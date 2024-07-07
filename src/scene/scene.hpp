@@ -154,11 +154,9 @@ public:
 			if(it != cameras_.end()){
 				cameras_.erase(it);
 				
-				if(*it == camera_){
-					camera_ = cameras_.back();
-					
-					return true;
-				}
+				camera_ = cameras_.back();
+				
+				return true;
 			}
 		}
 		
