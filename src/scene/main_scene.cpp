@@ -398,7 +398,6 @@ void MainScene::picking(int x, int y, bool is_edit_mode, bool is_bone_picking_mo
 		
 		entity = resources_->get_entity(pixel_x);
 		
-		
 		if (entity){
 			if(is_edit_mode){
 				set_selected_entity(nullptr);

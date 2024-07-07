@@ -679,7 +679,7 @@ std::shared_ptr<Entity> SharedResources::parse_sprite(const std::string& name, c
 		root_entity_ = entity;
 		entity->set_parent(entity);
 	}
-	entity->set_root(root_entity_);
+	entity->set_root(entity);
 
 	if(serialize){
 		auto serialization = entity->add_component<ModelSerializationComponent>();
@@ -702,6 +702,7 @@ std::shared_ptr<Entity> SharedResources::parse_sprite(const std::string& name, c
 	mesh->set_shader(sprite_shader.get());
 	
 	mesh->selectionColor = entity->get_id() << 8;
+	mesh->uniqueIdentifier = entity_id << 8;
 	mesh->set_unit_scale(1);
 	
 	if (entity)
@@ -1232,6 +1233,7 @@ std::shared_ptr<anim::Entity> SharedResources::create_camera(const glm::vec3& po
 	mesh->set_shader(sprite_shader.get());
 	
 	mesh->selectionColor = camera->get_id() << 8;
+	mesh->uniqueIdentifier = camera->get_id() << 8;
 	mesh->set_unit_scale(1);
 	
 	camera->get_component<TransformComponent>()->set_scale(50);
