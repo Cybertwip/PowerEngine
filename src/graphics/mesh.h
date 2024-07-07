@@ -25,11 +25,11 @@ namespace anim
         float weights[MAX_BONE_INFLUENCE];
 
 		Vertex()
-		: position(0.0f), normal(0.0f), tex_coords1(0.0f), tex_coords2(0.0f), tangent(0.0f), bitangent(0.0f)
+		: tex_coords1({0.0f, 0.0f}), tex_coords2({0.0f, 0.0f})
 		{
 			init_bone();
 		}
-		
+
 		Vertex(const glm::vec3 &pos, const glm::vec2 &tex)
 		: position(pos), normal(0.0f), tex_coords1(tex), tex_coords2(0.0f), tangent(0.0f), bitangent(0.0f)
 		{

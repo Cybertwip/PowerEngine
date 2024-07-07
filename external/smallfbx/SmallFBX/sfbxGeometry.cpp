@@ -105,91 +105,116 @@ void GeomMesh::checkModes(LayerElement<T>& layer)
 //        layer.mapping_mode = expected_map_mode;
     }
 }
-
 void GeomMesh::importFBXObjects()
 {
-    for (auto n : getNode()->getChildren()) {
+	for (auto n : getNode()->getChildren()) {
 		if (n->getName() == sfbxS_Vertices) {
 			// points
 			GetPropertyValue<double3>(m_points, n);
-		}
-		else if (n->getName() == sfbxS_Normals) {
-			// points
+		} else if (n->getName() == sfbxS_Normals) {
+			// normals
 			GetPropertyValue<double3>(m_normals, n);
-		}
-        else if (n->getName() == sfbxS_PolygonVertexIndex) {
-            // counts & indices
-            GetPropertyValue<int>(m_indices, n);
-            m_counts.resize(m_indices.size()); // reserve
-            int* dst_counts = m_counts.data();
-            size_t cfaces = 0;
-            size_t cpoints = 0;
-            for (int& i : m_indices) {
-                ++cpoints;
-                if (i < 0) { // negative value indicates the last index in the face
-                    i = ~i;
-                    dst_counts[cfaces++] = cpoints;
-                    cpoints = 0;
-                }
-            }
-            m_counts.resize(cfaces); // fit to actual size
-        }
-        else if (n->getName() == sfbxS_LayerElementNormal) {
-            // normals
-            LayerElementF3 tmp;
-            tmp.name = GetChildPropertyString(n, sfbxS_Name);
-            GetChildPropertyValue<double3>(tmp.data, n, sfbxS_Normals);
-            GetChildPropertyValue<int>(tmp.indices, n, sfbxS_NormalsIndex);
-            GetChildPropertyValue<string_view>(tmp.mapping_mode, n, sfbxS_MappingInformationType);
-            GetChildPropertyValue<string_view>(tmp.reference_mode, n, sfbxS_ReferenceInformationType);
-            checkModes(tmp);
-            m_normal_layers.push_back(std::move(tmp));
-        }
-        else if (n->getName() == sfbxS_LayerElementUV) {
-            // uv
-            LayerElementF2 tmp;
-            tmp.name = GetChildPropertyString(n, sfbxS_Name);
-            GetChildPropertyValue<double2>(tmp.data, n, sfbxS_UV);
-            GetChildPropertyValue<int>(tmp.indices, n, sfbxS_UVIndex);
-            GetChildPropertyValue<string_view>(tmp.mapping_mode, n, sfbxS_MappingInformationType);
-            GetChildPropertyValue<string_view>(tmp.reference_mode, n, sfbxS_ReferenceInformationType);
-            checkModes(tmp);
-            m_uv_layers.push_back(std::move(tmp));
-        }
-        else if (n->getName() == sfbxS_LayerElementColor) {
-            // colors
-            LayerElementF4 tmp;
-            tmp.name = GetChildPropertyString(n, sfbxS_Name);
-            GetChildPropertyValue<double4>(tmp.data, n, sfbxS_Colors);
-            GetChildPropertyValue<int>(tmp.indices, n, sfbxS_ColorIndex);
-            GetChildPropertyValue<string_view>(tmp.mapping_mode, n, sfbxS_MappingInformationType);
-            GetChildPropertyValue<string_view>(tmp.reference_mode, n, sfbxS_ReferenceInformationType);
-            checkModes(tmp);
-            m_color_layers.push_back(std::move(tmp));
-        }
-        else if (n->getName() == sfbxS_LayerElementMaterial) {
-            // colors
-            LayerElementI1 tmp;
-            tmp.name = GetChildPropertyString(n, sfbxS_Name);
-            GetChildPropertyValue<int>(tmp.data, n, sfbxS_Materials);
-            GetChildPropertyValue<string_view>(tmp.mapping_mode, n, sfbxS_MappingInformationType);
-            GetChildPropertyValue<string_view>(tmp.reference_mode, n, sfbxS_ReferenceInformationType);
-//            checkModes(tmp);
-            m_material_layers.push_back(std::move(tmp));
-        }
-        else if (n->getName() == sfbxS_Layer) {
-            std::vector<LayerElementDesc> layer;
-            for (auto n : n->getChildren()) {
-                LayerElementDesc tmp;
-                if (n->getName() == sfbxS_LayerElement) {
-                    GetChildPropertyValue<string_view>(tmp.type, n, sfbxS_Type);
-                    GetChildPropertyValue<int>(tmp.index, n, sfbxS_TypedIndex);
+		} else if (n->getName() == sfbxS_PolygonVertexIndex) {
+			// counts & indices
+			GetPropertyValue<int>(m_indices, n);
+			m_counts.resize(m_indices.size()); // reserve
+			int* dst_counts = m_counts.data();
+			size_t cfaces = 0;
+			size_t cpoints = 0;
+			for (int& i : m_indices) {
+				++cpoints;
+				if (i < 0) { // negative value indicates the last index in the face
+					i = ~i;
+					dst_counts[cfaces++] = cpoints;
+					cpoints = 0;
+				}
+			}
+			m_counts.resize(cfaces); // fit to actual size
+			
+			// Adjust the indices for decomposed polygons to triangles
+			std::vector<int> adjusted_indices;
+			adjusted_indices.reserve(m_indices.size() * 3); // Reserve space for the expanded indices
+			
+			size_t start = 0;
+			for (size_t i = 0; i < m_counts.size(); ++i) {
+				size_t face_size = m_counts[i];
+				if (face_size < 3) continue; // Skip degenerate faces
+				
+				for (size_t j = 1; j < face_size - 1; ++j) {
+					adjusted_indices.push_back(m_indices[start]);
+					adjusted_indices.push_back(m_indices[start + j]);
+					adjusted_indices.push_back(m_indices[start + j + 1]);
+				}
+				
+				start += face_size;
+			}
+			
+			m_indices.assign(adjusted_indices.begin(), adjusted_indices.end());
+		} else if (n->getName() == sfbxS_LayerElementNormal) {
+			// normals
+			LayerElementF3 tmp;
+			tmp.name = GetChildPropertyString(n, sfbxS_Name);
+			GetChildPropertyValue<double3>(tmp.data, n, sfbxS_Normals);
+			GetChildPropertyValue<int>(tmp.indices, n, sfbxS_NormalsIndex);
+			GetChildPropertyValue<string_view>(tmp.mapping_mode, n, sfbxS_MappingInformationType);
+			GetChildPropertyValue<string_view>(tmp.reference_mode, n, sfbxS_ReferenceInformationType);
+			checkModes(tmp);
+			m_normal_layers.push_back(std::move(tmp));
+		} else if (n->getName() == sfbxS_LayerElementUV) {
+			// uv
+			LayerElementF2 tmp;
+			tmp.name = GetChildPropertyString(n, sfbxS_Name);
+			GetChildPropertyValue<double2>(tmp.data, n, sfbxS_UV);
+			GetChildPropertyValue<int>(tmp.indices, n, sfbxS_UVIndex);
+			GetChildPropertyValue<string_view>(tmp.mapping_mode, n, sfbxS_MappingInformationType);
+			GetChildPropertyValue<string_view>(tmp.reference_mode, n, sfbxS_ReferenceInformationType);
+			checkModes(tmp);
+			
+			// Adjust indices for decomposed vertex indices
+			std::vector<int> adjusted_uv_indices;
+			adjusted_uv_indices.reserve(m_indices.size());
+			
+			for (int i = 0; i < m_indices.size(); i++) {
+				int uv_index = i;
+				if (!tmp.indices.empty()) {
+					uv_index = tmp.indices[i % tmp.indices.size()]; // Adjust uv_index for the current vertex
+				}
+				adjusted_uv_indices.push_back(uv_index);
+			}
+			
+			tmp.indices.assign(adjusted_uv_indices.begin(), adjusted_uv_indices.end()); // Replace original indices with adjusted ones
+			m_uv_layers.push_back(std::move(tmp));
+		} else if (n->getName() == sfbxS_LayerElementColor) {
+			// colors
+			LayerElementF4 tmp;
+			tmp.name = GetChildPropertyString(n, sfbxS_Name);
+			GetChildPropertyValue<double4>(tmp.data, n, sfbxS_Colors);
+			GetChildPropertyValue<int>(tmp.indices, n, sfbxS_ColorIndex);
+			GetChildPropertyValue<string_view>(tmp.mapping_mode, n, sfbxS_MappingInformationType);
+			GetChildPropertyValue<string_view>(tmp.reference_mode, n, sfbxS_ReferenceInformationType);
+			checkModes(tmp);
+			m_color_layers.push_back(std::move(tmp));
+		} else if (n->getName() == sfbxS_LayerElementMaterial) {
+			// materials
+			LayerElementI1 tmp;
+			tmp.name = GetChildPropertyString(n, sfbxS_Name);
+			GetChildPropertyValue<int>(tmp.data, n, sfbxS_Materials);
+			GetChildPropertyValue<string_view>(tmp.mapping_mode, n, sfbxS_MappingInformationType);
+			GetChildPropertyValue<string_view>(tmp.reference_mode, n, sfbxS_ReferenceInformationType);
+			m_material_layers.push_back(std::move(tmp));
+		} else if (n->getName() == sfbxS_Layer) {
+			std::vector<LayerElementDesc> layer;
+			for (auto n : n->getChildren()) {
+				LayerElementDesc tmp;
+				if (n->getName() == sfbxS_LayerElement) {
+					GetChildPropertyValue<string_view>(tmp.type, n, sfbxS_Type);
+					GetChildPropertyValue<int>(tmp.index, n, sfbxS_TypedIndex);
 					layer.push_back(std::move(tmp));
-                }
-            }
-            m_layers.push_back(std::move(layer));
-        }
-    }
+				}
+			}
+			m_layers.push_back(std::move(layer));
+		}
+	}
 }
 
 void GeomMesh::exportFBXObjects()
@@ -243,7 +268,6 @@ void GeomMesh::exportFBXObjects()
 	Node* l = nullptr;
 	if(!m_normal_layers.empty()){
 		l = n->createChild(sfbxS_LayerElementNormal, 0);
-
 	}
 
     for (auto& layer : m_normal_layers) {

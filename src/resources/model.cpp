@@ -135,7 +135,6 @@ namespace anim
 		int layerIndex = 0;
 		for (auto& uvLayer : uvLayers)
 		{
-			
 			for (int i = 0; i < vertexIndices.size(); i++) {
 				int index;
 				

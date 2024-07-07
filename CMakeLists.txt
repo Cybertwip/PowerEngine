@@ -70,6 +70,7 @@ message("==========================================================")
 # for external option
 option(JSONCPP_WITH_TESTS OFF)
 option(GLFW_BUILD_DOCS OFF)
+option(GLFW_BUILD_EXAMPLES ON)
 
 # add external libraries
 message("GLAD")
