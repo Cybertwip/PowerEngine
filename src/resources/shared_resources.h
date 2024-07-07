@@ -111,7 +111,7 @@ public:
 		return _scene;
 	}
 	
-	std::shared_ptr<anim::Entity> create_camera(const glm::vec3& position = glm::vec3(0.0f, 10.0f, 250.0f));
+	std::shared_ptr<anim::Entity> create_camera(const glm::vec3& position = glm::vec3(0.0f, 50.0f, 250.0f));
 
 	std::shared_ptr<anim::Entity> create_light(const LightManager::DirectionalLight& parameters = { glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0, 0.0f), glm::vec3(1.0f), glm::vec3(1.0f), glm::vec3(0.1f) });
 		
