@@ -38,6 +38,7 @@ class Shader;
 class Animation;
 class Entity;
 class Model;
+class Sprite;
 struct ModelNode;
 class PostProcessing;
 
@@ -58,11 +59,14 @@ public:
 	Animator *get_mutable_animator();
 	std::shared_ptr<Shader> get_mutable_shader(const std::string &name);
 	std::shared_ptr<Model> import_model(const char *path, float scale = 100.0f);
+	std::shared_ptr<Sprite> import_sprite(const std::string& path);
+
 //	void import_animation(const char *path, float scale = 100.0f);
 	void export_animation(std::shared_ptr<Entity> entity, const char *path, bool is_linear);
 	void serialize(const std::string& path);
 	void deserialize(const std::string& path);	
 	std::shared_ptr<Entity> parse_model(std::shared_ptr<Model> &model, const char *path, bool serialize = true);
+	std::shared_ptr<Entity> parse_sprite(const std::string& name, const char *path, std::shared_ptr<Sprite> sprite, bool serialize);
 	void add_animations(const std::vector<std::shared_ptr<Animation>> &animations);
 	void add_animation_set(const std::string& path, std::shared_ptr<Model> model, const std::vector<std::shared_ptr<Animation>> &animations);
 	void add_animation(std::shared_ptr<Animation> animation);
@@ -107,7 +111,7 @@ public:
 		return _scene;
 	}
 	
-	std::shared_ptr<anim::Entity> create_camera(const glm::vec3& position = glm::vec3(0.0f, 5.0f, 250.0f));
+	std::shared_ptr<anim::Entity> create_camera(const glm::vec3& position = glm::vec3(0.0f, 10.0f, 250.0f));
 
 	std::shared_ptr<anim::Entity> create_light(const LightManager::DirectionalLight& parameters = { glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0, 0.0f), glm::vec3(1.0f), glm::vec3(1.0f), glm::vec3(0.1f) });
 		
@@ -137,6 +141,8 @@ private:
 	std::string _defaultScenePath;
 	
 	std::map<std::string, std::shared_ptr<Model>> _model_cache;
+	std::map<std::string, std::shared_ptr<Sprite>> sprite_cache_;
+
 };
 
 }

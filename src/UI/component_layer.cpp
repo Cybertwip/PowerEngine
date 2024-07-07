@@ -123,7 +123,7 @@ void ComponentLayer::draw(ComponentContext &context, Scene *scene)
 				ImGui::End();
 			}
 		} else {
-			auto camera = scene->get_mutable_ref_camera();
+			auto camera = scene->get_active_camera();
 			
 			if(camera){
 				if (ImGui::Begin("Details", nullptr, window_flags))

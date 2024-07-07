@@ -142,7 +142,7 @@ void SceneLayer::draw_gizmo(Scene *scene, UiContext &ui_context)
 	scene_window_top_ = scene_pos_.y;
 	
 	// scene camera
-	auto &entity = scene->get_mutable_ref_camera();
+	auto &entity = scene->get_active_camera();
 	
 	auto camera = entity->get_component<anim::CameraComponent>();
 	

@@ -24,11 +24,17 @@ namespace anim
         // weights from each bone
         float weights[MAX_BONE_INFLUENCE];
 
-        Vertex()
-            : tex_coords1({0.0f, 0.0f}), tex_coords2({0.0f, 0.0f})
-        {
-            init_bone();
-        }
+		Vertex()
+		: position(0.0f), normal(0.0f), tex_coords1(0.0f), tex_coords2(0.0f), tangent(0.0f), bitangent(0.0f)
+		{
+			init_bone();
+		}
+		
+		Vertex(const glm::vec3 &pos, const glm::vec2 &tex)
+		: position(pos), normal(0.0f), tex_coords1(tex), tex_coords2(0.0f), tangent(0.0f), bitangent(0.0f)
+		{
+			init_bone();
+		}
 
         void init_bone()
         {
@@ -104,14 +110,12 @@ namespace anim
     {
 
     public:
-        // Mesh::Mesh() = default;
         Mesh(const std::vector<Vertex> &vertices, const std::vector<unsigned int> &indices, const std::vector<Texture> &textures, const MaterialProperties &mat_properties);
         Mesh(const std::vector<Vertex> &vertices);
-        // virtual ~Mesh();
         virtual ~Mesh() = default;
 		virtual void draw(Shader &shader) = 0;
 		virtual void draw_shadow(Shader &shader) = 0;
-        virtual void draw_outline(anim::Shader &shader) = 0;
+        virtual void draw_outline(Shader &shader) = 0;
         MaterialProperties &get_mutable_mat_properties()
         {
             return mat_properties_;

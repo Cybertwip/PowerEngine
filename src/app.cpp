@@ -108,7 +108,7 @@ void App::OnStart(){
 
 void App::init_ui(int width, int height)
 {
-	ImTextureID gearTextureId = LoadTexture("textures/ui/gear.png");
+	ImTextureID gearTextureId = LoadTexture("Textures/ui/gear.png");
 	
 	ui_ = std::make_unique<ui::MainLayer>(*scenes_[current_scene_idx_], gearTextureId, width, height);
 	ui_->init();
@@ -346,8 +346,8 @@ void App::process_timeline_context()
 			auto children = shared_resources_->get_root_entity()->get_children_recursive();
 
 			std::filesystem::path cwd = std::filesystem::current_path();
-			std::filesystem::create_directory(cwd / "renders");
-			std::filesystem::path filepath = cwd / "renders";
+			std::filesystem::create_directory(cwd / "Renders");
+			std::filesystem::path filepath = cwd / "Renders";
 			shared_resources_->start_export_sequence(filepath.string());
 			auto animator = shared_resources_->get_mutable_animator();
 			
@@ -544,7 +544,7 @@ void App::process_input(float dt)
 		return;
 	}
 	
-	auto cameraEntity = scenes_[current_scene_idx_]->get_mutable_ref_camera();
+	auto cameraEntity = scenes_[current_scene_idx_]->get_active_camera();
 	
 	auto camera = cameraEntity->get_component<anim::CameraComponent>();
 	auto app = this;

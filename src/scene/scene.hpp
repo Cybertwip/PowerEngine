@@ -52,7 +52,7 @@ public:
     {
         return resources_;
     }
-	virtual std::shared_ptr<anim::Entity> &get_mutable_ref_camera()
+	virtual std::shared_ptr<anim::Entity> &get_active_camera()
 	{
 		return camera_;
 	}

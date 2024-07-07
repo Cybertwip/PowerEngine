@@ -44,17 +44,21 @@ message("==========================================================")
 
 # new
 set(test_src
+    graphics/sprite.cpp
     graphics/mesh.cpp
     graphics/opengl/gl_shader.cpp
     graphics/opengl/gl_mesh.cpp
+    graphics/opengl/gl_sprite.cpp
     graphics/opengl/framebuffer.cpp
     graphics/opengl/image.cpp
     graphics/post_processing.cpp
 
     graphics/shader.h
     graphics/mesh.h
+    graphics/sprite.h
     graphics/opengl/gl_shader.h
     graphics/opengl/gl_mesh.h
+    graphics/opengl/gl_sprite.h
     graphics/opengl/framebuffer.h
     graphics/opengl/image.h
     graphics/post_processing.h
@@ -70,6 +74,7 @@ set(test_src
     entity/components/blueprint_component.cpp
     entity/components/renderable/armature_component.cpp
     entity/components/renderable/physics_component.cpp
+    entity/components/renderable/billboard_component.cpp
     entity/components/renderable/mesh_component.cpp
     entity/components/renderable/light_component.cpp
     
@@ -80,6 +85,7 @@ set(test_src
     entity/components/animation_component.h
     entity/components/pose_component.h
     entity/components/blueprint_component.h
+    entity/components/renderable/billboard_component.h
     entity/components/renderable/mesh_component.h
     entity/components/renderable/light_component.h
     entity/components/renderable/armature_component.h

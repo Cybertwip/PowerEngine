@@ -33,8 +33,8 @@ macro(add_example_executable name)
     #source_group("" FILES ${_Example_Sources})
     source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${_Example_Sources})
 
-    file(GLOB _Example_CommonResources CONFIGURE_DEPENDS "${IMGUI_NODE_EDITOR_ROOT_DIR}/examples/data/*")
-    file(GLOB _Example_Resources CONFIGURE_DEPENDS "${IMGUI_NODE_EDITOR_ROOT_DIR}/data/*")
+    file(GLOB _Example_CommonResources CONFIGURE_DEPENDS "${IMGUI_NODE_EDITOR_ROOT_DIR}/examples/Data/*")
+    file(GLOB _Example_Resources CONFIGURE_DEPENDS "${IMGUI_NODE_EDITOR_ROOT_DIR}/Data/*")
     #message(FATAL_ERROR "_Example_Resources = ${_Example_Resources}")
 
     set(_Example_Type)
@@ -120,7 +120,7 @@ macro(add_example_executable name)
         add_custom_command(
             TARGET ${name}
             PRE_BUILD
-            COMMAND ${CMAKE_COMMAND} -E copy_if_different ARGS ${_Resource} ${_ExampleBinDir}/data/${_RelResource}
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different ARGS ${_Resource} ${_ExampleBinDir}/Data/${_RelResource}
         )
     endforeach()
 

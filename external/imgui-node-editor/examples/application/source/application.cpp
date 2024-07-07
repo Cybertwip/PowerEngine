@@ -119,7 +119,7 @@ void Application::RecreateFontAtlas()
     config.OversampleV = 4;
     config.PixelSnapH = false;
 
-	std::filesystem::path absPath = DEFAULT_CWD + std::string{"/data/D2Coding.ttf"};
+	std::filesystem::path absPath = DEFAULT_CWD + std::string{"/Data/D2Coding.ttf"};
 	
 	absPath = std::filesystem::absolute(absPath);
 	io.Fonts->AddFontFromFileTTF(absPath.string().c_str(), 16.0f, &config);

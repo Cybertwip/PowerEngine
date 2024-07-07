@@ -53,7 +53,7 @@ bool ImGui::LoadInternalIcons(ImFontAtlas *atlas)
 
     // Awesome Icons
 	
-	std::filesystem::path absPath = DEFAULT_CWD + std::string{"/data/D2Coding.ttf"};
+	std::filesystem::path absPath = DEFAULT_CWD + std::string{"/Data/D2Coding.ttf"};
 	
 	absPath = std::filesystem::absolute(absPath);
 

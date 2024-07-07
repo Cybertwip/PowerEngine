@@ -13,10 +13,12 @@
 #include "../entity/components/serialization_component.h"
 #include "../entity/components/renderable/mesh_component.h"
 #include "../entity/components/renderable/armature_component.h"
+#include "../entity/components/renderable/billboard_component.h"
 #include "../entity/components/renderable/physics_component.h"
 #include "../entity/components/renderable/light_component.h"
 #include "../entity/components/animation_component.h"
 #include "../entity/components/transform_component.h"
+
 #include "physics/PhysicsUtils.h"
 
 #include "scene/scene.hpp"
@@ -25,6 +27,7 @@
 #include <glm/gtc/type_ptr.hpp>
 
 #include "../graphics/opengl/gl_mesh.h"
+#include "../graphics/opengl/gl_sprite.h"
 #include "../graphics/post_processing.h"
 
 #include "shading/light_manager.h"
@@ -300,6 +303,31 @@ std::shared_ptr<Model> SharedResources::import_model(const char *path, float sca
 		return _model_cache[path];
 	}
 }
+
+
+std::shared_ptr<Sprite> SharedResources::import_sprite(const std::string& path)
+{
+	// Check if the sprite is already cached
+	auto it = sprite_cache_.find(path);
+	if (it != sprite_cache_.end())
+	{
+		return it->second;
+	}
+	
+	
+	// Default material properties for the sprite
+	MaterialProperties mat_properties;
+	
+	// Create the sprite
+	auto sprite = std::make_shared<gl::GLSprite>(path, mat_properties, _scene);
+	
+	// Cache the sprite
+	sprite_cache_[path] = sprite;
+	
+	return sprite;
+}
+
+
 //
 //void SharedResources::import_animation(const char *path, float scale)
 //{
@@ -580,7 +608,7 @@ std::shared_ptr<Entity> SharedResources::parse_model(std::shared_ptr<Model> &mod
 	
 	std::shared_ptr<Entity> entity = nullptr;
 	convert_to_entity(entity, model, model->get_root_node(), nullptr, 0, nullptr);
-
+	
 	if(serialize){
 		auto serialization = entity->add_component<ModelSerializationComponent>();
 		
@@ -607,7 +635,7 @@ std::shared_ptr<Entity> SharedResources::parse_model(std::shared_ptr<Model> &mod
 	
 	if(entity && animations_.size() > 0){
 		auto pose = entity->get_mutable_root()->get_component<PoseComponent>();
-				
+		
 		animator_->set_end_time(animations_.back()->get_duration());
 		
 	}
@@ -615,13 +643,70 @@ std::shared_ptr<Entity> SharedResources::parse_model(std::shared_ptr<Model> &mod
 	{
 		entity->set_name(model->get_name());
 		
-//		auto [t, r, s] = DecomposeTransform(entity->get_local());
-//		
-//		s *= model->get_unit_scale(); // Normalized when imported
-//		
-//		auto transformation = ComposeTransform(t, r, s);
-//		
-//		entity->set_local(transformation);
+		//		auto [t, r, s] = DecomposeTransform(entity->get_local());
+		//
+		//		s *= model->get_unit_scale(); // Normalized when imported
+		//
+		//		auto transformation = ComposeTransform(t, r, s);
+		//
+		//		entity->set_local(transformation);
+	}
+	
+	return entity;
+}
+
+
+std::shared_ptr<Entity> SharedResources::parse_sprite(const std::string& name, const char *path, std::shared_ptr<Sprite> sprite, bool serialize)
+{
+	std::shared_ptr<Entity> entity = nullptr;
+	
+	int32_t entity_id = single_entity_list_.size();
+	
+	for(auto entity : single_entity_list_){
+		if(entity->get_id() >= entity_id){
+			entity_id = entity->get_id();
+		}
+	}
+	
+	entity_id++;
+
+	entity.reset(new Entity(shared_from_this(), name, entity_id, root_entity_));
+	
+	single_entity_list_.push_back(entity);
+	
+	if (!root_entity_)
+	{
+		root_entity_ = entity;
+		entity->set_parent(entity);
+	}
+	entity->set_root(root_entity_);
+
+	if(serialize){
+		auto serialization = entity->add_component<ModelSerializationComponent>();
+		
+		serialization->set_model_path(path);
+		
+		entity->get_animation_tracks()->mType = TrackType::Actor;
+	} else {
+		entity->get_animation_tracks()->mType = TrackType::Other;
+	}
+	
+	auto childrenRecursive = entity->get_children_recursive();
+	
+	auto mesh = entity->add_component<BillboardComponent>();
+	
+	mesh->set_sprite(sprite);
+	
+	auto sprite_shader = get_mutable_shader("billboard");
+
+	mesh->set_shader(sprite_shader.get());
+	
+	mesh->selectionColor = entity->get_id() << 8;
+	mesh->set_unit_scale(1);
+	
+	if (entity)
+	{
+		entity->set_name(name);
 	}
 	
 	return entity;
@@ -702,16 +787,18 @@ void SharedResources::init_animator()
 }
 void SharedResources::init_shader()
 {
-	add_shader("armature", "./resources/shaders/armature.vs", "./resources/shaders/phong_model.fs");
-	add_shader("model", "./resources/shaders/simple_model.vs", "./resources/shaders/phong_model.fs");
-	add_shader("animation", "./resources/shaders/animation_skinning.vs", "./resources/shaders/phong_model.fs");
+	add_shader("armature", "./Resources/Shaders/armature.vs", "./Resources/Shaders/phong_model.fs");
+	add_shader("model", "./Resources/Shaders/simple_model.vs", "./Resources/Shaders/phong_model.fs");
+	add_shader("animation", "./Resources/Shaders/animation_skinning.vs", "./Resources/Shaders/phong_model.fs");
 	
-	add_shader("framebuffer", "./resources/shaders/simple_framebuffer.vs", "./resources/shaders/simple_framebuffer.fs");
-	add_shader("grid", "./resources/shaders/grid.vs", "./resources/shaders/grid.fs");
-	add_shader("outline", "./resources/shaders/simple_framebuffer.vs", "./resources/shaders/outline.fs");
+	add_shader("framebuffer", "./Resources/Shaders/simple_framebuffer.vs", "./Resources/Shaders/simple_framebuffer.fs");
+	add_shader("grid", "./Resources/Shaders/grid.vs", "./Resources/Shaders/grid.fs");
+	add_shader("outline", "./Resources/Shaders/simple_framebuffer.vs", "./Resources/Shaders/outline.fs");
 	
-	add_shader("shadow", "./resources/shaders/shadow.vs", "./resources/shaders/shadow.fs");
-	add_shader("ui", "./resources/shaders/ui_model.vs", "./resources/shaders/ui_model.fs");
+	add_shader("shadow", "./Resources/Shaders/shadow.vs", "./Resources/Shaders/shadow.fs");
+	add_shader("ui", "./Resources/Shaders/ui_model.vs", "./Resources/Shaders/ui_model.fs");
+
+	add_shader("billboard", "./Resources/Shaders/sprite_billboard.vs", "./Resources/Shaders/sprite_billboard.fs");
 
 	mPostProcessing->set_shaders(shaders_["framebuffer"].get(), shaders_["outline"].get());
 	
@@ -1095,11 +1182,11 @@ std::shared_ptr<anim::Entity> SharedResources::create_camera(const glm::vec3& po
 	
 	std::string uniqueActorName = anim::GenerateUniqueActorName(existingNames, prefix);
 
-	auto modelPath = std::filesystem::path(DEFAULT_CWD) / "Models/Camera.ubx";
+	auto modelPath = std::filesystem::path(DEFAULT_CWD) / "Textures/ui/camera.png";
 	
-	auto model = import_model(modelPath.string().c_str());
-	auto camera = parse_model(model, modelPath.string().c_str(), false);
-	
+	auto sprite = import_sprite(modelPath.string().c_str());
+	auto camera = parse_sprite(uniqueActorName, modelPath.string().c_str(), sprite, false);
+
 	auto default_camera = std::dynamic_pointer_cast<CameraComponent>(camera->add_component<CameraComponent>());
 	
 	default_camera->initialize(camera, shared_from_this());
@@ -1136,16 +1223,18 @@ std::shared_ptr<anim::Entity> SharedResources::create_camera(const glm::vec3& po
 	if(root){
 		root->add_children(camera);
 	}
+	auto mesh = camera->add_component<BillboardComponent>();
 	
-	auto ui_shader = get_mutable_shader("ui");
+	mesh->set_sprite(sprite);
+	
+	auto sprite_shader = get_mutable_shader("billboard");
 
-	auto meshes = camera->get_children_recursive();
-	for(auto child : meshes){
-		if(auto mesh = child->get_component<MeshComponent>(); mesh){
-			mesh->isInterface = true;
-			mesh->set_shader(ui_shader.get());
-		}
-	}
+	mesh->set_shader(sprite_shader.get());
+	
+	mesh->selectionColor = camera->get_id() << 8;
+	mesh->set_unit_scale(1);
+	
+	camera->get_component<TransformComponent>()->set_scale(50);
 
 	_scene.add_camera(camera);
 	
@@ -1172,13 +1261,14 @@ std::shared_ptr<anim::Entity> SharedResources::create_light(const LightManager::
 	std::string uniqueActorName = anim::GenerateUniqueActorName(existingNames, prefix);
 	
 	
-	auto modelPath = std::filesystem::path(DEFAULT_CWD) / "Models/Light.ubx";
+	auto modelPath = std::filesystem::path(DEFAULT_CWD) / "Textures/ui/lightbulb.png";
 	
-	auto model = import_model(modelPath.string().c_str());
-	auto entity = parse_model(model, modelPath.string().c_str(), false);
+	auto model = import_sprite(modelPath.string().c_str());
+	auto entity = parse_sprite(uniqueActorName, modelPath.string().c_str(), model, false);
 		
 	auto light = std::dynamic_pointer_cast<DirectionalLightComponent>(entity->add_component<DirectionalLightComponent>());
 	
+	entity->get_component<TransformComponent>()->set_scale(50);
 	entity->get_component<TransformComponent>()->set_rotation(parameters.direction);
 	entity->get_component<TransformComponent>()->set_translation({0.0f, 100.0f, 0.0f});
 
@@ -1186,22 +1276,11 @@ std::shared_ptr<anim::Entity> SharedResources::create_light(const LightManager::
 	
 	entity->set_name(uniqueActorName);
 	
-	auto ui_shader = get_mutable_shader("ui");
-	
 	if(root){
 		root->add_children(entity);
 	}
-
-	auto meshes = entity->get_children_recursive();
-	for(auto child : meshes){
-		if(auto mesh = child->get_component<MeshComponent>(); mesh){
-			mesh->isInterface = true;
-			mesh->set_shader(ui_shader.get());
-		}
-	}
 	
 	LightManager::getInstance()->addDirectionalLight(entity);
-	
 	
 	_scene.add_light(entity);
 	
