@@ -735,7 +735,7 @@ const std::map<std::string, AnimationSet>& SharedResources::getAnimationSets(){
 
 void SharedResources::add_animation(std::shared_ptr<Animation> animation)
 {
-	if (animation)
+	if (animation && animation->get_duration() > 0)
 	{
 		if(animations_.empty()){
 			animations_.push_back(animation);

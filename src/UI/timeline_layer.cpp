@@ -1250,7 +1250,6 @@ void TimelineLayer::draw(Scene *scene, UiContext &ui_context)
 					auto& sequencer = static_cast<AnimationSequencer&>(animation_sequence_->get_sequencer());
 					
 					if(ui_context.entity.is_manipulated){
-						
 						ui_context.scene.is_trigger_update_keyframe = true;
 						
 						auto root = std::dynamic_pointer_cast<AnimationSequence>(animation_sequence_)->get_root();
@@ -1429,7 +1428,7 @@ void TimelineLayer::draw(Scene *scene, UiContext &ui_context)
 					
 					auto& sequencer = static_cast<AnimationSequencer&>(animation_sequence_->get_sequencer());
 					
-					Sequencer(&sequencer, &sequencerPick, &expanded, &sequencer.mSelectedEntry, &sequencer.mFirstFrame,  ImSequencer::SEQUENCER_CHANGE_FRAME | ImSequencer::SEQUENCER_ADD | ImSequencer::SEQUENCER_SELECT);
+					Sequencer(&sequencer, &sequencerPick, &expanded, &sequencer.mSelectedEntry, &sequencer.mFirstFrame,  ImSequencer::SEQUENCER_CHANGE_FRAME | ImSequencer::SEQUENCER_ADD);
 					
 					if(animator_){
 						if(currentFrame != sequencerPick){

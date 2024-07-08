@@ -386,8 +386,6 @@ bool Sequencer(SequenceInterface* sequence, int* currentFrame, bool* expanded, i
 				sequenceCount = sequence->GetItemCount();
 			}
 			
-			
-			
 			bool existing = true;
 			sequence->Get(i, NULL, &existing, NULL, NULL, NULL, NULL);
 			

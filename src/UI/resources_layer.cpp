@@ -427,7 +427,7 @@ bool DrawResourcesPanel(Scene *scene, ui::TimelineLayer& timelineLayer, ui::UiCo
 							
 							auto& sequencer = sequence->get_sequencer();
 							
-							sequencer.mSequencerType = anim::TracksSequencer::SequencerType::Single;
+							sequencer.mSequencerType = anim::TracksSequencer::SequencerType::Composition;
 							
 							timelineLayer.setCinematicSequence(sequence);
 							
