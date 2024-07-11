@@ -454,7 +454,6 @@ void TimelineLayer::draw(Scene *scene, UiContext &ui_context)
 {
 	init_context(ui_context, scene);
 	
-	
 	if(ui_context.scene.editor_mode == EditorMode::Map){
 		ImGuiWindowFlags window_flags = 0;
 		
@@ -523,6 +522,13 @@ void TimelineLayer::draw(Scene *scene, UiContext &ui_context)
 		
 		if(ui_context.scene.editor_mode == EditorMode::Map){
 			
+			if(ui_context.scene.is_mode_change){
+				resetAnimatorTime();
+				resources_->set_root_entity(hierarchy_entity_);
+				
+				setActiveEntity(ui_context, hierarchy_entity_);
+			}
+
 			auto children = resources_->get_root_entity()->get_children_recursive();
 			
 			children.push_back(resources_->get_root_entity());

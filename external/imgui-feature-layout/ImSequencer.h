@@ -25,6 +25,9 @@
 //
 #pragma once
 
+#include "imgui.h"
+#include "imgui_internal.h"
+
 #include "json/json.h"
 
 #include <cstddef>
@@ -87,6 +90,7 @@ enum SEQUENCER_OPTIONS
 	SEQUENCER_EDIT_ALL = SEQUENCER_EDIT_STARTEND | SEQUENCER_CHANGE_FRAME
 };
 
+
 struct SequenceInterface
 {
 	bool focused = false;
@@ -119,6 +123,7 @@ struct SequenceInterface
 	virtual void CustomDrawCompact(int /*index*/, ImDrawList* /*draw_list*/, const ImRect& /*rc*/, const ImRect& /*clippingRect*/) {}
 	
 	std::function<void(int, const ImGuiPayload*, int)> OnMissingActorPayload;
+
 };
 
 

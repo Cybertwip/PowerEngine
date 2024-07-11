@@ -39,9 +39,11 @@ static ImVec2 operator+(const ImVec2& a, const ImVec2& b) {
 	return ImVec2(a.x + b.x, a.y + b.y);
 }
 #endif
+
 static ImVec2 selectionStart = ImVec2(-1, -1); // Start position of the selection box
 static ImVec2 selectionEnd = ImVec2(-1, -1);   // End position of the selection box
 static bool selecting = false;                 // Flag indicating if the user is currently selecting
+
 
 // Function to draw the selection box
 void DrawSelectionBox(ImDrawList* drawList) {
@@ -717,6 +719,15 @@ bool Sequencer(SequenceInterface* sequence, int* currentFrame, bool* expanded, i
 			draw_list->AddLine(ImVec2(cursorOffset, canvas_pos.y), ImVec2(cursorOffset, contentMax.y), 0xA02A2AFF, cursorWidth);
 		}
 		
+		
+		struct CircleData {
+			ImVec2 position;
+			float radius;
+			ImU32 color;
+		};
+		
+		std::vector<CircleData> circles;
+
 		for (int i = 0; i < sequenceCount; i++)
 		{
 			size_t localCustomHeight = sequence->GetCustomHeight(i);
@@ -729,7 +740,6 @@ bool Sequencer(SequenceInterface* sequence, int* currentFrame, bool* expanded, i
 			if(keyframes != NULL){
 				for(auto& keyframe : *keyframes){
 					int frame = keyframe.first;
-					
 					if (frame >= *firstFrame && frame <= sequence->GetFrameMax() && keyframe.second.active)
 					{
 						static const float cursorWidth = 6.f;
@@ -737,12 +747,37 @@ bool Sequencer(SequenceInterface* sequence, int* currentFrame, bool* expanded, i
 						
 						float dotRadius = 3.0f;
 						
-						draw_list->AddCircleFilled(ImVec2(cursorOffset + framePixelWidth / 2.0f - dotRadius + 0.5f, pos.y + ItemHeight / 2.0f + localCustomHeight / 2.0f), dotRadius, 0xFF000000);
+						if (cursorOffset + framePixelWidth / 2.0f - dotRadius + 0.5f <= contentMax.x) {
+							circles.push_back(CircleData{
+								ImVec2(cursorOffset + framePixelWidth / 2.0f - dotRadius + 0.5f, pos.y + ItemHeight / 2.0f + localCustomHeight / 2.0f),
+								dotRadius,
+								0xFF000000
+							});
+						}
 					}
 				}
 			}
 		}
-		
+	
+		// Draw all collected circles in a single draw call
+		if (!circles.empty()) {
+			ImDrawList* draw_list = ImGui::GetWindowDrawList();
+			const int num_segments = 4; // Number of segments to approximate a circle
+			for (const auto& circle : circles) {
+				const ImVec2& center = circle.position;
+				const float radius = circle.radius;
+				const ImU32 col = circle.color;
+				
+				// Generate vertices for the circle
+				for (int i = 0; i < num_segments; i++) {
+					const float a = ((float)i / (float)num_segments) * 2.0f * IM_PI;
+					const float x = center.x + ImCos(a) * radius;
+					const float y = center.y + ImSin(a) * radius;
+					draw_list->PathLineTo(ImVec2(x, y));
+				}
+				draw_list->PathFillConvex(col);
+			}
+		}
 		
 		if(sequenceOptions & SEQUENCER_SELECT){
 			
