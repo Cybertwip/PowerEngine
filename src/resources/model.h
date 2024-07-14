@@ -16,6 +16,8 @@
 
 #include "SmallFBX.h"
 
+class LightManager;
+
 namespace anim
 {
     class Mesh;
@@ -71,7 +73,7 @@ namespace anim
                                                        const std::shared_ptr<ModelNode> &model_node,
 													   std::shared_ptr<Entity> parent_entity, int child_num, std::shared_ptr<Entity> root_entity);
 
-        Model(const std::string& path, const sfbx::DocumentPtr doc);
+        Model(const std::string& path, const sfbx::DocumentPtr doc, LightManager& lightManager);
         ~Model();
 
         // void draw_armature(ArmatureNode &armature, Shader &shader, const glm::mat4 &view, const glm::mat4 &projection, const glm::mat4 &world, float depth);
@@ -92,14 +94,14 @@ namespace anim
 		const float get_unit_scale() const;
 
     private:
-        void load_model(const std::string& path, const sfbx::DocumentPtr doc);
+        void load_model(const std::string& path, const sfbx::DocumentPtr doc, LightManager& lightManager);
         /**
          * @brief 루트노드를 처음에 입력받아, 자식노드들을 순회하면서 메쉬들을 찾음
          *
          * @param node
          * @param scene
          */
-        void process_node(std::shared_ptr<ModelNode> &model_node, const std::shared_ptr<sfbx::Model> node, const sfbx::DocumentPtr doc);
+        void process_node(std::shared_ptr<ModelNode> &model_node, const std::shared_ptr<sfbx::Model> node, const sfbx::DocumentPtr doc, LightManager& lightManager);
         /**
          * @brief 모든 vertex 데이터를 얻고, mesh의 indices를 얻고, 연관된 material(texture) 데이터를 얻음
          *
@@ -107,7 +109,7 @@ namespace anim
          * @param scene
          * @return Mesh
          */
-        std::shared_ptr<Mesh> process_mesh(const std::shared_ptr<sfbx::Mesh> mesh, const sfbx::DocumentPtr doc);
+        std::shared_ptr<Mesh> process_mesh(const std::shared_ptr<sfbx::Mesh> mesh, const sfbx::DocumentPtr doc, LightManager& lightManager);
         /**
          * @brief bone_info_map_에 bone 데이터를 넣고, vertex에 영향을 주는 bone과 그의 영향(가중치)을 집어넣음
          *

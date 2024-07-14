@@ -20,9 +20,9 @@
 namespace anim
 {
     using namespace gl;
-    Model::Model(const std::string& path, const sfbx::DocumentPtr doc)
+    Model::Model(const std::string& path, const sfbx::DocumentPtr doc, LightManager& lightManager)
     {
-        load_model(path, doc);
+        load_model(path, doc, lightManager);
     }
 
     Model::~Model()
@@ -30,15 +30,15 @@ namespace anim
         root_node_ = nullptr;
     }
 
-    void Model::load_model(const std::string& path, const sfbx::DocumentPtr doc)
+    void Model::load_model(const std::string& path, const sfbx::DocumentPtr doc, LightManager& lightManager)
     {
         directory_ = std::filesystem::u8path(path);
         name_ = directory_.filename().string();
-        process_node(root_node_, doc->getRootModel(), doc);
+        process_node(root_node_, doc->getRootModel(), doc, lightManager);
         textures_loaded_.clear();
     }
 
-    void Model::process_node(std::shared_ptr<ModelNode> &model_node, const std::shared_ptr<sfbx::Model> node, const sfbx::DocumentPtr doc)
+    void Model::process_node(std::shared_ptr<ModelNode> &model_node, const std::shared_ptr<sfbx::Model> node, const sfbx::DocumentPtr doc, LightManager& lightManager)
     {
 		std::vector<std::shared_ptr<sfbx::Mesh>> meshes;
 		std::vector<std::shared_ptr<sfbx::Model>> models;
@@ -69,7 +69,7 @@ namespace anim
 //		   	filteredModels.size()));
 		
 		if(auto mesh = std::dynamic_pointer_cast<sfbx::Mesh>(node); mesh){
-			model_node->meshes.emplace_back(process_mesh(mesh, doc));
+			model_node->meshes.emplace_back(process_mesh(mesh, doc, lightManager));
 			
 			model_node->has_bone = mesh->getGeometry()->hasSkinDeformer();
 
@@ -80,13 +80,13 @@ namespace anim
 			auto child = sfbx::as<sfbx::Model>(filteredModels[i]);
 			
 			if(child){
-				process_node(model_node->childrens[i], child, doc);
+				process_node(model_node->childrens[i], child, doc, lightManager);
 
 			}
         }
     }
 
-    std::shared_ptr<Mesh> Model::process_mesh(const std::shared_ptr<sfbx::Mesh> mesh, const sfbx::DocumentPtr doc)
+    std::shared_ptr<Mesh> Model::process_mesh(const std::shared_ptr<sfbx::Mesh> mesh, const sfbx::DocumentPtr doc, LightManager& lightManager)
     {
         std::vector<Vertex> vertices;
         std::vector<unsigned int> indices;
@@ -231,7 +231,7 @@ namespace anim
 //        std::vector<Texture> heightMaps = load_material_textures(material, scene, aiTextureType_AMBIENT, "texture_height");
 //        textures.insert(textures.end(), heightMaps.begin(), heightMaps.end());
 
-		return std::make_shared<GLMesh>(vertices, indices, textures, mat_properties);
+		return std::make_shared<GLMesh>(vertices, indices, textures, mat_properties, lightManager);
     }
 
     void Model::process_bone(const std::shared_ptr<sfbx::Mesh> mesh, const sfbx::DocumentPtr doc, std::vector<Vertex> &vertices)

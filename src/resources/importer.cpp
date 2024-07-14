@@ -90,7 +90,7 @@ Importer::Importer()
 {
 }
 
-std::pair<std::shared_ptr<Model>, std::vector<std::shared_ptr<Animation>>> Importer::read_file(const char *path)
+std::pair<std::shared_ptr<Model>, std::vector<std::shared_ptr<Animation>>> Importer::read_file(const char *path, LightManager& lightManager)
 {
 	path_ = std::string(path);
 	std::vector<std::shared_ptr<Animation>> animations;
@@ -111,7 +111,7 @@ std::pair<std::shared_ptr<Model>, std::vector<std::shared_ptr<Animation>>> Impor
 		sfbx::DocumentPtr doc = sfbx::MakeDocument(path_);
 		
 		if(doc->valid()){
-			model = import_model(doc);
+			model = import_model(doc, lightManager);
 			
 			animations = import_animation(doc);
 			
@@ -133,9 +133,9 @@ std::pair<std::shared_ptr<Model>, std::vector<std::shared_ptr<Animation>>> Impor
 	return std::make_pair(model, animations);
 }
 
-std::shared_ptr<Model> Importer::import_model(const sfbx::DocumentPtr doc)
+std::shared_ptr<Model> Importer::import_model(const sfbx::DocumentPtr doc, LightManager& lightManager)
 {
-	return std::make_shared<Model>(path_, doc);
+	return std::make_shared<Model>(path_, doc, lightManager);
 }
 
 std::vector<std::shared_ptr<Animation>> Importer::import_animation(const sfbx::DocumentPtr doc)

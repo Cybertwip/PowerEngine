@@ -44,14 +44,14 @@ public:
 	{
 		return selected_entity_;
 	}
-    virtual std::shared_ptr<anim::Framebuffer> get_mutable_framebuffer()
-    {
-        return framebuffer_;
-    }
-    virtual std::shared_ptr<anim::SharedResources> get_mutable_shared_resources()
-    {
-        return resources_;
-    }
+	virtual std::shared_ptr<anim::Framebuffer> get_mutable_framebuffer()
+	{
+		return framebuffer_;
+	}
+	virtual std::shared_ptr<anim::SharedResources> get_mutable_shared_resources()
+	{
+		return resources_;
+	}
 	virtual std::shared_ptr<anim::Entity> &get_active_camera()
 	{
 		return camera_;
@@ -228,7 +228,7 @@ public:
 	
 protected:
 	std::shared_ptr<anim::Entity> selected_entity_{nullptr};
-    std::shared_ptr<anim::SharedResources> resources_;
+	std::shared_ptr<anim::SharedResources> resources_;
 	std::shared_ptr<anim::Framebuffer> framebuffer_;
 	std::shared_ptr<anim::Framebuffer> entity_framebuffer_;
 	std::vector<std::shared_ptr<anim::Entity>> cameras_;

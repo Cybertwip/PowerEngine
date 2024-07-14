@@ -252,11 +252,12 @@ void SharedResources::initialize(){
 	root_entity_->set_root(root_entity_);
 	single_entity_list_.push_back(root_entity_);
 	
-	ArmatureComponent::setShape(gl::CreateBiPyramid());
-
-	std::filesystem::current_path(DEFAULT_CWD);
+	ArmatureComponent::setShape(gl::CreateBiPyramid(_lightManager));
 	
-	auto homePath = std::filesystem::current_path();
+	
+	auto homePath = std::filesystem::path(DEFAULT_CWD);
+
+	//auto homePath = std::filesystem::current_path();
 	
 	rootNode = CreateDirectoryNodeTreeFromPath(homePath);
 	
@@ -290,7 +291,7 @@ std::shared_ptr<Model> SharedResources::import_model(const char *path, float sca
 	if(it == _model_cache.end()){
 		Importer import{};
 		import.mScale = scale;
-		auto [model, animations] = import.read_file(path);
+		auto [model, animations] = import.read_file(path, _lightManager);
 		
 		add_animation_set(path, model, animations);
 		
@@ -462,7 +463,7 @@ void SharedResources::deserialize(const std::string& path){
 	if (root.isNull() || root.empty()) {
 		std::cerr << "Warning: File is empty or content is not valid JSON: " << serializationPath << std::endl;
 		
-		LightManager::getInstance()->clearLights();
+		_lightManager.clearLights();
 
 		single_entity_list_.clear();
 		animations_.clear();
@@ -498,7 +499,7 @@ void SharedResources::deserialize(const std::string& path){
 	_scene.clear_cameras();
 	_scene.clear_lights();
 	
-	LightManager::getInstance()->clearLights();
+	_lightManager.clearLights();
 	
 	root_entity_ = std::make_shared<Entity>(shared_from_this(), "Scene", single_entity_list_.size());
 	root_entity_->set_root(root_entity_);
@@ -1272,7 +1273,7 @@ std::shared_ptr<anim::Entity> SharedResources::create_light(const LightManager::
 	
 	entity->get_component<TransformComponent>()->set_scale(50);
 	entity->get_component<TransformComponent>()->set_rotation(parameters.direction);
-	entity->get_component<TransformComponent>()->set_translation({0.0f, 100.0f, 0.0f});
+	entity->get_component<TransformComponent>()->set_translation({0.0f, 250.0f, 0.0f});
 
 	light->set_parameters(parameters);
 	
@@ -1282,7 +1283,7 @@ std::shared_ptr<anim::Entity> SharedResources::create_light(const LightManager::
 		root->add_children(entity);
 	}
 	
-	LightManager::getInstance()->addDirectionalLight(entity);
+	_lightManager.addDirectionalLight(entity);
 	
 	_scene.add_light(entity);
 	

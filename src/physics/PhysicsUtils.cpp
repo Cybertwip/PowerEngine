@@ -2,11 +2,11 @@
 #include "graphics/opengl/gl_mesh.h"
 
 namespace physics{
-std::unique_ptr<anim::Mesh> CreateCuboid(const glm::vec3& extents) {
+std::unique_ptr<anim::Mesh> CreateCuboid(const glm::vec3& extents, LightManager& lightManager) {
 	
 	auto vertices = CreateCuboidVertices(extents);
 	
-	auto mesh = std::make_unique<anim::gl::GLMesh>(vertices);
+	auto mesh = std::make_unique<anim::gl::GLMesh>(vertices, lightManager);
 	mesh->get_mutable_mat_properties().opacity = 0.15f;
 	mesh->get_mutable_mat_properties().diffuse = glm::vec3(0.5f, 0.0f, 0.5f);
 	

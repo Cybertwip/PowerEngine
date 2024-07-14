@@ -86,7 +86,8 @@ void App::init_shared_resources()
 void App::init_scene(uint32_t width, uint32_t height)
 {
 	scenes_.push_back(std::make_shared<MainScene>(width, height));
-	
+	scenes_.push_back(std::make_shared<MainScene>(height, height));
+
 	scenes_[current_scene_idx_]->set_selected_entity(0);
 }
 
@@ -108,10 +109,15 @@ void App::OnStart(){
 
 void App::init_ui(int width, int height)
 {
-	ImTextureID gearTextureId = LoadTexture("Textures/ui/gear.png");
-	ImTextureID poweredByTextureId = LoadTexture("Textures/ui/poweredby.png");
+	auto gearPath = std::filesystem::path(DEFAULT_CWD) / "Textures/ui/gear.png";
+	auto poweredByPath = std::filesystem::path(DEFAULT_CWD) / "Textures/ui/poweredby.png";
+	auto dragAndDropPath = std::filesystem::path(DEFAULT_CWD) / "Textures/ui/draganddrop.png";
 
-	ui_ = std::make_unique<ui::MainLayer>(*scenes_[current_scene_idx_], gearTextureId, poweredByTextureId, width, height);
+	ImTextureID gearTextureId = LoadTexture(gearPath.string().c_str());
+	ImTextureID poweredByTextureId = LoadTexture(poweredByPath.string().c_str());
+	ImTextureID dragAndDropTextureId = LoadTexture(dragAndDropPath.string().c_str());
+
+	ui_ = std::make_unique<ui::MainLayer>(*scenes_[current_scene_idx_], gearTextureId, poweredByTextureId, dragAndDropTextureId, width, height);
 	ui_->init();
 	
 	ui_->init_timeline(scenes_[current_scene_idx_].get());
@@ -130,7 +136,7 @@ void App::OnFrame(float deltaTime){
 	
 	update(deltaTime);
 	
-	ui_->draw_ai_widget(scenes_[current_scene_idx_].get());
+	ui_->draw_ai_widget(scenes_[ai_scene_idx_].get());
 	
 	ui_->draw_component_layer(scenes_[current_scene_idx_].get());
 	
@@ -199,6 +205,9 @@ void App::process_ai_context(){
 				
 				auto shader = shared_resources_->get_mutable_shader("ui");
 				auto component = entity->add_component<anim::PhysicsComponent>();
+				
+				component->Initialize(shared_resources_->get_light_manager());
+				
 				component->set_shader(shader.get());
 				
 				if(extents != glm::vec3()){
@@ -597,7 +606,7 @@ void App::process_input(float dt)
 			} else if(light){
 				ui_->disable_light_from_sequencer(entity);
 				scenes_[current_scene_idx_]->remove_light(entity);
-				LightManager::getInstance()->removeDirectionalLight(entity);
+				shared_resources_->get_light_manager().removeDirectionalLight(entity);
 				shared_resources_->remove_entity(selected_id);
 			}
 			auto children = shared_resources_->get_root_entity()->get_children_recursive();

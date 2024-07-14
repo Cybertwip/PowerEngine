@@ -32,18 +32,17 @@ public:
 		float quadratic;
 	};
 	
-	
+	// Private constructor for singleton
+	LightManager() {}
+
 private:
 	std::vector<std::shared_ptr<anim::Entity>> directionalLights;
 	std::vector<PointLight> pointLights;
-	static LightManager* instance;
 	
 	// Existing member variables and methods...
 	GLuint shadowMapTextureID = 0; // Add this line to store shadow map texture ID
 
 	
-	// Private constructor for singleton
-	LightManager() {}
 	
 public:
 	// Delete copy constructor and assignment operator
@@ -68,7 +67,6 @@ public:
 		}
 	}
 
-	static LightManager* getInstance();
 	void addPointLight(const PointLight& light);
 	const std::vector<PointLight>& getPointLights() const;
 	void addDirectionalLight(std::shared_ptr<anim::Entity> entity);

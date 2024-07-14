@@ -42,7 +42,8 @@ public:
     bool is_pressed_ = false;
     bool is_pressed_scroll_ = false;
     glm::vec2 prev_mouse_{-1.0f, -1.0f}, cur_mouse_{-1.0f, -1.0f};
-    uint32_t current_scene_idx_ = 0u;
+	uint32_t current_scene_idx_ = 0u;
+	uint32_t ai_scene_idx_ = 1u;
     std::unique_ptr<ui::MainLayer> ui_;
     // timing
     bool is_manipulated_ = false;

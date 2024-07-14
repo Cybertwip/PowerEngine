@@ -22,6 +22,15 @@ namespace anim
     class Entity;
 }
 
+namespace deepmotion {
+struct Model {
+	std::string id;
+	std::string name;
+	std::string url;
+	std::string timestamp;
+};
+}
+
 namespace ui
 {
     class SceneLayer;
@@ -33,7 +42,7 @@ namespace ui
     class MainLayer
     {
     public:
-		MainLayer(Scene& scene, ImTextureID gearTexture, ImTextureID poweredbyTexture, int width, int height);
+		MainLayer(Scene& scene, ImTextureID gearTexture, ImTextureID poweredbyTexture, ImTextureID dragAndDropTexture, int width, int height);
         ~MainLayer();
 
         void init();
@@ -74,6 +83,7 @@ namespace ui
 		
 		ImTextureID gearTextureId;
 		ImTextureID poweredByTextureId;
+		ImTextureID dragAndDropTextureId;
 
 		ImVec2 gearPosition;
 		bool draggingThisFrame = false;
@@ -89,6 +99,10 @@ namespace ui
 		httplib::SSLClient _client = httplib::SSLClient("api-saymotion.deepmotion.com", 443);
 		
 		std::string _sessionCookie;
+		
+		std::vector<deepmotion::Model> _deepmotionModels;
+		
+		std::shared_ptr<anim::Entity> _ai_entity;
     };
 }
 

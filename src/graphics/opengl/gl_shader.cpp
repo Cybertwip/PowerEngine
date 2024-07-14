@@ -53,35 +53,28 @@ namespace anim::gl
         vert_shader_file.exceptions(std::ifstream::failbit | std::ifstream::badbit);
         frag_shader_file.exceptions(std::ifstream::failbit | std::ifstream::badbit);
         geo_shader_file.exceptions(std::ifstream::failbit | std::ifstream::badbit);
-        try
-        {
-            // open files
-            vert_shader_file.open(vertex_path);
-            frag_shader_file.open(fragment_path);
-            std::stringstream vert_shader_stream, frag_shader_stream;
-            // read file's buffer contents into streams
-            vert_shader_stream << vert_shader_file.rdbuf();
-            frag_shader_stream << frag_shader_file.rdbuf();
-            // close file handlers
-            vert_shader_file.close();
-            frag_shader_file.close();
-            // convert stream into string
-			vertex_code = InjectHighPrecision(vert_shader_stream.str(), "vertex");
-			fragment_code = InjectHighPrecision(frag_shader_stream.str(), "fragment");
-            // if geometry shader path is present, also load a geometry shader
-            if (geometry_path != nullptr)
-            {
-                geo_shader_file.open(geometry_path);
-                std::stringstream geo_shader_stream;
-                geo_shader_stream << geo_shader_file.rdbuf();
-                geo_shader_file.close();
-                geometry_code = geo_shader_stream.str();
-            }
-        }
-        catch (std::ifstream::failure &e)
-        {
-            anim::LOG("ERROR::SHADER::FILE_NOT_SUCCESFULLY_READ");
-        }
+		// open files
+		vert_shader_file.open(vertex_path);
+		frag_shader_file.open(fragment_path);
+		std::stringstream vert_shader_stream, frag_shader_stream;
+		// read file's buffer contents into streams
+		vert_shader_stream << vert_shader_file.rdbuf();
+		frag_shader_stream << frag_shader_file.rdbuf();
+		// close file handlers
+		vert_shader_file.close();
+		frag_shader_file.close();
+		// convert stream into string
+		vertex_code = InjectHighPrecision(vert_shader_stream.str(), "vertex");
+		fragment_code = InjectHighPrecision(frag_shader_stream.str(), "fragment");
+		// if geometry shader path is present, also load a geometry shader
+		if (geometry_path != nullptr)
+		{
+			geo_shader_file.open(geometry_path);
+			std::stringstream geo_shader_stream;
+			geo_shader_stream << geo_shader_file.rdbuf();
+			geo_shader_file.close();
+			geometry_code = geo_shader_stream.str();
+		}
         const char *vert_shader_code = vertex_code.c_str();
         const char *frag_shader_code = fragment_code.c_str();
 

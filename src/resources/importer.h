@@ -8,7 +8,7 @@
 
 #include "SmallFBX.h"
 
-struct aiScene;
+class LightManager;
 
 namespace anim
 {
@@ -21,13 +21,13 @@ namespace anim
     public:
         Importer();
         ~Importer() = default;
-        std::pair<std::shared_ptr<Model>, std::vector<std::shared_ptr<Animation>>> read_file(const char *path);
+        std::pair<std::shared_ptr<Model>, std::vector<std::shared_ptr<Animation>>> read_file(const char *path, LightManager& lightManager);
         float mScale = 100.0f;
 
 		static unsigned int LoadTextureFromFile(const char* path);
 
     private:
-        std::shared_ptr<Model> import_model(const sfbx::DocumentPtr doc);
+        std::shared_ptr<Model> import_model(const sfbx::DocumentPtr doc, LightManager& lightManager);
         std::vector<std::shared_ptr<Animation>> import_animation(const sfbx::DocumentPtr doc);
 
     private:

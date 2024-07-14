@@ -42,14 +42,16 @@ MainScene::MainScene(uint32_t width, uint32_t height)
 	resources_ = std::make_shared<anim::SharedResources>(static_cast<Scene&>(*this));
 	resources_->initialize();
 	
-	init_shadow_map();
+	init_shadow_map(get_mutable_shared_resources()->get_light_manager());
+	
+	
 	init_framebuffer(width, height);
 	grid_framebuffer_.reset(new anim::Image{1, 1, GL_RGBA});
-	
+
 	init_camera();
 	
 	resources_->create_light();
-	
+
 	LightManager::PointLight keyLight = {
 		glm::vec3(2.0f, 2.0f, 2.0f), // Position to the right, above, and in front of the subject
 		glm::vec3(0.05f), // Ambient
@@ -59,7 +61,7 @@ MainScene::MainScene(uint32_t width, uint32_t height)
 		0.09f, // Linear attenuation
 		0.032f // Quadratic attenuation
 	};
-	LightManager::getInstance()->addPointLight(keyLight);
+	get_mutable_shared_resources()->get_light_manager().addPointLight(keyLight);
 
 	LightManager::PointLight fillLight = {
 		glm::vec3(-2.0f, 0.5f, 2.0f), // Position to the left, slightly above, and in front of the subject
@@ -70,8 +72,7 @@ MainScene::MainScene(uint32_t width, uint32_t height)
 		0.09f, // Linear attenuation
 		0.032f // Quadratic attenuation
 	};
-	LightManager::getInstance()->addPointLight(fillLight);
-
+	get_mutable_shared_resources()->get_light_manager().addPointLight(fillLight);
 	
 	LightManager::PointLight backLight = {
 		glm::vec3(0.0f, 2.0f, -2.0f), // Position directly behind and above the subject
@@ -82,15 +83,12 @@ MainScene::MainScene(uint32_t width, uint32_t height)
 		0.09f, // Linear attenuation
 		0.032f // Quadratic attenuation
 	};
-	LightManager::getInstance()->addPointLight(backLight);
-
+	get_mutable_shared_resources()->get_light_manager().addPointLight(backLight);
 	_physics_world = physics::PhysicsWorld::create();
 
 }
 
-void MainScene::init_shadow_map() {
-	
-	return;
+void MainScene::init_shadow_map(LightManager& lightManager) {
 	const GLuint SHADOW_WIDTH = 1024, SHADOW_HEIGHT = 1024;
 
 	// Define variables for shadow map texture and framebuffer
@@ -131,7 +129,7 @@ void MainScene::init_shadow_map() {
 	this->shadowMapFBO = shadowMapFBO;
 	
 	// Set the shadow map texture ID in the LightManager for later use
-	LightManager::getInstance()->setShadowMapTextureID(shadowMap);
+	lightManager.setShadowMapTextureID(shadowMap);
 }
 
 
@@ -175,12 +173,12 @@ void MainScene::init_framebuffer(uint32_t width, uint32_t height)
 																	   {anim::FramebufferTextureFormat::RGBA8},
 																	   anim::FramebufferTextureFormat::Depth)});
 	}
+
 }
 
 void MainScene::init_camera()
 {
 	auto camera = resources_->create_camera();
-	
 	camera_ = camera;
 }
 
@@ -188,7 +186,7 @@ void MainScene::render_to_shadow_map(ui::UiContext& ui_context) {
 	const GLuint SHADOW_WIDTH = 1024, SHADOW_HEIGHT = 1024;
 
 	// Retrieve the first directional light as the primary shadow caster
-	auto& directionalLights = LightManager::getInstance()->getDirectionalLights();
+	auto& directionalLights = get_mutable_shared_resources()->get_light_manager().getDirectionalLights();
 	if (directionalLights.empty()) return; // Early return if no directional lights
 	
 	const auto& entity = directionalLights[0];
@@ -261,7 +259,6 @@ void MainScene::pre_draw(ui::UiContext& ui_context)
 	resources_->set_ubo_view(camera->get_view());
 	resources_->set_ubo_projection(camera->get_projection());
 	resources_->set_ubo_position(camera->get_position());
-
 	render_to_shadow_map(ui_context);
 	draw_to_framebuffer(ui_context);
 }
@@ -302,7 +299,7 @@ void MainScene::draw_to_framebuffer(ui::UiContext& ui_context)
 		
 		auto shadow_shader = resources_->get_mutable_shader("animation");
 
-		auto& directionalLights = LightManager::getInstance()->getDirectionalLights();
+		auto& directionalLights = get_mutable_shared_resources()->get_light_manager().getDirectionalLights();
 
 		for(auto entity : directionalLights){
 			const auto& transform = entity->get_component<anim::TransformComponent>();

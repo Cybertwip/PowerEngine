@@ -11,6 +11,8 @@
 
 #include <cassert>
 
+class LightManager;
+
 namespace windy{
 struct CollisionContact;
 }
@@ -30,6 +32,8 @@ namespace anim
 		int32_t uniqueIdentifier;
 
 		PhysicsComponent();
+		
+		void Initialize(LightManager& lightManager);
 
 		void set_owner(std::shared_ptr<Entity> owner){
 			_owner = owner;

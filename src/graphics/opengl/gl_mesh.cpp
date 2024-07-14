@@ -11,7 +11,7 @@ using namespace anim;
 
 namespace anim::gl
 {
-std::unique_ptr<Mesh> CreateBiPyramid()
+std::unique_ptr<Mesh> CreateBiPyramid(LightManager& lightManager)
 {
 	const float position[24 * 3] = {
 		// positions
@@ -75,16 +75,16 @@ std::unique_ptr<Mesh> CreateBiPyramid()
 		vertices.push_back(vert);
 	}
 	
-	return std::make_unique<GLMesh>(vertices);
+	return std::make_unique<GLMesh>(vertices, lightManager);
 }
 
-GLMesh::GLMesh(const std::vector<Vertex>& vertices, const std::vector<unsigned int>& indices, const std::vector<Texture>& textures, const MaterialProperties& mat_properties)
-: Mesh(vertices, indices, textures, mat_properties)
+GLMesh::GLMesh(const std::vector<Vertex>& vertices, const std::vector<unsigned int>& indices, const std::vector<Texture>& textures, const MaterialProperties& mat_properties, LightManager& lightManager)
+: Mesh(vertices, indices, textures, mat_properties), _lightManager(lightManager)
 {
 	init_buffer();
 }
-GLMesh::GLMesh(const std::vector<Vertex>& vertices)
-: Mesh(vertices)
+GLMesh::GLMesh(const std::vector<Vertex>& vertices, LightManager& lightManager)
+: Mesh(vertices), _lightManager(lightManager)
 {
 	init_buffer();
 }
@@ -115,7 +115,7 @@ void GLMesh::draw(anim::Shader& shader)
 }
 
 void GLMesh::draw_shadow(anim::Shader &shader){
-	const int shadowMapTextureID = LightManager::getInstance()->getShadowMapTextureId();
+	const int shadowMapTextureID = _lightManager.getShadowMapTextureId();
 	const int shadowMapTextureUnit = 15; // Example texture unit dedicated for shadow map
 	glActiveTexture(GL_TEXTURE0 + shadowMapTextureUnit);
 	glBindTexture(GL_TEXTURE_2D, shadowMapTextureID);
@@ -163,7 +163,7 @@ void GLMesh::draw_mesh(anim::Shader& shader)
 	shader.set_float("material.opacity", mat_properties_.opacity);
 	shader.set_bool("material.has_diffuse_texture", mat_properties_.has_diffuse_texture);
 	
-	LightManager::getInstance()->updateLightParameters(shader);
+	_lightManager.updateLightParameters(shader);
 
 	for (unsigned int i = 0; i < textures_.size(); i++)
 	{
@@ -188,7 +188,7 @@ void GLMesh::draw_mesh(anim::Shader& shader)
 		glBindTexture(GL_TEXTURE_2D, textures_[i].id);
 	}
 	
-	const int shadowMapTextureID = LightManager::getInstance()->getShadowMapTextureId();
+	const int shadowMapTextureID = _lightManager.getShadowMapTextureId();
 	const int shadowMapTextureUnit = 15; // Example texture unit dedicated for shadow map
 	glActiveTexture(GL_TEXTURE0 + shadowMapTextureUnit);
 	shader.set_int("shadowMap", shadowMapTextureUnit); // Inform shader about the texture unit

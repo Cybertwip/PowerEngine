@@ -5,15 +5,6 @@
 #include "entity/entity.h"
 #include "components/renderable/light_component.h"
 
-LightManager* LightManager::instance = nullptr;
-
-LightManager* LightManager::getInstance() {
-	if (instance == nullptr) {
-		instance = new LightManager();
-	}
-	return instance;
-}
-
 void LightManager::addPointLight(const PointLight& light) {
 	pointLights.push_back(light);
 }

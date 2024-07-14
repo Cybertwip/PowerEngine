@@ -4,15 +4,17 @@
 #include "../mesh.h"
 #include <memory>
 
+class LightManager;
+
 namespace anim::gl
 {
     // TODO: Refactor Create function
-    std::unique_ptr<Mesh> CreateBiPyramid();
+    std::unique_ptr<Mesh> CreateBiPyramid(LightManager& lightManager);
     class GLMesh : public anim::Mesh
     {
     public:
-        GLMesh(const std::vector<Vertex> &vertices, const std::vector<unsigned int> &indices, const std::vector<Texture> &textures, const MaterialProperties &mat_properties);
-        GLMesh(const std::vector<Vertex> &vertices);
+        GLMesh(const std::vector<Vertex> &vertices, const std::vector<unsigned int> &indices, const std::vector<Texture> &textures, const MaterialProperties &mat_properties, LightManager& lightManager);
+        GLMesh(const std::vector<Vertex> &vertices, LightManager& lightManager);
         ~GLMesh();
 		void draw_mesh(anim::Shader &shader);
 		void draw(anim::Shader &shader) override;
@@ -30,6 +32,8 @@ namespace anim::gl
 
     private:
         unsigned int VAO_, VBO_, EBO_;
+		
+		LightManager& _lightManager;
     };
 }
 #endif

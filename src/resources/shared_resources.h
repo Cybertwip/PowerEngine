@@ -11,6 +11,7 @@
 #include <unordered_map>
 
 class Scene;
+class LightManager;
 
 struct DirectoryNode
 {
@@ -106,15 +107,17 @@ public:
 		return _exporting_sequence;
 	}
 	
-	
 	Scene& get_scene() const {
 		return _scene;
 	}
 	
-	std::shared_ptr<anim::Entity> create_camera(const glm::vec3& position = glm::vec3(0.0f, 50.0f, 250.0f));
+	std::shared_ptr<anim::Entity> create_camera(const glm::vec3& position = glm::vec3(0.0f, 100.0f, 250.0f));
 
 	std::shared_ptr<anim::Entity> create_light(const LightManager::DirectionalLight& parameters = { glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0, 0.0f), glm::vec3(1.0f), glm::vec3(1.0f), glm::vec3(0.1f) });
 		
+	LightManager& get_light_manager() {
+		return _lightManager;
+	}
 private:
 	void init_animator();
 	void init_shader();
@@ -142,7 +145,8 @@ private:
 	
 	std::map<std::string, std::shared_ptr<Model>> _model_cache;
 	std::map<std::string, std::shared_ptr<Sprite>> sprite_cache_;
-
+	
+	LightManager _lightManager;
 };
 
 }

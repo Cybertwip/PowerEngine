@@ -15,15 +15,17 @@
 namespace anim
 {
 PhysicsComponent::PhysicsComponent(){
+}
+
+void PhysicsComponent::Initialize(LightManager& lightManager){
 	_extents = glm::vec3(5.0f, 5.0f, 5.0f);
-	shape_ = physics::CreateCuboid(_extents);
+	shape_ = physics::CreateCuboid(_extents, lightManager);
 	// Creating collision boxes for all six faces
 	for (int i = 0; i < 4; ++i) {
 		_collisionBoxes.push_back(std::make_shared<windy::Rect>(create_collision_box(i)));
 	}
-
-
 }
+
 void PhysicsComponent::set_shader(Shader *shader)
 {
 	shader_ = shader;

@@ -8,6 +8,8 @@
 
 #include <animation.h>
 
+#include "utility.h"
+
 #include "text_edit_layer.h"
 
 #include <array>
@@ -86,6 +88,32 @@ std::string base64_encode(unsigned char const* bytes_to_encode, unsigned int in_
 	return ret;
 }
 
+
+std::vector<char> readFileToVector(const std::filesystem::path& path) {
+	// Open the file as an input stream in binary mode
+	std::ifstream file(path, std::ios::binary | std::ios::ate);
+	
+	// Check if the file was successfully opened
+	if (!file) {
+		throw std::runtime_error("Could not open file: " + path.string());
+	}
+	
+	// Get the size of the file
+	std::streamsize size = file.tellg();
+	file.seekg(0, std::ios::beg);
+	
+	// Resize the vector to fit the file contents
+	std::vector<char> buffer(size);
+	
+	// Read the contents of the file into the vector
+	if (!file.read(buffer.data(), size)) {
+		throw std::runtime_error("Error reading file: " + path.string());
+	}
+	
+	return buffer;
+}
+
+
 }
 
 namespace ui
@@ -93,8 +121,8 @@ namespace ui
 static bool isLinear{true};
 static float ImportScale{100.0f};
 
-MainLayer::MainLayer(Scene& scene, ImTextureID gearTexture, ImTextureID poweredByTexture, int width, int height)
-: gearTextureId(gearTexture), poweredByTextureId(poweredByTexture), timeline_layer_(){
+MainLayer::MainLayer(Scene& scene, ImTextureID gearTexture, ImTextureID poweredByTexture, ImTextureID dragAndDropTexture, int width, int height)
+: gearTextureId(gearTexture), poweredByTextureId(poweredByTexture), dragAndDropTextureId(dragAndDropTexture), timeline_layer_(){
 	
 	gearPosition.x = width - 200;
 	gearPosition.y = height - 200;
@@ -190,11 +218,11 @@ void MainLayer::begin()
 	context_.scene.is_trigger_resources = persistedTriggerResources;
 	context_.scene.is_trigger_update_keyframe = persistedTriggerSetKeyframe;
 	context_.scene.is_focused = persistedWindowFocus;
-
+	
 	context_.scene.was_armature_activate = persistedWasArmatureActivate;
 	context_.scene.was_mesh_activate = persistedWasMeshActivate;
 	context_.scene.was_bone_picking_mode = persistedWasBonePickingMode;
-
+	
 	if(context_.scene.editor_mode != ui::EditorMode::Animation){
 		anim::ArmatureComponent::isActivate = false;
 		anim::MeshComponent::isActivate = true;
@@ -243,7 +271,7 @@ void MainLayer::draw_ai_widget(Scene* scene)
 	static bool showComponentSubMenu = false;
 	static bool showAssetSubMenu = false;
 	
-
+	
 	ImGui::Begin("Texture Button", nullptr, windowFlags);
 	
 	ImGui::GetCurrentWindow()->BeginOrderWithinContext = 4096;
@@ -263,12 +291,12 @@ void MainLayer::draw_ai_widget(Scene* scene)
 		
 		animationProgress += showCircularMenu ? animationSpeed : -animationSpeed;
 		animationProgress = std::clamp(animationProgress, 0.0f, 1.0f);
-
+		
 		// Calculate current radius based on animation progress
 		// This adjusts whether we are showing or hiding the menu
 		float currentMenuRadius = menuRadius * animationProgress;
 		ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 12.0f);
-
+		
 		if (animationProgress > 0.0f) { // Render the menu if there's any animation progress
 			
 			for (int i = 0; i < numItems; ++i) {
@@ -296,17 +324,17 @@ void MainLayer::draw_ai_widget(Scene* scene)
 				ImGui::PushStyleColor(ImGuiCol_ButtonHovered, hoverColor);
 				
 				if (ImGui::Button(itemLabels[i], itemSize)) {
-					if(i == 3){ 
+					if(i == 3){
 						showComponentSubMenu = !showComponentSubMenu;
 						showAssetSubMenu = false; // Optionally close other sub-menus
-
+						
 						// clicked scene
 						//context_.ai.is_clicked_new_scene = true;
 					} else if(i == 2){ // clicked scene
 						
 						showAssetSubMenu = !showAssetSubMenu;
 						showComponentSubMenu = false; // Optionally close other sub-menus
-
+						
 					} else if(i == 1){
 						context_.ai.is_clicked_ai_prompt = true;
 						isChatboxVisible = true;
@@ -329,8 +357,8 @@ void MainLayer::draw_ai_widget(Scene* scene)
 				ImVec4(0.3f, 0.3f, 0.3f, 1.0f), // Gray
 				ImVec4(0.0f, 0.5f, 0.0f, 1.0f)  // Green
 			};
-
-
+			
+			
 			for (int j = 0; j < numSubItems; ++j) {
 				
 				ImVec4 baseColor = itemColors[j];
@@ -367,11 +395,11 @@ void MainLayer::draw_ai_widget(Scene* scene)
 					
 					showComponentSubMenu = false;
 					showCircularMenu = false;
-
+					
 				}
 				
 				ImGui::PopStyleColor(2);
-
+				
 			}
 		}
 		
@@ -424,7 +452,7 @@ void MainLayer::draw_ai_widget(Scene* scene)
 					} else if(j == 2){
 						context_.ai.is_clicked_new_scene = true;
 					}
-
+					
 					showAssetSubMenu = false;
 					showCircularMenu = false;
 				}
@@ -433,10 +461,10 @@ void MainLayer::draw_ai_widget(Scene* scene)
 				
 			}
 		}
-
-
+		
+		
 		ImGui::PopStyleVar();
-
+		
 		
 		ImVec4 tintCol = ImVec4(1, 1, 1, 1); // Normal tint color (white, no tint)
 		ImVec4 hoverTintCol = ImVec4(0.8f, 0.8f, 0.8f, 1.0f); // Light grey tint for hover
@@ -484,7 +512,7 @@ void MainLayer::draw_ai_widget(Scene* scene)
 					// If no sub-menus are open, toggle the main menu visibility
 					showCircularMenu = !showCircularMenu;
 				}
-
+				
 			}
 		}
 		
@@ -554,7 +582,7 @@ void MainLayer::draw_ai_widget(Scene* scene)
 		
 		// Chat history (example of a vertical chatbox)
 		static std::vector<std::string> chatHistory;
-
+		
 		if (ImGui::Button("Send")) {
 			auto res = _client.Get("/account/v1/creditBalance");
 			
@@ -564,58 +592,200 @@ void MainLayer::draw_ai_widget(Scene* scene)
 			Json::CharReader* reader = readerBuilder.newCharReader();
 			Json::Value jsonData;
 			std::string errors;
-
+			
 			
 			bool parsingSuccessful = reader->parse(res->body.c_str(), res->body.c_str() + res->body.size(), &jsonData, &errors);
-
+			
 			// Check for parsing errors
 			if (!parsingSuccessful) {
-				chatHistory.push_back(std::string("Failed to parse the JSON string: "));
+				//chatHistory.push_back(std::string("Failed to parse the JSON string: "));
 			} else {
-//				
-//				{"credits":<value>,"subscription":{"name":<value>,"credits":<value>,"featureLimits":{"maxVariantsGeneration":<value>},"currentPeriod":{"start":<value>,"end":<value>}}}
-//				
-
+				//
+				//				{"credits":<value>,"subscription":{"name":<value>,"credits":<value>,"featureLimits":{"maxVariantsGeneration":<value>},"currentPeriod":{"start":<value>,"end":<value>}}}
+				//
+				
 				chatHistory.push_back(std::string(jsonData["credits"].asString()));
 			}
-
+			
 			// Add message to chat history
 			// Clear the input
 			message[0] = '\0';
 		}
-
+		
 		for (const auto& msg : chatHistory) {
 			ImGui::TextUnformatted(msg.c_str());
 		}
-				
+		
 		ImGui::NextColumn();
 		
 		float columnWidth = ImGui::GetColumnWidth();
 		float imageSize = columnWidth < ImGui::GetWindowHeight() ? columnWidth : ImGui::GetWindowHeight();
-
+		
 		// Right column - Render target logic (e.g., 3D model) and Settings button
 		if (scene) {
 			ImGui::Text("Preview");
-
-			ImGui::Image(reinterpret_cast<void*>(static_cast<intptr_t>(scene->get_mutable_framebuffer()->get_color_attachment())),
+			
+			
+			void* framebufferTextureId = dragAndDropTextureId;
+			
+			//if(!_deepmotionModels.empty()){
+				framebufferTextureId = reinterpret_cast<void*>(static_cast<intptr_t>(scene->get_mutable_framebuffer()->get_color_attachment()));
+			//}
+			
+			//ImGui::Image(reinterpret_cast<void*>(static_cast<intptr_t>(scene->get_mutable_framebuffer()->get_color_attachment())),
+			ImGui::Image(framebufferTextureId,
 						 ImVec2{imageSize, imageSize},
 						 ImVec2{0, 1},
 						 ImVec2{1, 0});
-
-			// Drag and Drop logic
-			if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_SourceAllowNullID)) {
-				ImGui::SetDragDropPayload("RENDER_TARGET", scene, sizeof(scene)); // You might need to adjust the payload depending on what you need to transfer
-				ImGui::Text("Dragging Render Target");
-				ImGui::EndDragDropSource();
-			}
 			
-			if (ImGui::BeginDragDropTarget()) {
-				if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("RENDER_TARGET")) {
-					// Handle the dropped payload
-					// auto dropped_scene = *static_cast<decltype(scene)*>(payload->Data);
-					// Do something with the dropped scene
+			// Drag and Drop logic
+			if (ImGui::BeginDragDropTarget() && !_sessionCookie.empty()) {
+				if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("FBX_ACTOR_PATH")) {
+					const char* fbxPath = reinterpret_cast<const char*>(payload->Data);
+					
+					std::filesystem::path path = std::string{ fbxPath };
+					
+					auto fileContents = readFileToVector(path);
+					
+					auto res = _client.Get("/character/v1/getModelUploadUrl?resumable=0&modelExt=fbx");
+					
+					
+					Json::CharReaderBuilder readerBuilder;
+					Json::CharReader* reader = readerBuilder.newCharReader();
+					Json::Value jsonData;
+					std::string errors;
+					
+					bool parsingSuccessful = reader->parse(res->body.c_str(), res->body.c_str() + res->body.size(), &jsonData, &errors);
+					
+					if(parsingSuccessful){
+						std::string modelUrl = jsonData["modelUrl"].asString();
+						
+						const char* body = fileContents.data();
+						size_t content_length = fileContents.size();
+						std::string content_type = "application/octet-stream"; // Assuming binary file
+						
+						// Variables to hold the protocol, host, and path
+						std::string protocol, host, uploadPath;
+						
+						// Find the position of "://"
+						std::string::size_type protocolPos = modelUrl.find("://");
+						if (protocolPos != std::string::npos) {
+							protocol = modelUrl.substr(0, protocolPos);
+							protocolPos += 3; // Move past "://"
+						}
+						
+						// Find the position of the first "/" after the protocol
+						std::string::size_type hostPos = modelUrl.find("/", protocolPos);
+						if (hostPos != std::string::npos) {
+							host = modelUrl.substr(protocolPos, hostPos - protocolPos);
+							uploadPath = modelUrl.substr(hostPos);
+						} else {
+							// If there's no path, the host is everything after the protocol
+							host = modelUrl.substr(protocolPos);
+							uploadPath = "/";
+						}
+						
+						httplib::SSLClient uploadClient(host);
+						uploadClient.set_compress(false);
+						
+						uploadClient.Put(uploadPath, body, content_length, content_type);
+						
+						// Construct JSON payload
+						Json::Value jsonData;
+						if (!modelUrl.empty()) {
+							jsonData["modelUrl"] = modelUrl;
+						}
+						
+						Json::StreamWriterBuilder writer;
+						std::string modelJsonPostData = Json::writeString(writer, jsonData);
+						
+						std::string path = "/character/v1/storeModel";
+						const char* modelBody = modelJsonPostData.c_str();
+						size_t modelContentLength = modelJsonPostData.size();
+						std::string modelContentType = "application/json";
+						
+						auto res2 = _client.Post(path, modelBody, modelContentLength, modelContentType);
+						
+						
+						if(res2->status == httplib::StatusCode::OK_200){
+							
+							auto res = _client.Get("/character/v1/listModels");
+							
+							Json::CharReaderBuilder readerBuilder;
+							Json::CharReader* reader = readerBuilder.newCharReader();
+							Json::Value jsonData;
+							std::string errors;
+							
+							bool parsingSuccessful = reader->parse(res->body.c_str(), res->body.c_str() + res->body.size(), &jsonData, &errors);
+							
+							if(parsingSuccessful){
+								_deepmotionModels.clear();
+								
+								if(jsonData["count"].asInt() > 0){
+									for(auto& json : jsonData["list"]){
+										_deepmotionModels.push_back({
+											json["id"].asString(),
+											json["name"].asString(),
+											json["glb"].asString(),
+											json["mtime"].asString()});
+									}
+									
+									//
+									auto resources = scene->get_mutable_shared_resources();
+									
+									resources->import_model(fbxPath);
+									
+									auto& animationSet = resources->getAnimationSet(fbxPath);
+									
+									resources->add_animations(animationSet.animations);
+									
+									auto entity = resources->parse_model(animationSet.model, fbxPath);
+									
+									auto root = resources->get_root_entity();
+									
+									std::vector<std::string> existingNames; // Example existing actor names
+									std::string prefix = "Actor"; // Prefix for actor names
+									
+									if(_ai_entity != nullptr){
+										root->removeChild(_ai_entity);
+										_ai_entity = nullptr;
+									}
+									
+									auto children = root->get_mutable_children();
+									
+									// Example iteration to get existing names (replace this with your actual iteration logic)
+									for (int i = 0; i < children.size(); ++i) {
+										std::string actorName = children[i]->get_name();
+										existingNames.push_back(actorName);
+									}
+									
+									std::string uniqueActorName = anim::GenerateUniqueActorName(existingNames, prefix);
+									
+									entity->set_name(uniqueActorName);
+									
+									root->add_children(entity);
+									
+									
+									_ai_entity = entity;
+								}
+							} else {
+								// handle error
+							}
+							
+							
+						} else {
+							// handle error
+						}
+						
+						
+					} else {
+						// handle error
+					}
+					
 				}
 				ImGui::EndDragDropTarget();
+			} else {
+				// Handle error
 			}
 		}
 		
@@ -626,7 +796,7 @@ void MainLayer::draw_ai_widget(Scene* scene)
 		// Settings modal
 		if (ImGui::BeginPopupModal("AI Settings", NULL, ImGuiWindowFlags_AlwaysAutoResize)) {
 			ImGui::GetCurrentWindow()->BeginOrderWithinContext = 8196;
-
+			
 			// Center the image
 			float windowWidth = ImGui::GetWindowSize().x;
 			float imageWidth = 128; // Adjust the image width as needed
@@ -654,14 +824,14 @@ void MainLayer::draw_ai_widget(Scene* scene)
 			
 			static std::string authMessage = "";
 			static ImVec4 authColor;
-
+			
 			
 			ImGui::Spacing();
 			ImGui::Spacing();
 			
 			
 			// Test Credentials button
-			if (ImGui::Button("Test")) {
+			if (ImGui::Button("Sync")) {
 				// Encode clientId and clientSecret in Base64
 				std::string credentials = std::string(clientId) + ":" + std::string(clientSecret);
 				std::string encodedCredentials = base64_encode(reinterpret_cast<const unsigned char*>(credentials.c_str()), credentials.length());
@@ -672,18 +842,55 @@ void MainLayer::draw_ai_widget(Scene* scene)
 				
 				auto res = _client.Get("/account/v1/auth");
 				
-				
 				if (res && res->status == httplib::StatusCode::OK_200) {
 					_sessionCookie = res->headers.find("Set-Cookie")->second;
+					
+					// Find the end position of the cookie value before the first semicolon
+					std::string::size_type startPos = _sessionCookie.find("dmsess=");
+					
+					std::string::size_type endPos = _sessionCookie.find(";", startPos);
+					if (endPos != std::string::npos) {
+						_sessionCookie = _sessionCookie.substr(startPos, endPos - startPos);
+					} else {
+						_sessionCookie = _sessionCookie.substr(startPos);
+					}
 					
 					_client.set_default_headers({
 						{ "cookie", _sessionCookie }
 					});
 					
 					// Handle successful authentication
-					authMessage = "Credentials are valid!";
-					
 					authColor = ImVec4(0.0f, 1.0f, 0.0f, 1.0f); // Green color for success
+					
+					auto res = _client.Get("/character/v1/listModels");
+					
+					Json::CharReaderBuilder readerBuilder;
+					Json::CharReader* reader = readerBuilder.newCharReader();
+					Json::Value jsonData;
+					std::string errors;
+					
+					bool parsingSuccessful = reader->parse(res->body.c_str(), res->body.c_str() + res->body.size(), &jsonData, &errors);
+					
+					if(parsingSuccessful){
+						authMessage = "Successful sync.";
+						
+						_deepmotionModels.clear();
+						
+						if(jsonData["count"].asInt() > 0){
+							for(auto& json : jsonData["list"]){
+								_deepmotionModels.push_back({
+									json["id"].asString(),
+									json["name"].asString(),
+									json["glb"].asString(),
+									json["mtime"].asString()});
+								
+							}
+						}
+					} else {
+						authColor = ImVec4(1.0f, 0.0f, 0.0f, 1.0f); // Red color for error
+						
+						authMessage = "API Error (Models)";
+					}
 					
 				} else {
 					// Handle error
@@ -695,7 +902,7 @@ void MainLayer::draw_ai_widget(Scene* scene)
 			}
 			
 			ImGui::SameLine();
-
+			
 			if (ImGui::Button("Close")) {
 				ImGui::CloseCurrentPopup();
 				
@@ -723,9 +930,9 @@ void MainLayer::draw_ai_widget(Scene* scene)
 				ImGui::SameLine();
 				ImGui::TextColored(authColor, "%s", authMessage.c_str());
 			}
-
+			
 			ImGui::EndPopup();
-
+			
 		}
 		
 		ImGui::End(); // End of chatbox window
@@ -775,9 +982,9 @@ void MainLayer::draw_ingame_menu(Scene* scene){
 			bool isTriggerResources = context_.scene.is_trigger_resources;
 			bool isCompositionMode = context_.scene.editor_mode == ui::EditorMode::Composition;
 			bool isAnimationMode = context_.scene.editor_mode == ui::EditorMode::Animation;
-
+			
 			bool isBluePrintMode = context_.scene.editor_mode == ui::EditorMode::Map;
-
+			
 			bool setBluePrintMode = false;
 			bool setTriggerResources = false;
 			bool setCompositionMode = false;
@@ -797,7 +1004,7 @@ void MainLayer::draw_ingame_menu(Scene* scene){
 			ImGui::SameLine();
 			
 			ImGui::PopFont();
-
+			
 			
 			ToggleButton(ICON_MD_TRACK_CHANGES, &isCompositionMode, btn_size, &setCompositionMode);
 			
@@ -834,17 +1041,17 @@ void MainLayer::draw_ingame_menu(Scene* scene){
 					timeline_layer_.clearActiveEntity();
 					
 					resources->import_model(fbxPath);
-
+					
 					auto& animationSet = resources->getAnimationSet(fbxPath);
 					
 					resources->add_animations(animationSet.animations);
 					
 					auto entity = resources->parse_model(animationSet.model, fbxPath);
-										
+					
 					timeline_layer_.setActiveEntity(context_, entity);
 					
 					auto sequence = std::make_shared<anim::AnimationSequence>(*scene, scene->get_mutable_shared_resources(), entity, fbxPath, animationSet.animations[0]->get_id());
-
+					
 					timeline_layer_.setAnimationSequence(sequence);
 					
 					context_.scene.editor_mode = ui::EditorMode::Animation;
@@ -885,7 +1092,7 @@ void MainLayer::draw_ingame_menu(Scene* scene){
 			if(setAnimationMode){
 				isCompositionMode = false;
 				isBluePrintMode = false;
-
+				
 				context_.scene.editor_mode = EditorMode::Animation;
 				
 				context_.timeline.is_stop = true;
