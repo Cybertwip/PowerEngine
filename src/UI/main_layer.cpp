@@ -37,13 +37,64 @@
 
 #define FILTER_MODEL "Model files (*.fbx *.gltf){.fbx,.gltf,.glb}"
 
+namespace {
+// Base64 encoding table
+static const std::string base64_chars =
+"ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+"abcdefghijklmnopqrstuvwxyz"
+"0123456789+/";
+
+std::string base64_encode(unsigned char const* bytes_to_encode, unsigned int in_len) {
+	std::string ret;
+	int i = 0;
+	int j = 0;
+	unsigned char char_array_3[3];
+	unsigned char char_array_4[4];
+	
+	while (in_len--) {
+		char_array_3[i++] = *(bytes_to_encode++);
+		if (i == 3) {
+			char_array_4[0] = (char_array_3[0] & 0xfc) >> 2;
+			char_array_4[1] = ((char_array_3[0] & 0x03) << 4) + ((char_array_3[1] & 0xf0) >> 4);
+			char_array_4[2] = ((char_array_3[1] & 0x0f) << 2) + ((char_array_3[2] & 0xc0) >> 6);
+			char_array_4[3] = char_array_3[2] & 0x3f;
+			
+			for(i = 0; (i <4) ; i++)
+				ret += base64_chars[char_array_4[i]];
+			i = 0;
+		}
+	}
+	
+	if (i)
+	{
+		for(j = i; j < 3; j++)
+			char_array_3[j] = '\0';
+		
+		char_array_4[0] = (char_array_3[0] & 0xfc) >> 2;
+		char_array_4[1] = ((char_array_3[0] & 0x03) << 4) + ((char_array_3[1] & 0xf0) >> 4);
+		char_array_4[2] = ((char_array_3[1] & 0x0f) << 2) + ((char_array_3[2] & 0xc0) >> 6);
+		char_array_4[3] = char_array_3[2] & 0x3f;
+		
+		for (j = 0; (j < i + 1); j++)
+			ret += base64_chars[char_array_4[j]];
+		
+		while((i++ < 3))
+			ret += '=';
+		
+	}
+	
+	return ret;
+}
+
+}
+
 namespace ui
 {
 static bool isLinear{true};
 static float ImportScale{100.0f};
 
-MainLayer::MainLayer(Scene& scene, ImTextureID gearTexture, int width, int height)
-: gearTextureId(gearTexture), timeline_layer_(){
+MainLayer::MainLayer(Scene& scene, ImTextureID gearTexture, ImTextureID poweredByTexture, int width, int height)
+: gearTextureId(gearTexture), poweredByTextureId(poweredByTexture), timeline_layer_(){
 	
 	gearPosition.x = width - 200;
 	gearPosition.y = height - 200;
@@ -164,7 +215,7 @@ ImVec2 menuCenter;
 float menuRadius = 100.0f; // Example radius for the circular menu
 static bool isChatboxVisible = false; // Flag to track chatbox visibility
 
-void MainLayer::draw_ai_widget()
+void MainLayer::draw_ai_widget(Scene* scene)
 {
 	ImVec4* colors = ImGui::GetStyle().Colors;
 	ImVec4 oldButton = colors[ImGuiCol_Button];
@@ -484,32 +535,200 @@ void MainLayer::draw_ai_widget()
 	
 	
 	context_.ai.is_widget_dragging = isWidgetActive || draggingThisFrame;
-	
-	
-	// Chatbox window logic
 	if (isChatboxVisible) {
 		// Ensure the chatbox window is positioned and sized appropriately
-		ImGui::SetNextWindowSize(ImVec2(300, 400), ImGuiCond_FirstUseEver); // Example size, adjust as needed
+		ImGui::SetNextWindowSize(ImVec2(640, 480), ImGuiCond_FirstUseEver); // Example size, adjust as needed
 		ImGui::SetNextWindowPos(ImVec2(50, 50), ImGuiCond_FirstUseEver); // Example position, adjust as needed
-		ImGui::Begin("AI Chatbox", &isChatboxVisible);
-		ImGui::GetCurrentWindow()->BeginOrderWithinContext = 12000;
+		ImGui::Begin("AI Prompt", &isChatboxVisible);
+		ImGui::GetCurrentWindow()->BeginOrderWithinContext = 4096;
 		
-		if(context_.ai.is_clicked_ai_prompt){
-			ImGui::SetWindowFocus();
+		// Chat and Render Target layout in two columns
+		ImGui::Columns(2, NULL, true);
+		
+		// Left column - Chatbox
+		ImGui::Text("Prompt History");
+		static char message[128] = "";
+		ImGui::InputText("##Message", message, IM_ARRAYSIZE(message));
+		ImGui::SameLine();
+		
+		
+		// Chat history (example of a vertical chatbox)
+		static std::vector<std::string> chatHistory;
+
+		if (ImGui::Button("Send")) {
+			auto res = _client.Get("/account/v1/creditBalance");
+			
+			_sessionCookie = res->body;
+			
+			Json::CharReaderBuilder readerBuilder;
+			Json::CharReader* reader = readerBuilder.newCharReader();
+			Json::Value jsonData;
+			std::string errors;
+
+			
+			bool parsingSuccessful = reader->parse(res->body.c_str(), res->body.c_str() + res->body.size(), &jsonData, &errors);
+
+			// Check for parsing errors
+			if (!parsingSuccessful) {
+				chatHistory.push_back(std::string("Failed to parse the JSON string: "));
+			} else {
+//				
+//				{"credits":<value>,"subscription":{"name":<value>,"credits":<value>,"featureLimits":{"maxVariantsGeneration":<value>},"currentPeriod":{"start":<value>,"end":<value>}}}
+//				
+
+				chatHistory.push_back(std::string(jsonData["credits"].asString()));
+			}
+
+			// Add message to chat history
+			// Clear the input
+			message[0] = '\0';
+		}
+
+		for (const auto& msg : chatHistory) {
+			ImGui::TextUnformatted(msg.c_str());
+		}
+				
+		ImGui::NextColumn();
+		
+		float columnWidth = ImGui::GetColumnWidth();
+		float imageSize = columnWidth < ImGui::GetWindowHeight() ? columnWidth : ImGui::GetWindowHeight();
+
+		// Right column - Render target logic (e.g., 3D model) and Settings button
+		if (scene) {
+			ImGui::Text("Preview");
+
+			ImGui::Image(reinterpret_cast<void*>(static_cast<intptr_t>(scene->get_mutable_framebuffer()->get_color_attachment())),
+						 ImVec2{imageSize, imageSize},
+						 ImVec2{0, 1},
+						 ImVec2{1, 0});
+
+			// Drag and Drop logic
+			if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_SourceAllowNullID)) {
+				ImGui::SetDragDropPayload("RENDER_TARGET", scene, sizeof(scene)); // You might need to adjust the payload depending on what you need to transfer
+				ImGui::Text("Dragging Render Target");
+				ImGui::EndDragDropSource();
+			}
+			
+			if (ImGui::BeginDragDropTarget()) {
+				if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("RENDER_TARGET")) {
+					// Handle the dropped payload
+					// auto dropped_scene = *static_cast<decltype(scene)*>(payload->Data);
+					// Do something with the dropped scene
+				}
+				ImGui::EndDragDropTarget();
+			}
 		}
 		
-		// Your chatbox UI elements go here
-		ImGui::Text("Hello, I'm your AI assistant!");
+		if (ImGui::Button("Settings")) {
+			ImGui::OpenPopup("AI Settings");
+		}
 		
-		// Example of a text input and a button to send
-		static char message[128] = "";
-		ImGui::InputText("Message", message, IM_ARRAYSIZE(message));
-		if (ImGui::Button("Send")) {
-			// Logic to handle message sending
+		// Settings modal
+		if (ImGui::BeginPopupModal("AI Settings", NULL, ImGuiWindowFlags_AlwaysAutoResize)) {
+			ImGui::GetCurrentWindow()->BeginOrderWithinContext = 8196;
+
+			// Center the image
+			float windowWidth = ImGui::GetWindowSize().x;
+			float imageWidth = 128; // Adjust the image width as needed
+			float imageHeight = 128; // Adjust the image height as needed
+			float imageX = (windowWidth - imageWidth) * 0.5f;
+			
+			ImGui::SetCursorPosX(imageX);
+			ImGui::Image(poweredByTextureId, ImVec2(imageWidth, imageHeight));
+			
+			// Align input fields
+			ImGui::Spacing();
+			ImGui::Spacing();
+			ImGui::Spacing();
+			
+			static char clientId[128] = "";
+			static char clientSecret[128] = "";
+			
+			ImGui::InputText("##ClientID", clientId, IM_ARRAYSIZE(clientId));
+			ImGui::Text("Client ID");
+			
+			ImGui::Spacing();
+			ImGui::InputText("##ClientSecret", clientSecret, IM_ARRAYSIZE(clientSecret));
+			ImGui::Text("Client Secret");
+			
+			
+			static std::string authMessage = "";
+			static ImVec4 authColor;
+
+			
+			ImGui::Spacing();
+			ImGui::Spacing();
+			
+			
+			// Test Credentials button
+			if (ImGui::Button("Test")) {
+				// Encode clientId and clientSecret in Base64
+				std::string credentials = std::string(clientId) + ":" + std::string(clientSecret);
+				std::string encodedCredentials = base64_encode(reinterpret_cast<const unsigned char*>(credentials.c_str()), credentials.length());
+				
+				_client.set_default_headers({
+					{ "Authorization", "Basic " + encodedCredentials }
+				});
+				
+				auto res = _client.Get("/account/v1/auth");
+				
+				
+				if (res && res->status == httplib::StatusCode::OK_200) {
+					_sessionCookie = res->headers.find("Set-Cookie")->second;
+					
+					_client.set_default_headers({
+						{ "cookie", _sessionCookie }
+					});
+					
+					// Handle successful authentication
+					authMessage = "Credentials are valid!";
+					
+					authColor = ImVec4(0.0f, 1.0f, 0.0f, 1.0f); // Green color for success
+					
+				} else {
+					// Handle error
+					authMessage = "Invalid credentials.";
+					
+					authColor = ImVec4(1.0f, 0.0f, 0.0f, 1.0f); // Red color for error
+					
+				}
+			}
+			
+			ImGui::SameLine();
+
+			if (ImGui::Button("Close")) {
+				ImGui::CloseCurrentPopup();
+				
+				// Encode clientId and clientSecret in Base64
+				std::string credentials = std::string(clientId) + ":" + std::string(clientSecret);
+				std::string encodedCredentials = base64_encode(reinterpret_cast<const unsigned char*>(credentials.c_str()), credentials.length());
+				
+				_client.set_default_headers({
+					{ "Authorization", "Basic " + encodedCredentials }
+				});
+				
+				auto res = _client.Get("/account/v1/auth");
+				
+				if (res && res->status == httplib::StatusCode::OK_200) {
+					_sessionCookie = res->headers.find("Set-Cookie")->second;
+					
+					_client.set_default_headers({
+						{ "cookie", _sessionCookie }
+					});
+				} else {
+					// Handle error
+				}
+			}
+			if (!authMessage.empty()) {
+				ImGui::SameLine();
+				ImGui::TextColored(authColor, "%s", authMessage.c_str());
+			}
+
+			ImGui::EndPopup();
+
 		}
 		
 		ImGui::End(); // End of chatbox window
-		
 	}
 }
 

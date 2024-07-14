@@ -101,6 +101,10 @@ message("node-graph")
 add_subdirectory(external/imgui-feature-layout/)
 add_subdirectory(external/imgui-node-editor/)
 
+
+message("cpp-httplib")
+add_subdirectory(external/cpp-httplib/)
+
 # message("Python" ${CMAKE_BINARY_DIR}/bin/python/)
 # set(Python3_ROOT_DIR ${CMAKE_BINARY_DIR}/bin/python)
 # set(CMAKE_FIND_ROOT_PATH ${CMAKE_BINARY_DIR})
@@ -126,7 +130,7 @@ target_link_libraries(application glad)
 
 target_link_libraries(imgui-feature-layout glm jsoncpp_static)
 target_link_libraries(OAC application imgui-feature-layout imgui-node-editor)
-target_link_libraries(test PUBLIC imgui-feature-layout imgui-node-editor)
+target_link_libraries(test PUBLIC imgui-feature-layout imgui-node-editor httplib::httplib)
 target_link_libraries(glcpp PUBLIC test)
 target_link_libraries(SmallFBX zlib)
 

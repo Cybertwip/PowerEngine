@@ -6,9 +6,12 @@
 #include "hierarchy_layer.h"
 #include "component_layer.h"
 
+#include "httplib.h"
+
 #include <string>
 #include <memory>
 #include <map>
+
 
 struct GLFWwindow;
 
@@ -30,13 +33,13 @@ namespace ui
     class MainLayer
     {
     public:
-		MainLayer(Scene& scene, ImTextureID gearTexture, int width, int height);
+		MainLayer(Scene& scene, ImTextureID gearTexture, ImTextureID poweredbyTexture, int width, int height);
         ~MainLayer();
 
         void init();
         void begin();
         void end();
-        void draw_ai_widget();
+        void draw_ai_widget(Scene* scene);
 		void draw_ingame_menu(Scene* scene);
         void draw_scene(const std::string &title, Scene *scene);
         void draw_component_layer(Scene *scene);
@@ -70,7 +73,8 @@ namespace ui
         UiContext context_{};
 		
 		ImTextureID gearTextureId;
-		
+		ImTextureID poweredByTextureId;
+
 		ImVec2 gearPosition;
 		bool draggingThisFrame = false;
 		ImVec2 dragStartPosition = {0.0f, 0.0f}; // Track start position of dragging
@@ -81,6 +85,10 @@ namespace ui
 
 		int _windowWidth;
 		int _windowHeight;
+		
+		httplib::SSLClient _client = httplib::SSLClient("api-saymotion.deepmotion.com", 443);
+		
+		std::string _sessionCookie;
     };
 }
 

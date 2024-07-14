@@ -109,8 +109,9 @@ void App::OnStart(){
 void App::init_ui(int width, int height)
 {
 	ImTextureID gearTextureId = LoadTexture("Textures/ui/gear.png");
-	
-	ui_ = std::make_unique<ui::MainLayer>(*scenes_[current_scene_idx_], gearTextureId, width, height);
+	ImTextureID poweredByTextureId = LoadTexture("Textures/ui/poweredby.png");
+
+	ui_ = std::make_unique<ui::MainLayer>(*scenes_[current_scene_idx_], gearTextureId, poweredByTextureId, width, height);
 	ui_->init();
 	
 	ui_->init_timeline(scenes_[current_scene_idx_].get());
@@ -129,7 +130,7 @@ void App::OnFrame(float deltaTime){
 	
 	update(deltaTime);
 	
-	ui_->draw_ai_widget();
+	ui_->draw_ai_widget(scenes_[current_scene_idx_].get());
 	
 	ui_->draw_component_layer(scenes_[current_scene_idx_].get());
 	
