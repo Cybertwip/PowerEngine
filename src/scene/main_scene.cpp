@@ -86,6 +86,9 @@ MainScene::MainScene(uint32_t width, uint32_t height)
 	get_mutable_shared_resources()->get_light_manager().addPointLight(backLight);
 	_physics_world = physics::PhysicsWorld::create();
 
+	
+	set_size(width, height);
+
 }
 
 void MainScene::init_shadow_map(LightManager& lightManager) {
@@ -135,11 +138,6 @@ void MainScene::init_shadow_map(LightManager& lightManager) {
 
 void MainScene::init_framebuffer(uint32_t width, uint32_t height)
 {
-	set_size(width, height);
-	
-	width = 1280;
-	height = 720;
-
 	framebuffer_.reset(new anim::Framebuffer(
 											 anim::FramebufferSpec(
 																   width,

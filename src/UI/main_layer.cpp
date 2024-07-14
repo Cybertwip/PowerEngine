@@ -128,6 +128,8 @@ MainLayer::MainLayer(Scene& scene, ImTextureID gearTexture, ImTextureID poweredB
 	gearPosition.y = height - 200;
 	
 	dragStartPosition = gearPosition;
+	
+	_client.set_keep_alive(true);
 }
 
 MainLayer::~MainLayer()
@@ -589,7 +591,7 @@ void MainLayer::draw_ai_widget(Scene* scene)
 			_sessionCookie = res->body;
 			
 			Json::CharReaderBuilder readerBuilder;
-			Json::CharReader* reader = readerBuilder.newCharReader();
+			auto reader = std::unique_ptr<Json::CharReader>(readerBuilder.newCharReader());
 			Json::Value jsonData;
 			std::string errors;
 			
@@ -628,9 +630,9 @@ void MainLayer::draw_ai_widget(Scene* scene)
 			
 			void* framebufferTextureId = dragAndDropTextureId;
 			
-			//if(!_deepmotionModels.empty()){
+			if(!_deepmotionModels.empty()){
 				framebufferTextureId = reinterpret_cast<void*>(static_cast<intptr_t>(scene->get_mutable_framebuffer()->get_color_attachment()));
-			//}
+			}
 			
 			//ImGui::Image(reinterpret_cast<void*>(static_cast<intptr_t>(scene->get_mutable_framebuffer()->get_color_attachment())),
 			ImGui::Image(framebufferTextureId,
@@ -649,9 +651,8 @@ void MainLayer::draw_ai_widget(Scene* scene)
 					
 					auto res = _client.Get("/character/v1/getModelUploadUrl?resumable=0&modelExt=fbx");
 					
-					
 					Json::CharReaderBuilder readerBuilder;
-					Json::CharReader* reader = readerBuilder.newCharReader();
+					auto reader = std::unique_ptr<Json::CharReader>(readerBuilder.newCharReader());
 					Json::Value jsonData;
 					std::string errors;
 					
@@ -684,12 +685,12 @@ void MainLayer::draw_ai_widget(Scene* scene)
 							host = modelUrl.substr(protocolPos);
 							uploadPath = "/";
 						}
+						{
+							httplib::SSLClient uploadClient(host);
+							uploadClient.set_compress(false);
 						
-						httplib::SSLClient uploadClient(host);
-						uploadClient.set_compress(false);
-						
-						uploadClient.Put(uploadPath, body, content_length, content_type);
-						
+							uploadClient.Put(uploadPath, body, content_length, content_type);
+						}
 						// Construct JSON payload
 						Json::Value jsonData;
 						if (!modelUrl.empty()) {
@@ -706,13 +707,12 @@ void MainLayer::draw_ai_widget(Scene* scene)
 						
 						auto res2 = _client.Post(path, modelBody, modelContentLength, modelContentType);
 						
-						
 						if(res2->status == httplib::StatusCode::OK_200){
 							
 							auto res = _client.Get("/character/v1/listModels");
 							
 							Json::CharReaderBuilder readerBuilder;
-							Json::CharReader* reader = readerBuilder.newCharReader();
+							auto reader = std::unique_ptr<Json::CharReader>(readerBuilder.newCharReader());
 							Json::Value jsonData;
 							std::string errors;
 							
@@ -865,7 +865,7 @@ void MainLayer::draw_ai_widget(Scene* scene)
 					auto res = _client.Get("/character/v1/listModels");
 					
 					Json::CharReaderBuilder readerBuilder;
-					Json::CharReader* reader = readerBuilder.newCharReader();
+					auto reader = std::unique_ptr<Json::CharReader>(readerBuilder.newCharReader());
 					Json::Value jsonData;
 					std::string errors;
 					
@@ -919,6 +919,15 @@ void MainLayer::draw_ai_widget(Scene* scene)
 				if (res && res->status == httplib::StatusCode::OK_200) {
 					_sessionCookie = res->headers.find("Set-Cookie")->second;
 					
+					std::string::size_type startPos = _sessionCookie.find("dmsess=");
+					
+					std::string::size_type endPos = _sessionCookie.find(";", startPos);
+					if (endPos != std::string::npos) {
+						_sessionCookie = _sessionCookie.substr(startPos, endPos - startPos);
+					} else {
+						_sessionCookie = _sessionCookie.substr(startPos);
+					}
+
 					_client.set_default_headers({
 						{ "cookie", _sessionCookie }
 					});

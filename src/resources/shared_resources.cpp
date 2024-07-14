@@ -254,7 +254,6 @@ void SharedResources::initialize(){
 	
 	ArmatureComponent::setShape(gl::CreateBiPyramid(_lightManager));
 	
-	
 	auto homePath = std::filesystem::path(DEFAULT_CWD);
 
 	//auto homePath = std::filesystem::current_path();

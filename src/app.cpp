@@ -86,9 +86,15 @@ void App::init_shared_resources()
 void App::init_scene(uint32_t width, uint32_t height)
 {
 	scenes_.push_back(std::make_shared<MainScene>(width, height));
-	scenes_.push_back(std::make_shared<MainScene>(height, height));
+	scenes_.push_back(std::make_shared<MainScene>(width, height));
+	
+	
+	scenes_[current_scene_idx_]->init_framebuffer(1280, 720);
+	scenes_[ai_scene_idx_]->init_framebuffer(720, 720);
 
 	scenes_[current_scene_idx_]->set_selected_entity(0);
+	
+	
 }
 
 void App::update(float deltaTime)
@@ -535,16 +541,25 @@ void App::draw_scene(float dt)
 	auto &ui_context = const_cast<ui::UiContext&>(ui_->get_context());
 	
 	size_t size = scenes_.size();
-	for (size_t i = 0; i < size; i++)
-	{
-		std::string scene_name = std::string("scene") + std::to_string(i + 1);
-		scenes_[i]->pre_draw(ui_context);
-		ui_->draw_scene(scene_name, scenes_[i].get());
-		if (ui_->is_scene_layer_hovered(scene_name))
-		{
-			current_scene_idx_ = i;
-		}
-	}
+	
+	scenes_[current_scene_idx_]->pre_draw(ui_context);
+	ui::UiContext ai_context;
+	scenes_[ai_scene_idx_]->pre_draw(ai_context);
+
+	std::string scene_name = std::string("scene") + std::to_string(current_scene_idx_ + 1);
+
+	ui_->draw_scene(scene_name, scenes_[current_scene_idx_].get());
+	
+//	for (size_t i = 0; i < size; i++)
+//	{
+//		std::string scene_name = std::string("scene") + std::to_string(i + 1);
+//		scenes_[i]->pre_draw(ui_context);
+//		ui_->draw_scene(scene_name, scenes_[i].get());
+////		if (ui_->is_scene_layer_hovered(scene_name))
+////		{
+////			//current_scene_idx_ = i;
+////		}
+//	}
 }
 //
 void App::process_input(float dt)
