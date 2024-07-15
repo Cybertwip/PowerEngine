@@ -236,8 +236,8 @@ MainLayer::MainLayer(Scene& scene, ImTextureID gearTexture, ImTextureID poweredB
 	if (std::filesystem::exists("powerkey.dat")) {
 		loadFromFile("powerkey.dat", clientId, clientSecret, sizeof(clientId));
 	}
-
-
+	
+	
 }
 
 MainLayer::~MainLayer()
@@ -355,6 +355,9 @@ static bool isChatboxVisible = false; // Flag to track chatbox visibility
 
 void MainLayer::draw_ai_widget(Scene* scene)
 {
+	
+	PollJobStatus();
+	
 	ImVec4* colors = ImGui::GetStyle().Colors;
 	ImVec4 oldButton = colors[ImGuiCol_Button];
 	ImVec4 oldButtonHovered = colors[ImGuiCol_ButtonHovered];
@@ -674,7 +677,7 @@ void MainLayer::draw_ai_widget(Scene* scene)
 	
 	context_.ai.is_widget_dragging = isWidgetActive || draggingThisFrame;
 	if (isChatboxVisible) {
-
+		
 		if(!_sessionCookie.empty()){
 			// Ensure the chatbox window is positioned and sized appropriately
 			ImGui::SetNextWindowSize(ImVec2(640, 480), ImGuiCond_FirstUseEver); // Example size, adjust as needed
@@ -696,9 +699,37 @@ void MainLayer::draw_ai_widget(Scene* scene)
 			static std::vector<std::string> chatHistory;
 			
 			if (ImGui::Button("Send")) {
-				auto res = _client.Get("/account/v1/creditBalance");
 				
-				_sessionCookie = res->body;
+				// Construct JSON payload
+				std::string modelId;
+				
+				for (auto& deepmotionModel : _deepmotionModels) {
+					if (deepmotionModel.name.compare(lastDeepmotionModel) == 0) {
+						modelId = deepmotionModel.id;
+						break;
+					}
+				}
+				
+				Json::Value postJsonData;
+				
+				auto params =  std::vector<std::string>{
+					"prompt="+std::string{message},
+					"model="+std::string{modelId}
+				};
+				
+				for (const auto& param : params) {
+					postJsonData["params"].append(param);
+				}
+				
+				Json::StreamWriterBuilder writer;
+				std::string modelJsonPostData = Json::writeString(writer, postJsonData);
+				
+				std::string path = "/job/v1/process/text2motion";
+				const char* promptBody = modelJsonPostData.c_str();
+				size_t promptContentLength = modelJsonPostData.size();
+				std::string promptContentType = "application/json";
+				
+				auto res = _client.Post(path, promptBody, promptContentLength, promptContentType);
 				
 				Json::CharReaderBuilder readerBuilder;
 				auto reader = std::unique_ptr<Json::CharReader>(readerBuilder.newCharReader());
@@ -716,10 +747,15 @@ void MainLayer::draw_ai_widget(Scene* scene)
 					//				{"credits":<value>,"subscription":{"name":<value>,"credits":<value>,"featureLimits":{"maxVariantsGeneration":<value>},"currentPeriod":{"start":<value>,"end":<value>}}}
 					//
 					
-					chatHistory.push_back(std::string(jsonData["credits"].asString()));
+					
+					auto requestId = jsonData["rid"].asString();
+					
+					_requestQueueMutex.lock();
+					_requestQueue.push_back(requestId);
+					_requestQueueMutex.unlock();
+					chatHistory.push_back(message);
 				}
 				
-				// Add message to chat history
 				// Clear the input
 				message[0] = '\0';
 			}
@@ -893,7 +929,7 @@ void MainLayer::draw_ai_widget(Scene* scene)
 											lastDeepmotionModel = modelName;
 											
 											saveToFile("powersettings.dat", lastDeepmotionModel);
-
+											
 										}
 									} else {
 										// handle error
@@ -958,23 +994,23 @@ void MainLayer::draw_ai_widget(Scene* scene)
 			}
 			
 			ImGui::End(); // End of chatbox window
-
+			
 		} else {
 			ImGui::OpenPopup("AI Settings");
 			
 			if (ImGui::BeginPopupModal("AI Settings", &isChatboxVisible, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_MenuBar)) {
 				
 				ImGui::GetCurrentWindow()->BeginOrderWithinContext = 8196;
-
+				
 				// Add a close button in the upper right corner
 				float buttonWidth = 20.0f; // Adjust the width of the button as needed
 				
 				ImVec2 panelSize = ImGui::GetContentRegionAvail();
-
+				
 				float windowWidth = panelSize.x;
 				
 				float buttonX = (windowWidth - buttonWidth * 0.65f);
-
+				
 				if (ImGui::BeginMenuBar()) {
 					ImGui::SetCursorPosX(buttonX);
 					if (ImGui::Button("X", ImVec2(buttonWidth, 0))) {
@@ -983,8 +1019,8 @@ void MainLayer::draw_ai_widget(Scene* scene)
 					}
 					ImGui::EndMenuBar();
 				}
-
-
+				
+				
 				windowWidth = ImGui::GetWindowSize().x;
 				
 				// Center the image
@@ -999,7 +1035,7 @@ void MainLayer::draw_ai_widget(Scene* scene)
 				ImGui::Spacing();
 				ImGui::Spacing();
 				ImGui::Spacing();
-
+				
 				ImGui::InputText("##ClientID", clientId, IM_ARRAYSIZE(clientId), ImGuiInputTextFlags_Password);
 				ImGui::Text("Client ID");
 				
@@ -1079,7 +1115,11 @@ void MainLayer::draw_ai_widget(Scene* scene)
 							}
 							
 							if (existing) {
-								std::string fbxPath = "Models/" + lastDeepmotionModel + ".fbx";
+								
+								std::filesystem::path modelPath = std::string{DEFAULT_CWD} + std::string{"/Models/"} + lastDeepmotionModel + std::string{".fbx"};
+								
+								std::string fbxPath = modelPath.string();
+								
 								if (std::filesystem::exists(fbxPath)) {
 									auto resources = scene->get_mutable_shared_resources();
 									
@@ -1149,7 +1189,7 @@ void MainLayer::draw_ai_widget(Scene* scene)
 				
 				ImGui::EndPopup();
 			}
-
+			
 		}
 		
 		
@@ -1655,5 +1695,113 @@ bool MainLayer::is_scene_layer_focused(const std::string &title)
 const UiContext &MainLayer::get_context() const
 {
 	return context_;
+}
+
+void MainLayer::PollJobStatus() {
+	auto now = std::chrono::steady_clock::now();
+	if (std::chrono::duration_cast<std::chrono::seconds>(now - lastPollTime).count() >= 3) {
+		lastPollTime = now;
+		
+		_requestQueueMutex.lock();
+		if (!_requestQueue.empty()) {
+			std::string requestId = _requestQueue.back();
+			_requestQueueMutex.unlock();
+			
+			auto res = _client.Get("/job/v1/status/" + requestId);
+			if (res && res->status == httplib::StatusCode::OK_200) {
+				Json::CharReaderBuilder readerBuilder;
+				auto reader = std::unique_ptr<Json::CharReader>(readerBuilder.newCharReader());
+				Json::Value jsonData;
+				std::string errors;
+				
+				bool parsingSuccessful = reader->parse(res->body.c_str(), res->body.c_str() + res->body.size(), &jsonData, &errors);
+				if (parsingSuccessful) {
+					
+					if(jsonData["count"].asInt() > 0){
+						
+						for(auto& json : jsonData["status"]){
+							
+							
+							if(json["status"].asString().compare("SUCCESS") == 0){
+								_requestQueueMutex.lock();
+								_requestQueue.pop_back();
+								_requestQueueMutex.unlock();
+								
+								
+								
+								auto res = _client.Get("/job/v1/download/" + requestId);
+								
+								auto reader = std::unique_ptr<Json::CharReader>(readerBuilder.newCharReader());
+								Json::Value jsonData;
+								std::string errors;
+								
+								bool parsingSuccessful = reader->parse(res->body.c_str(), res->body.c_str() + res->body.size(), &jsonData, &errors);
+								
+								
+								if(jsonData["count"].asInt() > 0){
+									for(auto& urls : jsonData["links"][0]["urls"]){
+										
+										for(auto& url : urls){
+											
+											auto fbxUrl = url["fbx"].asString();
+											
+											if(fbxUrl.find(".fbx")){
+												
+												
+												anim::LOG("SUCCESS: " + fbxUrl);
+												
+												break;
+											}
+											break;
+										}
+										
+										break;
+										
+									}
+									
+								}
+								
+								
+								
+							} else if(json["status"].asString().compare("PROGRESS") == 0) {
+								
+								float total = json["details"]["total"].asFloat();
+								float current = json["details"]["step"].asFloat();
+								if (current > total){
+									current = total;
+								}
+								float percentage = std::roundf((current * 100.0f) / total);
+								
+								
+								anim::LOG("Deepmotion Job Progress " + std::to_string(percentage));
+							} else if(json["status"].asString().compare("FAILURE") == 0) {
+								_requestQueueMutex.lock();
+								_requestQueue.pop_back();
+								_requestQueueMutex.unlock();
+								
+								anim::LOG("FAILURE: " + requestId);
+
+							}
+							
+							break;
+							
+						}
+					}
+					
+					//					_ai_entity->get_component<anim::AnimationComponent>()->set_animation(<#std::shared_ptr<Animation> animation#>);
+					
+					
+					// Process jsonData as needed
+					// For example, update some UI element or internal state
+				} else {
+					// Handle parsing error
+				}
+			} else {
+				// Handle HTTP error
+			}
+		} else {
+			_requestQueueMutex.unlock();
+		}
+	}
 }
 }

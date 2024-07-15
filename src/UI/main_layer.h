@@ -11,7 +11,9 @@
 #include <string>
 #include <memory>
 #include <map>
-
+#include <vector>
+#include <chrono>
+#include <mutex>
 
 struct GLFWwindow;
 
@@ -72,6 +74,8 @@ namespace ui
         void init_bookmark();
         void shutdown();
         void draw_menu_bar(float fps);
+		
+		void PollJobStatus();
 //        void draw_python_modal(bool &is_open);
         // https://www.fluentcpp.com/2017/09/22/make-pimpl-using-unique_ptr/
         std::map<std::string, std::unique_ptr<SceneLayer>> scene_layer_map_;
@@ -103,6 +107,12 @@ namespace ui
 		std::vector<deepmotion::Model> _deepmotionModels;
 		
 		std::shared_ptr<anim::Entity> _ai_entity;
+		
+		std::vector<std::string> _requestQueue;
+		std::mutex _requestQueueMutex;
+		bool pollingActive = false;
+		std::chrono::time_point<std::chrono::steady_clock> lastPollTime;
+
     };
 }
 
