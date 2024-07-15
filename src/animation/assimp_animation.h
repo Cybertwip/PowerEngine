@@ -20,7 +20,7 @@ namespace anim
     public:
 		FbxAnimation() = delete;
 
-		FbxAnimation(const sfbx::DocumentPtr doc, const std::shared_ptr<sfbx::AnimationLayer> animationLayer, const std::string& path);
+		FbxAnimation(const sfbx::DocumentPtr doc, const std::shared_ptr<sfbx::AnimationLayer> animationLayer, const std::string& path, float fps);
 
         ~FbxAnimation();
 

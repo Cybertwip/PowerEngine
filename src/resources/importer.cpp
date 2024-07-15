@@ -124,9 +124,6 @@ std::pair<std::shared_ptr<Model>, std::vector<std::shared_ptr<Animation>>> Impor
 			LOG("ERROR::IMPORTER: INVALID FBX");
 		}
 		
-		for(auto& animation : animations){
-			animation->set_fps(doc->global_settings.frame_rate);
-		}
 		model->set_unit_scale(doc->global_settings.unit_scale);
 	}
 	catch (std::exception &e)
@@ -148,7 +145,7 @@ std::vector<std::shared_ptr<Animation>> Importer::import_animation(const sfbx::D
 	if(doc && doc->valid()){
 		for(auto& stack : doc->getAnimationStacks()){
 			for(auto& animationLayer : stack->getAnimationLayers()){
-				animations.push_back(std::make_shared<FbxAnimation>(doc, animationLayer, path_));
+				animations.push_back(std::make_shared<FbxAnimation>(doc, animationLayer, path_, doc->global_settings.frame_rate));
 			}
 		}
 	}

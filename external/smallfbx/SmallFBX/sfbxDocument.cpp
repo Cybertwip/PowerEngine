@@ -224,7 +224,7 @@ void GlobalSettings::importFBXObjects(Document *doc)
 			unit_scale = c->getProperty(4)->getValue<float64>();
 		}
 
-		if (name == sfbxS_OriginalUnitScaleFactor) {
+		if (name == sfbxS_CustomFrameRate) {
 			assert(propssize >= 5);
 			frame_rate = c->getProperty(4)->getValue<float64>();
 			

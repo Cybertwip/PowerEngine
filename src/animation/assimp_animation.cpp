@@ -7,8 +7,8 @@ namespace fs = std::filesystem;
 
 namespace anim
 {
-FbxAnimation::FbxAnimation(const sfbx::DocumentPtr doc, const std::shared_ptr<sfbx::AnimationLayer> animationLayer, const std::string& path)
-{
+FbxAnimation::FbxAnimation(const sfbx::DocumentPtr doc, const std::shared_ptr<sfbx::AnimationLayer> animationLayer, const std::string& path, float fps){
+	set_fps(fps);
 	init_animation(doc, animationLayer, path);
 }
 
