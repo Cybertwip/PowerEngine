@@ -15,112 +15,92 @@
 #include <array>
 #include <glcpp/window.h>
 
-#include <zlib.h>
+#include <contrib/minizip/unzip.h>
+
 #include <sstream>
 
 
-struct ZipLocalFileHeader {
-	uint32_t signature;
-	uint16_t versionNeeded;
-	uint16_t generalPurposeBitFlag;
-	uint16_t compressionMethod;
-	uint16_t lastModFileTime;
-	uint16_t lastModFileDate;
-	uint32_t crc32;
-	uint32_t compressedSize;
-	uint32_t uncompressedSize;
-	uint16_t fileNameLength;
-	uint16_t extraFieldLength;
-};
-
-struct UncompressedFile {
-	std::string fileName;
-	std::vector<unsigned char> data;
-};
-
-
-// Helper function to read a ZIP local file header
-bool readLocalFileHeader(const std::vector<unsigned char>& zipData, size_t offset, ZipLocalFileHeader& header) {
-	if (offset + sizeof(ZipLocalFileHeader) > zipData.size()) {
+// Function to write the extracted data to a file
+bool write_file(const std::string& file_path, const std::vector<unsigned char>& data) {
+	std::ofstream file(file_path, std::ios::binary);
+	if (!file.is_open()) {
+		std::cerr << "Failed to open file: " << file_path << std::endl;
 		return false;
 	}
-	
-	std::memcpy(&header, zipData.data() + offset, sizeof(ZipLocalFileHeader));
+	file.write(reinterpret_cast<const char*>(data.data()), data.size());
+	file.close();
 	return true;
 }
 
-// Function to uncompress ZIP data and return a list of files in memory
-std::vector<UncompressedFile> uncompressZipData(const std::vector<unsigned char>& zipData) {
-	std::vector<UncompressedFile> uncompressedFiles;
-	size_t offset = 0;
-	
-	while (offset < zipData.size()) {
-		ZipLocalFileHeader header;
-		if (!readLocalFileHeader(zipData, offset, header)) {
-			std::cerr << "ERROR: Failed to read local file header." << std::endl;
-			break;
-		}
-		
-		if (header.signature != 0x04034b50) { // Local file header signature
-			std::cerr << "ERROR: Invalid local file header signature." << std::endl;
-			break;
-		}
-		
-		// Read the file name
-		std::string fileName(reinterpret_cast<const char*>(zipData.data() + offset + sizeof(ZipLocalFileHeader)), header.fileNameLength);
-		
-		// Skip to the file data
-		size_t fileDataOffset = offset + sizeof(ZipLocalFileHeader) + header.fileNameLength + header.extraFieldLength;
-		if (fileDataOffset + header.compressedSize > zipData.size()) {
-			std::cerr << "ERROR: Invalid compressed size." << std::endl;
-			break;
-		}
-		
-		// Uncompress the file data if it is compressed
-		std::vector<unsigned char> uncompressedData(header.uncompressedSize);
-		if (header.compressionMethod == 0) {
-			// No compression
-			std::memcpy(uncompressedData.data(), zipData.data() + fileDataOffset, header.uncompressedSize);
-		} else if (header.compressionMethod == 8) {
-			// Deflate
-			z_stream stream;
-			stream.zalloc = Z_NULL;
-			stream.zfree = Z_NULL;
-			stream.opaque = Z_NULL;
-			stream.avail_in = header.compressedSize;
-			stream.next_in = const_cast<Bytef*>(zipData.data() + fileDataOffset);
-			stream.avail_out = header.uncompressedSize;
-			stream.next_out = uncompressedData.data();
-			
-			if (inflateInit2(&stream, -MAX_WBITS) != Z_OK) {
-				std::cerr << "ERROR: Failed to initialize zlib." << std::endl;
-				break;
-			}
-			
-			if (inflate(&stream, Z_FINISH) != Z_STREAM_END) {
-				std::cerr << "ERROR: Failed to uncompress data." << std::endl;
-				inflateEnd(&stream);
-				break;
-			}
-			
-			inflateEnd(&stream);
-		} else {
-			std::cerr << "ERROR: Unsupported compression method." << std::endl;
-			break;
-		}
-		
-		// Store the uncompressed file data
-		UncompressedFile file;
-		file.fileName = fileName;
-		file.data = std::move(uncompressedData);
-		uncompressedFiles.push_back(std::move(file));
-		
-		// Move to the next file in the ZIP archive
-		offset = fileDataOffset + header.compressedSize;
+// Function to decompress ZIP data and extract files to the specified directory
+bool decompress_zip_data(const std::vector<unsigned char>& zip_data, const std::string& output_dir) {
+	// Create a temporary file to store the ZIP data
+	const std::string temp_zip_file = output_dir + "temp.zip";
+	if (!write_file(temp_zip_file, zip_data)) {
+		return false;
 	}
 	
-	return uncompressedFiles;
+	// Open the ZIP file
+	unzFile zipfile = unzOpen(temp_zip_file.c_str());
+	if (zipfile == nullptr) {
+		std::cerr << "Failed to open ZIP file: " << temp_zip_file << std::endl;
+		return false;
+	}
+	
+	// Iterate over each file in the ZIP archive
+	if (unzGoToFirstFile(zipfile) != UNZ_OK) {
+		std::cerr << "Failed to go to first file in ZIP archive" << std::endl;
+		unzClose(zipfile);
+		return false;
+	}
+	
+	do {
+		// Get the file info
+		unz_file_info file_info;
+		char filename[256];
+		if (unzGetCurrentFileInfo(zipfile, &file_info, filename, sizeof(filename), nullptr, 0, nullptr, 0) != UNZ_OK) {
+			std::cerr << "Failed to get file info" << std::endl;
+			unzClose(zipfile);
+			return false;
+		}
+		
+		// Open the current file in the ZIP archive
+		if (unzOpenCurrentFile(zipfile) != UNZ_OK) {
+			std::cerr << "Failed to open file in ZIP archive" << std::endl;
+			unzClose(zipfile);
+			return false;
+		}
+		
+		// Read the file data
+		std::vector<unsigned char> file_data(file_info.uncompressed_size);
+		if (unzReadCurrentFile(zipfile, file_data.data(), file_info.uncompressed_size) < 0) {
+			std::cerr << "Failed to read file data" << std::endl;
+			unzCloseCurrentFile(zipfile);
+			unzClose(zipfile);
+			return false;
+		}
+		
+		// Close the current file in the ZIP archive
+		unzCloseCurrentFile(zipfile);
+		
+		// Write the file data to the output directory
+		std::string output_file_path = output_dir + filename;
+		if (!write_file(output_file_path, file_data)) {
+			unzClose(zipfile);
+			return false;
+		}
+		
+	} while (unzGoToNextFile(zipfile) == UNZ_OK);
+	
+	// Close the ZIP file
+	unzClose(zipfile);
+	
+	// Remove the temporary ZIP file
+	std::remove(temp_zip_file.c_str());
+	
+	return true;
 }
+
 
 #ifndef IMGUI_IMPL_OPENGL_LOADER_GLAD
 #define IMGUI_IMPL_OPENGL_LOADER_GLAD
@@ -460,10 +440,9 @@ ImVec2 menuCenter;
 float menuRadius = 100.0f; // Example radius for the circular menu
 static bool isChatboxVisible = false; // Flag to track chatbox visibility
 
-void MainLayer::draw_ai_widget(Scene* scene)
+bool MainLayer::draw_ai_widget(Scene* scene)
 {
-	
-	PollJobStatus();
+	bool needsRefresh = PollJobStatus(scene);
 	
 	ImVec4* colors = ImGui::GetStyle().Colors;
 	ImVec4 oldButton = colors[ImGuiCol_Button];
@@ -490,7 +469,6 @@ void MainLayer::draw_ai_widget(Scene* scene)
 	
 	static bool showComponentSubMenu = false;
 	static bool showAssetSubMenu = false;
-	
 	
 	ImGui::Begin("Texture Button", nullptr, windowFlags);
 	
@@ -861,6 +839,8 @@ void MainLayer::draw_ai_widget(Scene* scene)
 					_requestQueue.push_back(requestId);
 					_requestQueueMutex.unlock();
 					chatHistory.push_back(message);
+					
+					_job_percentage = 0.0f;
 				}
 				
 				// Clear the input
@@ -878,7 +858,7 @@ void MainLayer::draw_ai_widget(Scene* scene)
 			
 			// Right column - Render target logic (e.g., 3D model) and Settings button
 			if (scene) {
-				ImGui::Text("Preview");
+				ImGui::Text("Model");
 				
 				void* framebufferTextureId = dragAndDropTextureId;
 				
@@ -1004,7 +984,7 @@ void MainLayer::draw_ai_widget(Scene* scene)
 											
 											resources->add_animations(animationSet.animations);
 											
-											auto entity = resources->parse_model(animationSet.model, fbxPath);
+											auto entity = resources->parse_model(animationSet.model, animationSet.animations[0], fbxPath);
 											
 											auto root = resources->get_root_entity();
 											
@@ -1029,7 +1009,6 @@ void MainLayer::draw_ai_widget(Scene* scene)
 											entity->set_name(uniqueActorName);
 											
 											root->add_children(entity);
-											
 											
 											_ai_entity = entity;
 											
@@ -1061,7 +1040,7 @@ void MainLayer::draw_ai_widget(Scene* scene)
 							
 							resources->add_animations(animationSet.animations);
 							
-							auto entity = resources->parse_model(animationSet.model, fbxPath);
+							auto entity = resources->parse_model(animationSet.model, animationSet.animations[0], fbxPath);
 							
 							auto root = resources->get_root_entity();
 							
@@ -1097,6 +1076,10 @@ void MainLayer::draw_ai_widget(Scene* scene)
 					}
 					ImGui::EndDragDropTarget();
 				} else {
+				}
+				
+				if(_job_percentage >= 0){
+					ImGui::ProgressBar(_job_percentage / 100.0f);
 				}
 			}
 			
@@ -1236,7 +1219,8 @@ void MainLayer::draw_ai_widget(Scene* scene)
 									
 									resources->add_animations(animationSet.animations);
 									
-									auto entity = resources->parse_model(animationSet.model, fbxPath.c_str());
+									auto entity = resources->parse_model(animationSet.model,
+										 animationSet.animations[0], fbxPath.c_str());
 									
 									auto root = resources->get_root_entity();
 									
@@ -1301,6 +1285,8 @@ void MainLayer::draw_ai_widget(Scene* scene)
 		
 		
 	}
+	
+	return needsRefresh;
 }
 
 void MainLayer::draw_ingame_menu(Scene* scene){
@@ -1410,7 +1396,7 @@ void MainLayer::draw_ingame_menu(Scene* scene){
 					
 					resources->add_animations(animationSet.animations);
 					
-					auto entity = resources->parse_model(animationSet.model, fbxPath);
+					auto entity = resources->parse_model(animationSet.model, animationSet.animations[0], fbxPath);
 					
 					timeline_layer_.setActiveEntity(context_, entity);
 					
@@ -1804,7 +1790,7 @@ const UiContext &MainLayer::get_context() const
 	return context_;
 }
 
-void MainLayer::PollJobStatus() {
+bool MainLayer::PollJobStatus(Scene* scene) {
 	auto now = std::chrono::steady_clock::now();
 	if (std::chrono::duration_cast<std::chrono::seconds>(now - lastPollTime).count() >= 3) {
 		lastPollTime = now;
@@ -1841,6 +1827,7 @@ void MainLayer::PollJobStatus() {
 								
 								bool parsingSuccessful = reader->parse(res->body.c_str(), res->body.c_str() + res->body.size(), &jsonData, &errors);
 								
+								bool needsRefresh = false;
 								if(jsonData["count"].asInt() > 0){
 									for(auto& urls : jsonData["links"][0]["urls"]){
 										
@@ -1852,22 +1839,52 @@ void MainLayer::PollJobStatus() {
 													anim::LOG("SUCCESS: " + fileString);
 													
 													
-													auto res = _client.Get(fileString);
-
+													std::string protocol, host, downloadPath;
 													
-													std::vector<unsigned char> zipData(res->body.begin(), res->body.end());
+													// Find the position of "://"
+													std::string::size_type protocolPos = fileString.find("://");
+													if (protocolPos != std::string::npos) {
+														protocol = fileString.substr(0, protocolPos);
+														protocolPos += 3; // Move past "://"
+													}
 													
-													// Uncompress the ZIP data and get the list of files
-													std::vector<UncompressedFile> uncompressedFiles = uncompressZipData(zipData);
-
-													
-													break;
+													// Find the position of the first "/" after the protocol
+													std::string::size_type hostPos = fileString.find("/", protocolPos);
+													if (hostPos != std::string::npos) {
+														host = fileString.substr(protocolPos, hostPos - protocolPos);
+														downloadPath = fileString.substr(hostPos);
+													} else {
+														// If there's no path, the host is everything after the protocol
+														host = fileString.substr(protocolPos);
+														downloadPath = "/";
+													}
+													{
+														httplib::SSLClient downloadClient(host);
+														downloadClient.set_compress(false);
+														
+														auto res = downloadClient.Get(downloadPath);
+														
+														
+														std::vector<unsigned char> zipData(res->body.begin(), res->body.end());
+														
+														// Uncompress the ZIP data and get the list of files
+														
+														const std::string baseDir = DEFAULT_CWD; // Assuming DEFAULT_CWD is defined somewhere
+														
+														decompress_zip_data(zipData, baseDir + "/Animations/");
+														
+														_job_percentage = -1.0f;
+														
+														needsRefresh = true;
+														break;
+													}
 												}
 											}
 										}
 									}
-									
 								}
+								
+								return needsRefresh;
 							} else if(json["status"].asString().compare("PROGRESS") == 0) {
 								
 								float total = json["details"]["total"].asFloat();
@@ -1875,17 +1892,19 @@ void MainLayer::PollJobStatus() {
 								if (current > total){
 									current = total;
 								}
-								float percentage = std::roundf((current * 100.0f) / total);
+								_job_percentage = std::roundf((current * 100.0f) / total);
 								
-								
-								anim::LOG("Deepmotion Job Progress " + std::to_string(percentage));
+								anim::LOG("Deepmotion Job Progress " + std::to_string(_job_percentage));
 							} else if(json["status"].asString().compare("FAILURE") == 0) {
 								_requestQueueMutex.lock();
 								_requestQueue.pop_back();
 								_requestQueueMutex.unlock();
 								
 								anim::LOG("FAILURE: " + requestId);
-
+								
+								_job_percentage = -1.0f;
+								
+								
 							}
 							
 							break;
@@ -1908,5 +1927,7 @@ void MainLayer::PollJobStatus() {
 			_requestQueueMutex.unlock();
 		}
 	}
+	
+	return false;
 }
 }

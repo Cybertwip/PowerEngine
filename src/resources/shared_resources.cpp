@@ -265,8 +265,8 @@ void SharedResources::initialize(){
 }
 
 void SharedResources::refresh_directory_node(){
-	auto homePath = std::filesystem::current_path();
-	
+	auto homePath = std::filesystem::path(DEFAULT_CWD);
+
 	rootNode = CreateDirectoryNodeTreeFromPath(homePath);
 	RecursivelyCleanDirectoryNodes(rootNode);
 }
@@ -553,7 +553,7 @@ void SharedResources::deserialize(const std::string& path){
 		auto modelPath = std::filesystem::absolute(modelData["path"].asString()).string();
 		
 		auto model = import_model(modelPath.c_str());
-		auto entity = parse_model(model, modelPath.c_str());
+		auto entity = parse_model(model, nullptr, modelPath.c_str());
 		
 		
 		// Deserialize the transform
@@ -599,7 +599,7 @@ void SharedResources::deserialize(const std::string& path){
 
 }
 
-std::shared_ptr<Entity> SharedResources::parse_model(std::shared_ptr<Model> &model, const char *path, bool serialize)
+std::shared_ptr<Entity> SharedResources::parse_model(std::shared_ptr<Model> &model, std::shared_ptr<Animation> animation, const char *path, bool serialize)
 {
 	if (!model)
 	{
@@ -633,10 +633,14 @@ std::shared_ptr<Entity> SharedResources::parse_model(std::shared_ptr<Model> &mod
 	}
 	
 	
-	if(entity && animations_.size() > 0){
+	if(entity && animation){
 		auto pose = entity->get_mutable_root()->get_component<PoseComponent>();
 		
-		animator_->set_end_time(animations_.back()->get_duration());
+		auto animation_component = entity->get_component<AnimationComponent>();
+		
+		animation_component->set_animation(animation);
+
+		animator_->set_end_time(animation->get_duration());
 		
 	}
 	if (entity)
@@ -885,7 +889,6 @@ void SharedResources::convert_to_entity(std::shared_ptr<Entity> &entity,
 	
 	entity_id++;
 	
-		
 	//	std::string hash = name + std::to_string(entity_id);
 	//	auto hashId = ImHashStr(hash.c_str());
 	//
@@ -970,6 +973,7 @@ void SharedResources::convert_to_entity(std::shared_ptr<Entity> &entity,
 			auto animation = root_entity->add_component<AnimationComponent>();
 			if (animations_.size() > 0)
 			{
+				
 				animation->set_animation(animations_.back());
 				
 				animations_.back()->set_owner(root_entity);
@@ -1090,6 +1094,20 @@ void SharedResources::remove_entity(int id)
 
 	
 	if (it != single_entity_list_.end()) {
+		
+		auto children = (*it)->get_children_recursive();
+		for(auto childIt = children.begin(); childIt != children.end(); ++childIt){
+			
+			auto childFindIt = std::find_if(single_entity_list_.begin(), single_entity_list_.end(),
+								   [childIt](const std::shared_ptr<Entity>& entity) {
+				return (*childIt)->get_id() == entity->get_id();
+			});
+
+			if(childFindIt != single_entity_list_.end()){
+				single_entity_list_.erase(childFindIt);
+			}
+		}
+		
 		if(root_entity_){
 			root_entity_->removeChild(*it);
 		}

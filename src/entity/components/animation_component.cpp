@@ -35,23 +35,26 @@ void AnimationSequence::deserialize() {
 		
 		auto& bone = name_bone_map[child->get_name()];
 		
-		auto timeset = bone->get_time_set();
-		
-		if(!timeset.empty()){
-			for(auto& time : timeset){
-				
-				int frame = static_cast<int>(time);
-				
-				sequencer_.mItems.back()->mKeyFrames[frame] = {};
-				
-				auto& keyframe = sequencer_.mItems.back()->mKeyFrames[frame];
-				
-				keyframe.active = true;
-				
-				keyframe.transform = bone->get_local_transform(frame, bone->get_factor());
+		if(bone){
+			auto timeset = bone->get_time_set();
 
+			if(!timeset.empty()){
+				for(auto& time : timeset){
+					
+					int frame = static_cast<int>(time);
+					
+					sequencer_.mItems.back()->mKeyFrames[frame] = {};
+					
+					auto& keyframe = sequencer_.mItems.back()->mKeyFrames[frame];
+					
+					keyframe.active = true;
+					
+					keyframe.transform = bone->get_local_transform(frame, bone->get_factor());
+					
+				}
 			}
 		}
+		
 
 	}
 	

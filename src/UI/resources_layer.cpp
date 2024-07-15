@@ -490,7 +490,7 @@ bool DrawResourcesPanel(Scene *scene, ui::TimelineLayer& timelineLayer, ui::UiCo
 								auto& animationSet = resources->getAnimationSet(child.FullPath);
 								
 								resources->add_animations(animationSet.animations);
-								auto entity = resources->parse_model(animationSet.model, child.FileName.c_str());
+								auto entity = resources->parse_model(animationSet.model, animationSet.animations[0], child.FileName.c_str());
 								
 								timelineLayer.setActiveEntity(ui_context, entity);
 								

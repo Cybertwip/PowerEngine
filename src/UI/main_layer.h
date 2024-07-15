@@ -50,7 +50,7 @@ namespace ui
         void init();
         void begin();
         void end();
-        void draw_ai_widget(Scene* scene);
+        bool draw_ai_widget(Scene* scene);
 		void draw_ingame_menu(Scene* scene);
         void draw_scene(const std::string &title, Scene *scene);
         void draw_component_layer(Scene *scene);
@@ -75,7 +75,7 @@ namespace ui
         void shutdown();
         void draw_menu_bar(float fps);
 		
-		void PollJobStatus();
+		bool PollJobStatus(Scene* scene);
 //        void draw_python_modal(bool &is_open);
         // https://www.fluentcpp.com/2017/09/22/make-pimpl-using-unique_ptr/
         std::map<std::string, std::unique_ptr<SceneLayer>> scene_layer_map_;
@@ -113,6 +113,7 @@ namespace ui
 		bool pollingActive = false;
 		std::chrono::time_point<std::chrono::steady_clock> lastPollTime;
 
+		float _job_percentage = -1.0f;
     };
 }
 

@@ -140,7 +140,11 @@ void App::OnFrame(float deltaTime){
 	
 	update(deltaTime);
 	
-	ui_->draw_ai_widget(scenes_[ai_scene_idx_].get());
+	bool needsRefresh = ui_->draw_ai_widget(scenes_[ai_scene_idx_].get());
+	
+	if(needsRefresh){
+		scenes_[current_scene_idx_]->get_mutable_shared_resources()->refresh_directory_node();
+	}
 	
 	ui_->draw_component_layer(scenes_[current_scene_idx_].get());
 	

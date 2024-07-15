@@ -77,7 +77,7 @@ void HierarchyLayer::draw(Scene *scene, UiContext &ui_context)
 					auto& animationSet = resources->getAnimationSet(fbxPath);
 					
 					resources->add_animations(animationSet.animations);
-					auto entity = resources->parse_model(animationSet.model, fbxPath);
+					auto entity = resources->parse_model(animationSet.model, animationSet.animations[0], fbxPath);
 					
 					auto root = resources->get_root_entity();
 					

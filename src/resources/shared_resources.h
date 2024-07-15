@@ -66,7 +66,7 @@ public:
 	void export_animation(std::shared_ptr<Entity> entity, const char *path, bool is_linear);
 	void serialize(const std::string& path);
 	void deserialize(const std::string& path);	
-	std::shared_ptr<Entity> parse_model(std::shared_ptr<Model> &model, const char *path, bool serialize = true);
+	std::shared_ptr<Entity> parse_model(std::shared_ptr<Model> &model, std::shared_ptr<Animation> animation, const char *path, bool serialize = true);
 	std::shared_ptr<Entity> parse_sprite(const std::string& name, const char *path, std::shared_ptr<Sprite> sprite, bool serialize);
 	void add_animations(const std::vector<std::shared_ptr<Animation>> &animations);
 	void add_animation_set(const std::string& path, std::shared_ptr<Model> model, const std::vector<std::shared_ptr<Animation>> &animations);

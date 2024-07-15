@@ -132,7 +132,7 @@ void TimelineLayer::setCinematicSequence(std::shared_ptr<CinematicSequence> sequ
 void TimelineLayer::setAnimationSequence(std::shared_ptr<AnimationSequence> sequence){
 	animator_->set_active_animation_sequence(sequence);
 	animation_sequence_ = sequence;
-	
+		
 	auto& sequencer = static_cast<AnimationSequencer&>(animation_sequence_->get_sequencer());
 	
 	sequencer.mOnKeyFrameSet = [this, &sequencer](int index, int time){
@@ -198,7 +198,9 @@ void TimelineLayer::setActiveEntity(UiContext &ui_context, std::shared_ptr<Entit
 			if(auto component = animation_entity_->get_component<ModelSerializationComponent>(); component){
 				auto fbxPath = component->get_model_path();
 				
-				auto animationsPath = std::filesystem::path("Animations");
+				const std::string baseDir = DEFAULT_CWD; // Assuming DEFAULT_CWD is defined somewhere
+
+				auto animationsPath = baseDir / std::filesystem::path("Animations");
 				auto modelPath = std::filesystem::path(fbxPath);
 				
 				auto path = std::filesystem::absolute(animationsPath / modelPath);
@@ -1463,7 +1465,7 @@ void TimelineLayer::draw(Scene *scene, UiContext &ui_context)
 							auto& animationSet = resources->getAnimationSet(sequencePath);
 							
 							resources->add_animations(animationSet.animations);
-							auto entity = resources->parse_model(animationSet.model, sequencePath);
+							auto entity = resources->parse_model(animationSet.model, animationSet.animations[0], sequencePath);
 							
 							auto sequence = std::make_shared<anim::AnimationSequence>(*scene, resources_->shared_from_this(), entity, sequencePath, animationSet.animations[0]->get_id());
 							

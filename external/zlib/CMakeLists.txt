@@ -121,6 +121,10 @@ set(ZLIB_SRCS
     trees.c
     uncompr.c
     zutil.c
+    contrib/minizip/unzip.c
+    contrib/minizip/minizip.c
+    contrib/minizip/ioapi.c
+    contrib/minizip/zip.c
 )
 
 if(NOT MINGW)
