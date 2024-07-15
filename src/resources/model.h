@@ -71,7 +71,8 @@ namespace anim
         friend void SharedResources::convert_to_entity(std::shared_ptr<Entity> &entity,
                                                        std::shared_ptr<Model> &model,
                                                        const std::shared_ptr<ModelNode> &model_node,
-													   std::shared_ptr<Entity> parent_entity, int child_num, std::shared_ptr<Entity> root_entity);
+													   std::shared_ptr<Entity> parent_entity, int child_num, std::shared_ptr<Entity> root_entity,
+													   std::shared_ptr<Animation> animation);
 
         Model(const std::string& path, const sfbx::DocumentPtr doc, LightManager& lightManager);
         ~Model();

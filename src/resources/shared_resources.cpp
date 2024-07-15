@@ -607,7 +607,7 @@ std::shared_ptr<Entity> SharedResources::parse_model(std::shared_ptr<Model> &mod
 	}
 	
 	std::shared_ptr<Entity> entity = nullptr;
-	convert_to_entity(entity, model, model->get_root_node(), nullptr, 0, nullptr);
+	convert_to_entity(entity, model, model->get_root_node(), nullptr, 0, nullptr, animation);
 	
 	if(serialize){
 		auto serialization = entity->add_component<ModelSerializationComponent>();
@@ -634,18 +634,23 @@ std::shared_ptr<Entity> SharedResources::parse_model(std::shared_ptr<Model> &mod
 	
 	
 	if(entity && animation){
+		entity->set_name(model->get_name());
+
 		auto pose = entity->get_mutable_root()->get_component<PoseComponent>();
 		
 		auto animation_component = entity->get_component<AnimationComponent>();
 		
 		animation_component->set_animation(animation);
+		
+		animation->set_owner(entity);
+		
+		animation->set_root_bone_name(entity->get_name());
 
 		animator_->set_end_time(animation->get_duration());
 		
 	}
 	if (entity)
 	{
-		entity->set_name(model->get_name());
 		
 		//		auto [t, r, s] = DecomposeTransform(entity->get_local());
 		//
@@ -874,7 +879,7 @@ namespace anim
 void SharedResources::convert_to_entity(std::shared_ptr<Entity> &entity,
 										std::shared_ptr<Model> &model,
 										const std::shared_ptr<ModelNode> &model_node,
-										std::shared_ptr<Entity> parent_entity, int child_num, std::shared_ptr<Entity> root_entity)
+										std::shared_ptr<Entity> parent_entity, int child_num, std::shared_ptr<Entity> root_entity, std::shared_ptr<Animation> animation)
 {
 	const std::string &name = model_node->name;
 	LOG("- - TO ENTITY: " + name);
@@ -970,23 +975,25 @@ void SharedResources::convert_to_entity(std::shared_ptr<Entity> &entity,
 		}
 		else
 		{
-			auto animation = root_entity->add_component<AnimationComponent>();
+			auto animationComponent = root_entity->add_component<AnimationComponent>();
+			
 			if (animations_.size() > 0)
 			{
+				animationComponent->set_animation(animation);
 				
-				animation->set_animation(animations_.back());
-				
-				animations_.back()->set_owner(root_entity);
+				animation->set_owner(root_entity);
 			}
+			
+
 			pose = root_entity->add_component<PoseComponent>();
 			LOG("=============== POSE: " + parent_entity->get_name());
 			
-			animation->set_root_bone_name(parent_entity->get_name());
-			
+			animationComponent->set_root_bone_name(parent_entity->get_name());
+
 			pose->set_bone_info_map(model->bone_info_map_);
 			pose->set_animator(animator_.get());
 			pose->set_shader(shaders_["animation"].get());
-			pose->set_animation_component(animation);
+			pose->set_animation_component(animationComponent);
 			pose->set_armature_root(entity);
 			armature->set_local_scale(0, 100.0f);
 		}
@@ -1006,7 +1013,7 @@ void SharedResources::convert_to_entity(std::shared_ptr<Entity> &entity,
 	for (int i = 0; i < child_size; i++)
 	{
 		LOG("---------------------------------------------------------- Children: " + model_node->childrens[i]->name);
-		convert_to_entity(children[i], model, model_node->childrens[i], entity, i, root_entity);
+		convert_to_entity(children[i], model, model_node->childrens[i], entity, i, root_entity, animation);
 	}
 }
 

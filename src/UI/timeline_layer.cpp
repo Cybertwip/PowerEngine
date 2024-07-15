@@ -821,12 +821,9 @@ void TimelineLayer::draw(Scene *scene, UiContext &ui_context)
 						ToggleButton(ICON_KI_CARET_RIGHT, &context.is_forward, small_button_size, &context.is_clicked_play);
 						ImGui::SameLine();
 						ToggleButton(ICON_KI_PAUSE, &context.is_stop, small_button_size);
-						
-						
 					}
 					ImGui::PopStyleColor();
 					ImGui::PopStyleVar();
-					
 					
 					button_size = ImVec2(180.0f, 0.0f);
 					
@@ -1266,7 +1263,6 @@ void TimelineLayer::draw(Scene *scene, UiContext &ui_context)
 						
 						int currentFrame = static_cast<int>(animator_->get_current_frame_time());
 						
-						
 						if(animation){
 							auto &name_bone_map = animation->get_animation()->get_mutable_name_bone_map();
 							
@@ -1298,7 +1294,6 @@ void TimelineLayer::draw(Scene *scene, UiContext &ui_context)
 								}
 							}
 						}
-						
 						
 					} else {
 						ui_context.scene.is_trigger_update_keyframe = false;

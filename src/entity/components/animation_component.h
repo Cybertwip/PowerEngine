@@ -154,7 +154,7 @@ private:
 
 class AnimationSequence : public ISerializableSequence {
 public:
-	AnimationSequence(Scene& scene, std::shared_ptr<SharedResources> resources, std::shared_ptr<Entity> entity, const std::string& path, int animationId) : scene_(scene), sequencer_(resources), _entity(entity), _path(path), _resources(resources) {
+	AnimationSequence(Scene& scene, std::shared_ptr<SharedResources> resources, std::shared_ptr<Entity> entity, const std::string& path, int animationId) : scene_(scene), sequencer_(resources), _entity(entity), _path(path), _resources(resources), _animation_id(animationId) {
 		deserialize();
 	}
 	

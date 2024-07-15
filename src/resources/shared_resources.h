@@ -78,7 +78,7 @@ public:
 	void convert_to_entity(std::shared_ptr<Entity> &entity,
 						   std::shared_ptr<Model> &model,
 						   const std::shared_ptr<ModelNode> &model_node,
-						   std::shared_ptr<Entity> parent_entity, int child_num, std::shared_ptr<Entity> root_entity);
+						   std::shared_ptr<Entity> parent_entity, int child_num, std::shared_ptr<Entity> root_entity, std::shared_ptr<Animation> animation);
 	void update(ui::UiContext& ui_context, bool includeSequencer = true);
 	void set_ubo_position(const glm::vec3 &position);
 	void set_ubo_projection(const glm::mat4 &projection);
