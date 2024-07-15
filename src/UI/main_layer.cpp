@@ -15,6 +15,113 @@
 #include <array>
 #include <glcpp/window.h>
 
+#include <zlib.h>
+#include <sstream>
+
+
+struct ZipLocalFileHeader {
+	uint32_t signature;
+	uint16_t versionNeeded;
+	uint16_t generalPurposeBitFlag;
+	uint16_t compressionMethod;
+	uint16_t lastModFileTime;
+	uint16_t lastModFileDate;
+	uint32_t crc32;
+	uint32_t compressedSize;
+	uint32_t uncompressedSize;
+	uint16_t fileNameLength;
+	uint16_t extraFieldLength;
+};
+
+struct UncompressedFile {
+	std::string fileName;
+	std::vector<unsigned char> data;
+};
+
+
+// Helper function to read a ZIP local file header
+bool readLocalFileHeader(const std::vector<unsigned char>& zipData, size_t offset, ZipLocalFileHeader& header) {
+	if (offset + sizeof(ZipLocalFileHeader) > zipData.size()) {
+		return false;
+	}
+	
+	std::memcpy(&header, zipData.data() + offset, sizeof(ZipLocalFileHeader));
+	return true;
+}
+
+// Function to uncompress ZIP data and return a list of files in memory
+std::vector<UncompressedFile> uncompressZipData(const std::vector<unsigned char>& zipData) {
+	std::vector<UncompressedFile> uncompressedFiles;
+	size_t offset = 0;
+	
+	while (offset < zipData.size()) {
+		ZipLocalFileHeader header;
+		if (!readLocalFileHeader(zipData, offset, header)) {
+			std::cerr << "ERROR: Failed to read local file header." << std::endl;
+			break;
+		}
+		
+		if (header.signature != 0x04034b50) { // Local file header signature
+			std::cerr << "ERROR: Invalid local file header signature." << std::endl;
+			break;
+		}
+		
+		// Read the file name
+		std::string fileName(reinterpret_cast<const char*>(zipData.data() + offset + sizeof(ZipLocalFileHeader)), header.fileNameLength);
+		
+		// Skip to the file data
+		size_t fileDataOffset = offset + sizeof(ZipLocalFileHeader) + header.fileNameLength + header.extraFieldLength;
+		if (fileDataOffset + header.compressedSize > zipData.size()) {
+			std::cerr << "ERROR: Invalid compressed size." << std::endl;
+			break;
+		}
+		
+		// Uncompress the file data if it is compressed
+		std::vector<unsigned char> uncompressedData(header.uncompressedSize);
+		if (header.compressionMethod == 0) {
+			// No compression
+			std::memcpy(uncompressedData.data(), zipData.data() + fileDataOffset, header.uncompressedSize);
+		} else if (header.compressionMethod == 8) {
+			// Deflate
+			z_stream stream;
+			stream.zalloc = Z_NULL;
+			stream.zfree = Z_NULL;
+			stream.opaque = Z_NULL;
+			stream.avail_in = header.compressedSize;
+			stream.next_in = const_cast<Bytef*>(zipData.data() + fileDataOffset);
+			stream.avail_out = header.uncompressedSize;
+			stream.next_out = uncompressedData.data();
+			
+			if (inflateInit2(&stream, -MAX_WBITS) != Z_OK) {
+				std::cerr << "ERROR: Failed to initialize zlib." << std::endl;
+				break;
+			}
+			
+			if (inflate(&stream, Z_FINISH) != Z_STREAM_END) {
+				std::cerr << "ERROR: Failed to uncompress data." << std::endl;
+				inflateEnd(&stream);
+				break;
+			}
+			
+			inflateEnd(&stream);
+		} else {
+			std::cerr << "ERROR: Unsupported compression method." << std::endl;
+			break;
+		}
+		
+		// Store the uncompressed file data
+		UncompressedFile file;
+		file.fileName = fileName;
+		file.data = std::move(uncompressedData);
+		uncompressedFiles.push_back(std::move(file));
+		
+		// Move to the next file in the ZIP archive
+		offset = fileDataOffset + header.compressedSize;
+	}
+	
+	return uncompressedFiles;
+}
+
 #ifndef IMGUI_IMPL_OPENGL_LOADER_GLAD
 #define IMGUI_IMPL_OPENGL_LOADER_GLAD
 #endif
@@ -1721,13 +1828,10 @@ void MainLayer::PollJobStatus() {
 						
 						for(auto& json : jsonData["status"]){
 							
-							
 							if(json["status"].asString().compare("SUCCESS") == 0){
 								_requestQueueMutex.lock();
 								_requestQueue.pop_back();
 								_requestQueueMutex.unlock();
-								
-								
 								
 								auto res = _client.Get("/job/v1/download/" + requestId);
 								
@@ -1737,32 +1841,33 @@ void MainLayer::PollJobStatus() {
 								
 								bool parsingSuccessful = reader->parse(res->body.c_str(), res->body.c_str() + res->body.size(), &jsonData, &errors);
 								
-								
 								if(jsonData["count"].asInt() > 0){
 									for(auto& urls : jsonData["links"][0]["urls"]){
 										
 										for(auto& url : urls){
 											
-											auto fbxUrl = url["fbx"].asString();
-											
-											if(fbxUrl.find(".fbx")){
-												
-												
-												anim::LOG("SUCCESS: " + fbxUrl);
-												
-												break;
+											for(auto& file : url){
+												if(file.isMember("fbx")){
+													auto fileString = file["fbx"].asString();
+													anim::LOG("SUCCESS: " + fileString);
+													
+													
+													auto res = _client.Get(fileString);
+
+													
+													std::vector<unsigned char> zipData(res->body.begin(), res->body.end());
+													
+													// Uncompress the ZIP data and get the list of files
+													std::vector<UncompressedFile> uncompressedFiles = uncompressZipData(zipData);
+
+													
+													break;
+												}
 											}
-											break;
 										}
-										
-										break;
-										
 									}
 									
 								}
-								
-								
-								
 							} else if(json["status"].asString().compare("PROGRESS") == 0) {
 								
 								float total = json["details"]["total"].asFloat();
