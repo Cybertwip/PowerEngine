@@ -40,6 +40,103 @@
 #define FILTER_MODEL "Model files (*.fbx *.gltf){.fbx,.gltf,.glb}"
 
 namespace {
+
+static std::string lastDeepmotionModel;
+
+static char clientId[128] = "";
+static char clientSecret[128] = "";
+static bool dataSaved = false; // Flag to track if data has been saved
+
+const char XOR_KEY = 0xAA; // XOR key for encryption/decryption
+
+void xorEncryptDecrypt(char* data, size_t dataLength, char key) {
+	for (size_t i = 0; i < dataLength; ++i) {
+		data[i] ^= key;
+	}
+}
+
+void saveToFile(const char* filename, const char* clientId, const char* clientSecret) {
+	std::ofstream file(filename, std::ios::binary);
+	if (file.is_open()) {
+		size_t clientIdLen = std::strlen(clientId);
+		size_t clientSecretLen = std::strlen(clientSecret);
+		
+		std::vector<char> buffer(clientIdLen + clientSecretLen + 2); // +2 for null terminators
+		std::memcpy(buffer.data(), clientId, clientIdLen + 1);
+		std::memcpy(buffer.data() + clientIdLen + 1, clientSecret, clientSecretLen + 1);
+		
+		xorEncryptDecrypt(buffer.data(), buffer.size(), XOR_KEY);
+		
+		file.write(buffer.data(), buffer.size());
+		file.close();
+	}
+}
+
+bool loadFromFile(const char* filename, char* clientId, char* clientSecret, size_t bufferSize) {
+	std::ifstream file(filename, std::ios::binary);
+	if (file.is_open()) {
+		file.seekg(0, std::ios::end);
+		size_t fileSize = file.tellg();
+		file.seekg(0, std::ios::beg);
+		
+		if (fileSize > bufferSize * 2 + 2) {
+			return false; // File too large for buffer
+		}
+		
+		std::vector<char> buffer(fileSize);
+		file.read(buffer.data(), fileSize);
+		file.close();
+		
+		xorEncryptDecrypt(buffer.data(), buffer.size(), XOR_KEY);
+		
+		size_t clientIdLen = std::strlen(buffer.data());
+		size_t clientSecretLen = std::strlen(buffer.data() + clientIdLen + 1);
+		
+		if (clientIdLen >= bufferSize || clientSecretLen >= bufferSize) {
+			return false; // Data too large for buffer
+		}
+		
+		std::strcpy(clientId, buffer.data());
+		std::strcpy(clientSecret, buffer.data() + clientIdLen + 1);
+		
+		return true;
+	}
+	return false;
+}
+
+
+void saveToFile(const char* filename, const std::string& modelName) {
+	std::ofstream file(filename, std::ios::binary);
+	if (file.is_open()) {
+		std::vector<char> buffer(modelName.begin(), modelName.end());
+		buffer.push_back('\0'); // Null-terminate the string
+		
+		xorEncryptDecrypt(buffer.data(), buffer.size(), XOR_KEY);
+		
+		file.write(buffer.data(), buffer.size());
+		file.close();
+	}
+}
+
+bool loadFromFile(const char* filename, std::string& modelName) {
+	std::ifstream file(filename, std::ios::binary);
+	if (file.is_open()) {
+		file.seekg(0, std::ios::end);
+		size_t fileSize = file.tellg();
+		file.seekg(0, std::ios::beg);
+		
+		std::vector<char> buffer(fileSize);
+		file.read(buffer.data(), fileSize);
+		file.close();
+		
+		xorEncryptDecrypt(buffer.data(), buffer.size(), XOR_KEY);
+		
+		modelName = std::string(buffer.data());
+		return true;
+	}
+	return false;
+}
+
 // Base64 encoding table
 static const std::string base64_chars =
 "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
@@ -130,6 +227,17 @@ MainLayer::MainLayer(Scene& scene, ImTextureID gearTexture, ImTextureID poweredB
 	dragStartPosition = gearPosition;
 	
 	_client.set_keep_alive(true);
+	
+	if(std::filesystem::exists("powersettings.dat")){
+		loadFromFile("powersettings.dat", lastDeepmotionModel);
+	}
+	
+	
+	if (std::filesystem::exists("powerkey.dat")) {
+		loadFromFile("powerkey.dat", clientId, clientSecret, sizeof(clientId));
+	}
+
+
 }
 
 MainLayer::~MainLayer()
@@ -566,150 +674,102 @@ void MainLayer::draw_ai_widget(Scene* scene)
 	
 	context_.ai.is_widget_dragging = isWidgetActive || draggingThisFrame;
 	if (isChatboxVisible) {
-		// Ensure the chatbox window is positioned and sized appropriately
-		ImGui::SetNextWindowSize(ImVec2(640, 480), ImGuiCond_FirstUseEver); // Example size, adjust as needed
-		ImGui::SetNextWindowPos(ImVec2(50, 50), ImGuiCond_FirstUseEver); // Example position, adjust as needed
-		ImGui::Begin("AI Prompt", &isChatboxVisible);
-		ImGui::GetCurrentWindow()->BeginOrderWithinContext = 4096;
-		
-		// Chat and Render Target layout in two columns
-		ImGui::Columns(2, NULL, true);
-		
-		// Left column - Chatbox
-		ImGui::Text("Prompt History");
-		static char message[128] = "";
-		ImGui::InputText("##Message", message, IM_ARRAYSIZE(message));
-		ImGui::SameLine();
-		
-		
-		// Chat history (example of a vertical chatbox)
-		static std::vector<std::string> chatHistory;
-		
-		if (ImGui::Button("Send")) {
-			auto res = _client.Get("/account/v1/creditBalance");
+
+		if(!_sessionCookie.empty()){
+			// Ensure the chatbox window is positioned and sized appropriately
+			ImGui::SetNextWindowSize(ImVec2(640, 480), ImGuiCond_FirstUseEver); // Example size, adjust as needed
+			ImGui::SetNextWindowPos(ImVec2(50, 50), ImGuiCond_FirstUseEver); // Example position, adjust as needed
+			ImGui::Begin("AI Prompt", &isChatboxVisible);
+			ImGui::GetCurrentWindow()->BeginOrderWithinContext = 4096;
 			
-			_sessionCookie = res->body;
+			// Chat and Render Target layout in two columns
+			ImGui::Columns(2, NULL, true);
 			
-			Json::CharReaderBuilder readerBuilder;
-			auto reader = std::unique_ptr<Json::CharReader>(readerBuilder.newCharReader());
-			Json::Value jsonData;
-			std::string errors;
+			// Left column - Chatbox
+			ImGui::Text("Prompt History");
+			static char message[128] = "";
+			ImGui::InputText("##Message", message, IM_ARRAYSIZE(message));
+			ImGui::SameLine();
 			
 			
-			bool parsingSuccessful = reader->parse(res->body.c_str(), res->body.c_str() + res->body.size(), &jsonData, &errors);
+			// Chat history (example of a vertical chatbox)
+			static std::vector<std::string> chatHistory;
 			
-			// Check for parsing errors
-			if (!parsingSuccessful) {
-				//chatHistory.push_back(std::string("Failed to parse the JSON string: "));
-			} else {
-				//
-				//				{"credits":<value>,"subscription":{"name":<value>,"credits":<value>,"featureLimits":{"maxVariantsGeneration":<value>},"currentPeriod":{"start":<value>,"end":<value>}}}
-				//
+			if (ImGui::Button("Send")) {
+				auto res = _client.Get("/account/v1/creditBalance");
 				
-				chatHistory.push_back(std::string(jsonData["credits"].asString()));
+				_sessionCookie = res->body;
+				
+				Json::CharReaderBuilder readerBuilder;
+				auto reader = std::unique_ptr<Json::CharReader>(readerBuilder.newCharReader());
+				Json::Value jsonData;
+				std::string errors;
+				
+				
+				bool parsingSuccessful = reader->parse(res->body.c_str(), res->body.c_str() + res->body.size(), &jsonData, &errors);
+				
+				// Check for parsing errors
+				if (!parsingSuccessful) {
+					//chatHistory.push_back(std::string("Failed to parse the JSON string: "));
+				} else {
+					//
+					//				{"credits":<value>,"subscription":{"name":<value>,"credits":<value>,"featureLimits":{"maxVariantsGeneration":<value>},"currentPeriod":{"start":<value>,"end":<value>}}}
+					//
+					
+					chatHistory.push_back(std::string(jsonData["credits"].asString()));
+				}
+				
+				// Add message to chat history
+				// Clear the input
+				message[0] = '\0';
 			}
 			
-			// Add message to chat history
-			// Clear the input
-			message[0] = '\0';
-		}
-		
-		for (const auto& msg : chatHistory) {
-			ImGui::TextUnformatted(msg.c_str());
-		}
-		
-		ImGui::NextColumn();
-		
-		float columnWidth = ImGui::GetColumnWidth();
-		float imageSize = columnWidth < ImGui::GetWindowHeight() ? columnWidth : ImGui::GetWindowHeight();
-		
-		// Right column - Render target logic (e.g., 3D model) and Settings button
-		if (scene) {
-			ImGui::Text("Preview");
-			
-			
-			void* framebufferTextureId = dragAndDropTextureId;
-			
-			if(!_deepmotionModels.empty()){
-				framebufferTextureId = reinterpret_cast<void*>(static_cast<intptr_t>(scene->get_mutable_framebuffer()->get_color_attachment()));
+			for (const auto& msg : chatHistory) {
+				ImGui::TextUnformatted(msg.c_str());
 			}
 			
-			//ImGui::Image(reinterpret_cast<void*>(static_cast<intptr_t>(scene->get_mutable_framebuffer()->get_color_attachment())),
-			ImGui::Image(framebufferTextureId,
-						 ImVec2{imageSize, imageSize},
-						 ImVec2{0, 1},
-						 ImVec2{1, 0});
+			ImGui::NextColumn();
 			
-			// Drag and Drop logic
-			if (ImGui::BeginDragDropTarget() && !_sessionCookie.empty()) {
-				if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("FBX_ACTOR_PATH")) {
-					const char* fbxPath = reinterpret_cast<const char*>(payload->Data);
-					
-					std::filesystem::path path = std::string{ fbxPath };
-					
-					auto fileContents = readFileToVector(path);
-					
-					auto res = _client.Get("/character/v1/getModelUploadUrl?resumable=0&modelExt=fbx");
-					
-					Json::CharReaderBuilder readerBuilder;
-					auto reader = std::unique_ptr<Json::CharReader>(readerBuilder.newCharReader());
-					Json::Value jsonData;
-					std::string errors;
-					
-					bool parsingSuccessful = reader->parse(res->body.c_str(), res->body.c_str() + res->body.size(), &jsonData, &errors);
-					
-					if(parsingSuccessful){
-						std::string modelUrl = jsonData["modelUrl"].asString();
+			float columnWidth = ImGui::GetColumnWidth();
+			float imageSize = columnWidth < ImGui::GetWindowHeight() ? columnWidth : ImGui::GetWindowHeight();
+			
+			// Right column - Render target logic (e.g., 3D model) and Settings button
+			if (scene) {
+				ImGui::Text("Preview");
+				
+				void* framebufferTextureId = dragAndDropTextureId;
+				
+				if(!_deepmotionModels.empty()){
+					framebufferTextureId = reinterpret_cast<void*>(static_cast<intptr_t>(scene->get_mutable_framebuffer()->get_color_attachment()));
+				}
+				
+				//ImGui::Image(reinterpret_cast<void*>(static_cast<intptr_t>(scene->get_mutable_framebuffer()->get_color_attachment())),
+				ImGui::Image(framebufferTextureId,
+							 ImVec2{imageSize, imageSize},
+							 ImVec2{0, 1},
+							 ImVec2{1, 0});
+				
+				// Drag and Drop logic
+				if (ImGui::BeginDragDropTarget() && !_sessionCookie.empty()) {
+					if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("FBX_ACTOR_PATH")) {
+						const char* fbxPath = reinterpret_cast<const char*>(payload->Data);
 						
-						const char* body = fileContents.data();
-						size_t content_length = fileContents.size();
-						std::string content_type = "application/octet-stream"; // Assuming binary file
+						std::filesystem::path path = std::string{ fbxPath };
 						
-						// Variables to hold the protocol, host, and path
-						std::string protocol, host, uploadPath;
+						std::string modelName = path.stem().string();
 						
-						// Find the position of "://"
-						std::string::size_type protocolPos = modelUrl.find("://");
-						if (protocolPos != std::string::npos) {
-							protocol = modelUrl.substr(0, protocolPos);
-							protocolPos += 3; // Move past "://"
+						bool existing = false;
+						for(auto& deepmotionModel : _deepmotionModels){
+							if(deepmotionModel.name.compare(modelName) == 0){
+								existing = true;
+								break;
+							}
 						}
 						
-						// Find the position of the first "/" after the protocol
-						std::string::size_type hostPos = modelUrl.find("/", protocolPos);
-						if (hostPos != std::string::npos) {
-							host = modelUrl.substr(protocolPos, hostPos - protocolPos);
-							uploadPath = modelUrl.substr(hostPos);
-						} else {
-							// If there's no path, the host is everything after the protocol
-							host = modelUrl.substr(protocolPos);
-							uploadPath = "/";
-						}
-						{
-							httplib::SSLClient uploadClient(host);
-							uploadClient.set_compress(false);
-						
-							uploadClient.Put(uploadPath, body, content_length, content_type);
-						}
-						// Construct JSON payload
-						Json::Value jsonData;
-						if (!modelUrl.empty()) {
-							jsonData["modelUrl"] = modelUrl;
-						}
-						
-						Json::StreamWriterBuilder writer;
-						std::string modelJsonPostData = Json::writeString(writer, jsonData);
-						
-						std::string path = "/character/v1/storeModel";
-						const char* modelBody = modelJsonPostData.c_str();
-						size_t modelContentLength = modelJsonPostData.size();
-						std::string modelContentType = "application/json";
-						
-						auto res2 = _client.Post(path, modelBody, modelContentLength, modelContentType);
-						
-						if(res2->status == httplib::StatusCode::OK_200){
+						if(!existing){
+							auto fileContents = readFileToVector(path);
 							
-							auto res = _client.Get("/character/v1/listModels");
+							auto res = _client.Get("/character/v1/getModelUploadUrl?resumable=0&modelExt=fbx");
 							
 							Json::CharReaderBuilder readerBuilder;
 							auto reader = std::unique_ptr<Json::CharReader>(readerBuilder.newCharReader());
@@ -719,34 +779,324 @@ void MainLayer::draw_ai_widget(Scene* scene)
 							bool parsingSuccessful = reader->parse(res->body.c_str(), res->body.c_str() + res->body.size(), &jsonData, &errors);
 							
 							if(parsingSuccessful){
-								_deepmotionModels.clear();
+								std::string modelUrl = jsonData["modelUrl"].asString();
 								
-								if(jsonData["count"].asInt() > 0){
-									for(auto& json : jsonData["list"]){
-										_deepmotionModels.push_back({
-											json["id"].asString(),
-											json["name"].asString(),
-											json["glb"].asString(),
-											json["mtime"].asString()});
+								const char* body = fileContents.data();
+								size_t content_length = fileContents.size();
+								std::string content_type = "application/octet-stream"; // Assuming binary file
+								
+								// Variables to hold the protocol, host, and path
+								std::string protocol, host, uploadPath;
+								
+								// Find the position of "://"
+								std::string::size_type protocolPos = modelUrl.find("://");
+								if (protocolPos != std::string::npos) {
+									protocol = modelUrl.substr(0, protocolPos);
+									protocolPos += 3; // Move past "://"
+								}
+								
+								// Find the position of the first "/" after the protocol
+								std::string::size_type hostPos = modelUrl.find("/", protocolPos);
+								if (hostPos != std::string::npos) {
+									host = modelUrl.substr(protocolPos, hostPos - protocolPos);
+									uploadPath = modelUrl.substr(hostPos);
+								} else {
+									// If there's no path, the host is everything after the protocol
+									host = modelUrl.substr(protocolPos);
+									uploadPath = "/";
+								}
+								{
+									httplib::SSLClient uploadClient(host);
+									uploadClient.set_compress(false);
+									
+									uploadClient.Put(uploadPath, body, content_length, content_type);
+								}
+								// Construct JSON payload
+								Json::Value jsonData;
+								if (!modelUrl.empty()) {
+									jsonData["modelUrl"] = modelUrl;
+								}
+								
+								jsonData["modelName"] = modelName;
+								
+								Json::StreamWriterBuilder writer;
+								std::string modelJsonPostData = Json::writeString(writer, jsonData);
+								
+								std::string path = "/character/v1/storeModel";
+								const char* modelBody = modelJsonPostData.c_str();
+								size_t modelContentLength = modelJsonPostData.size();
+								std::string modelContentType = "application/json";
+								
+								auto res2 = _client.Post(path, modelBody, modelContentLength, modelContentType);
+								
+								if(res2->status == httplib::StatusCode::OK_200){
+									
+									auto res = _client.Get("/character/v1/listModels");
+									
+									Json::CharReaderBuilder readerBuilder;
+									auto reader = std::unique_ptr<Json::CharReader>(readerBuilder.newCharReader());
+									Json::Value jsonData;
+									std::string errors;
+									
+									bool parsingSuccessful = reader->parse(res->body.c_str(), res->body.c_str() + res->body.size(), &jsonData, &errors);
+									
+									if(parsingSuccessful){
+										_deepmotionModels.clear();
+										
+										if(jsonData["count"].asInt() > 0){
+											for(auto& json : jsonData["list"]){
+												_deepmotionModels.push_back({
+													json["id"].asString(),
+													json["name"].asString(),
+													json["glb"].asString(),
+													json["mtime"].asString()});
+											}
+											
+											//
+											auto resources = scene->get_mutable_shared_resources();
+											
+											resources->import_model(fbxPath);
+											
+											auto& animationSet = resources->getAnimationSet(fbxPath);
+											
+											resources->add_animations(animationSet.animations);
+											
+											auto entity = resources->parse_model(animationSet.model, fbxPath);
+											
+											auto root = resources->get_root_entity();
+											
+											std::vector<std::string> existingNames; // Example existing actor names
+											std::string prefix = "Actor"; // Prefix for actor names
+											
+											if(_ai_entity != nullptr){
+												root->removeChild(_ai_entity);
+												_ai_entity = nullptr;
+											}
+											
+											auto children = root->get_mutable_children();
+											
+											// Example iteration to get existing names (replace this with your actual iteration logic)
+											for (int i = 0; i < children.size(); ++i) {
+												std::string actorName = children[i]->get_name();
+												existingNames.push_back(actorName);
+											}
+											
+											std::string uniqueActorName = anim::GenerateUniqueActorName(existingNames, prefix);
+											
+											entity->set_name(uniqueActorName);
+											
+											root->add_children(entity);
+											
+											
+											_ai_entity = entity;
+											
+											lastDeepmotionModel = modelName;
+											
+											saveToFile("powersettings.dat", lastDeepmotionModel);
+
+										}
+									} else {
+										// handle error
 									}
 									
-									//
+									
+								} else {
+									// handle error
+								}
+								
+							} else {
+								// handle error
+							}
+						} else {
+							
+							//
+							auto resources = scene->get_mutable_shared_resources();
+							
+							resources->import_model(fbxPath);
+							
+							auto& animationSet = resources->getAnimationSet(fbxPath);
+							
+							resources->add_animations(animationSet.animations);
+							
+							auto entity = resources->parse_model(animationSet.model, fbxPath);
+							
+							auto root = resources->get_root_entity();
+							
+							std::vector<std::string> existingNames; // Example existing actor names
+							std::string prefix = "Actor"; // Prefix for actor names
+							
+							if(_ai_entity != nullptr){
+								root->removeChild(_ai_entity);
+								_ai_entity = nullptr;
+							}
+							
+							auto children = root->get_mutable_children();
+							
+							// Example iteration to get existing names (replace this with your actual iteration logic)
+							for (int i = 0; i < children.size(); ++i) {
+								std::string actorName = children[i]->get_name();
+								existingNames.push_back(actorName);
+							}
+							
+							std::string uniqueActorName = anim::GenerateUniqueActorName(existingNames, prefix);
+							
+							entity->set_name(uniqueActorName);
+							
+							root->add_children(entity);
+							
+							_ai_entity = entity;
+							
+							lastDeepmotionModel = modelName;
+							
+							saveToFile("powersettings.dat", lastDeepmotionModel);
+						}
+						
+					}
+					ImGui::EndDragDropTarget();
+				} else {
+				}
+			}
+			
+			ImGui::End(); // End of chatbox window
+
+		} else {
+			ImGui::OpenPopup("AI Settings");
+			
+			if (ImGui::BeginPopupModal("AI Settings", &isChatboxVisible, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_MenuBar)) {
+				
+				ImGui::GetCurrentWindow()->BeginOrderWithinContext = 8196;
+
+				// Add a close button in the upper right corner
+				float buttonWidth = 20.0f; // Adjust the width of the button as needed
+				
+				ImVec2 panelSize = ImGui::GetContentRegionAvail();
+
+				float windowWidth = panelSize.x;
+				
+				float buttonX = (windowWidth - buttonWidth * 0.65f);
+
+				if (ImGui::BeginMenuBar()) {
+					ImGui::SetCursorPosX(buttonX);
+					if (ImGui::Button("X", ImVec2(buttonWidth, 0))) {
+						ImGui::CloseCurrentPopup();
+						isChatboxVisible = false;
+					}
+					ImGui::EndMenuBar();
+				}
+
+
+				windowWidth = ImGui::GetWindowSize().x;
+				
+				// Center the image
+				float imageWidth = 128; // Adjust the image width as needed
+				float imageHeight = 128; // Adjust the image height as needed
+				float imageX = (windowWidth - imageWidth) * 0.5f;
+				
+				ImGui::SetCursorPosX(imageX);
+				ImGui::Image(poweredByTextureId, ImVec2(imageWidth, imageHeight));
+				
+				// Align input fields
+				ImGui::Spacing();
+				ImGui::Spacing();
+				ImGui::Spacing();
+
+				ImGui::InputText("##ClientID", clientId, IM_ARRAYSIZE(clientId), ImGuiInputTextFlags_Password);
+				ImGui::Text("Client ID");
+				
+				ImGui::Spacing();
+				ImGui::InputText("##ClientSecret", clientSecret, IM_ARRAYSIZE(clientSecret), ImGuiInputTextFlags_Password);
+				ImGui::Text("Client Secret");
+				
+				static std::string authMessage = "";
+				static ImVec4 authColor;
+				
+				ImGui::Spacing();
+				ImGui::Spacing();
+				
+				// Test Credentials button
+				if (ImGui::Button("Sync")) {
+					// Encode clientId and clientSecret in Base64
+					std::string credentials = std::string(clientId) + ":" + std::string(clientSecret);
+					std::string encodedCredentials = base64_encode(reinterpret_cast<const unsigned char*>(credentials.c_str()), credentials.length());
+					
+					_client.set_default_headers({
+						{ "Authorization", "Basic " + encodedCredentials }
+					});
+					
+					auto res = _client.Get("/account/v1/auth");
+					
+					if (res && res->status == httplib::StatusCode::OK_200) {
+						_sessionCookie = res->headers.find("Set-Cookie")->second;
+						
+						// Find the end position of the cookie value before the first semicolon
+						std::string::size_type startPos = _sessionCookie.find("dmsess=");
+						
+						std::string::size_type endPos = _sessionCookie.find(";", startPos);
+						if (endPos != std::string::npos) {
+							_sessionCookie = _sessionCookie.substr(startPos, endPos - startPos);
+						} else {
+							_sessionCookie = _sessionCookie.substr(startPos);
+						}
+						
+						_client.set_default_headers({
+							{ "cookie", _sessionCookie }
+						});
+						
+						// Handle successful authentication
+						authColor = ImVec4(0.0f, 1.0f, 0.0f, 1.0f); // Green color for success
+						
+						auto res = _client.Get("/character/v1/listModels");
+						
+						Json::CharReaderBuilder readerBuilder;
+						auto reader = std::unique_ptr<Json::CharReader>(readerBuilder.newCharReader());
+						Json::Value jsonData;
+						std::string errors;
+						
+						bool parsingSuccessful = reader->parse(res->body.c_str(), res->body.c_str() + res->body.size(), &jsonData, &errors);
+						
+						if(parsingSuccessful){
+							
+							_deepmotionModels.clear();
+							
+							if(jsonData["count"].asInt() > 0){
+								for(auto& json : jsonData["list"]){
+									_deepmotionModels.push_back({
+										json["id"].asString(),
+										json["name"].asString(),
+										json["glb"].asString(),
+										json["mtime"].asString()});
+									
+								}
+							}
+							
+							
+							bool existing = false;
+							for (auto& deepmotionModel : _deepmotionModels) {
+								if (deepmotionModel.name.compare(lastDeepmotionModel) == 0) {
+									existing = true;
+									break;
+								}
+							}
+							
+							if (existing) {
+								std::string fbxPath = "Models/" + lastDeepmotionModel + ".fbx";
+								if (std::filesystem::exists(fbxPath)) {
 									auto resources = scene->get_mutable_shared_resources();
 									
-									resources->import_model(fbxPath);
+									resources->import_model(fbxPath.c_str());
 									
 									auto& animationSet = resources->getAnimationSet(fbxPath);
 									
 									resources->add_animations(animationSet.animations);
 									
-									auto entity = resources->parse_model(animationSet.model, fbxPath);
+									auto entity = resources->parse_model(animationSet.model, fbxPath.c_str());
 									
 									auto root = resources->get_root_entity();
 									
 									std::vector<std::string> existingNames; // Example existing actor names
 									std::string prefix = "Actor"; // Prefix for actor names
 									
-									if(_ai_entity != nullptr){
+									if (_ai_entity != nullptr) {
 										root->removeChild(_ai_entity);
 										_ai_entity = nullptr;
 									}
@@ -765,186 +1115,44 @@ void MainLayer::draw_ai_widget(Scene* scene)
 									
 									root->add_children(entity);
 									
-									
 									_ai_entity = entity;
 								}
-							} else {
-								// handle error
 							}
 							
+							authMessage = "Successful sync.";
 							
+							// Save clientId and clientSecret to file when successful sync occurs
+							if (!dataSaved) {
+								saveToFile("powerkey.dat", clientId, clientSecret);
+								saveToFile("powersettings.dat", lastDeepmotionModel);
+								dataSaved = true; // Set the flag to true to prevent further saves
+							}
 						} else {
-							// handle error
+							authColor = ImVec4(1.0f, 0.0f, 0.0f, 1.0f); // Red color for error
+							authMessage = "API Error (Models)";
 						}
 						
-						
 					} else {
-						// handle error
-					}
-					
-				}
-				ImGui::EndDragDropTarget();
-			} else {
-				// Handle error
-			}
-		}
-		
-		if (ImGui::Button("Settings")) {
-			ImGui::OpenPopup("AI Settings");
-		}
-		
-		// Settings modal
-		if (ImGui::BeginPopupModal("AI Settings", NULL, ImGuiWindowFlags_AlwaysAutoResize)) {
-			ImGui::GetCurrentWindow()->BeginOrderWithinContext = 8196;
-			
-			// Center the image
-			float windowWidth = ImGui::GetWindowSize().x;
-			float imageWidth = 128; // Adjust the image width as needed
-			float imageHeight = 128; // Adjust the image height as needed
-			float imageX = (windowWidth - imageWidth) * 0.5f;
-			
-			ImGui::SetCursorPosX(imageX);
-			ImGui::Image(poweredByTextureId, ImVec2(imageWidth, imageHeight));
-			
-			// Align input fields
-			ImGui::Spacing();
-			ImGui::Spacing();
-			ImGui::Spacing();
-			
-			static char clientId[128] = "";
-			static char clientSecret[128] = "";
-			
-			ImGui::InputText("##ClientID", clientId, IM_ARRAYSIZE(clientId));
-			ImGui::Text("Client ID");
-			
-			ImGui::Spacing();
-			ImGui::InputText("##ClientSecret", clientSecret, IM_ARRAYSIZE(clientSecret));
-			ImGui::Text("Client Secret");
-			
-			
-			static std::string authMessage = "";
-			static ImVec4 authColor;
-			
-			
-			ImGui::Spacing();
-			ImGui::Spacing();
-			
-			
-			// Test Credentials button
-			if (ImGui::Button("Sync")) {
-				// Encode clientId and clientSecret in Base64
-				std::string credentials = std::string(clientId) + ":" + std::string(clientSecret);
-				std::string encodedCredentials = base64_encode(reinterpret_cast<const unsigned char*>(credentials.c_str()), credentials.length());
-				
-				_client.set_default_headers({
-					{ "Authorization", "Basic " + encodedCredentials }
-				});
-				
-				auto res = _client.Get("/account/v1/auth");
-				
-				if (res && res->status == httplib::StatusCode::OK_200) {
-					_sessionCookie = res->headers.find("Set-Cookie")->second;
-					
-					// Find the end position of the cookie value before the first semicolon
-					std::string::size_type startPos = _sessionCookie.find("dmsess=");
-					
-					std::string::size_type endPos = _sessionCookie.find(";", startPos);
-					if (endPos != std::string::npos) {
-						_sessionCookie = _sessionCookie.substr(startPos, endPos - startPos);
-					} else {
-						_sessionCookie = _sessionCookie.substr(startPos);
-					}
-					
-					_client.set_default_headers({
-						{ "cookie", _sessionCookie }
-					});
-					
-					// Handle successful authentication
-					authColor = ImVec4(0.0f, 1.0f, 0.0f, 1.0f); // Green color for success
-					
-					auto res = _client.Get("/character/v1/listModels");
-					
-					Json::CharReaderBuilder readerBuilder;
-					auto reader = std::unique_ptr<Json::CharReader>(readerBuilder.newCharReader());
-					Json::Value jsonData;
-					std::string errors;
-					
-					bool parsingSuccessful = reader->parse(res->body.c_str(), res->body.c_str() + res->body.size(), &jsonData, &errors);
-					
-					if(parsingSuccessful){
-						authMessage = "Successful sync.";
+						// Handle error
+						authMessage = "Invalid credentials.";
 						
-						_deepmotionModels.clear();
+						dataSaved = false;
 						
-						if(jsonData["count"].asInt() > 0){
-							for(auto& json : jsonData["list"]){
-								_deepmotionModels.push_back({
-									json["id"].asString(),
-									json["name"].asString(),
-									json["glb"].asString(),
-									json["mtime"].asString()});
-								
-							}
-						}
-					} else {
 						authColor = ImVec4(1.0f, 0.0f, 0.0f, 1.0f); // Red color for error
-						
-						authMessage = "API Error (Models)";
 					}
-					
-				} else {
-					// Handle error
-					authMessage = "Invalid credentials.";
-					
-					authColor = ImVec4(1.0f, 0.0f, 0.0f, 1.0f); // Red color for error
-					
 				}
+				
+				if (!authMessage.empty()) {
+					ImGui::SameLine();
+					ImGui::TextColored(authColor, "%s", authMessage.c_str());
+				}
+				
+				ImGui::EndPopup();
 			}
-			
-			ImGui::SameLine();
-			
-			if (ImGui::Button("Close")) {
-				ImGui::CloseCurrentPopup();
-				
-				// Encode clientId and clientSecret in Base64
-				std::string credentials = std::string(clientId) + ":" + std::string(clientSecret);
-				std::string encodedCredentials = base64_encode(reinterpret_cast<const unsigned char*>(credentials.c_str()), credentials.length());
-				
-				_client.set_default_headers({
-					{ "Authorization", "Basic " + encodedCredentials }
-				});
-				
-				auto res = _client.Get("/account/v1/auth");
-				
-				if (res && res->status == httplib::StatusCode::OK_200) {
-					_sessionCookie = res->headers.find("Set-Cookie")->second;
-					
-					std::string::size_type startPos = _sessionCookie.find("dmsess=");
-					
-					std::string::size_type endPos = _sessionCookie.find(";", startPos);
-					if (endPos != std::string::npos) {
-						_sessionCookie = _sessionCookie.substr(startPos, endPos - startPos);
-					} else {
-						_sessionCookie = _sessionCookie.substr(startPos);
-					}
 
-					_client.set_default_headers({
-						{ "cookie", _sessionCookie }
-					});
-				} else {
-					// Handle error
-				}
-			}
-			if (!authMessage.empty()) {
-				ImGui::SameLine();
-				ImGui::TextColored(authColor, "%s", authMessage.c_str());
-			}
-			
-			ImGui::EndPopup();
-			
 		}
 		
-		ImGui::End(); // End of chatbox window
+		
 	}
 }
 

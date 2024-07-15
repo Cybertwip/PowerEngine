@@ -93,8 +93,6 @@ void App::init_scene(uint32_t width, uint32_t height)
 	scenes_[ai_scene_idx_]->init_framebuffer(720, 720);
 
 	scenes_[current_scene_idx_]->set_selected_entity(0);
-	
-	
 }
 
 void App::update(float deltaTime)
