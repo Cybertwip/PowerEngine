@@ -731,7 +731,17 @@ void SharedResources::add_animations(const std::vector<std::shared_ptr<Animation
 }
 
 void SharedResources::add_animation_set(const std::string& path, std::shared_ptr<Model> model, const std::vector<std::shared_ptr<Animation>> &animations){
-	animationSets_[path] = {model, animations};
+	
+	// filter out empty animations
+	
+	std::vector<std::shared_ptr<Animation>> filtered;
+	for(auto& animation : animations){
+		if(animation->get_duration() > 0){
+			filtered.push_back(animation);
+		}
+	}
+	
+	animationSets_[path] = {model, filtered};
 }
 
 AnimationSet& SharedResources::getAnimationSet(const std::string& path){
