@@ -643,7 +643,7 @@ public:
 	{
 		return _transform_component->get_mat4();
 	}
-	void set_local(const glm::mat4 &local)
+	void set_local(glm::mat4 local)
 	{
 		_transform_component->set_transform(local);
 	}

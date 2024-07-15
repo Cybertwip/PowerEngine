@@ -243,7 +243,7 @@ namespace anim
                 pose_comp->update(nullptr);
                 TransformComponent hips{};
                 hips.set_transform(pose_root_entity->get_component<ArmatureComponent>()->get_model());
-                init_json_pose(pose["world"], pose["rotation"], pose_root_entity, hips.mTranslation);
+                init_json_pose(pose["world"], pose["rotation"], pose_root_entity, hips.get_translation());
                 ret["pose"].append(pose);
                 pose_size++;
             }

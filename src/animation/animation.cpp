@@ -29,6 +29,7 @@ Bone *Animation::find_bone(const std::string &name)
 		return &(*(iter->second));
 }
 float Animation::get_fps() { return fps_; }
+void Animation::set_fps(float fps) { fps_ = fps; }
 float Animation::get_duration() { return duration_; }
 float Animation::get_current_duration()
 {

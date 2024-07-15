@@ -144,12 +144,22 @@ void PhysicsWorld::alignCollisions(std::shared_ptr<anim::Entity> a, std::shared_
 					entity->get_contacts_internal().push_back(contact);
 					
 					if (hasOffsetX) {
-						transform->mTranslation.x += intersection.size.x;
+						auto transformTranslation = transform->get_translation();
+						
+						transformTranslation.x += intersection.size.x;
+						
+						transform->set_translation(transformTranslation);
 						collisionBox->origin.x += intersection.size.x;
 					}
 					
 					if (hasOffsetY) {
-						transform->mTranslation.y += intersection.size.y;
+						
+						auto transformTranslation = transform->get_translation();
+						
+						transformTranslation.y += intersection.size.y;
+
+						transform->set_translation(transformTranslation);
+
 						collisionBox->origin.y += intersection.size.y;
 					}
 				}

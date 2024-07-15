@@ -58,7 +58,7 @@ namespace anim
         void process_mouse_scroll(float yoffset);
         void process_mouse_scroll_press(float yoffset, float xoffset, float deltaTime);
 		
-		glm::vec3& get_position();
+		const glm::vec3& get_position();
 		glm::vec3 get_up();
 		float get_yaw();
 		float get_pitch();

@@ -238,7 +238,7 @@ void App::process_ai_context(){
 
 void App::process_timeline_context()
 {
-	auto &ui_context = ui_->get_context();
+	auto &ui_context = const_cast<ui::UiContext&>(ui_->get_context());
 	auto &time_context = ui_context.timeline;
 	auto &entity_context = ui_context.entity;
 	auto &scene_context = ui_context.scene;
@@ -293,15 +293,18 @@ void App::process_timeline_context()
 			auto gizmo_op = entity_context.gizmo_operation;
 			
 			if(gizmo_op & ImGuizmo::TRANSLATE){
-				component->set_translation(entity_context.new_transform.mTranslation);
+				auto translation = entity_context.new_transform.get_translation();
+				component->set_translation(translation);
 			}
 			
 			if(gizmo_op & ImGuizmo::ROTATE){
-				component->set_rotation(entity_context.new_transform.mRotation);
+				auto rotation = entity_context.new_transform.get_rotation();
+				component->set_rotation(rotation);
 			}
 			
 			if(gizmo_op & ImGuizmo::SCALE){
-				component->set_scale(entity_context.new_transform.mScale);
+				auto scale = entity_context.new_transform.get_scale();
+				component->set_scale(scale);
 			}
 		}
 		

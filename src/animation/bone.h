@@ -52,7 +52,7 @@ namespace anim
     {
     public:
         Bone();		
-		Bone(const std::string &name, sfbx::AnimationCurveNode* positionCurve, sfbx::AnimationCurveNode* rotationCurve, sfbx::AnimationCurveNode* scaleCurve, const glm::mat4 &inverse_binding_pose);
+		Bone(const std::string &name, sfbx::AnimationCurveNode* positionCurve, sfbx::AnimationCurveNode* rotationCurve, sfbx::AnimationCurveNode* scaleCurve, const glm::mat4 &inverse_binding_pose, float fps);
 
 		
         void update(float animation_time, float factor);

@@ -87,7 +87,7 @@ void FbxAnimation::process_bones(const sfbx::AnimationLayer *animation, sfbx::Mo
 		
 	auto poseMatrix = SfbxMatToGlmMat(node->getLocalMatrix());
 	
-	name_bone_map_[bone_name] = std::make_unique<Bone>(bone_name, positionCurve.get(), rotationCurve.get(), scaleCurve.get(), glm::inverse(poseMatrix));
+	name_bone_map_[bone_name] = std::make_unique<Bone>(bone_name, positionCurve.get(), rotationCurve.get(), scaleCurve.get(), glm::inverse(poseMatrix), fps_);
 	
 	for(auto& child : node->getChildren()){
 		if(auto model = sfbx::as<sfbx::Model>(child); model){

@@ -31,10 +31,10 @@ const glm::mat4 &CameraComponent::get_projection() const
 	return projection_;
 }
 
-glm::vec3& CameraComponent::get_position(){
+const glm::vec3& CameraComponent::get_position(){
 	auto component = _owner->get_component<TransformComponent>();
 	
-	return component->mTranslation;
+	return component->get_translation();
 }
 
 glm::vec3 CameraComponent::get_up(){
@@ -44,13 +44,13 @@ glm::vec3 CameraComponent::get_up(){
 float CameraComponent::get_yaw(){
 	auto component = _owner->get_component<TransformComponent>();
 	
-	return glm::degrees(component->mRotation.y);
+	return glm::degrees(component->get_rotation().y);
 }
 
 float CameraComponent::get_pitch(){
 	auto component = _owner->get_component<TransformComponent>();
 	
-	return glm::degrees(component->mRotation.x);
+	return glm::degrees(component->get_rotation().x);
 }
 
 
@@ -67,7 +67,7 @@ void CameraComponent::set_view_and_projection(float aspect)
 
 	projection_ = glm::perspective(zoom_, aspect, 1.0f, 5e3f);
 
-	glm::mat4 mat = glm::lookAt(component->mTranslation, component->mTranslation + front_, up_);
+	glm::mat4 mat = glm::lookAt(component->get_translation(), component->get_translation() + front_, up_);
 	mat = glm::rotate(mat, x_angle_, glm::vec3(1.0f, 0.0f, 0.0f));
 	view_ = glm::rotate(mat, 0.0f, glm::vec3(0.0f, 1.0f, 0.0f));
 }
@@ -76,15 +76,27 @@ void CameraComponent::process_keyboard(CameraMovement direction, float deltaTime
 {
 	auto component = _owner->get_component<TransformComponent>();
 	float velocity = MANUAL_SPEED * deltaTime;
-	if (direction == FORWARD)
-		component->mTranslation += up_ * velocity;
-	if (direction == BACKWARD)
-		component->mTranslation -= up_ * velocity;
-	if (direction == LEFT)
-		component->mTranslation -= right_ * velocity;
-	if (direction == RIGHT)
-		component->mTranslation += right_ * velocity;
-	
+	if (direction == FORWARD){
+		auto transformTranslation = component->get_translation() + up_ * velocity;
+		
+		component->set_translation(transformTranslation);
+
+	}
+	if (direction == BACKWARD){
+		
+		auto transformTranslation = component->get_translation() - up_ * velocity;
+		component->set_translation(transformTranslation);
+
+	}
+	if (direction == LEFT){
+		auto transformTranslation = component->get_translation() - right_ * velocity;
+		component->set_translation(transformTranslation);
+	}
+	if (direction == RIGHT){
+		auto transformTranslation = component->get_translation() + right_ * velocity;
+		component->set_translation(transformTranslation);
+	}
+
 	update_camera_vectors();
 }
 
@@ -97,16 +109,17 @@ void CameraComponent::process_mouse_movement(float xoffset, float yoffset)
 	
 	auto component = _owner->get_component<TransformComponent>();
 
-	auto pitch = glm::degrees(component->mRotation.x);
-	auto yaw = glm::degrees(component->mRotation.y);
+	auto pitch = glm::degrees(component->get_rotation().x);
+	auto yaw = glm::degrees(component->get_rotation().y);
 
 	yaw -= y_offset_;
 	pitch -= x_offset_;
 
-	
-	component->mRotation.x = glm::radians(pitch);
-	component->mRotation.y = glm::radians(yaw);
+	auto componentRotation = component->get_rotation();
+	componentRotation.x = glm::radians(pitch);
+	componentRotation.y = glm::radians(yaw);
 
+	component->set_rotation(componentRotation);
 	update_camera_vectors();
 }
 
@@ -115,10 +128,21 @@ void CameraComponent::process_mouse_scroll(float yoffset)
 	auto component = _owner->get_component<TransformComponent>();
 	
 	glm::vec3 delta = front_ * movement_sensitivity_ * 0.1f;
-	if (yoffset > 0)
-		component->mTranslation += delta;
-	if (yoffset < 0)
-		component->mTranslation -= delta;
+	if (yoffset > 0){
+		auto transformTranslation = component->get_translation();
+		transformTranslation += delta;
+		
+		component->set_translation(transformTranslation);
+
+	}
+	if (yoffset < 0){
+		
+		auto transformTranslation = component->get_translation();
+		
+		transformTranslation -= delta;
+		
+		component->set_translation(transformTranslation);
+	}
 	
 	update_camera_vectors();
 }
@@ -128,8 +152,11 @@ void CameraComponent::process_mouse_scroll_press(float yoffset, float xoffset, f
 	auto component = _owner->get_component<TransformComponent>();
 	
 	float velocity = movement_sensitivity_ * deltaTime;
-	component->mTranslation -= up_ * velocity * yoffset;
-	component->mTranslation += right_ * velocity * xoffset;
+	auto transformTranslation = component->get_translation();
+	
+	transformTranslation -= up_ * velocity * yoffset;
+	transformTranslation += right_ * velocity * xoffset;
+	component->set_translation(transformTranslation);
 	
 	update_camera_vectors();
 }

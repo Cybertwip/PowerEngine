@@ -11,93 +11,48 @@
 namespace anim
 {
 Bone::Bone() = default;
-Bone::Bone(const std::string &name, sfbx::AnimationCurveNode* positionCurve, sfbx::AnimationCurveNode* rotationCurve, sfbx::AnimationCurveNode* scaleCurve, const glm::mat4 &inverse_binding_pose)
+Bone::Bone(const std::string &name, sfbx::AnimationCurveNode* positionCurve, sfbx::AnimationCurveNode* rotationCurve, sfbx::AnimationCurveNode* scaleCurve, const glm::mat4 &inverse_binding_pose, float fps)
 : name_(name),
 local_transform_(1.0f)
 {
 	set_bindpose(glm::inverse(inverse_binding_pose));
-		
-	std::size_t num_positions = positionCurve ?  positionCurve->getAnimationCurves()[0]->getTimes().size() : 0;
-
-	std::size_t num_rotations = rotationCurve ?  rotationCurve->getAnimationCurves()[0]->getTimes().size() : 0;
-
-	std::size_t num_scales = scaleCurve ?  scaleCurve->getAnimationCurves()[0]->getTimes().size() : 0;
-
-	for (int pos_idx = 0; pos_idx < num_positions; ++pos_idx)
+	
+	// Determine the maximum number of frames to process
+	std::size_t max_frames = 0;
+	if (positionCurve) {
+		max_frames = std::max(max_frames, positionCurve->getAnimationCurves()[0]->getTimes().size());
+	}
+	if (rotationCurve) {
+		max_frames = std::max(max_frames, rotationCurve->getAnimationCurves()[0]->getTimes().size());
+	}
+	if (scaleCurve) {
+		max_frames = std::max(max_frames, scaleCurve->getAnimationCurves()[0]->getTimes().size());
+	}
+	
+	for (std::size_t frame_idx = 0; frame_idx < max_frames; ++frame_idx)
 	{
-		if(positionCurve){
-			positionCurve->applyAnimation(pos_idx / 60.0f);
+		if (positionCurve) {
+			positionCurve->applyAnimation(frame_idx / fps);
 		}
 		
-		if(rotationCurve){
-			rotationCurve->applyAnimation(pos_idx / 60.0f);
+		if (rotationCurve) {
+			rotationCurve->applyAnimation(frame_idx / fps);
 		}
 		
-		if(scaleCurve){
-			scaleCurve->applyAnimation(pos_idx / 60.0f);
+		if (scaleCurve) {
+			scaleCurve->applyAnimation(frame_idx / fps);
 		}
 		
 		auto model = sfbx::as<sfbx::Model>(rotationCurve->getAnimationTarget());
 		
 		auto [t, r, s] = DecomposeTransform(SfbxMatToGlmMat(model->getLocalMatrix()));
-		
-		glm::vec3 rotationAxis = glm::degrees(glm::eulerAngles(r));
-		
-		push_position(t, pos_idx);
-		push_rotation(r, pos_idx);
-		push_scale(s, pos_idx);
+
+		push_position(t, frame_idx);
+		push_rotation(r, frame_idx);
+		push_scale(s, frame_idx);
 	}
 	
-	for (int rot_idx = 0; rot_idx < num_rotations; ++rot_idx)
-	{
-		if(positionCurve){
-			positionCurve->applyAnimation(rot_idx / 60.0f);
-		}
-		
-		if(rotationCurve){
-			rotationCurve->applyAnimation(rot_idx / 60.0f);
-		}
-		
-		if(scaleCurve){
-			scaleCurve->applyAnimation(rot_idx / 60.0f);
-		}
-		
-		auto model = sfbx::as<sfbx::Model>(rotationCurve->getAnimationTarget());
-		
-		auto [t, r, s] = DecomposeTransform(SfbxMatToGlmMat(model->getLocalMatrix()));
-		
-		glm::vec3 rotationAxis = glm::degrees(glm::eulerAngles(r));
-		
-		push_position(t, rot_idx);
-		push_rotation(r, rot_idx);
-		push_scale(s, rot_idx);
-	}
-	
-	
-	for (int scale_idx = 0; scale_idx < num_scales; ++scale_idx)
-	{
-		if(positionCurve){
-			positionCurve->applyAnimation(scale_idx / 60.0f);
-		}
-		
-		if(rotationCurve){
-			rotationCurve->applyAnimation(scale_idx / 60.0f);
-		}
-		
-		if(scaleCurve){
-			scaleCurve->applyAnimation(scale_idx / 60.0f);
-		}
-		
-		auto model = sfbx::as<sfbx::Model>(rotationCurve->getAnimationTarget());
-		
-		auto [t, r, s] = DecomposeTransform(SfbxMatToGlmMat(model->getLocalMatrix()));
-		
-		push_position(t, scale_idx);
-		push_rotation(r, scale_idx);
-		push_scale(s, scale_idx);
-	}
-	
-//	 unbind bind pose
+	// Unbind bind pose
 	for (auto time : time_set_)
 	{
 		auto t = positions_.find(time);
@@ -109,7 +64,7 @@ local_transform_(1.0f)
 		glm::mat4 transformation = glm::translate(glm::mat4(1.0f), tt) * glm::toMat4(glm::normalize(rr)) * glm::scale(glm::mat4(1.0f), ss);
 		
 		transformation = glm::inverse(this->get_bindpose()) * transformation;
-
+		
 		auto [translation, rotation, scale] = DecomposeTransform(transformation);
 		if (t != positions_.end())
 		{
@@ -125,6 +80,7 @@ local_transform_(1.0f)
 		}
 	}
 }
+
 void Bone::update(float animation_time, float factor)
 {
 	factor_ = factor;

@@ -1305,9 +1305,11 @@ std::shared_ptr<anim::Entity> SharedResources::create_light(const LightManager::
 		
 	auto light = std::dynamic_pointer_cast<DirectionalLightComponent>(entity->add_component<DirectionalLightComponent>());
 	
+	auto directionRef = parameters.direction;
 	entity->get_component<TransformComponent>()->set_scale(50);
-	entity->get_component<TransformComponent>()->set_rotation(parameters.direction);
-	entity->get_component<TransformComponent>()->set_translation({0.0f, 250.0f, 0.0f});
+	entity->get_component<TransformComponent>()->set_rotation(directionRef);
+	auto translationRef = glm::vec3{0.0f, 250.0f, 0.0f};
+	entity->get_component<TransformComponent>()->set_translation(translationRef);
 
 	light->set_parameters(parameters);
 	

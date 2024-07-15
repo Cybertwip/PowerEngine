@@ -228,51 +228,60 @@ void ComponentLayer::draw_transform(std::shared_ptr<Entity> entity)
 	if(auto camera = entity->get_component<CameraComponent>(); camera){
 		auto component = entity->get_component<TransformComponent>();
 				
-		if(DragPropertyXYZ("Translation", component->mTranslation)){
+		auto translation = component->get_translation();
+		
+		if(DragPropertyXYZ("Translation", translation)){
+			component->set_translation(translation);
 			entity->set_local(component->get_mat4());
 			camera->update_camera_vectors();
 		}
 
-		auto euler = glm::degrees(component->mRotation);
+		auto euler = glm::degrees(component->get_rotation());
 		
 		auto pitchRoll = glm::vec3(euler.x, euler.y, euler.z);
 
 		if(DragFPropertyPitchYawRoll("Rotation", &pitchRoll[0])){
-			component->mRotation = glm::radians(pitchRoll);
+			auto rotation = glm::radians(pitchRoll);
+			
+			component->set_rotation(rotation);
 			camera->update_camera_vectors();
 		}
 		
 	} else if(auto light = entity->get_component<DirectionalLightComponent>(); light){
 		
 		auto transform = entity->get_component<TransformComponent>();
-		auto translation = transform->mTranslation;
+		auto translation = transform->get_translation();
 		
-		auto euler = glm::degrees(transform->mRotation);
+		auto euler = glm::degrees(transform->get_rotation());
 		
 		if(DragPropertyXYZ("Translation", translation)){
-			transform->mTranslation = translation;
+			transform->set_translation(translation);
 		}
 		
 		auto pitchRoll = glm::vec3(euler.x, euler.y, euler.z);
 		
 		if(DragFPropertyPitchYawRoll("Rotation", &pitchRoll[0])){
-			transform->mRotation = glm::radians(glm::vec3(pitchRoll.x, pitchRoll.y, pitchRoll.z));
+			auto rotation = glm::radians(glm::vec3(pitchRoll.x, pitchRoll.y, pitchRoll.z));
+			
+			transform->set_rotation(rotation);
 		}
 	} else if(auto transform = entity->get_component<TransformComponent>(); transform){
-		auto euler = glm::degrees(transform->mRotation);
+		auto euler = glm::degrees(transform->get_rotation());
 		
-		auto translation = transform->mTranslation;
+		auto translation = transform->get_translation();
 		
 		if(DragPropertyXYZ("Translation", translation)){
-			transform->mTranslation = translation;
+			transform->set_translation(translation);
 		}
 		if(DragPropertyXYZ("Rotation", euler)){
-			transform->mRotation = glm::radians(euler);
+			auto rotation = glm::radians(euler);;
+			
+			transform->set_rotation(rotation);
 		}
-		auto scale = transform->mScale;
+		auto scale = transform->get_scale();
 		
 		if(DragPropertyXYZ("Scale", scale)){
-			transform->mScale = scale;
+			transform->set_scale(scale);
 		}
 	}
 	
@@ -348,7 +357,10 @@ void ComponentLayer::draw_transform_reset_button(anim::TransformComponent &trans
 {
 	if (ImGui::Button("reset"))
 	{
-		transform.set_translation({0.0f, 0.0f, 0.0f}).set_rotation({0.0f, 0.0f, 0.0f}).set_scale({1.0f, 1.0f, 1.0f});
+		glm::vec3 defaultTranslation = {0.0f, 0.0f, 0.0f};
+		glm::vec3 defaultRotation = {0.0f, 0.0f, 0.0f};
+		glm::vec3 defaultScale = {1.0f, 1.0f, 1.0f};
+		transform.set_translation(defaultTranslation).set_rotation(defaultRotation).set_scale(defaultScale);
 	}
 }
 void ComponentLayer::draw_mesh(anim::MeshComponent *mesh)

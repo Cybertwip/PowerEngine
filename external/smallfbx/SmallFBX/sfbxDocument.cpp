@@ -226,7 +226,11 @@ void GlobalSettings::importFBXObjects(Document *doc)
 
 		if (name == sfbxS_OriginalUnitScaleFactor) {
 			assert(propssize >= 5);
-			original_unit_scale = c->getProperty(4)->getValue<float64>();
+			frame_rate = c->getProperty(4)->getValue<float64>();
+			
+			if(frame_rate <= 0){
+				frame_rate = 60;
+			}
 		}
 
 //            prop->createChild(sfbxS_P, sfbxS_UnitScaleFactor, sfbxS_double, sfbxS_Number, "", 1.0);
@@ -238,6 +242,11 @@ void GlobalSettings::importFBXObjects(Document *doc)
 //            prop->createChild(sfbxS_P, sfbxS_SnapOnFrameMode, sfbxS_enum, "", "", 0);
 //            prop->createChild(sfbxS_P, sfbxS_TimeSpanStart, sfbxS_KTime, sfbxS_Time, "", (int64)0);
 //            prop->createChild(sfbxS_P, sfbxS_CustomFrameRate, sfbxS_double, sfbxS_Number, "", -1.0);
+
+		if (name == sfbxS_CustomFrameRate) {
+			assert(propssize >= 5);
+			double frameRate = c->getProperty(4)->getValue<float64>();
+		}
 
 //            prop->createChild(sfbxS_P, sfbxS_TimeMarker, sfbxS_Compound, "", "");
 //            prop->createChild(sfbxS_P, sfbxS_CurrentTimeMarker, sfbxS_int, sfbxS_Integer, "", -1);

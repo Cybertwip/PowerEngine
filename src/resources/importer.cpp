@@ -124,6 +124,9 @@ std::pair<std::shared_ptr<Model>, std::vector<std::shared_ptr<Animation>>> Impor
 			LOG("ERROR::IMPORTER: INVALID FBX");
 		}
 		
+		for(auto& animation : animations){
+			animation->set_fps(doc->global_settings.frame_rate);
+		}
 		model->set_unit_scale(doc->global_settings.unit_scale);
 	}
 	catch (std::exception &e)

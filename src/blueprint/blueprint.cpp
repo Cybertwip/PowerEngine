@@ -275,7 +275,7 @@ Node* NodeProcessor::SpawnSetActorRotationNode()
 				
 				if(entity){
 					
-					auto rotation = entity->get_component<anim::TransformComponent>()->mRotation;
+					auto rotation = entity->get_component<anim::TransformComponent>()->get_rotation();
 
 					auto euler = glm::degrees(rotation);
 					
@@ -300,7 +300,7 @@ Node* NodeProcessor::SpawnSetActorRotationNode()
 					
 					auto radians = glm::radians(euler);
 					
-					entity->get_component<anim::TransformComponent>()->mRotation = radians;
+					entity->get_component<anim::TransformComponent>()->set_rotation(radians);
 					
 				}
 			} else {

@@ -37,6 +37,7 @@ public:
 	virtual ~Animation() = default;
 	Bone *find_bone(const std::string &name);
 	float get_fps();
+	void set_fps(float fps);
 	float get_duration();
 	float get_current_duration();
 	const std::string &get_name() const;

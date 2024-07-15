@@ -24,6 +24,7 @@ struct GlobalSettings
 {
 	double unit_scale = 1;
 	double original_unit_scale = 1;
+	double frame_rate = 60;
     std::string camera = "Camera";
     int64_t time_stop = 0;//sfbxI_TicksPerSecond;
 
