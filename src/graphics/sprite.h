@@ -20,7 +20,7 @@ struct Vertex;
 class Sprite
 {
 public:
-	Sprite(const std::string& path, const MaterialProperties &mat_properties, Scene& scene);
+	Sprite(const std::string& path, const MaterialProperties &mat_properties);
 	virtual ~Sprite() = default;
 	virtual void draw(Shader &shader) = 0;
 	virtual void draw_shadow(Shader &shader) = 0;
@@ -43,10 +43,6 @@ public:
 		return indices_;
 	}
 	
-	Scene& get_scene() const {
-		return scene_;
-	}
-	
 protected:
 	void build_sprite_geometry();
 	
@@ -54,7 +50,6 @@ protected:
 	std::vector<unsigned int> indices_;
 	Texture texture_;
 	MaterialProperties mat_properties_;
-	Scene& scene_;
 };
 }
 

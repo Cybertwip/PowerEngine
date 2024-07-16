@@ -7,13 +7,14 @@
 
 namespace anim
 {
+	class CameraComponent;
     class Shader;
     class Image
     {
     public:
         Image(uint32_t width, uint32_t height, GLenum format = GL_RGB);
         ~Image();
-        void draw(Shader &shader);
+        void draw(Shader &shader, CameraComponent& camera);
 
     private:
         void set_quad_VAO();

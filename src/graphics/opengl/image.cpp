@@ -1,7 +1,10 @@
 #include "image.h"
 #include <iostream>
 #include "../shader.h"
+
+#include "glcpp/camera.h"
 #include <vector>
+
 
 namespace anim
 {
@@ -18,13 +21,21 @@ namespace anim
         glDeleteBuffers(1, &quad_VBO_);
         glDeleteTextures(1, &texture_);
     }
-    void Image::draw(Shader &shader)
+    void Image::draw(Shader &shader, anim::CameraComponent& camera)
     {
         shader.use();
-        glUniform1i(glGetUniformLocation(shader.get_id(), "texture_diffuse1"), 0);
-        glBindVertexArray(quad_VAO_);
-        glBindTexture(GL_TEXTURE_2D, texture_);
-        glDrawArrays(GL_TRIANGLES, 0, 6);
+		
+		shader.set_mat4("view", camera.get_view());
+		shader.set_mat4("projection", camera.get_projection());
+
+		// Set the grid-specific uniforms
+		shader.set_vec3("gridColor", glm::vec3(1.0f, 1.0f, 1.0f));  // White grid lines
+		shader.set_float("gridSpacing", 10.0f);  // Adjust this value as needed
+		
+		glUniform1i(glGetUniformLocation(shader.get_id(), "texture_diffuse1"), 0);
+		glBindVertexArray(quad_VAO_);
+		glBindTexture(GL_TEXTURE_2D, texture_);
+		glDrawArrays(GL_TRIANGLES, 0, 6);
     }
     void Image::set_quad_VAO()
     {

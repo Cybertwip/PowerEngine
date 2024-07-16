@@ -16,7 +16,7 @@ void BillboardComponent::update(std::shared_ptr<Entity> entity)
 	{
 		return;
 	}
-	auto cameraEntity = sprite_->get_scene().get_active_camera();
+	auto cameraEntity = entity->get_scene().get_active_camera();
 	auto camera = cameraEntity->get_component<anim::CameraComponent>();
 	
 	// Get the positions of the camera and the billboard
@@ -81,7 +81,7 @@ void BillboardComponent::update(std::shared_ptr<Entity> entity)
 void BillboardComponent::draw_shadow(std::shared_ptr<Entity> entity, anim::Shader& shader)
 {
 	
-	auto cameraEntity = sprite_->get_scene().get_active_camera();
+	auto cameraEntity = entity->get_scene().get_active_camera();
 	
 	auto camera = cameraEntity->get_component<anim::CameraComponent>();
 

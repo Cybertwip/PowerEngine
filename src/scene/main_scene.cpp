@@ -8,6 +8,7 @@
 #include <util/log.h>
 #include <graphics/shader.h>
 #include <graphics/opengl/image.h>
+#include <graphics/opengl/grid.h>
 #include <graphics/opengl/framebuffer.h>
 
 #include <imgui.h>
@@ -23,6 +24,7 @@
 
 #include "utility.h"
 #include "shading/light_manager.h"
+#include "scene/scene.hpp"
 
 #include <filesystem>
 #include <graphics/post_processing.h>
@@ -46,7 +48,7 @@ MainScene::MainScene(uint32_t width, uint32_t height)
 	
 	
 	init_framebuffer(width, height);
-	grid_framebuffer_.reset(new anim::Image{1, 1, GL_RGBA});
+	grid_framebuffer_.reset(new anim::Grid());
 
 	init_camera();
 	
@@ -258,7 +260,6 @@ void MainScene::pre_draw(ui::UiContext& ui_context)
 	resources_->set_ubo_projection(camera->get_projection());
 	resources_->set_ubo_position(camera->get_position());
 	render_to_shadow_map(ui_context);
-	draw_to_framebuffer(ui_context);
 }
 
 void MainScene::update_framebuffer()
@@ -268,89 +269,95 @@ void MainScene::update_framebuffer()
 //		init_framebuffer(width_, height_);
 //	}
 }
-
 void MainScene::draw_to_framebuffer(ui::UiContext& ui_context)
 {
 	auto grid_shader = resources_->get_mutable_shader("grid");
 	glEnable(GL_DEPTH_TEST);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glEnable(GL_BLEND);
-
+	
 	glDepthMask(true);
-
+	
 	entity_framebuffer_->bind_with_depth_and_stencil(background_color_);
 	resources_->update(ui_context, false);
 	entity_framebuffer_->unbind();
-
+	
 	framebuffer_->bind_with_depth_and_stencil(background_color_);
-	{// 2. Enable stencil test for grid drawing
-		glEnable(GL_STENCIL_TEST);
-		glStencilFunc(GL_ALWAYS, 1, 0x00); // Set stencil to 1 where drawing occurs
-		glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE); // Replace stencil value on drawing
-		glStencilMask(0x00); // Enable stencil writing
+	
+	// Enable stencil test for grid drawing
+	glEnable(GL_STENCIL_TEST);
+	glStencilFunc(GL_ALWAYS, 1, 0xFF); // Set stencil to 1 where drawing occurs
+	glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE); // Replace stencil value on drawing
+	glStencilMask(0xFF); // Enable stencil writing
+	
+	glStencilMask(0x00); // Disable stencil writing
+
+	// Draw the grid
+	if (!resources_->get_is_exporting()) {
 		
-		// Draw the grid
-		if (!resources_->get_is_exporting()) {
-			grid_framebuffer_->draw(*grid_shader);
-		}
-		glStencilMask(0xFF);
+		auto camera_entity = resources_->get_scene().get_active_camera();
 		
-		auto shadow_shader = resources_->get_mutable_shader("animation");
-
-		auto& directionalLights = get_mutable_shared_resources()->get_light_manager().getDirectionalLights();
-
-		for(auto entity : directionalLights){
-			const auto& transform = entity->get_component<anim::TransformComponent>();
-			
-			glm::mat4 lightProjection, lightView;
-			glm::mat4 lightSpaceMatrix;
-			float near_plane = 0.01f, far_plane = 1000.0f;
-			lightProjection = glm::ortho(-SHADOW_SIZE, SHADOW_SIZE, -SHADOW_SIZE, SHADOW_SIZE, near_plane, far_plane);
-			
-			glm::vec3 lightPos = transform->get_translation();
-			auto [t, r, s] = anim::DecomposeTransform(transform->get_mat4());
-			
-			// The base "down" vector
-			glm::vec3 down = glm::vec3(0.0f, 1.0f, 0.0f);
-			
-			// Rotate the base "down" vector by the quaternion to get the actual "down" direction
-			glm::vec3 downDirection = r * down;
-			
-			// Now use the downDirection to compute the target position
-			glm::vec3 targetPosition = lightPos + downDirection; // Here we add because downDirection is already in the correct direction from lightPos
-
-			// Construct the view matrix by combining translation and rotation
-			lightView = glm::lookAt(lightPos, targetPosition, glm::vec3(0.0, 0.0, -1.0f));
-			
-			lightSpaceMatrix = lightProjection * lightView;
-			
-			shadow_shader->use();
-			shadow_shader->set_mat4("lightSpaceMatrix", lightSpaceMatrix);
-			
-			break;
-		}
+		auto camera = camera_entity->get_component<anim::CameraComponent>();
 		
-		resources_->update(ui_context, !ui_context.scene.is_trigger_update_keyframe);
-
-		anim::OutlineInfo cellShading;
-		cellShading.color = glm::vec3{0.0f, 0.0f, 0.0f};
-		cellShading.width = 1.15f;
-		cellShading.threshold = 0.8f;
-		resources_->mPostProcessing->execute_outline_with_depth_always(framebuffer_.get(), 1, 0xFF, cellShading);
-		
-		if (selected_entity_)
-		{
-			anim::OutlineInfo outlineShading;
-			
-			outlineShading.width = 1.0f;
-			outlineShading.threshold = 0.25f;
-			
-			resources_->mPostProcessing->execute_outline_with_depth_always(framebuffer_.get(), 2, 0xFF, outlineShading);
-		}
-
-		glClear(GL_STENCIL_BUFFER_BIT);
+		grid_framebuffer_->draw(*grid_shader, *camera);
 	}
-
+	
+	
+	auto shadow_shader = resources_->get_mutable_shader("animation");
+	
+	auto& directionalLights = get_mutable_shared_resources()->get_light_manager().getDirectionalLights();
+	
+	for(auto entity : directionalLights){
+		const auto& transform = entity->get_component<anim::TransformComponent>();
+		
+		glm::mat4 lightProjection, lightView;
+		glm::mat4 lightSpaceMatrix;
+		float near_plane = 0.01f, far_plane = 1000.0f;
+		lightProjection = glm::ortho(-SHADOW_SIZE, SHADOW_SIZE, -SHADOW_SIZE, SHADOW_SIZE, near_plane, far_plane);
+		
+		glm::vec3 lightPos = transform->get_translation();
+		auto [t, r, s] = anim::DecomposeTransform(transform->get_mat4());
+		
+		// The base "down" vector
+		glm::vec3 down = glm::vec3(0.0f, 1.0f, 0.0f);
+		
+		// Rotate the base "down" vector by the quaternion to get the actual "down" direction
+		glm::vec3 downDirection = r * down;
+		
+		// Now use the downDirection to compute the target position
+		glm::vec3 targetPosition = lightPos + downDirection; // Here we add because downDirection is already in the correct direction from lightPos
+		
+		// Construct the view matrix by combining translation and rotation
+		lightView = glm::lookAt(lightPos, targetPosition, glm::vec3(0.0, 0.0, -1.0f));
+		
+		lightSpaceMatrix = lightProjection * lightView;
+		
+		shadow_shader->use();
+		shadow_shader->set_mat4("lightSpaceMatrix", lightSpaceMatrix);
+		
+		break;
+	}
+	
+	resources_->update(ui_context, !ui_context.scene.is_trigger_update_keyframe);
+	
+	anim::OutlineInfo cellShading;
+	cellShading.color = glm::vec3{0.0f, 0.0f, 0.0f};
+	cellShading.width = 1.15f;
+	cellShading.threshold = 0.8f;
+	resources_->mPostProcessing->execute_outline_with_depth_always(framebuffer_.get(), 1, 0xFF, cellShading);
+	
+	if (selected_entity_)
+	{
+		anim::OutlineInfo outlineShading;
+		
+		outlineShading.width = 1.0f;
+		outlineShading.threshold = 0.25f;
+		
+		resources_->mPostProcessing->execute_outline_with_depth_always(framebuffer_.get(), 2, 0xFF, outlineShading);
+	}
+	
+	glClear(GL_STENCIL_BUFFER_BIT);
+	
 	framebuffer_->unbind();
 	
 	glDisable(GL_BLEND);
@@ -362,8 +369,9 @@ void MainScene::draw_to_framebuffer(ui::UiContext& ui_context)
 #endif
 }
 
-void MainScene::draw()
+void MainScene::draw(ui::UiContext& ui_context)
 {
+	draw_to_framebuffer(ui_context);
 }
 
 void MainScene::picking(int x, int y, bool is_edit_mode, bool is_bone_picking_mode)

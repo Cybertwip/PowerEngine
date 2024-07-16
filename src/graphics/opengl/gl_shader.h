@@ -34,6 +34,7 @@ namespace anim::gl
         void set_mat2(const std::string &name, const glm::mat2 &mat) const;
         void set_mat3(const std::string &name, const glm::mat3 &mat) const;
         void set_mat4(const std::string &name, const glm::mat4 &mat) const;
+		void set_float_array(const std::string &name, const float *values, unsigned int count) const;
 
     private:
         unsigned int id_;

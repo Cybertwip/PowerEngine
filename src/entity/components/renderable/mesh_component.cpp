@@ -3,6 +3,9 @@
 #include "../../../graphics/mesh.h"
 #include "../../entity.h"
 
+#include "glcpp/camera.h"
+#include "scene/scene.hpp"
+
 #include "utility.h"
 
 namespace anim
@@ -21,7 +24,13 @@ void MeshComponent::update(std::shared_ptr<Entity> entity)
 	
 	auto world = ComposeTransform(t, r, s);
 	
-	shader_->set_mat4("model", world);
+	auto cameraEntity = entity->get_scene().get_active_camera();
+	
+	auto camera = cameraEntity->get_component<anim::CameraComponent>();
+
+	shader_->set_mat4("model", entity->get_world_transformation());
+	shader_->set_mat4("view", camera->get_view());  // Ensure viewMatrix is passed correctly
+	shader_->set_mat4("projection", camera->get_projection()); // Ensure projectionMatrix is passed correctly
 	shader_->set_uint("selectionColor", selectionColor);
 	shader_->set_uint("uniqueIdentifier", uniqueIdentifier);
 	glEnable(GL_DEPTH_TEST); // Enable depth testing

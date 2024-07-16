@@ -1,11 +1,7 @@
-
 #include "gl_mesh.h"
 #include "../shader.h"
-
 #include "shading/light_manager.h"
-
 #include <glad/glad.h>
-
 
 using namespace anim;
 
@@ -83,13 +79,13 @@ GLMesh::GLMesh(const std::vector<Vertex>& vertices, const std::vector<unsigned i
 {
 	init_buffer();
 }
+
 GLMesh::GLMesh(const std::vector<Vertex>& vertices, LightManager& lightManager)
 : Mesh(vertices), _lightManager(lightManager)
 {
 	init_buffer();
 }
 
-// TODO: delete buffer
 GLMesh::~GLMesh()
 {
 	glDeleteVertexArrays(1, &VAO_);
@@ -99,8 +95,8 @@ GLMesh::~GLMesh()
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 		glDeleteBuffers(1, &EBO_);
 	}
-	
 }
+
 void GLMesh::draw(anim::Shader& shader)
 {
 	glEnable(GL_STENCIL_TEST);
@@ -111,10 +107,10 @@ void GLMesh::draw(anim::Shader& shader)
 	draw_mesh(shader);
 	
 	glDisable(GL_STENCIL_TEST);
-
 }
 
-void GLMesh::draw_shadow(anim::Shader &shader){
+void GLMesh::draw_shadow(anim::Shader &shader)
+{
 	const int shadowMapTextureID = _lightManager.getShadowMapTextureId();
 	const int shadowMapTextureUnit = 15; // Example texture unit dedicated for shadow map
 	glActiveTexture(GL_TEXTURE0 + shadowMapTextureUnit);
@@ -148,6 +144,7 @@ void GLMesh::draw_outline(anim::Shader& shader)
 	
 	glDisable(GL_STENCIL_TEST);
 }
+
 void GLMesh::draw_mesh(anim::Shader& shader)
 {
 	// bind appropriate textures
@@ -164,7 +161,7 @@ void GLMesh::draw_mesh(anim::Shader& shader)
 	shader.set_bool("material.has_diffuse_texture", mat_properties_.has_diffuse_texture);
 	
 	_lightManager.updateLightParameters(shader);
-
+	
 	for (unsigned int i = 0; i < textures_.size(); i++)
 	{
 		glActiveTexture(GL_TEXTURE0 + i); // active proper texture unit before binding
@@ -193,7 +190,7 @@ void GLMesh::draw_mesh(anim::Shader& shader)
 	glActiveTexture(GL_TEXTURE0 + shadowMapTextureUnit);
 	shader.set_int("shadowMap", shadowMapTextureUnit); // Inform shader about the texture unit
 	glBindTexture(GL_TEXTURE_2D, shadowMapTextureID);
-
+	
 	// draw mesh
 	draw();
 	
@@ -219,6 +216,7 @@ void GLMesh::draw()
 	
 	glBindVertexArray(0);
 }
+
 void GLMesh::init_buffer() {
 	glGenVertexArrays(1, &VAO_);
 	glGenBuffers(1, &VBO_);
@@ -269,4 +267,5 @@ void GLMesh::update_vertices(const std::vector<Vertex>& newVertices) {
 	
 	glBufferData(GL_ARRAY_BUFFER, vertices_.size() * sizeof(Vertex), vertices_.data(), GL_DYNAMIC_DRAW);
 }
-}
+
+} // namespace anim::gl

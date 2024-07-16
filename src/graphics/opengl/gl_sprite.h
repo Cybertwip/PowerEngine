@@ -8,7 +8,7 @@ namespace anim::gl
 class GLSprite : public anim::Sprite
 {
 public:
-	GLSprite(const std::string& path, const MaterialProperties &mat_properties, Scene& scene);
+	GLSprite(const std::string& path, const MaterialProperties &mat_properties);
 	~GLSprite();
 	void draw(anim::Shader &shader) override;
 	void draw_shadow(anim::Shader &shader) override;

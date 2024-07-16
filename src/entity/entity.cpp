@@ -130,7 +130,7 @@ mFrameMax(300), _resources(resources){
 }
 
 Entity::Entity(std::shared_ptr<SharedResources> resources, const std::string& name, int identifier, std::shared_ptr<Entity> parent)
-: name_(name), id_(identifier), parent_(parent){
+: name_(name), id_(identifier), parent_(parent), scene_(resources->get_scene()){
 	_transform_component = add_component<TransformComponent>();
 	sequence_items_ = std::make_shared<TracksContainer>();
 }

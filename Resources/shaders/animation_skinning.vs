@@ -8,12 +8,9 @@ layout (location = 5) in vec3 bitangent;
 layout (location = 6) in ivec4 boneIds; // because MAX_BONE_INFLUENCE == 4
 layout (location = 7) in vec4 weights;
 
-layout(std140) uniform Matrices {
-    mat4 projection;
-    mat4 view;
-    vec4 viewPos; // Notice we use vec4 to ensure std140 alignment
-};
 uniform mat4 model;
+uniform mat4 view;
+uniform mat4 projection;
 
 uniform mat4 lightSpaceMatrix; // Add this uniform
 
@@ -32,7 +29,6 @@ void main()
     vec4 pos = vec4(aPos, 1.0f);
     vec3 norm = aNormal;
     vec4 totalPosition = vec4(0.0f);
-    vec4 totalFragPosition = vec4(0.0f);
     vec3 totalNormal = vec3(0.0f);
 
     float maxWeight = 0.0;

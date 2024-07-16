@@ -51,6 +51,7 @@ set(test_src
     graphics/opengl/gl_sprite.cpp
     graphics/opengl/framebuffer.cpp
     graphics/opengl/image.cpp
+    graphics/opengl/grid.cpp
     graphics/post_processing.cpp
 
     graphics/shader.h
@@ -61,6 +62,7 @@ set(test_src
     graphics/opengl/gl_sprite.h
     graphics/opengl/framebuffer.h
     graphics/opengl/image.h
+    graphics/opengl/grid.h
     graphics/post_processing.h
 
     util/log.h

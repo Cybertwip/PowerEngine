@@ -7,7 +7,7 @@
 namespace anim
 {
     class Entity;
-    class Image;
+    class Grid;
 }
 class MainScene : public Scene
 {
@@ -18,7 +18,7 @@ public:
 	void init_shadow_map(LightManager& lightManager);
     void init_framebuffer(uint32_t width, uint32_t height) override;
     void pre_draw(ui::UiContext& ui_context) override;
-    void draw() override;
+    void draw(ui::UiContext& ui_context) override;
     void picking(int x, int y, bool is_edit, bool is_only_bone) override;
 
 private:
@@ -27,7 +27,7 @@ private:
 	void render_to_shadow_map(ui::UiContext& ui_context);
 	void draw_to_framebuffer(ui::UiContext& ui_context);
 
-	std::shared_ptr<anim::Image> grid_framebuffer_;
+	std::shared_ptr<anim::Grid> grid_framebuffer_;
 
 	GLuint shadowMap;
 	GLuint shadowMapFBO;

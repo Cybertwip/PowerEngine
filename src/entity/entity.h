@@ -712,7 +712,7 @@ public:
 	}
 	
 	std::shared_ptr<Entity> clone(){
-		auto clone = std::shared_ptr<Entity>(new Entity());
+		auto clone = std::shared_ptr<Entity>(new Entity(get_scene()));
 		
 		std::vector<std::shared_ptr<Component>> cloneComponents;
 		std::vector<std::shared_ptr<Entity>> cloneChildren;
@@ -730,8 +730,14 @@ public:
 		return clone;
 	}
 	
+	
+	Scene& get_scene() const {
+		return scene_;
+	}
+
+	
 private:
-	Entity() : sequence_items_(std::make_shared<TracksContainer>()) {
+	Entity(Scene& scene) : sequence_items_(std::make_shared<TracksContainer>()), scene_(scene) {
 		
 	}
 	
@@ -746,6 +752,9 @@ private:
 	std::shared_ptr<TracksContainer> sequence_items_;
 	
 	std::shared_ptr<TransformComponent> _transform_component;
+	
+	Scene& scene_;
+
 };
 
 template <class T>

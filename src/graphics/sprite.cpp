@@ -5,8 +5,8 @@
 
 namespace anim
 {
-Sprite::Sprite(const std::string& path, const MaterialProperties &mat_properties, Scene& scene)
-: mat_properties_(mat_properties), scene_(scene)
+Sprite::Sprite(const std::string& path, const MaterialProperties &mat_properties)
+: mat_properties_(mat_properties)
 {
 	texture_.id = Importer::LoadTextureFromFile(path.c_str()); // Implement LoadTextureFromFile according to your texture loading mechanism
 	texture_.path = path;

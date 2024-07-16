@@ -4,8 +4,8 @@
 
 namespace anim::gl
 {
-GLSprite::GLSprite(const std::string& path, const MaterialProperties& mat_properties, Scene& scene)
-: Sprite(path, mat_properties, scene)
+GLSprite::GLSprite(const std::string& path, const MaterialProperties& mat_properties)
+: Sprite(path, mat_properties)
 {
 	// Define the vertices for a quad (two triangles)
 	vertices_ = {

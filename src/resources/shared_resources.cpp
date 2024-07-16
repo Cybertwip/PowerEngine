@@ -319,7 +319,7 @@ std::shared_ptr<Sprite> SharedResources::import_sprite(const std::string& path)
 	MaterialProperties mat_properties;
 	
 	// Create the sprite
-	auto sprite = std::make_shared<gl::GLSprite>(path, mat_properties, _scene);
+	auto sprite = std::make_shared<gl::GLSprite>(path, mat_properties);
 	
 	// Cache the sprite
 	sprite_cache_[path] = sprite;
