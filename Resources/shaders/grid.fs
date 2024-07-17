@@ -56,8 +56,8 @@ void main() {
     vec3 R = near + t * (far - near);
     float is_on = float(t > 0);
 
-    float fade = smoothstep(0.08, 0.0, compute_fade(R));
-    o_color = grid(R, 16, true);
+    float fade = smoothstep(0.32, 0.0, compute_fade(R));
+    o_color = grid(R, 32, true);
     o_color *= fade;
 
     o_color *= is_on;

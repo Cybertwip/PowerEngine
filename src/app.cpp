@@ -82,6 +82,9 @@ void error_callback(int code, const char *description)
 void App::init_shared_resources()
 {
 	shared_resources_ = scenes_[current_scene_idx_]->get_mutable_shared_resources();
+	
+	ai_resources_ = scenes_[ai_scene_idx_]->get_mutable_shared_resources();
+
 }
 void App::init_scene(uint32_t width, uint32_t height)
 {
@@ -98,6 +101,9 @@ void App::init_scene(uint32_t width, uint32_t height)
 void App::update(float deltaTime)
 {
 	shared_resources_->set_dt(deltaTime);
+	
+	ai_resources_->set_dt(deltaTime);
+
 }
 void App::OnStart(){
 	stbi_set_flip_vertically_on_load(true);
@@ -549,6 +555,9 @@ void App::draw_scene(float dt)
 	
 	scenes_[current_scene_idx_]->pre_draw(ui_context);
 	ui::UiContext ai_context;
+	
+	ai_context.timeline.is_stop = false;
+	ai_context.timeline.is_forward = true;
 	scenes_[ai_scene_idx_]->pre_draw(ai_context);
 
 	std::string scene_name = std::string("scene") + std::to_string(current_scene_idx_ + 1);

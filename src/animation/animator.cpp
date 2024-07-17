@@ -853,7 +853,6 @@ void Animator::apply_bone_offsets(std::shared_ptr<Entity> entity, const glm::mat
 	if(armature){
 		global_transformation *= armature->get_bindpose();
 		
-		
 		int id = armature->get_id();
 		if (id < MAX_BONE_NUM) {
 			global_transformation *= final_bone_matrices_[id];

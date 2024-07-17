@@ -18,6 +18,8 @@
 #include <contrib/minizip/unzip.h>
 
 #include <sstream>
+#include <regex>
+#include <unordered_map>
 
 
 // Function to write the extracted data to a file
@@ -33,42 +35,54 @@ bool write_file(const std::string& file_path, const std::vector<unsigned char>& 
 }
 
 // Function to decompress ZIP data and extract files to the specified directory
-bool decompress_zip_data(const std::vector<unsigned char>& zip_data, const std::string& output_dir) {
+
+std::vector<std::string> decompress_zip_data(const std::vector<unsigned char>& zip_data, const std::string& output_dir) {
+	
+	std::vector<std::string> fileVector;
 	// Create a temporary file to store the ZIP data
 	const std::string temp_zip_file = output_dir + "temp.zip";
 	if (!write_file(temp_zip_file, zip_data)) {
-		return false;
+		return fileVector;
 	}
 	
 	// Open the ZIP file
 	unzFile zipfile = unzOpen(temp_zip_file.c_str());
 	if (zipfile == nullptr) {
 		std::cerr << "Failed to open ZIP file: " << temp_zip_file << std::endl;
-		return false;
+		return fileVector;
 	}
 	
 	// Iterate over each file in the ZIP archive
 	if (unzGoToFirstFile(zipfile) != UNZ_OK) {
 		std::cerr << "Failed to go to first file in ZIP archive" << std::endl;
 		unzClose(zipfile);
-		return false;
+		return fileVector;
 	}
+	
+	std::regex filename_regex(R"(^[A-Za-z0-9\-_]+_[A-Za-z0-9\-_]+_v[0-9]+\.fbx$)");
 	
 	do {
 		// Get the file info
 		unz_file_info file_info;
 		char filename[256];
+		std::memset(filename, 0, sizeof(filename)); // Zero-initialize the filename array
+		
 		if (unzGetCurrentFileInfo(zipfile, &file_info, filename, sizeof(filename), nullptr, 0, nullptr, 0) != UNZ_OK) {
 			std::cerr << "Failed to get file info" << std::endl;
 			unzClose(zipfile);
-			return false;
+			return fileVector;
+		}
+		
+		std::string matching_filename = filename;
+		if (!std::regex_match(matching_filename, filename_regex)) {
+			continue;
 		}
 		
 		// Open the current file in the ZIP archive
 		if (unzOpenCurrentFile(zipfile) != UNZ_OK) {
 			std::cerr << "Failed to open file in ZIP archive" << std::endl;
 			unzClose(zipfile);
-			return false;
+			return fileVector;
 		}
 		
 		// Read the file data
@@ -77,7 +91,7 @@ bool decompress_zip_data(const std::vector<unsigned char>& zip_data, const std::
 			std::cerr << "Failed to read file data" << std::endl;
 			unzCloseCurrentFile(zipfile);
 			unzClose(zipfile);
-			return false;
+			return fileVector;
 		}
 		
 		// Close the current file in the ZIP archive
@@ -87,8 +101,10 @@ bool decompress_zip_data(const std::vector<unsigned char>& zip_data, const std::
 		std::string output_file_path = output_dir + filename;
 		if (!write_file(output_file_path, file_data)) {
 			unzClose(zipfile);
-			return false;
+			return fileVector;
 		}
+		
+		fileVector.push_back(output_dir + filename);
 		
 	} while (unzGoToNextFile(zipfile) == UNZ_OK);
 	
@@ -98,7 +114,7 @@ bool decompress_zip_data(const std::vector<unsigned char>& zip_data, const std::
 	// Remove the temporary ZIP file
 	std::remove(temp_zip_file.c_str());
 	
-	return true;
+	return fileVector;
 }
 
 
@@ -224,6 +240,130 @@ bool loadFromFile(const char* filename, std::string& modelName) {
 	return false;
 }
 
+void saveToFile(const char* filename,
+				const std::vector<std::string>& chatHistory,
+				const std::map<std::string, std::string>& promptMap,
+				const std::map<std::string, std::vector<std::string>>& promptAnimationMap) {
+	std::ofstream file(filename, std::ios::binary);
+	if (file.is_open()) {
+		std::ostringstream oss;
+		// Save chatHistory
+		oss << chatHistory.size() << '\n';
+		for (const auto& entry : chatHistory) {
+			oss << entry.size() << '\n' << entry << '\n';
+		}
+		
+		// Save promptMap
+		oss << promptMap.size() << '\n';
+		for (const auto& entry : promptMap) {
+			oss << entry.first.size() << '\n' << entry.first << '\n';
+			oss << entry.second.size() << '\n' << entry.second << '\n';
+		}
+		
+		// Save promptAnimationMap
+		oss << promptAnimationMap.size() << '\n';
+		for (const auto& entry : promptAnimationMap) {
+			oss << entry.first.size() << '\n' << entry.first << '\n';
+			oss << entry.second.size() << '\n';
+			for (const auto& anim : entry.second) {
+				oss << anim.size() << '\n' << anim << '\n';
+			}
+		}
+		
+		std::string data = oss.str();
+		std::vector<char> buffer(data.begin(), data.end());
+		xorEncryptDecrypt(buffer.data(), buffer.size(), XOR_KEY);
+		
+		file.write(buffer.data(), buffer.size());
+		file.close();
+	}
+}
+
+bool loadFromFile(const char* filename,
+				  std::vector<std::string>& chatHistory,
+				  std::map<std::string, std::string>& promptMap,
+				  std::map<std::string, std::vector<std::string>>& promptAnimationMap) {
+	std::ifstream file(filename, std::ios::binary);
+	if (file.is_open()) {
+		file.seekg(0, std::ios::end);
+		size_t fileSize = file.tellg();
+		file.seekg(0, std::ios::beg);
+		
+		std::vector<char> buffer(fileSize);
+		file.read(buffer.data(), fileSize);
+		file.close();
+		
+		xorEncryptDecrypt(buffer.data(), buffer.size(), XOR_KEY);
+		
+		std::istringstream iss(std::string(buffer.begin(), buffer.end()));
+		
+		// Load chatHistory
+		size_t chatHistorySize;
+		iss >> chatHistorySize;
+		iss.ignore();
+		chatHistory.clear();
+		for (size_t i = 0; i < chatHistorySize; ++i) {
+			size_t entrySize;
+			iss >> entrySize;
+			iss.ignore();
+			std::string entry(entrySize, '\0');
+			iss.read(&entry[0], entrySize);
+			iss.ignore();
+			chatHistory.push_back(entry);
+		}
+		
+		// Load promptMap
+		size_t promptMapSize;
+		iss >> promptMapSize;
+		iss.ignore();
+		promptMap.clear();
+		for (size_t i = 0; i < promptMapSize; ++i) {
+			size_t keySize, valueSize;
+			iss >> keySize;
+			iss.ignore();
+			std::string key(keySize, '\0');
+			iss.read(&key[0], keySize);
+			iss.ignore();
+			iss >> valueSize;
+			iss.ignore();
+			std::string value(valueSize, '\0');
+			iss.read(&value[0], valueSize);
+			iss.ignore();
+			promptMap[key] = value;
+		}
+		
+		// Load promptAnimationMap
+		size_t promptAnimationMapSize;
+		iss >> promptAnimationMapSize;
+		iss.ignore();
+		promptAnimationMap.clear();
+		for (size_t i = 0; i < promptAnimationMapSize; ++i) {
+			size_t keySize, animListSize;
+			iss >> keySize;
+			iss.ignore();
+			std::string key(keySize, '\0');
+			iss.read(&key[0], keySize);
+			iss.ignore();
+			iss >> animListSize;
+			iss.ignore();
+			std::vector<std::string> animList;
+			for (size_t j = 0; j < animListSize; ++j) {
+				size_t animSize;
+				iss >> animSize;
+				iss.ignore();
+				std::string anim(animSize, '\0');
+				iss.read(&anim[0], animSize);
+				iss.ignore();
+				animList.push_back(anim);
+			}
+			promptAnimationMap[key] = animList;
+		}
+		
+		return true;
+	}
+	return false;
+}
+
 // Base64 encoding table
 static const std::string base64_chars =
 "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
@@ -300,6 +440,10 @@ std::vector<char> readFileToVector(const std::filesystem::path& path) {
 
 }
 
+static std::vector<std::string> chatHistory;
+static std::map<std::string, std::string> promptMap;
+static std::map<std::string, std::vector<std::string>> promptAnimationMap;
+
 namespace ui
 {
 static bool isLinear{true};
@@ -324,7 +468,9 @@ MainLayer::MainLayer(Scene& scene, ImTextureID gearTexture, ImTextureID poweredB
 		loadFromFile("powerkey.dat", clientId, clientSecret, sizeof(clientId));
 	}
 	
-	
+	if (std::filesystem::exists("prompts.dat")) {
+		loadFromFile("prompts.dat", chatHistory, promptMap, promptAnimationMap);
+	}
 }
 
 MainLayer::~MainLayer()
@@ -779,10 +925,7 @@ bool MainLayer::draw_ai_widget(Scene* scene)
 			ImGui::InputText("##Message", message, IM_ARRAYSIZE(message));
 			ImGui::SameLine();
 			
-			
-			// Chat history (example of a vertical chatbox)
-			static std::vector<std::string> chatHistory;
-			
+					
 			if (ImGui::Button("Send")) {
 				
 				// Construct JSON payload
@@ -821,26 +964,37 @@ bool MainLayer::draw_ai_widget(Scene* scene)
 				Json::Value jsonData;
 				std::string errors;
 				
-				
 				bool parsingSuccessful = reader->parse(res->body.c_str(), res->body.c_str() + res->body.size(), &jsonData, &errors);
 				
 				// Check for parsing errors
-				if (!parsingSuccessful) {
-					//chatHistory.push_back(std::string("Failed to parse the JSON string: "));
-				} else {
-					//
-					//				{"credits":<value>,"subscription":{"name":<value>,"credits":<value>,"featureLimits":{"maxVariantsGeneration":<value>},"currentPeriod":{"start":<value>,"end":<value>}}}
-					//
-					
-					
+				if (parsingSuccessful) {
 					auto requestId = jsonData["rid"].asString();
+					
+					auto promptId = std::to_string(std::hash<std::string>{}(message)); // Generate a unique promptId
+					
+					promptMap[requestId] = promptId; // Map the requestId to the promptId
+					
 					
 					_requestQueueMutex.lock();
 					_requestQueue.push_back(requestId);
 					_requestQueueMutex.unlock();
 					chatHistory.push_back(message);
 					
+					auto resources = scene->get_mutable_shared_resources();
+					
+					resources->get_mutable_animator()->set_current_time(0);
+
+					resources->get_mutable_animator()->set_active_animation_sequence(nullptr);
+
+					
 					_job_percentage = 0.0f;
+
+				} else {
+					//chatHistory.push_back(std::string("Failed to parse the JSON string: "));
+
+					//				{"credits":<value>,"subscription":{"name":<value>,"credits":<value>,"featureLimits":{"maxVariantsGeneration":<value>},"currentPeriod":{"start":<value>,"end":<value>}}}
+					//
+					
 				}
 				
 				// Clear the input
@@ -848,9 +1002,74 @@ bool MainLayer::draw_ai_widget(Scene* scene)
 			}
 			
 			for (const auto& msg : chatHistory) {
-				ImGui::TextUnformatted(msg.c_str());
+				if (ImGui::Selectable(msg.c_str())) {
+					
+					// Handle click event here
+					auto selectedPromptId = std::to_string(std::hash<std::string>{}(msg));
+					
+					// Find the requestId associated with this promptId
+					for (const auto& entry : promptMap) {
+						if (entry.second == selectedPromptId) {
+							
+							auto animationFileVector = promptAnimationMap[selectedPromptId];
+
+							auto sequencePath = animationFileVector[0].c_str();
+							
+							auto resources = scene->get_mutable_shared_resources();
+							
+							resources->import_model(sequencePath);
+							
+							auto& animationSet = resources->getAnimationSet(sequencePath);
+							
+							resources->add_animations(animationSet.animations);
+							auto entity = resources->parse_model(animationSet.model, animationSet.animations[0], sequencePath);
+
+							auto root = resources->get_root_entity();
+							std::vector<std::string> existingNames; // Example existing actor names
+							std::string prefix = "Actor"; // Prefix for actor names
+							
+							if(_ai_entity != nullptr){
+								root->removeChild(_ai_entity);
+								_ai_entity = nullptr;
+							}
+							
+							auto children = root->get_mutable_children();
+							
+							// Example iteration to get existing names (replace this with your actual iteration logic)
+							for (int i = 0; i < children.size(); ++i) {
+								std::string actorName = children[i]->get_name();
+								existingNames.push_back(actorName);
+							}
+							
+							std::string uniqueActorName = anim::GenerateUniqueActorName(existingNames, prefix);
+							
+							entity->set_name(uniqueActorName);
+							
+							root->add_children(entity);
+							
+							_ai_entity = entity;
+							
+							auto sequence = std::make_shared<anim::AnimationSequence>(*scene, resources->shared_from_this(), _ai_entity, sequencePath, animationSet.animations[0]->get_id());
+
+							
+							resources->get_mutable_animator()->set_current_time(0);
+							
+							
+							resources->get_mutable_animator()->set_is_stop(false);
+
+							resources->get_mutable_animator()->set_active_animation_sequence(sequence);
+
+							resources->get_mutable_animator()->set_mode(anim::AnimatorMode::Animation);
+
+							break;
+						}
+					}
+
+					
+
+				}
 			}
-			
+
 			ImGui::NextColumn();
 			
 			float columnWidth = ImGui::GetColumnWidth();
@@ -1015,7 +1234,6 @@ bool MainLayer::draw_ai_widget(Scene* scene)
 											lastDeepmotionModel = modelName;
 											
 											saveToFile("powersettings.dat", lastDeepmotionModel);
-											
 										}
 									} else {
 										// handle error
@@ -1220,7 +1438,7 @@ bool MainLayer::draw_ai_widget(Scene* scene)
 									resources->add_animations(animationSet.animations);
 									
 									auto entity = resources->parse_model(animationSet.model,
-										 animationSet.animations[0], fbxPath.c_str());
+																		 animationSet.animations[0], fbxPath.c_str());
 									
 									auto root = resources->get_root_entity();
 									
@@ -1827,6 +2045,7 @@ bool MainLayer::PollJobStatus(Scene* scene) {
 								
 								bool parsingSuccessful = reader->parse(res->body.c_str(), res->body.c_str() + res->body.size(), &jsonData, &errors);
 								
+								std::vector<std::string> animationFileVector;
 								bool needsRefresh = false;
 								if(jsonData["count"].asInt() > 0){
 									for(auto& urls : jsonData["links"][0]["urls"]){
@@ -1871,11 +2090,18 @@ bool MainLayer::PollJobStatus(Scene* scene) {
 														
 														const std::string baseDir = DEFAULT_CWD; // Assuming DEFAULT_CWD is defined somewhere
 														
-														decompress_zip_data(zipData, baseDir + "/Animations/");
+													auto fileVector = decompress_zip_data(zipData, baseDir + "/Animations/");
 														
 														_job_percentage = -1.0f;
 														
 														needsRefresh = true;
+														
+														
+														for(auto& fileString : fileVector){
+															animationFileVector.push_back(fileString);
+														}
+														
+
 														break;
 													}
 												}
@@ -1884,6 +2110,10 @@ bool MainLayer::PollJobStatus(Scene* scene) {
 									}
 								}
 								
+								promptAnimationMap[promptMap[requestId]] = animationFileVector;
+								
+								saveToFile("prompts.dat", chatHistory, promptMap, promptAnimationMap);
+
 								return needsRefresh;
 							} else if(json["status"].asString().compare("PROGRESS") == 0) {
 								
