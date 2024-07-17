@@ -443,6 +443,7 @@ std::vector<char> readFileToVector(const std::filesystem::path& path) {
 static std::vector<std::string> chatHistory;
 static std::map<std::string, std::string> promptMap;
 static std::map<std::string, std::vector<std::string>> promptAnimationMap;
+static int currentIndex = 0;
 
 namespace ui
 {
@@ -585,6 +586,53 @@ bool showCircularMenu = false;
 ImVec2 menuCenter;
 float menuRadius = 100.0f; // Example radius for the circular menu
 static bool isChatboxVisible = false; // Flag to track chatbox visibility
+static std::string currentSequence = ""; // Flag to track chatbox visibility
+// Function to handle the logic when a new prompt is selected
+void MainLayer::HandleNewPrompt(const std::vector<std::string>& generatedPrompts, int currentIndex, Scene* scene)
+{
+	if (generatedPrompts.empty()) return;
+		
+	if(currentSequence == generatedPrompts[currentIndex]){
+		return;
+	} else {
+		currentSequence = generatedPrompts[currentIndex];
+	}
+	
+	auto sequencePath = generatedPrompts[currentIndex].c_str();
+
+	auto resources = scene->get_mutable_shared_resources();
+	resources->import_model(sequencePath);
+	auto& animationSet = resources->getAnimationSet(sequencePath);
+	resources->add_animations(animationSet.animations);
+	auto entity = resources->parse_model(animationSet.model, animationSet.animations[0], sequencePath);
+	auto root = resources->get_root_entity();
+	std::vector<std::string> existingNames;
+	std::string prefix = "Actor";
+	
+	if (_ai_entity != nullptr)
+	{
+		root->removeChild(_ai_entity);
+		_ai_entity = nullptr;
+	}
+	
+	auto children = root->get_mutable_children();
+	for (int i = 0; i < children.size(); ++i)
+	{
+		std::string actorName = children[i]->get_name();
+		existingNames.push_back(actorName);
+	}
+	
+	std::string uniqueActorName = anim::GenerateUniqueActorName(existingNames, prefix);
+	entity->set_name(uniqueActorName);
+	root->add_children(entity);
+	_ai_entity = entity;
+	
+	auto sequence = std::make_shared<anim::AnimationSequence>(*scene, resources->shared_from_this(), _ai_entity, sequencePath, animationSet.animations[0]->get_id());
+	resources->get_mutable_animator()->set_current_time(0);
+	resources->get_mutable_animator()->set_is_stop(false);
+	resources->get_mutable_animator()->set_active_animation_sequence(sequence);
+	resources->get_mutable_animator()->set_mode(anim::AnimatorMode::Animation);
+}
 
 bool MainLayer::draw_ai_widget(Scene* scene)
 {
@@ -1000,6 +1048,7 @@ bool MainLayer::draw_ai_widget(Scene* scene)
 				// Clear the input
 				message[0] = '\0';
 			}
+			static std::vector<std::string> generatedPrompts;
 			
 			for (const auto& msg : chatHistory) {
 				if (ImGui::Selectable(msg.c_str())) {
@@ -1011,56 +1060,10 @@ bool MainLayer::draw_ai_widget(Scene* scene)
 					for (const auto& entry : promptMap) {
 						if (entry.second == selectedPromptId) {
 							
-							auto animationFileVector = promptAnimationMap[selectedPromptId];
+							generatedPrompts = promptAnimationMap[selectedPromptId];
 
-							auto sequencePath = animationFileVector[0].c_str();
-							
-							auto resources = scene->get_mutable_shared_resources();
-							
-							resources->import_model(sequencePath);
-							
-							auto& animationSet = resources->getAnimationSet(sequencePath);
-							
-							resources->add_animations(animationSet.animations);
-							auto entity = resources->parse_model(animationSet.model, animationSet.animations[0], sequencePath);
-
-							auto root = resources->get_root_entity();
-							std::vector<std::string> existingNames; // Example existing actor names
-							std::string prefix = "Actor"; // Prefix for actor names
-							
-							if(_ai_entity != nullptr){
-								root->removeChild(_ai_entity);
-								_ai_entity = nullptr;
-							}
-							
-							auto children = root->get_mutable_children();
-							
-							// Example iteration to get existing names (replace this with your actual iteration logic)
-							for (int i = 0; i < children.size(); ++i) {
-								std::string actorName = children[i]->get_name();
-								existingNames.push_back(actorName);
-							}
-							
-							std::string uniqueActorName = anim::GenerateUniqueActorName(existingNames, prefix);
-							
-							entity->set_name(uniqueActorName);
-							
-							root->add_children(entity);
-							
-							_ai_entity = entity;
-							
-							auto sequence = std::make_shared<anim::AnimationSequence>(*scene, resources->shared_from_this(), _ai_entity, sequencePath, animationSet.animations[0]->get_id());
-
-							
-							resources->get_mutable_animator()->set_current_time(0);
-							
-							
-							resources->get_mutable_animator()->set_is_stop(false);
-
-							resources->get_mutable_animator()->set_active_animation_sequence(sequence);
-
-							resources->get_mutable_animator()->set_mode(anim::AnimatorMode::Animation);
-
+							HandleNewPrompt(generatedPrompts, 0, scene);
+							currentIndex = 0;
 							break;
 						}
 					}
@@ -1299,6 +1302,36 @@ bool MainLayer::draw_ai_widget(Scene* scene)
 				if(_job_percentage >= 0){
 					ImGui::ProgressBar(_job_percentage / 100.0f);
 				}
+				
+
+				// Check if buttons should be enabled or disabled
+				bool disablePrevious = generatedPrompts.empty() || currentIndex == 0;
+				bool disableNext = generatedPrompts.empty() || currentIndex == generatedPrompts.size() - 1;
+				
+				// Previous button
+				if (disablePrevious)
+					ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);
+				if (ImGui::Button("<--") && !disablePrevious)
+				{
+					currentIndex--;
+				}
+				if (disablePrevious)
+					ImGui::PopItemFlag();
+				
+				ImGui::SameLine();
+				
+				// Next button
+				if (disableNext)
+					ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);
+				if (ImGui::Button("-->") && !disableNext)
+				{
+					currentIndex++;
+				}
+				if (disableNext)
+					ImGui::PopItemFlag();
+				
+				HandleNewPrompt(generatedPrompts, currentIndex, scene);
+
 			}
 			
 			ImGui::End(); // End of chatbox window

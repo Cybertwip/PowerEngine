@@ -50,6 +50,7 @@ namespace ui
         void init();
         void begin();
         void end();
+		void HandleNewPrompt(const std::vector<std::string>& generatedPrompts, int currentIndex, Scene* scene);
         bool draw_ai_widget(Scene* scene);
 		void draw_ingame_menu(Scene* scene);
         void draw_scene(const std::string &title, Scene *scene);
