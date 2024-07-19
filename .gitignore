@@ -5,7 +5,6 @@ doxy/
 doxy2/
 tmp/
 .vs/
-dist/
 __pycache__
 *.fbx
 mp2mm/
