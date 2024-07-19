@@ -20,7 +20,7 @@ endif()
 # Add the shaders
 file(GLOB SHADERS ${CMAKE_CURRENT_LIST_DIR}/shaders/*.vs ${CMAKE_CURRENT_LIST_DIR}/shaders/*.fs)
 
-add_executable(OAC 
+add_executable(PowerEngine
     ${BUNDLE}
     ${APP_ICON}
     ${BUNDLE_MENU}
@@ -50,9 +50,9 @@ add_executable(OAC
     ${SHADERS}
 )
 
-target_include_directories(OAC PUBLIC ../external/smallfbx)
-target_include_directories(OAC PUBLIC ${CMAKE_CURRENT_LIST_DIR})
-target_link_libraries(OAC PRIVATE nanogui EnTT glm)
+target_include_directories(PowerEngine PUBLIC ../external/smallfbx)
+target_include_directories(PowerEngine PUBLIC ${CMAKE_CURRENT_LIST_DIR})
+target_link_libraries(PowerEngine PRIVATE nanogui EnTT glm)
 
 # Set the resource files to be included in the bundle
 set(RESOURCE_DIRECTORIES
@@ -65,39 +65,39 @@ set(RESOURCE_FILES
 
 # Copy resource and shader files to the binary directory after the build
 foreach(resource_file ${RESOURCE_DIRECTORIES})
-    add_custom_command(TARGET OAC POST_BUILD
+    add_custom_command(TARGET PowerEngine POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_directory
-        ${resource_file} $<TARGET_FILE_DIR:OAC>/../Resources)
+        ${resource_file} $<TARGET_FILE_DIR:PowerEngine>/../Resources)
 endforeach()
 
 foreach(resource_file ${RESOURCE_FILES})
-    add_custom_command(TARGET OAC POST_BUILD
+    add_custom_command(TARGET PowerEngine POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy
-        ${CMAKE_SOURCE_DIR}/${resource_file} $<TARGET_FILE_DIR:OAC>/../Resources/${resource_file})
+        ${CMAKE_SOURCE_DIR}/${resource_file} $<TARGET_FILE_DIR:PowerEngine>/../Resources/${resource_file})
 endforeach()
 
 # Copy shader files
 foreach(shader_file ${SHADERS})
-    add_custom_command(TARGET OAC POST_BUILD
+    add_custom_command(TARGET PowerEngine POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy
-        ${shader_file} $<TARGET_FILE_DIR:OAC>/shaders/)
+        ${shader_file} $<TARGET_FILE_DIR:PowerEngine>/shaders/)
 endforeach()
 
 if(APPLE)
     # Set macOS bundle properties
-    set_target_properties(OAC PROPERTIES
+    set_target_properties(PowerEngine PROPERTIES
         MACOSX_BUNDLE TRUE
         MACOSX_BUNDLE_INFO_PLIST ${CMAKE_SOURCE_DIR}/Info.plist  # Provide your Info.plist file
     )
 
     # Disable code signing for the entire project
-    set_target_properties(OAC PROPERTIES
+    set_target_properties(PowerEngine PROPERTIES
         XCODE_ATTRIBUTE_CODE_SIGN_IDENTITY ""
     )
 
-    set_target_properties(OAC PROPERTIES 
+    set_target_properties(PowerEngine PROPERTIES 
                       XCODE_GENERATE_SCHEME TRUE
-                      XCODE_SCHEME_WORKING_DIRECTORY  "$<TARGET_FILE_DIR:OAC>/../Resources")
+                      XCODE_SCHEME_WORKING_DIRECTORY  "$<TARGET_FILE_DIR:PowerEngine>/../Resources")
 
 
     # Set release build type and enable optimizations
