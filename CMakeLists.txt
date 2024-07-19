@@ -5,7 +5,7 @@ include(${CMAKE_ROOT}/Modules/ExternalProject.cmake)
 
 
 project(
-  OAC
+  PowerEngine
   LANGUAGES CXX
   VERSION 0.1.0)
 set(CMAKE_CXX_STANDARD 17)
@@ -86,7 +86,7 @@ target_link_libraries(nanogui PUBLIC glad glfw)
 #target_link_libraries(application nanogui ozz_animation entt)
 
 #target_link_libraries(imgui-feature-layout glm json)
-#target_link_libraries(OAC application imgui-feature-layout imgui-node-editor)
+#target_link_libraries(PowerEngine application imgui-feature-layout imgui-node-editor)
 #target_link_libraries(test PUBLIC imgui-feature-layout imgui-node-editor httplib::httplib zstr::zstr)
 #target_link_libraries(glcpp PUBLIC test)
 #target_link_libraries(SmallFBX zlib)

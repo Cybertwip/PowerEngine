@@ -171,7 +171,7 @@ if(APPLE)
 endif()
 
 
-add_executable(OAC 
+add_executable(PowerEngine 
 ${BUNDLE}
 ${APP_ICON}
 ${BUNDLE_MENU}
@@ -203,23 +203,23 @@ event/event_history.cpp
 ./scene/main_scene.cpp
 )
 
-target_include_directories(OAC  PUBLIC ../external/smallfbx)
+target_include_directories(PowerEngine  PUBLIC ../external/smallfbx)
 target_include_directories(test  PUBLIC ../external/smallfbx)
 
 if(MSVC)
-  target_compile_options(OAC PUBLIC   "/utf-8")#  target_link_options(OAC PUBLIC "/INCREMENTAL")
+  target_compile_options(PowerEngine PUBLIC   "/utf-8")#  target_link_options(PowerEngine PUBLIC "/INCREMENTAL")
   if (CMAKE_BUILD_TYPE  MATCHES Release)
-      target_link_options(OAC PUBLIC "/INCREMENTAL" "/SUBSYSTEM:windows" "/ENTRY:mainCRTStartup")
+      target_link_options(PowerEngine PUBLIC "/INCREMENTAL" "/SUBSYSTEM:windows" "/ENTRY:mainCRTStartup")
   endif()
-#   target_link_libraries(OAC  glcpp test py)
-target_link_libraries(OAC  glcpp test )
+#   target_link_libraries(PowerEngine  glcpp test py)
+target_link_libraries(PowerEngine  glcpp test )
 elseif(WIN32)
-    target_compile_options(OAC  PRIVATE -Wall -Werror -std=c++17 -static)
-    target_link_libraries(OAC  glcpp)
-    target_include_directories(OAC  PUBLIC ./)
+    target_compile_options(PowerEngine  PRIVATE -Wall -Werror -std=c++17 -static)
+    target_link_libraries(PowerEngine  glcpp)
+    target_include_directories(PowerEngine  PUBLIC ./)
 else()
-# target_link_libraries(OAC  glcpp test py)
-    target_link_libraries(OAC  glcpp test)
+# target_link_libraries(PowerEngine  glcpp test py)
+    target_link_libraries(PowerEngine  glcpp test)
 endif()
 
 message("==========================================================")
@@ -238,26 +238,26 @@ if(APPLE)
     
     # Copy resource files to the binary directory
     foreach(resource_file ${RESOURCE_DIRECTORIES})
-        add_custom_command(TARGET OAC POST_BUILD
+        add_custom_command(TARGET PowerEngine POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_directory
-        ${CMAKE_SOURCE_DIR}/${resource_file} $<TARGET_FILE_DIR:OAC>/../Resources/${resource_file})
+        ${CMAKE_SOURCE_DIR}/${resource_file} $<TARGET_FILE_DIR: PowerEngine>/../Resources/${resource_file})
     endforeach()
 
     foreach(resource_file ${RESOURCE_FILES})
-        add_custom_command(TARGET OAC POST_BUILD
+        add_custom_command(TARGET PowerEngine POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy
-        ${CMAKE_SOURCE_DIR}/${resource_file} $<TARGET_FILE_DIR:OAC>/../Resources/${resource_file})
+        ${CMAKE_SOURCE_DIR}/${resource_file} $<TARGET_FILE_DIR: PowerEngine>/../Resources/${resource_file})
     endforeach()
 
 
     # Set macOS bundle properties
-    set_target_properties(OAC PROPERTIES
+    set_target_properties(PowerEngine PROPERTIES
         MACOSX_BUNDLE TRUE
         MACOSX_BUNDLE_INFO_PLIST ${CMAKE_SOURCE_DIR}/Info.plist  # Provide your Info.plist file
     )
 
         # Disable code signing for the entire project
-    set_target_properties(OAC PROPERTIES
+    set_target_properties(PowerEngine PROPERTIES
         XCODE_ATTRIBUTE_CODE_SIGN_IDENTITY ""
     )
     
@@ -266,15 +266,15 @@ if(APPLE)
 
 else()
     foreach(resource_file ${RESOURCE_DIRECTORIES})
-        add_custom_command(TARGET OAC POST_BUILD
+        add_custom_command(TARGET PowerEngine POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_directory
-        ${CMAKE_SOURCE_DIR}/${resource_file} $<TARGET_FILE_DIR:OAC>/${resource_file})
+        ${CMAKE_SOURCE_DIR}/${resource_file} $<TARGET_FILE_DIR: PowerEngine>/${resource_file})
     endforeach()
 
     foreach(resource_file ${RESOURCE_FILES})
-        add_custom_command(TARGET OAC POST_BUILD
+        add_custom_command(TARGET PowerEngine POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy
-        ${CMAKE_SOURCE_DIR}/${resource_file} $<TARGET_FILE_DIR:OAC>/${resource_file})
+        ${CMAKE_SOURCE_DIR}/${resource_file} $<TARGET_FILE_DIR: PowerEngine>/${resource_file})
     endforeach()
 
 endif()
