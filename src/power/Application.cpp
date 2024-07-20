@@ -23,8 +23,8 @@
 #include "ui/TransformPanel.hpp"
 
 Application::Application() : nanogui::Screen(nanogui::Vector2i(1920, 1080), "Power Engine", false) {
-    set_layout(new nanogui::GridLayout(nanogui::Orientation::Vertical, 2,
-                                       nanogui::Alignment::Middle, 15, 5));
+    set_layout(new nanogui::GridLayout(nanogui::Orientation::Horizontal, 2,
+                                       nanogui::Alignment::Fill, 15, 5));
 
     int canvasWidth = 900;
     int canvasHeight = 600;

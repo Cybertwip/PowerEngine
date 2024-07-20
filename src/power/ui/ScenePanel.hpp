@@ -2,9 +2,9 @@
 
 #include "Canvas.hpp"
 
-#include <nanogui/window.h>
+#include "Panel.hpp"
 
-class ScenePanel : public nanogui::Window {
+class ScenePanel : public Panel {
 public:
-    ScenePanel(nanogui::Widget *parent);
+    ScenePanel(nanogui::Widget& parent);
 };

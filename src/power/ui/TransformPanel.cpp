@@ -7,7 +7,7 @@
 #include <nanogui/textbox.h>
 #include <nanogui/window.h>
 
-TransformPanel::TransformPanel(nanogui::Widget *parent) : nanogui::Window(parent, "Transform") {
+TransformPanel::TransformPanel(nanogui::Widget &parent) : Panel(parent, "Transform") {
     set_position(nanogui::Vector2i(0, 0));
     set_layout(new nanogui::GroupLayout());
 

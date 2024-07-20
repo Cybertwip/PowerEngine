@@ -70,6 +70,9 @@ add_executable(PowerEngine
     ${CMAKE_CURRENT_LIST_DIR}/import/Fbx.hpp
     ${CMAKE_CURRENT_LIST_DIR}/import/Fbx.cpp
 
+    ${CMAKE_CURRENT_LIST_DIR}/ui/Panel.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/ui/Panel.cpp
+
     ${CMAKE_CURRENT_LIST_DIR}/ui/ScenePanel.hpp
     ${CMAKE_CURRENT_LIST_DIR}/ui/ScenePanel.cpp
 

@@ -4,4 +4,4 @@
 #include "ui/TransformPanel.hpp"
 
 UiCommon::UiCommon(nanogui::Widget& parent)
-    : mScenePanel(new ScenePanel(&parent)), mTransformPanel(new TransformPanel(&parent)) {}
+    : mScenePanel(new ScenePanel(parent)), mTransformPanel(new TransformPanel(parent)) {}

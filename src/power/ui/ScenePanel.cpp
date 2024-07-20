@@ -6,7 +6,7 @@
 #include <nanogui/toolbutton.h>
 #include <nanogui/window.h>
 
-ScenePanel::ScenePanel(nanogui::Widget *parent) : nanogui::Window(parent, "Scene") {
+ScenePanel::ScenePanel(nanogui::Widget &parent) : Panel(parent, "Scene") {
     set_position(nanogui::Vector2i(0, 0));
     set_layout(new nanogui::GroupLayout());
 

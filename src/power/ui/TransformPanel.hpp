@@ -1,8 +1,8 @@
 #pragma once
 
-#include <nanogui/window.h>
+#include "Panel.hpp"
 
-class TransformPanel : public nanogui::Window {
+class TransformPanel : public Panel {
 public:
-    TransformPanel(nanogui::Widget *parent);
+    TransformPanel(nanogui::Widget& parent);
 };
