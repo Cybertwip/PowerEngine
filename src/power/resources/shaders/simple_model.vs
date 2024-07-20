@@ -10,7 +10,6 @@ layout (location = 3) in vec2 aTexcoords2;
 uniform mat4 aProjection;
 uniform mat4 aView;
 uniform mat4 aModel;
-uniform mat4 lightSpaceMatrix;
 
 out vec4 FragPosLightSpace;
 flat out int boneId;
@@ -29,5 +28,5 @@ void main()
     FragPos = vec3(aModel * vec4(aPosition, 1.0));
     boneId = 0;
 
-    FragPosLightSpace = lightSpaceMatrix * vec4(FragPos, 1.0);
+    FragPosLightSpace = vec4(FragPos, 1.0);
 }

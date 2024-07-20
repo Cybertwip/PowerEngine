@@ -1,25 +1,17 @@
 #include "CameraManager.hpp"
+#include "actors/Camera.hpp"
 
 #include "graphics/shading/ShaderWrapper.hpp"
 
-CameraManager::CameraManager(float fov, float near, float far, float aspect) :
-mFov(fov),
-mNear(near),
-mFar(far),
-mAspect(aspect) {
-    mProjection =
-        nanogui::Matrix4f::perspective(mFov,
-                              mNear,
-                              mFar,
-                              mAspect
-        );
+CameraManager::CameraManager() :
+mDefaultCamera(create_camera(45, 0.01f, 5e3f, 900.0f / 600.0f)),
+mActiveCamera(mDefaultCamera) {
 }
-void CameraManager::set_view_projection(ShaderWrapper &shader){
-    static float viewOffset = -200.0f;  // Configurable parameter
 
-    nanogui::Matrix4f view =
-    nanogui::Matrix4f::look_at(nanogui::Vector3f(0, -2, viewOffset), nanogui::Vector3f(0, 0, 0), nanogui::Vector3f(0, 1, 0));
-    
-    shader.set_uniform("aView", view);
-    shader.set_uniform("aProjection", mProjection);
+Camera& CameraManager::create_camera(float fov, float near, float far, float aspect) {
+    return *mCameras.emplace_back(std::make_unique<Camera>(fov, near, far, aspect));
+}
+
+void CameraManager::set_view_projection(ShaderWrapper &shader){
+    mActiveCamera.set_view_projection(shader);
 }

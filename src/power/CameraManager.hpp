@@ -2,18 +2,20 @@
 
 #include <nanogui/vector.h>
 
+#include <memory>
+
 class ShaderWrapper;
+class Camera;
 
 class CameraManager
 {
 public:
-    CameraManager(float fov, float near, float far, float aspect);
+    CameraManager();
+    Camera& create_camera(float fov, float near, float far, float aspect);
     void set_view_projection(ShaderWrapper& shader);
     
 private:
-    float mFov;
-    float mNear;
-    float mFar;
-    float mAspect;
-    nanogui::Matrix4f mProjection;
+    Camera& mDefaultCamera;
+    Camera& mActiveCamera;
+    std::vector<std::unique_ptr<Camera>> mCameras;
 };

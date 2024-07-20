@@ -10,10 +10,12 @@
 #include <cmath>
 
 #include "Canvas.hpp"
+
 #include "CameraManager.hpp"
 #include "MeshActorLoader.hpp"
 #include "RenderManager.hpp"
 #include "ShaderManager.hpp"
+#include "actors/Camera.hpp"
 #include "graphics/drawing/MeshActor.hpp"
 #include "import/Fbx.hpp"
 #include "ui/ScenePanel.hpp"
@@ -23,7 +25,7 @@ Application::Application() : nanogui::Screen(nanogui::Vector2i(1920, 1080), "Pow
     int canvasWidth = 900;
     int canvasHeight = 600;
     
-    mCameraManager = std::make_unique<CameraManager>(45.0f, 0.01f, 5e3f, canvasWidth / static_cast<float>(canvasHeight));
+    mCameraManager = std::make_unique<CameraManager>();
     mRenderManager = std::make_unique<RenderManager>(*mCameraManager);
 
     ScenePanel *scenePanel = new ScenePanel(this);

@@ -8,7 +8,6 @@ layout(location = 2) out int UniqueID;
 // Input attributes from vertex shader
 in vec2 TexCoords1;
 in vec2 TexCoords2;
-flat in int boneId; // Flat interpolation for integer value
 
 // Uniforms
 uniform sampler2D texture_diffuse1; // Diffuse texture
@@ -23,8 +22,6 @@ struct Material {
 };
 
 uniform Material material;
-uniform uint selectionColor;
-uniform uint uniqueIdentifier;
 
 void main() {
     vec3 mat_diffuse = material.diffuse;
@@ -36,6 +33,4 @@ void main() {
 
     // Set the fragment color to the diffuse texture color or material diffuse color
     FragColor = vec4(mat_diffuse, material.opacity);
-    EntityID = int(selectionColor);
-    UniqueID = int(uniqueIdentifier);
 }
