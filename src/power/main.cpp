@@ -1,11 +1,15 @@
 #include <nanogui/nanogui.h>
 #include "Application.hpp"
 
+#include <stb_image.h>
+
 #include <iostream>
 #include <filesystem>
 
 int main(int /* argc */, char ** /* argv */) {
 	
+    stbi_set_flip_vertically_on_load(1);
+    
 	std::cout << std::filesystem::current_path().string() << std::endl;
     try {
         nanogui::init();

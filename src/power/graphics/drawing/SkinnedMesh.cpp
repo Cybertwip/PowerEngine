@@ -143,8 +143,6 @@ void SkinnedMesh::SkinnedMeshShader::upload_texture_data(std::vector<std::unique
     mShader.set_texture("texture_diffuse1", textureData[0].get());
 }
 
-
-
 SkinnedMesh::SkinnedMesh(MeshData& meshData, SkinnedMeshShader& shader)
 : mMeshData(meshData), mShader(shader) {
 	initialize_mesh();
