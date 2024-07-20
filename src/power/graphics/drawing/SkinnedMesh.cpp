@@ -1,18 +1,16 @@
 #include "SkinnedMesh.hpp"
 
-#include "Canvas.hpp"
-#include "CameraManager.hpp"
-#include "ShaderManager.hpp"
-#include "graphics/shading/ShaderWrapper.hpp"
-#include "import/Fbx.hpp"
-
+#include <GLFW/glfw3.h>
 #include <nanogui/renderpass.h>
 #include <nanogui/texture.h>
 
-#include <GLFW/glfw3.h>
-
-
 #include <cmath>
+
+#include "CameraManager.hpp"
+#include "Canvas.hpp"
+#include "ShaderManager.hpp"
+#include "graphics/shading/ShaderWrapper.hpp"
+#include "import/Fbx.hpp"
 
 SkinnedMesh::Vertex::Vertex() {}
 
@@ -162,7 +160,7 @@ void SkinnedMesh::draw_content(CameraManager& cameraManager) {
                      Matrix4f::translate(-Vector3f(center.x, center.y, center.z));
 
     cameraManager.set_view_projection(mShader);
-    
+
     mShader.set_uniform("aModel", model);
 
     mShader.begin();

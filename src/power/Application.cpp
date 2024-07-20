@@ -9,9 +9,8 @@
 
 #include <cmath>
 
-#include "Canvas.hpp"
-
 #include "CameraManager.hpp"
+#include "Canvas.hpp"
 #include "MeshActorLoader.hpp"
 #include "RenderManager.hpp"
 #include "ShaderManager.hpp"
@@ -22,12 +21,11 @@
 #include "ui/TransformPanel.hpp"
 
 Application::Application() : nanogui::Screen(nanogui::Vector2i(1920, 1080), "Power Engine", false) {
-    
     int canvasWidth = 900;
     int canvasHeight = 600;
-    
+
     mEntityRegistry = std::make_unique<entt::registry>();
-    
+
     mCameraManager = std::make_unique<CameraManager>(*mEntityRegistry);
     mRenderManager = std::make_unique<RenderManager>(*mCameraManager);
 
@@ -43,7 +41,6 @@ Application::Application() : nanogui::Screen(nanogui::Vector2i(1920, 1080), "Pow
 
     mActors.push_back(mMeshActorLoader->create_mesh_actor("models/DeepMotionBot.fbx"));
 
-    
     TransformPanel *transformPanel = new TransformPanel(this);
     transformPanel->set_position(nanogui::Vector2i(932, 0));
 

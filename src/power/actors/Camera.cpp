@@ -1,44 +1,35 @@
 #include "Camera.hpp"
 
+#include <glm/gtc/type_ptr.hpp>
+
 #include "components/Transform.hpp"
 #include "graphics/shading/ShaderWrapper.hpp"
 
-#include <glm/gtc/type_ptr.hpp>
-
-Camera::Camera(entt::registry& registry, float fov, float near, float far, float aspect) :
-Actor(registry),
-mFov(fov),
-mNear(near),
-mFar(far),
-mAspect(aspect) {
-    mProjection =
-    nanogui::Matrix4f::perspective(mFov,
-                                   mNear,
-                                   mFar,
-                                   mAspect
-                                   );
+Camera::Camera(entt::registry& registry, float fov, float near, float far, float aspect)
+    : Actor(registry), mFov(fov), mNear(near), mFar(far), mAspect(aspect) {
+    mProjection = nanogui::Matrix4f::perspective(mFov, mNear, mFar, mAspect);
 
     add_component<Transform>();
 }
-void Camera::set_view_projection(ShaderWrapper &shader){
+void Camera::set_view_projection(ShaderWrapper& shader) {
     update_view();
-    
+
     shader.set_uniform("aView", mView);
     shader.set_uniform("aProjection", mProjection);
 }
 
 void Camera::update_view() {
     auto& transform = get_component<Transform>();
-    
+
     // Convert ozz::math::Transform to glm types
     glm::vec3 position = transform.get_translation();
     glm::quat rotation = transform.get_rotation();
-    
+
     // Calculate the view matrix (inverse of camera's transformation)
     glm::mat4 translationMatrix = glm::translate(glm::mat4(1.0f), -position);
     glm::mat4 rotationMatrix = glm::mat4_cast(glm::conjugate(rotation));
     glm::mat4 view = rotationMatrix * translationMatrix;
-    
+
     // Convert glm::mat4 to nanogui::Matrix4f
     std::memcpy(mView.m, glm::value_ptr(view), sizeof(float) * 16);
 }

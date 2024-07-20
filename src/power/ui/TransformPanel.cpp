@@ -2,9 +2,9 @@
 
 #include <nanogui/button.h>
 #include <nanogui/icons.h>
-#include <nanogui/textbox.h>
 #include <nanogui/label.h>
 #include <nanogui/layout.h>
+#include <nanogui/textbox.h>
 #include <nanogui/window.h>
 
 TransformPanel::TransformPanel(nanogui::Widget *parent) : nanogui::Window(parent, "Transform") {
@@ -17,7 +17,7 @@ TransformPanel::TransformPanel(nanogui::Widget *parent) : nanogui::Window(parent
     Widget *translatePanel = new Widget(this);
     translatePanel->set_layout(new nanogui::GridLayout(nanogui::Orientation::Vertical, 2,
                                                        nanogui::Alignment::Middle, 15, 5));
-    
+
     new nanogui::Label(translatePanel, "X:", "sans-bold");
     auto x_translate = new nanogui::IntBox<int>(translatePanel);
     x_translate->set_editable(true);

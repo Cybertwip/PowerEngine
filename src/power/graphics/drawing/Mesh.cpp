@@ -89,5 +89,4 @@ void Mesh::initialize_mesh() {
     mShader.upload_vertex_data(vertices);
 }
 
-void Mesh::draw_content(CameraManager &cameraManager) {
-}
+void Mesh::draw_content(CameraManager &cameraManager) {}
