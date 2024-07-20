@@ -10,7 +10,12 @@ class Canvas;
 class RenderManager;
 class ShaderManager;
 
-struct RenderSettings {
+class RenderSettings {
+    RenderSettings(int canvasWidth, canvasHeight) :
+    mCanvasWidth(canvasWidth),
+    mCanvasHeight(canvasHeight){
+        
+    }
     int mCanvasWidth;
     int mCanvasHeight;
 };

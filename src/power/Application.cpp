@@ -31,7 +31,7 @@ Application::Application() : nanogui::Screen(nanogui::Vector2i(1920, 1080), "Pow
     mCameraManager = std::make_unique<CameraManager>(*mEntityRegistry);
     mRenderManager = std::make_unique<RenderManager>(*mCameraManager);
 
-    mRenderSettings = std::make_unique<RenderSettings>();
+    mRenderSettings = std::make_unique<RenderSettings>(900, 600);
     mUiCommon = std::make_unique<UiCommon>(*this);
 
     mRenderCommon = std::make_unique<RenderCommon>(mUiCommon->scene_panel(), *mRenderManager, *mRenderSettings);
