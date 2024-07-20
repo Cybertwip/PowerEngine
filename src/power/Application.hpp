@@ -1,3 +1,5 @@
+#include <entt/entt.hpp>
+
 #include <nanogui/screen.h>
 
 #include <memory>
@@ -23,6 +25,7 @@ class Application : public nanogui::Screen
     virtual void draw(NVGcontext *ctx) override;
 
    private:
+    std::unique_ptr<entt::registry> mEntityRegistry;
     std::unique_ptr<CameraManager> mCameraManager;
     std::unique_ptr<RenderManager> mRenderManager;
     std::unique_ptr<Canvas> mCanvas;

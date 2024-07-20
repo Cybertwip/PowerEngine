@@ -1,13 +1,15 @@
 #pragma once
 
+#include <entt/entt.hpp>
+
 #include <nanogui/vector.h>
 
 class ShaderWrapper;
 
-class Camera //: public Actor
+class Camera
 {
 public:
-    Camera(float fov, float near, float far, float aspect);
+    Camera(entt::registry& registry, float fov, float near, float far, float aspect);
     void set_view_projection(ShaderWrapper& shader);
     
 private:
@@ -17,4 +19,6 @@ private:
     float mAspect;
     nanogui::Matrix4f mView;
     nanogui::Matrix4f mProjection;
+    
+    entt::entity mEntity;
 };

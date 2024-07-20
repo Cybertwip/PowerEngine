@@ -25,7 +25,9 @@ Application::Application() : nanogui::Screen(nanogui::Vector2i(1920, 1080), "Pow
     int canvasWidth = 900;
     int canvasHeight = 600;
     
-    mCameraManager = std::make_unique<CameraManager>();
+    mEntityRegistry = std::make_unique<entt::registry>();
+    
+    mCameraManager = std::make_unique<CameraManager>(*mEntityRegistry);
     mRenderManager = std::make_unique<RenderManager>(*mCameraManager);
 
     ScenePanel *scenePanel = new ScenePanel(this);

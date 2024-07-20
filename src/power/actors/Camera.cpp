@@ -2,7 +2,10 @@
 
 #include "graphics/shading/ShaderWrapper.hpp"
 
-Camera::Camera(float fov, float near, float far, float aspect) :
+#include "ozz/base/maths/transform.h"
+
+
+Camera::Camera(entt::registry& registry, float fov, float near, float far, float aspect) :
 mFov(fov),
 mNear(near),
 mFar(far),
@@ -13,6 +16,8 @@ mAspect(aspect) {
                               mFar,
                               mAspect
         );
+    
+    registry.emplace<ozz::math::Transform>(mEntity);
 }
 void Camera::set_view_projection(ShaderWrapper &shader){
     static float viewOffset = -200.0f;  // Configurable parameter
