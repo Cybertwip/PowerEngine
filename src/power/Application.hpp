@@ -7,14 +7,13 @@
 
 #include "graphics/drawing/SkinnedMesh.hpp"
 
-struct RenderSettings;
-
 class Canvas;
 class CameraManager;
 class MeshActor;
 class MeshActorLoader;
 class RenderCommon;
 class RenderManager;
+class RenderSettings;
 class SkinnedMesh;
 class ShaderManager;
 class ShaderWrapper;

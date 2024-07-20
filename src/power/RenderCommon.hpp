@@ -11,6 +11,7 @@ class RenderManager;
 class ShaderManager;
 
 class RenderSettings {
+public:
     RenderSettings(int canvasWidth, int canvasHeight) :
     mCanvasWidth(canvasWidth),
     mCanvasHeight(canvasHeight){
