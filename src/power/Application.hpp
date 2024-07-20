@@ -2,12 +2,15 @@
 
 #include <nanogui/screen.h>
 
+#include <vector>
 #include <memory>
 
 class Canvas;
 class SkinnedMesh;
 class ShaderManager;
 class ShaderWrapper;
+
+class Fbx;
 
 class Application : public nanogui::Screen {
 public:
@@ -20,6 +23,8 @@ private:
 	std::unique_ptr<ShaderManager> mShaderManager;
 	std::unique_ptr<SkinnedMesh::SkinnedMeshShader> mMeshShaderWrapper;
 
+    std::unique_ptr<Fbx> mModel;
+
     Canvas* mCanvas;
-	SkinnedMesh* mMesh;
+	std::vector<std::unique_ptr<SkinnedMesh>> mMeshes;
 };

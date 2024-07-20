@@ -4,6 +4,8 @@
 #include "graphics/shading/ShaderWrapper.hpp"
 #include "graphics/drawing/SkinnedMesh.hpp"
 
+#include "import/Fbx.hpp"
+
 #include <nanogui/window.h>
 #include <nanogui/button.h>
 #include <nanogui/toolbutton.h>
@@ -29,9 +31,12 @@ Application::Application() : nanogui::Screen(nanogui::Vector2i(1440, 900), "Nano
 	
 	mMeshShaderWrapper = std::make_unique<SkinnedMesh::SkinnedMeshShader>(*mShaderManager->load_shader("mesh", "shaders/simple_shader.vs", "shaders/simple_shader.fs"));
 	
-	mMesh = new SkinnedMesh(*mMeshShaderWrapper);
+    mModel = std::make_unique<Fbx>("models/DeepMotionBot.fbx");
+    
+    for (auto& meshData : mModel->GetMeshData()) {
+        mMeshes.push_back(std::make_unique<SkinnedMesh>(*meshData, *mMeshShaderWrapper));
+    }
 	
-
     Widget *tools = new Widget(window);
     tools->set_layout(new nanogui::BoxLayout(nanogui::Orientation::Horizontal, nanogui::Alignment::Middle, 0, 5));
 
@@ -59,6 +64,10 @@ bool Application::keyboard_event(int key, int scancode, int action, int modifier
 }
 
 void Application::draw(NVGcontext *ctx) {
-	mCanvas->add_drawable(*mMesh);
+    
+    for (auto& mesh : mMeshes) {
+        mCanvas->add_drawable(*mesh);
+    }
+    
     Screen::draw(ctx);
 }

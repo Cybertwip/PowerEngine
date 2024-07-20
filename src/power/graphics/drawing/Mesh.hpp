@@ -44,7 +44,7 @@ public:
 public:
 	Mesh(MeshShader& shader);
 	
-	void draw_content() override;
+	void draw_content(Canvas& canvas) override;
 	
 private:
 	MeshShader& mShader;

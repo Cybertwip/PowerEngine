@@ -126,7 +126,7 @@ void Mesh::initialize_mesh() {
 	mShader.upload_vertex_data(vertices);
 }
 
-void Mesh::draw_content() {
+void Mesh::draw_content(Canvas& canvas) {
 	using namespace nanogui;
 	
 	Matrix4f view = Matrix4f::look_at(

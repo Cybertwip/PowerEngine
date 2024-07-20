@@ -1,5 +1,9 @@
 #include "SkinnedMesh.hpp"
+#include "Canvas.hpp"
+
 #include "graphics/shading/ShaderWrapper.hpp"
+
+#include "import/Fbx.hpp"
 
 #include <nanogui/renderpass.h>
 
@@ -125,73 +129,87 @@ void SkinnedMesh::SkinnedMeshShader::upload_vertex_data(const std::vector<Vertex
 }
 
 
-SkinnedMesh::SkinnedMesh(SkinnedMeshShader& shader)
-: mShader(shader) {
+SkinnedMesh::SkinnedMesh(MeshData& meshData, SkinnedMeshShader& shader)
+: mMeshData(meshData), mShader(shader) {
 	initialize_mesh();
 }
 
 void SkinnedMesh::initialize_mesh() {
-	
-	std::vector<uint32_t> indices = {
-		3, 2, 6, 6, 7, 3,
-		4, 5, 1, 1, 0, 4,
-		4, 0, 3, 3, 7, 4,
-		1, 5, 6, 6, 2, 1,
-		0, 1, 2, 2, 3, 0,
-		7, 6, 5, 5, 4, 7
-	};
-
-	
-	std::vector<glm::vec3> positions = {
-		glm::vec3(-1.f, 1.f, 1.f), glm::vec3(-1.f, -1.f, 1.f),
-		glm::vec3(1.f, -1.f, 1.f), glm::vec3(1.f, 1.f, 1.f),
-		glm::vec3(-1.f, 1.f, -1.f), glm::vec3(-1.f, -1.f, -1.f),
-		glm::vec3(1.f, -1.f, -1.f), glm::vec3(1.f, 1.f, -1.f)
-	};
-	
-	std::vector<glm::vec3> colors = {
-		glm::vec3(0.f, 1.f, 1.f), glm::vec3(0.f, 0.f, 1.f),
-		glm::vec3(1.f, 0.f, 1.f), glm::vec3(1.f, 1.f, 1.f),
-		glm::vec3(0.f, 1.f, 0.f), glm::vec3(0.f, 0.f, 0.f),
-		glm::vec3(1.f, 0.f, 0.f), glm::vec3(1.f, 1.f, 0.f)
-	};
-	
-	std::vector<Vertex> vertices;
-	for (size_t i = 0; i < positions.size(); ++i)
-	{
-		vertices.emplace_back(positions[i], colors[i]);
-	}
-	
-	mShader.upload_index_data(indices);
-	mShader.upload_vertex_data(vertices);
+//	
+//	std::vector<uint32_t> indices = {
+//		3, 2, 6, 6, 7, 3,
+//		4, 5, 1, 1, 0, 4,
+//		4, 0, 3, 3, 7, 4,
+//		1, 5, 6, 6, 2, 1,
+//		0, 1, 2, 2, 3, 0,
+//		7, 6, 5, 5, 4, 7
+//	};
+//
+//	
+//	std::vector<glm::vec3> positions = {
+//		glm::vec3(-1.f, 1.f, 1.f), glm::vec3(-1.f, -1.f, 1.f),
+//		glm::vec3(1.f, -1.f, 1.f), glm::vec3(1.f, 1.f, 1.f),
+//		glm::vec3(-1.f, 1.f, -1.f), glm::vec3(-1.f, -1.f, -1.f),
+//		glm::vec3(1.f, -1.f, -1.f), glm::vec3(1.f, 1.f, -1.f)
+//	};
+//	
+//	std::vector<glm::vec3> colors = {
+//		glm::vec3(0.f, 1.f, 1.f), glm::vec3(0.f, 0.f, 1.f),
+//		glm::vec3(1.f, 0.f, 1.f), glm::vec3(1.f, 1.f, 1.f),
+//		glm::vec3(0.f, 1.f, 0.f), glm::vec3(0.f, 0.f, 0.f),
+//		glm::vec3(1.f, 0.f, 0.f), glm::vec3(1.f, 1.f, 0.f)
+//	};
+//	
+//	std::vector<Vertex> vertices;
+//	for (size_t i = 0; i < positions.size(); ++i)
+//	{
+//		vertices.emplace_back(positions[i], colors[i]);
+//	}
+//	
+    mShader.upload_index_data(mMeshData.mIndices);
+    mShader.upload_vertex_data(mMeshData.mVertices);
 }
 
-void SkinnedMesh::draw_content() {
-	using namespace nanogui;
-	
-	Matrix4f view = Matrix4f::look_at(
-									  Vector3f(0, -2, -10),
-									  Vector3f(0, 0, 0),
-									  Vector3f(0, 1, 0)
-									  );
-	
-	Matrix4f model = Matrix4f::rotate(
-									  Vector3f(0, 1, 0),
-									  (float) glfwGetTime()
-									  );
-	
-	Matrix4f proj = Matrix4f::perspective(
-										  float(25 * M_PI / 180),
-										  0.1f,
-										  20.f,
-										  1.0f // Aspect ratio will be set in the Canvas
-										  );
-	
-	mvp = proj * view * model;
-	
-	mShader.set_uniform("mvp", mvp);
-	
-	mShader.begin();
-	mShader.draw_array(Shader::PrimitiveType::Triangle, 0, 12*3, true);
-	mShader.end();
+void SkinnedMesh::draw_content(Canvas& canvas) {
+    using namespace nanogui;
+    
+    // Calculate bounding box to center the model
+    glm::vec3 minPos(std::numeric_limits<float>::max());
+    glm::vec3 maxPos(std::numeric_limits<float>::lowest());
+
+    for (const auto& vertex : mMeshData.mVertices) {
+        minPos = glm::min(minPos, vertex.get_position());
+        maxPos = glm::max(maxPos, vertex.get_position());
+    }
+
+    auto center = (minPos + maxPos) / 2.0f;
+
+
+    static float viewOffset = -200.0f; // Configurable parameter
+
+    Matrix4f view = Matrix4f::look_at(
+        Vector3f(0, -2, viewOffset),
+        Vector3f(0, 0, 0),
+        Vector3f(0, 1, 0)
+    );
+
+    Matrix4f model = Matrix4f::rotate(
+        Vector3f(0, 1, 0),
+        (float)glfwGetTime()
+    ) * Matrix4f::translate(-Vector3f(center.x, center.y, center.z));
+
+    Matrix4f proj = Matrix4f::perspective(
+        45.0f, // Reduced FOV
+        0.01f,
+        5000.0f,
+        (float)canvas.width() / (float)canvas.height() // Aspect ratio
+    );
+
+    mvp = proj * view * model;
+
+    mShader.set_uniform("mvp", mvp);
+
+    mShader.begin();
+    mShader.draw_array(Shader::PrimitiveType::Triangle, 0, mMeshData.mIndices.size(), true);
+    mShader.end();
 }

@@ -1,4 +1,4 @@
-#include "Fbx.hpp"
+#include "import/Fbx.hpp"
 
 #include <glm/gtc/quaternion.hpp>
 
@@ -75,7 +75,8 @@ void Fbx::ProcessNode(const std::shared_ptr<sfbx::Model> node) {
 }
 
 void Fbx::ProcessMesh(const std::shared_ptr<sfbx::Mesh> mesh) {
-    Mesh resultMesh;
+    
+    auto& resultMesh = mMeshes.emplace_back(std::make_unique<MeshData>());
 
     auto geometry = mesh->getGeometry();
     auto points = geometry->getPointsDeformed();
@@ -83,12 +84,12 @@ void Fbx::ProcessMesh(const std::shared_ptr<sfbx::Mesh> mesh) {
     auto vertexIndices = geometry->getIndices();
 
     for (unsigned int i = 0; i < points.size(); ++i) {
-        Vertex vertex;
-        vertex.mPosition = { points[i].x, points[i].y, points[i].z };
+        SkinnedMesh::Vertex vertex;
+        vertex.set_position({ points[i].x, points[i].y, points[i].z });
         if (!normals.empty()) {
-            vertex.mNormal = { normals[i].x, normals[i].y, normals[i].z };
+            vertex.set_normal({ normals[i].x, normals[i].y, normals[i].z });
         }
-        resultMesh.mVertices.push_back(vertex);
+        resultMesh->mVertices.push_back(vertex);
     }
 
     auto uvLayers = geometry->getUVLayers();
@@ -98,10 +99,10 @@ void Fbx::ProcessMesh(const std::shared_ptr<sfbx::Mesh> mesh) {
             int uv_index = uvLayer.indices.empty() ? i : uvLayer.indices[i];
             int index = vertexIndices[i];
             if (layerIndex == 0) {
-                resultMesh.mVertices[index].mTexCoords1 = { uvLayer.data[uv_index].x, uvLayer.data[uv_index].y };
-                resultMesh.mVertices[index].mTexCoords2 = { uvLayer.data[uv_index].x, uvLayer.data[uv_index].y };
+                resultMesh->mVertices[index].set_texture_coords1({ uvLayer.data[uv_index].x, uvLayer.data[uv_index].y });
+                resultMesh->mVertices[index].set_texture_coords2({ uvLayer.data[uv_index].x, uvLayer.data[uv_index].y });
             } else {
-                resultMesh.mVertices[index].mTexCoords2 = { uvLayer.data[uv_index].x, uvLayer.data[uv_index].y };
+                resultMesh->mVertices[index].set_texture_coords2({ uvLayer.data[uv_index].x, uvLayer.data[uv_index].y });
             }
         }
         layerIndex++;
@@ -110,24 +111,23 @@ void Fbx::ProcessMesh(const std::shared_ptr<sfbx::Mesh> mesh) {
     ProcessBones(mesh);
 
     for (unsigned int i = 0; i < vertexIndices.size(); ++i) {
-        resultMesh.mIndices.push_back(vertexIndices[i]);
+        resultMesh->mIndices.push_back(vertexIndices[i]);
     }
 
     if (mesh->getMaterials().size() > 0) {
         auto material = mesh->getMaterials()[0];
         auto color = material->getAmbientColor();
-        resultMesh.mMaterial.mAmbient = { color.x, color.y, color.z };
+        resultMesh->mMaterial.mAmbient = { color.x, color.y, color.z };
         color = material->getDiffuseColor();
-        resultMesh.mMaterial.mDiffuse = { color.x, color.y, color.z };
+        resultMesh->mMaterial.mDiffuse = { color.x, color.y, color.z };
         color = material->getSpecularColor();
-        resultMesh.mMaterial.mSpecular = { color.x, color.y, color.z };
-        resultMesh.mMaterial.mShininess = 0.1f;
-        resultMesh.mMaterial.mOpacity = material->getOpacity();
-        resultMesh.mMaterial.mHasDiffuseTexture = false;
+        resultMesh->mMaterial.mSpecular = { color.x, color.y, color.z };
+        resultMesh->mMaterial.mShininess = 0.1f;
+        resultMesh->mMaterial.mOpacity = material->getOpacity();
+        resultMesh->mMaterial.mHasDiffuseTexture = false;
         // Process textures if needed
     }
 
-    mMeshes.push_back(resultMesh);
 }
 
 void Fbx::ProcessBones(const std::shared_ptr<sfbx::Mesh> mesh) {
@@ -159,9 +159,8 @@ void Fbx::ProcessBones(const std::shared_ptr<sfbx::Mesh> mesh) {
                 int vertexID = indices[i];
                 float weight = weights[i];
                 for (int j = 0; j < 4; ++j) {
-                    if (mMeshes.back().mVertices[vertexID].mWeights[j] == 0.0f) {
-                        mMeshes.back().mVertices[vertexID].mBoneIDs[j] = static_cast<int>(boneID);
-                        mMeshes.back().mVertices[vertexID].mWeights[j] = weight;
+                    if (mMeshes.back()->mVertices[vertexID].get_weights()[j] == 0.0f) {
+                        mMeshes.back()->mVertices[vertexID].set_bone(static_cast<int>(boneID), weight);
                         break;
                     }
                 }

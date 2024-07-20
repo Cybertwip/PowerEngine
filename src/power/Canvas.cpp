@@ -7,7 +7,7 @@ Canvas::Canvas(Widget *parent) : nanogui::Canvas(parent, 1) {
 
 void Canvas::draw_contents() {
 	for (auto drawable : drawables) {
-		drawable.get().draw_content();
+		drawable.get().draw_content(*this);
 	}
 	drawables.clear();
 }

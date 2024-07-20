@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Drawable.hpp"
+#include "graphics/drawing/Drawable.hpp"
 #include "graphics/shading/ShaderWrapper.hpp"
 
 #include <nanogui/vector.h>
@@ -8,6 +8,8 @@
 #include <glm/glm.hpp>
 
 #include <array>
+
+struct MeshData;
 
 class SkinnedMesh : public Drawable {
 public:
@@ -52,11 +54,13 @@ public:
 	};
 
 public:
-	SkinnedMesh(SkinnedMeshShader& shader);
+	SkinnedMesh(MeshData& meshData, SkinnedMeshShader& shader);
 	
-	void draw_content() override;
+	void draw_content(Canvas& canvas) override;
 	
 private:
+    MeshData& mMeshData;
+
 	SkinnedMeshShader& mShader;
 	nanogui::Matrix4f mvp;
 	void initialize_mesh();
