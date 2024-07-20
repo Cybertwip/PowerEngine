@@ -2,12 +2,13 @@
 #include "Canvas.hpp"
 #include "RenderManager.hpp"
 #include "ShaderManager.hpp"
-#include "graphics/shading/ShaderWrapper.hpp"
-#include "graphics/drawing/SkinnedMesh.hpp"
+#include "MeshActorLoader.hpp"
 
-#include "ui/ScenePanel.hpp"
+#include "graphics/drawing/MeshActor.hpp"
 
 #include "import/Fbx.hpp"
+
+#include "ui/ScenePanel.hpp"
 
 #include <nanogui/window.h>
 #include <nanogui/slider.h>
@@ -20,52 +21,6 @@
 
 #include <cmath>
 
-class MeshActor : public Drawable {
-public:
-    MeshActor(const std::string& path, SkinnedMesh::SkinnedMeshShader& meshShaderWrapper);
-    
-    void draw_content(Canvas& canvas) override;
-    
-private:
-    std::unique_ptr<Fbx> mModel;
-    std::vector<std::unique_ptr<SkinnedMesh>> mMeshes;
-};
-
-MeshActor::MeshActor(const std::string& path, SkinnedMesh::SkinnedMeshShader& meshShaderWrapper){
-    mModel = std::make_unique<Fbx>("models/DeepMotionBot.fbx");
-    
-    for (auto& meshData : mModel->GetMeshData()) {
-        mMeshes.push_back(std::make_unique<SkinnedMesh>(*meshData, meshShaderWrapper));
-    }
-}
-
-
-void MeshActor::draw_content(Canvas& canvas) {
-    for (auto& mesh : mMeshes) {
-        mesh->draw_content(canvas);
-    }
-}
-
-
-
-class MeshActorLoader {
-public:
-    MeshActorLoader(ShaderManager& shaderManager);
-    
-    std::unique_ptr<MeshActor> create_mesh_actor(const std::string& path);
-    
-private:
-    std::unique_ptr<SkinnedMesh::SkinnedMeshShader> mMeshShaderWrapper;
-};
-
-MeshActorLoader::MeshActorLoader(ShaderManager& shaderManager) :
-mMeshShaderWrapper(std::make_unique<SkinnedMesh::SkinnedMeshShader>(shaderManager)) {
-    
-}
-
-std::unique_ptr<MeshActor> MeshActorLoader::create_mesh_actor(const std::string &path) {
-    return std::make_unique<MeshActor>(path, *mMeshShaderWrapper);
-}
 
 Application::Application() : nanogui::Screen(nanogui::Vector2i(1920, 1080), "Power Engine", false) {
     mRenderManager = std::make_unique<RenderManager>();

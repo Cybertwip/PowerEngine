@@ -30,7 +30,6 @@ struct MeshData {
 };
 
 class Fbx {
-    
 public:
     explicit Fbx(const std::string_view path);
 

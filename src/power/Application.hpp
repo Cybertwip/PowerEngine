@@ -13,8 +13,6 @@ class SkinnedMesh;
 class ShaderManager;
 class ShaderWrapper;
 
-class Fbx;
-
 class Application : public nanogui::Screen {
 public:
 	Application();

@@ -29,6 +29,8 @@ add_executable(PowerEngine
     ${CMAKE_CURRENT_LIST_DIR}/Canvas.cpp
     ${CMAKE_CURRENT_LIST_DIR}/Canvas.hpp
     ${CMAKE_CURRENT_LIST_DIR}/main.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/MeshActorLoader.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/MeshActorLoader.hpp
     ${CMAKE_CURRENT_LIST_DIR}/RenderManager.cpp
     ${CMAKE_CURRENT_LIST_DIR}/RenderManager.hpp
     ${CMAKE_CURRENT_LIST_DIR}/ShaderManager.cpp
@@ -49,6 +51,9 @@ add_executable(PowerEngine
 
     ${CMAKE_CURRENT_LIST_DIR}/graphics/drawing/Billboard.hpp
     ${CMAKE_CURRENT_LIST_DIR}/graphics/drawing/Billboard.cpp
+
+    ${CMAKE_CURRENT_LIST_DIR}/graphics/drawing/MeshActor.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/graphics/drawing/MeshActor.cpp
 
     ${CMAKE_CURRENT_LIST_DIR}/import/Fbx.hpp
     ${CMAKE_CURRENT_LIST_DIR}/import/Fbx.cpp
