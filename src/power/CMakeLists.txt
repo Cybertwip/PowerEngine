@@ -47,12 +47,16 @@ add_executable(PowerEngine
 
     ${CMAKE_CURRENT_LIST_DIR}/graphics/drawing/Billboard.hpp
     ${CMAKE_CURRENT_LIST_DIR}/graphics/drawing/Billboard.cpp
+
+
+    ${CMAKE_CURRENT_LIST_DIR}/import/Fbx.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/import/Fbx.cpp
     ${SHADERS}
 )
 
-target_include_directories(PowerEngine PUBLIC ../external/smallfbx)
+target_include_directories(PowerEngine PUBLIC ../../external/smallfbx)
 target_include_directories(PowerEngine PUBLIC ${CMAKE_CURRENT_LIST_DIR})
-target_link_libraries(PowerEngine PRIVATE nanogui EnTT glm)
+target_link_libraries(PowerEngine PRIVATE nanogui ozz_animation EnTT imgui-feature-layout imgui-node-editor json fbx2ozz SmallFBX)
 
 # Set the resource files to be included in the bundle
 set(RESOURCE_DIRECTORIES

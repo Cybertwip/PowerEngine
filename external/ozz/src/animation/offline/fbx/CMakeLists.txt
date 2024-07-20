@@ -18,11 +18,9 @@ target_link_libraries(ozz_animation_fbx
   fbx::sdk)
 set_target_properties(ozz_animation_fbx PROPERTIES FOLDER "ozz/tools")
 
-install(TARGETS ozz_animation_fbx DESTINATION lib)
-
 fuse_target("ozz_animation_fbx")
 
-add_executable(fbx2ozz
+add_library(fbx2ozz
   fbx2ozz.h
   fbx2ozz.cc
   fbx2ozz_anim.cc
@@ -33,8 +31,6 @@ target_link_libraries(fbx2ozz
 target_copy_shared_libraries(fbx2ozz)
 set_target_properties(fbx2ozz
   PROPERTIES FOLDER "ozz/tools")
-
-install(TARGETS fbx2ozz DESTINATION bin/tools)
 
 # Gerenate binary data to a specific folder (${ozz_media_directory}/bin)
 set(build_configurations

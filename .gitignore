@@ -6,7 +6,6 @@ doxy2/
 tmp/
 .vs/
 __pycache__
-*.fbx
 mp2mm/
 out/
 python/

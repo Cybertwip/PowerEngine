@@ -85,15 +85,14 @@ target_link_libraries(nanogui PUBLIC glad glfw)
 
 #target_link_libraries(application nanogui ozz_animation entt)
 
-#target_link_libraries(imgui-feature-layout glm json)
-#target_link_libraries(PowerEngine application imgui-feature-layout imgui-node-editor)
+target_link_libraries(imgui-feature-layout glm json)
 #target_link_libraries(test PUBLIC imgui-feature-layout imgui-node-editor httplib::httplib zstr::zstr)
 #target_link_libraries(glcpp PUBLIC test)
 #target_link_libraries(SmallFBX zlib)
 
 
 
-#if(APPLE)
-#  target_compile_definitions(imgui-feature-layout PUBLIC -DDEFAULT_CWD="${CMAKE_CURRENT_LIST_DIR}/Resources")
+if(APPLE)
+target_compile_definitions(imgui-feature-layout PUBLIC -DDEFAULT_CWD="${CMAKE_CURRENT_LIST_DIR}/Resources")
 #  target_compile_definitions(application PUBLIC -DDEFAULT_CWD="${CMAKE_CURRENT_LIST_DIR}/Resources")
-#endif()
+endif()
