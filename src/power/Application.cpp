@@ -15,6 +15,7 @@
 #include "RenderCommon.hpp"
 #include "RenderManager.hpp"
 #include "ShaderManager.hpp"
+#include "UiCommon.hpp"
 #include "actors/Camera.hpp"
 #include "graphics/drawing/MeshActor.hpp"
 #include "import/Fbx.hpp"
@@ -22,6 +23,9 @@
 #include "ui/TransformPanel.hpp"
 
 Application::Application() : nanogui::Screen(nanogui::Vector2i(1920, 1080), "Power Engine", false) {
+    set_layout(new nanogui::GridLayout(nanogui::Orientation::Vertical, 2,
+                                       nanogui::Alignment::Middle, 15, 5));
+
     int canvasWidth = 900;
     int canvasHeight = 600;
 
@@ -30,17 +34,13 @@ Application::Application() : nanogui::Screen(nanogui::Vector2i(1920, 1080), "Pow
     mCameraManager = std::make_unique<CameraManager>(*mEntityRegistry);
     mRenderManager = std::make_unique<RenderManager>(*mCameraManager);
 
-    
-    ScenePanel *scenePanel = new ScenePanel(this);
-    TransformPanel *transformPanel = new TransformPanel(this);
-    transformPanel->set_position(nanogui::Vector2i(932, 0));
+    mUiCommon = std::make_unique<UiCommon>(*this);
 
-    mRenderCommon = std::make_unique<RenderCommon>(*scenePanel, *mRenderManager);
+    mRenderCommon = std::make_unique<RenderCommon>(mUiCommon->scene_panel(), *mRenderManager);
 
     mMeshActorLoader = std::make_unique<MeshActorLoader>(mRenderCommon->shader_manager());
 
     mActors.push_back(mMeshActorLoader->create_mesh_actor("models/DeepMotionBot.fbx"));
-
 
     perform_layout();
 }

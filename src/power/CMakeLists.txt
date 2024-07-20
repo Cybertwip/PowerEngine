@@ -39,6 +39,8 @@ add_executable(PowerEngine
     ${CMAKE_CURRENT_LIST_DIR}/RenderManager.hpp
     ${CMAKE_CURRENT_LIST_DIR}/ShaderManager.cpp
     ${CMAKE_CURRENT_LIST_DIR}/ShaderManager.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/UiCommon.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/UiCommon.hpp
 
     ${CMAKE_CURRENT_LIST_DIR}/actors/Actor.cpp
     ${CMAKE_CURRENT_LIST_DIR}/actors/Actor.hpp
