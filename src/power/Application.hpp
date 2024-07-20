@@ -7,6 +7,8 @@
 
 #include "graphics/drawing/SkinnedMesh.hpp"
 
+struct RenderSettings;
+
 class Canvas;
 class CameraManager;
 class MeshActor;
@@ -32,6 +34,7 @@ class Application : public nanogui::Screen
     std::unique_ptr<RenderManager> mRenderManager;
     std::unique_ptr<Canvas> mCanvas;
     std::unique_ptr<ShaderManager> mShaderManager;
+    std::unique_ptr<RenderSettings> mRenderSettings;
     std::unique_ptr<UiCommon> mUiCommon;
     std::unique_ptr<RenderCommon> mRenderCommon;
     std::unique_ptr<MeshActorLoader> mMeshActorLoader;

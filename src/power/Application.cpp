@@ -26,15 +26,13 @@ Application::Application() : nanogui::Screen(nanogui::Vector2i(1920, 1080), "Pow
     set_layout(new nanogui::GridLayout(nanogui::Orientation::Horizontal, 2,
                                        nanogui::Alignment::Fill, 15, 5));
 
-    int canvasWidth = 900;
-    int canvasHeight = 600;
-
     mEntityRegistry = std::make_unique<entt::registry>();
 
     mCameraManager = std::make_unique<CameraManager>(*mEntityRegistry);
     mRenderManager = std::make_unique<RenderManager>(*mCameraManager);
 
-    mUiCommon = std::make_unique<UiCommon>(*this);
+    mRenderSettings = std::make_unique<RenderSettings>();
+    mUiCommon = std::make_unique<UiCommon>(*this, *mRenderSettings);
 
     mRenderCommon = std::make_unique<RenderCommon>(mUiCommon->scene_panel(), *mRenderManager);
 

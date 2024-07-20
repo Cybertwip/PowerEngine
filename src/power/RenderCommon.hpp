@@ -10,14 +10,14 @@ class Canvas;
 class RenderManager;
 class ShaderManager;
 
-struct PowerEngineSettings {
+struct RenderSettings {
     int mCanvasWidth;
     int mCanvasHeight;
 };
 
 class RenderCommon {
 public:
-    RenderCommon(nanogui::Widget& parent, RenderManager& renderManager, PowerEngineSettings settings = {900, 600});
+    RenderCommon(nanogui::Widget& parent, RenderManager& renderManager, RenderSettings settings&);
     Canvas& canvas() {
         return *mCanvas;
     }
