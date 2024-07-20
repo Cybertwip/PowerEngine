@@ -1,17 +1,17 @@
 #include "Canvas.hpp"
+#include "RenderManager.hpp"
 
 #include "graphics/drawing/Drawable.hpp"
 
-Canvas::Canvas(Widget *parent) : nanogui::Canvas(parent, 1) {
+Canvas::Canvas(Widget *parent, RenderManager& renderManager) :
+nanogui::Canvas(parent, 1),
+mRenderManager(renderManager) {
 }
 
 void Canvas::draw_contents() {
-	for (auto drawable : drawables) {
-		drawable.get().draw_content(*this);
-	}
-	drawables.clear();
+    visit(mRenderManager);
 }
 
-void Canvas::add_drawable(std::reference_wrapper<Drawable> drawable) {
-	drawables.push_back(drawable);
+void Canvas::visit(RenderManager& renderManager) {
+    renderManager.render(*this);
 }

@@ -29,6 +29,8 @@ add_executable(PowerEngine
     ${CMAKE_CURRENT_LIST_DIR}/Canvas.cpp
     ${CMAKE_CURRENT_LIST_DIR}/Canvas.hpp
     ${CMAKE_CURRENT_LIST_DIR}/main.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/RenderManager.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/RenderManager.hpp
     ${CMAKE_CURRENT_LIST_DIR}/ShaderManager.cpp
     ${CMAKE_CURRENT_LIST_DIR}/ShaderManager.hpp
 
@@ -48,9 +50,18 @@ add_executable(PowerEngine
     ${CMAKE_CURRENT_LIST_DIR}/graphics/drawing/Billboard.hpp
     ${CMAKE_CURRENT_LIST_DIR}/graphics/drawing/Billboard.cpp
 
-
     ${CMAKE_CURRENT_LIST_DIR}/import/Fbx.hpp
     ${CMAKE_CURRENT_LIST_DIR}/import/Fbx.cpp
+
+    ${CMAKE_CURRENT_LIST_DIR}/ui/ScenePanel.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/ui/ScenePanel.cpp
+
+    ${CMAKE_CURRENT_LIST_DIR}/ui/TransformPanel.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/ui/TransformPanel.cpp
+
+    ${CMAKE_CURRENT_LIST_DIR}/ui/HierarchyPanel.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/ui/HierarchyPanel.cpp
+
     ${SHADERS}
 )
 

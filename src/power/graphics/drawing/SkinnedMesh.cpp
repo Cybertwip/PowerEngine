@@ -135,37 +135,6 @@ SkinnedMesh::SkinnedMesh(MeshData& meshData, SkinnedMeshShader& shader)
 }
 
 void SkinnedMesh::initialize_mesh() {
-//	
-//	std::vector<uint32_t> indices = {
-//		3, 2, 6, 6, 7, 3,
-//		4, 5, 1, 1, 0, 4,
-//		4, 0, 3, 3, 7, 4,
-//		1, 5, 6, 6, 2, 1,
-//		0, 1, 2, 2, 3, 0,
-//		7, 6, 5, 5, 4, 7
-//	};
-//
-//	
-//	std::vector<glm::vec3> positions = {
-//		glm::vec3(-1.f, 1.f, 1.f), glm::vec3(-1.f, -1.f, 1.f),
-//		glm::vec3(1.f, -1.f, 1.f), glm::vec3(1.f, 1.f, 1.f),
-//		glm::vec3(-1.f, 1.f, -1.f), glm::vec3(-1.f, -1.f, -1.f),
-//		glm::vec3(1.f, -1.f, -1.f), glm::vec3(1.f, 1.f, -1.f)
-//	};
-//	
-//	std::vector<glm::vec3> colors = {
-//		glm::vec3(0.f, 1.f, 1.f), glm::vec3(0.f, 0.f, 1.f),
-//		glm::vec3(1.f, 0.f, 1.f), glm::vec3(1.f, 1.f, 1.f),
-//		glm::vec3(0.f, 1.f, 0.f), glm::vec3(0.f, 0.f, 0.f),
-//		glm::vec3(1.f, 0.f, 0.f), glm::vec3(1.f, 1.f, 0.f)
-//	};
-//	
-//	std::vector<Vertex> vertices;
-//	for (size_t i = 0; i < positions.size(); ++i)
-//	{
-//		vertices.emplace_back(positions[i], colors[i]);
-//	}
-//	
     mShader.upload_index_data(mMeshData.mIndices);
     mShader.upload_vertex_data(mMeshData.mVertices);
 }

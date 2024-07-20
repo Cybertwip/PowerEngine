@@ -6,6 +6,7 @@
 #include <memory>
 
 class Canvas;
+class RenderManager;
 class SkinnedMesh;
 class ShaderManager;
 class ShaderWrapper;
@@ -20,11 +21,11 @@ public:
     virtual void draw(NVGcontext *ctx) override;
 
 private:
-	std::unique_ptr<ShaderManager> mShaderManager;
+    std::unique_ptr<RenderManager> mRenderManager;
+    std::unique_ptr<ShaderManager> mShaderManager;
 	std::unique_ptr<SkinnedMesh::SkinnedMeshShader> mMeshShaderWrapper;
 
     std::unique_ptr<Fbx> mModel;
 
-    Canvas* mCanvas;
 	std::vector<std::unique_ptr<SkinnedMesh>> mMeshes;
 };

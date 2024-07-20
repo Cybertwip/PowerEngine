@@ -13,7 +13,7 @@ std::string ShaderManager::read_file(const std::string &file_path) {
 	return buffer.str();
 }
 
-ShaderManager::ShaderManager(nanogui::RenderPass *render_pass) : mRenderPass(render_pass) {
+ShaderManager::ShaderManager(nanogui::RenderPass& render_pass) : mRenderPass(render_pass) {
 	//load_default_shaders();
 }
 
@@ -24,7 +24,7 @@ nanogui::ref<nanogui::Shader> ShaderManager::load_shader(const std::string &name
 	
 	std::string vertex_code = read_file(vertex_path);
 	std::string fragment_code = read_file(fragment_path);
-	nanogui::ref<nanogui::Shader> shader = new nanogui::Shader(mRenderPass, name, vertex_code, fragment_code);
+	nanogui::ref<nanogui::Shader> shader = new nanogui::Shader(&mRenderPass, name, vertex_code, fragment_code);
 	mShaderCache[name] = shader;
 	return shader;
 }
