@@ -17,6 +17,7 @@ mAspect(aspect) {
                               mAspect
         );
     
+    mEntity = registry.create();
     registry.emplace<ozz::math::Transform>(mEntity);
 }
 void Camera::set_view_projection(ShaderWrapper &shader){
