@@ -128,12 +128,9 @@ void Fbx::ProcessMesh(const std::shared_ptr<sfbx::Mesh> mesh) {
         // Process textures if needed
         if (material->getTexture("DiffuseColor")) {
             const auto& fbxTexture = material->getTexture("DiffuseColor");
-            unsigned char* image_data = nullptr;
-            if (image_data) {
-                
+            if (!fbxTexture->getData().empty()) {
                 // Assuming nanogui::Texture is compatible with the loaded image data
-                nanogui::Texture texture(fbxTexture->getData().data(), static_cast<int>(fbxTexture->getData().size()));
-                resultMesh->mTextures.push_back(texture);
+                resultMesh->mTextures.push_back(std::make_unique<nanogui::Texture>(fbxTexture->getData().data(), static_cast<int>(fbxTexture->getData().size())));
                 resultMesh->mMaterial.mHasDiffuseTexture = true;
             }
         }

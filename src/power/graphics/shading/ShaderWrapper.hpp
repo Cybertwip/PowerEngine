@@ -21,7 +21,7 @@ public:
 		mShader.set_uniform(name, value);
 	}
 
-	void set_texture(const std::string &name, nanogui::Texture *texture);
+	void set_texture(const std::string &name, nanogui::Texture& texture);
 	void begin();
 	void end();
 	void draw_array(nanogui::Shader::PrimitiveType primitive_type,

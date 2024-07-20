@@ -24,7 +24,7 @@
 struct MeshData {
     std::vector<SkinnedMesh::Vertex> mVertices;
     std::vector<unsigned int> mIndices;
-    std::vector<nanogui::Texture> mTextures;
+    std::vector<std::unique_ptr<nanogui::Texture>> mTextures;
     MaterialProperties mMaterial;
 };
 

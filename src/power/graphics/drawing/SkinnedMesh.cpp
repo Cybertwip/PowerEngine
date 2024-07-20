@@ -139,8 +139,8 @@ void SkinnedMesh::SkinnedMeshShader::upload_material_data(const MaterialProperti
     mShader.set_uniform("material.has_diffuse_texture", materialData.mHasDiffuseTexture);
 }
 
-void SkinnedMesh::SkinnedMeshShader::upload_texture_data(const std::vector<nanogui::Texture>& textureData){
-    mShader.set_texture("texture_diffuse1", &textureData[0]);
+void SkinnedMesh::SkinnedMeshShader::upload_texture_data(std::vector<std::unique_ptr<nanogui::Texture>>& textureData){
+    mShader.set_texture("texture_diffuse1", textureData[0].get());
 }
 
 
@@ -154,7 +154,9 @@ void SkinnedMesh::initialize_mesh() {
     mShader.upload_index_data(mMeshData.mIndices);
     mShader.upload_vertex_data(mMeshData.mVertices);
     mShader.upload_material_data(mMeshData.mMaterial);
-    mShader.upload_texture_data(mMeshData.mTextures);
+    if (mMeshData.mMaterial.mHasDiffuseTexture) {
+        mShader.upload_texture_data(mMeshData.mTextures);
+    }
 }
 
 void SkinnedMesh::draw_content(Canvas& canvas) {

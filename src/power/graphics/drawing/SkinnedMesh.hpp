@@ -55,7 +55,7 @@ public:
         
         void upload_vertex_data(const std::vector<Vertex>& vertexData);
         void upload_material_data(const MaterialProperties& vertexData);
-        void upload_texture_data(const std::vector<nanogui::Texture>& textureData);
+        void upload_texture_data(std::vector<std::unique_ptr<nanogui::Texture>>& textureData);
     };
 
 public:

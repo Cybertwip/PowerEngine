@@ -11,8 +11,8 @@ void ShaderWrapper::upload_index_data(const std::vector<uint32_t> &index_data){
 	mShader.set_buffer("indices", nanogui::VariableType::UInt32, {index_data.size()}, index_data.data());
 }
 
-void ShaderWrapper::set_texture(const std::string &name, nanogui::Texture *texture){
-	mShader.set_texture(name, texture);
+void ShaderWrapper::set_texture(const std::string &name, nanogui::Texture& texture){
+	mShader.set_texture(name, &texture);
 }
 void ShaderWrapper::begin(){
 	mShader.begin();
