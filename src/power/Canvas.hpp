@@ -6,7 +6,7 @@ class RenderManager;
 
 class Canvas : public nanogui::Canvas {
 public:
-	Canvas(nanogui::Widget *parent, RenderManager& renderManager);
+	Canvas(Widget *parent, RenderManager& renderManager, nanogui::Color backgroundColor, nanogui::Vector2i size);
 	
 	virtual void draw_contents() override;
 	

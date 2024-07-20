@@ -2,20 +2,9 @@
 
 #include "Canvas.hpp"
 
-#include <nanogui/widget.h>
+#include <nanogui/window.h>
 
-class RenderManager;
-
-class ScenePanel : public nanogui::Widget {
+class ScenePanel : public nanogui::Window {
 public:
-    ScenePanel(nanogui::Widget *parent, RenderManager& renderManager);
-    
-    nanogui::RenderPass& AcquireRenderPass() const {
-        return *mCanvas->render_pass();
-    }
-
-    virtual ~ScenePanel() {}
-
-private:
-    Canvas *mCanvas;
+    ScenePanel(nanogui::Widget *parent);
 };

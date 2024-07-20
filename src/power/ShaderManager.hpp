@@ -5,9 +5,11 @@
 #include <unordered_map>
 #include <memory>
 
+class Canvas;
+
 class ShaderManager {
 public:
-	ShaderManager(nanogui::RenderPass& render_pass);
+	ShaderManager(Canvas& canvas);
 	
 	nanogui::ref<nanogui::Shader> load_shader(const std::string &name, const std::string &vertex_path, const std::string &fragment_path);
 	nanogui::ref<nanogui::Shader> get_shader(const std::string &name);

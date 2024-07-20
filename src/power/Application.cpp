@@ -26,10 +26,13 @@
 
 Application::Application() : nanogui::Screen(nanogui::Vector2i(1920, 1080), "Power Engine", false) {
     mRenderManager = std::make_unique<RenderManager>();
+
+	ScenePanel *scenePanel = new ScenePanel(this);
     
-	ScenePanel *scenePanel = new ScenePanel(this, *mRenderManager);
+    mCanvas = std::make_unique<Canvas>(scenePanel, *mRenderManager, nanogui::Color{100, 100, 100, 255}, nanogui::Vector2i{900, 600});
+
 	
-    mShaderManager = std::make_unique<ShaderManager>(scenePanel->AcquireRenderPass());
+    mShaderManager = std::make_unique<ShaderManager>(*mCanvas);
 	
 	mMeshShaderWrapper = std::make_unique<SkinnedMesh::SkinnedMeshShader>(*mShaderManager->load_shader("mesh", "shaders/simple_shader.vs", "shaders/simple_shader.fs"));
 	

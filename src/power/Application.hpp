@@ -21,6 +21,7 @@ public:
     virtual void draw(NVGcontext *ctx) override;
 
 private:
+    std::unique_ptr<Canvas> mCanvas;
     std::unique_ptr<RenderManager> mRenderManager;
     std::unique_ptr<ShaderManager> mShaderManager;
 	std::unique_ptr<SkinnedMesh::SkinnedMeshShader> mMeshShaderWrapper;

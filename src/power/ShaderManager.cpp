@@ -1,4 +1,6 @@
 #include "ShaderManager.hpp"
+#include "Canvas.hpp"
+
 #include <fstream>
 #include <sstream>
 #include <iostream>
@@ -13,7 +15,7 @@ std::string ShaderManager::read_file(const std::string &file_path) {
 	return buffer.str();
 }
 
-ShaderManager::ShaderManager(nanogui::RenderPass& render_pass) : mRenderPass(render_pass) {
+ShaderManager::ShaderManager(Canvas& canvas) : mRenderPass(*canvas.render_pass()) {
 	//load_default_shaders();
 }
 
