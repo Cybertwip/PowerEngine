@@ -17,7 +17,7 @@ struct RenderSettings {
 
 class RenderCommon {
 public:
-    RenderCommon(nanogui::Widget& parent, RenderManager& renderManager, RenderSettings& settings&;
+    RenderCommon(nanogui::Widget& parent, RenderManager& renderManager, RenderSettings& renderSettings;
     Canvas& canvas() {
         return *mCanvas;
     }
