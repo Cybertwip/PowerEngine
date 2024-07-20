@@ -11,6 +11,7 @@ class Canvas;
 class CameraManager;
 class MeshActor;
 class MeshActorLoader;
+class RenderCommon;
 class RenderManager;
 class SkinnedMesh;
 class ShaderManager;
@@ -30,6 +31,7 @@ class Application : public nanogui::Screen
     std::unique_ptr<RenderManager> mRenderManager;
     std::unique_ptr<Canvas> mCanvas;
     std::unique_ptr<ShaderManager> mShaderManager;
+    std::unique_ptr<RenderCommon> mRenderCommon;
     std::unique_ptr<MeshActorLoader> mMeshActorLoader;
 
     std::vector<std::unique_ptr<MeshActor>> mActors;

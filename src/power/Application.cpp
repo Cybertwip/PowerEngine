@@ -12,6 +12,7 @@
 #include "CameraManager.hpp"
 #include "Canvas.hpp"
 #include "MeshActorLoader.hpp"
+#include "RenderCommon.hpp"
 #include "RenderManager.hpp"
 #include "ShaderManager.hpp"
 #include "actors/Camera.hpp"
@@ -29,20 +30,17 @@ Application::Application() : nanogui::Screen(nanogui::Vector2i(1920, 1080), "Pow
     mCameraManager = std::make_unique<CameraManager>(*mEntityRegistry);
     mRenderManager = std::make_unique<RenderManager>(*mCameraManager);
 
+    
     ScenePanel *scenePanel = new ScenePanel(this);
+    TransformPanel *transformPanel = new TransformPanel(this);
+    transformPanel->set_position(nanogui::Vector2i(932, 0));
 
-    mCanvas =
-        std::make_unique<Canvas>(scenePanel, *mRenderManager, nanogui::Color{70, 130, 180, 255},
-                                 nanogui::Vector2i{canvasWidth, canvasHeight});
+    mRenderCommon = std::make_unique<RenderCommon>(*scenePanel, *mRenderManager);
 
-    mShaderManager = std::make_unique<ShaderManager>(*mCanvas);
-
-    mMeshActorLoader = std::make_unique<MeshActorLoader>(*mShaderManager);
+    mMeshActorLoader = std::make_unique<MeshActorLoader>(mRenderCommon->shader_manager());
 
     mActors.push_back(mMeshActorLoader->create_mesh_actor("models/DeepMotionBot.fbx"));
 
-    TransformPanel *transformPanel = new TransformPanel(this);
-    transformPanel->set_position(nanogui::Vector2i(932, 0));
 
     perform_layout();
 }

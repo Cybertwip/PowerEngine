@@ -33,6 +33,8 @@ add_executable(PowerEngine
     ${CMAKE_CURRENT_LIST_DIR}/main.cpp
     ${CMAKE_CURRENT_LIST_DIR}/MeshActorLoader.cpp
     ${CMAKE_CURRENT_LIST_DIR}/MeshActorLoader.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/RenderCommon.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/RenderCommon.hpp
     ${CMAKE_CURRENT_LIST_DIR}/RenderManager.cpp
     ${CMAKE_CURRENT_LIST_DIR}/RenderManager.hpp
     ${CMAKE_CURRENT_LIST_DIR}/ShaderManager.cpp
@@ -74,6 +76,9 @@ add_executable(PowerEngine
 
     ${CMAKE_CURRENT_LIST_DIR}/ui/HierarchyPanel.hpp
     ${CMAKE_CURRENT_LIST_DIR}/ui/HierarchyPanel.cpp
+
+    ${CMAKE_CURRENT_LIST_DIR}/ui/UiLogicManager.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/ui/UiLogicManager.cpp
 
     ${SHADERS}
 )
