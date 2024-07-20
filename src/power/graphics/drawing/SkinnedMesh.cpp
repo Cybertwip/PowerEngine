@@ -140,7 +140,7 @@ void SkinnedMesh::SkinnedMeshShader::upload_material_data(const MaterialProperti
 }
 
 void SkinnedMesh::SkinnedMeshShader::upload_texture_data(const std::vector<nanogui::Texture>& textureData){
-    mShader.set_texture("texture_diffuse1", textureData[0]);
+    mShader.set_texture("texture_diffuse1", &textureData[0]);
 }
 
 
