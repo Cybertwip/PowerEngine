@@ -15,7 +15,7 @@ TransformPanel::TransformPanel(nanogui::Widget *parent) : nanogui::Window(parent
     new nanogui::Label(this, "Translation", "sans-bold");
 
     Widget *translatePanel = new Widget(this);
-    translatePanel->set_layout(new nanogui::GridLayout(nanogui::Orientation::Horizontal, 2,
+    translatePanel->set_layout(new nanogui::GridLayout(nanogui::Orientation::Vertical, 2,
                                                        nanogui::Alignment::Middle, 15, 5));
     
     new nanogui::Label(translatePanel, "X:", "sans-bold");
@@ -55,10 +55,10 @@ TransformPanel::TransformPanel(nanogui::Widget *parent) : nanogui::Window(parent
     new nanogui::Label(this, "Rotation", "sans-bold");
 
     Widget *rotatePanel = new Widget(this);
-    rotatePanel->set_layout(new nanogui::GridLayout(nanogui::Orientation::Horizontal, 2,
+    rotatePanel->set_layout(new nanogui::GridLayout(nanogui::Orientation::Vertical, 2,
                                                     nanogui::Alignment::Middle, 15, 5));
 
-    new nanogui::Label(rotatePanel, "Pitch:", "sans-bold");
+    new nanogui::Label(rotatePanel, "Pitch", "sans-bold");
     auto pitch_rotate = new nanogui::IntBox<int>(rotatePanel);
     pitch_rotate->set_editable(true);
     pitch_rotate->set_fixed_size(nanogui::Vector2i(100, 20));
@@ -69,7 +69,7 @@ TransformPanel::TransformPanel(nanogui::Widget *parent) : nanogui::Window(parent
     pitch_rotate->set_spinnable(true);
     pitch_rotate->set_value_increment(1);
 
-    new nanogui::Label(rotatePanel, "Yaw:", "sans-bold");
+    new nanogui::Label(rotatePanel, "Yaw", "sans-bold");
     auto yaw_rotate = new nanogui::IntBox<int>(rotatePanel);
     yaw_rotate->set_editable(true);
     yaw_rotate->set_fixed_size(nanogui::Vector2i(100, 20));
@@ -80,7 +80,7 @@ TransformPanel::TransformPanel(nanogui::Widget *parent) : nanogui::Window(parent
     yaw_rotate->set_spinnable(true);
     yaw_rotate->set_value_increment(1);
 
-    new nanogui::Label(rotatePanel, "Roll:", "sans-bold");
+    new nanogui::Label(rotatePanel, "Roll", "sans-bold");
     auto roll_rotate = new nanogui::IntBox<int>(rotatePanel);
     roll_rotate->set_editable(true);
     roll_rotate->set_fixed_size(nanogui::Vector2i(100, 20));
@@ -95,10 +95,10 @@ TransformPanel::TransformPanel(nanogui::Widget *parent) : nanogui::Window(parent
     new nanogui::Label(this, "Scale", "sans-bold");
 
     Widget *scalePanel = new Widget(this);
-    scalePanel->set_layout(new nanogui::GridLayout(nanogui::Orientation::Horizontal, 2,
+    scalePanel->set_layout(new nanogui::GridLayout(nanogui::Orientation::Vertical, 2,
                                                    nanogui::Alignment::Middle, 15, 5));
 
-    new nanogui::Label(scalePanel, "X:", "sans-bold");
+    new nanogui::Label(scalePanel, "X", "sans-bold");
     auto x_scale = new nanogui::IntBox<int>(scalePanel);
     x_scale->set_editable(true);
     x_scale->set_fixed_size(nanogui::Vector2i(100, 20));
@@ -109,7 +109,7 @@ TransformPanel::TransformPanel(nanogui::Widget *parent) : nanogui::Window(parent
     x_scale->set_spinnable(true);
     x_scale->set_value_increment(1);
 
-    new nanogui::Label(scalePanel, "Y:", "sans-bold");
+    new nanogui::Label(scalePanel, "Y", "sans-bold");
     auto y_scale = new nanogui::IntBox<int>(scalePanel);
     y_scale->set_editable(true);
     y_scale->set_fixed_size(nanogui::Vector2i(100, 20));
@@ -120,7 +120,7 @@ TransformPanel::TransformPanel(nanogui::Widget *parent) : nanogui::Window(parent
     y_scale->set_spinnable(true);
     y_scale->set_value_increment(1);
 
-    new nanogui::Label(scalePanel, "Z:", "sans-bold");
+    new nanogui::Label(scalePanel, "Z", "sans-bold");
     auto z_scale = new nanogui::IntBox<int>(scalePanel);
     z_scale->set_editable(true);
     z_scale->set_fixed_size(nanogui::Vector2i(100, 20));
