@@ -38,7 +38,6 @@ add_executable(PowerEngine
 
 
     ${CMAKE_CURRENT_LIST_DIR}/graphics/shading/MaterialProperties.hpp
-    ${CMAKE_CURRENT_LIST_DIR}/graphics/shading/Texture.hpp
     ${CMAKE_CURRENT_LIST_DIR}/graphics/shading/ShaderWrapper.hpp
     ${CMAKE_CURRENT_LIST_DIR}/graphics/shading/ShaderWrapper.cpp
 

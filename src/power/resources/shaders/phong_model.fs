@@ -137,7 +137,8 @@ void main() {
 
 
     // Pass fragment color, entity ID, and unique ID to output
-    FragColor = result;
+    // FragColor = result;
+    FragColor = vec4(mat_diffuse, 1.0);
     EntityID = int(selectionColor);
     UniqueID = int(uniqueIdentifier);
 }

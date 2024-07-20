@@ -26,6 +26,44 @@ Texture::Texture(PixelFormat pixel_format,
     init();
 }
 
+Texture::Texture(const unsigned char* data, int size,
+                 InterpolationMode min_interpolation_mode,
+                 InterpolationMode mag_interpolation_mode,
+                 WrapMode wrap_mode)
+    : m_component_format(ComponentFormat::UInt8),
+      m_min_interpolation_mode(min_interpolation_mode),
+      m_mag_interpolation_mode(mag_interpolation_mode),
+      m_wrap_mode(wrap_mode),
+      m_samples(1),
+      m_flags(TextureFlags::ShaderRead),
+      m_mipmap_manual(false) {
+    
+    int n = 0;
+    unsigned char* image_data = stbi_load_from_memory(data, size, &m_size.x(), &m_size.y(), &n, 0);
+
+    std::unique_ptr<uint8_t[], void(*)(void*)> texture_data_holder(image_data, stbi_image_free);
+    if (!texture_data_holder) {
+        throw std::runtime_error("Could not load texture data from memory.");
+    }
+
+    switch (n) {
+        case 1: m_pixel_format = PixelFormat::R;    break;
+        case 2: m_pixel_format = PixelFormat::RA;   break;
+        case 3: m_pixel_format = PixelFormat::RGB;  break;
+        case 4: m_pixel_format = PixelFormat::RGBA; break;
+        default:
+            throw std::runtime_error("Texture::Texture(): unsupported channel count!");
+    }
+
+    PixelFormat pixel_format = m_pixel_format;
+    init();
+    if (m_pixel_format != pixel_format) {
+        throw std::runtime_error("Texture::Texture(): pixel format not supported by the hardware!");
+    }
+    upload((const uint8_t*) texture_data_holder.get());
+}
+
+
 Texture::Texture(const std::string &filename,
                  InterpolationMode min_interpolation_mode,
                  InterpolationMode mag_interpolation_mode,

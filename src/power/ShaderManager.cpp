@@ -17,7 +17,7 @@ std::string ShaderManager::read_file(const std::string &file_path) {
 
 ShaderManager::ShaderManager(Canvas& canvas) : mRenderPass(*canvas.render_pass()) {
 	//load_default_shaders();
-    load_shader("mesh", "shaders/simple_shader.vs", "shaders/simple_shader.fs");
+    load_shader("mesh", "shaders/simple_model.vs", "shaders/diffuse.fs");
 }
 
 nanogui::ref<nanogui::Shader> ShaderManager::load_shader(const std::string &name, const std::string &vertex_path, const std::string &fragment_path) {

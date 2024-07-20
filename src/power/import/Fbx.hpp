@@ -2,7 +2,6 @@
 
 #include "graphics/drawing/SkinnedMesh.hpp"
 
-#include "graphics/shading/Texture.hpp"
 #include "graphics/shading/MaterialProperties.hpp"
 
 #include <SmallFBX.h>
@@ -25,7 +24,7 @@
 struct MeshData {
     std::vector<SkinnedMesh::Vertex> mVertices;
     std::vector<unsigned int> mIndices;
-    std::vector<Texture> mTextures;
+    std::vector<nanogui::Texture> mTextures;
     MaterialProperties mMaterial;
 };
 

@@ -7,6 +7,7 @@
 #include "import/Fbx.hpp"
 
 #include <nanogui/renderpass.h>
+#include <nanogui/texture.h>
 
 #include <GLFW/glfw3.h>
 
@@ -105,8 +106,6 @@ void SkinnedMesh::SkinnedMeshShader::upload_vertex_data(const std::vector<Vertex
 	std::vector<float> normals;
 	std::vector<float> texCoords1;
 	std::vector<float> texCoords2;
-//	std::vector<float> tangents;
-//	std::vector<float> bitangents;
 	std::vector<int> boneIds;
 	std::vector<float> weights;
 	for (const auto& vertex : vertexData) {
@@ -118,16 +117,32 @@ void SkinnedMesh::SkinnedMeshShader::upload_vertex_data(const std::vector<Vertex
 		weights.insert(weights.end(), vertex.get_weights().begin(), vertex.get_weights().end());
 	}
 	
-	mShader.set_buffer("position", nanogui::VariableType::Float32, {vertexData.size(), 3}, positions.data());
-	//mShader.set_buffer("normal", nanogui::VariableType::Float32, {vertexData.size(), 3}, normals.data());
-	//mShader.set_buffer("texCoords1", nanogui::VariableType::Float32, {vertexData.size(), 2}, texCoords1.data());
-	//mShader.set_buffer("texCoords2", nanogui::VariableType::Float32, {vertexData.size(), 2}, texCoords2.data());
-	//mShader.set_buffer("tangent", nanogui::VariableType::Float32, {vertexData.size(), 3}, tangents.data());
-	//mShader.set_buffer("bitangent", nanogui::VariableType::Float32, {vertexData.size(), 3}, bitangents.data());
+	mShader.set_buffer("aPosition", nanogui::VariableType::Float32, {vertexData.size(), 3}, positions.data());
+	mShader.set_buffer("aNormal", nanogui::VariableType::Float32, {vertexData.size(), 3}, normals.data());
+	mShader.set_buffer("aTexcoords1", nanogui::VariableType::Float32, {vertexData.size(), 2}, texCoords1.data());
+	mShader.set_buffer("aTexcoords2", nanogui::VariableType::Float32, {vertexData.size(), 2}, texCoords2.data());
 	//mShader.set_buffer("boneIds", nanogui::VariableType::Int32, {vertexData.size(), MAX_BONE_INFLUENCE}, boneIds.data());
 	//mShader.set_buffer("weights", nanogui::VariableType::Float32, {vertexData.size(), MAX_BONE_INFLUENCE}, weights.data());
-	
 }
+
+void SkinnedMesh::SkinnedMeshShader::upload_material_data(const MaterialProperties& materialData){
+    // Uploading vec3 uniforms
+    mShader.set_uniform("material.ambient", nanogui::Vector3f(materialData.mAmbient.x, materialData.mAmbient.y, materialData.mAmbient.z));
+    mShader.set_uniform("material.diffuse", nanogui::Vector3f(materialData.mDiffuse.x, materialData.mDiffuse.y, materialData.mDiffuse.z));
+    mShader.set_uniform("material.specular", nanogui::Vector3f(materialData.mSpecular.x, materialData.mSpecular.y, materialData.mSpecular.z));
+
+    // Uploading float uniforms
+    mShader.set_uniform("material.shininess", materialData.mShininess);
+    mShader.set_uniform("material.opacity", materialData.mOpacity);
+
+    // Uploading boolean uniform
+    mShader.set_uniform("material.has_diffuse_texture", materialData.mHasDiffuseTexture);
+}
+
+void SkinnedMesh::SkinnedMeshShader::upload_texture_data(const std::vector<nanogui::Texture>& textureData){
+    mShader.set_texture("texture_diffuse1", textureData[0]);
+}
+
 
 
 SkinnedMesh::SkinnedMesh(MeshData& meshData, SkinnedMeshShader& shader)
@@ -138,6 +153,8 @@ SkinnedMesh::SkinnedMesh(MeshData& meshData, SkinnedMeshShader& shader)
 void SkinnedMesh::initialize_mesh() {
     mShader.upload_index_data(mMeshData.mIndices);
     mShader.upload_vertex_data(mMeshData.mVertices);
+    mShader.upload_material_data(mMeshData.mMaterial);
+    mShader.upload_texture_data(mMeshData.mTextures);
 }
 
 void SkinnedMesh::draw_content(Canvas& canvas) {
@@ -177,7 +194,9 @@ void SkinnedMesh::draw_content(Canvas& canvas) {
 
     mvp = proj * view * model;
 
-    mShader.set_uniform("mvp", mvp);
+    mShader.set_uniform("aView", view);
+    mShader.set_uniform("aProjection", proj);
+    mShader.set_uniform("aModel", model);
 
     mShader.begin();
     mShader.draw_array(Shader::PrimitiveType::Triangle, 0, mMeshData.mIndices.size(), true);
