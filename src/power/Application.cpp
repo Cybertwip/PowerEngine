@@ -1,38 +1,35 @@
 #include "Application.hpp"
-#include "Canvas.hpp"
-#include "RenderManager.hpp"
-#include "ShaderManager.hpp"
-#include "MeshActorLoader.hpp"
-
-#include "graphics/drawing/MeshActor.hpp"
-
-#include "import/Fbx.hpp"
-
-#include "ui/ScenePanel.hpp"
-
-#include <nanogui/window.h>
-#include <nanogui/slider.h>
-#include <nanogui/textbox.h>
-#include <nanogui/layout.h>
-#include <nanogui/label.h>
-#include <nanogui/layout.h>
 
 #include <GLFW/glfw3.h>
+#include <nanogui/label.h>
+#include <nanogui/layout.h>
+#include <nanogui/slider.h>
+#include <nanogui/textbox.h>
+#include <nanogui/window.h>
 
 #include <cmath>
 
+#include "Canvas.hpp"
+#include "MeshActorLoader.hpp"
+#include "RenderManager.hpp"
+#include "ShaderManager.hpp"
+#include "graphics/drawing/MeshActor.hpp"
+#include "import/Fbx.hpp"
+#include "ui/ScenePanel.hpp"
 
 Application::Application() : nanogui::Screen(nanogui::Vector2i(1920, 1080), "Power Engine", false) {
     mRenderManager = std::make_unique<RenderManager>();
 
-	ScenePanel *scenePanel = new ScenePanel(this);
-    
-    mCanvas = std::make_unique<Canvas>(scenePanel, *mRenderManager, nanogui::Color{70, 130, 180, 255}, nanogui::Vector2i{900, 600});
+    ScenePanel *scenePanel = new ScenePanel(this);
+
+    mCanvas =
+        std::make_unique<Canvas>(scenePanel, *mRenderManager, nanogui::Color{70, 130, 180, 255},
+                                 nanogui::Vector2i{900, 600});
 
     mShaderManager = std::make_unique<ShaderManager>(*mCanvas);
-	
+
     mMeshActorLoader = std::make_unique<MeshActorLoader>(*mShaderManager);
-    
+
     mActors.push_back(mMeshActorLoader->create_mesh_actor("models/DeepMotionBot.fbx"));
 
     nanogui::Window *propertiesWindow = new nanogui::Window(this, "Properties");
@@ -55,8 +52,7 @@ Application::Application() : nanogui::Screen(nanogui::Vector2i(1920, 1080), "Pow
 }
 
 bool Application::keyboard_event(int key, int scancode, int action, int modifiers) {
-    if (Screen::keyboard_event(key, scancode, action, modifiers))
-        return true;
+    if (Screen::keyboard_event(key, scancode, action, modifiers)) return true;
     if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS) {
         set_visible(false);
         return true;
@@ -65,10 +61,9 @@ bool Application::keyboard_event(int key, int scancode, int action, int modifier
 }
 
 void Application::draw(NVGcontext *ctx) {
-    
-    for (auto& actor : mActors) {
+    for (auto &actor : mActors) {
         mRenderManager->add_drawable(*actor);
     }
-    
+
     Screen::draw(ctx);
 }

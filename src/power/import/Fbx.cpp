@@ -1,8 +1,7 @@
 #include "import/Fbx.hpp"
 
-#include <glm/gtc/quaternion.hpp>
-
 #include <filesystem>
+#include <glm/gtc/quaternion.hpp>
 
 namespace {
 
@@ -11,31 +10,25 @@ ozz::math::Transform ToOzzTransform(const sfbx::float4x4& mat) {
     ozz::math::Float3 translation(mat[3].x, mat[3].y, mat[3].z);
 
     // Extract scale
-    ozz::math::Float3 scale(
-        glm::length(glm::vec3(mat[0].x, mat[0].y, mat[0].z)),
-        glm::length(glm::vec3(mat[1].x, mat[1].y, mat[1].z)),
-        glm::length(glm::vec3(mat[2].x, mat[2].y, mat[2].z))
-    );
+    ozz::math::Float3 scale(glm::length(glm::vec3(mat[0].x, mat[0].y, mat[0].z)),
+                            glm::length(glm::vec3(mat[1].x, mat[1].y, mat[1].z)),
+                            glm::length(glm::vec3(mat[2].x, mat[2].y, mat[2].z)));
 
     // Extract rotation
-    glm::mat3 rotationMatrix(
-        glm::vec3(mat[0].x, mat[0].y, mat[0].z) / scale.x,
-        glm::vec3(mat[1].x, mat[1].y, mat[1].z) / scale.y,
-        glm::vec3(mat[2].x, mat[2].y, mat[2].z) / scale.z
-    );
+    glm::mat3 rotationMatrix(glm::vec3(mat[0].x, mat[0].y, mat[0].z) / scale.x,
+                             glm::vec3(mat[1].x, mat[1].y, mat[1].z) / scale.y,
+                             glm::vec3(mat[2].x, mat[2].y, mat[2].z) / scale.z);
 
     glm::quat rotationQuat = glm::quat_cast(rotationMatrix);
     ozz::math::Quaternion rotation(rotationQuat.w, rotationQuat.x, rotationQuat.y, rotationQuat.z);
 
-    ozz::math::Transform transform = { translation, rotation, scale };
+    ozz::math::Transform transform = {translation, rotation, scale};
     return transform;
 }
 
-}
+}  // namespace
 
-Fbx::Fbx(const std::string_view path) {
-    LoadModel(path);
-}
+Fbx::Fbx(const std::string_view path) { LoadModel(path); }
 
 void Fbx::LoadModel(const std::string_view path) {
     sfbx::DocumentPtr doc = sfbx::MakeDocument(std::string(path));
@@ -75,7 +68,6 @@ void Fbx::ProcessNode(const std::shared_ptr<sfbx::Model> node) {
 }
 
 void Fbx::ProcessMesh(const std::shared_ptr<sfbx::Mesh> mesh) {
-    
     auto& resultMesh = mMeshes.emplace_back(std::make_unique<MeshData>());
 
     auto geometry = mesh->getGeometry();
@@ -85,9 +77,9 @@ void Fbx::ProcessMesh(const std::shared_ptr<sfbx::Mesh> mesh) {
 
     for (unsigned int i = 0; i < points.size(); ++i) {
         SkinnedMesh::Vertex vertex;
-        vertex.set_position({ points[i].x, points[i].y, points[i].z });
+        vertex.set_position({points[i].x, points[i].y, points[i].z});
         if (!normals.empty()) {
-            vertex.set_normal({ normals[i].x, normals[i].y, normals[i].z });
+            vertex.set_normal({normals[i].x, normals[i].y, normals[i].z});
         }
         resultMesh->mVertices.push_back(vertex);
     }
@@ -99,10 +91,13 @@ void Fbx::ProcessMesh(const std::shared_ptr<sfbx::Mesh> mesh) {
             int uv_index = uvLayer.indices.empty() ? i : uvLayer.indices[i];
             int index = vertexIndices[i];
             if (layerIndex == 0) {
-                resultMesh->mVertices[index].set_texture_coords1({ uvLayer.data[uv_index].x, uvLayer.data[uv_index].y });
-                resultMesh->mVertices[index].set_texture_coords2({ uvLayer.data[uv_index].x, uvLayer.data[uv_index].y });
+                resultMesh->mVertices[index].set_texture_coords1(
+                    {uvLayer.data[uv_index].x, uvLayer.data[uv_index].y});
+                resultMesh->mVertices[index].set_texture_coords2(
+                    {uvLayer.data[uv_index].x, uvLayer.data[uv_index].y});
             } else {
-                resultMesh->mVertices[index].set_texture_coords2({ uvLayer.data[uv_index].x, uvLayer.data[uv_index].y });
+                resultMesh->mVertices[index].set_texture_coords2(
+                    {uvLayer.data[uv_index].x, uvLayer.data[uv_index].y});
             }
         }
         layerIndex++;
@@ -117,11 +112,11 @@ void Fbx::ProcessMesh(const std::shared_ptr<sfbx::Mesh> mesh) {
     if (mesh->getMaterials().size() > 0) {
         auto material = mesh->getMaterials()[0];
         auto color = material->getAmbientColor();
-        resultMesh->mMaterial.mAmbient = { color.x, color.y, color.z };
+        resultMesh->mMaterial.mAmbient = {color.x, color.y, color.z};
         color = material->getDiffuseColor();
-        resultMesh->mMaterial.mDiffuse = { color.x, color.y, color.z };
+        resultMesh->mMaterial.mDiffuse = {color.x, color.y, color.z};
         color = material->getSpecularColor();
-        resultMesh->mMaterial.mSpecular = { color.x, color.y, color.z };
+        resultMesh->mMaterial.mSpecular = {color.x, color.y, color.z};
         resultMesh->mMaterial.mShininess = 0.1f;
         resultMesh->mMaterial.mOpacity = material->getOpacity();
         resultMesh->mMaterial.mHasDiffuseTexture = false;
@@ -130,12 +125,12 @@ void Fbx::ProcessMesh(const std::shared_ptr<sfbx::Mesh> mesh) {
             const auto& fbxTexture = material->getTexture("DiffuseColor");
             if (!fbxTexture->getData().empty()) {
                 // Assuming nanogui::Texture is compatible with the loaded image data
-                resultMesh->mTextures.push_back(std::make_unique<nanogui::Texture>(fbxTexture->getData().data(), static_cast<int>(fbxTexture->getData().size())));
+                resultMesh->mTextures.push_back(std::make_unique<nanogui::Texture>(
+                    fbxTexture->getData().data(), static_cast<int>(fbxTexture->getData().size())));
                 resultMesh->mMaterial.mHasDiffuseTexture = true;
             }
         }
     }
-
 }
 
 void Fbx::ProcessBones(const std::shared_ptr<sfbx::Mesh> mesh) {
@@ -153,7 +148,7 @@ void Fbx::ProcessBones(const std::shared_ptr<sfbx::Mesh> mesh) {
         auto skinClusters = skin->getChildren();
         for (const auto& clusterObj : skinClusters) {
             auto skinCluster = sfbx::as<sfbx::Cluster>(clusterObj);
-            std::string boneName = std::string{ skinCluster->getChild()->getName() };
+            std::string boneName = std::string{skinCluster->getChild()->getName()};
             if (mBoneMapping.find(boneName) == mBoneMapping.end()) {
                 mBoneMapping[boneName] = static_cast<int>(mBoneMapping.size());
                 mBoneTransforms.emplace_back(ToOzzTransform(skinCluster->getTransform()));
@@ -168,7 +163,8 @@ void Fbx::ProcessBones(const std::shared_ptr<sfbx::Mesh> mesh) {
                 float weight = weights[i];
                 for (int j = 0; j < 4; ++j) {
                     if (mMeshes.back()->mVertices[vertexID].get_weights()[j] == 0.0f) {
-                        mMeshes.back()->mVertices[vertexID].set_bone(static_cast<int>(boneID), weight);
+                        mMeshes.back()->mVertices[vertexID].set_bone(static_cast<int>(boneID),
+                                                                     weight);
                         break;
                     }
                 }

@@ -12,4 +12,3 @@ void RenderManager::render(Canvas& canvas) {
 void RenderManager::add_drawable(std::reference_wrapper<Drawable> drawable) {
     drawables.push_back(drawable);
 }
-

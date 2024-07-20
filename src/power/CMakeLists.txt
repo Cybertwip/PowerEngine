@@ -6,18 +6,18 @@ if(APPLE)
     set(BUNDLE MACOSX_BUNDLE)
     set(MACOSX_BUNDLE_ICON_FILE ${CMAKE_CURRENT_LIST_DIR}/../../AppIcon.icns)
 
-    # Specify the icon file location
+#Specify the icon file location
     set(APP_ICON ${CMAKE_CURRENT_LIST_DIR}/../../AppIcon.icns)
     set_source_files_properties(${APP_ICON} PROPERTIES
         MACOSX_PACKAGE_LOCATION "Resources")
-        
-    # Specify the menu file location
+
+#Specify the menu file location
     set(BUNDLE_MENU ${CMAKE_CURRENT_LIST_DIR}/../platform/mac/MainMenu.xib)
     set_source_files_properties(${BUNDLE_MENU} PROPERTIES
         MACOSX_PACKAGE_LOCATION "Resources")
 endif()
 
-# Add the shaders
+#Add the shaders
 file(GLOB SHADERS ${CMAKE_CURRENT_LIST_DIR}/shaders/*.vs ${CMAKE_CURRENT_LIST_DIR}/shaders/*.fs)
 
 add_executable(PowerEngine

@@ -6,12 +6,13 @@
 class Canvas;
 class Drawable;
 
-class RenderManager {
-public:
+class RenderManager
+{
+   public:
     void add_drawable(std::reference_wrapper<Drawable> drawable);
-    
+
     void render(Canvas& canvas);
-    
-private:
+
+   private:
     std::vector<std::reference_wrapper<Drawable>> drawables;
 };
