@@ -19,6 +19,7 @@
 #include "graphics/drawing/MeshActor.hpp"
 #include "import/Fbx.hpp"
 #include "ui/ScenePanel.hpp"
+#include "ui/TransformPanel.hpp"
 
 Application::Application() : nanogui::Screen(nanogui::Vector2i(1920, 1080), "Power Engine", false) {
     
@@ -42,21 +43,9 @@ Application::Application() : nanogui::Screen(nanogui::Vector2i(1920, 1080), "Pow
 
     mActors.push_back(mMeshActorLoader->create_mesh_actor("models/DeepMotionBot.fbx"));
 
-    nanogui::Window *propertiesWindow = new nanogui::Window(this, "Properties");
-    propertiesWindow->set_position(nanogui::Vector2i(932, 0));
-    propertiesWindow->set_layout(new nanogui::GridLayout(nanogui::Orientation::Horizontal, 2,
-                                                         nanogui::Alignment::Middle, 15, 5));
-
-    new nanogui::Label(propertiesWindow, "X:", "sans-bold");
-    auto int_box = new nanogui::IntBox<int>(propertiesWindow);
-    int_box->set_editable(true);
-    int_box->set_fixed_size(nanogui::Vector2i(100, 20));
-    int_box->set_value(0);
-    int_box->set_default_value("0");
-    int_box->set_font_size(16);
-    int_box->set_format("[1-9][0-9]*");
-    int_box->set_spinnable(true);
-    int_box->set_value_increment(1);
+    
+    TransformPanel *transformPanel = new TransformPanel(this);
+    transformPanel->set_position(nanogui::Vector2i(932, 0));
 
     perform_layout();
 }
