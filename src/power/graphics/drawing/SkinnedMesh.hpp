@@ -61,12 +61,11 @@ public:
 public:
     SkinnedMesh(MeshData& meshData, SkinnedMeshShader& shader);
     
-    void draw_content(Canvas& canvas) override;
+    void draw_content(CameraManager& camera) override;
     
 private:
     MeshData& mMeshData;
 
     SkinnedMeshShader& mShader;
-    nanogui::Matrix4f mvp;
     void initialize_mesh();
 };

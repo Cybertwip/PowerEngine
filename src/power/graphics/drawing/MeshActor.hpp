@@ -11,8 +11,8 @@ class Fbx;
 
 class MeshActor : public Drawable {
 public:
-    MeshActor(const std::string& path, SkinnedMesh::SkinnedMeshShader& meshShaderWrapper);    
-    void draw_content(Canvas& canvas) override;
+    MeshActor(const std::string& path, SkinnedMesh::SkinnedMeshShader& meshShaderWrapper);
+    void draw_content(CameraManager& cameraManager) override;
     
 private:
     std::unique_ptr<Fbx> mModel;

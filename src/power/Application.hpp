@@ -6,6 +6,7 @@
 #include "graphics/drawing/SkinnedMesh.hpp"
 
 class Canvas;
+class CameraManager;
 class MeshActor;
 class MeshActorLoader;
 class RenderManager;
@@ -22,8 +23,9 @@ class Application : public nanogui::Screen
     virtual void draw(NVGcontext *ctx) override;
 
    private:
-    std::unique_ptr<Canvas> mCanvas;
+    std::unique_ptr<CameraManager> mCameraManager;
     std::unique_ptr<RenderManager> mRenderManager;
+    std::unique_ptr<Canvas> mCanvas;
     std::unique_ptr<ShaderManager> mShaderManager;
     std::unique_ptr<MeshActorLoader> mMeshActorLoader;
 

@@ -1,15 +1,18 @@
 #include "SkinnedMesh.hpp"
 
-#include <GLFW/glfw3.h>
-#include <nanogui/renderpass.h>
-#include <nanogui/texture.h>
-
-#include <cmath>
-
 #include "Canvas.hpp"
+#include "CameraManager.hpp"
 #include "ShaderManager.hpp"
 #include "graphics/shading/ShaderWrapper.hpp"
 #include "import/Fbx.hpp"
+
+#include <nanogui/renderpass.h>
+#include <nanogui/texture.h>
+
+#include <GLFW/glfw3.h>
+
+
+#include <cmath>
 
 SkinnedMesh::Vertex::Vertex() {}
 
@@ -141,7 +144,7 @@ void SkinnedMesh::initialize_mesh() {
     }
 }
 
-void SkinnedMesh::draw_content(Canvas& canvas) {
+void SkinnedMesh::draw_content(CameraManager& cameraManager) {
     using namespace nanogui;
 
     // Calculate bounding box to center the model
@@ -155,24 +158,11 @@ void SkinnedMesh::draw_content(Canvas& canvas) {
 
     auto center = (minPos + maxPos) / 2.0f;
 
-    static float viewOffset = -200.0f;  // Configurable parameter
-
-    Matrix4f view =
-        Matrix4f::look_at(Vector3f(0, -2, viewOffset), Vector3f(0, 0, 0), Vector3f(0, 1, 0));
-
     Matrix4f model = Matrix4f::rotate(Vector3f(0, 1, 0), (float)glfwGetTime()) *
                      Matrix4f::translate(-Vector3f(center.x, center.y, center.z));
 
-    Matrix4f proj =
-        Matrix4f::perspective(45.0f,  // Reduced FOV
-                              0.01f, 5000.0f,
-                              (float)canvas.width() / (float)canvas.height()  // Aspect ratio
-        );
-
-    mvp = proj * view * model;
-
-    mShader.set_uniform("aView", view);
-    mShader.set_uniform("aProjection", proj);
+    cameraManager.set_view_projection(mShader);
+    
     mShader.set_uniform("aModel", model);
 
     mShader.begin();

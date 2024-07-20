@@ -89,22 +89,5 @@ void Mesh::initialize_mesh() {
     mShader.upload_vertex_data(vertices);
 }
 
-void Mesh::draw_content(Canvas &canvas) {
-    using namespace nanogui;
-
-    Matrix4f view = Matrix4f::look_at(Vector3f(0, -2, -10), Vector3f(0, 0, 0), Vector3f(0, 1, 0));
-
-    Matrix4f model = Matrix4f::rotate(Vector3f(0, 1, 0), (float)glfwGetTime());
-
-    Matrix4f proj = Matrix4f::perspective(float(25 * M_PI / 180), 0.1f, 20.f,
-                                          1.0f  // Aspect ratio will be set in the Canvas
-    );
-
-    mvp = proj * view * model;
-
-    mShader.set_uniform("mvp", mvp);
-
-    mShader.begin();
-    mShader.draw_array(Shader::PrimitiveType::Triangle, 0, 12 * 3, true);
-    mShader.end();
+void Mesh::draw_content(CameraManager &cameraManager) {
 }

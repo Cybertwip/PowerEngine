@@ -2,9 +2,13 @@
 
 #include "graphics/drawing/Drawable.hpp"
 
+RenderManager::RenderManager(CameraManager& cameraManager) :
+mCameraManager(cameraManager){
+    
+}
 void RenderManager::render(Canvas& canvas) {
     for (auto drawable : drawables) {
-        drawable.get().draw_content(canvas);
+        drawable.get().draw_content(mCameraManager);
     }
     drawables.clear();
 }

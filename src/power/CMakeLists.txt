@@ -28,6 +28,10 @@ add_executable(PowerEngine
     ${CMAKE_CURRENT_LIST_DIR}/Application.hpp
     ${CMAKE_CURRENT_LIST_DIR}/Canvas.cpp
     ${CMAKE_CURRENT_LIST_DIR}/Canvas.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/Camera.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/Camera.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/CameraManager.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/CameraManager.hpp
     ${CMAKE_CURRENT_LIST_DIR}/main.cpp
     ${CMAKE_CURRENT_LIST_DIR}/MeshActorLoader.cpp
     ${CMAKE_CURRENT_LIST_DIR}/MeshActorLoader.hpp
@@ -35,6 +39,9 @@ add_executable(PowerEngine
     ${CMAKE_CURRENT_LIST_DIR}/RenderManager.hpp
     ${CMAKE_CURRENT_LIST_DIR}/ShaderManager.cpp
     ${CMAKE_CURRENT_LIST_DIR}/ShaderManager.hpp
+
+    ${CMAKE_CURRENT_LIST_DIR}/components/Transform.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/components/Transform.hpp
 
 
     ${CMAKE_CURRENT_LIST_DIR}/graphics/shading/MaterialProperties.hpp

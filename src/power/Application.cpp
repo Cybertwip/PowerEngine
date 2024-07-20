@@ -10,6 +10,7 @@
 #include <cmath>
 
 #include "Canvas.hpp"
+#include "CameraManager.hpp"
 #include "MeshActorLoader.hpp"
 #include "RenderManager.hpp"
 #include "ShaderManager.hpp"
@@ -18,13 +19,18 @@
 #include "ui/ScenePanel.hpp"
 
 Application::Application() : nanogui::Screen(nanogui::Vector2i(1920, 1080), "Power Engine", false) {
-    mRenderManager = std::make_unique<RenderManager>();
+    
+    int canvasWidth = 900;
+    int canvasHeight = 600;
+    
+    mCameraManager = std::make_unique<CameraManager>(45.0f, 0.01f, 5e3f, canvasWidth / static_cast<float>(canvasHeight));
+    mRenderManager = std::make_unique<RenderManager>(*mCameraManager);
 
     ScenePanel *scenePanel = new ScenePanel(this);
 
     mCanvas =
         std::make_unique<Canvas>(scenePanel, *mRenderManager, nanogui::Color{70, 130, 180, 255},
-                                 nanogui::Vector2i{900, 600});
+                                 nanogui::Vector2i{canvasWidth, canvasHeight});
 
     mShaderManager = std::make_unique<ShaderManager>(*mCanvas);
 

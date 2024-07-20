@@ -10,8 +10,8 @@ MeshActor::MeshActor(const std::string& path, SkinnedMesh::SkinnedMeshShader& me
     }
 }
 
-void MeshActor::draw_content(Canvas& canvas) {
+void MeshActor::draw_content(CameraManager& cameraManager) {
     for (auto& mesh : mMeshes) {
-        mesh->draw_content(canvas);
+        mesh->draw_content(cameraManager);
     }
 }
