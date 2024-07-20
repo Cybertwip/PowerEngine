@@ -10,11 +10,12 @@ class Canvas;
 class ShaderManager {
 public:
 	ShaderManager(Canvas& canvas);
-	
-	nanogui::ref<nanogui::Shader> load_shader(const std::string &name, const std::string &vertex_path, const std::string &fragment_path);
-	nanogui::ref<nanogui::Shader> get_shader(const std::string &name);
+
+    nanogui::ref<nanogui::Shader> get_shader(const std::string &name);
 	
 private:
+    nanogui::ref<nanogui::Shader> load_shader(const std::string &name, const std::string &vertex_path, const std::string &fragment_path);
+
 	std::unordered_map<std::string, nanogui::ref<nanogui::Shader>> mShaderCache;
 	nanogui::RenderPass& mRenderPass;
 	

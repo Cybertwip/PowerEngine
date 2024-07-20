@@ -6,6 +6,8 @@
 #include <memory>
 
 class Canvas;
+class MeshActor;
+class MeshActorLoader;
 class RenderManager;
 class SkinnedMesh;
 class ShaderManager;
@@ -24,9 +26,7 @@ private:
     std::unique_ptr<Canvas> mCanvas;
     std::unique_ptr<RenderManager> mRenderManager;
     std::unique_ptr<ShaderManager> mShaderManager;
-	std::unique_ptr<SkinnedMesh::SkinnedMeshShader> mMeshShaderWrapper;
+    std::unique_ptr<MeshActorLoader> mMeshActorLoader;
 
-    std::unique_ptr<Fbx> mModel;
-
-	std::vector<std::unique_ptr<SkinnedMesh>> mMeshes;
+    std::vector<std::unique_ptr<MeshActor>> mActors;
 };

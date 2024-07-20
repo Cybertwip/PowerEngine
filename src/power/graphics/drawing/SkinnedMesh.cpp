@@ -1,5 +1,6 @@
 #include "SkinnedMesh.hpp"
 #include "Canvas.hpp"
+#include "ShaderManager.hpp"
 
 #include "graphics/shading/ShaderWrapper.hpp"
 
@@ -95,7 +96,7 @@ std::array<float, SkinnedMesh::Vertex::MAX_BONE_INFLUENCE> SkinnedMesh::Vertex::
 	return mWeights;
 }
 
-SkinnedMesh::SkinnedMeshShader::SkinnedMeshShader(nanogui::Shader& shader) : ShaderWrapper(shader) {
+SkinnedMesh::SkinnedMeshShader::SkinnedMeshShader(ShaderManager& shaderManager) : ShaderWrapper(*shaderManager.get_shader("mesh")) {
 	
 }
 

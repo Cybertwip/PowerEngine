@@ -10,70 +10,75 @@
 #include "import/Fbx.hpp"
 
 #include <nanogui/window.h>
-#include <nanogui/button.h>
-#include <nanogui/toolbutton.h>
 #include <nanogui/slider.h>
 #include <nanogui/textbox.h>
 #include <nanogui/layout.h>
 #include <nanogui/label.h>
-
 #include <nanogui/layout.h>
-#include <nanogui/icons.h>
 
 #include <GLFW/glfw3.h>
 
 #include <cmath>
+
+class MeshActor : public Drawable {
+public:
+    MeshActor(const std::string& path, SkinnedMesh::SkinnedMeshShader& meshShaderWrapper);
+    
+    void draw_content(Canvas& canvas) override;
+    
+private:
+    std::unique_ptr<Fbx> mModel;
+    std::vector<std::unique_ptr<SkinnedMesh>> mMeshes;
+};
+
+MeshActor::MeshActor(const std::string& path, SkinnedMesh::SkinnedMeshShader& meshShaderWrapper){
+    mModel = std::make_unique<Fbx>("models/DeepMotionBot.fbx");
+    
+    for (auto& meshData : mModel->GetMeshData()) {
+        mMeshes.push_back(std::make_unique<SkinnedMesh>(*meshData, meshShaderWrapper));
+    }
+}
+
+
+void MeshActor::draw_content(Canvas& canvas) {
+    for (auto& mesh : mMeshes) {
+        mesh->draw_content(canvas);
+    }
+}
+
+
+
+class MeshActorLoader {
+public:
+    MeshActorLoader(ShaderManager& shaderManager);
+    
+    std::unique_ptr<MeshActor> create_mesh_actor(const std::string& path);
+    
+private:
+    std::unique_ptr<SkinnedMesh::SkinnedMeshShader> mMeshShaderWrapper;
+};
+
+MeshActorLoader::MeshActorLoader(ShaderManager& shaderManager) :
+mMeshShaderWrapper(std::make_unique<SkinnedMesh::SkinnedMeshShader>(shaderManager)) {
+    
+}
+
+std::unique_ptr<MeshActor> MeshActorLoader::create_mesh_actor(const std::string &path) {
+    return std::make_unique<MeshActor>(path, *mMeshShaderWrapper);
+}
 
 Application::Application() : nanogui::Screen(nanogui::Vector2i(1920, 1080), "Power Engine", false) {
     mRenderManager = std::make_unique<RenderManager>();
 
 	ScenePanel *scenePanel = new ScenePanel(this);
     
-    mCanvas = std::make_unique<Canvas>(scenePanel, *mRenderManager, nanogui::Color{100, 100, 100, 255}, nanogui::Vector2i{900, 600});
+    mCanvas = std::make_unique<Canvas>(scenePanel, *mRenderManager, nanogui::Color{70, 130, 180, 255}, nanogui::Vector2i{900, 600});
 
-	
     mShaderManager = std::make_unique<ShaderManager>(*mCanvas);
 	
-	mMeshShaderWrapper = std::make_unique<SkinnedMesh::SkinnedMeshShader>(*mShaderManager->load_shader("mesh", "shaders/simple_shader.vs", "shaders/simple_shader.fs"));
-	
-    mModel = std::make_unique<Fbx>("models/DeepMotionBot.fbx");
+    mMeshActorLoader = std::make_unique<MeshActorLoader>(*mShaderManager);
     
-    for (auto& meshData : mModel->GetMeshData()) {
-        mMeshes.push_back(std::make_unique<SkinnedMesh>(*meshData, *mMeshShaderWrapper));
-    }
-	
-    Widget *tools = new Widget(scenePanel);
-    tools->set_layout(new nanogui::BoxLayout(nanogui::Orientation::Horizontal, nanogui::Alignment::Middle, 0, 5));
-
-	nanogui::Button *b0 = new nanogui::ToolButton(tools, FA_PLAY);
-    b0->set_callback([this]() {
-		//mCanvas->set_background_color(nanogui::Vector4i(rand() % 256, rand() % 256, rand() % 256, 255));
-    });
-
-	nanogui::Button *b1 = new nanogui::Button(tools, "Random Rotation");
-    b1->set_callback([this]() {
-        //m_canvas->set_rotation((float) M_PI * rand() / (float) RAND_MAX);
-    });
-    
-    /* Create an empty panel with a horizontal layout */
-    Widget *panel = new Widget(scenePanel);
-    panel->set_layout(new nanogui::BoxLayout(nanogui::Orientation::Horizontal, nanogui::Alignment::Middle, 0, 20));
-
-    /* Add a slider and set defaults */
-    nanogui::Slider *slider = new nanogui::Slider(panel);
-    slider->set_value(0.5f);
-    slider->set_fixed_width(80);
-
-    /* Add a textbox and set defaults */
-    nanogui::TextBox *textBox = new nanogui::TextBox(panel);
-    textBox->set_fixed_size(nanogui::Vector2i(60, 25));
-    textBox->set_value("50");
-    textBox->set_units("px");
-
-    /* Propagate slider changes to the text box */
-    slider->set_callback([textBox](float value) {
-        textBox->set_value(std::to_string((int) (value * 100)));
-    });
+    mActors.push_back(mMeshActorLoader->create_mesh_actor("models/DeepMotionBot.fbx"));
 
     nanogui::Window *propertiesWindow = new nanogui::Window(this, "Properties");
     propertiesWindow->set_position(nanogui::Vector2i(932, 0));
@@ -106,8 +111,8 @@ bool Application::keyboard_event(int key, int scancode, int action, int modifier
 
 void Application::draw(NVGcontext *ctx) {
     
-    for (auto& mesh : mMeshes) {
-        mRenderManager->add_drawable(*mesh);
+    for (auto& actor : mActors) {
+        mRenderManager->add_drawable(*actor);
     }
     
     Screen::draw(ctx);

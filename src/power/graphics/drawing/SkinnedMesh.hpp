@@ -11,6 +11,8 @@
 
 struct MeshData;
 
+class ShaderManager;
+
 class SkinnedMesh : public Drawable {
 public:
 	class Vertex {
@@ -48,7 +50,7 @@ public:
 
 	class SkinnedMeshShader : public ShaderWrapper {
 	public:
-		SkinnedMeshShader(nanogui::Shader& shader);
+		SkinnedMeshShader(ShaderManager& shader);
 		
 		void upload_vertex_data(const std::vector<Vertex>& vertexData);
 	};
