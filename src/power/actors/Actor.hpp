@@ -2,8 +2,6 @@
 
 #include <entt/entt.hpp>
 
-//@TODO add add_component where enable_if from Component class
-
 class Actor {
 public:
     Actor(entt::registry& registry);

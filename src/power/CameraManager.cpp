@@ -6,8 +6,7 @@
 #include "graphics/shading/ShaderWrapper.hpp"
 
 CameraManager::CameraManager(entt::registry& registry)
-    : mRegistry(registry),
-      mActiveCamera(create_camera(45, 0.01f, 5e3f, 900.0f / 600.0f)) {
+    : mRegistry(registry), mActiveCamera(create_camera(45, 0.01f, 5e3f, 900.0f / 600.0f)) {
     mActiveCamera.get_component<TransformComponent>().set_translation(glm::vec3(0, 32, 200));
 }
 
@@ -15,19 +14,15 @@ Camera& CameraManager::create_camera(float fov, float near, float far, float asp
     return *mCameras.emplace_back(std::make_unique<Camera>(mRegistry, fov, near, far, aspect));
 }
 
-void CameraManager::update_view() {
-    mActiveCamera.update_view();
-}
+void CameraManager::update_view() { mActiveCamera.update_view(); }
 
-const nanogui::Matrix4f& CameraManager::get_view() const {
-    return mActiveCamera.get_view();
-}
+const nanogui::Matrix4f& CameraManager::get_view() const { return mActiveCamera.get_view(); }
 
 const nanogui::Matrix4f& CameraManager::get_projection() const {
     return mActiveCamera.get_projection();
 }
 
-void CameraManager::look_at(Actor& actor){
+void CameraManager::look_at(Actor& actor) {
     auto& cameraTransform = mActiveCamera.get_component<TransformComponent>();
     auto& actorTransform = actor.get_component<TransformComponent>();
 

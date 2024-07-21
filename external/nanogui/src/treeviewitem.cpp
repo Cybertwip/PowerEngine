@@ -14,7 +14,7 @@ void TreeViewItem::draw(NVGcontext *ctx) {
     nvgFill(ctx);
     nvgStrokeColor(ctx, Color(0, 0, 0, 255));
     nvgStroke(ctx);
-    nvgFillColor(ctx, Color(0, 0, 0, 255));
+    nvgFillColor(ctx, Color(255, 255, 255, 255)); // Change text color to white
     nvgText(ctx, m_pos.x() + 10, m_pos.y() + m_size.y() / 2, m_caption.c_str(), nullptr);
     if (m_expanded) {
         for (auto child : m_children) {

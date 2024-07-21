@@ -1,16 +1,19 @@
 #include "graphics/drawing/MeshActor.hpp"
 
+#include <filesystem>
 #include <functional>
 
 #include "components/DrawableComponent.hpp"
 #include "components/MeshComponent.hpp"
 #include "components/TransformComponent.hpp"
+#include "components/MetadataComponent.hpp"
 #include "import/Fbx.hpp"
+
 
 MeshActor::MeshActor(entt::registry& registry, const std::string& path,
                      SkinnedMesh::SkinnedMeshShader& meshShaderWrapper)
     : Actor(registry) {
-    mModel = std::make_unique<Fbx>("models/DeepMotionBot.fbx");
+    mModel = std::make_unique<Fbx>(path);
 
     std::vector<std::reference_wrapper<SkinnedMesh>> meshComponentData;
 
@@ -24,4 +27,5 @@ MeshActor::MeshActor(entt::registry& registry, const std::string& path,
 
     add_component<DrawableComponent>(*mMeshComponent);
     add_component<TransformComponent>();
+    add_component<MetadataComponent>(std::filesystem::path(path).stem().string());
 }

@@ -1,7 +1,6 @@
 #include "Canvas.hpp"
 
 #include "actors/ActorManager.hpp"
-
 #include "graphics/drawing/Drawable.hpp"
 
 Canvas::Canvas(Widget* parent, ActorManager& actorManager, nanogui::Color backgroundColor,

@@ -89,4 +89,5 @@ void Model::initialize_mesh() {
     mShader.upload_vertex_data(vertices);
 }
 
-void Model::draw_content(const nanogui::Matrix4f& model, const nanogui::Matrix4f& view, const nanogui::Matrix4f& projection) {}
+void Model::draw_content(const nanogui::Matrix4f &model, const nanogui::Matrix4f &view,
+                         const nanogui::Matrix4f &projection) {}
