@@ -5,10 +5,9 @@
 
 #include "components/DrawableComponent.hpp"
 #include "components/MeshComponent.hpp"
-#include "components/TransformComponent.hpp"
 #include "components/MetadataComponent.hpp"
+#include "components/TransformComponent.hpp"
 #include "import/Fbx.hpp"
-
 
 MeshActor::MeshActor(entt::registry& registry, const std::string& path,
                      SkinnedMesh::SkinnedMeshShader& meshShaderWrapper)

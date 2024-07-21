@@ -4,6 +4,7 @@
 
 #include <nanogui/textbox.h>
 
+class Actor;
 class TransformComponent;
 
 class TransformPanel : public Panel {
@@ -13,6 +14,11 @@ public:
     void gather_values_into(TransformComponent& transform);
     void update_values_from(TransformComponent& transform);
 
+    void set_active_actor(std::reference_wrapper<Actor> actor);
+    
+    void update();
+    
+    
 private:
     nanogui::IntBox<int> *mXTranslate;
     nanogui::IntBox<int> *mYTranslate;
@@ -25,4 +31,6 @@ private:
     nanogui::IntBox<int> *mXScale;
     nanogui::IntBox<int> *mYScale;
     nanogui::IntBox<int> *mZScale;
+    
+    std::optional<std::reference_wrapper<Actor>> mActiveActor;
 };

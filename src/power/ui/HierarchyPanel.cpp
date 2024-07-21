@@ -4,8 +4,9 @@
 #include <nanogui/layout.h>
 #include <nanogui/treeviewitem.h>
 
-#include "actors/Actor.hpp"  // Include the Actor header
-#include "components/MetadataComponent.hpp"  // Include the Actor header
+#include "actors/Actor.hpp"                
+#include "components/MetadataComponent.hpp"
+#include "components/UiComponent.hpp"
 
 HierarchyPanel::HierarchyPanel(nanogui::Widget &parent) : Panel(parent, "Hierarchy") {
     set_position(nanogui::Vector2i(0, 0));
@@ -16,8 +17,8 @@ HierarchyPanel::HierarchyPanel(nanogui::Widget &parent) : Panel(parent, "Hierarc
     mScrollPanel->set_fixed_size({0, 12 * 25});
 
     mTreeView = new nanogui::TreeView(mScrollPanel);
-    mTreeView->set_layout(new nanogui::GridLayout(nanogui::Orientation::Horizontal, 1 /*columns */,
-                                                  nanogui::Alignment::Fill, 3, 3));
+    mTreeView->set_layout(
+        new nanogui::BoxLayout(nanogui::Orientation::Vertical, nanogui::Alignment::Fill));
 }
 
 bool HierarchyPanel::mouse_drag_event(const nanogui::Vector2i &p, const nanogui::Vector2i &rel,
@@ -26,17 +27,24 @@ bool HierarchyPanel::mouse_drag_event(const nanogui::Vector2i &p, const nanogui:
     return mScrollPanel->mouse_drag_event(p, rel, button, modifiers);
 }
 
-void HierarchyPanel::set_actors(const std::vector<Actor *> &actors) {
+void HierarchyPanel::set_actors(const std::vector<std::reference_wrapper<Actor>> &actors) {
     mTreeView->clear();
-    for (Actor *actor : actors) {
-        populate_tree(actor);
+    for (auto actor : actors) {
+        populate_tree(actor.get());
     }
 }
 
-void HierarchyPanel::populate_tree(Actor *actor, nanogui::TreeViewItem *parent_node) {
+void HierarchyPanel::populate_tree(Actor& actor, nanogui::TreeViewItem *parent_node) {
     // Correctly reference the actor's name
     nanogui::TreeViewItem *node =
-    parent_node ? parent_node->add_node(std::string{actor->get_component<MetadataComponent>().get_name()}) : mTreeView->add_node(std::string{actor->get_component<MetadataComponent>().get_name()});
+        parent_node ? parent_node->add_node(
+                                            std::string{actor.get_component<MetadataComponent>().get_name()}, [&actor](){
+                                                actor.get_component<UiComponent>().select();
+                                            })
+                    : mTreeView->add_node(
+                          std::string{actor.get_component<MetadataComponent>().get_name()}, [&actor](){
+                              actor.get_component<UiComponent>().select();
+                          });
     // Uncomment and correctly iterate over the actor's children
     //    for (Actor *child : actor->children()) {
     //        populate_tree(child, node);

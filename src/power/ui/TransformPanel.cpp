@@ -1,5 +1,7 @@
 #include "ui/TransformPanel.hpp"
 
+#include "actors/Actor.hpp"
+
 #include <nanogui/button.h>
 #include <nanogui/icons.h>
 #include <nanogui/label.h>
@@ -162,4 +164,15 @@ void TransformPanel::update_values_from(TransformComponent &transform) {
     mXScale->set_value((int)scale.x);
     mYScale->set_value((int)scale.y);
     mZScale->set_value((int)scale.z);
+}
+
+
+void TransformPanel::set_active_actor(std::reference_wrapper<Actor> actor) {
+    mActiveActor = actor;
+}
+
+void TransformPanel::update() {
+    if (mActiveActor.has_value()){
+        gather_values_into(mActiveActor->get().get_component<TransformComponent>());
+    }
 }

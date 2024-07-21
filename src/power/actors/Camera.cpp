@@ -2,8 +2,8 @@
 
 #include <glm/gtc/type_ptr.hpp>
 
-#include "components/TransformComponent.hpp"
 #include "components/MetadataComponent.hpp"
+#include "components/TransformComponent.hpp"
 #include "graphics/shading/ShaderWrapper.hpp"
 
 Camera::Camera(entt::registry& registry, float fov, float near, float far, float aspect)

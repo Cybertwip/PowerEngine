@@ -53,6 +53,8 @@ add_executable(PowerEngine
     ${CMAKE_CURRENT_LIST_DIR}/components/DrawableComponent.hpp
     ${CMAKE_CURRENT_LIST_DIR}/components/MetadataComponent.hpp
     ${CMAKE_CURRENT_LIST_DIR}/components/TransformComponent.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/components/UiComponent.hpp
+
 
     ${CMAKE_CURRENT_LIST_DIR}/components/MeshComponent.cpp
     ${CMAKE_CURRENT_LIST_DIR}/components/MeshComponent.hpp

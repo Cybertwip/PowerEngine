@@ -16,8 +16,8 @@ void TreeView::add_item(TreeViewItem *item) {
     m_items.push_back(item);
 }
 
-TreeViewItem* TreeView::add_node(const std::string &caption) {
-    TreeViewItem *node = new TreeViewItem(this, caption);
+TreeViewItem* TreeView::add_node(const std::string &caption, std::function<void()> callback) {
+    TreeViewItem *node = new TreeViewItem(this, caption, callback);
     add_item(node);
     return node;
 }

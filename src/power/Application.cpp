@@ -45,10 +45,10 @@ Application::Application() : nanogui::Screen(nanogui::Vector2i(1920, 1080), "Pow
 
     mActorManager->push(mActors.back());
 
-    std::vector<Actor *> actors;
-    actors.push_back(&(mActors.back().get()));
-    actors.push_back(&mCameraManager->active_camera());
-    mUiCommon->hierarchy_panel().set_actors(actors);
+    std::vector<std::reference_wrapper<Actor>> actors;
+    actors.push_back(mActors.back());
+    actors.push_back(mCameraManager->active_camera());
+    mUiCommon->attach_actors(actors);
 
     perform_layout();
 }
@@ -63,9 +63,8 @@ bool Application::keyboard_event(int key, int scancode, int action, int modifier
 }
 
 void Application::draw(NVGcontext *ctx) {
-    mUiCommon->transform_panel().gather_values_into(
-        mActors[0].get().get_component<TransformComponent>());
-
+    mUiCommon->update();
+    
     //    mUiCommon->transform_panel().gather_values_into(
     //                                                    mCameraManager->active_camera().get_component<TransformComponent>());
 
