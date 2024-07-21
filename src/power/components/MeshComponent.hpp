@@ -13,7 +13,7 @@ class MeshComponent : public Drawable {
 public:
     MeshComponent(std::vector<std::reference_wrapper<SkinnedMesh>>& meshes);
 
-    void draw_content(CameraManager& cameraManager) override;
+    void draw_content(const nanogui::Matrix4f& model, const nanogui::Matrix4f& view, const nanogui::Matrix4f& projection) override;
     
 private:
     std::vector<std::reference_wrapper<SkinnedMesh>> mMeshes;

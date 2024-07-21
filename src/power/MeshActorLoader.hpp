@@ -15,9 +15,12 @@ class MeshActorLoader
    public:
     MeshActorLoader(entt::registry& registry, ShaderManager& shaderManager);
 
-    std::unique_ptr<Actor> create_mesh_actor(const std::string& path);
+    Actor& create_mesh_actor(const std::string& path);
 
    private:
     std::unique_ptr<SkinnedMesh::SkinnedMeshShader> mMeshShaderWrapper;
     entt::registry& mEntityRegistry;
+    
+    std::vector<std::unique_ptr<Actor>> mActors;
+
 };

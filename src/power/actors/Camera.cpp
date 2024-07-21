@@ -2,24 +2,18 @@
 
 #include <glm/gtc/type_ptr.hpp>
 
-#include "components/Transform.hpp"
+#include "components/TransformComponent.hpp"
 #include "graphics/shading/ShaderWrapper.hpp"
 
 Camera::Camera(entt::registry& registry, float fov, float near, float far, float aspect)
     : Actor(registry), mFov(fov), mNear(near), mFar(far), mAspect(aspect) {
     mProjection = nanogui::Matrix4f::perspective(mFov, mNear, mFar, mAspect);
 
-    add_component<Transform>();
-}
-void Camera::set_view_projection(ShaderWrapper& shader) {
-    update_view();
-
-    shader.set_uniform("aView", mView);
-    shader.set_uniform("aProjection", mProjection);
+    add_component<TransformComponent>();
 }
 
 void Camera::update_view() {
-    auto& transform = get_component<Transform>();
+    auto& transform = get_component<TransformComponent>();
 
     // Convert ozz::math::Transform to glm types
     glm::vec3 position = transform.get_translation();

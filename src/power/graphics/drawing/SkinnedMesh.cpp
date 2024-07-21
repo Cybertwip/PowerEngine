@@ -142,26 +142,27 @@ void SkinnedMesh::initialize_mesh() {
     }
 }
 
-void SkinnedMesh::draw_content(CameraManager& cameraManager) {
+
+void SkinnedMesh::draw_content(const nanogui::Matrix4f& model, const nanogui::Matrix4f& view, const nanogui::Matrix4f& projection) {
     using namespace nanogui;
-
+//
     // Calculate bounding box to center the model
-    glm::vec3 minPos(std::numeric_limits<float>::max());
-    glm::vec3 maxPos(std::numeric_limits<float>::lowest());
+//    glm::vec3 minPos(std::numeric_limits<float>::max());
+//    glm::vec3 maxPos(std::numeric_limits<float>::lowest());
+//
+//    for (const auto& vertex : mMeshData.mVertices) {
+//        minPos = glm::min(minPos, vertex.get_position());
+//        maxPos = glm::max(maxPos, vertex.get_position());
+//    }
+//
+//    auto center = (minPos + maxPos) / 2.0f;
 
-    for (const auto& vertex : mMeshData.mVertices) {
-        minPos = glm::min(minPos, vertex.get_position());
-        maxPos = glm::max(maxPos, vertex.get_position());
-    }
-
-    auto center = (minPos + maxPos) / 2.0f;
-
-    Matrix4f model = Matrix4f::rotate(Vector3f(0, 1, 0), (float)glfwGetTime()) *
-                     Matrix4f::translate(-Vector3f(center.x, center.y, center.z));
-
-    cameraManager.set_view_projection(mShader);
+//    Matrix4f m = Matrix4f::rotate(Vector3f(0, 1, 0), (float)glfwGetTime()) *
+//                     Matrix4f::translate(-Vector3f(center.x, center.y, center.z));
 
     mShader.set_uniform("aModel", model);
+    mShader.set_uniform("aView", view);
+    mShader.set_uniform("aProjection", projection);
 
     mShader.begin();
     mShader.draw_array(Shader::PrimitiveType::Triangle, 0, mMeshData.mIndices.size(), true);

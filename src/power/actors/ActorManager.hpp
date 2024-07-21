@@ -5,19 +5,18 @@
 #include <vector>
 
 class Actor;
+class CameraManager;
 class MeshActor;
 class MeshActorLoader;
-class RenderManager;
 
 class ActorManager {
 public:
-    ActorManager(RenderManager& renderManager, MeshActorLoader& meshActorLoader);
-    Actor& create_mesh_actor(const std::string& path);
+    ActorManager(CameraManager& cameraManager);
+    void push(Actor& actor);
     void draw();
     
 private:
-    RenderManager& mRenderManager;
-    MeshActorLoader& mMeshActorLoader;
-    std::vector<std::unique_ptr<Actor>> mActors;
+    CameraManager& mCameraManager;
+    std::vector<std::reference_wrapper<Actor>> mActors;
 };
 

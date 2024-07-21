@@ -35,8 +35,6 @@ add_executable(PowerEngine
     ${CMAKE_CURRENT_LIST_DIR}/MeshActorLoader.hpp
     ${CMAKE_CURRENT_LIST_DIR}/RenderCommon.cpp
     ${CMAKE_CURRENT_LIST_DIR}/RenderCommon.hpp
-    ${CMAKE_CURRENT_LIST_DIR}/RenderManager.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/RenderManager.hpp
     ${CMAKE_CURRENT_LIST_DIR}/ShaderManager.cpp
     ${CMAKE_CURRENT_LIST_DIR}/ShaderManager.hpp
     ${CMAKE_CURRENT_LIST_DIR}/UiCommon.cpp
@@ -53,8 +51,8 @@ add_executable(PowerEngine
     ${CMAKE_CURRENT_LIST_DIR}/components/Component.hpp
     ${CMAKE_CURRENT_LIST_DIR}/components/DrawableComponent.cpp
     ${CMAKE_CURRENT_LIST_DIR}/components/DrawableComponent.hpp
-    ${CMAKE_CURRENT_LIST_DIR}/components/Transform.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/components/Transform.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/components/TransformComponent.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/components/TransformComponent.hpp
 
     ${CMAKE_CURRENT_LIST_DIR}/components/MeshComponent.cpp
     ${CMAKE_CURRENT_LIST_DIR}/components/MeshComponent.hpp

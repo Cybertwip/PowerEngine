@@ -1,13 +1,16 @@
 #pragma once
 
+#include <entt/entt.hpp>
+
 #include <memory>
 
 namespace nanogui{
 class Widget;
 }
 
+class ActorManager;
 class Canvas;
-class RenderManager;
+class MeshActorLoader;
 class ShaderManager;
 
 class RenderSettings {
@@ -23,7 +26,8 @@ public:
 
 class RenderCommon {
 public:
-    RenderCommon(nanogui::Widget& parent, RenderManager& renderManager, RenderSettings& renderSettings);
+    RenderCommon(nanogui::Widget& parent, entt::registry& registry, ActorManager& actorManager,
+                 RenderSettings& renderSettings);
     Canvas& canvas() {
         return *mCanvas;
     }
@@ -31,9 +35,17 @@ public:
     ShaderManager& shader_manager() {
         return *mShaderManager;
     }
+    
+    MeshActorLoader& mesh_actor_loader() {
+        return *mMeshActorLoader;
+    }
+
 
 private:
     std::unique_ptr<Canvas> mCanvas;
     std::unique_ptr<ShaderManager> mShaderManager;
+    std::unique_ptr<MeshActorLoader> mMeshActorLoader;
+    std::unique_ptr<ActorManager> mActorManager;
+
 };
 

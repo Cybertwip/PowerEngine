@@ -6,17 +6,21 @@
 
 #include <nanogui/vector.h>
 
-class ShaderWrapper;
-
 class Camera : public Actor
 {
 public:
     Camera(entt::registry& registry, float fov, float near, float far, float aspect);
-    void set_view_projection(ShaderWrapper& shader);
-    
-private:
     void update_view();
     
+    const nanogui::Matrix4f& get_view() const {
+        return mView;
+    }
+    
+    const nanogui::Matrix4f& get_projection() const {
+        return mProjection;
+    }
+    
+private:
     float mFov;
     float mNear;
     float mFar;

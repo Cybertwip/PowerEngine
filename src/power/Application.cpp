@@ -13,11 +13,11 @@
 #include "Canvas.hpp"
 #include "MeshActorLoader.hpp"
 #include "RenderCommon.hpp"
-#include "RenderManager.hpp"
 #include "ShaderManager.hpp"
 #include "UiCommon.hpp"
 #include "actors/ActorManager.hpp"
 #include "actors/Camera.hpp"
+#include "components/TransformComponent.hpp"
 #include "graphics/drawing/MeshActor.hpp"
 #include "import/Fbx.hpp"
 #include "ui/ScenePanel.hpp"
@@ -30,18 +30,19 @@ Application::Application() : nanogui::Screen(nanogui::Vector2i(1920, 1080), "Pow
     mEntityRegistry = std::make_unique<entt::registry>();
 
     mCameraManager = std::make_unique<CameraManager>(*mEntityRegistry);
-    mRenderManager = std::make_unique<RenderManager>(*mCameraManager);
 
     mRenderSettings = std::make_unique<RenderSettings>(900, 600);
     mUiCommon = std::make_unique<UiCommon>(*this);
 
-    mRenderCommon =
-        std::make_unique<RenderCommon>(mUiCommon->scene_panel(), *mRenderManager, *mRenderSettings);
+    mActorManager = std::make_unique<ActorManager>(*mCameraManager);
 
-    mMeshActorLoader = std::make_unique<MeshActorLoader>(*mEntityRegistry, mRenderCommon->shader_manager());
-    mActorManager = std::make_unique<ActorManager>(*mRenderManager, *mMeshActorLoader);
+    mRenderCommon =
+    std::make_unique<RenderCommon>(mUiCommon->scene_panel(), *mEntityRegistry, *mActorManager, *mRenderSettings);
+
+    mActors.push_back(mRenderCommon->mesh_actor_loader().create_mesh_actor("models/DeepMotionBot.fbx"));
+
+    mActorManager->push(mActors.back());
     
-    mActors.push_back(mActorManager->create_mesh_actor("models/DeepMotionBot.fbx"));
 
     perform_layout();
 }
@@ -56,7 +57,16 @@ bool Application::keyboard_event(int key, int scancode, int action, int modifier
 }
 
 void Application::draw(NVGcontext *ctx) {
-    mActorManager->draw();
+    
+    mUiCommon->transform_panel().gather_values_into(
+        mActors[0].get().get_component<TransformComponent>());
+    
+//    mUiCommon->transform_panel().gather_values_into(
+//                                                    mCameraManager->active_camera().get_component<TransformComponent>());
+    
+    mCameraManager->look_at(mActors.back());
+
+    //mActorManager->draw(); // looks cool but not logic
 
     Screen::draw(ctx);
 }
