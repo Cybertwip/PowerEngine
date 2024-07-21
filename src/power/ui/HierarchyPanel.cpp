@@ -3,6 +3,7 @@
 #include "actors/Actor.hpp" // Include the Actor header
 
 #include <nanogui/layout.h>
+#include <nanogui/treeviewitem.h>
 
 HierarchyPanel::HierarchyPanel(nanogui::Widget &parent) : Panel(parent, "Hierarchy") {
     set_position(nanogui::Vector2i(0, 0));
