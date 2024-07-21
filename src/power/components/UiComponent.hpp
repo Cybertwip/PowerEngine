@@ -4,7 +4,7 @@
 
 class UiComponent {
 public:
-    UiComponent(std::function<void()> onSelected) {
+    UiComponent(std::function<void()> onSelected) : mOnSelected(onSelected) {
     }
     
     void select(){

@@ -48,7 +48,7 @@ Application::Application() : nanogui::Screen(nanogui::Vector2i(1920, 1080), "Pow
     std::vector<std::reference_wrapper<Actor>> actors;
     actors.push_back(mActors.back());
     actors.push_back(mCameraManager->active_camera());
-    mUiCommon->attach_actors(actors);
+    mUiCommon->attach_actors(std::move(actors));
 
     perform_layout();
 }

@@ -29,7 +29,7 @@ bool HierarchyPanel::mouse_drag_event(const nanogui::Vector2i &p, const nanogui:
 
 void HierarchyPanel::set_actors(const std::vector<std::reference_wrapper<Actor>> &actors) {
     mTreeView->clear();
-    for (auto actor : actors) {
+    for (auto& actor : actors) {
         populate_tree(actor.get());
     }
 }
