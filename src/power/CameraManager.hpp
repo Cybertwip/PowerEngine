@@ -14,7 +14,7 @@ class CameraManager
 public:
     CameraManager(entt::registry& registry);
     
-    Camera& active_camera() { return mActiveCamera; }
+    Camera& active_camera() { return mActiveCamera->get(); }
     
     Camera& create_camera(float fov, float near, float far, float aspect);
     void update_view();
@@ -26,6 +26,6 @@ public:
 
 private:
     entt::registry& mRegistry;
-    Camera& mActiveCamera;
+    std::optional<std::reference_wrapper<Camera>> mActiveCamera;
     std::vector<std::unique_ptr<Camera>> mCameras;
 };

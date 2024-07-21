@@ -11,7 +11,7 @@
 
 #include "components/TransformComponent.hpp"
 
-TransformPanel::TransformPanel(nanogui::Widget &parent) : Panel(parent, "Transform") {
+TransformPanel::TransformPanel(nanogui::Widget &parent) : Panel(parent, "Transform"), mActiveActor(std::nullopt) {
     set_position(nanogui::Vector2i(0, 0));
     set_layout(new nanogui::GroupLayout());
 
@@ -173,6 +173,7 @@ void TransformPanel::set_active_actor(std::reference_wrapper<Actor> actor) {
 
 void TransformPanel::update() {
     if (mActiveActor.has_value()){
-        gather_values_into(mActiveActor->get().get_component<TransformComponent>());
+        auto& transform = mActiveActor->get().get_component<TransformComponent>();
+        gather_values_into(transform);
     }
 }

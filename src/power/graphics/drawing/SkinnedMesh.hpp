@@ -53,7 +53,7 @@ public:
     public:
         SkinnedMeshShader(ShaderManager& shader);
         
-        void upload_vertex_data(const std::vector<Vertex>& vertexData);
+        void upload_vertex_data(const std::vector<std::unique_ptr<Vertex>>& vertexData);
         void upload_material_data(const MaterialProperties& vertexData);
         void upload_texture_data(std::vector<std::unique_ptr<nanogui::Texture>>& textureData);
     };

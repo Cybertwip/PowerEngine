@@ -5,6 +5,7 @@
 class Actor {
 public:
     Actor(entt::registry& registry);
+    virtual ~Actor() = default;
     
     template<typename T>
     bool find_component() {

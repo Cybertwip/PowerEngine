@@ -6,24 +6,30 @@
 #include "graphics/shading/ShaderWrapper.hpp"
 
 CameraManager::CameraManager(entt::registry& registry)
-    : mRegistry(registry), mActiveCamera(create_camera(45, 0.01f, 5e3f, 900.0f / 600.0f)) {
-    mActiveCamera.get_component<TransformComponent>().set_translation(glm::vec3(0, 32, 200));
+    : mRegistry(registry), mActiveCamera(std::nullopt) {
+        
+    mActiveCamera = create_camera(45, 0.01f, 5e3f, 900.0f / 600.0f);
+    mActiveCamera->get().get_component<TransformComponent>().set_translation(glm::vec3(0, 32, 200));
 }
 
 Camera& CameraManager::create_camera(float fov, float near, float far, float aspect) {
-    return *mCameras.emplace_back(std::make_unique<Camera>(mRegistry, fov, near, far, aspect));
+    auto camera = std::make_unique<Camera>(mRegistry, fov, near, far, aspect);
+    
+    mCameras.push_back(std::move(camera));
+    
+    return *mCameras.back();
 }
 
-void CameraManager::update_view() { mActiveCamera.update_view(); }
+void CameraManager::update_view() { mActiveCamera->get().update_view(); }
 
-const nanogui::Matrix4f& CameraManager::get_view() const { return mActiveCamera.get_view(); }
+const nanogui::Matrix4f& CameraManager::get_view() const { return mActiveCamera->get().get_view(); }
 
 const nanogui::Matrix4f& CameraManager::get_projection() const {
-    return mActiveCamera.get_projection();
+    return mActiveCamera->get().get_projection();
 }
 
 void CameraManager::look_at(Actor& actor) {
-    auto& cameraTransform = mActiveCamera.get_component<TransformComponent>();
+    auto& cameraTransform = mActiveCamera->get().get_component<TransformComponent>();
     auto& actorTransform = actor.get_component<TransformComponent>();
 
     glm::vec3 cameraPosition = cameraTransform.get_translation();

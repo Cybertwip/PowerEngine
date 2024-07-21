@@ -21,7 +21,7 @@ UiCommon::UiCommon(nanogui::Widget& parent) {
 
 void UiCommon::attach_actors(const std::vector<std::reference_wrapper<Actor>> &actors) {
     for(auto& actor : actors){
-        actor.get().add_component<UiComponent>([this, &actor](){
+        actor.get().add_component<UiComponent>([this, actor](){
             mTransformPanel->set_active_actor(actor);
         });
     }

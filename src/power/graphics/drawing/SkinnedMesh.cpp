@@ -70,14 +70,15 @@ std::array<float, SkinnedMesh::Vertex::MAX_BONE_INFLUENCE> SkinnedMesh::Vertex::
 SkinnedMesh::SkinnedMeshShader::SkinnedMeshShader(ShaderManager& shaderManager)
     : ShaderWrapper(*shaderManager.get_shader("mesh")) {}
 
-void SkinnedMesh::SkinnedMeshShader::upload_vertex_data(const std::vector<Vertex>& vertexData) {
+void SkinnedMesh::SkinnedMeshShader::upload_vertex_data(const std::vector<std::unique_ptr<Vertex>>& vertexData) {
     std::vector<float> positions;
     std::vector<float> normals;
     std::vector<float> texCoords1;
     std::vector<float> texCoords2;
     std::vector<int> boneIds;
     std::vector<float> weights;
-    for (const auto& vertex : vertexData) {
+    for (const auto& vertexPointer : vertexData) {
+        auto& vertex = *vertexPointer;
         positions.insert(positions.end(), {vertex.get_position().x, vertex.get_position().y,
                                            vertex.get_position().z});
         normals.insert(normals.end(),
@@ -86,8 +87,12 @@ void SkinnedMesh::SkinnedMeshShader::upload_vertex_data(const std::vector<Vertex
                           {vertex.get_tex_coords1().x, vertex.get_tex_coords1().y});
         texCoords2.insert(texCoords2.end(),
                           {vertex.get_tex_coords2().x, vertex.get_tex_coords2().y});
-        boneIds.insert(boneIds.end(), vertex.get_bone_ids().begin(), vertex.get_bone_ids().end());
-        weights.insert(weights.end(), vertex.get_weights().begin(), vertex.get_weights().end());
+        
+        auto vertexBoneIds = vertex.get_bone_ids();
+        auto vertexWeights = vertex.get_weights();
+
+        boneIds.insert(boneIds.end(), vertexBoneIds.begin(), vertexBoneIds.end());
+        weights.insert(weights.end(), vertexWeights.begin(), vertexWeights.end());
     }
 
     mShader.set_buffer("aPosition", nanogui::VariableType::Float32, {vertexData.size(), 3},

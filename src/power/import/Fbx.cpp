@@ -76,12 +76,12 @@ void Fbx::ProcessMesh(const std::shared_ptr<sfbx::Mesh> mesh) {
     auto vertexIndices = geometry->getIndices();
 
     for (unsigned int i = 0; i < points.size(); ++i) {
-        SkinnedMesh::Vertex vertex;
-        vertex.set_position({points[i].x, points[i].y, points[i].z});
+        auto vertex = std::make_unique<SkinnedMesh::Vertex>();
+        vertex->set_position({points[i].x, points[i].y, points[i].z});
         if (!normals.empty()) {
-            vertex.set_normal({normals[i].x, normals[i].y, normals[i].z});
+            vertex->set_normal({normals[i].x, normals[i].y, normals[i].z});
         }
-        resultMesh->mVertices.push_back(vertex);
+        resultMesh->mVertices.push_back(std::move(vertex));
     }
 
     auto uvLayers = geometry->getUVLayers();
@@ -91,12 +91,12 @@ void Fbx::ProcessMesh(const std::shared_ptr<sfbx::Mesh> mesh) {
             int uv_index = uvLayer.indices.empty() ? i : uvLayer.indices[i];
             int index = vertexIndices[i];
             if (layerIndex == 0) {
-                resultMesh->mVertices[index].set_texture_coords1(
+                resultMesh->mVertices[index]->set_texture_coords1(
                     {uvLayer.data[uv_index].x, uvLayer.data[uv_index].y});
-                resultMesh->mVertices[index].set_texture_coords2(
+                resultMesh->mVertices[index]->set_texture_coords2(
                     {uvLayer.data[uv_index].x, uvLayer.data[uv_index].y});
             } else {
-                resultMesh->mVertices[index].set_texture_coords2(
+                resultMesh->mVertices[index]->set_texture_coords2(
                     {uvLayer.data[uv_index].x, uvLayer.data[uv_index].y});
             }
         }
@@ -162,8 +162,8 @@ void Fbx::ProcessBones(const std::shared_ptr<sfbx::Mesh> mesh) {
                 int vertexID = indices[i];
                 float weight = weights[i];
                 for (int j = 0; j < 4; ++j) {
-                    if (mMeshes.back()->mVertices[vertexID].get_weights()[j] == 0.0f) {
-                        mMeshes.back()->mVertices[vertexID].set_bone(static_cast<int>(boneID),
+                    if (mMeshes.back()->mVertices[vertexID]->get_weights()[j] == 0.0f) {
+                        mMeshes.back()->mVertices[vertexID]->set_bone(static_cast<int>(boneID),
                                                                      weight);
                         break;
                     }
