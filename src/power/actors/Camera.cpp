@@ -10,6 +10,7 @@ Camera::Camera(entt::registry& registry, float fov, float near, float far, float
     mProjection = nanogui::Matrix4f::perspective(mFov, mNear, mFar, mAspect);
 
     add_component<TransformComponent>();
+    add_component<MetadataComponent>("Camera");
 }
 
 void Camera::update_view() {

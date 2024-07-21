@@ -5,6 +5,7 @@
 #include <nanogui/treeviewitem.h>
 
 #include "actors/Actor.hpp"  // Include the Actor header
+#include "components/MetadataComponent.hpp"  // Include the Actor header
 
 HierarchyPanel::HierarchyPanel(nanogui::Widget &parent) : Panel(parent, "Hierarchy") {
     set_position(nanogui::Vector2i(0, 0));
@@ -35,7 +36,7 @@ void HierarchyPanel::set_actors(const std::vector<Actor *> &actors) {
 void HierarchyPanel::populate_tree(Actor *actor, nanogui::TreeViewItem *parent_node) {
     // Correctly reference the actor's name
     nanogui::TreeViewItem *node =
-        parent_node ? parent_node->add_node("actor->name()") : mTreeView->add_node("actor->name()");
+    parent_node ? parent_node->add_node(std::string{actor->get_component<MetadataComponent>().get_name()}) : mTreeView->add_node(std::string{actor->get_component<MetadataComponent>().get_name()});
     // Uncomment and correctly iterate over the actor's children
     //    for (Actor *child : actor->children()) {
     //        populate_tree(child, node);
