@@ -10,7 +10,7 @@
 #include <array>
 
 
-class Mesh : public Drawable {
+class Model : public Drawable {
 public:
 	class Vertex {
 	public:
@@ -42,7 +42,7 @@ public:
 	};
 
 public:
-	Mesh(MeshShader& shader);
+    Model(MeshShader& shader);
 	
 	void draw_content(CameraManager& cameraManager) override;
 	

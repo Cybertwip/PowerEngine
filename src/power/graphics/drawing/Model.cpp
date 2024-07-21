@@ -1,4 +1,4 @@
-#include "graphics/drawing/Mesh.hpp"
+#include "graphics/drawing/Model.hpp"
 
 #include <GLFW/glfw3.h>
 #include <nanogui/renderpass.h>
@@ -7,30 +7,30 @@
 
 #include "graphics/shading/ShaderWrapper.hpp"
 
-Mesh::Vertex::Vertex() {}
+Model::Vertex::Vertex() {}
 
-Mesh::Vertex::Vertex(const glm::vec3 &pos, const glm::vec2 &tex)
+Model::Vertex::Vertex(const glm::vec3 &pos, const glm::vec2 &tex)
     : mPosition(pos), mNormal(0.0f), mTexCoords1(tex), mTexCoords2(tex) {}
 
-void Mesh::Vertex::set_position(const glm::vec3 &vec) { mPosition = vec; }
+void Model::Vertex::set_position(const glm::vec3 &vec) { mPosition = vec; }
 
-void Mesh::Vertex::set_normal(const glm::vec3 &vec) { mNormal = vec; }
+void Model::Vertex::set_normal(const glm::vec3 &vec) { mNormal = vec; }
 
-void Mesh::Vertex::set_texture_coords1(const glm::vec2 &vec) { mTexCoords1 = vec; }
+void Model::Vertex::set_texture_coords1(const glm::vec2 &vec) { mTexCoords1 = vec; }
 
-void Mesh::Vertex::set_texture_coords2(const glm::vec2 &vec) { mTexCoords2 = vec; }
+void Model::Vertex::set_texture_coords2(const glm::vec2 &vec) { mTexCoords2 = vec; }
 
-glm::vec3 Mesh::Vertex::get_position() const { return mPosition; }
+glm::vec3 Model::Vertex::get_position() const { return mPosition; }
 
-glm::vec3 Mesh::Vertex::get_normal() const { return mNormal; }
+glm::vec3 Model::Vertex::get_normal() const { return mNormal; }
 
-glm::vec2 Mesh::Vertex::get_tex_coords1() const { return mTexCoords1; }
+glm::vec2 Model::Vertex::get_tex_coords1() const { return mTexCoords1; }
 
-glm::vec2 Mesh::Vertex::get_tex_coords2() const { return mTexCoords2; }
+glm::vec2 Model::Vertex::get_tex_coords2() const { return mTexCoords2; }
 
-Mesh::MeshShader::MeshShader(nanogui::Shader &shader) : ShaderWrapper(shader) {}
+Model::MeshShader::MeshShader(nanogui::Shader &shader) : ShaderWrapper(shader) {}
 
-void Mesh::MeshShader::upload_vertex_data(const std::vector<Vertex> &vertexData) {
+void Model::MeshShader::upload_vertex_data(const std::vector<Vertex> &vertexData) {
     std::vector<float> positions;
     std::vector<float> normals;
     std::vector<float> texCoords1;
@@ -64,9 +64,9 @@ void Mesh::MeshShader::upload_vertex_data(const std::vector<Vertex> &vertexData)
     // MAX_BONE_INFLUENCE}, weights.data());
 }
 
-Mesh::Mesh(MeshShader &shader) : mShader(shader) { initialize_mesh(); }
+Model::Model(MeshShader &shader) : mShader(shader) { initialize_mesh(); }
 
-void Mesh::initialize_mesh() {
+void Model::initialize_mesh() {
     std::vector<uint32_t> indices = {3, 2, 6, 6, 7, 3, 4, 5, 1, 1, 0, 4, 4, 0, 3, 3, 7, 4,
                                      1, 5, 6, 6, 2, 1, 0, 1, 2, 2, 3, 0, 7, 6, 5, 5, 4, 7};
 
@@ -89,4 +89,4 @@ void Mesh::initialize_mesh() {
     mShader.upload_vertex_data(vertices);
 }
 
-void Mesh::draw_content(CameraManager &cameraManager) {}
+void Model::draw_content(CameraManager &cameraManager) {}

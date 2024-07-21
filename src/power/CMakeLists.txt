@@ -44,13 +44,20 @@ add_executable(PowerEngine
 
     ${CMAKE_CURRENT_LIST_DIR}/actors/Actor.cpp
     ${CMAKE_CURRENT_LIST_DIR}/actors/Actor.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/actors/ActorManager.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/actors/ActorManager.hpp
     ${CMAKE_CURRENT_LIST_DIR}/actors/Camera.cpp
     ${CMAKE_CURRENT_LIST_DIR}/actors/Camera.hpp
 
     ${CMAKE_CURRENT_LIST_DIR}/components/Component.cpp
     ${CMAKE_CURRENT_LIST_DIR}/components/Component.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/components/DrawableComponent.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/components/DrawableComponent.hpp
     ${CMAKE_CURRENT_LIST_DIR}/components/Transform.cpp
     ${CMAKE_CURRENT_LIST_DIR}/components/Transform.hpp
+
+    ${CMAKE_CURRENT_LIST_DIR}/components/MeshComponent.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/components/MeshComponent.hpp
 
 
     ${CMAKE_CURRENT_LIST_DIR}/graphics/shading/MaterialProperties.hpp
@@ -58,8 +65,8 @@ add_executable(PowerEngine
     ${CMAKE_CURRENT_LIST_DIR}/graphics/shading/ShaderWrapper.cpp
 
     ${CMAKE_CURRENT_LIST_DIR}/graphics/drawing/Drawable.hpp
-    ${CMAKE_CURRENT_LIST_DIR}/graphics/drawing/Mesh.hpp
-    ${CMAKE_CURRENT_LIST_DIR}/graphics/drawing/Mesh.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/graphics/drawing/Model.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/graphics/drawing/Model.cpp
     ${CMAKE_CURRENT_LIST_DIR}/graphics/drawing/SkinnedMesh.hpp
     ${CMAKE_CURRENT_LIST_DIR}/graphics/drawing/SkinnedMesh.cpp
     ${CMAKE_CURRENT_LIST_DIR}/graphics/drawing/Billboard.hpp
