@@ -22,6 +22,7 @@
 #include "import/Fbx.hpp"
 #include "ui/ScenePanel.hpp"
 #include "ui/TransformPanel.hpp"
+#include "ui/HierarchyPanel.hpp"
 
 Application::Application() : nanogui::Screen(nanogui::Vector2i(1920, 1080), "Power Engine", false) {
     set_layout(new nanogui::GridLayout(nanogui::Orientation::Horizontal, 2,
@@ -43,6 +44,11 @@ Application::Application() : nanogui::Screen(nanogui::Vector2i(1920, 1080), "Pow
 
     mActorManager->push(mActors.back());
     
+    std::vector<Actor*> actors;
+    for(int i = 0; i<100; ++i){
+        actors.push_back(&(mActors.back().get()));
+    }
+    mUiCommon->hierarchy_panel().set_actors(actors);
 
     perform_layout();
 }

@@ -331,6 +331,8 @@ add_library(nanogui ${NANOGUI_LIBRARY_TYPE}
   include/nanogui/messagedialog.h src/messagedialog.cpp
   include/nanogui/textbox.h src/textbox.cpp
   include/nanogui/textarea.h src/textarea.cpp
+  include/nanogui/treeview.h src/treeview.cpp
+  include/nanogui/treeviewitem.h src/treeviewitem.cpp
   include/nanogui/imagepanel.h src/imagepanel.cpp
   include/nanogui/vscrollpanel.h src/vscrollpanel.cpp
   include/nanogui/colorwheel.h src/colorwheel.cpp
@@ -373,7 +375,7 @@ target_include_directories(nanogui PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/ext/nanovg/src>
   $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/nanovg>)
 
-target_link_libraries(nanogui PUBLIC ${NANOGUI_LIBS})
+target_link_libraries(nanogui PUBLIC ${NANOGUI_LIBS} json)
 
 # Auto-detect GLES include directory on Raspberry PI
 if (EXISTS /opt/vc/include)

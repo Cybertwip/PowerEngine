@@ -1,21 +1,26 @@
+// HierarchyPanel.hpp
 #pragma once
 
-#include <nanogui/shader.h>
-#include <string>
-#include <unordered_map>
-#include <memory>
+#include "Panel.hpp"
 
-class ShaderManager {
+#include <nanogui/treeview.h>
+#include <nanogui/vscrollpanel.h>
+#include <vector>
+
+class Actor; // Forward declaration
+
+class HierarchyPanel : public Panel {
 public:
-	ShaderManager(nanogui::RenderPass *render_pass);
-	
-	nanogui::ref<nanogui::Shader> load_shader(const std::string &name, const std::string &vertex_path, const std::string &fragment_path);
-	nanogui::ref<nanogui::Shader> get_shader(const std::string &name);
-	
+    HierarchyPanel(nanogui::Widget &parent);
+
+    void set_actors(const std::vector<Actor*> &actors);
+
 private:
-	std::unordered_map<std::string, nanogui::ref<nanogui::Shader>> mShaderCache;
-	nanogui::RenderPass *mRenderPass;
-	
-	std::string read_file(const std::string &file_path);
-	void load_default_shaders();
+    bool mouse_drag_event(const nanogui::Vector2i &p, const nanogui::Vector2i &rel,
+                                  int button, int modifiers) override;
+    
+private:
+    nanogui::VScrollPanel *mScrollPanel;
+    nanogui::TreeView *mTreeView;
+    void populate_tree(Actor *actor, nanogui::TreeViewItem *parentNode = nullptr);
 };
