@@ -3,11 +3,10 @@
 #include "actors/ActorManager.hpp"
 #include "graphics/drawing/Drawable.hpp"
 
-Canvas::Canvas(Widget* parent, ActorManager& actorManager, nanogui::Color backgroundColor,
-               nanogui::Vector2i size)
+Canvas::Canvas(Widget* parent, ActorManager& actorManager, nanogui::Color backgroundColor)
     : nanogui::Canvas(parent, 1), mActorManager(actorManager) {
     set_background_color(backgroundColor);
-    set_fixed_size(size);
+    set_fixed_size(parent->fixed_size());
 }
 
 void Canvas::draw_contents() { visit(mActorManager); }

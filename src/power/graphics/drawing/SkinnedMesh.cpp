@@ -152,17 +152,17 @@ void SkinnedMesh::draw_content(const nanogui::Matrix4f& model, const nanogui::Ma
     using namespace nanogui;
     //
     // Calculate bounding box to center the model
-        glm::vec3 minPos(std::numeric_limits<float>::max());
-        glm::vec3 maxPos(std::numeric_limits<float>::lowest());
-    
-        for (const auto& vertex : mMeshData.mVertices) {
-            minPos = glm::min(minPos, vertex->get_position());
-            maxPos = glm::max(maxPos, vertex->get_position());
-        }
-    
-        auto center = (minPos + maxPos) / 2.0f;
+    glm::vec3 minPos(std::numeric_limits<float>::max());
+    glm::vec3 maxPos(std::numeric_limits<float>::lowest());
 
-        Matrix4f m = Matrix4f::rotate(Vector3f(0, 1, 0), (float)glfwGetTime()) *
+    for (const auto& vertex : mMeshData.mVertices) {
+        minPos = glm::min(minPos, vertex->get_position());
+        maxPos = glm::max(maxPos, vertex->get_position());
+    }
+
+    auto center = (minPos + maxPos) / 2.0f;
+
+        Matrix4f m =  model * Matrix4f::rotate(Vector3f(0, 1, 0), (float)glfwGetTime()) *
                          Matrix4f::translate(-Vector3f(center.x, center.y, center.z));
 
     mShader.set_uniform("aModel", m);

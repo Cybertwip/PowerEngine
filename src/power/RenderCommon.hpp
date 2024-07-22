@@ -26,8 +26,7 @@ public:
 
 class RenderCommon {
 public:
-    RenderCommon(nanogui::Widget& parent, entt::registry& registry, ActorManager& actorManager,
-                 RenderSettings& renderSettings);
+    RenderCommon(nanogui::Widget& parent, entt::registry& registry, ActorManager& actorManager);
     Canvas& canvas() {
         return *mCanvas;
     }

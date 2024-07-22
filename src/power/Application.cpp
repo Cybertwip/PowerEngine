@@ -35,13 +35,12 @@ Application::Application() : nanogui::Screen(nanogui::Vector2i(1920, 1080), "Pow
 
     mCameraManager = std::make_unique<CameraManager>(*mEntityRegistry);
 
-    mRenderSettings = std::make_unique<RenderSettings>(900, 600);
     mUiCommon = std::make_unique<UiCommon>(*this);
 
     mActorManager = std::make_unique<ActorManager>(*mCameraManager);
 
     mRenderCommon = std::make_unique<RenderCommon>(mUiCommon->scene_panel(), *mEntityRegistry,
-                                                   *mActorManager, *mRenderSettings);
+                                                   *mActorManager);
 
     mActors.push_back(
         mRenderCommon->mesh_actor_loader().create_mesh_actor("models/DeepMotionBot.fbx"));
@@ -50,7 +49,19 @@ Application::Application() : nanogui::Screen(nanogui::Vector2i(1920, 1080), "Pow
 
     std::vector<std::reference_wrapper<Actor>> actors;
     actors.push_back(mActors.back());
-    actors.push_back(mCameraManager->active_camera());
+    
+    if (mCameraManager->active_camera().has_value()) {
+        actors.push_back(mCameraManager->active_camera()->get());
+    } else {
+        actors.push_back(mCameraManager->create_camera(45.0f,
+                                                       0.01f,
+                                                       5e3f,
+                                                       mRenderCommon->canvas().fixed_size().x() /
+                                                       static_cast<float>(mRenderCommon->canvas().fixed_size().y())));
+    }
+    
+    mCameraManager->active_camera()->get().get_component<TransformComponent>().set_translation(glm::vec3(0, 0, 200));
+    
     mUiCommon->attach_actors(std::move(actors));
 
     perform_layout();

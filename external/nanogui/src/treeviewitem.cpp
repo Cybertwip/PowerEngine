@@ -4,8 +4,8 @@
 
 NAMESPACE_BEGIN(nanogui)
 
-TreeViewItem::TreeViewItem(Widget *parent, TreeView* tree, const std::string &caption, std::function<void()> selectionCallback)
-: Widget(parent), m_tree(tree), m_caption(caption), m_selected(false), m_expanded(false),  mSelectionCallback(selectionCallback) {}
+TreeViewItem::TreeViewItem(Widget *parent, TreeView* tree, const std::string &caption, std::function<void()> callback)
+: Widget(parent), m_tree(tree), m_caption(caption), m_selected(false), m_expanded(false),  m_selection_callback(callback) {}
 
 void TreeViewItem::draw(NVGcontext *ctx) {
     Widget::draw(ctx);
@@ -34,7 +34,6 @@ bool TreeViewItem::mouse_button_event(const Vector2i &p, int button, bool down, 
         
         m_tree->set_selected(this);
         
-        mSelectionCallback();
         return true;
     }
     return false;

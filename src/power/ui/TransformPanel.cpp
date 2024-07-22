@@ -20,9 +20,9 @@ TransformPanel::TransformPanel(nanogui::Widget &parent) : Panel(parent, "Transfo
 
     Widget *translatePanel = new Widget(this);
     translatePanel->set_layout(new nanogui::GridLayout(nanogui::Orientation::Vertical, 2,
-                                                       nanogui::Alignment::Middle, 15, 5));
+                                                       nanogui::Alignment::Middle, 0, 0));
 
-    new nanogui::Label(translatePanel, "X:", "sans-bold");
+    new nanogui::Label(translatePanel, "X", "sans-bold");
     mXTranslate = new nanogui::IntBox<int>(translatePanel);
     mXTranslate->set_editable(true);
     mXTranslate->set_fixed_size(nanogui::Vector2i(100, 20));
@@ -33,7 +33,7 @@ TransformPanel::TransformPanel(nanogui::Widget &parent) : Panel(parent, "Transfo
     mXTranslate->set_spinnable(true);
     mXTranslate->set_value_increment(1);
 
-    new nanogui::Label(translatePanel, "Y:", "sans-bold");
+    new nanogui::Label(translatePanel, "Y", "sans-bold");
     mYTranslate = new nanogui::IntBox<int>(translatePanel);
     mYTranslate->set_editable(true);
     mYTranslate->set_fixed_size(nanogui::Vector2i(100, 20));
@@ -44,7 +44,7 @@ TransformPanel::TransformPanel(nanogui::Widget &parent) : Panel(parent, "Transfo
     mYTranslate->set_spinnable(true);
     mYTranslate->set_value_increment(1);
 
-    new nanogui::Label(translatePanel, "Z:", "sans-bold");
+    new nanogui::Label(translatePanel, "Z", "sans-bold");
     mZTranslate = new nanogui::IntBox<int>(translatePanel);
     mZTranslate->set_editable(true);
     mZTranslate->set_fixed_size(nanogui::Vector2i(100, 20));
@@ -60,7 +60,7 @@ TransformPanel::TransformPanel(nanogui::Widget &parent) : Panel(parent, "Transfo
 
     Widget *rotatePanel = new Widget(this);
     rotatePanel->set_layout(new nanogui::GridLayout(nanogui::Orientation::Vertical, 2,
-                                                    nanogui::Alignment::Middle, 15, 5));
+                                                    nanogui::Alignment::Middle, 0, 0));
 
     new nanogui::Label(rotatePanel, "Pitch", "sans-bold");
     mPitchRotate = new nanogui::IntBox<int>(rotatePanel);
@@ -100,7 +100,7 @@ TransformPanel::TransformPanel(nanogui::Widget &parent) : Panel(parent, "Transfo
 
     Widget *scalePanel = new Widget(this);
     scalePanel->set_layout(new nanogui::GridLayout(nanogui::Orientation::Vertical, 2,
-                                                   nanogui::Alignment::Middle, 15, 5));
+                                                   nanogui::Alignment::Middle, 0, 0));
 
     new nanogui::Label(scalePanel, "X", "sans-bold");
     mXScale = new nanogui::IntBox<int>(scalePanel);
