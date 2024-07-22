@@ -15,17 +15,7 @@ Camera::Camera(entt::registry& registry, float fov, float near, float far, float
 }
 
 void Camera::update_view() {
-    auto& transform = get_component<TransformComponent>();
-
-    // Convert ozz::math::Transform to glm types
-    glm::vec3 position = transform.get_translation();
-    glm::quat rotation = transform.get_rotation();
-
-    // Calculate the view matrix (inverse of camera's transformation)
-    glm::mat4 translationMatrix = glm::translate(glm::mat4(1.0f), -position);
-    glm::mat4 rotationMatrix = glm::mat4_cast(glm::conjugate(rotation));
-    glm::mat4 view = rotationMatrix * translationMatrix;
-
+    auto matrix = get_component<TransformComponent>().get_matrix();
     // Convert glm::mat4 to nanogui::Matrix4f
-    std::memcpy(mView.m, glm::value_ptr(view), sizeof(float) * 16);
+    std::memcpy(mView.m, glm::value_ptr(matrix), sizeof(float) * 16);
 }

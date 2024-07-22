@@ -32,6 +32,8 @@ void HierarchyPanel::set_actors(const std::vector<std::reference_wrapper<Actor>>
     for (auto& actor : actors) {
         populate_tree(actor.get());
     }
+    
+    mTreeView->set_selected(static_cast<nanogui::TreeViewItem*>(mTreeView->children().front()));
 }
 
 void HierarchyPanel::populate_tree(Actor& actor, nanogui::TreeViewItem *parent_node) {

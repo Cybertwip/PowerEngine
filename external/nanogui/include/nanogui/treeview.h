@@ -17,9 +17,12 @@ public:
     void add_item(TreeViewItem *item);
     TreeViewItem* add_node(const std::string &caption, std::function<void()> callback);
     void clear();
+    
+    void set_selected(TreeViewItem* item);
 
 private:
     std::vector<TreeViewItem *> m_items;
+    TreeViewItem* m_selected_item;
 };
 
 NAMESPACE_END(nanogui)

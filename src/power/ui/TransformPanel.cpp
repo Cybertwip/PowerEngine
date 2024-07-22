@@ -169,6 +169,8 @@ void TransformPanel::update_values_from(TransformComponent &transform) {
 
 void TransformPanel::set_active_actor(std::reference_wrapper<Actor> actor) {
     mActiveActor = actor;
+    
+    update_values_from(mActiveActor->get().get_component<TransformComponent>());
 }
 
 void TransformPanel::update() {

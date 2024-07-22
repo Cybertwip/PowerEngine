@@ -1,16 +1,17 @@
 #include <nanogui/treeviewitem.h>
+#include <nanogui/treeview.h>
 #include <nanogui/opengl.h>
 
 NAMESPACE_BEGIN(nanogui)
 
-TreeViewItem::TreeViewItem(Widget *parent, const std::string &caption, std::function<void()> selectionCallback)
-: Widget(parent), m_caption(caption), m_expanded(false), mSelectionCallback(selectionCallback) {}
+TreeViewItem::TreeViewItem(Widget *parent, TreeView* tree, const std::string &caption, std::function<void()> selectionCallback)
+: Widget(parent), m_tree(tree), m_caption(caption), m_selected(false), m_expanded(false),  mSelectionCallback(selectionCallback) {}
 
 void TreeViewItem::draw(NVGcontext *ctx) {
     Widget::draw(ctx);
     nvgBeginPath(ctx);
     nvgRect(ctx, m_pos.x(), m_pos.y(), m_size.x(), m_size.y());
-    nvgFillColor(ctx, m_expanded ? Color(200, 200, 200, 25) : Color(255, 255, 255, 25));
+    nvgFillColor(ctx, m_selected ? Color(255, 255, 255, 100) : Color(100, 100, 100, 50));
     nvgFill(ctx);
     nvgStrokeColor(ctx, Color(0, 0, 0, 255));
     nvgStroke(ctx);
@@ -31,6 +32,8 @@ bool TreeViewItem::mouse_button_event(const Vector2i &p, int button, bool down, 
     if (button == GLFW_MOUSE_BUTTON_1 && down) {
         m_expanded = !m_expanded;
         
+        m_tree->set_selected(this);
+        
         mSelectionCallback();
         return true;
     }
@@ -38,7 +41,7 @@ bool TreeViewItem::mouse_button_event(const Vector2i &p, int button, bool down, 
 }
 
 TreeViewItem* TreeViewItem::add_node(const std::string &caption, std::function<void()> callback) {
-    TreeViewItem *child = new TreeViewItem(this, caption, callback);
+    TreeViewItem *child = new TreeViewItem(this, m_tree, caption, callback);
     m_children.push_back(child);
     return child;
 }

@@ -64,11 +64,10 @@ bool Application::keyboard_event(int key, int scancode, int action, int modifier
 
 void Application::draw(NVGcontext *ctx) {
     mUiCommon->update();
-    
     //    mUiCommon->transform_panel().gather_values_into(
     //                                                    mCameraManager->active_camera().get_component<TransformComponent>());
 
-    mCameraManager->look_at(mActors.back());
+//    mCameraManager->look_at(mActors.back());
 
     // mActorManager->draw(); // looks cool but not logic
 
