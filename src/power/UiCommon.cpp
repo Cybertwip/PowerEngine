@@ -6,17 +6,26 @@
 
 #include "ui/HierarchyPanel.hpp"
 #include "ui/ScenePanel.hpp"
+#include "ui/StatusBarPanel.hpp"
 #include "ui/TransformPanel.hpp"
 
 UiCommon::UiCommon(nanogui::Widget& parent) {
     auto mainWrapper = new nanogui::Window(&parent, "");
-    mainWrapper->set_layout(new nanogui::GridLayout(nanogui::Orientation::Horizontal, 2,
+
+    mainWrapper->set_layout(new nanogui::GridLayout(nanogui::Orientation::Vertical, 2,
                                        nanogui::Alignment::Fill, 0, 0));
 
-    mainWrapper->set_fixed_size(parent.size());
+    auto sceneWrapper = new nanogui::Window(mainWrapper, "");
+    sceneWrapper->set_layout(new nanogui::GridLayout(nanogui::Orientation::Horizontal, 2,
+                                       nanogui::Alignment::Fill, 0, 0));
+
+    sceneWrapper->set_fixed_width(parent.size().x());
+    sceneWrapper->set_fixed_height(parent.size().y() - 56);
     
-    mScenePanel = new ScenePanel(*mainWrapper);
-    auto rightWrapper = new nanogui::Window(mainWrapper, "");
+    mStatusBarPanel = new StatusBarPanel(*mainWrapper);
+    
+    mScenePanel = new ScenePanel(*sceneWrapper);
+    auto rightWrapper = new nanogui::Window(sceneWrapper, "");
     rightWrapper->set_layout(
         new nanogui::BoxLayout(nanogui::Orientation::Vertical, nanogui::Alignment::Fill));
 

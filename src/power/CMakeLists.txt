@@ -77,18 +77,17 @@ add_executable(PowerEngine
     ${CMAKE_CURRENT_LIST_DIR}/import/Fbx.hpp
     ${CMAKE_CURRENT_LIST_DIR}/import/Fbx.cpp
 
-    ${CMAKE_CURRENT_LIST_DIR}/ui/Panel.hpp
-    ${CMAKE_CURRENT_LIST_DIR}/ui/Panel.cpp
-
-    ${CMAKE_CURRENT_LIST_DIR}/ui/ScenePanel.hpp
-    ${CMAKE_CURRENT_LIST_DIR}/ui/ScenePanel.cpp
-
-    ${CMAKE_CURRENT_LIST_DIR}/ui/TransformPanel.hpp
-    ${CMAKE_CURRENT_LIST_DIR}/ui/TransformPanel.cpp
 
     ${CMAKE_CURRENT_LIST_DIR}/ui/HierarchyPanel.hpp
     ${CMAKE_CURRENT_LIST_DIR}/ui/HierarchyPanel.cpp
-
+    ${CMAKE_CURRENT_LIST_DIR}/ui/Panel.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/ui/Panel.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/ui/ScenePanel.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/ui/ScenePanel.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/ui/StatusBarPanel.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/ui/StatusBarPanel.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/ui/TransformPanel.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/ui/TransformPanel.cpp
     ${CMAKE_CURRENT_LIST_DIR}/ui/UiLogicManager.hpp
     ${CMAKE_CURRENT_LIST_DIR}/ui/UiLogicManager.cpp
 

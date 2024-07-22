@@ -1,7 +1,5 @@
 #pragma once
 
-#include "Canvas.hpp"
-
 #include "Panel.hpp"
 
 class ScenePanel : public Panel {

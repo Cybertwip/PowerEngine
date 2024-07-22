@@ -8,9 +8,11 @@ class Widget;
 }
 
 class Actor;
-class ScenePanel;
-class TransformPanel;
 class HierarchyPanel;
+class ScenePanel;
+class StatusBarPanel;
+class TransformPanel;
+
 
 class UiCommon {
 public:
@@ -18,16 +20,20 @@ public:
     
     void attach_actors(const std::vector<std::reference_wrapper<Actor>> &actors);
     
+    HierarchyPanel& hierarchy_panel() {
+        return *mHierarchyPanel;
+    }
+
     ScenePanel& scene_panel() {
         return *mScenePanel;
     }
 
-    TransformPanel& transform_panel() {
-        return *mTransformPanel;
+    StatusBarPanel& status_bar_panel() {
+        return *mStatusBarPanel;
     }
 
-    HierarchyPanel& hierarchy_panel() {
-        return *mHierarchyPanel;
+    TransformPanel& transform_panel() {
+        return *mTransformPanel;
     }
     
     void update();
@@ -36,4 +42,5 @@ private:
     ScenePanel* mScenePanel;
     TransformPanel* mTransformPanel;
     HierarchyPanel* mHierarchyPanel;
+    StatusBarPanel* mStatusBarPanel;
 };
