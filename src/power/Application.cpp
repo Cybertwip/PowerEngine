@@ -6,6 +6,7 @@
 #include <nanogui/slider.h>
 #include <nanogui/textbox.h>
 #include <nanogui/window.h>
+#include <nanogui/theme.h>
 
 #include <cmath>
 
@@ -25,8 +26,10 @@
 #include "ui/TransformPanel.hpp"
 
 Application::Application() : nanogui::Screen(nanogui::Vector2i(1920, 1080), "Power Engine", false) {
-    set_layout(new nanogui::GridLayout(nanogui::Orientation::Horizontal, 2,
-                                       nanogui::Alignment::Fill, 15, 5));
+    theme()->m_window_drop_shadow_size = 0;
+    
+    set_layout(new nanogui::GridLayout(nanogui::Orientation::Horizontal, 1,
+                                       nanogui::Alignment::Fill, 0, 0));
 
     mEntityRegistry = std::make_unique<entt::registry>();
 

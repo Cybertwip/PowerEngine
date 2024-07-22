@@ -9,13 +9,19 @@
 #include "ui/TransformPanel.hpp"
 
 UiCommon::UiCommon(nanogui::Widget& parent) {
-    mScenePanel = new ScenePanel(parent);
-    auto wrapper = new nanogui::Window(&parent, "");
-    wrapper->set_layout(
+    auto mainWrapper = new nanogui::Window(&parent, "");
+    mainWrapper->set_layout(new nanogui::GridLayout(nanogui::Orientation::Horizontal, 2,
+                                       nanogui::Alignment::Fill, 0, 0));
+
+    mainWrapper->set_fixed_size(parent.size());
+    
+    mScenePanel = new ScenePanel(*mainWrapper);
+    auto rightWrapper = new nanogui::Window(mainWrapper, "");
+    rightWrapper->set_layout(
         new nanogui::BoxLayout(nanogui::Orientation::Vertical, nanogui::Alignment::Fill));
 
-    mHierarchyPanel = new HierarchyPanel(*wrapper);
-    mTransformPanel = new TransformPanel(*wrapper);
+    mHierarchyPanel = new HierarchyPanel(*rightWrapper);
+    mTransformPanel = new TransformPanel(*rightWrapper);
 }
 
 
