@@ -3,14 +3,13 @@
 #include "graphics/drawing/Drawable.hpp"
 #include "graphics/shading/MaterialProperties.hpp"
 #include "graphics/shading/ShaderWrapper.hpp"
+#include "graphics/drawing/SkinnedMesh.hpp"
 
 #include <nanogui/vector.h>
 
 #include <glm/glm.hpp>
 
 #include <array>
-
-struct MeshData;
 
 class ShaderManager;
 
@@ -47,6 +46,13 @@ public:
         glm::vec2 mTexCoords2;
         std::array<int, Vertex::MAX_BONE_INFLUENCE> mBoneIds;
         std::array<float, Vertex::MAX_BONE_INFLUENCE> mWeights;
+    };
+
+    struct MeshData {
+        std::vector<std::unique_ptr<Vertex>> mVertices;
+        std::vector<unsigned int> mIndices;
+        std::vector<std::unique_ptr<nanogui::Texture>> mTextures;
+        MaterialProperties mMaterial;
     };
 
     class SkinnedMeshShader : public ShaderWrapper {

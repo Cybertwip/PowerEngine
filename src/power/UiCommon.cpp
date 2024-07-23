@@ -1,9 +1,7 @@
 #include "UiCommon.hpp"
 
 #include "actors/Actor.hpp"
-
 #include "components/UiComponent.hpp"
-
 #include "ui/HierarchyPanel.hpp"
 #include "ui/ScenePanel.hpp"
 #include "ui/StatusBarPanel.hpp"
@@ -11,8 +9,8 @@
 
 UiCommon::UiCommon(nanogui::Widget& parent) {
     auto mainWrapper = new nanogui::Window(&parent, "");
-    mainWrapper->set_layout(new nanogui::GridLayout(nanogui::Orientation::Vertical, 2,
-                                                    nanogui::Alignment::Fill, 0, 0));
+    mainWrapper->set_layout(
+        new nanogui::GridLayout(nanogui::Orientation::Vertical, 2, nanogui::Alignment::Fill, 0, 0));
 
     auto sceneWrapper = new nanogui::Window(mainWrapper, "");
     sceneWrapper->set_layout(new nanogui::GridLayout(nanogui::Orientation::Horizontal, 2,
@@ -21,43 +19,37 @@ UiCommon::UiCommon(nanogui::Widget& parent) {
     int totalWidth = parent.size().x();
     int sceneWidth = static_cast<int>(totalWidth * 0.80f);
     int rightWidth = totalWidth - sceneWidth;
-    
+
     int totalHeight = parent.size().y();
     int sceneHeight = static_cast<int>(totalHeight * 0.95f);
     int statusHeight = totalHeight - sceneHeight;
 
-    
     sceneWrapper->set_fixed_width(totalWidth);
-    
-    
+
     mScenePanel = new ScenePanel(*sceneWrapper);
     mScenePanel->set_fixed_width(sceneWidth);
     mScenePanel->set_fixed_height(sceneHeight);
 
     auto rightWrapper = new nanogui::Window(sceneWrapper, "");
-    rightWrapper->set_layout(new nanogui::BoxLayout(nanogui::Orientation::Vertical, nanogui::Alignment::Fill));
+    rightWrapper->set_layout(
+        new nanogui::BoxLayout(nanogui::Orientation::Vertical, nanogui::Alignment::Fill));
     rightWrapper->set_fixed_width(rightWidth);
 
     mHierarchyPanel = new HierarchyPanel(*rightWrapper);
     mTransformPanel = new TransformPanel(*rightWrapper);
 
     mStatusBarPanel = new StatusBarPanel(*mainWrapper);
-    
-    mStatusBarPanel->set_fixed_height(statusHeight);
 
+    mStatusBarPanel->set_fixed_height(statusHeight);
 }
 
-
-void UiCommon::attach_actors(const std::vector<std::reference_wrapper<Actor>> &actors) {
-    for(auto& actor : actors){
-        actor.get().add_component<UiComponent>([this, &actor](){
-            mTransformPanel->set_active_actor(actor);
-        });
+void UiCommon::attach_actors(const std::vector<std::reference_wrapper<Actor>>& actors) {
+    for (auto& actor : actors) {
+        actor.get().add_component<UiComponent>(
+            [this, actor]() { mTransformPanel->set_active_actor(actor); });
     }
-    
+
     mHierarchyPanel->set_actors(actors);
 }
 
-void UiCommon::update(){
-    mTransformPanel->update();
-}
+void UiCommon::update() { mTransformPanel->update(); }

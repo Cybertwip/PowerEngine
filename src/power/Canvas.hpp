@@ -2,17 +2,20 @@
 
 #include <nanogui/canvas.h>
 
+#include <functional>
+#include <vector>
+
 class ActorManager;
 
 class Canvas : public nanogui::Canvas
 {
    public:
-    Canvas(Widget* parent, ActorManager& actorManager, nanogui::Color backgroundColor);
+    Canvas(Widget* parent, nanogui::Color backgroundColor);
 
     virtual void draw_contents() override;
+    
+    void register_draw_callback(std::function<void()> callback);
 
    private:
-    void visit(ActorManager& renderManager);
-
-    ActorManager& mActorManager;
+    std::vector<std::function<void()>> mDrawCallbacks;
 };

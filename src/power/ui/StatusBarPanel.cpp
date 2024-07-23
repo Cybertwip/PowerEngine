@@ -11,13 +11,12 @@ StatusBarPanel::StatusBarPanel(nanogui::Widget &parent) : Panel(parent, "") {
     set_layout(new nanogui::GroupLayout());
 
     Widget *statusBar = new Widget(this);
-    statusBar->set_layout(
-                      new nanogui::BoxLayout(nanogui::Orientation::Horizontal, nanogui::Alignment::Minimum, 0, 0));
+    statusBar->set_layout(new nanogui::BoxLayout(nanogui::Orientation::Horizontal,
+                                                 nanogui::Alignment::Minimum, 0, 0));
 
     nanogui::Button *resourcesButton = new nanogui::ToolButton(statusBar, FA_FOLDER);
     resourcesButton->set_callback([this]() {
         // mCanvas->set_background_color(nanogui::Vector4i(rand() % 256, rand() % 256, rand() %
         // 256, 255));
     });
-
 }

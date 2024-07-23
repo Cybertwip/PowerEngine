@@ -70,7 +70,8 @@ std::array<float, SkinnedMesh::Vertex::MAX_BONE_INFLUENCE> SkinnedMesh::Vertex::
 SkinnedMesh::SkinnedMeshShader::SkinnedMeshShader(ShaderManager& shaderManager)
     : ShaderWrapper(*shaderManager.get_shader("mesh")) {}
 
-void SkinnedMesh::SkinnedMeshShader::upload_vertex_data(const std::vector<std::unique_ptr<Vertex>>& vertexData) {
+void SkinnedMesh::SkinnedMeshShader::upload_vertex_data(
+    const std::vector<std::unique_ptr<Vertex>>& vertexData) {
     std::vector<float> positions;
     std::vector<float> normals;
     std::vector<float> texCoords1;
@@ -87,7 +88,7 @@ void SkinnedMesh::SkinnedMeshShader::upload_vertex_data(const std::vector<std::u
                           {vertex.get_tex_coords1().x, vertex.get_tex_coords1().y});
         texCoords2.insert(texCoords2.end(),
                           {vertex.get_tex_coords2().x, vertex.get_tex_coords2().y});
-        
+
         auto vertexBoneIds = vertex.get_bone_ids();
         auto vertexWeights = vertex.get_weights();
 
@@ -162,14 +163,14 @@ void SkinnedMesh::draw_content(const nanogui::Matrix4f& model, const nanogui::Ma
 
     auto center = (minPos + maxPos) / 2.0f;
 
-        Matrix4f m =  model * Matrix4f::rotate(Vector3f(0, 1, 0), (float)glfwGetTime()) *
-                         Matrix4f::translate(-Vector3f(center.x, center.y, center.z));
+    Matrix4f m = model * Matrix4f::rotate(Vector3f(0, 1, 0), (float)glfwGetTime()) *
+                 Matrix4f::translate(-Vector3f(center.x, center.y, center.z));
 
     mShader.set_uniform("aModel", m);
     mShader.set_uniform("aView", view);
     mShader.set_uniform("aProjection", projection);
 
-    mShader.begin();
-    mShader.draw_array(Shader::PrimitiveType::Triangle, 0, mMeshData.mIndices.size(), true);
-    mShader.end();
+    //    mShader.begin();
+    //   mShader.draw_array(Shader::PrimitiveType::Triangle, 0, mMeshData.mIndices.size(), true);
+    //  mShader.end();
 }

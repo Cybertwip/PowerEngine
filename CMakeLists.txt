@@ -73,9 +73,10 @@ add_subdirectory(external/zlib/)
 add_subdirectory(external/imgui-feature-layout/)
 add_subdirectory(external/imgui-node-editor/)
 add_subdirectory(external/cpp-httplib/)
-add_subdirectory(external/zstr/) # defines INTERFACE target 'zstr::zstr'
-add_subdirectory(external/nanogui/) # defines INTERFACE target 'zstr::zstr'
-add_subdirectory(external/ozz/) # defines INTERFACE target 'zstr::zstr'
+add_subdirectory(external/zstr/)
+add_subdirectory(external/nanogui/)
+add_subdirectory(external/ozz/)
+add_subdirectory(external/tinygizmo/) 
 
 add_subdirectory(src/power)
 

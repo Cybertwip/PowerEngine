@@ -59,12 +59,22 @@ add_executable(PowerEngine
     ${CMAKE_CURRENT_LIST_DIR}/components/MeshComponent.cpp
     ${CMAKE_CURRENT_LIST_DIR}/components/MeshComponent.hpp
 
+    ${CMAKE_CURRENT_LIST_DIR}/actors/GizmoActor.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/actors/GizmoActor.hpp
+
+    ${CMAKE_CURRENT_LIST_DIR}/components/GizmoComponent.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/components/GizmoComponent.hpp
+
+    ${CMAKE_CURRENT_LIST_DIR}/gizmo/GizmoManager.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/gizmo/GizmoManager.cpp
 
     ${CMAKE_CURRENT_LIST_DIR}/graphics/shading/MaterialProperties.hpp
     ${CMAKE_CURRENT_LIST_DIR}/graphics/shading/ShaderWrapper.hpp
     ${CMAKE_CURRENT_LIST_DIR}/graphics/shading/ShaderWrapper.cpp
 
     ${CMAKE_CURRENT_LIST_DIR}/graphics/drawing/Drawable.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/graphics/drawing/GizmoMesh.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/graphics/drawing/GizmoMesh.hpp
     ${CMAKE_CURRENT_LIST_DIR}/graphics/drawing/Model.hpp
     ${CMAKE_CURRENT_LIST_DIR}/graphics/drawing/Model.cpp
     ${CMAKE_CURRENT_LIST_DIR}/graphics/drawing/SkinnedMesh.hpp
@@ -96,7 +106,7 @@ add_executable(PowerEngine
 
 target_include_directories(PowerEngine PUBLIC ../../external/smallfbx)
 target_include_directories(PowerEngine PUBLIC ${CMAKE_CURRENT_LIST_DIR})
-target_link_libraries(PowerEngine PRIVATE nanogui ozz_animation EnTT imgui-feature-layout imgui-node-editor json fbx2ozz SmallFBX)
+target_link_libraries(PowerEngine PRIVATE nanogui ozz_animation EnTT imgui-feature-layout imgui-node-editor json fbx2ozz SmallFBX tinygizmo)
 
 # Set the resource files to be included in the bundle
 set(RESOURCE_DIRECTORIES

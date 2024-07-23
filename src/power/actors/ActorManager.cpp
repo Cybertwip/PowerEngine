@@ -1,10 +1,13 @@
 #include "ActorManager.hpp"
 
+#include <nanogui/opengl.h>
+
 #include "CameraManager.hpp"
 #include "MeshActorLoader.hpp"
 #include "components/DrawableComponent.hpp"
 #include "components/MeshComponent.hpp"
 #include "components/TransformComponent.hpp"
+#include "gizmo/GizmoManager.hpp"
 #include "graphics/drawing/MeshActor.hpp"
 #include "import/Fbx.hpp"
 
@@ -23,4 +26,11 @@ void ActorManager::draw() {
 
         drawable.draw_content(model, mCameraManager.get_view(), mCameraManager.get_projection());
     }
+}
+
+void ActorManager::visit(GizmoManager& gizmoManager) {
+    mCameraManager.update_view();
+
+    gizmoManager.draw_content(nanogui::Matrix4f(), mCameraManager.get_view(),
+                              mCameraManager.get_projection());
 }

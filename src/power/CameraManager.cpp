@@ -6,18 +6,17 @@
 #include "graphics/shading/ShaderWrapper.hpp"
 
 CameraManager::CameraManager(entt::registry& registry)
-    : mRegistry(registry), mActiveCamera(std::nullopt) {
-}
+    : mRegistry(registry), mActiveCamera(std::nullopt) {}
 
 Camera& CameraManager::create_camera(float fov, float near, float far, float aspect) {
     auto camera = std::make_unique<Camera>(mRegistry, fov, near, far, aspect);
-    
+
     if (mActiveCamera == std::nullopt) {
         mActiveCamera = *camera;
     }
-    
+
     mCameras.push_back(std::move(camera));
-    
+
     return *mCameras.back();
 }
 
@@ -43,7 +42,6 @@ const nanogui::Matrix4f CameraManager::get_projection() const {
 }
 
 void CameraManager::look_at(Actor& actor) {
-    
     if (mActiveCamera.has_value()) {
         auto& cameraTransform = mActiveCamera->get().get_component<TransformComponent>();
         auto& actorTransform = actor.get_component<TransformComponent>();
@@ -61,5 +59,4 @@ void CameraManager::look_at(Actor& actor) {
 
         cameraTransform.set_rotation(orientation);
     }
-
 }

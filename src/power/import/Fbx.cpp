@@ -68,7 +68,7 @@ void Fbx::ProcessNode(const std::shared_ptr<sfbx::Model> node) {
 }
 
 void Fbx::ProcessMesh(const std::shared_ptr<sfbx::Mesh> mesh) {
-    auto& resultMesh = mMeshes.emplace_back(std::make_unique<MeshData>());
+    auto& resultMesh = mMeshes.emplace_back(std::make_unique<SkinnedMesh::MeshData>());
 
     auto geometry = mesh->getGeometry();
     auto points = geometry->getPointsDeformed();
@@ -164,7 +164,7 @@ void Fbx::ProcessBones(const std::shared_ptr<sfbx::Mesh> mesh) {
                 for (int j = 0; j < 4; ++j) {
                     if (mMeshes.back()->mVertices[vertexID]->get_weights()[j] == 0.0f) {
                         mMeshes.back()->mVertices[vertexID]->set_bone(static_cast<int>(boneID),
-                                                                     weight);
+                                                                      weight);
                         break;
                     }
                 }

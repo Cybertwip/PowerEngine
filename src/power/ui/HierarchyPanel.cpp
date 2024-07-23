@@ -4,7 +4,7 @@
 #include <nanogui/layout.h>
 #include <nanogui/treeviewitem.h>
 
-#include "actors/Actor.hpp"                
+#include "actors/Actor.hpp"
 #include "components/MetadataComponent.hpp"
 #include "components/UiComponent.hpp"
 
@@ -29,24 +29,22 @@ bool HierarchyPanel::mouse_drag_event(const nanogui::Vector2i &p, const nanogui:
 
 void HierarchyPanel::set_actors(const std::vector<std::reference_wrapper<Actor>> &actors) {
     mTreeView->clear();
-    for (auto& actor : actors) {
+    for (auto &actor : actors) {
         populate_tree(actor.get());
     }
-    
-    mTreeView->set_selected(static_cast<nanogui::TreeViewItem*>(mTreeView->children().front()));
+
+    mTreeView->set_selected(static_cast<nanogui::TreeViewItem *>(mTreeView->children().front()));
 }
 
-void HierarchyPanel::populate_tree(Actor& actor, nanogui::TreeViewItem *parent_node) {
+void HierarchyPanel::populate_tree(Actor &actor, nanogui::TreeViewItem *parent_node) {
     // Correctly reference the actor's name
     nanogui::TreeViewItem *node =
-        parent_node ? parent_node->add_node(
-                                            std::string{actor.get_component<MetadataComponent>().get_name()}, [&actor](){
-                                                actor.get_component<UiComponent>().select();
-                                            })
-                    : mTreeView->add_node(
-                          std::string{actor.get_component<MetadataComponent>().get_name()}, [&actor](){
-                              actor.get_component<UiComponent>().select();
-                          });
+        parent_node
+            ? parent_node->add_node(
+                  std::string{actor.get_component<MetadataComponent>().get_name()},
+                  [&actor]() { actor.get_component<UiComponent>().select(); })
+            : mTreeView->add_node(std::string{actor.get_component<MetadataComponent>().get_name()},
+                                  [&actor]() { actor.get_component<UiComponent>().select(); });
     // Uncomment and correctly iterate over the actor's children
     //    for (Actor *child : actor->children()) {
     //        populate_tree(child, node);

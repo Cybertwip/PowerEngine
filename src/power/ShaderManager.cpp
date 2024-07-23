@@ -19,6 +19,7 @@ std::string ShaderManager::read_file(const std::string &file_path) {
 ShaderManager::ShaderManager(Canvas &canvas) : mRenderPass(*canvas.render_pass()) {
     // load_default_shaders();
     load_shader("mesh", "shaders/simple_model.vs", "shaders/diffuse.fs");
+    load_shader("gizmo", "shaders/gizmo.vs", "shaders/gizmo.fs");
 }
 
 nanogui::ref<nanogui::Shader> ShaderManager::load_shader(const std::string &name,

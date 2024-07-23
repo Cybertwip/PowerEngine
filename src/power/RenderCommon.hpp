@@ -10,6 +10,7 @@ class Widget;
 
 class ActorManager;
 class Canvas;
+class GizmoManager;
 class MeshActorLoader;
 class ShaderManager;
 
@@ -44,7 +45,7 @@ private:
     std::unique_ptr<Canvas> mCanvas;
     std::unique_ptr<ShaderManager> mShaderManager;
     std::unique_ptr<MeshActorLoader> mMeshActorLoader;
-    std::unique_ptr<ActorManager> mActorManager;
+    std::unique_ptr<GizmoManager> mGizmoManager;
 
 };
 

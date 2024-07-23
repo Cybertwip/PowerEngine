@@ -1,7 +1,5 @@
 #include "ui/TransformPanel.hpp"
 
-#include "actors/Actor.hpp"
-
 #include <nanogui/button.h>
 #include <nanogui/icons.h>
 #include <nanogui/label.h>
@@ -9,9 +7,11 @@
 #include <nanogui/textbox.h>
 #include <nanogui/window.h>
 
+#include "actors/Actor.hpp"
 #include "components/TransformComponent.hpp"
 
-TransformPanel::TransformPanel(nanogui::Widget &parent) : Panel(parent, "Transform"), mActiveActor(std::nullopt) {
+TransformPanel::TransformPanel(nanogui::Widget &parent)
+    : Panel(parent, "Transform"), mActiveActor(std::nullopt) {
     set_position(nanogui::Vector2i(0, 0));
     set_layout(new nanogui::GroupLayout());
 
@@ -166,16 +166,15 @@ void TransformPanel::update_values_from(TransformComponent &transform) {
     mZScale->set_value((int)scale.z);
 }
 
-
 void TransformPanel::set_active_actor(std::reference_wrapper<Actor> actor) {
     mActiveActor = actor;
-    
+
     update_values_from(mActiveActor->get().get_component<TransformComponent>());
 }
 
 void TransformPanel::update() {
-    if (mActiveActor.has_value()){
-        auto& transform = mActiveActor->get().get_component<TransformComponent>();
+    if (mActiveActor.has_value()) {
+        auto &transform = mActiveActor->get().get_component<TransformComponent>();
         gather_values_into(transform);
     }
 }

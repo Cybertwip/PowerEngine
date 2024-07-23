@@ -10,7 +10,7 @@
 class Actor;
 class ActorManager;
 class Canvas;
-class CameraManager;
+class GizmoManager;
 class MeshActor;
 class MeshActorLoader;
 class RenderCommon;
