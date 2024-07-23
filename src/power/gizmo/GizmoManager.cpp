@@ -60,9 +60,9 @@ std::vector<std::unique_ptr<GizmoMesh::MeshData>> create_axis_mesh_data() {
         float x = coneBaseRadius * cosf(theta);
         float z = coneBaseRadius * sinf(theta);
 
-        meshDataZ.mVertices.push_back(
+        meshDataY.mVertices.push_back(
             std::make_unique<GizmoMesh::Vertex>(glm::vec3({x, length, z})));
-        meshDataZ.mVertices.push_back(
+        meshDataY.mVertices.push_back(
             std::make_unique<GizmoMesh::Vertex>(glm::vec3({0.0f, length + coneHeight, 0.0f})));
     }
 
@@ -89,33 +89,35 @@ std::vector<std::unique_ptr<GizmoMesh::MeshData>> create_axis_mesh_data() {
             std::make_unique<GizmoMesh::Vertex>(glm::vec3({0.0f, 0.0f, length + coneHeight})));
     }
 
-    std::vector<std::unique_ptr<GizmoMesh::MeshData>> meshDataVector{
-        std::move(meshDataPtrX), std::move(meshDataPtrY), std::move(meshDataPtrZ)};
+    std::vector<std::unique_ptr<GizmoMesh::MeshData>> meshDataVector;
+    meshDataVector.push_back(std::move(meshDataPtrX));
+    meshDataVector.push_back(std::move(meshDataPtrY));
+    meshDataVector.push_back(std::move(meshDataPtrZ));
 
     // Indices for X, Y, and Z axes
     for (unsigned int i = 0; i < meshDataVector.size(); ++i) {
-        auto& meshData = *meshDataVector[i];
+        auto& meshData = meshDataVector[i];
         unsigned int baseIndex = 0;
         for (int j = 0; j < 3; ++j) {
             baseIndex = j * (numSegments + 1) * 4;
-            for (int i = 0; i < numSegments; ++i) {
-                meshData.mIndices.push_back(baseIndex + i * 2);
-                meshData.mIndices.push_back(baseIndex + i * 2 + 1);
-                meshData.mIndices.push_back(baseIndex + i * 2 + 2);
+            for (int k = 0; k < numSegments; ++k) {
+                meshData->mIndices.push_back(baseIndex + k * 2);
+                meshData->mIndices.push_back(baseIndex + k * 2 + 1);
+                meshData->mIndices.push_back(baseIndex + k * 2 + 2);
 
-                meshData.mIndices.push_back(baseIndex + i * 2 + 1);
-                meshData.mIndices.push_back(baseIndex + i * 2 + 3);
-                meshData.mIndices.push_back(baseIndex + i * 2 + 2);
+                meshData->mIndices.push_back(baseIndex + k * 2 + 1);
+                meshData->mIndices.push_back(baseIndex + k * 2 + 3);
+                meshData->mIndices.push_back(baseIndex + k * 2 + 2);
             }
             baseIndex += (numSegments + 1) * 2;
-            for (int i = 0; i < numSegments; ++i) {
-                meshData.mIndices.push_back(baseIndex + i * 2);
-                meshData.mIndices.push_back(baseIndex + i * 2 + 1);
-                meshData.mIndices.push_back(baseIndex + i * 2 + 2);
+            for (int k = 0; k < numSegments; ++k) {
+                meshData->mIndices.push_back(baseIndex + k * 2);
+                meshData->mIndices.push_back(baseIndex + k * 2 + 1);
+                meshData->mIndices.push_back(baseIndex + k * 2 + 2);
 
-                meshData.mIndices.push_back(baseIndex + i * 2 + 1);
-                meshData.mIndices.push_back(baseIndex + i * 2 + 3);
-                meshData.mIndices.push_back(baseIndex + i * 2 + 2);
+                meshData->mIndices.push_back(baseIndex + k * 2 + 1);
+                meshData->mIndices.push_back(baseIndex + k * 2 + 3);
+                meshData->mIndices.push_back(baseIndex + k * 2 + 2);
             }
         }
     }
@@ -124,8 +126,9 @@ std::vector<std::unique_ptr<GizmoMesh::MeshData>> create_axis_mesh_data() {
     meshDataVector[1]->mColor = glm::vec3(0.0, 1.0, 0.0);
     meshDataVector[2]->mColor = glm::vec3(0.0, 0.0, 1.0);
 
-    return std::move(meshDataVector);
+    return meshDataVector;
 }
+
 
 GizmoManager::GizmoManager(ShaderManager& shaderManager, ActorManager& actorManager)
     : mShaderManager(shaderManager), mActorManager(actorManager) {
