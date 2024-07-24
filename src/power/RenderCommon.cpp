@@ -18,7 +18,7 @@ RenderCommon::RenderCommon(nanogui::Widget& parent, entt::registry& registry,
     mGizmoManager = std::make_unique<GizmoManager>(*mShaderManager, actorManager);
 
     mCanvas->register_draw_callback([this, &actorManager]() {
-        // actorManager.draw();
+		actorManager.draw();
         mGizmoManager->draw();
     });
 }

@@ -151,6 +151,13 @@ void SkinnedMesh::initialize_mesh() {
 void SkinnedMesh::draw_content(const nanogui::Matrix4f& model, const nanogui::Matrix4f& view,
                                const nanogui::Matrix4f& projection) {
     using namespace nanogui;
+	
+	mShader.upload_vertex_data(mMeshData.mVertices);
+	mShader.upload_material_data(mMeshData.mMaterial);
+	if (mMeshData.mMaterial.mHasDiffuseTexture) {
+		mShader.upload_texture_data(mMeshData.mTextures);
+	}
+
     //
     // Calculate bounding box to center the model
     glm::vec3 minPos(std::numeric_limits<float>::max());
@@ -170,7 +177,7 @@ void SkinnedMesh::draw_content(const nanogui::Matrix4f& model, const nanogui::Ma
     mShader.set_uniform("aView", view);
     mShader.set_uniform("aProjection", projection);
 
-    //    mShader.begin();
-    //   mShader.draw_array(Shader::PrimitiveType::Triangle, 0, mMeshData.mIndices.size(), true);
-    //  mShader.end();
+	mShader.begin();
+	mShader.draw_array(Shader::PrimitiveType::Triangle, 0, mMeshData.mIndices.size(), true);
+	mShader.end();
 }

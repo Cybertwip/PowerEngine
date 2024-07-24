@@ -26,5 +26,6 @@ private:
     
     std::vector<std::unique_ptr<GizmoMesh::MeshData>> mTranslationGizmoMeshData;
     std::vector<std::unique_ptr<GizmoMesh>> mTranslationGizmo;
+    std::vector<nanogui::Matrix4f> mTranslationTransforms;
 };
 

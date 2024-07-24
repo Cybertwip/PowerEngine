@@ -9,7 +9,15 @@ CameraManager::CameraManager(entt::registry& registry)
     : mRegistry(registry), mActiveCamera(std::nullopt) {}
 
 Camera& CameraManager::create_camera(float fov, float near, float far, float aspect) {
-    auto camera = std::make_unique<Camera>(mRegistry, fov, near, far, aspect);
+	
+	auto deleter = [this](Camera* ptr) {
+		if (mActiveCamera && &mActiveCamera->get() == ptr) {
+			mActiveCamera = std::nullopt;
+		}
+		delete ptr;
+	};
+
+	auto camera = std::unique_ptr<Camera, decltype(deleter)>(new Camera(mRegistry, fov, near, far, aspect), deleter);
 
     if (mActiveCamera == std::nullopt) {
         mActiveCamera = *camera;

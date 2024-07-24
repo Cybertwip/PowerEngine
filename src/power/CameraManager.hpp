@@ -27,5 +27,7 @@ public:
 private:
     entt::registry& mRegistry;
     std::optional<std::reference_wrapper<Camera>> mActiveCamera;
-    std::vector<std::unique_ptr<Camera>> mCameras;
+	
+	using CameraDeleter = std::function<void(Camera*)>;
+	std::vector<std::unique_ptr<Camera, CameraDeleter>> mCameras;
 };

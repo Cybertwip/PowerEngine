@@ -2,6 +2,7 @@
 
 #include <nanogui/opengl.h>
 
+#include "Camera.hpp"
 #include "CameraManager.hpp"
 #include "MeshActorLoader.hpp"
 #include "components/DrawableComponent.hpp"
@@ -13,7 +14,32 @@
 
 ActorManager::ActorManager(CameraManager& cameraManager) : mCameraManager(cameraManager) {}
 
-void ActorManager::push(Actor& actor) { mActors.push_back(actor); }
+void ActorManager::push(Actor& actor) {
+	
+	auto existing = std::find_if(mActors.begin(), mActors.end(), [&actor](const Actor& iterable){
+		if(&iterable == &actor){
+			return true;
+		} else {
+			return false;
+		}
+	});
+	
+	assert(existing != mActors.end());
+	
+	actor.register_on_deallocated([this, &actor](){
+		auto existing = std::find_if(mActors.begin(), mActors.end(), [&actor](const Actor& iterable){
+			if(&iterable == &actor){
+				return true;
+			} else {
+				return false;
+			}
+		});
+
+		mActors.erase(existing);
+	});
+	
+	mActors.push_back(actor);
+}
 
 void ActorManager::draw() {
     mCameraManager.update_view();
@@ -31,6 +57,6 @@ void ActorManager::draw() {
 void ActorManager::visit(GizmoManager& gizmoManager) {
     mCameraManager.update_view();
 
-    gizmoManager.draw_content(nanogui::Matrix4f(), mCameraManager.get_view(),
+    gizmoManager.draw_content(nanogui::Matrix4f::identity(), mCameraManager.get_view(),
                               mCameraManager.get_projection());
 }

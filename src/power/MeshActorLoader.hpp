@@ -21,6 +21,7 @@ class MeshActorLoader
     std::unique_ptr<SkinnedMesh::SkinnedMeshShader> mMeshShaderWrapper;
     entt::registry& mEntityRegistry;
     
-    std::vector<std::unique_ptr<Actor>> mActors;
+	using ActorDeleter = std::function<void(Actor*)>;
+    std::vector<std::unique_ptr<Actor, ActorDeleter>> mActors;
 
 };

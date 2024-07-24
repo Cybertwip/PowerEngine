@@ -424,6 +424,17 @@ template <typename Value_, size_t Size_> struct Matrix {
         for (size_t i = 0; i < Size; ++i)
             m[i][i] = s;
     }
+    
+    
+    static Matrix identity() {
+        Matrix result;
+        for (size_t i = 0; i < Size; ++i) {
+            for (size_t j = 0; j < Size; ++j) {
+                result.m[i][j] = (i == j) ? 1 : 0;
+            }
+        }
+        return result;
+    }
 
     friend Matrix operator*(const Matrix &a, const Matrix &b) {
         Matrix c;

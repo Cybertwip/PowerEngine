@@ -9,7 +9,26 @@ MeshActorLoader::MeshActorLoader(entt::registry& registry, ShaderManager& shader
       mMeshShaderWrapper(std::make_unique<SkinnedMesh::SkinnedMeshShader>(shaderManager)) {}
 
 Actor& MeshActorLoader::create_mesh_actor(const std::string& path) {
-    mActors.emplace_back(std::move(
-        std::move(std::make_unique<MeshActor>(mEntityRegistry, path, *mMeshShaderWrapper))));
+	auto deleter = [this](Actor* ptr) {
+		
+		auto existing = std::find_if(mActors.begin(), mActors.end(), [this, ptr](const std::unique_ptr<Actor>& actor){
+			if (ptr == actor.get()) {
+				return true;
+			} else {
+				return false;
+			}
+		});
+		
+		assert(existing != mActors.end());
+		
+		mActors.erase(existing);
+		
+		delete ptr;
+	};
+	
+	mActors.emplace_back(std::move(
+								   std::move(std::make_unique<MeshActor, decltype(deleter)>(mEntityRegistry, path, *mMeshShaderWrapper))));
+
+	
     return *mActors.back();
 }
