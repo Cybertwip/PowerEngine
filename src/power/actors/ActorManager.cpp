@@ -24,7 +24,7 @@ void ActorManager::push(Actor& actor) {
 		}
 	});
 	
-	assert(existing != mActors.end());
+	assert(existing == mActors.end());
 	
 	actor.register_on_deallocated([this, &actor](){
 		auto existing = std::find_if(mActors.begin(), mActors.end(), [&actor](const Actor& iterable){

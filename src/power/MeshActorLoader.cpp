@@ -11,7 +11,7 @@ MeshActorLoader::MeshActorLoader(entt::registry& registry, ShaderManager& shader
 Actor& MeshActorLoader::create_mesh_actor(const std::string& path) {
 	auto deleter = [this](Actor* ptr) {
 		
-		auto existing = std::find_if(mActors.begin(), mActors.end(), [this, ptr](const std::unique_ptr<Actor>& actor){
+		auto existing = std::find_if(mActors.begin(), mActors.end(), [this, ptr](const auto& actor){
 			if (ptr == actor.get()) {
 				return true;
 			} else {
@@ -27,7 +27,7 @@ Actor& MeshActorLoader::create_mesh_actor(const std::string& path) {
 	};
 	
 	mActors.emplace_back(std::move(
-								   std::move(std::make_unique<MeshActor, decltype(deleter)>(mEntityRegistry, path, *mMeshShaderWrapper))));
+								   std::move(std::unique_ptr<MeshActor, decltype(deleter)>(new MeshActor(mEntityRegistry, path, *mMeshShaderWrapper), deleter))));
 
 	
     return *mActors.back();
