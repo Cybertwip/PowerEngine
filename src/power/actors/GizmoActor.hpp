@@ -17,7 +17,5 @@ public:
     GizmoActor(entt::registry& registry, const std::string& path, GizmoMesh::GizmoMeshShader& gizmoShaderWrapper);
 private:
     std::unique_ptr<Fbx> mModel;
-    std::vector<std::unique_ptr<GizmoMesh>> mGizmos;
-    
-    std::unique_ptr<GizmoComponent> mGizmoComponent;
+    std::vector<std::unique_ptr<GizmoMesh>> mGizmos;    
 };

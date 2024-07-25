@@ -9,22 +9,20 @@
 #include "components/TransformComponent.hpp"
 #include "import/Fbx.hpp"
 
-MeshActor::MeshActor(entt::registry& registry, const std::string& path,
-                     SkinnedMesh::SkinnedMeshShader& meshShaderWrapper)
-    : Actor(registry) {
-    mModel = std::make_unique<Fbx>(path);
+Actor& MeshActorBuilder::build(Actor& actor, const std::string& path,
+                     SkinnedMesh::SkinnedMeshShader& meshShaderWrapper) {
+    auto model = Fbx(path);
 
-    std::vector<std::reference_wrapper<SkinnedMesh>> meshComponentData;
+    std::vector<std::unique_ptr<SkinnedMesh>> meshComponentData;
 
-    for (auto& meshData : mModel->GetMeshData()) {
-        auto& mesh =
-            mMeshes.emplace_back(std::make_unique<SkinnedMesh>(*meshData, meshShaderWrapper));
-        meshComponentData.push_back(*mesh);
+    for (auto& meshData : model.GetMeshData()) {
+        meshComponentData.push_back(std::make_unique<SkinnedMesh>(*meshData, meshShaderWrapper));
     }
 
-    mMeshComponent = std::make_unique<MeshComponent>(meshComponentData);
-
-    add_component<DrawableComponent>(*mMeshComponent);
-    add_component<TransformComponent>();
-    add_component<MetadataComponent>(std::filesystem::path(path).stem().string());
+	std::unique_ptr<Drawable> meshComponent = std::make_unique<MeshComponent>(meshComponentData);
+	actor.add_component<DrawableComponent>(std::move(meshComponent));
+	actor.add_component<TransformComponent>();
+	actor.add_component<MetadataComponent>(std::filesystem::path(path).stem().string());
+		
+	return actor;
 }

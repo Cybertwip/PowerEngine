@@ -1,27 +1,24 @@
 #pragma once
 
-#include <entt/entt.hpp>
-
 #include <memory>
 #include <string>
 
 #include "graphics/drawing/SkinnedMesh.hpp"
 
-class ShaderManager;
 class Actor;
+class ActorManager;
+class ShaderManager;
 
 class MeshActorLoader
 {
    public:
-    MeshActorLoader(entt::registry& registry, ShaderManager& shaderManager);
+    MeshActorLoader(ActorManager& actorManager, ShaderManager& shaderManager);
 
+	~MeshActorLoader();
+	
     Actor& create_mesh_actor(const std::string& path);
 
    private:
+	ActorManager& mActorManager;
     std::unique_ptr<SkinnedMesh::SkinnedMeshShader> mMeshShaderWrapper;
-    entt::registry& mEntityRegistry;
-    
-	using ActorDeleter = std::function<void(Actor*)>;
-    std::vector<std::unique_ptr<Actor, ActorDeleter>> mActors;
-
 };

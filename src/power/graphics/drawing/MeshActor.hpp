@@ -13,13 +13,7 @@ class Canvas;
 class Fbx;
 class MeshComponent;
 
-class MeshActor : public Actor {
+class MeshActorBuilder {
 public:
-    MeshActor(entt::registry& registry, const std::string& path, SkinnedMesh::SkinnedMeshShader& meshShaderWrapper);    
-private:
-    std::unique_ptr<Fbx> mModel;
-    std::vector<std::unique_ptr<SkinnedMesh>> mMeshes;
-    
-    std::unique_ptr<MeshComponent> mMeshComponent;
-    
+	static Actor& build(Actor& actor, const std::string& path, SkinnedMesh::SkinnedMeshShader& meshShaderWrapper);
 };

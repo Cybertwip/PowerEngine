@@ -12,9 +12,8 @@
 GizmoActor::GizmoActor(entt::registry& registry, const std::string& path,
                        GizmoMesh::GizmoMeshShader& gizmoShaderWrapper)
     : Actor(registry) {
-    mGizmoComponent = std::make_unique<GizmoComponent>();
 
-    add_component<DrawableComponent>(*mGizmoComponent);
+    add_component<DrawableComponent>(std::move(std::make_unique<GizmoComponent>()));
     add_component<TransformComponent>();
     add_component<MetadataComponent>(std::filesystem::path(path).stem().string());
 }

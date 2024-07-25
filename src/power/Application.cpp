@@ -38,14 +38,12 @@ Application::Application() : nanogui::Screen(nanogui::Vector2i(1920, 1080), "Pow
 
     mUiCommon = std::make_unique<UiCommon>(*this);
 
-    mActorManager = std::make_unique<ActorManager>(*mCameraManager);
+    mActorManager = std::make_unique<ActorManager>(*mEntityRegistry, *mCameraManager);
 
     mRenderCommon =
         std::make_unique<RenderCommon>(mUiCommon->scene_panel(), *mEntityRegistry, *mActorManager);
     mActors.push_back(
         mRenderCommon->mesh_actor_loader().create_mesh_actor("models/DeepMotionBot.fbx"));
-
-    mActorManager->push(mActors.back());
 
     std::vector<std::reference_wrapper<Actor>> actors;
     actors.push_back(mActors.back());

@@ -1,6 +1,6 @@
 #pragma once
 
-#include <tiny-gizmo.hpp>
+#include <entt/entt.hpp>
 
 #include <memory>
 #include <string>
@@ -14,14 +14,16 @@ class GizmoManager;
 
 class ActorManager {
 public:
-    ActorManager(CameraManager& cameraManager);
-    void push(Actor& actor);
+    ActorManager(entt::registry& registry, CameraManager& cameraManager);
+	Actor& create_actor();
+
     void draw();
     void visit(GizmoManager& gizmoManager);
 
 private:
+	entt::registry& mRegistry;
     CameraManager& mCameraManager;
-    std::vector<std::reference_wrapper<Actor>> mActors;
+    std::vector<std::unique_ptr<Actor>> mActors;
 
 };
 

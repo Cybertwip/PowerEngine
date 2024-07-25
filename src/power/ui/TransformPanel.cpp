@@ -167,17 +167,6 @@ void TransformPanel::update_values_from(TransformComponent &transform) {
 }
 
 void TransformPanel::set_active_actor(std::reference_wrapper<Actor> actor) {
-	
-	bool sameActor = mActiveActor.has_value() && &(mActiveActor->get()) == &(actor.get());
-	
-	if (!sameActor){
-		actor.get().register_on_deallocated([this, sameActor](){
-			if (sameActor){
-				mActiveActor = std::nullopt;
-			}
-		});
-	}
-	
     mActiveActor = actor;
 
     update_values_from(mActiveActor->get().get_component<TransformComponent>());

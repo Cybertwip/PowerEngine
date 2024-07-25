@@ -1,4 +1,4 @@
 #include "Actor.hpp"
 
-Actor::Actor(entt::registry& registry) : mRegistry(registry), mEntity(mRegistry.create()), mCancellationToken(std::make_unique<CancellationToken>()) {
+Actor::Actor(entt::registry& registry) : mRegistry(registry), mEntity(mRegistry.create()) {
 }

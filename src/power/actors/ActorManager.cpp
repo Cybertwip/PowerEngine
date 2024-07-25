@@ -12,41 +12,19 @@
 #include "graphics/drawing/MeshActor.hpp"
 #include "import/Fbx.hpp"
 
-ActorManager::ActorManager(CameraManager& cameraManager) : mCameraManager(cameraManager) {}
+ActorManager::ActorManager(entt::registry& registry, CameraManager& cameraManager) : mRegistry(registry), mCameraManager(cameraManager) {}
 
-void ActorManager::push(Actor& actor) {
-	
-	auto existing = std::find_if(mActors.begin(), mActors.end(), [&actor](const Actor& iterable){
-		if(&iterable == &actor){
-			return true;
-		} else {
-			return false;
-		}
-	});
-	
-	assert(existing == mActors.end());
-	
-	actor.register_on_deallocated([this, &actor](){
-		auto existing = std::find_if(mActors.begin(), mActors.end(), [&actor](const Actor& iterable){
-			if(&iterable == &actor){
-				return true;
-			} else {
-				return false;
-			}
-		});
-
-		mActors.erase(existing);
-	});
-	
-	mActors.push_back(actor);
+Actor& ActorManager::create_actor() {
+	mActors.push_back(std::make_unique<Actor>(mRegistry));
+	return *mActors.back();
 }
 
 void ActorManager::draw() {
     mCameraManager.update_view();
 
     for (auto& actor : mActors) {
-        auto& drawable = actor.get().get_component<DrawableComponent>();
-        auto& transform = actor.get().get_component<TransformComponent>();
+		auto& drawable = actor.get()->get_component<DrawableComponent>();
+		auto& transform = actor.get()->get_component<TransformComponent>();
 
         nanogui::Matrix4f model = TransformComponent::glm_to_nanogui(transform.get_matrix());
 
