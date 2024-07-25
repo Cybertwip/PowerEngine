@@ -65,12 +65,13 @@ public:
     };
 
 public:
-    SkinnedMesh(MeshData& meshData, SkinnedMeshShader& shader);
+    SkinnedMesh(std::unique_ptr<MeshData> meshData, SkinnedMeshShader& shader);
+	~SkinnedMesh() override = default;
     
     void draw_content(const nanogui::Matrix4f& model, const nanogui::Matrix4f& view, const nanogui::Matrix4f& projection) override;
     
 private:
-    MeshData& mMeshData;
+	std::unique_ptr<MeshData> mMeshData;
 
     SkinnedMeshShader& mShader;
     void initialize_mesh();

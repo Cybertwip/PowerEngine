@@ -134,17 +134,17 @@ void SkinnedMesh::SkinnedMeshShader::upload_texture_data(
     mShader.set_texture("texture_diffuse1", textureData[0].get());
 }
 
-SkinnedMesh::SkinnedMesh(MeshData& meshData, SkinnedMeshShader& shader)
-    : mMeshData(meshData), mShader(shader) {
+SkinnedMesh::SkinnedMesh(std::unique_ptr<MeshData> meshData, SkinnedMeshShader& shader)
+    : mMeshData(std::move(meshData)), mShader(shader) {
     initialize_mesh();
 }
 
 void SkinnedMesh::initialize_mesh() {
-    mShader.upload_index_data(mMeshData.mIndices);
-    mShader.upload_vertex_data(mMeshData.mVertices);
-    mShader.upload_material_data(mMeshData.mMaterial);
-    if (mMeshData.mMaterial.mHasDiffuseTexture) {
-        mShader.upload_texture_data(mMeshData.mTextures);
+	mShader.upload_index_data(mMeshData->mIndices);
+	mShader.upload_vertex_data(mMeshData->mVertices);
+	mShader.upload_material_data(mMeshData->mMaterial);
+	if (mMeshData->mMaterial.mHasDiffuseTexture) {
+		mShader.upload_texture_data(mMeshData->mTextures);
     }
 }
 
@@ -152,10 +152,10 @@ void SkinnedMesh::draw_content(const nanogui::Matrix4f& model, const nanogui::Ma
                                const nanogui::Matrix4f& projection) {
     using namespace nanogui;
 	
-	mShader.upload_vertex_data(mMeshData.mVertices);
-	mShader.upload_material_data(mMeshData.mMaterial);
-	if (mMeshData.mMaterial.mHasDiffuseTexture) {
-		mShader.upload_texture_data(mMeshData.mTextures);
+	mShader.upload_vertex_data(mMeshData->mVertices);
+	mShader.upload_material_data(mMeshData->mMaterial);
+	if (mMeshData->mMaterial.mHasDiffuseTexture) {
+		mShader.upload_texture_data(mMeshData->mTextures);
 	}
 
     //
@@ -163,7 +163,7 @@ void SkinnedMesh::draw_content(const nanogui::Matrix4f& model, const nanogui::Ma
     glm::vec3 minPos(std::numeric_limits<float>::max());
     glm::vec3 maxPos(std::numeric_limits<float>::lowest());
 
-    for (const auto& vertex : mMeshData.mVertices) {
+	for (const auto& vertex : mMeshData->mVertices) {
         minPos = glm::min(minPos, vertex->get_position());
         maxPos = glm::max(maxPos, vertex->get_position());
     }
@@ -178,6 +178,6 @@ void SkinnedMesh::draw_content(const nanogui::Matrix4f& model, const nanogui::Ma
     mShader.set_uniform("aProjection", projection);
 
 	mShader.begin();
-	mShader.draw_array(Shader::PrimitiveType::Triangle, 0, mMeshData.mIndices.size(), true);
+	mShader.draw_array(Shader::PrimitiveType::Triangle, 0, mMeshData->mIndices.size(), true);
 	mShader.end();
 }

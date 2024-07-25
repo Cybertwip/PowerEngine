@@ -25,7 +25,7 @@ public:
     explicit Fbx(const std::string_view path);
 
     const ozz::animation::Skeleton& GetSkeleton() const { return *mSkeleton; }
-    const std::vector<std::unique_ptr<SkinnedMesh::MeshData>>& GetMeshData() const { return mMeshes; }
+    std::vector<std::unique_ptr<SkinnedMesh::MeshData>>& GetMeshData() { return mMeshes; }
 
 private:
     void LoadModel(const std::string_view path);
