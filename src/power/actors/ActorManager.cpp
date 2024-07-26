@@ -9,7 +9,7 @@
 #include "components/MeshComponent.hpp"
 #include "components/TransformComponent.hpp"
 #include "gizmo/GizmoManager.hpp"
-#include "graphics/drawing/MeshActor.hpp"
+#include "graphics/drawing/MeshActorBuilder.hpp"
 #include "import/Fbx.hpp"
 
 ActorManager::ActorManager(entt::registry& registry, CameraManager& cameraManager) : mRegistry(registry), mCameraManager(cameraManager) {}

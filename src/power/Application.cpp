@@ -20,7 +20,7 @@
 #include "actors/Camera.hpp"
 #include "components/TransformComponent.hpp"
 #include "gizmo/GizmoManager.hpp"
-#include "graphics/drawing/MeshActor.hpp"
+#include "graphics/drawing/MeshActorBuilder.hpp"
 #include "import/Fbx.hpp"
 #include "ui/HierarchyPanel.hpp"
 #include "ui/ScenePanel.hpp"
