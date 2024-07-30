@@ -220,14 +220,36 @@ GizmoManager::GizmoManager(ShaderManager& shaderManager, ActorManager& actorMana
 
 void GizmoManager::draw_content(const nanogui::Matrix4f& model, const nanogui::Matrix4f& view,
                                 const nanogui::Matrix4f& projection) {
-	
 	glEnable(GL_DEPTH_TEST);
 	glClear(GL_DEPTH_BUFFER_BIT);
+	
+	// Extract the camera position from the view matrix
+	auto viewInverse = view.inverse();
+	nanogui::Vector3f cameraPosition(view.m[3][0], view.m[3][1], view.m[3][2]);
 
-    for (size_t i = 0; i < mTranslationGizmo.size(); ++i) {
-        nanogui::Matrix4f gizmoModel = mTranslationTransforms[i];
-        mTranslationGizmo[i]->draw_content(gizmoModel, view, projection);
-    }
+	for (size_t i = 0; i < mTranslationGizmo.size(); ++i) {
+		nanogui::Matrix4f gizmoModel = mTranslationTransforms[i];
+		
+		// Calculate gizmo position from its model matrix
+		nanogui::Vector3f gizmoPosition(gizmoModel.m[3][0], gizmoModel.m[3][1], gizmoModel.m[3][2]);
+		
+		// Calculate distance from camera to gizmo
+		float distance = std::sqrt(
+								   (cameraPosition.x() - gizmoPosition.x()) * (cameraPosition.x() - gizmoPosition.x()) +
+								   (cameraPosition.y() - gizmoPosition.y()) * (cameraPosition.y() - gizmoPosition.y()) +
+								   (cameraPosition.z() - gizmoPosition.z()) * (cameraPosition.z() - gizmoPosition.z())
+								   );
+
+		// Determine a suitable scale factor (tweak this value as needed)
+		float scaleFactor = std::max(0.005f, distance * 0.005f);
+		
+		// Apply scaling to the gizmo model matrix
+		nanogui::Matrix4f scaleMatrix = nanogui::Matrix4f::scale(nanogui::Vector3f(scaleFactor, scaleFactor, scaleFactor));
+		gizmoModel = gizmoModel * scaleMatrix;
+		
+		// Draw the gizmo with the adjusted model matrix
+		mTranslationGizmo[i]->draw_content(gizmoModel, view, projection);
+	}
 	
 	// Cleanup
 	glDisable(GL_DEPTH_TEST);

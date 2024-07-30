@@ -40,6 +40,10 @@ add_executable(PowerEngine
     ${CMAKE_CURRENT_LIST_DIR}/UiCommon.cpp
     ${CMAKE_CURRENT_LIST_DIR}/UiCommon.hpp
 
+
+    ${CMAKE_CURRENT_LIST_DIR}/actors/IActorSelectedCallback.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/actors/IActorSelectedRegistry.hpp
+
     ${CMAKE_CURRENT_LIST_DIR}/actors/Actor.cpp
     ${CMAKE_CURRENT_LIST_DIR}/actors/Actor.hpp
     ${CMAKE_CURRENT_LIST_DIR}/actors/ActorManager.cpp
@@ -49,6 +53,8 @@ add_executable(PowerEngine
 
     ${CMAKE_CURRENT_LIST_DIR}/components/Component.cpp
     ${CMAKE_CURRENT_LIST_DIR}/components/Component.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/components/ColorComponent.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/components/ColorComponent.cpp
     ${CMAKE_CURRENT_LIST_DIR}/components/DrawableComponent.cpp
     ${CMAKE_CURRENT_LIST_DIR}/components/DrawableComponent.hpp
     ${CMAKE_CURRENT_LIST_DIR}/components/MetadataComponent.hpp
@@ -98,8 +104,8 @@ add_executable(PowerEngine
     ${CMAKE_CURRENT_LIST_DIR}/ui/StatusBarPanel.cpp
     ${CMAKE_CURRENT_LIST_DIR}/ui/TransformPanel.hpp
     ${CMAKE_CURRENT_LIST_DIR}/ui/TransformPanel.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/ui/UiLogicManager.hpp
-    ${CMAKE_CURRENT_LIST_DIR}/ui/UiLogicManager.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/ui/UiManager.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/ui/UiManager.cpp
 
     ${SHADERS}
 )

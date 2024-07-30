@@ -2,21 +2,24 @@
 
 #include <functional>
 #include <vector>
+#include <memory>
 
 namespace nanogui{
 class Widget;
 }
 
 class Actor;
+class ActorManager;
 class HierarchyPanel;
 class ScenePanel;
+class ShaderManager;
 class StatusBarPanel;
 class TransformPanel;
-
+class UiManager;
 
 class UiCommon {
 public:
-    UiCommon(nanogui::Widget& parent);
+    UiCommon(nanogui::Widget& parent, ActorManager& actorManager);
     
     void attach_actors(const std::vector<std::reference_wrapper<Actor>> &actors);
     
@@ -35,7 +38,7 @@ public:
     TransformPanel& transform_panel() {
         return *mTransformPanel;
     }
-    
+	    
     void update();
 
 private:

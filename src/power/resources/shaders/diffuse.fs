@@ -22,6 +22,7 @@ struct Material {
 };
 
 uniform Material material;
+uniform vec3 color; // Add this uniform for setting color
 
 void main() {
     vec3 mat_diffuse = material.diffuse;
@@ -31,6 +32,9 @@ void main() {
         mat_diffuse = material.diffuse + material.specular;
     }
 
-    // Set the fragment color to the diffuse texture color or material diffuse color
-    FragColor = vec4(mat_diffuse, material.opacity);
+    // Combine the material diffuse color with the uniform color
+    vec3 final_color = mat_diffuse * color;
+
+    // Set the fragment color to the combined color
+    FragColor = vec4(final_color, material.opacity);
 }

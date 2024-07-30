@@ -25,6 +25,7 @@
 #include "ui/HierarchyPanel.hpp"
 #include "ui/ScenePanel.hpp"
 #include "ui/TransformPanel.hpp"
+#include "ui/UiManager.hpp"
 
 Application::Application() : nanogui::Screen(nanogui::Vector2i(1920, 1080), "Power Engine", false) {
     theme()->m_window_drop_shadow_size = 0;
@@ -36,12 +37,15 @@ Application::Application() : nanogui::Screen(nanogui::Vector2i(1920, 1080), "Pow
 
     mCameraManager = std::make_unique<CameraManager>(*mEntityRegistry);
 
-    mUiCommon = std::make_unique<UiCommon>(*this);
+	mActorManager = std::make_unique<ActorManager>(*mEntityRegistry, *mCameraManager);
 
-    mActorManager = std::make_unique<ActorManager>(*mEntityRegistry, *mCameraManager);
+	mUiCommon = std::make_unique<UiCommon>(*this, *mActorManager);
 
-    mRenderCommon =
+	mRenderCommon =
         std::make_unique<RenderCommon>(mUiCommon->scene_panel(), *mEntityRegistry, *mActorManager);
+
+	mUiManager = std::make_unique<UiManager>(mUiCommon->hierarchy_panel(), *mActorManager, mRenderCommon->shader_manager(), mRenderCommon->canvas());
+
     mActors.push_back(
         mRenderCommon->mesh_actor_loader().create_mesh_actor("models/DeepMotionBot.fbx"));
 
@@ -58,7 +62,7 @@ Application::Application() : nanogui::Screen(nanogui::Vector2i(1920, 1080), "Pow
     }
 
     mCameraManager->active_camera()->get().get_component<TransformComponent>().set_translation(
-        glm::vec3(0, 0, 0));
+        glm::vec3(0, 0, 200));
 
     mUiCommon->attach_actors(std::move(actors));
 

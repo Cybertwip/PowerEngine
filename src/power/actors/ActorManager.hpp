@@ -11,6 +11,7 @@ class CameraManager;
 class MeshActor;
 class MeshActorLoader;
 class GizmoManager;
+class UiManager;
 
 class ActorManager {
 public:
@@ -18,7 +19,8 @@ public:
 	Actor& create_actor();
 
     void draw();
-    void visit(GizmoManager& gizmoManager);
+	void visit(GizmoManager& gizmoManager);
+	void visit(UiManager& uiManager);
 
 private:
 	entt::registry& mRegistry;

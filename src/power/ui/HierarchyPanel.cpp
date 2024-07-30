@@ -5,6 +5,7 @@
 #include <nanogui/treeviewitem.h>
 
 #include "actors/Actor.hpp"
+#include "actors/IActorSelectedCallback.hpp"
 #include "components/MetadataComponent.hpp"
 #include "components/UiComponent.hpp"
 
@@ -34,6 +35,7 @@ void HierarchyPanel::set_actors(const std::vector<std::reference_wrapper<Actor>>
     }
 
     mTreeView->set_selected(static_cast<nanogui::TreeViewItem *>(mTreeView->children().front()));
+	OnActorSelected(actors.front());
 }
 
 void HierarchyPanel::populate_tree(Actor &actor, nanogui::TreeViewItem *parent_node) {
@@ -50,3 +52,27 @@ void HierarchyPanel::populate_tree(Actor &actor, nanogui::TreeViewItem *parent_n
     //        populate_tree(child, node);
     //    }
 }
+
+void HierarchyPanel::RegisterOnActorSelectedCallback(IActorSelectedCallback& callback) {
+	if (actorSelectedCallbacks.size() >= 2) {
+		throw std::runtime_error("Cannot register more than two callbacks.");
+	}
+	actorSelectedCallbacks.push_back(std::ref(callback));
+}
+
+void HierarchyPanel::UnregisterOnActorSelectedCallback(IActorSelectedCallback& callback) {
+	auto it = std::remove_if(actorSelectedCallbacks.begin(), actorSelectedCallbacks.end(),
+							 [&callback](std::reference_wrapper<IActorSelectedCallback>& ref) {
+		return &ref.get() == &callback;
+	});
+	if (it != actorSelectedCallbacks.end()) {
+		actorSelectedCallbacks.erase(it, actorSelectedCallbacks.end());
+	}
+}
+
+void HierarchyPanel::OnActorSelected(Actor& actor) {
+	for (auto& callbackRef : actorSelectedCallbacks) {
+		callbackRef.get().OnActorSelected(actor);
+	}
+}
+

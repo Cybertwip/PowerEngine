@@ -175,7 +175,7 @@ void SkinnedMesh::draw_content(const nanogui::Matrix4f& model, const nanogui::Ma
 
     mShader.set_uniform("aModel", m);
     mShader.set_uniform("aView", view);
-    mShader.set_uniform("aProjection", projection);
+	mShader.set_uniform("aProjection", projection);
 
 	mShader.begin();
 	mShader.draw_array(Shader::PrimitiveType::Triangle, 0, mMeshData->mIndices.size(), true);

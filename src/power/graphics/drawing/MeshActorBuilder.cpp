@@ -3,6 +3,7 @@
 #include <filesystem>
 #include <functional>
 
+#include "components/ColorComponent.hpp"
 #include "components/DrawableComponent.hpp"
 #include "components/MeshComponent.hpp"
 #include "components/MetadataComponent.hpp"
@@ -23,6 +24,7 @@ Actor& MeshActorBuilder::build(Actor& actor, const std::string& path,
 	actor.add_component<DrawableComponent>(std::move(meshComponent));
 	actor.add_component<TransformComponent>();
 	actor.add_component<MetadataComponent>(std::filesystem::path(path).stem().string());
-		
+	actor.add_component<ColorComponent>(meshShaderWrapper);
+
 	return actor;
 }

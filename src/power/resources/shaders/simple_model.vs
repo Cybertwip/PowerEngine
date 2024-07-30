@@ -4,8 +4,6 @@ layout (location = 0) in vec3 aPosition;
 layout (location = 1) in vec3 aNormal;
 layout (location = 2) in vec2 aTexcoords1;
 layout (location = 3) in vec2 aTexcoords2;
-//layout (location = 6) in ivec4 boneIds; // because MAX_BONE_INFLUENCE == 4
-//layout (location = 7) in vec4 weights;
 
 uniform mat4 aProjection;
 uniform mat4 aView;
