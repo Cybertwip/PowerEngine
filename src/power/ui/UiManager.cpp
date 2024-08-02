@@ -42,6 +42,9 @@ void UiManager::draw() {
 void UiManager::draw_content(const nanogui::Matrix4f& model, const nanogui::Matrix4f& view,
 							 const nanogui::Matrix4f& projection) {
 		
+	// Disable writing to the stencil buffer
+	glStencilMask(0x00);
+
 	if(mActiveActor.has_value()){
 		auto& drawable = mActiveActor->get().get_component<DrawableComponent>();
 		auto& color = mActiveActor->get().get_component<ColorComponent>();
@@ -51,14 +54,24 @@ void UiManager::draw_content(const nanogui::Matrix4f& model, const nanogui::Matr
 		
 		nanogui::Matrix4f model = TransformComponent::glm_to_nanogui(transform.get_matrix());
 
-		// Second pass: Draw outline using stencil buffer
-		glStencilFunc(GL_NOTEQUAL, 1, 0xFF);
-		glStencilMask(0x00);
-		glDisable(GL_DEPTH_TEST);
+		// Second pass: Draw using the stencil buffer as a mask
+		glStencilFunc(GL_EQUAL, 1, 0xFF);  // Draw only where stencil value is 1
+		glStencilMask(0x00);  // Disable writing to the stencil buffer
+
+		
+		glDisable(GL_DEPTH_TEST);  // Optionally disable depth test
+
 
 		drawable.draw_content(model, view, projection);
-
+		
+		// Re-enable depth testing after drawing the outlines
 		glEnable(GL_DEPTH_TEST);
+
 	}
+	
+	
+	// Disable stencil test
+	glDisable(GL_STENCIL_TEST);
+
 }
  

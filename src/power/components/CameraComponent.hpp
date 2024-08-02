@@ -1,15 +1,15 @@
 #pragma once
 
-#include "actors/Actor.hpp"
-
 #include <glm/glm.hpp>
 
 #include <nanogui/vector.h>
 
-class Camera : public Actor
+class TransformComponent;
+
+class CameraComponent
 {
 public:
-    Camera(entt::registry& registry, float fov, float near, float far, float aspect);
+	CameraComponent(TransformComponent& transformComponent, float fov, float near, float far, float aspect);
     void update_view();
     
     const nanogui::Matrix4f& get_view() const {
@@ -21,6 +21,8 @@ public:
     }
     
 private:
+	TransformComponent& mTransformComponent;
+	
     float mFov;
     float mNear;
     float mFar;

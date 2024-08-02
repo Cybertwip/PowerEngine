@@ -2,9 +2,10 @@
 
 #include <nanogui/opengl.h>
 
-#include "Camera.hpp"
 #include "CameraManager.hpp"
 #include "MeshActorLoader.hpp"
+#include "actors/Actor.hpp"
+#include "components/CameraComponent.hpp"
 #include "components/ColorComponent.hpp"
 #include "components/DrawableComponent.hpp"
 #include "components/MeshComponent.hpp"
@@ -27,13 +28,15 @@ void ActorManager::draw() {
 	// Enable stencil test
 	glEnable(GL_STENCIL_TEST);
 	
-	// First pass: Draw object to update stencil buffer
-	glStencilFunc(GL_ALWAYS, 1, 0xFF);
-	glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
-	glStencilMask(0xFF);
-	glClear(GL_STENCIL_BUFFER_BIT);
+	// Clear stencil buffer and depth buffer
+	glClear(GL_STENCIL_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	
+	// First pass: Mark the stencil buffer
+	glStencilFunc(GL_ALWAYS, 1, 0xFF);  // Always pass stencil test
+	glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);  // Replace stencil buffer with 1 where actors are drawn
+	glStencilMask(0xFF);  // Enable writing to the stencil buffer
 
-    for (auto& actor : mActors) {
+	for (auto& actor : mActors) {
 		auto& drawable = actor.get()->get_component<DrawableComponent>();
 		auto& color = actor.get()->get_component<ColorComponent>();
 		

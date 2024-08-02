@@ -28,6 +28,8 @@ add_executable(PowerEngine
     ${CMAKE_CURRENT_LIST_DIR}/Application.hpp
     ${CMAKE_CURRENT_LIST_DIR}/Canvas.cpp
     ${CMAKE_CURRENT_LIST_DIR}/Canvas.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/CameraActorLoader.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/CameraActorLoader.hpp
     ${CMAKE_CURRENT_LIST_DIR}/CameraManager.cpp
     ${CMAKE_CURRENT_LIST_DIR}/CameraManager.hpp
     ${CMAKE_CURRENT_LIST_DIR}/main.cpp
@@ -48,9 +50,9 @@ add_executable(PowerEngine
     ${CMAKE_CURRENT_LIST_DIR}/actors/Actor.hpp
     ${CMAKE_CURRENT_LIST_DIR}/actors/ActorManager.cpp
     ${CMAKE_CURRENT_LIST_DIR}/actors/ActorManager.hpp
-    ${CMAKE_CURRENT_LIST_DIR}/actors/Camera.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/actors/Camera.hpp
-
+    
+    ${CMAKE_CURRENT_LIST_DIR}/components/CameraComponent.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/components/CameraComponent.hpp
     ${CMAKE_CURRENT_LIST_DIR}/components/Component.cpp
     ${CMAKE_CURRENT_LIST_DIR}/components/Component.hpp
     ${CMAKE_CURRENT_LIST_DIR}/components/ColorComponent.hpp
@@ -81,12 +83,15 @@ add_executable(PowerEngine
     ${CMAKE_CURRENT_LIST_DIR}/graphics/drawing/Drawable.hpp
     ${CMAKE_CURRENT_LIST_DIR}/graphics/drawing/GizmoMesh.cpp
     ${CMAKE_CURRENT_LIST_DIR}/graphics/drawing/GizmoMesh.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/graphics/drawing/NullDrawable.hpp
     ${CMAKE_CURRENT_LIST_DIR}/graphics/drawing/Model.hpp
     ${CMAKE_CURRENT_LIST_DIR}/graphics/drawing/Model.cpp
     ${CMAKE_CURRENT_LIST_DIR}/graphics/drawing/SkinnedMesh.hpp
     ${CMAKE_CURRENT_LIST_DIR}/graphics/drawing/SkinnedMesh.cpp
     ${CMAKE_CURRENT_LIST_DIR}/graphics/drawing/Billboard.hpp
     ${CMAKE_CURRENT_LIST_DIR}/graphics/drawing/Billboard.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/graphics/drawing/CameraActorBuilder.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/graphics/drawing/CameraActorBuilder.cpp
     ${CMAKE_CURRENT_LIST_DIR}/graphics/drawing/MeshActorBuilder.hpp
     ${CMAKE_CURRENT_LIST_DIR}/graphics/drawing/MeshActorBuilder.cpp
 

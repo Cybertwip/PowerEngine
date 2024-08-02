@@ -9,6 +9,8 @@ class Widget;
 }
 
 class ActorManager;
+class CameraActorLoader;
+class CameraManager;
 class Canvas;
 class GizmoManager;
 class MeshActorLoader;
@@ -27,7 +29,7 @@ public:
 
 class RenderCommon {
 public:
-    RenderCommon(nanogui::Widget& parent, entt::registry& registry, ActorManager& actorManager);
+    RenderCommon(nanogui::Widget& parent, entt::registry& registry, ActorManager& actorManager, CameraManager& cameraManager);
     Canvas& canvas() {
         return *mCanvas;
     }
@@ -36,15 +38,20 @@ public:
         return *mShaderManager;
     }
     
-    MeshActorLoader& mesh_actor_loader() {
-        return *mMeshActorLoader;
-    }
+	MeshActorLoader& mesh_actor_loader() {
+		return *mMeshActorLoader;
+	}
+
+	CameraActorLoader& camera_actor_loader() {
+		return *mCameraActorLoader;
+	}
 
 
 private:
     std::unique_ptr<Canvas> mCanvas;
     std::unique_ptr<ShaderManager> mShaderManager;
-    std::unique_ptr<MeshActorLoader> mMeshActorLoader;
+	std::unique_ptr<MeshActorLoader> mMeshActorLoader;
+	std::unique_ptr<CameraActorLoader> mCameraActorLoader;
     std::unique_ptr<GizmoManager> mGizmoManager;
 
 };

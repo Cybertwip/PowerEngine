@@ -1,7 +1,8 @@
 #include "graphics/drawing/MeshActorBuilder.hpp"
 
 #include <filesystem>
-#include <functional>
+
+#include "actors/Actor.hpp"
 
 #include "components/ColorComponent.hpp"
 #include "components/DrawableComponent.hpp"

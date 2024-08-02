@@ -44,9 +44,15 @@ void HierarchyPanel::populate_tree(Actor &actor, nanogui::TreeViewItem *parent_n
         parent_node
             ? parent_node->add_node(
                   std::string{actor.get_component<MetadataComponent>().get_name()},
-                  [&actor]() { actor.get_component<UiComponent>().select(); })
+									[this, &actor]() {
+										actor.get_component<UiComponent>().select();
+										OnActorSelected(actor);
+									})
             : mTreeView->add_node(std::string{actor.get_component<MetadataComponent>().get_name()},
-                                  [&actor]() { actor.get_component<UiComponent>().select(); });
+								  [this, &actor]() {
+				actor.get_component<UiComponent>().select();
+				OnActorSelected(actor);
+			});
     // Uncomment and correctly iterate over the actor's children
     //    for (Actor *child : actor->children()) {
     //        populate_tree(child, node);
@@ -54,24 +60,24 @@ void HierarchyPanel::populate_tree(Actor &actor, nanogui::TreeViewItem *parent_n
 }
 
 void HierarchyPanel::RegisterOnActorSelectedCallback(IActorSelectedCallback& callback) {
-	if (actorSelectedCallbacks.size() >= 2) {
+	if (mActorSelectedCallbacks.size() >= 2) {
 		throw std::runtime_error("Cannot register more than two callbacks.");
 	}
-	actorSelectedCallbacks.push_back(std::ref(callback));
+	mActorSelectedCallbacks.push_back(std::ref(callback));
 }
 
 void HierarchyPanel::UnregisterOnActorSelectedCallback(IActorSelectedCallback& callback) {
-	auto it = std::remove_if(actorSelectedCallbacks.begin(), actorSelectedCallbacks.end(),
+	auto it = std::remove_if(mActorSelectedCallbacks.begin(), mActorSelectedCallbacks.end(),
 							 [&callback](std::reference_wrapper<IActorSelectedCallback>& ref) {
 		return &ref.get() == &callback;
 	});
-	if (it != actorSelectedCallbacks.end()) {
-		actorSelectedCallbacks.erase(it, actorSelectedCallbacks.end());
+	if (it != mActorSelectedCallbacks.end()) {
+		mActorSelectedCallbacks.erase(it, mActorSelectedCallbacks.end());
 	}
 }
 
 void HierarchyPanel::OnActorSelected(Actor& actor) {
-	for (auto& callbackRef : actorSelectedCallbacks) {
+	for (auto& callbackRef : mActorSelectedCallbacks) {
 		callbackRef.get().OnActorSelected(actor);
 	}
 }

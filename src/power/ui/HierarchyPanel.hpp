@@ -24,7 +24,7 @@ public:
 	void UnregisterOnActorSelectedCallback(IActorSelectedCallback& callback) override;
 	
 private:
-	std::vector<std::reference_wrapper<IActorSelectedCallback>> actorSelectedCallbacks;
+	std::vector<std::reference_wrapper<IActorSelectedCallback>> mActorSelectedCallbacks;
 
 private:
     bool mouse_drag_event(const nanogui::Vector2i &p, const nanogui::Vector2i &rel,

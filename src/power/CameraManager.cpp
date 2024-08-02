@@ -1,49 +1,57 @@
 #include "CameraManager.hpp"
 
 #include "actors/Actor.hpp"
-#include "actors/Camera.hpp"
+#include "actors/ActorManager.hpp"
+#include "components/CameraComponent.hpp"
 #include "components/TransformComponent.hpp"
 #include "graphics/shading/ShaderWrapper.hpp"
 
 CameraManager::CameraManager(entt::registry& registry)
     : mRegistry(registry), mActiveCamera(std::nullopt) {}
 
-Camera& CameraManager::create_camera(float fov, float near, float far, float aspect) {
+void CameraManager::update_from(const ActorManager& actorManager) {
+	auto cameras = actorManager.get_actors_with_component<CameraComponent>();
 	
-	auto deleter = [this](Camera* ptr) {
-		if (mActiveCamera && &mActiveCamera->get() == ptr) {
+	mCameras.clear();
+	
+	for (auto& camera : cameras) {
+		mCameras.push_back(camera);
+	}
+	
+	if (mActiveCamera.has_value()) {
+		auto it = std::find_if(mCameras.begin(), mCameras.end(), [this](auto& camera){
+			if (&camera.get() == &mActiveCamera->get()) {
+				return true;
+			} else {
+				return false;
+			}
+		});
+		
+		if (it == mCameras.end()) {
 			mActiveCamera = std::nullopt;
 		}
-		delete ptr;
-	};
+	} else {
+		mActiveCamera = *mCameras.begin();
+	}
 
-	auto camera = std::unique_ptr<Camera, decltype(deleter)>(new Camera(mRegistry, fov, near, far, aspect), deleter);
-
-    if (mActiveCamera == std::nullopt) {
-        mActiveCamera = *camera;
-    }
-
-    mCameras.push_back(std::move(camera));
-
-    return *mCameras.back();
 }
 
 void CameraManager::update_view() {
     if (mActiveCamera.has_value()) {
-        mActiveCamera->get().update_view();
+		mActiveCamera->get().get_component<CameraComponent>().update_view();
     }
 }
 
 const nanogui::Matrix4f CameraManager::get_view() const {
     if (mActiveCamera.has_value()) {
-        return mActiveCamera->get().get_view();
+        return mActiveCamera->get().get_component<CameraComponent>().get_view();
     } else {
         return nanogui::Matrix4f();
     }
 }
 const nanogui::Matrix4f CameraManager::get_projection() const {
     if (mActiveCamera.has_value()) {
-        return mActiveCamera->get().get_projection();
+		return mActiveCamera->get().get_component<CameraComponent>().get_projection();
     } else {
         return nanogui::Matrix4f::perspective(45, 0.01f, 5e3f, 16.0f / 9.0f);
     }

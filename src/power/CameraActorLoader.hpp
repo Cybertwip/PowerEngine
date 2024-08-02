@@ -7,18 +7,21 @@
 
 class Actor;
 class ActorManager;
+class CameraManager;
 class ShaderManager;
 
-class MeshActorLoader
+class CameraActorLoader
 {
    public:
-    MeshActorLoader(ActorManager& actorManager, ShaderManager& shaderManager);
+	CameraActorLoader(ActorManager& actorManager, CameraManager& cameraManager, ShaderManager& shaderManager);
 
-	~MeshActorLoader();
+	~CameraActorLoader();
 	
-    Actor& create_actor(const std::string& path);
+	
+	Actor& create_actor(float fov, float near, float far, float aspect);
 
    private:
 	ActorManager& mActorManager;
+	CameraManager& mCameraManager;
     std::unique_ptr<SkinnedMesh::SkinnedMeshShader> mMeshShaderWrapper;
 };

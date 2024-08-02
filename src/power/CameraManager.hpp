@@ -7,16 +7,17 @@
 #include <memory>
 
 class Actor;
-class Camera;
+class ActorManager;
 
 class CameraManager
 {
 public:
     CameraManager(entt::registry& registry);
+	
+	void update_from(const ActorManager& actorManager);
     
-    std::optional<std::reference_wrapper<Camera>> active_camera() { return mActiveCamera; }
+    std::optional<std::reference_wrapper<Actor>> active_camera() { return mActiveCamera; }
     
-    Camera& create_camera(float fov, float near, float far, float aspect);
     void update_view();
     
     const nanogui::Matrix4f get_view() const;
@@ -26,8 +27,7 @@ public:
 
 private:
     entt::registry& mRegistry;
-    std::optional<std::reference_wrapper<Camera>> mActiveCamera;
+    std::optional<std::reference_wrapper<Actor>> mActiveCamera;
 	
-	using CameraDeleter = std::function<void(Camera*)>;
-	std::vector<std::unique_ptr<Camera, CameraDeleter>> mCameras;
+	std::vector<std::reference_wrapper<Actor>> mCameras;
 };
