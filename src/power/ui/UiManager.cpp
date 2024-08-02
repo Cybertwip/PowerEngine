@@ -13,18 +13,22 @@
 #include "components/DrawableComponent.hpp"
 #include "components/TransformComponent.hpp"
 
+#include "gizmo/GizmoManager.hpp"
+
 #include <nanogui/opengl.h>
 
 UiManager::UiManager(IActorSelectedRegistry& registry, ActorManager& actorManager, ShaderManager& shaderManager, Canvas& canvas)
 : mRegistry(registry)
 , mActorManager(actorManager)
-, mShader(*shaderManager.get_shader("mesh")) {
+, mShader(*shaderManager.get_shader("mesh"))
+, mGizmoManager(std::make_unique<GizmoManager>(shaderManager, actorManager)) {
 	mRegistry.RegisterOnActorSelectedCallback(*this);
-	
-	canvas.register_draw_callback([this]() {
-		draw();
-	});
 
+	canvas.register_draw_callback([this, &actorManager]() {
+		actorManager.draw();
+		draw();
+		mGizmoManager->draw();
+	});
 }
 
 UiManager::~UiManager() {
@@ -57,16 +61,15 @@ void UiManager::draw_content(const nanogui::Matrix4f& model, const nanogui::Matr
 		// Second pass: Draw using the stencil buffer as a mask
 		glStencilFunc(GL_EQUAL, 1, 0xFF);  // Draw only where stencil value is 1
 		glStencilMask(0x00);  // Disable writing to the stencil buffer
-
 		
-		glDisable(GL_DEPTH_TEST);  // Optionally disable depth test
+		glClear(GL_DEPTH_BUFFER_BIT);
 
+		glEnable(GL_DEPTH_TEST);  // Optionally disable depth test
 
 		drawable.draw_content(model, view, projection);
 		
 		// Re-enable depth testing after drawing the outlines
-		glEnable(GL_DEPTH_TEST);
-
+		glDisable(GL_DEPTH_TEST);
 	}
 	
 	

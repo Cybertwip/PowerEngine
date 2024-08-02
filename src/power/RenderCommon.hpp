@@ -52,7 +52,5 @@ private:
     std::unique_ptr<ShaderManager> mShaderManager;
 	std::unique_ptr<MeshActorLoader> mMeshActorLoader;
 	std::unique_ptr<CameraActorLoader> mCameraActorLoader;
-    std::unique_ptr<GizmoManager> mGizmoManager;
-
 };
 

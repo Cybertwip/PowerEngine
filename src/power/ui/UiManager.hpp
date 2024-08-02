@@ -4,13 +4,15 @@
 #include "graphics/drawing/Drawable.hpp"
 #include "graphics/shading/ShaderWrapper.hpp"
 
+#include <memory>
 #include <optional>
 #include <functional>
 
 class IActorSelectedRegistry;
 class ActorManager;
-class ShaderManager;
 class Canvas;
+class GizmoManager;
+class ShaderManager;
 
 // UiManager class definition
 class UiManager : public IActorSelectedCallback, public Drawable {
@@ -31,4 +33,6 @@ private:
 	std::optional<std::reference_wrapper<Actor>> mActiveActor;
 
 	ShaderWrapper mShader;
+	
+	std::unique_ptr<GizmoManager> mGizmoManager;
 };

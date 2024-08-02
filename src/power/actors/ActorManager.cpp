@@ -27,7 +27,8 @@ void ActorManager::draw() {
 	
 	// Enable stencil test
 	glEnable(GL_STENCIL_TEST);
-	
+	glEnable(GL_DEPTH_TEST);
+
 	// Clear stencil buffer and depth buffer
 	glClear(GL_STENCIL_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	
