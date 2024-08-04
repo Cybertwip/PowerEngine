@@ -17,8 +17,8 @@ Actor& CameraActorBuilder::build(Actor& actor,
 	std::unique_ptr<Drawable> drawable = std::make_unique<NullDrawable>();
 	actor.add_component<DrawableComponent>(std::move(drawable));
 	actor.add_component<TransformComponent>();
-	actor.add_component<MetadataComponent>("Camera");
-	actor.add_component<ColorComponent>(meshShaderWrapper);
+	actor.add_component<MetadataComponent>(actor.identifier(), "Camera");
+	actor.add_component<ColorComponent>(actor.get_component<MetadataComponent>(), meshShaderWrapper);
 	actor.add_component<CameraComponent>(actor.get_component<TransformComponent>(), fov, near, far, aspect);
 	
 	return actor;

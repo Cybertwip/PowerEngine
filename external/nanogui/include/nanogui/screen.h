@@ -80,7 +80,7 @@ public:
         bool resizable = true,
         bool fullscreen = false,
         bool depth_buffer = true,
-        bool stencil_buffer = true,
+        bool stencil_buffer = false,
         bool float_buffer = false,
         unsigned int gl_major = 3,
         unsigned int gl_minor = 2
@@ -271,7 +271,7 @@ public:
     void center_window(Window *window);
     void move_window_to_front(Window *window);
     void draw_widgets();
-
+	virtual void process_events() {}
 protected:
     GLFWwindow *m_glfw_window = nullptr;
     NVGcontext *m_nvg_context = nullptr;

@@ -64,7 +64,7 @@ set(NANOGUI_BACKEND "OpenGL" CACHE STRING "OpenGL Backend")
 # add external libraries
 add_subdirectory(external/entt/)
 add_subdirectory(external/glad/)
-add_library(STB_IMAGE "external/stb/stb_image.cpp")
+add_library(STB_IMAGE external/stb/stb_image.cpp)
 add_subdirectory(external/glfw/)
 add_subdirectory(external/jsoncpp)
 add_subdirectory(external/glm/)

@@ -309,7 +309,7 @@ static void gl_map_texture_format(Texture::PixelFormat &pixel_format,
     switch (pixel_format) {
         case PixelFormat::R:
 #if defined(NANOGUI_USE_OPENGL)
-            pixel_format_gl = GL_RED;
+            pixel_format_gl = GL_RED_INTEGER;
 #else
             pixel_format_gl = GL_LUMINANCE;
 #endif
@@ -321,7 +321,8 @@ static void gl_map_texture_format(Texture::PixelFormat &pixel_format,
                 case ComponentFormat::Float32: internal_format_gl = GL_R32F;      break;
 #if defined(NANOGUI_USE_OPENGL)
                 case ComponentFormat::Int8:    internal_format_gl = GL_R8_SNORM;  break;
-                case ComponentFormat::Int16:   internal_format_gl = GL_R16_SNORM; break;
+				case ComponentFormat::Int16:   internal_format_gl = GL_R16_SNORM; break;
+				case ComponentFormat::Int32:   internal_format_gl = GL_R32I; break;
 #endif
                 default:
                     break;
@@ -343,6 +344,7 @@ static void gl_map_texture_format(Texture::PixelFormat &pixel_format,
 #if defined(NANOGUI_USE_OPENGL)
                 case ComponentFormat::Int8:    internal_format_gl = GL_RG8_SNORM;  break;
                 case ComponentFormat::Int16:   internal_format_gl = GL_RG16_SNORM; break;
+				case ComponentFormat::Int32:   internal_format_gl = GL_RG32I; break;
 #endif
                 default:
                     break;
@@ -360,6 +362,7 @@ static void gl_map_texture_format(Texture::PixelFormat &pixel_format,
 #if defined(NANOGUI_USE_OPENGL)
                 case ComponentFormat::Int8:    internal_format_gl = GL_RGB8_SNORM;  break;
                 case ComponentFormat::Int16:   internal_format_gl = GL_RGB16_SNORM; break;
+				case ComponentFormat::Int32:   internal_format_gl = GL_RGB32I; break;
 #endif
                 default:
                     break;
@@ -377,6 +380,7 @@ static void gl_map_texture_format(Texture::PixelFormat &pixel_format,
 #if defined(NANOGUI_USE_OPENGL)
                 case ComponentFormat::Int8:    internal_format_gl = GL_RGBA8_SNORM;  break;
                 case ComponentFormat::Int16:   internal_format_gl = GL_RGBA16_SNORM; break;
+				case ComponentFormat::Int32:   internal_format_gl = GL_RGBA32I; break;
 #endif
                 default:
                     break;
@@ -407,31 +411,30 @@ static void gl_map_texture_format(Texture::PixelFormat &pixel_format,
                     break;
             }
             break;
-
-        case PixelFormat::DepthStencil:
-            pixel_format_gl = GL_DEPTH_STENCIL;
-
-            switch (component_format) {
-                case ComponentFormat::Int8:
-                case ComponentFormat::UInt8:
-                case ComponentFormat::Int16:
-                case ComponentFormat::UInt16:
-                case ComponentFormat::Int32:
-                case ComponentFormat::UInt32:
-                    component_format = ComponentFormat::UInt32;
-                    internal_format_gl = GL_DEPTH_COMPONENT24;
-                    break;
-
-                case ComponentFormat::Float16:
-                case ComponentFormat::Float32:
-                    component_format = ComponentFormat::Float32;
-                    internal_format_gl = GL_DEPTH_COMPONENT32F;
-                    break;
-
-                default:
-                    break;
-            }
-            break;
+		case PixelFormat::DepthStencil:
+			pixel_format_gl = GL_DEPTH_STENCIL;
+			
+			switch (component_format) {
+				case ComponentFormat::Int8:
+				case ComponentFormat::UInt8:
+				case ComponentFormat::Int16:
+				case ComponentFormat::UInt16:
+				case ComponentFormat::Int32:
+				case ComponentFormat::UInt32:
+					component_format = ComponentFormat::UInt32;
+					internal_format_gl = GL_DEPTH24_STENCIL8;  // Use the combined depth-stencil format
+					break;
+					
+				case ComponentFormat::Float16:
+				case ComponentFormat::Float32:
+					component_format = ComponentFormat::Float32;
+					internal_format_gl = GL_DEPTH32F_STENCIL8;  // Use the float combined depth-stencil format
+					break;
+					
+				default:
+					throw std::runtime_error("gl_map_texture_format(): unsupported component format for DepthStencil.");
+			}
+			break;
 
         default:
             break;
@@ -440,8 +443,10 @@ static void gl_map_texture_format(Texture::PixelFormat &pixel_format,
     switch (component_format) {
         case ComponentFormat::Int8:    component_format_gl = GL_BYTE;           break;
         case ComponentFormat::UInt8:   component_format_gl = GL_UNSIGNED_BYTE;  break;
-        case ComponentFormat::Int16:   component_format_gl = GL_SHORT;          break;
-        case ComponentFormat::UInt16:  component_format_gl = GL_UNSIGNED_SHORT; break;
+		case ComponentFormat::Int16:   component_format_gl = GL_SHORT;          break;
+		case ComponentFormat::Int32:   component_format_gl = GL_INT;          break;
+		case ComponentFormat::UInt16:  component_format_gl = GL_UNSIGNED_SHORT; break;
+		case ComponentFormat::UInt32:  component_format_gl = GL_UNSIGNED_INT; break;
         case ComponentFormat::Float16: component_format_gl = GL_HALF_FLOAT;     break;
         case ComponentFormat::Float32: component_format_gl = GL_FLOAT;          break;
         default:

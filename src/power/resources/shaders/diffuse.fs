@@ -3,7 +3,6 @@
 // Output variables for fragment shader
 layout(location = 0) out vec4 FragColor;
 layout(location = 1) out int EntityID;
-layout(location = 2) out int UniqueID;
 
 // Input attributes from vertex shader
 in vec2 TexCoords1;
@@ -11,6 +10,7 @@ in vec2 TexCoords2;
 
 // Uniforms
 uniform sampler2D texture_diffuse1; // Diffuse texture
+uniform int identifier;
 
 struct Material {
     vec3 ambient;
@@ -37,4 +37,6 @@ void main() {
 
     // Set the fragment color to the combined color
     FragColor = vec4(final_color, material.opacity);
+
+    EntityID = identifier;
 }

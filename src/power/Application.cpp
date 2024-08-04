@@ -45,7 +45,7 @@ Application::Application() : nanogui::Screen(nanogui::Vector2i(1920, 1080), "Pow
 	mRenderCommon =
         std::make_unique<RenderCommon>(mUiCommon->scene_panel(), *mEntityRegistry, *mActorManager, *mCameraManager);
 
-	mUiManager = std::make_unique<UiManager>(mUiCommon->hierarchy_panel(), *mActorManager, mRenderCommon->shader_manager(), mRenderCommon->canvas());
+	mUiManager = std::make_unique<UiManager>(mUiCommon->hierarchy_panel(), *mActorManager, mRenderCommon->shader_manager(), mUiCommon->scene_panel(), mRenderCommon->canvas());
 
     mActors.push_back(
         mRenderCommon->mesh_actor_loader().create_actor("models/DeepMotionBot.fbx"));
@@ -81,6 +81,9 @@ bool Application::keyboard_event(int key, int scancode, int action, int modifier
 
 void Application::draw(NVGcontext *ctx) {
     mUiCommon->update();
-
     Screen::draw(ctx);
+}
+
+void Application::process_events() {
+	mUiCommon->scene_panel().process_events();
 }

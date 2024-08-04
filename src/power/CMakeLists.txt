@@ -116,6 +116,7 @@ add_executable(PowerEngine
 )
 
 target_include_directories(PowerEngine PUBLIC ../../external/smallfbx)
+target_include_directories(PowerEngine PUBLIC ../../external/stb)
 target_include_directories(PowerEngine PUBLIC ${CMAKE_CURRENT_LIST_DIR})
 target_link_libraries(PowerEngine PRIVATE nanogui ozz_animation EnTT imgui-feature-layout imgui-node-editor json fbx2ozz SmallFBX tinygizmo)
 

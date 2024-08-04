@@ -5,16 +5,22 @@
 
 class MetadataComponent {
 public:
-    MetadataComponent(const std::string& name) : mName(name) {
+    MetadataComponent(int identifier, const std::string& name) : mIdentifier(identifier), mName(name) {
     }
 
-    void set_name(std::string_view name) {
-        mName = name;
-    }
-    std::string_view get_name() const {
-        return mName;
-    }
-    
+	int identifier() const {
+		return mIdentifier;
+	}
+
+	void name(std::string_view name) {
+		mName = name;
+	}
+	
+	std::string_view name() const {
+		return mName;
+	}
+
 private:
-    std::string mName;
+	int mIdentifier;
+	std::string mName;
 };

@@ -604,7 +604,6 @@ void Screen::draw_all() {
 #if defined(NANOGUI_USE_METAL)
         void *pool = autorelease_init();
 #endif
-
         draw_setup();
         draw_contents();
         draw_widgets();

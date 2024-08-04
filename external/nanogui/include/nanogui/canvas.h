@@ -62,7 +62,7 @@ public:
         Widget *parent,
         uint8_t samples = 4,
         bool has_depth_buffer = true,
-        bool has_stencil_buffer = false,
+        bool has_stencil_buffer = true,
         bool clear = true
     );
 

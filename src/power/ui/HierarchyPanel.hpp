@@ -12,10 +12,12 @@
 class IActorSelectedCallback;
 
 class Actor; // Forward declaration
+class ScenePanel;
+class TransformPanel;
 
 class HierarchyPanel : public IActorSelectedRegistry, public Panel {
 public:
-    HierarchyPanel(nanogui::Widget &parent);
+	HierarchyPanel(ScenePanel& scenePanel, TransformPanel& transformPanel, nanogui::Widget &parent);
 
     void set_actors(const std::vector<std::reference_wrapper<Actor>> &actors);
 
@@ -33,6 +35,7 @@ private:
 	void OnActorSelected(Actor& actor);
 
 private:
+	TransformPanel& mTransformPanel;
     nanogui::VScrollPanel *mScrollPanel;
     nanogui::TreeView *mTreeView;
     void populate_tree(Actor& actor, nanogui::TreeViewItem *parentNode = nullptr);

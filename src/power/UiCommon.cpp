@@ -36,8 +36,19 @@ UiCommon::UiCommon(nanogui::Widget& parent, ActorManager& actorManager) {
         new nanogui::BoxLayout(nanogui::Orientation::Vertical, nanogui::Alignment::Fill));
     rightWrapper->set_fixed_width(rightWidth);
 
-    mHierarchyPanel = new HierarchyPanel(*rightWrapper);
-    mTransformPanel = new TransformPanel(*rightWrapper);
+
+	mTransformPanel = new TransformPanel(*rightWrapper);
+
+	mHierarchyPanel = new HierarchyPanel(*mScenePanel, *mTransformPanel, *rightWrapper);
+
+	mHierarchyPanel->inc_ref();
+	mTransformPanel->inc_ref();
+	
+	rightWrapper->remove_child(mHierarchyPanel);
+	rightWrapper->remove_child(mTransformPanel);
+	
+	rightWrapper->add_child(mHierarchyPanel); // Add HierarchyPanel first
+	rightWrapper->add_child(mTransformPanel); // Add TransformPanel second
 
     mStatusBarPanel = new StatusBarPanel(*mainWrapper);
 
@@ -45,11 +56,6 @@ UiCommon::UiCommon(nanogui::Widget& parent, ActorManager& actorManager) {
 }
 
 void UiCommon::attach_actors(const std::vector<std::reference_wrapper<Actor>>& actors) {
-    for (auto& actor : actors) {
-        actor.get().add_component<UiComponent>(
-            [this, actor]() { mTransformPanel->set_active_actor(actor); });
-    }
-
     mHierarchyPanel->set_actors(actors);
 }
 

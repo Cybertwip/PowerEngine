@@ -3,7 +3,12 @@
 #include "actors/ActorManager.hpp"
 #include "graphics/drawing/Drawable.hpp"
 
-Canvas::Canvas(Widget* parent, nanogui::Color backgroundColor) : nanogui::Canvas(parent, 1) {
+#include <nanogui/opengl.h>
+#include <nanogui/renderpass.h>
+
+#include <iostream>
+
+Canvas::Canvas(Widget* parent, nanogui::Color backgroundColor) : nanogui::Canvas(parent, 1, true, true) {
     set_background_color(backgroundColor);
     set_fixed_size(parent->fixed_size());
 }

@@ -4,6 +4,7 @@
 
 #include <nanogui/vector.h>
 
+class MetadataComponent;
 class ShaderWrapper;
 
 class ColorComponent {
@@ -12,14 +13,15 @@ public:
 		return nanogui::Vector3f(color.x, color.y, color.z);
     }
 	
-	ColorComponent(ShaderWrapper& shaderWrapper);
+	ColorComponent(MetadataComponent& metadataComponent, ShaderWrapper& shaderWrapper);
 
-	void set_color(const glm::vec3& color);
+	void apply(const glm::vec3& color);
 
-	glm::vec3 get_color() const {
+	glm::vec3 get() const {
 		return mColor;
 	}
 	
+	MetadataComponent& mMetadataComponent;
 	ShaderWrapper& mShader;
 	glm::vec3 mColor;
 };

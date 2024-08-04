@@ -1,7 +1,11 @@
 // HierarchyPanel.cpp
 #include "ui/HierarchyPanel.hpp"
 
+#include "ui/ScenePanel.hpp"
+#include "ui/TransformPanel.hpp"
+
 #include <nanogui/layout.h>
+#include <nanogui/opengl.h>
 #include <nanogui/treeviewitem.h>
 
 #include "actors/Actor.hpp"
@@ -9,54 +13,64 @@
 #include "components/MetadataComponent.hpp"
 #include "components/UiComponent.hpp"
 
-HierarchyPanel::HierarchyPanel(nanogui::Widget &parent) : Panel(parent, "Hierarchy") {
-    set_position(nanogui::Vector2i(0, 0));
-    set_layout(new nanogui::GroupLayout());
-
-    mScrollPanel = new nanogui::VScrollPanel(this);
-
-    mScrollPanel->set_fixed_size({0, 12 * 25});
-
-    mTreeView = new nanogui::TreeView(mScrollPanel);
-    mTreeView->set_layout(
-        new nanogui::BoxLayout(nanogui::Orientation::Vertical, nanogui::Alignment::Fill));
+HierarchyPanel::HierarchyPanel(ScenePanel& scenePanel, TransformPanel& transformPanel, nanogui::Widget &parent) : Panel(parent, "Hierarchy"), mTransformPanel(transformPanel) {
+	set_position(nanogui::Vector2i(0, 0));
+	set_layout(new nanogui::GroupLayout());
+	
+	mScrollPanel = new nanogui::VScrollPanel(this);
+	
+	mScrollPanel->set_fixed_size({0, 12 * 25});
+	
+	mTreeView = new nanogui::TreeView(mScrollPanel);
+	mTreeView->set_layout(
+						  new nanogui::BoxLayout(nanogui::Orientation::Vertical, nanogui::Alignment::Fill));
 }
 
 bool HierarchyPanel::mouse_drag_event(const nanogui::Vector2i &p, const nanogui::Vector2i &rel,
-                                      int button, int modifiers) {
-    // Disable dragging
-    return mScrollPanel->mouse_drag_event(p, rel, button, modifiers);
+									  int button, int modifiers) {
+	// Disable dragging
+	return mScrollPanel->mouse_drag_event(p, rel, button, modifiers);
 }
 
 void HierarchyPanel::set_actors(const std::vector<std::reference_wrapper<Actor>> &actors) {
-    mTreeView->clear();
-    for (auto &actor : actors) {
-        populate_tree(actor.get());
-    }
+	mTreeView->clear();
+	for (auto &actor : actors) {
+		populate_tree(actor.get());
+	}
 
-    mTreeView->set_selected(static_cast<nanogui::TreeViewItem *>(mTreeView->children().front()));
-	OnActorSelected(actors.front());
+	actors.front().get().get_component<UiComponent>().select();
 }
 
 void HierarchyPanel::populate_tree(Actor &actor, nanogui::TreeViewItem *parent_node) {
-    // Correctly reference the actor's name
-    nanogui::TreeViewItem *node =
-        parent_node
-            ? parent_node->add_node(
-                  std::string{actor.get_component<MetadataComponent>().get_name()},
-									[this, &actor]() {
-										actor.get_component<UiComponent>().select();
-										OnActorSelected(actor);
-									})
-            : mTreeView->add_node(std::string{actor.get_component<MetadataComponent>().get_name()},
-								  [this, &actor]() {
-				actor.get_component<UiComponent>().select();
-				OnActorSelected(actor);
-			});
-    // Uncomment and correctly iterate over the actor's children
-    //    for (Actor *child : actor->children()) {
-    //        populate_tree(child, node);
-    //    }
+	// Correctly reference the actor's name
+	nanogui::TreeViewItem *node =
+	parent_node
+	? parent_node->add_node(
+							std::string{actor.get_component<MetadataComponent>().name()},
+							[this, &actor]() {
+								mTransformPanel.set_active_actor(std::ref(actor));
+								OnActorSelected(actor);
+							})
+	: mTreeView->add_node(std::string{actor.get_component<MetadataComponent>().name()},
+						  [this, &actor]() {
+		mTransformPanel.set_active_actor(std::ref(actor));
+		OnActorSelected(actor);
+	});
+	// Uncomment and correctly iterate over the actor's children
+	//    for (Actor *child : actor->children()) {
+	//        populate_tree(child, node);
+	//    }
+	
+	
+	if (actor.find_component<UiComponent>()) {
+		actor.remove_component<UiComponent>();
+	}
+	
+	actor.add_component<UiComponent>([this, &actor, node]() {
+		mTreeView->set_selected(node);
+		mTransformPanel.set_active_actor(std::ref(actor));
+		OnActorSelected(actor);
+	});
 }
 
 void HierarchyPanel::RegisterOnActorSelectedCallback(IActorSelectedCallback& callback) {

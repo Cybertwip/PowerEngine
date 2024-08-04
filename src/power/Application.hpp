@@ -26,7 +26,8 @@ class Application : public nanogui::Screen
     Application();
 
     virtual bool keyboard_event(int key, int scancode, int action, int modifiers) override;
-    virtual void draw(NVGcontext *ctx) override;
+	virtual void draw(NVGcontext *ctx) override;
+	virtual void process_events() override;
 
    private:
     std::unique_ptr<entt::registry> mEntityRegistry;

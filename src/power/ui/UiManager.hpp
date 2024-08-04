@@ -12,12 +12,13 @@ class IActorSelectedRegistry;
 class ActorManager;
 class Canvas;
 class GizmoManager;
+class ScenePanel;
 class ShaderManager;
 
 // UiManager class definition
 class UiManager : public IActorSelectedCallback, public Drawable {
 public:
-	UiManager(IActorSelectedRegistry& registry, ActorManager& actorManager, ShaderManager& shaderManager, Canvas& canvas);
+	UiManager(IActorSelectedRegistry& registry, ActorManager& actorManager, ShaderManager& shaderManager, ScenePanel& scenePanel, Canvas& canvas);
 	~UiManager();
 	
 	void OnActorSelected(Actor& actor) override;
