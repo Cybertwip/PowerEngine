@@ -14,8 +14,9 @@ class ShaderWrapper
 public:
 	ShaderWrapper(nanogui::Shader& shader);
 	
-	void upload_index_data(const std::vector<uint32_t>& index_data);	
-
+	void set_buffer(const std::string &name, nanogui::VariableType type,
+			   std::initializer_list<size_t> shape, const void *data);
+	
 	template <typename Array> void set_uniform(const std::string &name,
 															  const Array &value) {
 		mShader.set_uniform(name, value);

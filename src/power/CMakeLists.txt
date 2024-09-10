@@ -76,6 +76,23 @@ add_executable(PowerEngine
     ${CMAKE_CURRENT_LIST_DIR}/gizmo/GizmoManager.hpp
     ${CMAKE_CURRENT_LIST_DIR}/gizmo/GizmoManager.cpp
 
+    ${CMAKE_CURRENT_LIST_DIR}/gizmo/TranslationGizmo.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/gizmo/TranslationGizmo.cpp
+
+    ${CMAKE_CURRENT_LIST_DIR}/gizmo/RotationGizmo.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/gizmo/RotationGizmo.cpp
+
+    ${CMAKE_CURRENT_LIST_DIR}/gizmo/ScaleGizmo.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/gizmo/ScaleGizmo.cpp
+
+    ${CMAKE_CURRENT_LIST_DIR}/grok/Client.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/grok/Client.cpp
+
+    ${CMAKE_CURRENT_LIST_DIR}/grok/Message.hpp
+
+    ${CMAKE_CURRENT_LIST_DIR}/grok/PromptBox.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/grok/PromptBox.cpp
+
     ${CMAKE_CURRENT_LIST_DIR}/graphics/shading/MaterialProperties.hpp
     ${CMAKE_CURRENT_LIST_DIR}/graphics/shading/ShaderWrapper.hpp
     ${CMAKE_CURRENT_LIST_DIR}/graphics/shading/ShaderWrapper.cpp
@@ -83,6 +100,8 @@ add_executable(PowerEngine
     ${CMAKE_CURRENT_LIST_DIR}/graphics/drawing/Drawable.hpp
     ${CMAKE_CURRENT_LIST_DIR}/graphics/drawing/GizmoMesh.cpp
     ${CMAKE_CURRENT_LIST_DIR}/graphics/drawing/GizmoMesh.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/graphics/drawing/Grid.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/graphics/drawing/Grid.hpp
     ${CMAKE_CURRENT_LIST_DIR}/graphics/drawing/NullDrawable.hpp
     ${CMAKE_CURRENT_LIST_DIR}/graphics/drawing/Model.hpp
     ${CMAKE_CURRENT_LIST_DIR}/graphics/drawing/Model.cpp
@@ -118,7 +137,7 @@ add_executable(PowerEngine
 target_include_directories(PowerEngine PUBLIC ../../external/smallfbx)
 target_include_directories(PowerEngine PUBLIC ../../external/stb)
 target_include_directories(PowerEngine PUBLIC ${CMAKE_CURRENT_LIST_DIR})
-target_link_libraries(PowerEngine PRIVATE nanogui ozz_animation EnTT imgui-feature-layout imgui-node-editor json fbx2ozz SmallFBX tinygizmo)
+target_link_libraries(PowerEngine PRIVATE nanogui ozz_animation EnTT imgui-feature-layout imgui-node-editor json fbx2ozz SmallFBX tinygizmo grpc++)
 
 # Set the resource files to be included in the bundle
 set(RESOURCE_DIRECTORIES

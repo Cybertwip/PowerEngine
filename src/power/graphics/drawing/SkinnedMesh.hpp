@@ -74,5 +74,4 @@ private:
 	std::unique_ptr<MeshData> mMeshData;
 
     SkinnedMeshShader& mShader;
-    void initialize_mesh();
 };

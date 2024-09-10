@@ -136,22 +136,14 @@ void SkinnedMesh::SkinnedMeshShader::upload_texture_data(
 
 SkinnedMesh::SkinnedMesh(std::unique_ptr<MeshData> meshData, SkinnedMeshShader& shader)
     : mMeshData(std::move(meshData)), mShader(shader) {
-    initialize_mesh();
-}
-
-void SkinnedMesh::initialize_mesh() {
-	mShader.upload_index_data(mMeshData->mIndices);
-	mShader.upload_vertex_data(mMeshData->mVertices);
-	mShader.upload_material_data(mMeshData->mMaterial);
-	if (mMeshData->mMaterial.mHasDiffuseTexture) {
-		mShader.upload_texture_data(mMeshData->mTextures);
-    }
 }
 
 void SkinnedMesh::draw_content(const nanogui::Matrix4f& model, const nanogui::Matrix4f& view,
                                const nanogui::Matrix4f& projection) {
     using namespace nanogui;
 	
+	mShader.set_buffer("indices", nanogui::VariableType::UInt32, {mMeshData->mIndices.size()},
+					   mMeshData->mIndices.data());
 	mShader.upload_vertex_data(mMeshData->mVertices);
 	mShader.upload_material_data(mMeshData->mMaterial);
 	if (mMeshData->mMaterial.mHasDiffuseTexture) {

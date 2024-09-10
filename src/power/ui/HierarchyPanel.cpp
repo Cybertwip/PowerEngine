@@ -38,7 +38,7 @@ void HierarchyPanel::set_actors(const std::vector<std::reference_wrapper<Actor>>
 		populate_tree(actor.get());
 	}
 
-	actors.front().get().get_component<UiComponent>().select();
+	//actors.front().get().get_component<UiComponent>().select();
 }
 
 void HierarchyPanel::populate_tree(Actor &actor, nanogui::TreeViewItem *parent_node) {

@@ -16,9 +16,6 @@ public:
 
     void set_active_actor(std::reference_wrapper<Actor> actor);
     
-    void update();
-    
-    
 private:
     nanogui::IntBox<int> *mXTranslate;
     nanogui::IntBox<int> *mYTranslate;
@@ -31,6 +28,10 @@ private:
     nanogui::IntBox<int> *mXScale;
     nanogui::IntBox<int> *mYScale;
     nanogui::IntBox<int> *mZScale;
+	
+	nanogui::Widget *mTranslateWidget;
+	nanogui::Widget *mRotateWidget;
+	nanogui::Widget *mScaleWidget;
     
     std::optional<std::reference_wrapper<Actor>> mActiveActor;
 };

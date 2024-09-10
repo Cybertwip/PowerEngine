@@ -103,7 +103,7 @@ Canvas::Canvas(Widget *parent, uint8_t samples,
 		
 		depth_texture = new Texture(
 									has_stencil_buffer ? Texture::PixelFormat::DepthStencil
-									: Texture::PixelFormat::DepthStencil,
+									: Texture::PixelFormat::Depth,
 									Texture::ComponentFormat::Int32,
 									m_size,
 									Texture::InterpolationMode::Bilinear,

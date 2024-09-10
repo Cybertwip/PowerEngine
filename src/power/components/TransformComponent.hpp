@@ -6,6 +6,8 @@
 
 #include <ozz/base/maths/transform.h>
 
+#include <nanogui/vector.h>
+
 class TransformComponent {
 public:
     static nanogui::Matrix4f glm_to_nanogui(glm::mat4 glmMatrix){
@@ -18,7 +20,16 @@ public:
         return matrix;
 
     }
-    
+	
+	static glm::mat4 nanogui_to_glm(const nanogui::Matrix4f& nanoguiMatrix) {
+		glm::mat4 glmMatrix;
+		
+		// Assuming both glm::mat4 and nanogui::Matrix4f are stored in column-major order
+		std::memcpy(glm::value_ptr(glmMatrix), nanoguiMatrix.m, sizeof(float) * 16);
+		
+		return glmMatrix;
+	}
+
     ozz::math::Transform transform;
 
     TransformComponent() {
@@ -34,6 +45,10 @@ public:
     void set_rotation(const glm::quat& rotation) {
         transform.rotation = ozz::math::Quaternion(rotation.x, rotation.y, rotation.z, rotation.w);
     }
+	
+	void set_scale(const glm::vec3& scale) {
+		transform.scale = ozz::math::Float3(scale.x, scale.y, scale.z);
+	}
 
     glm::vec3 get_translation() const {
         return glm::vec3(transform.translation.x, transform.translation.y, transform.translation.z);
@@ -60,4 +75,18 @@ public:
 
         return translationMatrix * rotationMatrix * scaleMatrix;
     }
+	
+	void rotate(const glm::vec3& axis, float angle) {
+		// Create a quaternion representing the rotation
+		glm::quat rotationQuat = glm::angleAxis(glm::radians(angle), glm::normalize(axis));
+		
+		// Get the current rotation
+		glm::quat currentRotation = get_rotation();
+		
+		// Combine the current rotation with the new rotation
+		glm::quat newRotation = rotationQuat * currentRotation;
+		
+		// Set the new rotation
+		set_rotation(newRotation);
+	}
 };

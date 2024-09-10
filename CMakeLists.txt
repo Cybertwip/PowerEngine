@@ -4,10 +4,19 @@ cmake_minimum_required(VERSION 3.21)
 include(${CMAKE_ROOT}/Modules/ExternalProject.cmake)
 
 
+
+if(APPLE)
+project(
+  PowerEngine
+  LANGUAGES CXX OBJC
+  VERSION 0.1.0)
+else()
 project(
   PowerEngine
   LANGUAGES CXX
   VERSION 0.1.0)
+endif()
+
 set(CMAKE_CXX_STANDARD 17)
 
 set(CMAKE_WARN_DEPRECATED FALSE)
@@ -68,8 +77,8 @@ add_library(STB_IMAGE external/stb/stb_image.cpp)
 add_subdirectory(external/glfw/)
 add_subdirectory(external/jsoncpp)
 add_subdirectory(external/glm/)
+add_subdirectory(external/grpc/)
 add_subdirectory(external/smallfbx/)
-add_subdirectory(external/zlib/)
 add_subdirectory(external/imgui-feature-layout/)
 add_subdirectory(external/imgui-node-editor/)
 add_subdirectory(external/cpp-httplib/)
@@ -90,8 +99,6 @@ target_link_libraries(imgui-feature-layout glm json)
 #target_link_libraries(test PUBLIC imgui-feature-layout imgui-node-editor httplib::httplib zstr::zstr)
 #target_link_libraries(glcpp PUBLIC test)
 #target_link_libraries(SmallFBX zlib)
-
-
 
 if(APPLE)
 target_compile_definitions(imgui-feature-layout PUBLIC -DDEFAULT_CWD="${CMAKE_CURRENT_LIST_DIR}/Resources")

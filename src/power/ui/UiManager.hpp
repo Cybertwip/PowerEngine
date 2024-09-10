@@ -11,14 +11,16 @@
 class IActorSelectedRegistry;
 class ActorManager;
 class Canvas;
+class CameraManager;
 class GizmoManager;
+class Grid;
 class ScenePanel;
 class ShaderManager;
 
 // UiManager class definition
 class UiManager : public IActorSelectedCallback, public Drawable {
 public:
-	UiManager(IActorSelectedRegistry& registry, ActorManager& actorManager, ShaderManager& shaderManager, ScenePanel& scenePanel, Canvas& canvas);
+	UiManager(IActorSelectedRegistry& registry, ActorManager& actorManager, ShaderManager& shaderManager, ScenePanel& scenePanel, Canvas& canvas, nanogui::Widget& toolbox, CameraManager& cameraManager);
 	~UiManager();
 	
 	void OnActorSelected(Actor& actor) override;
@@ -36,4 +38,6 @@ private:
 	ShaderWrapper mShader;
 	
 	std::unique_ptr<GizmoManager> mGizmoManager;
+	
+	std::unique_ptr<Grid> mGrid;
 };

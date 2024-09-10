@@ -38,12 +38,15 @@ public:
     TransformPanel& transform_panel() {
         return *mTransformPanel;
     }
+	
+	nanogui::Widget& toolbox() {
+		return *mToolbox;
+	}
 	    
-    void update();
-
 private:
     ScenePanel* mScenePanel;
     TransformPanel* mTransformPanel;
     HierarchyPanel* mHierarchyPanel;
     StatusBarPanel* mStatusBarPanel;
+	nanogui::Widget* mToolbox;
 };

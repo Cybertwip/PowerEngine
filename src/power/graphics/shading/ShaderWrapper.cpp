@@ -4,9 +4,9 @@
 
 ShaderWrapper::ShaderWrapper(nanogui::Shader& shader) : mShader(shader) {}
 
-void ShaderWrapper::upload_index_data(const std::vector<uint32_t>& index_data) {
-    mShader.set_buffer("indices", nanogui::VariableType::UInt32, {index_data.size()},
-                       index_data.data());
+void ShaderWrapper::set_buffer(const std::string &name, nanogui::VariableType type,
+				std::initializer_list<size_t> shape, const void *data) {
+	mShader.set_buffer(name, type, shape.end() - shape.begin(), shape.begin(), data);
 }
 
 void ShaderWrapper::set_texture(const std::string& name, nanogui::Texture& texture) {

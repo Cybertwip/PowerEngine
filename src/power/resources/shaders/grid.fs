@@ -11,9 +11,10 @@ out vec4 o_color;
 in vec3 near;
 in vec3 far;
 
-uniform float u_nearfar[2];
-uniform mat4 view;
-uniform mat4 projection;
+uniform float u_far;
+uniform float u_near;
+uniform mat4 aView;
+uniform mat4 aProjection;
 
 vec4 grid(vec3 point, float scale, bool is_axis) {
     vec2 coord = point.xz / scale;
@@ -34,7 +35,7 @@ vec4 grid(vec3 point, float scale, bool is_axis) {
 }
 
 float compute_depth(vec3 point) {
-    vec4 clip_space = projection * view * vec4(point, 1.0);
+    vec4 clip_space = aProjection * aView * vec4(point, 1.0);
     float clip_space_depth = clip_space.z / clip_space.w;
     float far = gl_DepthRange.far;
     float near = gl_DepthRange.near;
@@ -43,10 +44,10 @@ float compute_depth(vec3 point) {
 }
 
 float compute_fade(vec3 point) {
-    vec4 clip_space = projection * view * vec4(point, 1.0);
+    vec4 clip_space = aProjection * aView * vec4(point, 1.0);
     float clip_space_depth = (clip_space.z / clip_space.w) * 2.0 - 1.0;
-    float near = u_nearfar[0];
-    float far = u_nearfar[1];
+    float near = u_near;
+    float far = u_far;
     float linear_depth = (2.0 * near * far) / (far + near - clip_space_depth * (far - near));
     return linear_depth / far;
 }

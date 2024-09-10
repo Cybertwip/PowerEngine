@@ -44,5 +44,4 @@ public:
 private:
     MeshData& mMeshData;
     GizmoMeshShader& mShader;
-    void initialize_mesh();
 };

@@ -85,7 +85,8 @@ void Model::initialize_mesh() {
         vertices.emplace_back(positions[i], colors[i]);
     }
 
-    mShader.upload_index_data(indices);
+	mShader.set_buffer("indices", nanogui::VariableType::UInt32, {indices.size()},
+					   indices.data());
     mShader.upload_vertex_data(vertices);
 }
 
