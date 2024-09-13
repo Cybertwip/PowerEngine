@@ -12,15 +12,16 @@
 #include <future>
 #include <chrono>
 
+class ResourcesPanel;
 
 class StatusBarPanel : public Panel {
 public:
 	StatusBarPanel(nanogui::Widget &parent);
 	
 private:
-	nanogui::Widget *resourcesPanel;
-	bool isPanelVisible = false;
-	std::future<void> animationFuture;
+	ResourcesPanel *mResourcesPanel;
+	bool mIsPanelVisible = false;
+	std::future<void> mAnimationFuture;
 
 	void toggle_resources_panel(bool active);
 	void animate_panel_position(const nanogui::Vector2i &targetPosition);

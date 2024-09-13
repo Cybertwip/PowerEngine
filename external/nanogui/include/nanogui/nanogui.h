@@ -42,3 +42,4 @@
 #include <nanogui/renderpass.h>
 #include <nanogui/canvas.h>
 #include <nanogui/imageview.h>
+#include <nanogui/treeview.h>

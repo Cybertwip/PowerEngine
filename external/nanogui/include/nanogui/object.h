@@ -84,16 +84,20 @@ public:
     Object &operator=(Object &&) { return *this; }
 
     /// Increase the object's reference count
-    void inc_ref() const noexcept;
+    virtual void inc_ref() const noexcept;
 
     /// Decrease the object's reference count and potentially deallocate it
-    void dec_ref() const noexcept;
+    virtual void dec_ref() const noexcept;
 
     /// Return the Python object associated with this instance (or NULL)
     PyObject *self_py() const noexcept;
 
     /// Set the Python object associated with this instance
     void set_self_py(PyObject *self) noexcept;
+	
+	const std::atomic<uintptr_t>& state() const {
+		return m_state;
+	}
 
 private:
     mutable std::atomic<uintptr_t> m_state { 1 };

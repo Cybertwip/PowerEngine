@@ -87,8 +87,8 @@ UiManager::UiManager(IActorSelectedRegistry& registry, ActorManager& actorManage
 		float scaleX = viewport.second[0] / float(width);
 		float scaleY = viewport.second[1] / float(height);
 		
-		int adjusted_y = height - y + canvas.position().y();
-		int adjusted_x = x + canvas.position().x();
+		int adjusted_y = height - y + canvas.parent()->position().y();
+		int adjusted_x = x + canvas.parent()->position().x();
 		
 		// Scale x and y accordingly
 		adjusted_x *= scaleX;
@@ -181,11 +181,11 @@ UiManager::UiManager(IActorSelectedRegistry& registry, ActorManager& actorManage
 			float scaleY = viewport.second[1] / float(height);
 
 
-			int adjusted_y = height - y + canvas.position().y();
-			int adjusted_x = x + canvas.position().x();
+			int adjusted_y = height - y + canvas.parent()->position().y();
+			int adjusted_x = x + canvas.parent()->position().x();
 
-			int adjusted_dx = x + canvas.position().x() + dx;
-			int adjusted_dy = height - y + canvas.position().y() + dy;
+			int adjusted_dx = x + canvas.parent()->position().x() + dx;
+			int adjusted_dy = height - y + canvas.parent()->position().y() + dy;
 
 			// Scale x and y accordingly
 			adjusted_x *= scaleX;

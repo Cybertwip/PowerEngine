@@ -303,9 +303,8 @@ load_image_directory(NVGcontext *ctx, const std::string &path) {
     return result;
 }
 
-std::string file_dialog(const std::vector<std::pair<std::string, std::string>> &filetypes, bool save) {
-    auto result = file_dialog(filetypes, save, false);
-    return result.empty() ? "" : result.front();
+std::vector<std::string> file_dialog(const std::vector<std::pair<std::string, std::string>> &filetypes, bool save, bool multiple) {
+    return file_dialog_multiple(filetypes, save, multiple);
 }
 
 #if !defined(__APPLE__)

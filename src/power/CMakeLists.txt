@@ -73,6 +73,9 @@ add_executable(PowerEngine
     ${CMAKE_CURRENT_LIST_DIR}/components/GizmoComponent.cpp
     ${CMAKE_CURRENT_LIST_DIR}/components/GizmoComponent.hpp
 
+    ${CMAKE_CURRENT_LIST_DIR}/filesystem/DirectoryNode.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/filesystem/DirectoryNode.cpp
+
     ${CMAKE_CURRENT_LIST_DIR}/gizmo/GizmoManager.hpp
     ${CMAKE_CURRENT_LIST_DIR}/gizmo/GizmoManager.cpp
 
@@ -122,6 +125,8 @@ add_executable(PowerEngine
     ${CMAKE_CURRENT_LIST_DIR}/ui/HierarchyPanel.cpp
     ${CMAKE_CURRENT_LIST_DIR}/ui/Panel.hpp
     ${CMAKE_CURRENT_LIST_DIR}/ui/Panel.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/ui/ResourcesPanel.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/ui/ResourcesPanel.cpp
     ${CMAKE_CURRENT_LIST_DIR}/ui/ScenePanel.hpp
     ${CMAKE_CURRENT_LIST_DIR}/ui/ScenePanel.cpp
     ${CMAKE_CURRENT_LIST_DIR}/ui/StatusBarPanel.hpp

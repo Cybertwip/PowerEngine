@@ -787,8 +787,8 @@ void Screen::mouse_button_callback_event(int button, int action, int modifiers) 
             m_mouse_state &= ~(1 << button);
 
         auto drop_widget = find_widget(m_mouse_pos);
-        if (m_drag_active && action == GLFW_RELEASE &&
-            drop_widget != m_drag_widget) {
+        if (m_drag_active && action == GLFW_RELEASE && m_drag_widget &&
+            drop_widget != m_drag_widget && m_drag_widget->parent()) {
             m_redraw |= m_drag_widget->mouse_button_event(
                 m_mouse_pos - m_drag_widget->parent()->absolute_position(), button,
                 false, m_modifiers);
@@ -891,6 +891,21 @@ void Screen::resize_callback_event(int, int) {
         std::cerr << "Caught exception in event handler: " << e.what() << std::endl;
     }
     redraw();
+}
+
+void Screen::remove_from_focus(Widget *widget) {
+	if (widget == nullptr) {
+		throw std::runtime_error("Screen::remove_from_focus(): widget is nullptr!");
+	}
+	auto it = std::find(m_focus_path.begin(), m_focus_path.end(), widget);
+	
+	if (it != m_focus_path.end()) {
+		m_focus_path.erase(it);
+	}
+	
+	if (widget == m_drag_widget) {
+		m_drag_widget = nullptr;
+	}
 }
 
 void Screen::update_focus(Widget *widget) {

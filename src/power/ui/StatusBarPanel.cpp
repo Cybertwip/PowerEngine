@@ -1,9 +1,18 @@
 #include "ui/StatusBarPanel.hpp"
+#include "ui/ResourcesPanel.hpp"
+
+#include "filesystem/DirectoryNode.hpp"
+
 #include <nanogui/button.h>
 #include <nanogui/icons.h>
 #include <nanogui/layout.h>
 #include <nanogui/toolbutton.h>
 #include <nanogui/window.h>
+
+#include <filesystem>
+
+
+static std::unique_ptr<DirectoryNode> rootNode = DirectoryNode::create(std::filesystem::current_path().string());
 
 StatusBarPanel::StatusBarPanel(nanogui::Widget &parent) : Panel(parent, "") {
 	set_layout(new nanogui::GroupLayout());
@@ -20,55 +29,54 @@ StatusBarPanel::StatusBarPanel(nanogui::Widget &parent) : Panel(parent, "") {
 	resourcesButton->set_tooltip("Toggle Resources Panel");
 	
 	// Resources panel setup
-	resourcesPanel = new Panel(parent, "Resources");
-	resourcesPanel->set_visible(true);
-	// Add widgets to resourcesPanel here
-	
+	mResourcesPanel = new ResourcesPanel(parent, *rootNode);
+	mResourcesPanel->set_visible(true);
+		
 	// Initial positioning
-	resourcesPanel->set_position(nanogui::Vector2i(0, 0));
+	mResourcesPanel->set_position(nanogui::Vector2i(0, 0));
 	
-	resourcesPanel->set_fixed_width(parent.fixed_width());
-	resourcesPanel->set_fixed_height(parent.fixed_height() * 0.75f);
+	mResourcesPanel->set_fixed_width(parent.fixed_width());
+	mResourcesPanel->set_fixed_height(parent.fixed_height() * 0.75f);
 }
 
 void StatusBarPanel::toggle_resources_panel(bool active) {
-	if (animationFuture.valid() && animationFuture.wait_for(std::chrono::seconds(0)) != std::future_status::ready) {
+	if (mAnimationFuture.valid() && mAnimationFuture.wait_for(std::chrono::seconds(0)) != std::future_status::ready) {
 		return; // Animation is still running, do not start a new one
 	}
 	
 	if (active) {
-		animationFuture = std::async(std::launch::async, [this]() {
+		mAnimationFuture = std::async(std::launch::async, [this]() {
 			auto target = nanogui::Vector2i(0, parent()->fixed_height() * 0.25f - fixed_height());
 			animate_panel_position(target);
 		});
 	} else {
-		animationFuture = std::async(std::launch::async, [this]() {
+		mAnimationFuture = std::async(std::launch::async, [this]() {
 			auto target = nanogui::Vector2i(0, parent()->fixed_height());
 			animate_panel_position(target);
 		});
 	}
 	
-	isPanelVisible = active;
+	mIsPanelVisible = active;
 	
-	resourcesPanel->set_visible(true);
+	mResourcesPanel->set_visible(true);
 }
 
 void StatusBarPanel::animate_panel_position(const nanogui::Vector2i &targetPosition) {
 	const int steps = 10;
 	const auto stepDelay = std::chrono::milliseconds(16); // ~60 FPS
-	nanogui::Vector2i startPos = resourcesPanel->position();
+	nanogui::Vector2i startPos = mResourcesPanel->position();
 	nanogui::Vector2i step = (targetPosition - startPos) / (steps - 1);
 	
 	for (int i = 0; i < steps; ++i) {
 		// This check ensures we can stop the animation if another toggle happens
-		if (animationFuture.wait_for(std::chrono::seconds(0)) != std::future_status::ready) {
-			resourcesPanel->set_position(startPos + step * i);
+		if (mAnimationFuture.wait_for(std::chrono::seconds(0)) != std::future_status::ready) {
+			mResourcesPanel->set_position(startPos + step * i);
 			std::this_thread::sleep_for(stepDelay);
 		} else {
 			break; // Stop animation if future is no longer valid (another animation started)
 		}
 		if (i == steps) {
-			resourcesPanel->set_visible(isPanelVisible);
+			mResourcesPanel->set_visible(mIsPanelVisible);
 		}
 	}
 }

@@ -471,10 +471,13 @@ bool TextBox::keyboard_event(int key, int /* scancode */, int action, int modifi
             m_valid_format =
                 (m_value_temp == "") || check_format(m_value_temp, m_format);
         }
+		
+		if (m_callback)
+			m_callback(m_value_temp);
 
         return true;
     }
-
+	
     return false;
 }
 

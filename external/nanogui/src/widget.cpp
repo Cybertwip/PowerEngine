@@ -176,12 +176,14 @@ void Widget::add_child(Widget * widget) {
     add_child(child_count(), widget);
 }
 
-void Widget::remove_child(const Widget *widget) {
+void Widget::remove_child(Widget *widget) {
     size_t child_count = m_children.size();
     m_children.erase(std::remove(m_children.begin(), m_children.end(), widget),
                      m_children.end());
     if (m_children.size() == child_count)
         throw std::runtime_error("Widget::remove_child(): widget not found!");
+	screen()->remove_from_focus(widget);
+	widget->set_parent(nullptr);
     widget->dec_ref();
 }
 
@@ -190,6 +192,9 @@ void Widget::remove_child_at(int index) {
         throw std::runtime_error("Widget::remove_child_at(): out of bounds!");
     Widget *widget = m_children[index];
     m_children.erase(m_children.begin() + index);
+	
+	screen()->remove_from_focus(widget);
+	widget->set_parent(nullptr);
     widget->dec_ref();
 }
 
@@ -228,10 +233,8 @@ const Screen *Widget::screen() const { return const_cast<Widget*>(this)->screen(
 const Window *Widget::window() const { return const_cast<Widget*>(this)->window(); }
 
 void Widget::request_focus() {
-    Widget *widget = this;
-    while (widget->parent())
-        widget = widget->parent();
-    ((Screen *) widget)->update_focus(this);
+	Widget *widget = this;
+	widget->screen()->update_focus(this);
 }
 
 void Widget::draw(NVGcontext *ctx) {

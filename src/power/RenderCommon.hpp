@@ -48,7 +48,7 @@ public:
 
 
 private:
-    std::unique_ptr<Canvas> mCanvas;
+	Canvas* mCanvas;
     std::unique_ptr<ShaderManager> mShaderManager;
 	std::unique_ptr<MeshActorLoader> mMeshActorLoader;
 	std::unique_ptr<CameraActorLoader> mCameraActorLoader;

@@ -270,9 +270,9 @@ extern NANOGUI_EXPORT void async(const std::function<void()> &func);
  *     Set to ``true`` if you would like subsequent file dialogs to open
  *     at whatever folder they were in when they close this one.
  */
-extern NANOGUI_EXPORT std::string
+extern NANOGUI_EXPORT std::vector<std::string>
 file_dialog(const std::vector<std::pair<std::string, std::string>> &filetypes,
-            bool save);
+            bool save, bool multiple);
 
 
 /**
@@ -306,7 +306,7 @@ extern NANOGUI_EXPORT std::pair<bool, bool> test_10bit_edr_support();
  *     files at once. May not be simultaneously true with \p save.
  */
 extern NANOGUI_EXPORT std::vector<std::string>
-file_dialog(const std::vector<std::pair<std::string, std::string>> &filetypes,
+file_dialog_multiple(const std::vector<std::pair<std::string, std::string>> &filetypes,
             bool save, bool multiple);
 
 #if defined(__APPLE__) || defined(DOXYGEN_DOCUMENTATION_BUILD)
