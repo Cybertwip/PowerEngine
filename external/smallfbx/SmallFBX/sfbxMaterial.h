@@ -78,11 +78,11 @@ protected:
 	void exportFBXConnections() override;
 	
 private:
-	double3 m_ambient_color;
-	double3 m_diffuse_color;
-	double3 m_specular_color;
-	float64 m_shininess;
-	float64 m_opacity = 1.0f;
+	double3 m_ambient_color =  { 0.0, 0.0, 0.0 };
+	double3 m_diffuse_color =  { 1.0, 1.0, 1.0 };
+	double3 m_specular_color = { 0.0, 0.0, 0.0 };
+	float64 m_shininess = 0.0;
+	float64 m_opacity = 1.0;
 
 	std::vector<std::stringstream> mChildStreams;
 	
