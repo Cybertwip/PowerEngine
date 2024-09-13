@@ -358,13 +358,7 @@ void Shader::begin() {
 #endif
 	
 	for (auto &[key, buf] : m_buffers) {
-		bool indices = key == "indices";
 		if (!buf.buffer) {
-			if (!indices)
-				fprintf(stderr,
-						"Shader::begin(): shader \"%s\" has an unbound "
-						"argument \"%s\"!\n",
-						m_name.c_str(), key.c_str());
 			continue;
 		}
 		

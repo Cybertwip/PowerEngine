@@ -229,6 +229,8 @@ template<> void Property::assign(span<double4> v) { assign(span<float64>{ (float
 void Property::assign(string_view v)
 {
     m_type = PropertyType::String;
+	m_data.resize(v.size());
+	m_data.clear();
     m_data.assign(v.begin(), v.end());
 }
 

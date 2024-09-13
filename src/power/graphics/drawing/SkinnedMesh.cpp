@@ -51,6 +51,8 @@ void SkinnedMesh::Vertex::set_texture_coords1(const glm::vec2& vec) { mTexCoords
 
 void SkinnedMesh::Vertex::set_texture_coords2(const glm::vec2& vec) { mTexCoords2 = vec; }
 
+void SkinnedMesh::Vertex::set_texture_id(int textureId) { mTextureId = textureId; }
+
 glm::vec3 SkinnedMesh::Vertex::get_position() const { return mPosition; }
 
 glm::vec3 SkinnedMesh::Vertex::get_normal() const { return mNormal; }
@@ -67,6 +69,10 @@ std::array<float, SkinnedMesh::Vertex::MAX_BONE_INFLUENCE> SkinnedMesh::Vertex::
     return mWeights;
 }
 
+int SkinnedMesh::Vertex::get_texture_id() const {
+	return mTextureId;
+}
+
 SkinnedMesh::SkinnedMeshShader::SkinnedMeshShader(ShaderManager& shaderManager)
     : ShaderWrapper(*shaderManager.get_shader("mesh")) {}
 
@@ -77,9 +83,14 @@ void SkinnedMesh::SkinnedMeshShader::upload_vertex_data(
     std::vector<float> texCoords1;
     std::vector<float> texCoords2;
     std::vector<int> boneIds;
-    std::vector<float> weights;
+	std::vector<float> weights;
+	std::vector<int> textureIds;
     for (const auto& vertexPointer : vertexData) {
         auto& vertex = *vertexPointer;
+		
+		textureIds.push_back(vertex.get_texture_id());
+		textureIds.push_back(vertex.get_texture_id());
+
         positions.insert(positions.end(), {vertex.get_position().x, vertex.get_position().y,
                                            vertex.get_position().z});
         normals.insert(normals.end(),
@@ -102,36 +113,48 @@ void SkinnedMesh::SkinnedMeshShader::upload_vertex_data(
                        normals.data());
     mShader.set_buffer("aTexcoords1", nanogui::VariableType::Float32, {vertexData.size(), 2},
                        texCoords1.data());
-    mShader.set_buffer("aTexcoords2", nanogui::VariableType::Float32, {vertexData.size(), 2},
-                       texCoords2.data());
-    // mShader.set_buffer("boneIds", nanogui::VariableType::Int32, {vertexData.size(),
+	mShader.set_buffer("aTexcoords2", nanogui::VariableType::Float32, {vertexData.size(), 2},
+					   texCoords2.data());
+
+	const std::vector<size_t> shape = { vertexData.size(), 1
+	};
+
+	mShader.set_buffer("aTextureId", nanogui::VariableType::Int32, {vertexData.size(), 2},
+					   textureIds.data());
+	
+// mShader.set_buffer("boneIds", nanogui::VariableType::Int32, {vertexData.size(),
     // MAX_BONE_INFLUENCE}, boneIds.data()); mShader.set_buffer("weights",
     // nanogui::VariableType::Float32, {vertexData.size(), MAX_BONE_INFLUENCE}, weights.data());
 }
+void SkinnedMesh::SkinnedMeshShader::upload_material_data(const std::vector<MaterialProperties>& materialData) {
+	for (int i = 0; i < materialData.size(); ++i) {
+		// Create the uniform name dynamically for each material (e.g., "materials[0].ambient")
+		std::string baseName = "materials[" + std::to_string(i) + "].";
+		
+		// Uploading vec3 uniforms for each material
+		mShader.set_uniform(baseName + "ambient",
+							nanogui::Vector3f(materialData[i].mAmbient.x, materialData[i].mAmbient.y,
+											  materialData[i].mAmbient.z));
+		mShader.set_uniform(baseName + "diffuse",
+							nanogui::Vector3f(materialData[i].mDiffuse.x, materialData[i].mDiffuse.y,
+											  materialData[i].mDiffuse.z));
+		mShader.set_uniform(baseName + "specular",
+							nanogui::Vector3f(materialData[i].mSpecular.x, materialData[i].mSpecular.y,
+											  materialData[i].mSpecular.z));
+		
+		// Uploading float uniforms for shininess and opacity
+		mShader.set_uniform(baseName + "shininess", materialData[i].mShininess);
+		mShader.set_uniform(baseName + "opacity", materialData[i].mOpacity);
+		
+		// Uploading boolean for texture presence
+		mShader.set_uniform(baseName + "has_diffuse_texture", materialData[i].mHasDiffuseTexture);
 
-void SkinnedMesh::SkinnedMeshShader::upload_material_data(const MaterialProperties& materialData) {
-    // Uploading vec3 uniforms
-    mShader.set_uniform("material.ambient",
-                        nanogui::Vector3f(materialData.mAmbient.x, materialData.mAmbient.y,
-                                          materialData.mAmbient.z));
-    mShader.set_uniform("material.diffuse",
-                        nanogui::Vector3f(materialData.mDiffuse.x, materialData.mDiffuse.y,
-                                          materialData.mDiffuse.z));
-    mShader.set_uniform("material.specular",
-                        nanogui::Vector3f(materialData.mSpecular.x, materialData.mSpecular.y,
-                                          materialData.mSpecular.z));
-
-    // Uploading float uniforms
-    mShader.set_uniform("material.shininess", materialData.mShininess);
-    mShader.set_uniform("material.opacity", materialData.mOpacity);
-
-    // Uploading boolean uniform
-    mShader.set_uniform("material.has_diffuse_texture", materialData.mHasDiffuseTexture);
-}
-
-void SkinnedMesh::SkinnedMeshShader::upload_texture_data(
-    std::vector<std::unique_ptr<nanogui::Texture>>& textureData) {
-    mShader.set_texture("texture_diffuse1", textureData[0].get());
+		if (materialData[i].mHasDiffuseTexture) {
+			mShader.set_texture(baseName + "texture_diffuse", materialData[i].mTextureDiffuse.get());
+		} else {
+			mShader.set_texture(baseName + "texture_diffuse", mDummyTexture.get());
+		}
+	}
 }
 
 SkinnedMesh::SkinnedMesh(std::unique_ptr<MeshData> meshData, SkinnedMeshShader& shader)
@@ -145,10 +168,7 @@ void SkinnedMesh::draw_content(const nanogui::Matrix4f& model, const nanogui::Ma
 	mShader.set_buffer("indices", nanogui::VariableType::UInt32, {mMeshData->mIndices.size()},
 					   mMeshData->mIndices.data());
 	mShader.upload_vertex_data(mMeshData->mVertices);
-	mShader.upload_material_data(mMeshData->mMaterial);
-	if (mMeshData->mMaterial.mHasDiffuseTexture) {
-		mShader.upload_texture_data(mMeshData->mTextures);
-	}
+	mShader.upload_material_data(mMeshData->mMaterials);
 
     //
     // Calculate bounding box to center the model
@@ -173,3 +193,15 @@ void SkinnedMesh::draw_content(const nanogui::Matrix4f& model, const nanogui::Ma
 	mShader.draw_array(Shader::PrimitiveType::Triangle, 0, mMeshData->mIndices.size(), true);
 	mShader.end();
 }
+
+// Create a dummy 1x1 white texture using the Texture constructor
+
+void SkinnedMesh::init_dummy_texture() {
+	mDummyTexture = std::make_unique<nanogui::Texture>(
+										 nanogui::Texture::PixelFormat::RGBA,       // Set pixel format to RGBA
+										 nanogui::Texture::ComponentFormat::UInt8,  // Use unsigned 8-bit components for each channel
+										 nanogui::Vector2i(1, 1));                              // Size of the texture (1x1)
+
+}
+
+std::unique_ptr<nanogui::Texture> SkinnedMesh::mDummyTexture;

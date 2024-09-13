@@ -119,65 +119,6 @@ bool Document::readBinary(std::istream& is)
     return true;
 }
 
-void Document::importFBXObjects()
-{
-    if (Node* objects = findNode(sfbxS_Objects)) {
-        initialize();
-        for (Node* n : objects->getChildren()) {
-            if (ObjectPtr obj = createObject(GetObjectClass(n), GetObjectSubClass(n))) {
-                obj->setNode(n);
-            }
-        }
-    }
-
-    if (Node* connections = findNode(sfbxS_Connections)) {
-        for (Node* n : connections->getChildren()) {
-            auto name = n->getName();
-            auto ct = GetPropertyString(n, 0);
-            if (name == sfbxS_C && ct == sfbxS_OO) {
-                ObjectPtr child = FindObjectById(m_objects, GetPropertyValue<int64>(n, 1));
-				ObjectPtr parent = FindObjectById(m_objects, GetPropertyValue<int64>(n, 2));
-                if (child && parent)
-                    parent->addChild(child);
-            }
-            else if (name == sfbxS_C && ct == sfbxS_OP) {
-				ObjectPtr child = FindObjectById(m_objects,GetPropertyValue<int64>(n, 1));
-				ObjectPtr parent = FindObjectById(m_objects, GetPropertyValue<int64>(n, 2));
-                auto p = GetPropertyString(n, 3);
-                if (child && parent)
-                    parent->addChild(child, p);
-            }
-#ifdef sfbxEnableLegacyFormatSupport
-            else if (name == sfbxS_Connect && ct == sfbxS_OO) {
-                ObjectPtr child = FindObjectByName(m_objects, GetPropertyString(n, 1));
-                ObjectPtr parent = FindObjectByName(m_objects, GetPropertyString(n, 2));
-                if (child && parent)
-                    parent->addChild(child);
-            }
-#endif
-            else {
-                sfbxPrint("sfbx::Document::read(): unrecognized connection type %s %s\n",
-                    std::string(name).c_str(), std::string(ct).c_str());
-            }
-        }
-    }
-	
-	global_settings.importFBXObjects(this);
-
-    // index based loop because m_objects maybe push_backed in the loop
-    for (size_t i = 0; i < m_objects.size(); ++i) {
-        auto obj = m_objects[i];
-        obj->importFBXObjects();
-    }
-
-    if (Node* takes = findNode(sfbxS_Takes)) {
-        auto current = GetChildPropertyString(takes, sfbxS_Current);
-        if (auto t = findAnimationStack(current))
-            m_current_take = t;
-    }
-
-}
-
 void GlobalSettings::importFBXObjects(Document *doc)
 {
     Node* global_settings = doc->findNode(sfbxS_GlobalSettings);
@@ -416,21 +357,99 @@ Node* Document::findNode(string_view name) const
 span<sfbx::NodePtr> Document::getAllNodes() const { return make_span(m_nodes); }
 span<Node*> Document::getRootNodes() const { return make_span(m_root_nodes); }
 
+
 void Document::createLinkOO(ObjectPtr child, ObjectPtr parent)
 {
-    if (!child || !parent)
-        return;
-    if (auto c = findNode(sfbxS_Connections))
-        c->createChild(sfbxS_C, sfbxS_OO, child->getID(), parent->getID());
+	if (!child || !parent)
+		return;
+	if (auto c = findNode(sfbxS_Connections))
+		c->createChild(sfbxS_C, sfbxS_OO, child->getID(), parent->getID());
+	// **Store the connection**
+	m_connections.emplace_back(child, parent, Connection::Type::OO);
 }
 
 void Document::createLinkOP(ObjectPtr child, ObjectPtr parent, string_view target)
 {
-    if (!child || !parent)
-        return;
-    if (auto c = findNode(sfbxS_Connections))
-        c->createChild(sfbxS_C, sfbxS_OP, child->getID(), parent->getID(), target);
+	if (!child || !parent)
+		return;
+	if (auto c = findNode(sfbxS_Connections))
+		c->createChild(sfbxS_C, sfbxS_OP, child->getID(), parent->getID(), target);
+	// **Store the connection**
+	m_connections.emplace_back(child, parent, Connection::Type::OP, std::string(target));
 }
+
+void Document::importFBXObjects()
+{
+	if (Node* objects = findNode(sfbxS_Objects)) {
+		initialize();
+		for (Node* n : objects->getChildren()) {
+			if (ObjectPtr obj = createObject(GetObjectClass(n), GetObjectSubClass(n))) {
+				obj->setNode(n);
+			}
+		}
+	}
+	
+	if (Node* connections = findNode(sfbxS_Connections)) {
+		for (Node* n : connections->getChildren()) {
+			auto name = n->getName();
+			auto ct = GetPropertyString(n, 0);
+			if (name == sfbxS_C && ct == sfbxS_OO) {
+				ObjectPtr child = FindObjectById(m_objects, GetPropertyValue<int64>(n, 1));
+				ObjectPtr parent = FindObjectById(m_objects, GetPropertyValue<int64>(n, 2));
+				if (child && parent) {
+					parent->addChild(child);
+					// **Store the connection**
+					m_connections.emplace_back(child, parent, Connection::Type::OO);
+				}
+			}
+			else if (name == sfbxS_C && ct == sfbxS_OP) {
+				ObjectPtr child = FindObjectById(m_objects, GetPropertyValue<int64>(n, 1));
+				ObjectPtr parent = FindObjectById(m_objects, GetPropertyValue<int64>(n, 2));
+				auto p = GetPropertyString(n, 3);
+				if (child && parent) {
+					parent->addChild(child, p);
+					// **Store the connection**
+					m_connections.emplace_back(child, parent, Connection::Type::OP, std::string(p));
+				}
+			}
+#ifdef sfbxEnableLegacyFormatSupport
+			else if (name == sfbxS_Connect && ct == sfbxS_OO) {
+				ObjectPtr child = FindObjectByName(m_objects, GetPropertyString(n, 1));
+				ObjectPtr parent = FindObjectByName(m_objects, GetPropertyString(n, 2));
+				if (child && parent) {
+					parent->addChild(child);
+					// **Store the connection**
+					m_connections.emplace_back(child, parent, Connection::Type::OO);
+				}
+			}
+#endif
+			else {
+				sfbxPrint("sfbx::Document::read(): unrecognized connection type %s %s\n",
+						  std::string(name).c_str(), std::string(ct).c_str());
+			}
+		}
+	}
+	
+	global_settings.importFBXObjects(this);
+	
+	// index-based loop because m_objects may be push_backed in the loop
+	for (size_t i = 0; i < m_objects.size(); ++i) {
+		auto obj = m_objects[i];
+		obj->importFBXObjects();
+	}
+	
+	if (Node* takes = findNode(sfbxS_Takes)) {
+		auto current = GetChildPropertyString(takes, sfbxS_Current);
+		if (auto t = findAnimationStack(current))
+			m_current_take = t;
+	}
+}
+
+// **Implement the getConnections method**
+const std::vector<Connection>& Document::getConnections() const {
+	return m_connections;
+}
+
 
 ObjectPtr Document::createObject(ObjectClass c, ObjectSubClass s)
 {

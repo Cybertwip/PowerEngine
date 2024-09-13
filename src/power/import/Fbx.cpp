@@ -1,6 +1,7 @@
 #include "import/Fbx.hpp"
 
 #include <filesystem>
+#include <map>
 #include <glm/gtc/quaternion.hpp>
 
 namespace {
@@ -68,69 +69,168 @@ void Fbx::ProcessNode(const std::shared_ptr<sfbx::Model> node) {
 }
 
 void Fbx::ProcessMesh(const std::shared_ptr<sfbx::Mesh> mesh) {
-    auto& resultMesh = mMeshes.emplace_back(std::make_unique<SkinnedMesh::MeshData>());
-
-    auto geometry = mesh->getGeometry();
-    auto points = geometry->getPointsDeformed();
-    auto normals = geometry->getNormals();
-    auto vertexIndices = geometry->getIndices();
-
-    for (unsigned int i = 0; i < points.size(); ++i) {
-        auto vertex = std::make_unique<SkinnedMesh::Vertex>();
-        vertex->set_position({points[i].x, points[i].y, points[i].z});
-        if (!normals.empty()) {
-            vertex->set_normal({normals[i].x, normals[i].y, normals[i].z});
-        }
-        resultMesh->mVertices.push_back(std::move(vertex));
-    }
-
-    auto uvLayers = geometry->getUVLayers();
-    int layerIndex = 0;
-    for (const auto& uvLayer : uvLayers) {
-        for (int i = 0; i < vertexIndices.size(); ++i) {
-            int uv_index = uvLayer.indices.empty() ? i : uvLayer.indices[i];
-            int index = vertexIndices[i];
-            if (layerIndex == 0) {
-                resultMesh->mVertices[index]->set_texture_coords1(
-                    {uvLayer.data[uv_index].x, uvLayer.data[uv_index].y});
-                resultMesh->mVertices[index]->set_texture_coords2(
-                    {uvLayer.data[uv_index].x, uvLayer.data[uv_index].y});
-            } else {
-                resultMesh->mVertices[index]->set_texture_coords2(
-                    {uvLayer.data[uv_index].x, uvLayer.data[uv_index].y});
-            }
-        }
-        layerIndex++;
-    }
-
-    ProcessBones(mesh);
-
-    for (unsigned int i = 0; i < vertexIndices.size(); ++i) {
-        resultMesh->mIndices.push_back(vertexIndices[i]);
-    }
-
-    if (mesh->getMaterials().size() > 0) {
-        auto material = mesh->getMaterials()[0];
-        auto color = material->getAmbientColor();
-        resultMesh->mMaterial.mAmbient = {color.x, color.y, color.z};
-        color = material->getDiffuseColor();
-        resultMesh->mMaterial.mDiffuse = {color.x, color.y, color.z};
-        color = material->getSpecularColor();
-        resultMesh->mMaterial.mSpecular = {color.x, color.y, color.z};
-        resultMesh->mMaterial.mShininess = 0.1f;
-        resultMesh->mMaterial.mOpacity = material->getOpacity();
-        resultMesh->mMaterial.mHasDiffuseTexture = false;
-        // Process textures if needed
-        if (material->getTexture("DiffuseColor")) {
-            const auto& fbxTexture = material->getTexture("DiffuseColor");
-            if (!fbxTexture->getData().empty()) {
-                // Assuming nanogui::Texture is compatible with the loaded image data
-                resultMesh->mTextures.push_back(std::make_unique<nanogui::Texture>(
-                    fbxTexture->getData().data(), static_cast<int>(fbxTexture->getData().size())));
-                resultMesh->mMaterial.mHasDiffuseTexture = true;
-            }
-        }
-    }
+	auto& resultMesh = mMeshes.emplace_back(std::make_unique<SkinnedMesh::MeshData>());
+	
+	auto geometry = mesh->getGeometry();
+	auto points = geometry->getPointsDeformed();
+	auto vertexIndices = geometry->getIndices();
+	
+	// Process UV layers
+	auto uvLayers = geometry->getUVLayers();
+	
+	const auto& materials = mesh->getMaterials();
+	
+	std::map<std::shared_ptr<sfbx::Material>, int64_t> materialIndexMap;  // Map from Material pointer to index
+	
+	for (int i = 0; i < materials.size(); ++i) {
+		materialIndexMap[materials[i]] = i;
+	}
+	
+	std::vector<std::shared_ptr<sfbx::Material>> indexMaterialMap(materials.begin(), materials.end());
+	
+	// Create the vertices per polygon vertex
+	for (unsigned int i = 0; i < vertexIndices.size(); ++i) {
+		int controlPointIndex = vertexIndices[i];
+		auto vertex = std::make_unique<SkinnedMesh::Vertex>();
+		// Set position
+		const auto& point = points[controlPointIndex];
+		vertex->set_position({point.x, point.y, point.z});
+		
+		// Process normals
+		const auto& normalLayers = geometry->getNormalLayers();
+		if (!normalLayers.empty()) {
+			// For simplicity, we'll process the first normal layer
+			const auto& normalLayer = normalLayers[0];
+			const std::string& mappingMode = normalLayer.mapping_mode;
+			const std::string& referenceMode = normalLayer.reference_mode;
+			
+			int normalIndex = -1;
+			
+			// Determine normalIndex based on mapping and reference modes
+			if (mappingMode == "ByPolygonVertex") {
+				if (referenceMode == "Direct") {
+					normalIndex = i;
+				} else if (referenceMode == "IndexToDirect") {
+					normalIndex = normalLayer.indices[i];
+				}
+			} else if (mappingMode == "ByControlPoint") {
+				if (referenceMode == "Direct") {
+					normalIndex = controlPointIndex;
+				} else if (referenceMode == "IndexToDirect") {
+					normalIndex = normalLayer.indices[controlPointIndex];
+				}
+			} else {
+				// Handle other mapping modes if necessary
+				normalIndex = -1;
+			}
+			
+			if (normalIndex >= 0 && normalIndex < normalLayer.data.size()) {
+				const auto& normal = normalLayer.data[normalIndex];
+				vertex->set_normal({normal.x, normal.y, normal.z});
+			} else {
+				// Set a default normal if index is invalid
+				vertex->set_normal({0.0f, 1.0f, 0.0f});
+			}
+		} else {
+			// Set a default normal if no normal layers are available
+			vertex->set_normal({0.0f, 1.0f, 0.0f});
+		}
+		
+		// Process UV layers
+		int layerIndex = 0;
+		for (const auto& uvLayer : uvLayers) {
+			const std::string& uvMappingMode = uvLayer.mapping_mode;
+			const std::string& uvReferenceMode = uvLayer.reference_mode;
+			
+			int uvIndex = -1;
+			
+			// Determine uvIndex based on mapping and reference modes
+			if (uvMappingMode == "ByPolygonVertex") {
+				if (uvReferenceMode == "Direct") {
+					uvIndex = i;
+				} else if (uvReferenceMode == "IndexToDirect") {
+					uvIndex = uvLayer.indices[i];
+				}
+			} else if (uvMappingMode == "ByControlPoint") {
+				if (uvReferenceMode == "Direct") {
+					uvIndex = controlPointIndex;
+				} else if (uvReferenceMode == "IndexToDirect") {
+					uvIndex = uvLayer.indices[controlPointIndex];
+				}
+			} else {
+				// Handle other mapping modes if necessary
+				uvIndex = -1;
+			}
+			
+			if (uvIndex >= 0 && uvIndex < uvLayer.data.size()) {
+				float u = uvLayer.data[uvIndex].x;
+				float v = uvLayer.data[uvIndex].y;
+				if (layerIndex == 0) {
+					vertex->set_texture_coords1({u, v});
+					vertex->set_texture_coords2({u, v});
+				} else {
+					vertex->set_texture_coords2({u, v});
+				}
+			} else {
+				// Set default UVs if index is invalid
+				if (layerIndex == 0) {
+					vertex->set_texture_coords1({0.0f, 0.0f});
+					vertex->set_texture_coords2({0.0f, 0.0f});
+				} else {
+					vertex->set_texture_coords2({0.0f, 0.0f});
+				}
+			}
+			layerIndex++;
+		}
+		
+		// Get material for this vertex
+		int materialIndex = geometry->getMaterialForVertexIndex(i); // i is the polygon vertex index
+		if (materialIndex >= 0 && materialIndex < indexMaterialMap.size()) {
+			auto material = indexMaterialMap[materialIndex];
+			int textureId = materialIndexMap[material];
+			vertex->set_texture_id(textureId);
+		} else {
+			vertex->set_texture_id(-1); // No material assigned
+		}
+		
+		resultMesh->mVertices.push_back(std::move(vertex));
+		resultMesh->mIndices.push_back(i); // Sequential indices
+	}
+	
+	// Process the bones for skinning
+	ProcessBones(mesh);
+	
+	// Process all materials in the mesh
+	for (auto& [material, index] : materialIndexMap) {
+		MaterialProperties matData;  // Store material properties for each material
+		
+		// Process material colors
+		auto color = material->getAmbientColor();
+		matData.mAmbient = {color.x, color.y, color.z};
+		
+		color = material->getDiffuseColor();
+		matData.mDiffuse = {color.x, color.y, color.z};
+		
+		color = material->getSpecularColor();
+		matData.mSpecular = {color.x, color.y, color.z};
+		
+		matData.mShininess = 0.1f;
+		matData.mOpacity = material->getOpacity();
+		matData.mHasDiffuseTexture = false;
+		
+		// Process textures if available
+		if (auto fbxTexture = material->getTexture("DiffuseColor")) {
+			if (!fbxTexture->getData().empty()) {
+				// Assuming nanogui::Texture is compatible with the loaded image data
+				matData.mTextureDiffuse = std::make_unique<nanogui::Texture>(
+																			 fbxTexture->getData().data(), static_cast<int>(fbxTexture->getData().size()));
+				matData.mHasDiffuseTexture = true;
+			}
+		}
+		
+		// Add the processed material to the resultMesh's material collection
+		resultMesh->mMaterials.push_back(std::move(matData));
+	}
 }
 
 void Fbx::ProcessBones(const std::shared_ptr<sfbx::Mesh> mesh) {

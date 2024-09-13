@@ -5,6 +5,9 @@
 #include <iostream>
 #include <fstream>
 #include <vector>
+#include <filesystem>
+#include <algorithm>
+#include <sstream>
 
 namespace {
 
@@ -13,7 +16,6 @@ const std::string kEmbeddedToken = "*";
 std::string getFileExtension(const std::string& filename) {
 	// Find the last dot in the filename
 	size_t dotPos = filename.find_last_of('.');
-	
 	// Check if a dot was found and it's not the last character in the string
 	if (dotPos != std::string::npos && dotPos < filename.length() - 1) {
 		// Extract and return the substring after the last dot
@@ -45,71 +47,58 @@ const std::vector<uint8_t>& Video::getData() const {
 void Video::importFBXObjects()
 {
 	super::importFBXObjects();
-	// todo
-
+	// Process the properties
 	std::string embeddedFilename;
 	std::string imageExtension;
-
+	
 	bool isEmbedded = false;
 	
-	for(auto& child : getNode()->getChildren()){
-
-		if(child->getName() == "RelativeFilename"){
+	for (auto& child : getNode()->getChildren()) {
+		if (child->getName() == "RelativeFilename") {
 			embeddedFilename = child->getProperty(0)->getString();
 		}
-				
-		if(child->getName() == "Content"){
+		if (child->getName() == "Content") {
 			isEmbedded = true;
 			auto content = child->getProperty(0)->getString();
-			
 			if (content.empty()) {
 				isEmbedded = false;
 			} else {
-				m_data = std::vector<uint8_t>(content.begin(), content.end()) ;
+				m_data = std::vector<uint8_t>(content.begin(), content.end());
 			}
 		}
-
 	}
 	
-	
-	if(isEmbedded){
+	if (isEmbedded) {
 		imageExtension = getFileExtension(embeddedFilename);
 		embeddedFilename = kEmbeddedToken + ":" + std::to_string(this->getID()) + "." + imageExtension;
 	}
 	
-	for(auto& child : getNode()->getChildren()){
+	for (auto& child : getNode()->getChildren()) {
 		auto stream = std::stringstream();
 		
-		if(child->getName() == "RelativeFilename"){
-			if(isEmbedded){
+		if (child->getName() == "RelativeFilename") {
+			if (isEmbedded) {
 				child->getProperty(0)->assign(embeddedFilename);
 			} else {
-				
 				embeddedFilename = child->getProperty(0)->getString();
 			}
 		}
 		
 		child->writeBinary(stream, 0);
-
 		mChildStreams.push_back(std::move(stream));
 	}
 	
 	m_embedded = isEmbedded;
 	m_filename = embeddedFilename;
 	
-	if(!m_embedded){
+	if (!m_embedded) {
 		// Open the file in binary mode
-		// Convert to preferred format (platform-specific)
-		// Convert the base path to a filesystem path and normalize it
 		std::filesystem::path base = std::filesystem::path(m_document->global_settings.path).parent_path().make_preferred();
-		
 		std::filesystem::path relative = std::filesystem::path(m_filename).make_preferred();
-		
 		// Resolve the relative path based on the base path
 		std::filesystem::path absolutePath = std::filesystem::absolute(base / relative);
-		
 		std::string result = absolutePath.string();
-
+		
 #ifdef _WIN32
 		// On Windows, ensure backslashes
 		std::replace(result.begin(), result.end(), '/', '\\');
@@ -139,22 +128,18 @@ void Video::importFBXObjects()
 	}
 }
 
-
 void Video::exportFBXObjects()
 {
 	super::exportFBXObjects();
 	
-	for(auto& stream : mChildStreams){
+	for (auto& stream : mChildStreams) {
 		auto child = getNode()->createChild();
-
 		stream.seekg(std::ios::beg);
-		
 		child->readBinary(stream, 0);
 	}
 }
 
 ObjectClass Texture::getClass() const { return ObjectClass::Texture; }
-
 
 bool Texture::getEmbedded() const {
 	return m_embedded;
@@ -171,71 +156,55 @@ const std::vector<uint8_t>& Texture::getData() const {
 void Texture::importFBXObjects()
 {
 	super::importFBXObjects();
-	// todo
-	
-	auto filter = find_if(m_children, [](ObjectPtr ptr){
-		return sfbx::as<Video>(ptr);
-	});
-	
-	auto video = sfbx::as<Video>(filter);
-	
-	bool hasVideo = false;
-	
-	std::string embeddedFilename;
-	
-	if(video){
-		hasVideo = true;
-		
-		m_embedded = video->getEmbedded();
-		
-		m_filename = video->getFilename();
-	}
-	
-	
-	for(auto& child : getNode()->getChildren()){
-		if(child->getName() == "RelativeFilename"){
-			
-			if(hasVideo){
-				if(m_embedded){
-					child->getProperty(0)->assign(m_filename);
+	// Process the connections to find the associated Video
+	Video* video = nullptr;
+	for (const auto& con : m_document->getConnections()) {
+		if (con.dest == shared_from_this()) {
+			if (con.type == Connection::Type::OO) {
+				if (auto vid = sfbx::as<Video>(con.src)) {
+					video = vid.get();
+					break;
 				}
 			}
 		}
-		
-		if(child->getName() == "RelativeFilename"){
-			if(!m_embedded){
-				m_filename = child->getProperty(0)->getString();
-			}
-		}
-
-		auto stream = std::stringstream();
-		
-		child->writeAscii(stream);
-		
-		mChildStreams.push_back(std::move(stream));
 	}
 	
+	bool hasVideo = (video != nullptr);
 	
-	if(m_embedded){
+	if (hasVideo) {
+		if (video->getData().empty()) {
+			// Import video data
+			static_cast<Object*>(video)->importFBXObjects();
+		}
+		
+		m_embedded = video->getEmbedded();
+		m_filename = video->getFilename();
 		m_data = video->getData();
 	} else {
-		if(hasVideo){
-			m_data = video->getData();
-		} else {
-			// Open the file in binary mode
+		// No video connected, handle external file
+		for (auto& child : getNode()->getChildren()) {
+			if (child->getName() == "RelativeFilename") {
+				m_filename = child->getProperty(0)->getString();
+			}
+			auto stream = std::stringstream();
+			child->writeAscii(stream);
+			mChildStreams.push_back(std::move(stream));
+		}
+		
+		if (!m_filename.empty()) {
 			std::ifstream file(m_filename, std::ios::binary);
 			
 			// Check if the file is successfully opened
 			if (file.is_open()) {
 				// Read the file contents into a vector<uint8_t>
 				m_data = std::vector<uint8_t>(
-											   (std::istreambuf_iterator<char>(file)),
-											   std::istreambuf_iterator<char>()
-											   );
+											  (std::istreambuf_iterator<char>(file)),
+											  std::istreambuf_iterator<char>()
+											  );
 				
 				// Close the file
 				file.close();
-
+				
 			} else {
 				std::cerr << "Error opening file: " << m_filename << std::endl;
 			}
@@ -247,7 +216,7 @@ void Texture::exportFBXObjects()
 {
 	super::exportFBXObjects();
 	
-	for(auto& stream : mChildStreams){
+	for (auto& stream : mChildStreams) {
 		auto child = getNode()->createChild();
 		auto streamString = stream.str();
 		auto streamView = std::string_view(streamString);
@@ -257,9 +226,16 @@ void Texture::exportFBXObjects()
 
 void Texture::exportFBXConnections()
 {
-	// ignore super::constructLinks()
+	// Ignore super::constructLinks()
 	
-	for(auto& parent : getParents()){
+	// Create OO connection to Video if exists
+	for (const auto& con : m_document->getConnections()) {
+		if (con.src == shared_from_this() && sfbx::as<Video>(con.dest)) {
+			m_document->createLinkOO(shared_from_this(), con.dest);
+		}
+	}
+	
+	for (auto& parent : getParents()) {
 		m_document->createLinkOO(shared_from_this(), parent);
 	}
 }
@@ -276,7 +252,6 @@ double3 Material::getDiffuseColor() const
 	return m_diffuse_color;
 }
 
-
 double3 Material::getSpecularColor() const
 {
 	return m_specular_color;
@@ -292,56 +267,55 @@ float64 Material::getOpacity() const
 	return m_opacity;
 }
 
-std::shared_ptr<sfbx::Texture> Material::getTexture(const std::string& textureType){
-	return m_textures[textureType];
+std::shared_ptr<sfbx::Texture> Material::getTexture(const std::string& textureType) {
+	auto it = m_textures.find(textureType);
+	if (it != m_textures.end()) {
+		return it->second;
+	}
+	return nullptr;
 }
 
 void Material::importFBXObjects()
 {
-    super::importFBXObjects();
+	super::importFBXObjects();
 	
-    // todo
-	for(auto& child : getNode()->getChildren()){
-		
-		if(child->getName() == "Properties70"){
-			
+	// Process properties
+	for (auto& child : getNode()->getChildren()) {
+		if (child->getName() == "Properties70") {
 			auto propertyChildren = child->getChildren();
-			
-			for(auto propertyChild : propertyChildren){
+			for (auto propertyChild : propertyChildren) {
 				auto name = propertyChild->getProperty(0)->getString();
-				
-				if(name == "AmbientColor"){
+				if (name == "AmbientColor") {
 					propertyChild->getPropertiesValues<double3>(4, m_ambient_color);
 				}
-				
-				if(name == "DiffuseColor"){
+				if (name == "DiffuseColor") {
 					propertyChild->getPropertiesValues<double3>(4, m_diffuse_color);
 				}
-
-				if(name == "SpecularColor"){
+				if (name == "SpecularColor") {
 					propertyChild->getPropertiesValues<double3>(4, m_specular_color);
 				}
-				
-				if(name == "Shininess"){
+				if (name == "Shininess") {
 					m_shininess = propertyChild->getProperty(4)->getValue<float64>();
 				}
-				
-				if(name == "Opacity"){
+				if (name == "Opacity") {
 					m_opacity = propertyChild->getProperty(4)->getValue<float64>();
 				}
 			}
 		}
-			
-		
 		auto stream = std::stringstream();
-		
 		child->writeAscii(stream);
-		
 		mChildStreams.push_back(std::move(stream));
 	}
 	
-	for(std::size_t i = 0; i<m_child_property_names.size(); ++i){
-		m_textures[m_child_property_names[i]] = sfbx::as<sfbx::Texture>(m_children[i]);
+	// Process connections to get textures
+	for (const auto& con : m_document->getConnections()) {
+		if (con.dest == shared_from_this()) {
+			if (con.type == Connection::Type::OP) {
+				if (auto texture = sfbx::as<Texture>(con.src)) {
+					m_textures[con.property_name] = texture;
+				}
+			}
+		}
 	}
 }
 
@@ -349,7 +323,7 @@ void Material::exportFBXObjects()
 {
 	super::exportFBXObjects();
 	
-	for(auto& stream : mChildStreams){
+	for (auto& stream : mChildStreams) {
 		auto child = getNode()->createChild();
 		auto streamString = stream.str();
 		auto streamView = std::string_view(streamString);
@@ -359,15 +333,14 @@ void Material::exportFBXObjects()
 
 void Material::exportFBXConnections()
 {
-	for(auto& parent : getParents()){
+	for (auto& parent : getParents()) {
 		m_document->createLinkOO(shared_from_this(), parent);
 	}
-
-	for(std::size_t i = 0; i<m_child_property_names.size(); ++i){
-		m_document->createLinkOP(m_children[i], shared_from_this(), m_child_property_names[i]);
+	
+	for (const auto& texPair : m_textures) {
+		m_document->createLinkOP(texPair.second, shared_from_this(), texPair.first);
 	}
 }
-
 
 ObjectClass Implementation::getClass() const { return ObjectClass::Implementation; }
 

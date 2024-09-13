@@ -85,7 +85,7 @@ public:
     span<LayerElementF3> getNormalLayers() const; // can be zero or multiple layers
     span<LayerElementF2> getUVLayers() const;     // can be zero or multiple layers
     span<LayerElementF4> getColorLayers() const;  // can be zero or multiple layers
-    span<LayerElementI1> getMatrialLayers() const;// can be zero or multiple layers
+    span<LayerElementI1> getMaterialLayers() const;// can be zero or multiple layers
     span<std::vector<LayerElementDesc>> getLayers() const;     //
 
     void setCounts(span<int> v);
@@ -101,7 +101,9 @@ public:
 
     span<float3> getPointsDeformed(bool apply_transform = false);
     span<float3> getNormalsDeformed(size_t layer_index = 0, bool apply_transform = false);
-
+	
+	int getMaterialForVertexIndex(size_t vertex_index) const;
+	
 protected:
     void importFBXObjects() override;
     void exportFBXObjects() override;

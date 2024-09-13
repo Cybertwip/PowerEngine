@@ -7,10 +7,11 @@ layout(location = 1) out int EntityID;
 // Input attributes from vertex shader
 in vec2 TexCoords1;
 in vec2 TexCoords2;
+flat in int TextureId;
 
-// Uniforms
-uniform sampler2D texture_diffuse1; // Diffuse texture
+// Uniforms for textures and materials
 uniform int identifier;
+uniform vec3 color; // Add this uniform for setting color
 
 struct Material {
     vec3 ambient;
@@ -18,25 +19,26 @@ struct Material {
     vec3 specular;
     float shininess;
     float opacity;
+    sampler2D texture_diffuse;
     bool has_diffuse_texture;
 };
 
-uniform Material material;
-uniform vec3 color; // Add this uniform for setting color
+uniform Material materials[4]; // Array of materials
 
 void main() {
-    vec3 mat_diffuse = material.diffuse;
-    if (material.has_diffuse_texture) {
-        mat_diffuse = (texture(texture_diffuse1, TexCoords1).rgb + texture(texture_diffuse1, TexCoords2).rgb) / 2;
+    // For each material, check if it has a diffuse texture
+    vec3 mat_diffuse = materials[TextureId].diffuse;
+    if (materials[TextureId].has_diffuse_texture) {
+        mat_diffuse = (texture(materials[TextureId].texture_diffuse, TexCoords1).rgb + texture(materials[TextureId].texture_diffuse, TexCoords2).rgb) / 2;
     } else {
-        mat_diffuse = material.diffuse + material.specular;
+        mat_diffuse = materials[TextureId].diffuse + materials[TextureId].specular;
     }
 
-    // Combine the material diffuse color with the uniform color
-    vec3 final_color = mat_diffuse * color;
+    // Compute the final fragment color by averaging the material contributions
+    vec3 final_color = mat_diffuse;
 
-    // Set the fragment color to the combined color
-    FragColor = vec4(final_color, material.opacity);
+    // Set the fragment color
+    FragColor = vec4(final_color * color, materials[TextureId].opacity); 
 
     EntityID = identifier;
 }

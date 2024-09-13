@@ -4,6 +4,7 @@ layout (location = 0) in vec3 aPosition;
 layout (location = 1) in vec3 aNormal;
 layout (location = 2) in vec2 aTexcoords1;
 layout (location = 3) in vec2 aTexcoords2;
+layout (location = 4) in ivec2 aTextureId;
 
 uniform mat4 aProjection;
 uniform mat4 aView;
@@ -16,6 +17,7 @@ out vec2 TexCoords1;
 out vec2 TexCoords2;
 out vec3 Normal;
 out vec3 FragPos;
+flat out int TextureId;
 
 void main()
 {
@@ -27,4 +29,6 @@ void main()
     boneId = 0;
 
     FragPosLightSpace = vec4(FragPos, 1.0);
+
+    TextureId = aTextureId.x;
 }

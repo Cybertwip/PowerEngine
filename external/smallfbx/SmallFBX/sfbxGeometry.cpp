@@ -11,147 +11,137 @@ ObjectClass Geometry::getClass() const { return ObjectClass::Geometry; }
 
 void Geometry::addChild(ObjectPtr v)
 {
-    super::addChild(v);
-    if (auto deformer = as<Deformer>(v))
-        m_deformers.push_back(deformer);
+	super::addChild(v);
+	if (auto deformer = as<Deformer>(v))
+		m_deformers.push_back(deformer);
 }
 
 void Geometry::eraseChild(ObjectPtr v)
 {
-    super::eraseChild(v);
-    if (auto deformer = as<Deformer>(v))
-        erase(m_deformers, deformer);
+	super::eraseChild(v);
+	if (auto deformer = as<Deformer>(v))
+		erase(m_deformers, deformer);
 }
 
 std::shared_ptr<Model> Geometry::getModel() const
 {
-    for (auto p : m_parents)
-        if (auto model = as<Model>(p))
-            return model;
-    return nullptr;
+	for (auto p : m_parents)
+		if (auto model = as<Model>(p))
+			return model;
+	return nullptr;
 }
 
 bool Geometry::hasDeformer() const
 {
-    return !m_deformers.empty();
+	return !m_deformers.empty();
 }
 
 bool Geometry::hasSkinDeformer() const
 {
-    for (auto d : m_deformers)
-        if (auto skin = as<Skin>(d))
-            return true;
-    return false;
+	for (auto d : m_deformers)
+		if (auto skin = as<Skin>(d))
+			return true;
+	return false;
 }
 
 span<std::shared_ptr<Deformer>> Geometry::getDeformers() const
 {
-    return make_span(m_deformers);
+	return make_span(m_deformers);
 }
 
 template<> std::shared_ptr<Skin> Geometry::createDeformer()
 {
-    auto ret = createChild<Skin>();
-    //ret->setName(getName()); // FBX SDK seems don't do this
-    return ret;
+	auto ret = createChild<Skin>();
+	return ret;
 }
 
 template<> std::shared_ptr<BlendShape> Geometry::createDeformer()
 {
-    auto ret = createChild<BlendShape>();
-    ret->setName(getName());
-    return ret;
+	auto ret = createChild<BlendShape>();
+	ret->setName(getName());
+	return ret;
 }
-
 
 ObjectSubClass GeomMesh::getSubClass() const { return ObjectSubClass::Mesh; }
 
 template<typename T>
 void GeomMesh::checkModes(LayerElement<T>& layer)
 {
-    auto expected_ref_mode = layer.indices.empty() ? "Direct" : "IndexToDirect";
-    if (layer.reference_mode.empty())
-        layer.reference_mode = expected_ref_mode;
-    else if (layer.reference_mode != expected_ref_mode) {
-        sfbxPrint("unexpected reference mode\n");
-//        layer.reference_mode = expected_ref_mode;
-    }
+	// Skip checking for materials
+	if (layer.name == sfbxS_LayerElementMaterial) {
+		return;
+	}
 
-    auto expected_map_mode = "None";
-    auto mapping_size = (layer.reference_mode == "Direct" ? layer.data.size() : layer.indices.size());
-    int match = 0;
-    if (mapping_size == m_indices.size()) {
-        expected_map_mode = "ByPolygonVertex";
-        match++;
-    }
-    if (mapping_size == m_points.size()) {
-        expected_map_mode = "ByControlPoint";
-        match++;
-    }
-    if (mapping_size == m_counts.size()) {
-        expected_map_mode = "ByPolygon";
-        match++;
-    }
-    if (match == 0 && mapping_size == 1) {
-        expected_map_mode = "AllSame";
-        match++;
-    }
-    if (layer.mapping_mode.empty()) {
-        layer.mapping_mode = expected_map_mode;
-        if (match > 1)
-            sfbxPrint("ambiguous mapping mode\n");
-    } else if (match <= 1 && layer.mapping_mode != expected_map_mode) {
-        sfbxPrint("unexpected mapping mode\n");
-//        layer.mapping_mode = expected_map_mode;
-    }
+	// Ensure the reference mode is correct
+	const std::string expected_ref_mode = layer.indices.empty() ? "Direct" : "IndexToDirect";
+	if (layer.reference_mode.empty()) {
+		layer.reference_mode = expected_ref_mode;
+	} else if (layer.reference_mode != expected_ref_mode) {
+		sfbxPrint("Unexpected reference mode: %s (expected %s)\n",
+				  layer.reference_mode.c_str(), expected_ref_mode.c_str());
+	}
+	
+	// Determine the expected mapping mode based on data size
+	size_t mapping_size = (layer.reference_mode == "Direct") ? layer.data.size() : layer.indices.size();
+	int match = 0;
+	std::string expected_map_mode = "None";
+	
+	// Compare mapping size with different attributes to determine expected mapping mode
+	if (mapping_size == m_indices.size()) {
+		expected_map_mode = "ByPolygonVertex";
+		match++;
+	}
+	if (mapping_size == m_points.size()) {
+		expected_map_mode = "ByControlPoint";
+		match++;
+	}
+	if (mapping_size == m_counts.size()) {
+		expected_map_mode = "ByPolygon";
+		match++;
+	}
+	if (mapping_size == 1) {
+		expected_map_mode = "AllSame";
+		match++;
+	}
+	
+	// Set mapping mode or report ambiguity if multiple matches exist
+	if (layer.mapping_mode.empty()) {
+		layer.mapping_mode = expected_map_mode;
+		if (match > 1) {
+			sfbxPrint("Ambiguous mapping mode for layer %s, setting to %s\n", layer.name.c_str(), expected_map_mode.c_str());
+		}
+	} else if (match == 0 || layer.mapping_mode != expected_map_mode) {
+		// If no match found or current mapping mode differs from expected, log a warning
+		sfbxPrint("Unexpected mapping mode: %s (expected %s)\n", layer.mapping_mode.c_str(), expected_map_mode.c_str());
+	}
 }
+
 void GeomMesh::importFBXObjects()
 {
+	super::importFBXObjects();
+	
 	for (auto n : getNode()->getChildren()) {
-		if (n->getName() == sfbxS_Vertices) {
-			// points
+		auto name = n->getName();
+		if (name == sfbxS_Vertices) {
+			// Points
 			GetPropertyValue<double3>(m_points, n);
-		} else if (n->getName() == sfbxS_Normals) {
-			// normals
-			GetPropertyValue<double3>(m_normals, n);
-		} else if (n->getName() == sfbxS_PolygonVertexIndex) {
-			// counts & indices
+		}
+		else if (name == sfbxS_PolygonVertexIndex) {
+			// Indices and Counts
 			GetPropertyValue<int>(m_indices, n);
-			m_counts.resize(m_indices.size()); // reserve
-			int* dst_counts = m_counts.data();
-			size_t cfaces = 0;
-			size_t cpoints = 0;
-			for (int& i : m_indices) {
-				++cpoints;
-				if (i < 0) { // negative value indicates the last index in the face
-					i = ~i;
-					dst_counts[cfaces++] = cpoints;
-					cpoints = 0;
+			m_counts.clear();
+			int count = 0;
+			for (auto& idx : m_indices) {
+				++count;
+				if (idx < 0) {
+					idx = ~idx;
+					m_counts.push_back(count);
+					count = 0;
 				}
 			}
-			m_counts.resize(cfaces); // fit to actual size
-			
-			// Adjust the indices for decomposed polygons to triangles
-			std::vector<int> adjusted_indices;
-			adjusted_indices.reserve(m_indices.size() * 3); // Reserve space for the expanded indices
-			
-			size_t start = 0;
-			for (size_t i = 0; i < m_counts.size(); ++i) {
-				size_t face_size = m_counts[i];
-				if (face_size < 3) continue; // Skip degenerate faces
-				
-				for (size_t j = 1; j < face_size - 1; ++j) {
-					adjusted_indices.push_back(m_indices[start]);
-					adjusted_indices.push_back(m_indices[start + j]);
-					adjusted_indices.push_back(m_indices[start + j + 1]);
-				}
-				
-				start += face_size;
-			}
-			
-			m_indices.assign(adjusted_indices.begin(), adjusted_indices.end());
-		} else if (n->getName() == sfbxS_LayerElementNormal) {
-			// normals
+		}
+		else if (name == sfbxS_LayerElementNormal) {
+			// Normals
 			LayerElementF3 tmp;
 			tmp.name = GetChildPropertyString(n, sfbxS_Name);
 			GetChildPropertyValue<double3>(tmp.data, n, sfbxS_Normals);
@@ -160,8 +150,9 @@ void GeomMesh::importFBXObjects()
 			GetChildPropertyValue<string_view>(tmp.reference_mode, n, sfbxS_ReferenceInformationType);
 			checkModes(tmp);
 			m_normal_layers.push_back(std::move(tmp));
-		} else if (n->getName() == sfbxS_LayerElementUV) {
-			// uv
+		}
+		else if (name == sfbxS_LayerElementUV) {
+			// UVs
 			LayerElementF2 tmp;
 			tmp.name = GetChildPropertyString(n, sfbxS_Name);
 			GetChildPropertyValue<double2>(tmp.data, n, sfbxS_UV);
@@ -169,23 +160,10 @@ void GeomMesh::importFBXObjects()
 			GetChildPropertyValue<string_view>(tmp.mapping_mode, n, sfbxS_MappingInformationType);
 			GetChildPropertyValue<string_view>(tmp.reference_mode, n, sfbxS_ReferenceInformationType);
 			checkModes(tmp);
-			
-			// Adjust indices for decomposed vertex indices
-			std::vector<int> adjusted_uv_indices;
-			adjusted_uv_indices.reserve(m_indices.size());
-			
-			for (int i = 0; i < m_indices.size(); i++) {
-				int uv_index = i;
-				if (!tmp.indices.empty()) {
-					uv_index = tmp.indices[i % tmp.indices.size()]; // Adjust uv_index for the current vertex
-				}
-				adjusted_uv_indices.push_back(uv_index);
-			}
-			
-			tmp.indices.assign(adjusted_uv_indices.begin(), adjusted_uv_indices.end()); // Replace original indices with adjusted ones
 			m_uv_layers.push_back(std::move(tmp));
-		} else if (n->getName() == sfbxS_LayerElementColor) {
-			// colors
+		}
+		else if (name == sfbxS_LayerElementColor) {
+			// Colors
 			LayerElementF4 tmp;
 			tmp.name = GetChildPropertyString(n, sfbxS_Name);
 			GetChildPropertyValue<double4>(tmp.data, n, sfbxS_Colors);
@@ -194,179 +172,116 @@ void GeomMesh::importFBXObjects()
 			GetChildPropertyValue<string_view>(tmp.reference_mode, n, sfbxS_ReferenceInformationType);
 			checkModes(tmp);
 			m_color_layers.push_back(std::move(tmp));
-		} else if (n->getName() == sfbxS_LayerElementMaterial) {
-			// materials
+		}
+		else if (name == sfbxS_LayerElementMaterial) {
+			// Materials
 			LayerElementI1 tmp;
 			tmp.name = GetChildPropertyString(n, sfbxS_Name);
-			GetChildPropertyValue<int>(tmp.data, n, sfbxS_Materials);
+			GetChildPropertyValue<int>(tmp.indices, n, sfbxS_Materials);
 			GetChildPropertyValue<string_view>(tmp.mapping_mode, n, sfbxS_MappingInformationType);
 			GetChildPropertyValue<string_view>(tmp.reference_mode, n, sfbxS_ReferenceInformationType);
+			checkModes(tmp);
 			m_material_layers.push_back(std::move(tmp));
-		} else if (n->getName() == sfbxS_Layer) {
-			std::vector<LayerElementDesc> layer;
-			for (auto n : n->getChildren()) {
-				LayerElementDesc tmp;
-				if (n->getName() == sfbxS_LayerElement) {
-					GetChildPropertyValue<string_view>(tmp.type, n, sfbxS_Type);
-					GetChildPropertyValue<int>(tmp.index, n, sfbxS_TypedIndex);
-					layer.push_back(std::move(tmp));
+		}
+		else if (name == sfbxS_Layer) {
+			// Layer descriptions
+			int layer_index = GetChildPropertyValue<int>(n, sfbxS_Layer);
+			std::vector<LayerElementDesc> layer_descs;
+			for (auto layer_node : n->getChildren()) {
+				if (layer_node->getName() == sfbxS_LayerElement) {
+					LayerElementDesc desc;
+					desc.type = GetChildPropertyString(layer_node, sfbxS_Type);
+					desc.index = GetChildPropertyValue<int>(layer_node, sfbxS_TypedIndex);
+					layer_descs.push_back(std::move(desc));
 				}
 			}
-			m_layers.push_back(std::move(layer));
+			m_layers.push_back(std::move(layer_descs));
 		}
 	}
 }
 
 void GeomMesh::exportFBXObjects()
 {
-    super::exportFBXObjects();
-
-    Node* n = getNode();
-
-    n->createChild(sfbxS_GeometryVersion, sfbxI_GeometryVersion);
-
-    // points
-    n->createChild(sfbxS_Vertices, make_adaptor<double3>(m_points));
-
-    // indices
-    {
-        // check if counts and indices are valid
-        size_t total_counts = 0;
-        for (int c : m_counts)
-            total_counts += c;
-
-        if (total_counts != m_indices.size()) {
-            sfbxPrint("sfbx::Mesh: *** indices mismatch with counts ***\n");
-        }
-        else {
-            auto* src_counts = m_counts.data();
-            auto dst_node = n->createChild(sfbxS_PolygonVertexIndex);
-            auto dst_prop = dst_node->createProperty();
-            auto dst = dst_prop->allocateArray<int>(m_indices.size()).data();
-
-            size_t cpoints = 0;
-            for (int i : m_indices) {
-                if (++cpoints == *src_counts) {
-                    i = ~i; // negative value indicates the last index in the face
-                    cpoints = 0;
-                    ++src_counts;
-                }
-                *dst++ = i;
-            }
-        }
-    }
-
-    auto add_mapping_and_reference_info = [](Node* node, const auto& layer) {
-        node->createChild(sfbxS_MappingInformationType, layer.mapping_mode);
-        node->createChild(sfbxS_ReferenceInformationType, layer.reference_mode);
-        //TODO if empty run checkModes() or warning?
-    };
-
-    int clayers = 0;
-
-    // normal layers
-	Node* l = nullptr;
-	if(!m_normal_layers.empty()){
-		l = n->createChild(sfbxS_LayerElementNormal, 0);
-	}
-
-    for (auto& layer : m_normal_layers) {
-        if (layer.data.empty())
-            continue;
-
-        ++clayers;
-		l->createChild(sfbxS_Version, sfbxI_LayerElementNormalVersion);
-		l->createChild(sfbxS_Name, layer.name);
-
-        add_mapping_and_reference_info(l, layer);
-		l->createChild(sfbxS_Normals, make_adaptor<double3>(layer.data));
-        if (!layer.indices.empty())
-			l->createChild(sfbxS_NormalsIndex, layer.indices);
-    }
-
-    // uv layers
-	if(!m_uv_layers.empty()){
-		l = n->createChild(sfbxS_LayerElementUV, 0);
-	}
-
-    for (auto& layer : m_uv_layers) {
-        if (layer.data.empty())
-            continue;
-
-        ++clayers;
-
-		l->createChild(sfbxS_Version, sfbxI_LayerElementUVVersion);
-		l->createChild(sfbxS_Name, layer.name);
-
-        add_mapping_and_reference_info(l, layer);
-		l->createChild(sfbxS_UV, make_adaptor<double2>(layer.data));
-        if (!layer.indices.empty())
-			l->createChild(sfbxS_UVIndex, layer.indices);
-    }
-
-    // color layers
-	if(!m_color_layers.empty()){
-		l = n->createChild(sfbxS_LayerElementColor, 0);
-	}
-
-    for (auto& layer : m_color_layers) {
-        if (layer.data.empty())
-            continue;
-
-        ++clayers;
-		l->createChild(sfbxS_Version, sfbxI_LayerElementColorVersion);
-		l->createChild(sfbxS_Name, layer.name);
-
-        add_mapping_and_reference_info(l, layer);
-		l->createChild(sfbxS_Colors, make_adaptor<double4>(layer.data));
-        if (!layer.indices.empty())
-			l->createChild(sfbxS_ColorIndex, layer.indices);
-    }
-
-    // material layers
+	super::exportFBXObjects();
 	
-	if(!m_material_layers.empty()){
-		l = n->createChild(sfbxS_LayerElementMaterial, 0);
-	}
-
-    for (auto& layer : m_material_layers) {
-        if (layer.data.empty())
-            continue;
-
-        ++clayers;
-		l->createChild(sfbxS_Version, sfbxI_LayerElementMaterialVersion);
-		l->createChild(sfbxS_Name, layer.name);
-
+	Node* n = getNode();
+	
+	n->createChild(sfbxS_GeometryVersion, sfbxI_GeometryVersion);
+	
+	// Points
+	n->createChild(sfbxS_Vertices, make_adaptor<double3>(m_points));
+	
+	// Indices
+	{
+		auto dst_node = n->createChild(sfbxS_PolygonVertexIndex);
+		auto dst_prop = dst_node->createProperty();
+		auto dst = dst_prop->allocateArray<int>(m_indices.size()).data();
 		
-        //TODO add_mapping_and_reference_info+checkModes?
-		
-		
-		l->createChild(sfbxS_MappingInformationType, "AllSame");
-		l->createChild(sfbxS_ReferenceInformationType, "IndexToDirect");
-
-		l->createChild(sfbxS_Materials, layer.data);
-    }
-
-    if (clayers) {
-		
-		auto layerContainer = n->createChild(sfbxS_Layer, 0);
-
-		layerContainer->createChild(sfbxS_Version, sfbxI_LayerVersion);
-
-		for (auto& layer : m_layers) {
-
-			for(auto& desc : layer){
-
-				auto le = layerContainer->createChild(sfbxS_LayerElement);
-				
-				le->createChild(sfbxS_Type, desc.type);
-				le->createChild(sfbxS_TypedIndex, desc.index);
-
+		size_t index = 0;
+		for (size_t i = 0; i < m_counts.size(); ++i) {
+			int count = m_counts[i];
+			for (int j = 0; j < count; ++j) {
+				int idx = m_indices[index++];
+				if (j == count - 1)
+					idx = ~idx; // Negate the last index in the polygon
+				*dst++ = idx;
 			}
-			
 		}
-		
-    }
+	}
+	
+	auto add_layer_element = [&](const std::string& element_name, auto& layers) {
+		for (size_t i = 0; i < layers.size(); ++i) {
+			auto& layer = layers[i];
+			if (layer.data.empty())
+				continue;
+			
+			Node* layer_node = n->createChild(element_name, (int)i);
+			layer_node->createChild(sfbxS_Version, sfbxI_LayerVersion);
+			layer_node->createChild(sfbxS_Name, layer.name);
+			layer_node->createChild(sfbxS_MappingInformationType, layer.mapping_mode);
+			layer_node->createChild(sfbxS_ReferenceInformationType, layer.reference_mode);
+			
+			if constexpr (std::is_same_v<decltype(layer), LayerElementF3&>) {
+				// Normals
+				layer_node->createChild(sfbxS_Normals, make_adaptor<double3>(layer.data));
+				if (!layer.indices.empty())
+					layer_node->createChild(sfbxS_NormalsIndex, layer.indices);
+			}
+			else if constexpr (std::is_same_v<decltype(layer), LayerElementF2&>) {
+				// UVs
+				layer_node->createChild(sfbxS_UV, make_adaptor<double2>(layer.data));
+				if (!layer.indices.empty())
+					layer_node->createChild(sfbxS_UVIndex, layer.indices);
+			}
+			else if constexpr (std::is_same_v<decltype(layer), LayerElementF4&>) {
+				// Colors
+				layer_node->createChild(sfbxS_Colors, make_adaptor<double4>(layer.data));
+				if (!layer.indices.empty())
+					layer_node->createChild(sfbxS_ColorIndex, layer.indices);
+			}
+			else if constexpr (std::is_same_v<decltype(layer), LayerElementI1&>) {
+				// Correct: Writing materials from layer.indices
+				layer_node->createChild(sfbxS_Materials, layer.indices);
+			}
+		}
+	};
+	
+	// Export layer elements
+	add_layer_element(sfbxS_LayerElementNormal, m_normal_layers);
+	add_layer_element(sfbxS_LayerElementUV, m_uv_layers);
+	add_layer_element(sfbxS_LayerElementColor, m_color_layers);
+	add_layer_element(sfbxS_LayerElementMaterial, m_material_layers);
+	
+	// Export layer descriptions
+	for (size_t i = 0; i < m_layers.size(); ++i) {
+		Node* layer_node = n->createChild(sfbxS_Layer, (int)i);
+		layer_node->createChild(sfbxS_Version, sfbxI_LayerVersion);
+		for (auto& desc : m_layers[i]) {
+			Node* le_node = layer_node->createChild(sfbxS_LayerElement);
+			le_node->createChild(sfbxS_Type, desc.type);
+			le_node->createChild(sfbxS_TypedIndex, desc.index);
+		}
+	}
 }
 
 span<int> GeomMesh::getCounts() const { return make_span(m_counts); }
@@ -376,7 +291,7 @@ span<float3> GeomMesh::getNormals() const { return make_span(m_normals); }
 span<LayerElementF3> GeomMesh::getNormalLayers() const  { return make_span(m_normal_layers); }
 span<LayerElementF2> GeomMesh::getUVLayers() const      { return make_span(m_uv_layers); }
 span<LayerElementF4> GeomMesh::getColorLayers() const   { return make_span(m_color_layers); }
-span<LayerElementI1> GeomMesh::getMatrialLayers() const { return make_span(m_material_layers); }
+span<LayerElementI1> GeomMesh::getMaterialLayers() const { return make_span(m_material_layers); }
 span<std::vector<LayerElementDesc>> GeomMesh::getLayers() const { return make_span(m_layers); }
 
 void GeomMesh::setCounts(span<int> v) { m_counts = v; }
@@ -390,52 +305,86 @@ void GeomMesh::addMaterialLayer(LayerElementI1&& v) { m_material_layers.push_bac
 
 span<float3> GeomMesh::getPointsDeformed(bool apply_transform)
 {
-    if (m_deformers.empty() && !apply_transform)
-        return make_span(m_points);
-
-    m_points_deformed = m_points;
-    auto dst = make_span(m_points_deformed);
-    bool is_skinned = false;
-    for (auto deformer : m_deformers) {
-        deformer->deformPoints(dst);
-        if (as<Skin>(deformer))
-            is_skinned = true;
-    }
-    if (!is_skinned && apply_transform) {
-        if (auto model = getModel()) {
-            auto mat = model->getGlobalMatrix();
-            for (auto& v : dst)
-                v = mul_p(mat, v);
-        }
-    }
-    return dst;
+	if (m_deformers.empty() && !apply_transform)
+		return make_span(m_points);
+	
+	m_points_deformed = m_points;
+	auto dst = make_span(m_points_deformed);
+	bool is_skinned = false;
+	for (auto deformer : m_deformers) {
+		deformer->deformPoints(dst);
+		if (as<Skin>(deformer))
+			is_skinned = true;
+	}
+	if (!is_skinned && apply_transform) {
+		if (auto model = getModel()) {
+			auto mat = model->getGlobalMatrix();
+			for (auto& v : dst)
+				v = mul_p(mat, v);
+		}
+	}
+	return dst;
 }
 
 span<float3> GeomMesh::getNormalsDeformed(size_t layer_index, bool apply_transform)
 {
-    if (layer_index >= m_normal_layers.size())
-        return {};
-
-    auto& l = m_normal_layers[layer_index];
-    if (m_deformers.empty() && !apply_transform)
-        return make_span(l.data);
-
-    l.data_deformed = l.data;
-    auto dst = make_span(l.data_deformed);
-    bool is_skinned = false;
-    for (auto deformer : m_deformers) {
-        deformer->deformNormals(dst);
-        if (as<Skin>(deformer))
-            is_skinned = true;
-    }
-    if (!is_skinned && apply_transform) {
-        if (auto model = getModel()) {
-            auto mat = model->getGlobalMatrix();
-            for (auto& v : dst)
-                v = normalize(mul_v(mat, v));
-        }
-    }
-    return dst;
+	if (layer_index >= m_normal_layers.size())
+		return {};
+	
+	auto& l = m_normal_layers[layer_index];
+	if (m_deformers.empty() && !apply_transform)
+		return make_span(l.data);
+	
+	l.data_deformed = l.data;
+	auto dst = make_span(l.data_deformed);
+	bool is_skinned = false;
+	for (auto deformer : m_deformers) {
+		deformer->deformNormals(dst);
+		if (as<Skin>(deformer))
+			is_skinned = true;
+	}
+	if (!is_skinned && apply_transform) {
+		if (auto model = getModel()) {
+			auto mat = model->getGlobalMatrix();
+			for (auto& v : dst)
+				v = normalize(mul_v(mat, v));
+		}
+	}
+	return dst;
+}
+int GeomMesh::getMaterialForVertexIndex(size_t vertex_index) const
+{
+	if (m_material_layers.empty())
+		return -1; // No material layer found
+	
+	const auto& material_layer = m_material_layers[0]; // Assuming first material layer
+	const std::string& mapping_mode = material_layer.mapping_mode;
+	
+	// Determine the polygon index for the given vertex index
+	size_t polygon_index = 0;
+	size_t vertex_count = 0;
+	for (size_t i = 0; i < m_counts.size(); ++i) {
+		vertex_count += m_counts[i];
+		if (vertex_index < vertex_count) {
+			polygon_index = i;
+			break;
+		}
+	}
+	
+	if (mapping_mode == "AllSame") {
+		// All faces have the same material
+		return 0; // Index of the first material connected to the mesh
+	}
+	else if (mapping_mode == "ByPolygon") {
+		if (polygon_index >= material_layer.indices.size())
+			return -1; // Out of bounds
+		int material_index = material_layer.indices[polygon_index];
+		return material_index; // Index into the materials connected to the mesh
+	}
+	else {
+		// Unsupported mapping mode
+		return -1;
+	}
 }
 
 
@@ -443,29 +392,29 @@ ObjectSubClass Shape::getSubClass() const { return ObjectSubClass::Shape; }
 
 void Shape::importFBXObjects()
 {
-    for (auto n : getNode()->getChildren()) {
-        auto name = n->getName();
-        if (name == sfbxS_Indexes)
-            GetPropertyValue<int>(m_indices, n);
-        else if (name == sfbxS_Vertices)
-            GetPropertyValue<double3>(m_delta_points, n);
-        else if (name == sfbxS_Normals)
-            GetPropertyValue<double3>(m_delta_normals, n);
-    }
+	for (auto n : getNode()->getChildren()) {
+		auto name = n->getName();
+		if (name == sfbxS_Indexes)
+			GetPropertyValue<int>(m_indices, n);
+		else if (name == sfbxS_Vertices)
+			GetPropertyValue<double3>(m_delta_points, n);
+		else if (name == sfbxS_Normals)
+			GetPropertyValue<double3>(m_delta_normals, n);
+	}
 }
 
 void Shape::exportFBXObjects()
 {
-    super::exportFBXObjects();
-
-    Node* n = getNode();
-    n->createChild(sfbxS_Version, sfbxI_ShapeVersion);
-    if (!m_indices.empty())
-        n->createChild(sfbxS_Indexes, m_indices);
-    if (!m_delta_points.empty())
-        n->createChild(sfbxS_Vertices, make_adaptor<double3>(m_delta_points));
-    if (!m_delta_normals.empty())
-        n->createChild(sfbxS_Normals, make_adaptor<double3>(m_delta_normals));
+	super::exportFBXObjects();
+	
+	Node* n = getNode();
+	n->createChild(sfbxS_Version, sfbxI_ShapeVersion);
+	if (!m_indices.empty())
+		n->createChild(sfbxS_Indexes, m_indices);
+	if (!m_delta_points.empty())
+		n->createChild(sfbxS_Vertices, make_adaptor<double3>(m_delta_points));
+	if (!m_delta_normals.empty())
+		n->createChild(sfbxS_Normals, make_adaptor<double3>(m_delta_normals));
 }
 
 span<int> Shape::getIndices() const { return make_span(m_indices); }

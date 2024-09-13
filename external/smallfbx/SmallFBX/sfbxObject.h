@@ -84,7 +84,8 @@ bool SplitFullName(string_view full_name, string_view& display_name, string_view
 
 class Object : public std::enable_shared_from_this<Object>
 {
-friend class Document;
+	friend class Document;
+	friend class Texture;
 public:
     virtual ~Object();
     virtual ObjectClass getClass() const;

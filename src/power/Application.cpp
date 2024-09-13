@@ -29,6 +29,9 @@
 #include "ui/UiManager.hpp"
 
 Application::Application() : nanogui::Screen(nanogui::Vector2i(1280, 720), "Power Engine", false) {
+	
+	SkinnedMesh::init_dummy_texture();
+	
     theme()->m_window_drop_shadow_size = 0;
 
     set_layout(new nanogui::GridLayout(nanogui::Orientation::Horizontal, 1,
@@ -49,8 +52,12 @@ Application::Application() : nanogui::Screen(nanogui::Vector2i(1280, 720), "Powe
 
 	mUiManager = std::make_unique<UiManager>(mUiCommon->hierarchy_panel(), mUiCommon->hierarchy_panel(), *mActorManager, *mMeshActorLoader, mRenderCommon->shader_manager(), mUiCommon->scene_panel(), mRenderCommon->canvas(), mUiCommon->toolbox(), mUiCommon->status_bar(), *mCameraManager);
 
+	
+//	mActors.push_back(
+//	mMeshActorLoader->create_actor("models/DeepMotionBot.fbx"));
+
     mActors.push_back(
-        mMeshActorLoader->create_actor("models/DeepMotionBot.fbx"));
+        mMeshActorLoader->create_actor("models/Venasaur/VenusaurF.fbx"));
 
     std::vector<std::reference_wrapper<Actor>> actors;
     actors.push_back(mActors.back());
