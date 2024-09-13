@@ -9,18 +9,20 @@
 #include <functional>
 
 class IActorSelectedRegistry;
+class IActorVisualManager;
 class ActorManager;
 class Canvas;
 class CameraManager;
 class GizmoManager;
 class Grid;
+class MeshActorLoader;
 class ScenePanel;
 class ShaderManager;
 
 // UiManager class definition
 class UiManager : public IActorSelectedCallback, public Drawable {
 public:
-	UiManager(IActorSelectedRegistry& registry, ActorManager& actorManager, ShaderManager& shaderManager, ScenePanel& scenePanel, Canvas& canvas, nanogui::Widget& toolbox, CameraManager& cameraManager);
+	UiManager(IActorSelectedRegistry& registry, IActorVisualManager& actorVisualManager, ActorManager& actorManager, MeshActorLoader& meshActorLoader, ShaderManager& shaderManager, ScenePanel& scenePanel, Canvas& canvas, nanogui::Widget& toolbox, nanogui::Widget& statusBar, CameraManager& cameraManager);
 	~UiManager();
 	
 	void OnActorSelected(Actor& actor) override;

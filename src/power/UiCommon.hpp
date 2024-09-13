@@ -20,9 +20,7 @@ class UiManager;
 class UiCommon {
 public:
     UiCommon(nanogui::Widget& parent, ActorManager& actorManager);
-    
-    void attach_actors(const std::vector<std::reference_wrapper<Actor>> &actors);
-    
+        
     HierarchyPanel& hierarchy_panel() {
         return *mHierarchyPanel;
     }
@@ -31,8 +29,8 @@ public:
         return *mScenePanel;
     }
 
-    StatusBarPanel& status_bar_panel() {
-        return *mStatusBarPanel;
+    nanogui::Widget& status_bar() {
+        return *mStatusBar;
     }
 
     TransformPanel& transform_panel() {
@@ -47,6 +45,7 @@ private:
     ScenePanel* mScenePanel;
     TransformPanel* mTransformPanel;
     HierarchyPanel* mHierarchyPanel;
-    StatusBarPanel* mStatusBarPanel;
+	nanogui::Widget* mStatusBar;
+	StatusBarPanel* mStatusBarPanel;
 	nanogui::Widget* mToolbox;
 };

@@ -15,12 +15,14 @@ class Actor; // Forward declaration
 class ScenePanel;
 class TransformPanel;
 
-class HierarchyPanel : public IActorSelectedRegistry, public Panel {
+class HierarchyPanel : public IActorSelectedRegistry, public IActorVisualManager, public Panel {
 public:
 	HierarchyPanel(ScenePanel& scenePanel, TransformPanel& transformPanel, nanogui::Widget &parent);
 
-    void set_actors(const std::vector<std::reference_wrapper<Actor>> &actors);
+    void add_actors(const std::vector<std::reference_wrapper<Actor>> &actors) override;
 
+	void add_actor(std::reference_wrapper<Actor> actor) override;
+	
 	void RegisterOnActorSelectedCallback(IActorSelectedCallback& callback) override;
 	
 	void UnregisterOnActorSelectedCallback(IActorSelectedCallback& callback) override;

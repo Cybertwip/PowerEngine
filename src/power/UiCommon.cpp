@@ -5,7 +5,6 @@
 #include "grok/PromptBox.hpp"
 #include "ui/HierarchyPanel.hpp"
 #include "ui/ScenePanel.hpp"
-#include "ui/StatusBarPanel.hpp"
 #include "ui/TransformPanel.hpp"
 #include "ui/UiManager.hpp"
 
@@ -48,10 +47,10 @@ UiCommon::UiCommon(nanogui::Widget& parent, ActorManager& actorManager) {
     mScenePanel->set_fixed_width(sceneWidth);
     mScenePanel->set_fixed_height(sceneHeight);
 
-	mStatusBarPanel = new StatusBarPanel(*leftWrapper);
-	mStatusBarPanel->set_fixed_height(statusHeight);
-	mStatusBarPanel->set_layout(new nanogui::BoxLayout(nanogui::Orientation::Horizontal,
-												nanogui::Alignment::Minimum, 4, 2));
+	mStatusBar = new nanogui::Widget(leftWrapper);
+
+	mStatusBar->set_fixed_width(leftWrapper->fixed_width());
+	mStatusBar->set_fixed_height(statusHeight);
 
     auto rightWrapper = new nanogui::Window(sceneWrapper, "");
     rightWrapper->set_layout(
@@ -77,6 +76,3 @@ UiCommon::UiCommon(nanogui::Widget& parent, ActorManager& actorManager) {
 	rightWrapper->add_child(promptbox); // Add Grok third
 }
 
-void UiCommon::attach_actors(const std::vector<std::reference_wrapper<Actor>>& actors) {
-    mHierarchyPanel->set_actors(actors);
-}

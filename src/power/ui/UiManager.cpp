@@ -24,6 +24,7 @@
 #include "graphics/drawing/Grid.hpp"
 
 #include "ui/ScenePanel.hpp"
+#include "ui/StatusBarPanel.hpp"
 
 #include <nanogui/opengl.h>
 
@@ -66,7 +67,7 @@ glm::vec3 ScreenToWorld(glm::vec2 screenPos, float depth, glm::mat4 projectionMa
 
 }
 
-UiManager::UiManager(IActorSelectedRegistry& registry, ActorManager& actorManager, ShaderManager& shaderManager, ScenePanel& scenePanel, Canvas& canvas, nanogui::Widget& toolbox, CameraManager& cameraManager)
+UiManager::UiManager(IActorSelectedRegistry& registry, IActorVisualManager& actorVisualManager, ActorManager& actorManager, MeshActorLoader& meshActorLoader, ShaderManager& shaderManager, ScenePanel& scenePanel, Canvas& canvas, nanogui::Widget& toolbox, nanogui::Widget& statusBar, CameraManager& cameraManager)
 : mRegistry(registry)
 , mActorManager(actorManager)
 , mShader(*shaderManager.get_shader("mesh"))
@@ -213,7 +214,13 @@ UiManager::UiManager(IActorSelectedRegistry& registry, ActorManager& actorManage
 
 			mActiveActor->get().get_component<UiComponent>().select();
 		}
-	});	
+	});
+	
+	StatusBarPanel* statusBarPanel = new StatusBarPanel(statusBar, actorVisualManager, meshActorLoader);
+	statusBarPanel->set_fixed_width(statusBar.fixed_height());
+	statusBarPanel->set_fixed_height(statusBar.fixed_height());
+	statusBarPanel->set_layout(new nanogui::BoxLayout(nanogui::Orientation::Horizontal,
+													   nanogui::Alignment::Minimum, 4, 2));
 }
 
 UiManager::~UiManager() {

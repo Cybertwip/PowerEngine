@@ -36,6 +36,7 @@ class Application : public nanogui::Screen
     std::unique_ptr<ShaderManager> mShaderManager;
 	std::unique_ptr<ActorManager> mActorManager;
 	std::unique_ptr<RenderCommon> mRenderCommon;
+	std::unique_ptr<MeshActorLoader> mMeshActorLoader;
     std::unique_ptr<UiCommon> mUiCommon;
 	std::unique_ptr<UiManager> mUiManager;
     

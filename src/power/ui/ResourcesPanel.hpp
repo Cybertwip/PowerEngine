@@ -6,10 +6,13 @@
 
 #include <nanogui/nanogui.h>
 
+class IActorVisualManager;
+class MeshActorLoader;
+
 class ResourcesPanel : public Panel {
 public:
 	ResourcesPanel(nanogui::Widget &parent,
-				   const DirectoryNode& root_directory_node);
+				   const DirectoryNode& root_directory_node, IActorVisualManager& actorVisualManager,  MeshActorLoader& meshActorLoader);
 	
 	void refresh_file_view();
 	int get_icon_for_file(const DirectoryNode& node);
@@ -40,4 +43,6 @@ private:
 	void export_assets();
 	void navigate_up_to_cwd();
 
+	IActorVisualManager& mActorVisualManager;
+	MeshActorLoader& mMeshActorLoader;
 };

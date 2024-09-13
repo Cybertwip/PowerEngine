@@ -14,7 +14,8 @@
 
 static std::unique_ptr<DirectoryNode> rootNode = DirectoryNode::create(std::filesystem::current_path().string());
 
-StatusBarPanel::StatusBarPanel(nanogui::Widget &parent) : Panel(parent, "") {
+
+StatusBarPanel::StatusBarPanel(nanogui::Widget &parent, IActorVisualManager& actorVisualManager,  MeshActorLoader& meshActorLoader) : Panel(parent, "") {
 	set_layout(new nanogui::GroupLayout());
 	
 	// Status bar setup
@@ -29,14 +30,15 @@ StatusBarPanel::StatusBarPanel(nanogui::Widget &parent) : Panel(parent, "") {
 	resourcesButton->set_tooltip("Toggle Resources Panel");
 	
 	// Resources panel setup
-	mResourcesPanel = new ResourcesPanel(parent, *rootNode);
+	mResourcesPanel = new ResourcesPanel(*parent.parent(), *rootNode, actorVisualManager, meshActorLoader);
 	mResourcesPanel->set_visible(true);
-		
+	// Add widgets to resourcesPanel here
+	
 	// Initial positioning
 	mResourcesPanel->set_position(nanogui::Vector2i(0, 0));
 	
-	mResourcesPanel->set_fixed_width(parent.fixed_width());
-	mResourcesPanel->set_fixed_height(parent.fixed_height() * 0.75f);
+	mResourcesPanel->set_fixed_width(parent.parent()->fixed_width());
+	mResourcesPanel->set_fixed_height(parent.parent()->fixed_height() * 0.75f);
 }
 
 void StatusBarPanel::toggle_resources_panel(bool active) {
@@ -46,12 +48,12 @@ void StatusBarPanel::toggle_resources_panel(bool active) {
 	
 	if (active) {
 		mAnimationFuture = std::async(std::launch::async, [this]() {
-			auto target = nanogui::Vector2i(0, parent()->fixed_height() * 0.25f - fixed_height());
+			auto target = nanogui::Vector2i(0, parent()->parent()->fixed_height() * 0.25f - fixed_height());
 			animate_panel_position(target);
 		});
 	} else {
 		mAnimationFuture = std::async(std::launch::async, [this]() {
-			auto target = nanogui::Vector2i(0, parent()->fixed_height());
+			auto target = nanogui::Vector2i(0, parent()->parent()->fixed_height());
 			animate_panel_position(target);
 		});
 	}
@@ -62,7 +64,7 @@ void StatusBarPanel::toggle_resources_panel(bool active) {
 }
 
 void StatusBarPanel::animate_panel_position(const nanogui::Vector2i &targetPosition) {
-	const int steps = 10;
+	const int steps = 20;
 	const auto stepDelay = std::chrono::milliseconds(16); // ~60 FPS
 	nanogui::Vector2i startPos = mResourcesPanel->position();
 	nanogui::Vector2i step = (targetPosition - startPos) / (steps - 1);

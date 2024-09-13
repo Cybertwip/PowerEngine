@@ -32,13 +32,14 @@ bool HierarchyPanel::mouse_drag_event(const nanogui::Vector2i &p, const nanogui:
 	return mScrollPanel->mouse_drag_event(p, rel, button, modifiers);
 }
 
-void HierarchyPanel::set_actors(const std::vector<std::reference_wrapper<Actor>> &actors) {
-	mTreeView->clear();
+void HierarchyPanel::add_actors(const std::vector<std::reference_wrapper<Actor>> &actors) {
 	for (auto &actor : actors) {
 		populate_tree(actor.get());
 	}
+}
 
-	//actors.front().get().get_component<UiComponent>().select();
+void HierarchyPanel::add_actor(std::reference_wrapper<Actor> actor) {
+	populate_tree(actor.get());
 }
 
 void HierarchyPanel::populate_tree(Actor &actor, nanogui::TreeViewItem *parent_node) {

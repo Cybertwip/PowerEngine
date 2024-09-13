@@ -38,10 +38,6 @@ public:
         return *mShaderManager;
     }
     
-	MeshActorLoader& mesh_actor_loader() {
-		return *mMeshActorLoader;
-	}
-
 	CameraActorLoader& camera_actor_loader() {
 		return *mCameraActorLoader;
 	}
@@ -50,7 +46,6 @@ public:
 private:
 	Canvas* mCanvas;
     std::unique_ptr<ShaderManager> mShaderManager;
-	std::unique_ptr<MeshActorLoader> mMeshActorLoader;
 	std::unique_ptr<CameraActorLoader> mCameraActorLoader;
 };
 

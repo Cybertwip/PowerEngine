@@ -12,11 +12,13 @@
 #include <future>
 #include <chrono>
 
+class IActorVisualManager;
+class MeshActorLoader;
 class ResourcesPanel;
 
 class StatusBarPanel : public Panel {
 public:
-	StatusBarPanel(nanogui::Widget &parent);
+	StatusBarPanel(nanogui::Widget &parent, IActorVisualManager& actorVisualManager, MeshActorLoader& meshActorLoader);
 	
 private:
 	ResourcesPanel *mResourcesPanel;
