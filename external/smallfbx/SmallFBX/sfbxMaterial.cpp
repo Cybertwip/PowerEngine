@@ -54,14 +54,19 @@ void Video::importFBXObjects()
 	
 	for(auto& child : getNode()->getChildren()){
 
-		if(child->getName() == "Filename"){
+		if(child->getName() == "RelativeFilename"){
 			embeddedFilename = child->getProperty(0)->getString();
 		}
 				
 		if(child->getName() == "Content"){
 			isEmbedded = true;
 			auto content = child->getProperty(0)->getString();
-			m_data = std::vector<uint8_t>(content.begin(), content.end()) ;
+			
+			if (content.empty()) {
+				isEmbedded = false;
+			} else {
+				m_data = std::vector<uint8_t>(content.begin(), content.end()) ;
+			}
 		}
 
 	}
@@ -75,9 +80,12 @@ void Video::importFBXObjects()
 	for(auto& child : getNode()->getChildren()){
 		auto stream = std::stringstream();
 		
-		if(child->getName() == "Filename" || child->getName() == "RelativeFilename"){
+		if(child->getName() == "RelativeFilename"){
 			if(isEmbedded){
 				child->getProperty(0)->assign(embeddedFilename);
+			} else {
+				
+				embeddedFilename = child->getProperty(0)->getString();
 			}
 		}
 		
@@ -164,7 +172,7 @@ void Texture::importFBXObjects()
 	
 	
 	for(auto& child : getNode()->getChildren()){
-		if(child->getName() == "FileName" || child->getName() == "RelativeFilename"){
+		if(child->getName() == "RelativeFilename"){
 			
 			if(hasVideo){
 				if(m_embedded){
@@ -173,7 +181,7 @@ void Texture::importFBXObjects()
 			}
 		}
 		
-		if(child->getName() == "FileName"){
+		if(child->getName() == "RelativeFilename"){
 			if(!m_embedded){
 				m_filename = child->getProperty(0)->getString();
 			}
