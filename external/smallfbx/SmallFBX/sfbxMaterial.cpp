@@ -99,6 +99,27 @@ void Video::importFBXObjects()
 	
 	if(!m_embedded){
 		// Open the file in binary mode
+		// Convert to preferred format (platform-specific)
+		// Convert the base path to a filesystem path and normalize it
+		std::filesystem::path base = std::filesystem::path(m_document->global_settings.path).parent_path().make_preferred();
+		
+		std::filesystem::path relative = std::filesystem::path(m_filename).make_preferred();
+		
+		// Resolve the relative path based on the base path
+		std::filesystem::path absolutePath = std::filesystem::absolute(base / relative);
+		
+		std::string result = absolutePath.string();
+
+#ifdef _WIN32
+		// On Windows, ensure backslashes
+		std::replace(result.begin(), result.end(), '/', '\\');
+#else
+		// On macOS/Linux, ensure forward slashes
+		std::replace(result.begin(), result.end(), '\\', '/');
+#endif
+		
+		m_filename = result;
+		
 		std::ifstream file(m_filename, std::ios::binary);
 		
 		// Check if the file is successfully opened

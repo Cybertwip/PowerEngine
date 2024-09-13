@@ -35,6 +35,7 @@ Document::Document(std::istream& input)
 
 Document::Document(const std::string& path)
 {
+	global_settings.path = path;
     read(path);
 }
 
