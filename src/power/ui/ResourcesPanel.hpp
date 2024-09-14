@@ -22,6 +22,9 @@ public:
 	virtual bool keyboard_event(int key, int scancode, int action, int modifiers) override;
 
 private:
+	
+	bool mouse_button_event(const nanogui::Vector2i &p, int button, bool down, int modifiers) override;
+	
 	const DirectoryNode& mRootDirectoryNode;
 	std::string mSelectedDirectoryPath;
 	
@@ -45,4 +48,11 @@ private:
 
 	IActorVisualManager& mActorVisualManager;
 	MeshActorLoader& mMeshActorLoader;
+	
+	std::vector<nanogui::Button*> mFileButtons;
+	nanogui::Button* mSelectedButton;
+	DirectoryNode* mSelectedNode;
+	nanogui::Color mNormalButtonColor;
+	nanogui::Color mSelectedButtonColor;
+
 };

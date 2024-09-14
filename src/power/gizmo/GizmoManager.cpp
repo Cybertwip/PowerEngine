@@ -92,7 +92,9 @@ void GizmoManager::draw() { mActorManager.visit(*this); }
 void GizmoManager::draw_content(const nanogui::Matrix4f& model, const nanogui::Matrix4f& view,
 								const nanogui::Matrix4f& projection) {
 	
-	if (mActiveActor.has_value()) {		
+	if (mActiveActor.has_value()) {
+		glClear(GL_DEPTH_BUFFER_BIT);
+		
 		switch (mCurrentMode) {
 			case GizmoMode::Translation:
 				mTranslationGizmo->draw_content(mActiveActor, model, view, projection);
@@ -104,8 +106,6 @@ void GizmoManager::draw_content(const nanogui::Matrix4f& model, const nanogui::M
 				mScaleGizmo->draw_content(mActiveActor, model, view, projection);
 				break;
 		}
-		
-		
 	}
 }
 

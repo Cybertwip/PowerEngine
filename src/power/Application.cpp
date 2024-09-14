@@ -50,7 +50,15 @@ Application::Application() : nanogui::Screen(nanogui::Vector2i(1280, 720), "Powe
 
 	mMeshActorLoader = std::make_unique<MeshActorLoader>(*mActorManager, mRenderCommon->shader_manager());
 
-	mUiManager = std::make_unique<UiManager>(mUiCommon->hierarchy_panel(), mUiCommon->hierarchy_panel(), *mActorManager, *mMeshActorLoader, mRenderCommon->shader_manager(), mUiCommon->scene_panel(), mRenderCommon->canvas(), mUiCommon->toolbox(), mUiCommon->status_bar(), *mCameraManager);
+	auto applicationClickCallbackRegistrator = [this](std::function<void(int, int)> callback){
+		auto callbackWrapee = [this, callback](bool down, int width, int height, int x, int y){
+			callback(x, y);
+		};
+		
+		register_click_callback(callbackWrapee);
+	};
+
+	mUiManager = std::make_unique<UiManager>(mUiCommon->hierarchy_panel(), mUiCommon->hierarchy_panel(), *mActorManager, *mMeshActorLoader, mRenderCommon->shader_manager(), mUiCommon->scene_panel(), mRenderCommon->canvas(), mUiCommon->toolbox(), mUiCommon->status_bar(), *mCameraManager, applicationClickCallbackRegistrator);
 
 	
 //	mActors.push_back(
@@ -74,8 +82,9 @@ Application::Application() : nanogui::Screen(nanogui::Vector2i(1280, 720), "Powe
 	if (mCameraManager->active_camera().has_value()) {
 		mCameraManager->active_camera()->get().get_component<TransformComponent>().set_translation(glm::vec3(0, -50, 250));
 	}
+	
     mUiCommon->hierarchy_panel().add_actors(std::move(actors));
-
+	
     perform_layout();
 }
 
@@ -93,5 +102,33 @@ void Application::draw(NVGcontext *ctx) {
 }
 
 void Application::process_events() {
+	// Dispatch queued click events
+	while (!mClickQueue.empty()) {
+		auto [down, w, h, x, y] = mClickQueue.front();
+		mClickQueue.pop();
+		
+		for (auto& callback : mClickCallbacks) {
+			callback(down, w, h, x, y);
+		}
+	}
+
 	mUiCommon->scene_panel().process_events();
+}
+
+bool Application::mouse_button_event(const nanogui::Vector2i &p, int button, bool down, int modifiers) {
+	if (button == GLFW_MOUSE_BUTTON_1 && down && !m_focused) {
+		request_focus();
+	}
+	
+	
+	// Queue the click event
+	if (button == GLFW_MOUSE_BUTTON_1) {
+		mClickQueue.push(std::make_tuple(down, width(), height(), p.x(), p.y()));
+	}
+	
+	return Widget::mouse_button_event(p, button, down, modifiers);
+}
+
+void Application::register_click_callback(std::function<void(bool, int, int, int, int)> callback) {
+	mClickCallbacks.push_back(callback);
 }

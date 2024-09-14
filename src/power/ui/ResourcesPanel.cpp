@@ -102,7 +102,19 @@ const DirectoryNode* FindNodeByPath(const DirectoryNode& currentNode, const std:
 }
 
 ResourcesPanel::ResourcesPanel(nanogui::Widget& parent, const DirectoryNode& root_directory_node, IActorVisualManager& actorVisualManager,  MeshActorLoader& meshActorLoader)
-: Panel(parent, "Resources"), mRootDirectoryNode(root_directory_node), mActorVisualManager(actorVisualManager),  mMeshActorLoader(meshActorLoader) {
+: Panel(parent, "Resources"),
+mRootDirectoryNode(root_directory_node),
+mActorVisualManager(actorVisualManager),
+mMeshActorLoader(meshActorLoader),
+mSelectedButton(nullptr),
+mSelectedNode(nullptr),
+mNormalButtonColor(nanogui::Color(0.7f, 0.7f, 0.7f, 1.0f)),
+mSelectedButtonColor(nanogui::Color(0.5f, 0.5f, 0.8f, 1.0f))
+{
+	mNormalButtonColor = theme()->m_button_gradient_bot_unfocused;
+
+	mSelectedButtonColor = mNormalButtonColor + nanogui::Color(0.25f, 0.25f, 0.32f, 1.0f);
+
 	// Set the layout
 	set_layout(new nanogui::BoxLayout(nanogui::Orientation::Vertical, nanogui::Alignment::Fill, 0, 10));
 	
@@ -143,7 +155,7 @@ ResourcesPanel::ResourcesPanel(nanogui::Widget& parent, const DirectoryNode& roo
 		nanogui::async([this](){
 			refresh_file_view();
 		});
-
+		
 		return true;
 	});
 	
@@ -169,7 +181,11 @@ void ResourcesPanel::refresh_file_view() {
 		}
 		mFileView->remove_child(file_view_child);
 	}
-
+	
+	// Clear the buttons vector
+	mFileButtons.clear();
+	
+	
 	if (!mSelectedDirectoryPath.empty()) {
 		const DirectoryNode* selected_node = FindNodeByPath(mRootDirectoryNode, mSelectedDirectoryPath);
 		
@@ -196,14 +212,37 @@ void ResourcesPanel::refresh_file_view() {
 				auto icon = new nanogui::Button(itemContainer, "");
 				icon->set_icon(get_icon_for_file(*child));
 				icon->set_fixed_size(nanogui::Vector2i(120, 120));
+								
+				
+				icon->set_background_color(mNormalButtonColor);
 				
 				auto name = new nanogui::Label(itemContainer, child->FileName);
 				name->set_fixed_width(120);
 				
+				mFileButtons.push_back(icon);
+
 				icon->set_callback([this, &child, icon]() {
-					nanogui::async([this, &child](){
-						handle_file_interaction(*child);
-					});
+					// Handle selection
+					if (mSelectedButton && mSelectedButton != icon) {
+						mSelectedButton->set_background_color(mNormalButtonColor);
+					}
+					mSelectedButton = icon;
+					icon->set_background_color(mSelectedButtonColor);
+					
+					// Store the selected node for later use
+					mSelectedNode = child.get();
+					
+					// Handle double-click for action
+					static std::chrono::time_point<std::chrono::high_resolution_clock> lastClickTime;
+					auto currentClickTime = std::chrono::high_resolution_clock::now();
+					auto clickDuration = std::chrono::duration_cast<std::chrono::milliseconds>(currentClickTime - lastClickTime).count();
+					if (clickDuration < 400) {
+						// Double-click detected
+						nanogui::async([this]() {
+							handle_file_interaction(*mSelectedNode);
+						});
+					}
+					lastClickTime = currentClickTime;
 				});
 			}
 		}
@@ -220,8 +259,31 @@ int ResourcesPanel::get_icon_for_file(const DirectoryNode& node) {
 	return FA_FILE; // Default icon
 }
 
-void ResourcesPanel::handle_file_interaction(DirectoryNode& node) {
+bool ResourcesPanel::mouse_button_event(const nanogui::Vector2i &p, int button, bool down, int modifiers) {
+	if (down && button == GLFW_MOUSE_BUTTON_1) {
+		nanogui::Widget* widget = find_widget(p);
+		bool clickOnButton = false;
+		for (auto fileButton : mFileButtons) {
+			if (widget == fileButton) {
+				clickOnButton = true;
+				break;
+			}
+		}
+		if (!clickOnButton) {
+			// Clicked outside of buttons
+			if (mSelectedButton) {
+				mSelectedButton->set_background_color(mNormalButtonColor);
+				mSelectedButton = nullptr;
+				mSelectedNode = nullptr;
+			}
+		}
+	}
 	
+	return Panel::mouse_button_event(p, button, down, modifiers);
+}
+
+
+void ResourcesPanel::handle_file_interaction(DirectoryNode& node) {
 	if (node.IsDirectory) {
 		node.refresh();
 		mSelectedDirectoryPath = node.FullPath;
@@ -234,6 +296,13 @@ void ResourcesPanel::handle_file_interaction(DirectoryNode& node) {
 		// Handle other file type interactions...
 	}
 	
+	
+	// Reset the selection
+	if (mSelectedButton) {
+		mSelectedButton->set_background_color(mNormalButtonColor);
+		mSelectedButton = nullptr;
+		mSelectedNode = nullptr;
+	}
 	
 	refresh_file_view();
 }
@@ -288,7 +357,7 @@ void ResourcesPanel::import_assets() {
 void ResourcesPanel::export_assets() {
 	// Open a file dialog to select the destination directory
 	std::vector<std::string> file = nanogui::file_dialog(
-													  { {"", ""} }, true, false);
+														 { {"", ""} }, true, false);
 	
 	if (file.empty()) {
 		return; // User canceled

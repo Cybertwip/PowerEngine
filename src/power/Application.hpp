@@ -30,7 +30,12 @@ class Application : public nanogui::Screen
 	virtual void draw(NVGcontext *ctx) override;
 	virtual void process_events() override;
 
+	void register_click_callback(std::function<void(bool, int, int, int, int)> callback);
+
    private:
+	
+	bool mouse_button_event(const nanogui::Vector2i &p, int button, bool down, int modifiers) override;
+
     std::unique_ptr<entt::registry> mEntityRegistry;
     std::unique_ptr<CameraManager> mCameraManager;
     std::unique_ptr<Canvas> mCanvas;
@@ -42,5 +47,8 @@ class Application : public nanogui::Screen
 	std::unique_ptr<UiManager> mUiManager;
     
     std::vector<std::reference_wrapper<Actor>> mActors;
+	
+	std::queue<std::tuple<bool, int, int, int, int>> mClickQueue;
+	std::vector<std::function<void(bool, int, int, int, int)>> mClickCallbacks;
 
 };

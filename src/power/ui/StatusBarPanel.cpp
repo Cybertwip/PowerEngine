@@ -14,8 +14,7 @@
 
 static std::unique_ptr<DirectoryNode> rootNode = DirectoryNode::create(std::filesystem::current_path().string());
 
-
-StatusBarPanel::StatusBarPanel(nanogui::Widget &parent, IActorVisualManager& actorVisualManager,  MeshActorLoader& meshActorLoader) : Panel(parent, "") {
+StatusBarPanel::StatusBarPanel(nanogui::Widget &parent, IActorVisualManager& actorVisualManager,  MeshActorLoader& meshActorLoader, std::function<void(std::function<void(int, int)>)> applicationClickRegistrator) : Panel(parent, "") {
 	set_layout(new nanogui::GroupLayout());
 	
 	// Status bar setup
@@ -25,9 +24,10 @@ StatusBarPanel::StatusBarPanel(nanogui::Widget &parent, IActorVisualManager& act
 	
 	// Button to toggle the resources panel
 	nanogui::ToolButton *resourcesButton = new nanogui::ToolButton(statusBar, FA_FOLDER);
-	resourcesButton->set_change_callback([this](bool pushed) { toggle_resources_panel(pushed);
-	});
+
 	resourcesButton->set_tooltip("Toggle Resources Panel");
+	
+	resourcesButton->set_enabled(false);
 	
 	// Resources panel setup
 	mResourcesPanel = new ResourcesPanel(*parent.parent(), *rootNode, actorVisualManager, meshActorLoader);
@@ -39,6 +39,21 @@ StatusBarPanel::StatusBarPanel(nanogui::Widget &parent, IActorVisualManager& act
 	
 	mResourcesPanel->set_fixed_width(parent.parent()->fixed_width());
 	mResourcesPanel->set_fixed_height(parent.parent()->fixed_height() * 0.75f);
+	
+	applicationClickRegistrator([this, resourcesButton](int x, int y){
+		if (!mResourcesPanel->contains(nanogui::Vector2i(x, y))){
+			if (mIsPanelVisible) {
+				toggle_resources_panel(false);
+				
+				resourcesButton->set_pushed(false);
+			}
+		}
+		
+		if (resourcesButton->contains(nanogui::Vector2i(x, y), true)) {
+			toggle_resources_panel(!mIsPanelVisible);
+			resourcesButton->set_pushed(mIsPanelVisible);
+		}
+	});
 }
 
 void StatusBarPanel::toggle_resources_panel(bool active) {

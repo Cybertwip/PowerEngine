@@ -217,15 +217,21 @@ public:
     void set_cursor(Cursor cursor) { m_cursor = cursor; }
 
     /// Check if the widget contains a certain position
-    bool contains(const Vector2i &p) const {
-        Vector2i d = p - m_pos;
-        return d.x() >= 0 && d.y() >= 0 &&
-               d.x() < m_size.x() && d.y() < m_size.y();
+    bool contains(const Vector2i &p, bool absolute = false) const {
+		if (absolute) {
+			auto pos = absolute_position();
+			Vector2i d = p - pos;
+			return d.x() >= 0 && d.y() >= 0 &&
+			d.x() < m_size.x() && d.y() < m_size.y();
+		} else {
+			Vector2i d = p - m_pos;
+			return d.x() >= 0 && d.y() >= 0 &&
+			d.x() < m_size.x() && d.y() < m_size.y();
+		}
     }
 
     /// Determine the widget located at the given position value (recursive)
-    Widget *find_widget(const Vector2i &p);
-    const Widget *find_widget(const Vector2i &p) const;
+    Widget *find_widget(const Vector2i &p, bool absolute = false);
 
     /// Handle a mouse button event (default implementation: propagate to children)
     virtual bool mouse_button_event(const Vector2i &p, int button, bool down, int modifiers);

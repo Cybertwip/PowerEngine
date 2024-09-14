@@ -81,22 +81,18 @@ void Widget::perform_layout(NVGcontext *ctx) {
 	}
 }
 
-Widget *Widget::find_widget(const Vector2i &p) {
+Widget *Widget::find_widget(const Vector2i &p, bool absolute) {
+	auto pos = m_pos;
+	
+	if (absolute) {
+		pos = absolute_position();
+	}
 	for (auto it = m_children.rbegin(); it != m_children.rend(); ++it) {
 		Widget *child = *it;
-		if (child->visible() && child->contains(p - m_pos))
-			return child->find_widget(p - m_pos);
+		if (child->visible() && child->contains(p - pos, absolute))
+			return child->find_widget(p - pos, absolute);
 	}
-	return contains(p) ? this : nullptr;
-}
-
-const Widget *Widget::find_widget(const Vector2i &p) const {
-	for (auto it = m_children.rbegin(); it != m_children.rend(); ++it) {
-		const Widget *child = *it;
-		if (child->visible() && child->contains(p - m_pos))
-			return child->find_widget(p - m_pos);
-	}
-	return contains(p) ? this : nullptr;
+	return contains(p, absolute) ? this : nullptr;
 }
 
 bool Widget::mouse_button_event(const Vector2i &p, int button, bool down, int modifiers) {

@@ -9,6 +9,7 @@
 #include <nanogui/window.h>
 #include <nanogui/screen.h>
 
+#include <functional>
 #include <future>
 #include <chrono>
 
@@ -18,7 +19,7 @@ class ResourcesPanel;
 
 class StatusBarPanel : public Panel {
 public:
-	StatusBarPanel(nanogui::Widget &parent, IActorVisualManager& actorVisualManager, MeshActorLoader& meshActorLoader);
+	StatusBarPanel(nanogui::Widget &parent, IActorVisualManager& actorVisualManager, MeshActorLoader& meshActorLoader, std::function<void(std::function<void(int, int)>)> applicationClickRegistrator);
 	
 private:
 	ResourcesPanel *mResourcesPanel;

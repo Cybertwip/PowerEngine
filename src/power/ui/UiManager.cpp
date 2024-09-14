@@ -67,7 +67,7 @@ glm::vec3 ScreenToWorld(glm::vec2 screenPos, float depth, glm::mat4 projectionMa
 
 }
 
-UiManager::UiManager(IActorSelectedRegistry& registry, IActorVisualManager& actorVisualManager, ActorManager& actorManager, MeshActorLoader& meshActorLoader, ShaderManager& shaderManager, ScenePanel& scenePanel, Canvas& canvas, nanogui::Widget& toolbox, nanogui::Widget& statusBar, CameraManager& cameraManager)
+UiManager::UiManager(IActorSelectedRegistry& registry, IActorVisualManager& actorVisualManager, ActorManager& actorManager, MeshActorLoader& meshActorLoader, ShaderManager& shaderManager, ScenePanel& scenePanel, Canvas& canvas, nanogui::Widget& toolbox, nanogui::Widget& statusBar, CameraManager& cameraManager, std::function<void(std::function<void(int, int)>)> applicationClickRegistrator)
 : mRegistry(registry)
 , mActorManager(actorManager)
 , mShader(*shaderManager.get_shader("mesh"))
@@ -214,7 +214,7 @@ UiManager::UiManager(IActorSelectedRegistry& registry, IActorVisualManager& acto
 		}
 	});
 	
-	StatusBarPanel* statusBarPanel = new StatusBarPanel(statusBar, actorVisualManager, meshActorLoader);
+	StatusBarPanel* statusBarPanel = new StatusBarPanel(statusBar, actorVisualManager, meshActorLoader, applicationClickRegistrator);
 	statusBarPanel->set_fixed_width(statusBar.fixed_height());
 	statusBarPanel->set_fixed_height(statusBar.fixed_height());
 	statusBarPanel->set_layout(new nanogui::BoxLayout(nanogui::Orientation::Horizontal,

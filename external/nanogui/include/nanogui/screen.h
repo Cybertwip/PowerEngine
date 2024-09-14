@@ -227,7 +227,7 @@ public:
     bool shutdown_glfw() { return m_shutdown_glfw; }
 
     /// Is a tooltip currently fading in?
-    bool tooltip_fade_in_progress() const;
+    bool tooltip_fade_in_progress();
 
     using Widget::perform_layout;
 
@@ -301,9 +301,6 @@ protected:
     void *m_metal_drawable = nullptr;
     ref<Texture> m_depth_stencil_texture;
 #endif
-	
-private:
-	Widget *m_mouse_widget; // Cache the widget under the mouse
 };
 
 NAMESPACE_END(nanogui)
