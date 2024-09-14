@@ -146,22 +146,22 @@ void Fbx::ProcessMesh(const std::shared_ptr<sfbx::Mesh> mesh) {
 		if (!normalLayers.empty()) {
 			// For simplicity, we'll process the first normal layer
 			const auto& normalLayer = normalLayers[0];
-			const std::string& mappingMode = normalLayer.mapping_mode;
-			const std::string& referenceMode = normalLayer.reference_mode;
+			const sfbx::LayerMappingMode mappingMode = normalLayer.mapping_mode;
+			const sfbx::LayerReferenceMode referenceMode = normalLayer.reference_mode;
 			
 			int normalIndex = -1;
 			
 			// Determine normalIndex based on mapping and reference modes
-			if (mappingMode == "ByPolygonVertex") {
-				if (referenceMode == "Direct") {
+			if (mappingMode == sfbx::LayerMappingMode::ByPolygonVertex) {
+				if (referenceMode == sfbx::LayerReferenceMode::Direct) {
 					normalIndex = i;
-				} else if (referenceMode == "IndexToDirect") {
+				} else if (referenceMode == sfbx::LayerReferenceMode::IndexToDirect) {
 					normalIndex = normalLayer.indices[i];
 				}
-			} else if (mappingMode == "ByControlPoint") {
-				if (referenceMode == "Direct") {
+			} else if (mappingMode == sfbx::LayerMappingMode::ByControlPoint) {
+				if (referenceMode == sfbx::LayerReferenceMode::Direct) {
 					normalIndex = controlPointIndex;
-				} else if (referenceMode == "IndexToDirect") {
+				} else if (referenceMode == sfbx::LayerReferenceMode::IndexToDirect) {
 					normalIndex = normalLayer.indices[controlPointIndex];
 				}
 			} else {
