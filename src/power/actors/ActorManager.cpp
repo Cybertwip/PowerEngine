@@ -38,7 +38,6 @@ void ActorManager::draw() {
 	glStencilMask(0xFF);  // Enable writing to the stencil buffer
 
 	for (auto& actor : mActors) {
-		
 		auto& drawable = actor.get()->get_component<DrawableComponent>();
 		auto& color = actor.get()->get_component<ColorComponent>();
 		

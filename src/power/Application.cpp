@@ -57,7 +57,7 @@ Application::Application() : nanogui::Screen(nanogui::Vector2i(1280, 720), "Powe
 //	mMeshActorLoader->create_actor("models/DeepMotionBot.fbx"));
 
     mActors.push_back(
-        mMeshActorLoader->create_actor("models/Venasaur/VenusaurF.fbx"));
+        mMeshActorLoader->create_actor("models/Jynx/jynx.fbx"));
 
     std::vector<std::reference_wrapper<Actor>> actors;
     actors.push_back(mActors.back());

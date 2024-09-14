@@ -6,7 +6,6 @@
 #include "gizmo/RotationGizmo.hpp"
 #include "gizmo/ScaleGizmo.hpp"
 
-
 #include <nanogui/nanogui.h>
 
 #include <functional>

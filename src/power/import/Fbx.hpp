@@ -29,9 +29,9 @@ public:
 
 private:
     void LoadModel(const std::string_view path);
-    void ProcessNode(const std::shared_ptr<sfbx::Model> node);
-    void ProcessMesh(const std::shared_ptr<sfbx::Mesh> mesh);
-    void ProcessBones(const std::shared_ptr<sfbx::Mesh> mesh);
+    void ProcessNode(const std::shared_ptr<sfbx::Model>& node);
+    void ProcessMesh(const std::shared_ptr<sfbx::Mesh>& mesh);
+    void ProcessBones(const std::shared_ptr<sfbx::Mesh>& mesh);
 
     std::vector<std::unique_ptr<SkinnedMesh::MeshData>> mMeshes;
     std::unordered_map<std::string, int> mBoneMapping;

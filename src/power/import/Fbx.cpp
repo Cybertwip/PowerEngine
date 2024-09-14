@@ -1,66 +1,65 @@
 #include "import/Fbx.hpp"
 
+#include <algorithm>
+#include <execution>
+#include <thread>
 #include <filesystem>
-#include <unordered_map>
-#include <utility> // for std::pair
+#include <map>
+#include <numeric>  // For std::iota
 #include <glm/gtc/quaternion.hpp>
-
-// Custom hash function for std::pair<int, int>
-namespace std {
-template <>
-struct hash<std::pair<int, int>> {
-	std::size_t operator()(const std::pair<int, int>& p) const noexcept {
-		// Combine the two integers into a single hash value
-		std::size_t h1 = std::hash<int>{}(p.first);
-		std::size_t h2 = std::hash<int>{}(p.second);
-		return h1 ^ (h2 << 1); // Simple combination
-	}
-};
-}
 
 namespace {
 
-// Precompute rotation matrices for each possible up axis to avoid recalculating them
-const std::unordered_map<std::pair<int, int>, glm::mat4, std::hash<std::pair<int, int>>> precomputedRotations = {
-	{{0, 1}, glm::rotate(glm::mat4(1.0f), glm::radians(90.0f), glm::vec3(0, 0, 1))},
-	{{0, -1}, glm::rotate(glm::mat4(1.0f), glm::radians(-90.0f), glm::vec3(0, 0, 1))},
-	{{1, -1}, glm::rotate(glm::mat4(1.0f), glm::radians(180.0f), glm::vec3(1, 0, 0))},
-	{{2, 1}, glm::rotate(glm::mat4(1.0f), glm::radians(-90.0f), glm::vec3(1, 0, 0))},
-	{{2, -1}, glm::rotate(glm::mat4(1.0f), glm::radians(90.0f), glm::vec3(1, 0, 0))},
-};
-
 glm::mat4 GetUpAxisRotation(int up_axis, int up_axis_sign) {
-	auto key = std::make_pair(up_axis, up_axis_sign);
-	auto it = precomputedRotations.find(key);
-	if (it != precomputedRotations.end()) {
-		return it->second;
+	glm::mat4 rotation = glm::mat4(1.0f); // Identity matrix
+	
+	if (up_axis == 0) { // X-Up
+		if (up_axis_sign == 1) {
+			// Rotate from X+ Up to Y+ Up
+			rotation = glm::rotate(rotation, glm::radians(90.0f), glm::vec3(0, 0, 1));
+		} else {
+			// Rotate from X- Up to Y+ Up
+			rotation = glm::rotate(rotation, glm::radians(-90.0f), glm::vec3(0, 0, 1));
+		}
+	} else if (up_axis == 1) { // Y-Up
+		if (up_axis_sign == -1) {
+			// Rotate around X-axis by 180 degrees
+			rotation = glm::rotate(rotation, glm::radians(180.0f), glm::vec3(1, 0, 0));
+		}
+		// No rotation needed for positive Y-Up
+	} else if (up_axis == 2) { // Z-Up
+		if (up_axis_sign == 1) {
+			// Rotate from Z+ Up to Y+ Up
+			rotation = glm::rotate(rotation, glm::radians(-90.0f), glm::vec3(1, 0, 0));
+		} else {
+			// Rotate from Z- Up to Y+ Up
+			rotation = glm::rotate(rotation, glm::radians(90.0f), glm::vec3(1, 0, 0));
+		}
 	}
-	return glm::mat4(1.0f); // Identity matrix if no rotation is needed
+	
+	return rotation;
 }
 
+
 ozz::math::Transform ToOzzTransform(const sfbx::float4x4& mat) {
-	// Extract translation
-	ozz::math::Float3 translation(mat[3].x, mat[3].y, mat[3].z);
-	
-	// Extract scale and normalize rotation matrix
-	glm::vec3 scale(
-					glm::length(glm::vec3(mat[0].x, mat[0].y, mat[0].z)),
-					glm::length(glm::vec3(mat[1].x, mat[1].y, mat[1].z)),
-					glm::length(glm::vec3(mat[2].x, mat[2].y, mat[2].z)));
-	
-	glm::mat3 rotationMatrix(
-							 glm::vec3(mat[0].x, mat[0].y, mat[0].z) / scale.x,
-							 glm::vec3(mat[1].x, mat[1].y, mat[1].z) / scale.y,
-							 glm::vec3(mat[2].x, mat[2].y, mat[2].z) / scale.z);
-	
-	glm::quat rotationQuat = glm::quat_cast(rotationMatrix);
-	ozz::math::Quaternion rotation(rotationQuat.w, rotationQuat.x, rotationQuat.y, rotationQuat.z);
-	
-	return ozz::math::Transform{
-		translation,         // ozz::math::Float3 (translation)
-		rotation,            // ozz::math::Quaternion (rotation)
-		ozz::math::Float3(scale.x, scale.y, scale.z) // ozz::math::Float3 (scale)
-	};
+    // Extract translation
+    ozz::math::Float3 translation(mat[3].x, mat[3].y, mat[3].z);
+
+    // Extract scale
+    ozz::math::Float3 scale(glm::length(glm::vec3(mat[0].x, mat[0].y, mat[0].z)),
+                            glm::length(glm::vec3(mat[1].x, mat[1].y, mat[1].z)),
+                            glm::length(glm::vec3(mat[2].x, mat[2].y, mat[2].z)));
+
+    // Extract rotation
+    glm::mat3 rotationMatrix(glm::vec3(mat[0].x, mat[0].y, mat[0].z) / scale.x,
+                             glm::vec3(mat[1].x, mat[1].y, mat[1].z) / scale.y,
+                             glm::vec3(mat[2].x, mat[2].y, mat[2].z) / scale.z);
+
+    glm::quat rotationQuat = glm::quat_cast(rotationMatrix);
+    ozz::math::Quaternion rotation(rotationQuat.w, rotationQuat.x, rotationQuat.y, rotationQuat.z);
+
+    ozz::math::Transform transform = {translation, rotation, scale};
+    return transform;
 }
 
 }  // namespace
@@ -68,264 +67,255 @@ ozz::math::Transform ToOzzTransform(const sfbx::float4x4& mat) {
 Fbx::Fbx(const std::string_view path) { LoadModel(path); }
 
 void Fbx::LoadModel(const std::string_view path) {
-	sfbx::DocumentPtr doc = sfbx::MakeDocument(std::string(path));
-	if (doc && doc->valid()) {
-		ProcessNode(doc->getRootModel());
-		
-		// Build the Ozz skeleton
-		ozz::animation::offline::RawSkeleton rawSkeleton;
-		rawSkeleton.roots.resize(mBoneMapping.size());
-		
-		int index = 0;
-		for (const auto& bone : mBoneMapping) {
-			ozz::animation::offline::RawSkeleton::Joint joint;
-			joint.name = bone.first.c_str();
-			joint.transform = mBoneTransforms[bone.second];
-			rawSkeleton.roots[index] = joint;
-			index++;
-		}
-		
-		ozz::animation::offline::SkeletonBuilder skeletonBuilder;
-		mSkeleton = skeletonBuilder(rawSkeleton);
-	}
+    sfbx::DocumentPtr doc = sfbx::MakeDocument(std::string(path));
+    if (doc && doc->valid()) {
+        ProcessNode(doc->getRootModel());
+
+        // Build the Ozz skeleton
+        ozz::animation::offline::RawSkeleton rawSkeleton;
+        rawSkeleton.roots.resize(mBoneMapping.size());
+
+        int index = 0;
+        for (const auto& bone : mBoneMapping) {
+            ozz::animation::offline::RawSkeleton::Joint joint;
+            joint.name = bone.first.c_str();
+            joint.transform = mBoneTransforms[bone.second];
+            rawSkeleton.roots[index] = joint;
+            index++;
+        }
+
+        ozz::animation::offline::SkeletonBuilder skeletonBuilder;
+        mSkeleton = skeletonBuilder(rawSkeleton);
+    }
 }
 
-void Fbx::ProcessNode(const std::shared_ptr<sfbx::Model> node) {
-	if (!node) return;
-	
-	if (auto mesh = std::dynamic_pointer_cast<sfbx::Mesh>(node); mesh) {
-		ProcessMesh(mesh);
-	}
-	
-	for (const auto& child : node->getChildren()) {
-		if (auto childModel = sfbx::as<sfbx::Model>(child); childModel) {
-			ProcessNode(childModel);
-		}
-	}
+void Fbx::ProcessNode(const std::shared_ptr<sfbx::Model>& node) {
+    if (!node) return;
+
+    if (auto mesh = std::dynamic_pointer_cast<sfbx::Mesh>(node); mesh) {
+        ProcessMesh(mesh);
+    }
+
+    for (const auto& child : node->getChildren()) {
+        if (auto childModel = sfbx::as<sfbx::Model>(child); childModel) {
+            ProcessNode(childModel);
+        }
+    }
 }
 
-void Fbx::ProcessMesh(const std::shared_ptr<sfbx::Mesh> mesh) {
+void Fbx::ProcessMesh(const std::shared_ptr<sfbx::Mesh>& mesh) {
 	auto& resultMesh = mMeshes.emplace_back(std::make_unique<SkinnedMesh::MeshData>());
 	
-	// Get rotation matrix based on UpAxis
-	glm::mat4 rotationMatrix = GetUpAxisRotation(
-												 mesh->document().global_settings.up_axis,
-												 mesh->document().global_settings.up_axis_sign);
-	
-	// Apply unit scaling
-	float scaleFactor = static_cast<float>(mesh->document().global_settings.unit_scale);
-	glm::mat4 scaleMatrix = glm::scale(glm::mat4(1.0f), glm::vec3(scaleFactor));
-	
-	glm::mat4 transformMatrix = rotationMatrix * scaleMatrix;
+	// Precompute transformation matrices
+	const glm::mat4 rotationMatrix = GetUpAxisRotation(mesh->document().global_settings.up_axis,
+													   mesh->document().global_settings.up_axis_sign);
+	const float scaleFactor = static_cast<float>(mesh->document().global_settings.unit_scale);
+	const glm::mat4 scaleMatrix = glm::scale(glm::mat4(1.0f), glm::vec3(scaleFactor));
+	const glm::mat4 transformMatrix = rotationMatrix * scaleMatrix;
 	
 	auto geometry = mesh->getGeometry();
-	auto points = geometry->getPointsDeformed();
-	auto vertexIndices = geometry->getIndices();
+	const auto& points = geometry->getPointsDeformed();
+	const auto& vertexIndices = geometry->getIndices();
 	
-	// Process UV layers
-	auto uvLayers = geometry->getUVLayers();
+	// Reserve space for vertices and indices
+	const size_t vertexCount = vertexIndices.size();
+	resultMesh->mVertices.resize(vertexCount);
+	resultMesh->mIndices.resize(vertexCount);
 	
+	// Retrieve materials and map them to indices
 	const auto& materials = mesh->getMaterials();
-	
 	std::unordered_map<std::shared_ptr<sfbx::Material>, int64_t> materialIndexMap;
-	
 	for (size_t i = 0; i < materials.size(); ++i) {
 		materialIndexMap[materials[i]] = static_cast<int64_t>(i);
 	}
 	
-	std::vector<std::shared_ptr<sfbx::Material>> indexMaterialMap(materials.begin(), materials.end());
-	
-	// Reserve space for vertices and indices to avoid reallocations
-	resultMesh->mVertices.resize(vertexIndices.size());
-	resultMesh->mIndices.resize(vertexIndices.size());
-	
-	// Preprocess normal layers
+	// Precompute normal indices
 	const auto& normalLayers = geometry->getNormalLayers();
-	const bool hasNormals = !normalLayers.empty();
-	const auto* normalLayer = hasNormals ? &normalLayers[0] : nullptr;
-	
-	// Precompute normal indices if needed
-	std::vector<int> normalIndices;
-	if (hasNormals && normalLayer->reference_mode == sfbx::LayerReferenceMode::IndexToDirect) {
-		normalIndices = std::vector<int>(normalLayer->indices.begin(), normalLayer->indices.end());
-	}
-	
-	// Preprocess UV indices
-	std::vector<std::vector<int>> uvIndices(uvLayers.size());
-	for (size_t layerIndex = 0; layerIndex < uvLayers.size(); ++layerIndex) {
-		if (uvLayers[layerIndex].reference_mode == sfbx::LayerReferenceMode::IndexToDirect) {
-			
-			uvIndices[layerIndex] = std::vector<int>(uvLayers[layerIndex].indices.begin(), uvLayers[layerIndex].indices.end());
+	std::vector<int> normalIndices(vertexCount, -1);
+	sfbx::RawVector<sfbx::float3> normalData;
+	if (!normalLayers.empty()) {
+		const auto& normalLayer = normalLayers[0];
+		normalData = normalLayer.data;
+		const auto mappingMode = normalLayer.mapping_mode;
+		const auto referenceMode = normalLayer.reference_mode;
+		const auto& normalLayerIndices = normalLayer.indices;
+		
+		for (size_t i = 0; i < vertexCount; ++i) {
+			int controlPointIndex = vertexIndices[i];
+			if (mappingMode == sfbx::LayerMappingMode::ByPolygonVertex) {
+				normalIndices[i] = (referenceMode == sfbx::LayerReferenceMode::Direct) ? static_cast<int>(i) : normalLayerIndices[i];
+			} else if (mappingMode == sfbx::LayerMappingMode::ByControlPoint) {
+				normalIndices[i] = (referenceMode == sfbx::LayerReferenceMode::Direct) ? controlPointIndex : normalLayerIndices[controlPointIndex];
+			}
 		}
 	}
 	
-	// Process vertices
-	for (size_t i = 0; i < vertexIndices.size(); ++i) {
-		int controlPointIndex = vertexIndices[i];
-		SkinnedMesh::Vertex& vertex = resultMesh->mVertices[i];
+	// Precompute UV indices for each layer
+	const auto& uvLayers = geometry->getUVLayers();
+	std::vector<std::vector<int>> uvIndicesPerLayer(uvLayers.size(), std::vector<int>(vertexCount, -1));
+	for (size_t layerIndex = 0; layerIndex < uvLayers.size(); ++layerIndex) {
+		const auto& uvLayer = uvLayers[layerIndex];
+		const auto mappingMode = uvLayer.mapping_mode;
+		const auto referenceMode = uvLayer.reference_mode;
+		const auto& uvLayerIndices = uvLayer.indices;
 		
-		// Set position
-		const auto& point = points[controlPointIndex];
-		glm::vec4 position(point.x, point.y, point.z, 1.0f);
-		
-		// Apply transformation (rotation and scaling)
-		position = transformMatrix * position;
-		vertex.set_position({position.x, position.y, position.z});
-		
-		// Process normals
-		if (hasNormals) {
-			int normalIndex = -1;
-			switch (normalLayer->mapping_mode) {
-				case sfbx::LayerMappingMode::ByPolygonVertex:
-					normalIndex = (normalLayer->reference_mode == sfbx::LayerReferenceMode::Direct) ? static_cast<int>(i) : normalIndices[i];
-					break;
-				case sfbx::LayerMappingMode::ByControlPoint:
-					normalIndex = (normalLayer->reference_mode == sfbx::LayerReferenceMode::Direct) ? controlPointIndex : normalIndices[controlPointIndex];
-					break;
-				default:
-					normalIndex = -1;
-					break;
+		for (size_t i = 0; i < vertexCount; ++i) {
+			int controlPointIndex = vertexIndices[i];
+			if (mappingMode == sfbx::LayerMappingMode::ByPolygonVertex) {
+				uvIndicesPerLayer[layerIndex][i] = (referenceMode == sfbx::LayerReferenceMode::Direct) ? static_cast<int>(i) : uvLayerIndices[i];
+			} else if (mappingMode == sfbx::LayerMappingMode::ByControlPoint) {
+				uvIndicesPerLayer[layerIndex][i] = (referenceMode == sfbx::LayerReferenceMode::Direct) ? controlPointIndex : uvLayerIndices[controlPointIndex];
 			}
+		}
+	}
+	
+	// Precompute material indices per vertex
+	std::vector<int> materialIndices(vertexCount, -1);
+	for (size_t i = 0; i < vertexCount; ++i) {
+		materialIndices[i] = geometry->getMaterialForVertexIndex(static_cast<int>(i));
+	}
+	
+	// Determine the number of threads to use
+	unsigned int numThreads = std::thread::hardware_concurrency();
+	if (numThreads == 0) numThreads = 1;
+	
+	// Divide the work among threads
+	std::vector<std::thread> threads(numThreads);
+	size_t chunkSize = vertexCount / numThreads;
+	size_t remainder = vertexCount % numThreads;
+	
+	auto processVertices = [&](size_t startIndex, size_t endIndex) {
+		for (size_t i = startIndex; i < endIndex; ++i) {
+			int controlPointIndex = vertexIndices[i];
+			SkinnedMesh::Vertex vertex;
 			
-			if (normalIndex >= 0 && normalIndex < normalLayer->data.size()) {
-				const auto& normal = normalLayer->data[normalIndex];
+			// Transform position
+			const auto& point = points[controlPointIndex];
+			glm::vec4 position(point.x, point.y, point.z, 1.0f);
+			position = transformMatrix * position;
+			vertex.set_position({ position.x, position.y, position.z });
+			
+			// Transform normal
+			if (!normalData.empty() && normalIndices[i] >= 0) {
+				const auto& normal = normalData[normalIndices[i]];
 				glm::vec4 normalVec(normal.x, normal.y, normal.z, 0.0f);
-				
-				// Apply rotation (do not apply scaling to normals)
 				normalVec = rotationMatrix * normalVec;
 				normalVec = glm::normalize(normalVec);
-				vertex.set_normal({normalVec.x, normalVec.y, normalVec.z});
+				vertex.set_normal({ normalVec.x, normalVec.y, normalVec.z });
 			} else {
-				vertex.set_normal({0.0f, 1.0f, 0.0f});
-			}
-		} else {
-			vertex.set_normal({0.0f, 1.0f, 0.0f});
-		}
-		
-		// Process UV layers
-		for (size_t layerIndex = 0; layerIndex < uvLayers.size(); ++layerIndex) {
-			const auto& uvLayer = uvLayers[layerIndex];
-			int uvIndex = -1;
-			
-			switch (uvLayer.mapping_mode) {
-				case sfbx::LayerMappingMode::ByPolygonVertex:
-					uvIndex = (uvLayer.reference_mode == sfbx::LayerReferenceMode::Direct) ? static_cast<int>(i) : uvIndices[layerIndex][i];
-					break;
-				case sfbx::LayerMappingMode::ByControlPoint:
-					uvIndex = (uvLayer.reference_mode == sfbx::LayerReferenceMode::Direct) ? controlPointIndex : uvIndices[layerIndex][controlPointIndex];
-					break;
-				default:
-					uvIndex = -1;
-					break;
+				vertex.set_normal({ 0.0f, 1.0f, 0.0f });
 			}
 			
-			if (uvIndex >= 0 && uvIndex < uvLayer.data.size()) {
-				float u = uvLayer.data[uvIndex].x;
-				float v = uvLayer.data[uvIndex].y;
-				if (layerIndex == 0) {
-					vertex.set_texture_coords1({u, v});
-				} else if (layerIndex == 1) {
-					vertex.set_texture_coords2({u, v});
-				}
-			} else {
-				if (layerIndex == 0) {
-					vertex.set_texture_coords1({0.0f, 0.0f});
-				} else if (layerIndex == 1) {
-					vertex.set_texture_coords2({0.0f, 0.0f});
+			// Set UVs
+			for (size_t layerIndex = 0; layerIndex < uvLayers.size(); ++layerIndex) {
+				int uvIndex = uvIndicesPerLayer[layerIndex][i];
+				if (uvIndex >= 0) {
+					const auto& uv = uvLayers[layerIndex].data[uvIndex];
+					if (layerIndex == 0) {
+						vertex.set_texture_coords1({ uv.x, uv.y });
+						vertex.set_texture_coords2({ uv.x, uv.y });
+					} else {
+						vertex.set_texture_coords2({ uv.x, uv.y });
+					}
+				} else {
+					if (layerIndex == 0) {
+						vertex.set_texture_coords1({ 0.0f, 0.0f });
+						vertex.set_texture_coords2({ 0.0f, 0.0f });
+					} else {
+						vertex.set_texture_coords2({ 0.0f, 0.0f });
+					}
 				}
 			}
+			
+			// Set material ID
+			int matIndex = materialIndices[i];
+			vertex.set_texture_id((matIndex >= 0 && matIndex < static_cast<int>(materials.size())) ? matIndex : -1);
+			
+			// Assign vertex and index
+			resultMesh->mVertices[i] = std::move(vertex);
+			resultMesh->mIndices[i] = static_cast<uint32_t>(i);
 		}
-		
-		// Get material for this vertex
-		int materialIndex = geometry->getMaterialForVertexIndex(static_cast<int>(i));
-		if (materialIndex >= 0 && materialIndex < static_cast<int>(indexMaterialMap.size())) {
-			auto material = indexMaterialMap[materialIndex];
-			int textureId = static_cast<int>(materialIndexMap[material]);
-			vertex.set_texture_id(textureId);
-		} else {
-			vertex.set_texture_id(-1);
-		}
-		
-		resultMesh->mIndices[i] = static_cast<uint32_t>(i);
+	};
+	
+	size_t startIndex = 0;
+	for (unsigned int t = 0; t < numThreads; ++t) {
+		size_t endIndex = startIndex + chunkSize + (t < remainder ? 1 : 0);
+		threads[t] = std::thread(processVertices, startIndex, endIndex);
+		startIndex = endIndex;
 	}
 	
-	// Process bones for skinning
+	// Wait for all threads to finish
+	for (auto& thread : threads) {
+		thread.join();
+	}
+	
+	// Process bones (assuming ProcessBones is efficient)
 	ProcessBones(mesh);
 	
 	// Process materials
-	resultMesh->mMaterials.reserve(materialIndexMap.size());
-	for (auto& [material, index] : materialIndexMap) {
+	resultMesh->mMaterials.reserve(materials.size());
+	for (size_t i = 0; i < materials.size(); ++i) {
+		const auto& material = materials[i];
 		MaterialProperties matData;
 		
-		// Process material colors
+		// Set material properties
 		auto color = material->getAmbientColor();
-		matData.mAmbient = {color.x, color.y, color.z};
-		
+		matData.mAmbient = { color.x, color.y, color.z };
 		color = material->getDiffuseColor();
-		matData.mDiffuse = {color.x, color.y, color.z};
-		
+		matData.mDiffuse = { color.x, color.y, color.z };
 		color = material->getSpecularColor();
-		matData.mSpecular = {color.x, color.y, color.z};
-		
+		matData.mSpecular = { color.x, color.y, color.z };
 		matData.mShininess = 0.1f;
 		matData.mOpacity = material->getOpacity();
 		matData.mHasDiffuseTexture = false;
 		
-		// Process textures if available
-		if (auto fbxTexture = material->getTexture("DiffuseColor")) {
-			if (!fbxTexture->getData().empty()) {
-				matData.mTextureDiffuse = std::make_unique<nanogui::Texture>(
-																			 fbxTexture->getData().data(),
-																			 static_cast<int>(fbxTexture->getData().size()));
-				matData.mHasDiffuseTexture = true;
-			}
+		// Load texture if available
+		if (auto fbxTexture = material->getTexture("DiffuseColor"); fbxTexture && !fbxTexture->getData().empty()) {
+			matData.mTextureDiffuse = std::make_unique<nanogui::Texture>(
+																		 fbxTexture->getData().data(), static_cast<int>(fbxTexture->getData().size()));
+			matData.mHasDiffuseTexture = true;
 		}
 		
 		resultMesh->mMaterials.push_back(std::move(matData));
 	}
 }
 
-void Fbx::ProcessBones(const std::shared_ptr<sfbx::Mesh> mesh) {
-	auto geometry = mesh->getGeometry();
-	auto deformers = geometry->getDeformers();
-	std::shared_ptr<sfbx::Skin> skin;
-	
-	for (auto& deformer : deformers) {
-		if (skin = sfbx::as<sfbx::Skin>(deformer); skin) {
-			break;
-		}
-	}
-	
-	if (skin) {
-		auto skinClusters = skin->getChildren();
-		for (const auto& clusterObj : skinClusters) {
-			auto skinCluster = sfbx::as<sfbx::Cluster>(clusterObj);
-			std::string boneName = std::string { skinCluster->getChild()->getName() };
-			auto [it, inserted] = mBoneMapping.emplace(boneName, static_cast<int>(mBoneMapping.size()));
-			if (inserted) {
-				mBoneTransforms.emplace_back(ToOzzTransform(skinCluster->getTransform()));
-			}
-			
-			int boneID = it->second;
-			const auto& weights = skinCluster->getWeights();
-			const auto& indices = skinCluster->getIndices();
-			
-			for (size_t i = 0; i < weights.size(); ++i) {
-				int vertexID = indices[i];
-				float weight = weights[i];
-				
-				auto& vertex = mMeshes.back()->mVertices[vertexID];
-				auto vertexWeights = vertex.get_weights();
-				auto vertexBones = vertex.get_bone_ids();
-				
-				for (int j = 0; j < 4; ++j) {
-					if (vertexWeights[j] == 0.0f) {
-						vertexWeights[j] = weight;
-						vertexBones[j] = boneID;
-						break;
-					}
-				}
-			}
-		}
-	}
+void Fbx::ProcessBones(const std::shared_ptr<sfbx::Mesh>& mesh) {
+    auto geometry = mesh->getGeometry();
+    auto deformers = geometry->getDeformers();
+    std::shared_ptr<sfbx::Skin> skin;
+
+    for (auto& deformer : deformers) {
+        if (skin = sfbx::as<sfbx::Skin>(deformer); skin) {
+            break;
+        }
+    }
+
+    if (skin) {
+        auto skinClusters = skin->getChildren();
+        for (const auto& clusterObj : skinClusters) {
+            auto skinCluster = sfbx::as<sfbx::Cluster>(clusterObj);
+            std::string boneName = std::string{skinCluster->getChild()->getName()};
+            if (mBoneMapping.find(boneName) == mBoneMapping.end()) {
+                mBoneMapping[boneName] = static_cast<int>(mBoneMapping.size());
+                mBoneTransforms.emplace_back(ToOzzTransform(skinCluster->getTransform()));
+            }
+
+            std::size_t boneID = mBoneMapping[boneName];
+            auto weights = skinCluster->getWeights();
+            auto indices = skinCluster->getIndices();
+
+            for (size_t i = 0; i < weights.size(); ++i) {
+                int vertexID = indices[i];
+                float weight = weights[i];
+                for (int j = 0; j < 4; ++j) {
+					if (mMeshes.back()->mVertices[vertexID].get_weights()[j] == 0.0f) {
+						mMeshes.back()->mVertices[vertexID].set_bone(static_cast<int>(boneID),
+                                                                      weight);
+                        break;
+                    }
+                }
+            }
+        }
+    }
 }

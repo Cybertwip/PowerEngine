@@ -3,7 +3,9 @@ set(BUILD_SHARED_LIBS OFF)
 cmake_minimum_required(VERSION 3.21)
 include(${CMAKE_ROOT}/Modules/ExternalProject.cmake)
 
-
+if (NOT POWER_ENGINE_DISTRIBUTION)
+  set(CMAKE_BUILD_TYPE RelWithDebInfo CACHE STRING "Choose the type of build." FORCE)
+endif()
 
 if(APPLE)
 project(
@@ -16,6 +18,8 @@ project(
   LANGUAGES CXX
   VERSION 0.1.0)
 endif()
+
+
 
 set(CMAKE_CXX_STANDARD 20)
 

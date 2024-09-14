@@ -211,8 +211,6 @@ UiManager::UiManager(IActorSelectedRegistry& registry, IActorVisualManager& acto
 			
 			// Step 3: Apply the world-space delta transformation
 			mGizmoManager->transform(world.x - offset.x, world.y - offset.y);
-
-			mActiveActor->get().get_component<UiComponent>().select();
 		}
 	});
 	
@@ -239,6 +237,8 @@ void UiManager::draw_content(const nanogui::Matrix4f& model, const nanogui::Matr
 							 const nanogui::Matrix4f& projection) {
 	// Disable writing to the stencil buffer
 	glStencilMask(0x00);
+	
+	mGrid->draw_content(model, view, projection);
 
 	if(mActiveActor.has_value()){
 		auto& drawable = mActiveActor->get().get_component<DrawableComponent>();
@@ -249,10 +249,11 @@ void UiManager::draw_content(const nanogui::Matrix4f& model, const nanogui::Matr
 		
 		nanogui::Matrix4f model = TransformComponent::glm_to_nanogui(transform.get_matrix());
 
-		// Second pass: Draw using the stencil buffer as a mask
-		glStencilFunc(GL_EQUAL, 1, 0xFF);  // Draw only where stencil value is 1
-		glStencilMask(0x00);  // Disable writing to the stencil buffer
+		// Disable stencil test
+		glDisable(GL_STENCIL_TEST);
 		
+		mGrid->draw_content(model, view, projection);
+
 		glClear(GL_DEPTH_BUFFER_BIT);
 
 		glEnable(GL_DEPTH_TEST);
@@ -264,7 +265,5 @@ void UiManager::draw_content(const nanogui::Matrix4f& model, const nanogui::Matr
 	
 	// Disable stencil test
 	glDisable(GL_STENCIL_TEST);
-	
-	mGrid->draw_content(model, view, projection);
 }
  
