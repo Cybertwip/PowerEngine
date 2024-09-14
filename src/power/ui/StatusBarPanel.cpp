@@ -66,8 +66,8 @@ void StatusBarPanel::toggle_resources_panel(bool active) {
 void StatusBarPanel::animate_panel_position(const nanogui::Vector2i &targetPosition) {
 	const int steps = 20;
 	const auto stepDelay = std::chrono::milliseconds(16); // ~60 FPS
-	nanogui::Vector2i startPos = mResourcesPanel->position();
-	nanogui::Vector2i step = (targetPosition - startPos) / (steps - 1);
+	nanogui::Vector2f startPos = mResourcesPanel->position();
+	nanogui::Vector2f step = (nanogui::Vector2f(targetPosition) - startPos) / (steps - 1);
 	
 	for (int i = 0; i < steps; ++i) {
 		// This check ensures we can stop the animation if another toggle happens

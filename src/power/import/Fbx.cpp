@@ -6,6 +6,37 @@
 
 namespace {
 
+glm::mat4 GetUpAxisRotation(int up_axis, int up_axis_sign) {
+	glm::mat4 rotation = glm::mat4(1.0f); // Identity matrix
+	
+	if (up_axis == 0) { // X-Up
+		if (up_axis_sign == 1) {
+			// Rotate from X+ Up to Y+ Up
+			rotation = glm::rotate(rotation, glm::radians(90.0f), glm::vec3(0, 0, 1));
+		} else {
+			// Rotate from X- Up to Y+ Up
+			rotation = glm::rotate(rotation, glm::radians(-90.0f), glm::vec3(0, 0, 1));
+		}
+	} else if (up_axis == 1) { // Y-Up
+		if (up_axis_sign == -1) {
+			// Rotate around X-axis by 180 degrees
+			rotation = glm::rotate(rotation, glm::radians(180.0f), glm::vec3(1, 0, 0));
+		}
+		// No rotation needed for positive Y-Up
+	} else if (up_axis == 2) { // Z-Up
+		if (up_axis_sign == 1) {
+			// Rotate from Z+ Up to Y+ Up
+			rotation = glm::rotate(rotation, glm::radians(-90.0f), glm::vec3(1, 0, 0));
+		} else {
+			// Rotate from Z- Up to Y+ Up
+			rotation = glm::rotate(rotation, glm::radians(90.0f), glm::vec3(1, 0, 0));
+		}
+	}
+	
+	return rotation;
+}
+
+
 ozz::math::Transform ToOzzTransform(const sfbx::float4x4& mat) {
     // Extract translation
     ozz::math::Float3 translation(mat[3].x, mat[3].y, mat[3].z);
@@ -71,6 +102,15 @@ void Fbx::ProcessNode(const std::shared_ptr<sfbx::Model> node) {
 void Fbx::ProcessMesh(const std::shared_ptr<sfbx::Mesh> mesh) {
 	auto& resultMesh = mMeshes.emplace_back(std::make_unique<SkinnedMesh::MeshData>());
 	
+	// Get rotation matrix based on UpAxis
+	glm::mat4 rotationMatrix = GetUpAxisRotation(mesh->document().global_settings.up_axis, mesh->document().global_settings.up_axis_sign);
+	
+	// Optionally, apply unit scaling
+	float scaleFactor = static_cast<float>(mesh->document().global_settings.unit_scale);
+	glm::mat4 scaleMatrix = glm::scale(glm::mat4(1.0f), glm::vec3(scaleFactor));
+	
+	glm::mat4 transformMatrix = rotationMatrix * scaleMatrix;
+	
 	auto geometry = mesh->getGeometry();
 	auto points = geometry->getPointsDeformed();
 	auto vertexIndices = geometry->getIndices();
@@ -92,9 +132,14 @@ void Fbx::ProcessMesh(const std::shared_ptr<sfbx::Mesh> mesh) {
 	for (unsigned int i = 0; i < vertexIndices.size(); ++i) {
 		int controlPointIndex = vertexIndices[i];
 		auto vertex = std::make_unique<SkinnedMesh::Vertex>();
+		
 		// Set position
 		const auto& point = points[controlPointIndex];
-		vertex->set_position({point.x, point.y, point.z});
+		glm::vec4 position(point.x, point.y, point.z, 1.0f);
+		
+		// Apply transformation (rotation and scaling)
+		position = transformMatrix * position;
+		vertex->set_position({position.x, position.y, position.z});
 		
 		// Process normals
 		const auto& normalLayers = geometry->getNormalLayers();
@@ -126,7 +171,12 @@ void Fbx::ProcessMesh(const std::shared_ptr<sfbx::Mesh> mesh) {
 			
 			if (normalIndex >= 0 && normalIndex < normalLayer.data.size()) {
 				const auto& normal = normalLayer.data[normalIndex];
-				vertex->set_normal({normal.x, normal.y, normal.z});
+				glm::vec4 normalVec(normal.x, normal.y, normal.z, 0.0f); // w = 0 for normals
+				
+				// Apply rotation (do not apply scaling to normals)
+				normalVec = rotationMatrix * normalVec;
+				normalVec = glm::normalize(normalVec);
+				vertex->set_normal({normalVec.x, normalVec.y, normalVec.z});
 			} else {
 				// Set a default normal if index is invalid
 				vertex->set_normal({0.0f, 1.0f, 0.0f});

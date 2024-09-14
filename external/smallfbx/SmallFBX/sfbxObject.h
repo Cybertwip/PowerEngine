@@ -112,6 +112,11 @@ public:
     void setName(string_view v);
     void setNode(Node* v);
 
+	
+	const Document& document() const {
+		return *m_document;
+	}
+	
 protected:
     Object();
     Object(const Object&) = delete;

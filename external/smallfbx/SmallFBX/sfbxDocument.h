@@ -29,6 +29,9 @@ struct GlobalSettings
 	std::string path = "";
 	int64_t time_stop = 0; // sfbxI_TicksPerSecond;
 	
+	int up_axis = 1;
+	int up_axis_sign = 1;
+	
 	void exportFBXNodes(Document* doc);
 	void importFBXObjects(Document* doc);
 };

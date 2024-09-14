@@ -152,8 +152,18 @@ void GlobalSettings::importFBXObjects(Document *doc)
             time_stop = c->getProperty(4)->getValue<int64>();
         }
 
-//            prop->createChild(sfbxS_P, sfbxS_UpAxis, sfbxS_int sfbxS_int, sfbxS_Integer, "", 1);
-//            prop->createChild(sfbxS_P, sfbxS_UpAxisSign, sfbxS_int, sfbxS_Integer, "", 1);
+		// Check for the UpAxis property
+		if (name == sfbxS_UpAxis) {
+			assert(propssize >= 5);
+			up_axis = c->getProperty(4)->getValue<int>();
+		}
+		
+		// Check for the UpAxisSign property
+		if (name == sfbxS_UpAxisSign) {
+			assert(propssize >= 5);
+			up_axis_sign = c->getProperty(4)->getValue<int>();
+		}
+
 //            prop->createChild(sfbxS_P, sfbxS_FrontAxis, sfbxS_int, sfbxS_Integer, "", 2);
 //            prop->createChild(sfbxS_P, sfbxS_FrontAxisSign, sfbxS_int, sfbxS_Integer, "", 1);
 //            prop->createChild(sfbxS_P, sfbxS_CoordAxis, sfbxS_int, sfbxS_Integer, "", 0);
