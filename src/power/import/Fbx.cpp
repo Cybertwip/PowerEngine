@@ -189,22 +189,23 @@ void Fbx::ProcessMesh(const std::shared_ptr<sfbx::Mesh> mesh) {
 		// Process UV layers
 		int layerIndex = 0;
 		for (const auto& uvLayer : uvLayers) {
-			const std::string& uvMappingMode = uvLayer.mapping_mode;
-			const std::string& uvReferenceMode = uvLayer.reference_mode;
+			
+			const sfbx::LayerMappingMode uvMappingMode = uvLayer.mapping_mode;
+			const sfbx::LayerReferenceMode uvReferenceMode = uvLayer.reference_mode;
 			
 			int uvIndex = -1;
 			
 			// Determine uvIndex based on mapping and reference modes
-			if (uvMappingMode == "ByPolygonVertex") {
-				if (uvReferenceMode == "Direct") {
+			if (uvMappingMode == sfbx::LayerMappingMode::ByPolygonVertex) {
+				if (uvReferenceMode == sfbx::LayerReferenceMode::Direct) {
 					uvIndex = i;
-				} else if (uvReferenceMode == "IndexToDirect") {
+				} else if (uvReferenceMode == sfbx::LayerReferenceMode::IndexToDirect) {
 					uvIndex = uvLayer.indices[i];
 				}
-			} else if (uvMappingMode == "ByControlPoint") {
-				if (uvReferenceMode == "Direct") {
+			} else if (uvMappingMode == sfbx::LayerMappingMode::ByControlPoint) {
+				if (uvReferenceMode == sfbx::LayerReferenceMode::Direct) {
 					uvIndex = controlPointIndex;
-				} else if (uvReferenceMode == "IndexToDirect") {
+				} else if (uvReferenceMode == sfbx::LayerReferenceMode::IndexToDirect) {
 					uvIndex = uvLayer.indices[controlPointIndex];
 				}
 			} else {
