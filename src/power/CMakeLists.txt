@@ -142,7 +142,7 @@ add_executable(PowerEngine
 target_include_directories(PowerEngine PUBLIC ../../external/smallfbx)
 target_include_directories(PowerEngine PUBLIC ../../external/stb)
 target_include_directories(PowerEngine PUBLIC ${CMAKE_CURRENT_LIST_DIR})
-target_link_libraries(PowerEngine PRIVATE nanogui ozz_animation EnTT imgui-feature-layout imgui-node-editor json fbx2ozz SmallFBX tinygizmo grpc++)
+target_link_libraries(PowerEngine PRIVATE nanogui ozz_animation EnTT imgui-feature-layout imgui-node-editor json fbx2ozz SmallFBX grpc++)
 
 # Set the resource files to be included in the bundle
 set(RESOURCE_DIRECTORIES
@@ -194,3 +194,9 @@ if(APPLE)
     set(CMAKE_BUILD_TYPE Release)
 endif()
 
+set_target_properties(json PROPERTIES UNITY_BUILD ON)
+set_target_properties(fbx2ozz PROPERTIES UNITY_BUILD ON)
+set_target_properties(ozz_animation PROPERTIES UNITY_BUILD ON)
+set_target_properties(PowerEngine PROPERTIES UNITY_BUILD ON)
+
+ 

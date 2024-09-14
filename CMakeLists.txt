@@ -111,6 +111,7 @@ target_link_libraries(imgui-feature-layout glm json)
 #target_link_libraries(glcpp PUBLIC test)
 #target_link_libraries(SmallFBX zlib)
 
+
 if(APPLE)
 target_compile_definitions(imgui-feature-layout PUBLIC -DDEFAULT_CWD="${CMAKE_CURRENT_LIST_DIR}/Resources")
 #  target_compile_definitions(application PUBLIC -DDEFAULT_CWD="${CMAKE_CURRENT_LIST_DIR}/Resources")

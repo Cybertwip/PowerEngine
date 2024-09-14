@@ -43,7 +43,10 @@ public:
     /// Return the parent widget
     const Widget *parent() const { return m_parent; }
     /// Set the parent widget
-    void set_parent(Widget *parent) { m_parent = parent; }
+	void set_parent(Widget *parent);
+	
+	/// Set the widget screen
+	void set_screen(Screen *screen);
 
     /// Return the used \ref Layout generator
     Layout *layout() { return m_layout; }
@@ -330,6 +333,8 @@ protected:
      */
     float m_icon_extra_scale;
     Cursor m_cursor;
+	
+	Screen *m_screen;
 };
 
 NAMESPACE_END(nanogui)

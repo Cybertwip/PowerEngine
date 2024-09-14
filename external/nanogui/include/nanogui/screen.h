@@ -301,6 +301,9 @@ protected:
     void *m_metal_drawable = nullptr;
     ref<Texture> m_depth_stencil_texture;
 #endif
+	
+private:
+	Widget *m_mouse_widget; // Cache the widget under the mouse
 };
 
 NAMESPACE_END(nanogui)

@@ -43,10 +43,52 @@ enum class LayerMappingMode : int
 };
 enum class LayerReferenceMode : int
 {
+	None,
     Direct,
     Index,
     IndexToDirect,
 };
+
+// Helper functions to convert between enums and strings
+inline LayerMappingMode toLayerMappingMode(const std::string& s)
+{
+	if (s == "ByControlPoint") return LayerMappingMode::ByControlPoint;
+	else if (s == "ByPolygonVertex") return LayerMappingMode::ByPolygonVertex;
+	else if (s == "ByPolygon") return LayerMappingMode::ByPolygon;
+	else if (s == "ByEdge") return LayerMappingMode::ByEdge;
+	else if (s == "AllSame") return LayerMappingMode::AllSame;
+	else return LayerMappingMode::None;
+}
+
+inline std::string toString(LayerMappingMode mode)
+{
+	switch (mode) {
+		case LayerMappingMode::ByControlPoint: return "ByControlPoint";
+		case LayerMappingMode::ByPolygonVertex: return "ByPolygonVertex";
+		case LayerMappingMode::ByPolygon: return "ByPolygon";
+		case LayerMappingMode::ByEdge: return "ByEdge";
+		case LayerMappingMode::AllSame: return "AllSame";
+		default: return "None";
+	}
+}
+
+inline LayerReferenceMode toLayerReferenceMode(const std::string& s)
+{
+	if (s == "Direct") return LayerReferenceMode::Direct;
+	else if (s == "Index") return LayerReferenceMode::Index;
+	else if (s == "IndexToDirect") return LayerReferenceMode::IndexToDirect;
+	else return LayerReferenceMode::Direct; // Default to Direct if unknown
+}
+
+inline std::string toString(LayerReferenceMode mode)
+{
+	switch (mode) {
+		case LayerReferenceMode::Direct: return "Direct";
+		case LayerReferenceMode::Index: return "Index";
+		case LayerReferenceMode::IndexToDirect: return "IndexToDirect";
+		default: return "Direct";
+	}
+}
 
 // FBX can store multiple normal / UV / vertex color channels ("layer" in FBX term).
 // LayerElement store these data.
@@ -57,8 +99,8 @@ struct LayerElement
     RawVector<int> indices; // can be empty. in that case, size of data must equal with vertex count or index count.
     RawVector<T> data;
     RawVector<T> data_deformed; // relevant only for normal layers for now.
-    std::string mapping_mode = "";
-	std::string reference_mode = "";
+	LayerMappingMode mapping_mode = LayerMappingMode::None;
+	LayerReferenceMode reference_mode = LayerReferenceMode::Direct;
 };
 using LayerElementF2 = LayerElement<float2>;
 using LayerElementF3 = LayerElement<float3>;

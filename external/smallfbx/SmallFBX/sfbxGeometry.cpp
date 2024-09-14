@@ -71,50 +71,51 @@ void GeomMesh::checkModes(LayerElement<T>& layer)
 	if (layer.name == sfbxS_LayerElementMaterial) {
 		return;
 	}
-
+	
 	// Ensure the reference mode is correct
-	const std::string expected_ref_mode = layer.indices.empty() ? "Direct" : "IndexToDirect";
-	if (layer.reference_mode.empty()) {
+	const LayerReferenceMode expected_ref_mode = layer.indices.empty() ? LayerReferenceMode::Direct : LayerReferenceMode::IndexToDirect;
+	if (layer.reference_mode == LayerReferenceMode::None) {
 		layer.reference_mode = expected_ref_mode;
 	} else if (layer.reference_mode != expected_ref_mode) {
 		sfbxPrint("Unexpected reference mode: %s (expected %s)\n",
-				  layer.reference_mode.c_str(), expected_ref_mode.c_str());
+				  toString(layer.reference_mode).c_str(), toString(expected_ref_mode).c_str());
 	}
 	
 	// Determine the expected mapping mode based on data size
-	size_t mapping_size = (layer.reference_mode == "Direct") ? layer.data.size() : layer.indices.size();
+	size_t mapping_size = (layer.reference_mode == LayerReferenceMode::Direct) ? layer.data.size() : layer.indices.size();
 	int match = 0;
-	std::string expected_map_mode = "None";
+	LayerMappingMode expected_map_mode = LayerMappingMode::None;
 	
 	// Compare mapping size with different attributes to determine expected mapping mode
 	if (mapping_size == m_indices.size()) {
-		expected_map_mode = "ByPolygonVertex";
+		expected_map_mode = LayerMappingMode::ByPolygonVertex;
 		match++;
 	}
 	if (mapping_size == m_points.size()) {
-		expected_map_mode = "ByControlPoint";
+		expected_map_mode = LayerMappingMode::ByControlPoint;
 		match++;
 	}
 	if (mapping_size == m_counts.size()) {
-		expected_map_mode = "ByPolygon";
+		expected_map_mode = LayerMappingMode::ByPolygon;
 		match++;
 	}
 	if (mapping_size == 1) {
-		expected_map_mode = "AllSame";
+		expected_map_mode = LayerMappingMode::AllSame;
 		match++;
 	}
 	
 	// Set mapping mode or report ambiguity if multiple matches exist
-	if (layer.mapping_mode.empty()) {
+	if (layer.mapping_mode == LayerMappingMode::None) {
 		layer.mapping_mode = expected_map_mode;
 		if (match > 1) {
-			sfbxPrint("Ambiguous mapping mode for layer %s, setting to %s\n", layer.name.c_str(), expected_map_mode.c_str());
+			sfbxPrint("Ambiguous mapping mode for layer %s, setting to %s\n", layer.name.c_str(), toString(expected_map_mode).c_str());
 		}
 	} else if (match == 0 || layer.mapping_mode != expected_map_mode) {
 		// If no match found or current mapping mode differs from expected, log a warning
-		sfbxPrint("Unexpected mapping mode: %s (expected %s)\n", layer.mapping_mode.c_str(), expected_map_mode.c_str());
+		sfbxPrint("Unexpected mapping mode: %s (expected %s)\n", toString(layer.mapping_mode).c_str(), toString(expected_map_mode).c_str());
 	}
 }
+
 
 void GeomMesh::importFBXObjects()
 {
@@ -146,8 +147,11 @@ void GeomMesh::importFBXObjects()
 			tmp.name = GetChildPropertyString(n, sfbxS_Name);
 			GetChildPropertyValue<double3>(tmp.data, n, sfbxS_Normals);
 			GetChildPropertyValue<int>(tmp.indices, n, sfbxS_NormalsIndex);
-			GetChildPropertyValue<string_view>(tmp.mapping_mode, n, sfbxS_MappingInformationType);
-			GetChildPropertyValue<string_view>(tmp.reference_mode, n, sfbxS_ReferenceInformationType);
+			std::string mapping_mode_str, reference_mode_str;
+			GetChildPropertyValue<string_view>(mapping_mode_str, n, sfbxS_MappingInformationType);
+			GetChildPropertyValue<string_view>(reference_mode_str, n, sfbxS_ReferenceInformationType);
+			tmp.mapping_mode = toLayerMappingMode(mapping_mode_str);
+			tmp.reference_mode = toLayerReferenceMode(reference_mode_str);
 			checkModes(tmp);
 			m_normal_layers.push_back(std::move(tmp));
 		}
@@ -157,8 +161,11 @@ void GeomMesh::importFBXObjects()
 			tmp.name = GetChildPropertyString(n, sfbxS_Name);
 			GetChildPropertyValue<double2>(tmp.data, n, sfbxS_UV);
 			GetChildPropertyValue<int>(tmp.indices, n, sfbxS_UVIndex);
-			GetChildPropertyValue<string_view>(tmp.mapping_mode, n, sfbxS_MappingInformationType);
-			GetChildPropertyValue<string_view>(tmp.reference_mode, n, sfbxS_ReferenceInformationType);
+			std::string mapping_mode_str, reference_mode_str;
+			GetChildPropertyValue<string_view>(mapping_mode_str, n, sfbxS_MappingInformationType);
+			GetChildPropertyValue<string_view>(reference_mode_str, n, sfbxS_ReferenceInformationType);
+			tmp.mapping_mode = toLayerMappingMode(mapping_mode_str);
+			tmp.reference_mode = toLayerReferenceMode(reference_mode_str);
 			checkModes(tmp);
 			m_uv_layers.push_back(std::move(tmp));
 		}
@@ -168,8 +175,11 @@ void GeomMesh::importFBXObjects()
 			tmp.name = GetChildPropertyString(n, sfbxS_Name);
 			GetChildPropertyValue<double4>(tmp.data, n, sfbxS_Colors);
 			GetChildPropertyValue<int>(tmp.indices, n, sfbxS_ColorIndex);
-			GetChildPropertyValue<string_view>(tmp.mapping_mode, n, sfbxS_MappingInformationType);
-			GetChildPropertyValue<string_view>(tmp.reference_mode, n, sfbxS_ReferenceInformationType);
+			std::string mapping_mode_str, reference_mode_str;
+			GetChildPropertyValue<string_view>(mapping_mode_str, n, sfbxS_MappingInformationType);
+			GetChildPropertyValue<string_view>(reference_mode_str, n, sfbxS_ReferenceInformationType);
+			tmp.mapping_mode = toLayerMappingMode(mapping_mode_str);
+			tmp.reference_mode = toLayerReferenceMode(reference_mode_str);
 			checkModes(tmp);
 			m_color_layers.push_back(std::move(tmp));
 		}
@@ -178,8 +188,11 @@ void GeomMesh::importFBXObjects()
 			LayerElementI1 tmp;
 			tmp.name = GetChildPropertyString(n, sfbxS_Name);
 			GetChildPropertyValue<int>(tmp.indices, n, sfbxS_Materials);
-			GetChildPropertyValue<string_view>(tmp.mapping_mode, n, sfbxS_MappingInformationType);
-			GetChildPropertyValue<string_view>(tmp.reference_mode, n, sfbxS_ReferenceInformationType);
+			std::string mapping_mode_str, reference_mode_str;
+			GetChildPropertyValue<string_view>(mapping_mode_str, n, sfbxS_MappingInformationType);
+			GetChildPropertyValue<string_view>(reference_mode_str, n, sfbxS_ReferenceInformationType);
+			tmp.mapping_mode = toLayerMappingMode(mapping_mode_str);
+			tmp.reference_mode = toLayerReferenceMode(reference_mode_str);
 			checkModes(tmp);
 			m_material_layers.push_back(std::move(tmp));
 		}
@@ -238,9 +251,9 @@ void GeomMesh::exportFBXObjects()
 			Node* layer_node = n->createChild(element_name, (int)i);
 			layer_node->createChild(sfbxS_Version, sfbxI_LayerVersion);
 			layer_node->createChild(sfbxS_Name, layer.name);
-			layer_node->createChild(sfbxS_MappingInformationType, layer.mapping_mode);
-			layer_node->createChild(sfbxS_ReferenceInformationType, layer.reference_mode);
-			
+			layer_node->createChild(sfbxS_MappingInformationType, toString(layer.mapping_mode));
+			layer_node->createChild(sfbxS_ReferenceInformationType, toString(layer.reference_mode));
+
 			if constexpr (std::is_same_v<decltype(layer), LayerElementF3&>) {
 				// Normals
 				layer_node->createChild(sfbxS_Normals, make_adaptor<double3>(layer.data));
@@ -358,7 +371,7 @@ int GeomMesh::getMaterialForVertexIndex(size_t vertex_index) const
 		return -1; // No material layer found
 	
 	const auto& material_layer = m_material_layers[0]; // Assuming first material layer
-	const std::string& mapping_mode = material_layer.mapping_mode;
+	LayerMappingMode mapping_mode = material_layer.mapping_mode;
 	
 	// Determine the polygon index for the given vertex index
 	size_t polygon_index = 0;
@@ -371,11 +384,11 @@ int GeomMesh::getMaterialForVertexIndex(size_t vertex_index) const
 		}
 	}
 	
-	if (mapping_mode == "AllSame") {
+	if (mapping_mode == LayerMappingMode::AllSame) {
 		// All faces have the same material
 		return 0; // Index of the first material connected to the mesh
 	}
-	else if (mapping_mode == "ByPolygon") {
+	else if (mapping_mode == LayerMappingMode::ByPolygon) {
 		if (polygon_index >= material_layer.indices.size())
 			return -1; // Out of bounds
 		int material_index = material_layer.indices[polygon_index];
@@ -386,7 +399,6 @@ int GeomMesh::getMaterialForVertexIndex(size_t vertex_index) const
 		return -1;
 	}
 }
-
 
 ObjectSubClass Shape::getSubClass() const { return ObjectSubClass::Shape; }
 

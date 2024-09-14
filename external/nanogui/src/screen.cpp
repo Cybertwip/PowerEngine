@@ -109,11 +109,12 @@ static EM_BOOL nanogui_emscripten_resize_callback(int eventType, const Emscripte
 #endif
 
 Screen::Screen()
-    : Widget(nullptr), m_glfw_window(nullptr), m_nvg_context(nullptr),
-      m_cursor(Cursor::Arrow), m_background(0.3f, 0.3f, 0.32f, 1.f),
-      m_shutdown_glfw(false), m_fullscreen(false), m_depth_buffer(false),
-      m_stencil_buffer(false), m_float_buffer(false), m_redraw(false) {
-    memset(m_cursors, 0, sizeof(GLFWcursor *) * (size_t) Cursor::CursorCount);
+: Widget(nullptr), m_glfw_window(nullptr), m_nvg_context(nullptr),
+m_cursor(Cursor::Arrow), m_background(0.3f, 0.3f, 0.32f, 1.f),
+m_shutdown_glfw(false), m_fullscreen(false), m_depth_buffer(false),
+m_stencil_buffer(false), m_float_buffer(false), m_redraw(false),
+m_mouse_widget(nullptr) { // Added m_mouse_widget initialization
+	memset(m_cursors, 0, sizeof(GLFWcursor *) * (size_t) Cursor::CursorCount);
 #if defined(NANOGUI_USE_OPENGL)
     GLint n_stencil_bits = 0, n_depth_bits = 0;
     GLboolean float_mode;
@@ -126,6 +127,8 @@ Screen::Screen()
     m_stencil_buffer = n_stencil_bits > 0;
     m_float_buffer = (bool) float_mode;
 #endif
+	
+	set_screen(this);
 }
 
 Screen::Screen(const Vector2i &size, const std::string &caption, bool resizable,
@@ -406,6 +409,9 @@ Screen::Screen(const Vector2i &size, const std::string &caption, bool resizable,
         );
     }
 #endif
+		  
+  set_screen(this);
+
 }
 
 void Screen::initialize(GLFWwindow *window, bool shutdown_glfw) {
@@ -624,73 +630,102 @@ void Screen::nvg_flush() {
     params->renderFlush(params->userPtr);
     params->renderViewport(params->userPtr, m_size[0], m_size[1], m_pixel_ratio);
 }
-
 void Screen::draw_widgets() {
-    nvgBeginFrame(m_nvg_context, m_size[0], m_size[1], m_pixel_ratio);
-
-    draw(m_nvg_context);
-
-    double elapsed = glfwGetTime() - m_last_interaction;
-
-    if (elapsed > 0.5f) {
-        /* Draw tooltips */
-        const Widget *widget = find_widget(m_mouse_pos);
-        if (widget && !widget->tooltip().empty()) {
-            int tooltip_width = 150;
-
-            float bounds[4];
-            nvgFontFace(m_nvg_context, "sans");
-            nvgFontSize(m_nvg_context, 15.0f);
-            nvgTextAlign(m_nvg_context, NVG_ALIGN_LEFT | NVG_ALIGN_TOP);
-            nvgTextLineHeight(m_nvg_context, 1.1f);
-            Vector2i pos = widget->absolute_position() +
-                           Vector2i(widget->width() / 2, widget->height() + 10);
-
-            nvgTextBounds(m_nvg_context, pos.x(), pos.y(),
-                          widget->tooltip().c_str(), nullptr, bounds);
-
-            int h = (bounds[2] - bounds[0]) / 2;
-            if (h > tooltip_width / 2) {
-                nvgTextAlign(m_nvg_context, NVG_ALIGN_CENTER | NVG_ALIGN_TOP);
-                nvgTextBoxBounds(m_nvg_context, pos.x(), pos.y(), tooltip_width,
-                                widget->tooltip().c_str(), nullptr, bounds);
-
-                h = (bounds[2] - bounds[0]) / 2;
-            }
-            int shift = 0;
-
-            if (pos.x() - h - 8 < 0) {
-                /* Keep tooltips on screen */
-                shift = pos.x() - h - 8;
-                pos.x() -= shift;
-                bounds[0] -= shift;
-                bounds[2] -= shift;
-            }
-
-            nvgGlobalAlpha(m_nvg_context,
-                           std::min(1.0, 2 * (elapsed - 0.5f)) * 0.8);
-
-            nvgBeginPath(m_nvg_context);
-            nvgFillColor(m_nvg_context, Color(0, 255));
-            nvgRoundedRect(m_nvg_context, bounds[0] - 4 - h, bounds[1] - 4,
-                           (int) (bounds[2] - bounds[0]) + 8,
-                           (int) (bounds[3] - bounds[1]) + 8, 3);
-
-            int px = (int) ((bounds[2] + bounds[0]) / 2) - h + shift;
-            nvgMoveTo(m_nvg_context, px, bounds[1] - 10);
-            nvgLineTo(m_nvg_context, px + 7, bounds[1] + 1);
-            nvgLineTo(m_nvg_context, px - 7, bounds[1] + 1);
-            nvgFill(m_nvg_context);
-
-            nvgFillColor(m_nvg_context, Color(255, 255));
-            nvgFontBlur(m_nvg_context, 0.0f);
-            nvgTextBox(m_nvg_context, pos.x() - h, pos.y(), tooltip_width,
-                       widget->tooltip().c_str(), nullptr);
-        }
-    }
-
-    nvgEndFrame(m_nvg_context);
+	nvgBeginFrame(m_nvg_context, m_size[0], m_size[1], m_pixel_ratio);
+	
+	draw(m_nvg_context);
+	
+	double elapsed = glfwGetTime() - m_last_interaction;
+	
+	// Use cached m_mouse_widget to avoid redundant calls to find_widget
+	if (elapsed > 0.5f && m_mouse_widget && !m_mouse_widget->tooltip().empty()) {
+		/* Draw tooltips */
+		int tooltip_width = 150;
+		
+		float bounds[4];
+		nvgFontFace(m_nvg_context, "sans");
+		nvgFontSize(m_nvg_context, 15.0f);
+		nvgTextAlign(m_nvg_context, NVG_ALIGN_LEFT | NVG_ALIGN_TOP);
+		nvgTextLineHeight(m_nvg_context, 1.1f);
+		Vector2i pos = m_mouse_widget->absolute_position() +
+		Vector2i(m_mouse_widget->width() / 2, m_mouse_widget->height() + 10);
+		
+		nvgTextBounds(m_nvg_context, pos.x(), pos.y(),
+					  m_mouse_widget->tooltip().c_str(), nullptr, bounds);
+		
+		int h = (bounds[2] - bounds[0]) / 2;
+		if (h > tooltip_width / 2) {
+			nvgTextAlign(m_nvg_context, NVG_ALIGN_CENTER | NVG_ALIGN_TOP);
+			nvgTextBoxBounds(m_nvg_context, pos.x(), pos.y(), tooltip_width,
+							 m_mouse_widget->tooltip().c_str(), nullptr, bounds);
+			
+			h = (bounds[2] - bounds[0]) / 2;
+		}
+		int shift = 0;
+		
+		if (pos.x() - h - 8 < 0) {
+			/* Keep tooltips on screen */
+			shift = pos.x() - h - 8;
+			pos.x() -= shift;
+			bounds[0] -= shift;
+			bounds[2] -= shift;
+		}
+		
+		nvgGlobalAlpha(m_nvg_context,
+					   std::min(1.0, 2 * (elapsed - 0.5f)) * 0.8);
+		
+		nvgBeginPath(m_nvg_context);
+		nvgFillColor(m_nvg_context, Color(0, 255));
+		nvgRoundedRect(m_nvg_context, bounds[0] - 4 - h, bounds[1] - 4,
+					   (int)(bounds[2] - bounds[0]) + 8,
+					   (int)(bounds[3] - bounds[1]) + 8, 3);
+		
+		int px = (int)((bounds[2] + bounds[0]) / 2) - h + shift;
+		nvgMoveTo(m_nvg_context, px, bounds[1] - 10);
+		nvgLineTo(m_nvg_context, px + 7, bounds[1] + 1);
+		nvgLineTo(m_nvg_context, px - 7, bounds[1] + 1);
+		nvgFill(m_nvg_context);
+		
+		nvgFillColor(m_nvg_context, Color(255, 255));
+		nvgFontBlur(m_nvg_context, 0.0f);
+		nvgTextBox(m_nvg_context, pos.x() - h, pos.y(), tooltip_width,
+				   m_mouse_widget->tooltip().c_str(), nullptr);
+	}
+	
+	nvgEndFrame(m_nvg_context);
 }
+
+void Screen::cursor_pos_callback_event(double x, double y) {
+	Vector2i p((int)x, (int)y);
+	
+#if defined(_WIN32) || defined(__linux__) || defined(EMSCRIPTEN)
+	p = Vector2i(Vector2f(p) / m_pixel_ratio);
+#endif
+	
+	m_last_interaction = glfwGetTime();
+	
+	// Removed unnecessary subtraction of Vector2i(1, 2)
+	bool ret = false;
+	if (!m_drag_active) {
+		Widget *widget = find_widget(p);
+		if (widget != nullptr && widget->cursor() != m_cursor) {
+			m_cursor = widget->cursor();
+			glfwSetCursor(m_glfw_window, m_cursors[(int)m_cursor]);
+		}
+		m_mouse_widget = widget; // Cache the widget under the mouse
+	} else {
+		ret = m_drag_widget->mouse_drag_event(
+											  p - m_drag_widget->parent()->absolute_position(), p - m_mouse_pos,
+											  m_mouse_state, m_modifiers);
+	}
+	
+	if (!ret)
+		ret = mouse_motion_event(p, p - m_mouse_pos, m_mouse_state, m_modifiers);
+	
+	m_mouse_pos = p;
+	m_redraw |= ret;
+}
+
 
 bool Screen::keyboard_event(int key, int scancode, int action, int modifiers) {
     if (m_focus_path.size() > 0) {
@@ -720,46 +755,12 @@ bool Screen::resize_event(const Vector2i& size) {
 }
 
 void Screen::redraw() {
-    if (!m_redraw) {
-        m_redraw = true;
-        #if !defined(EMSCRIPTEN)
-            glfwPostEmptyEvent();
-        #endif
-    }
-}
-
-void Screen::cursor_pos_callback_event(double x, double y) {
-    Vector2i p((int) x, (int) y);
-
-#if defined(_WIN32) || defined(__linux__) || defined(EMSCRIPTEN)
-    p = Vector2i(Vector2f(p) / m_pixel_ratio);
+	if (!m_redraw) {
+		m_redraw = true;
+#if !defined(EMSCRIPTEN)
+		glfwPostEmptyEvent();
 #endif
-
-    m_last_interaction = glfwGetTime();
-    try {
-        p -= Vector2i(1, 2);
-
-        bool ret = false;
-        if (!m_drag_active) {
-            Widget *widget = find_widget(p);
-            if (widget != nullptr && widget->cursor() != m_cursor) {
-                m_cursor = widget->cursor();
-                glfwSetCursor(m_glfw_window, m_cursors[(int) m_cursor]);
-            }
-        } else {
-            ret = m_drag_widget->mouse_drag_event(
-                p - m_drag_widget->parent()->absolute_position(), p - m_mouse_pos,
-                m_mouse_state, m_modifiers);
-        }
-
-        if (!ret)
-            ret = mouse_motion_event(p, p - m_mouse_pos, m_mouse_state, m_modifiers);
-
-        m_mouse_pos = p;
-        m_redraw |= ret;
-    } catch (const std::exception &e) {
-        std::cerr << "Caught exception in event handler: " << e.what() << std::endl;
-    }
+	}
 }
 
 void Screen::mouse_button_callback_event(int button, int action, int modifiers) {
