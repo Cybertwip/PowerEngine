@@ -208,6 +208,8 @@ public:
 			if (!mPlaying) {
 				mRecording = active;
 				mRecordBtn->set_text_color(active ? nanogui::Color(1.0f, 0.0f, 0.0f, 1.0f) : normalRecordColor); // Red when recording
+				
+				register_actor_transform_callback(mActiveActor);
 			}
 		});
 		
@@ -241,22 +243,35 @@ public:
 	
 	// Override OnActorSelected from IActorSelectedCallback
 	void OnActorSelected(Actor& actor) override {
-		if (mActiveActor.has_value()) {
-			auto& transformComponent = mActiveActor->get().get_component<TransformComponent>();
-			transformComponent.unregister_on_transform_changed_callback(mTransformRegistrationId);
-		}
+		unregister_actor_transform_callback(mActiveActor);
 		
 		mActiveActor = actor;
 		
-		auto& transformComponent = mActiveActor->get().get_component<TransformComponent>();
+		register_actor_transform_callback(mActiveActor);
+	}
+	
+	void unregister_actor_transform_callback(std::optional<std::reference_wrapper<Actor>> actor) {
+		if (actor != std::nullopt) {
+			auto& transformComponent = actor->get().get_component<TransformComponent>();
+			transformComponent.unregister_on_transform_changed_callback(mTransformRegistrationId);
+		}
+	}
+	
+	void register_actor_transform_callback(std::optional<std::reference_wrapper<Actor>> actor) {
 		
-		auto& animationComponent = mActiveActor->get().get_component<AnimationComponent>();
+		if (actor != std::nullopt) {
+			
+			auto& transformComponent = actor->get().get_component<TransformComponent>();
+			
+			auto& animationComponent = actor->get().get_component<AnimationComponent>();
+			
+			mTransformRegistrationId = transformComponent.register_on_transform_changed_callback([this, &animationComponent](const TransformComponent& transform) {
+				if (mRecording) {
+					animationComponent.addKeyframe(mCurrentTime, transform.get_translation(), transform.get_rotation(), transform.get_scale());
+				}
+			});
+		}
 		
-		mTransformRegistrationId = transformComponent.register_on_transform_changed_callback([this, &animationComponent](const TransformComponent& transform) {
-			if (mRecording) {
-				animationComponent.addKeyframe(mCurrentTime, transform.get_translation(), transform.get_rotation(), transform.get_scale());
-			}
-		});
 	}
 	
 	// Override mouse events to consume them
@@ -302,22 +317,13 @@ private:
 
 		if (play) {
 			mRecording = false;
-			if (mActiveActor.has_value()) {
-				auto& transformComponent = mActiveActor->get().get_component<TransformComponent>();
-				transformComponent.unregister_on_transform_changed_callback(mTransformRegistrationId);
-			}
+			
+			unregister_actor_transform_callback(mActiveActor);
+
 			mAnimatableActors = mActorManager.get_actors_with_component<AnimationComponent>();
 		} else {
-			if (mActiveActor.has_value()) {
-				auto& transformComponent = mActiveActor->get().get_component<TransformComponent>();
-				auto& animationComponent = mActiveActor->get().get_component<AnimationComponent>();
-				
-				mTransformRegistrationId = transformComponent.register_on_transform_changed_callback([this, &animationComponent](const TransformComponent& transform) {
-					if (mRecording) {
-						animationComponent.addKeyframe(mCurrentTime, transform.get_translation(), transform.get_rotation(), transform.get_scale());
-					}
-				});
-			}
+			
+			register_actor_transform_callback(mActiveActor);
 		}
 	}
 	
@@ -331,8 +337,6 @@ private:
 			// Reset play button color
 			mPlayPauseBtn->set_text_color(theme()->m_icon_color);
 		}
-		
-		mAnimatableActors.clear();
 	}
 	
 	// Helper method to update the time display
