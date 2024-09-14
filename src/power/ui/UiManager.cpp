@@ -245,7 +245,13 @@ void UiManager::draw_content(const nanogui::Matrix4f& model, const nanogui::Matr
 		auto& color = mActiveActor->get().get_component<ColorComponent>();
 		auto& transform = mActiveActor->get().get_component<TransformComponent>();
 		
-		color.apply(glm::vec3(1.0f, 0.0f, 0.0f));
+		// Target blue-ish color vector (choose a blend towards red, but not purely red)
+		glm::vec3 selection_color(0.83f, 0.68f, 0.21f); // A gold-ish color
+
+		// Normalize the color to ensure its length is exactly 1.0
+		selection_color = glm::normalize(selection_color);
+
+		color.apply(selection_color);
 		
 		nanogui::Matrix4f model = TransformComponent::glm_to_nanogui(transform.get_matrix());
 
