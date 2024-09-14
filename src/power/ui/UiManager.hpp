@@ -17,7 +17,9 @@ class GizmoManager;
 class Grid;
 class MeshActorLoader;
 class ScenePanel;
+class SceneTimeBar;
 class ShaderManager;
+
 
 // UiManager class definition
 class UiManager : public IActorSelectedCallback, public Drawable {
@@ -42,4 +44,6 @@ private:
 	std::unique_ptr<GizmoManager> mGizmoManager;
 	
 	std::unique_ptr<Grid> mGrid;
+	
+	SceneTimeBar* mSceneTimeBar;
 };

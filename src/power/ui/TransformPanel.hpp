@@ -10,9 +10,10 @@ class TransformComponent;
 class TransformPanel : public Panel {
 public:
     TransformPanel(nanogui::Widget& parent);
+	~TransformPanel();
     
     void gather_values_into(TransformComponent& transform);
-    void update_values_from(TransformComponent& transform);
+    void update_values_from(const TransformComponent& transform);
 
     void set_active_actor(std::reference_wrapper<Actor> actor);
     
@@ -34,4 +35,6 @@ private:
 	nanogui::Widget *mScaleWidget;
     
     std::optional<std::reference_wrapper<Actor>> mActiveActor;
+	
+	int mTransformRegistrationId;
 };

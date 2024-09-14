@@ -10,6 +10,7 @@
 #include "actors/Actor.hpp"
 #include "actors/ActorManager.hpp"
 
+#include "components/AnimationComponent.hpp"
 #include "components/ColorComponent.hpp"
 #include "components/DrawableComponent.hpp"
 #include "components/MetadataComponent.hpp"
@@ -67,125 +68,274 @@ glm::vec3 ScreenToWorld(glm::vec2 screenPos, float depth, glm::mat4 projectionMa
 
 }
 
-class SceneTimeBar : public nanogui::Widget {
+
+class SceneTimeBar : public nanogui::Widget, public IActorSelectedCallback {
 public:
-	SceneTimeBar(nanogui::Widget* parent, int width, int height) : nanogui::Widget(parent) {
+	SceneTimeBar(nanogui::Widget* parent, ActorManager& actorManager, int width, int height)
+	: nanogui::Widget(parent),
+	mActorManager(actorManager),
+	mTransformRegistrationId(-1),
+	mCurrentTime(0),
+	mTotalFrames(1800), // 30 seconds at 60 FPS
+	mRecording(false),
+	mPlaying(false) {
+		
+		// Set fixed dimensions
 		set_fixed_width(width);
 		set_fixed_height(height);
 		
 		mBackgroundColor = theme()->m_button_gradient_bot_unfocused;
-		
 		mBackgroundColor.a() = 0.25f;
 		
+		// Cache fixed dimensions
+		int fixedWidth = fixed_width();
+		int fixedHeight = fixed_height();
+		int buttonWidth = static_cast<int>(fixedWidth * 0.08f);
+		int buttonHeight = static_cast<int>(fixedHeight * 0.10f);
+		
 		// Vertical layout for slider above buttons
-		set_layout(new nanogui::BoxLayout(nanogui::Orientation::Vertical,
-										  nanogui::Alignment::Middle, 0, 0));
+		set_layout(new nanogui::BoxLayout(nanogui::Orientation::Vertical, nanogui::Alignment::Middle, 0, 0));
 		
-		// Add the slider above the buttons
+		// Slider Wrapper
 		nanogui::Widget* sliderWrapper = new nanogui::Widget(this);
-		sliderWrapper->set_layout(new nanogui::BoxLayout(nanogui::Orientation::Horizontal,
-														 nanogui::Alignment::Fill, 10, 5));
+		sliderWrapper->set_layout(new nanogui::BoxLayout(nanogui::Orientation::Horizontal, nanogui::Alignment::Fill, 10, 5));
 		
-		// Slider for timeline (relative to the SceneTimeBar width)
-		nanogui::Slider* timelineSlider = new nanogui::Slider(sliderWrapper);
-		timelineSlider->set_value(0.0f);  // Start at 0% of the timeline
-		timelineSlider->set_fixed_width(int(this->fixed_width()));
-		timelineSlider->set_range(std::make_pair(0.0f, 100.0f));  // Range for timeline
+		// Timeline Slider
+		mTimelineSlider = new nanogui::Slider(sliderWrapper);
+		mTimelineSlider->set_value(0.0f);  // Start at 0%
+		mTimelineSlider->set_fixed_width(fixedWidth);
+		mTimelineSlider->set_range(std::make_pair(0.0f, 1.0f));  // Normalized range
 		
-		// Create another widget for buttons
+		// Slider Callback to update mCurrentTime
+		mTimelineSlider->set_callback([this](float value) {
+			mCurrentTime = static_cast<int>(value * mTotalFrames);
+			update_time_display(mCurrentTime);
+			// Optionally, evaluate animations immediately when scrubbing
+			evaluate_animations();
+		});
+		
+		// Buttons Wrapper
 		nanogui::Widget* buttonWrapperWrapper = new nanogui::Widget(this);
-		
-
 		buttonWrapperWrapper->set_layout(new nanogui::BoxLayout(nanogui::Orientation::Vertical, nanogui::Alignment::Middle, 0, 0));
 		
-		// Time Counter Display (relative to the SceneTimeBar width)
+		// Time Counter Display
 		mTimeLabel = new nanogui::TextBox(buttonWrapperWrapper);
-		mTimeLabel->set_fixed_width(int(this->fixed_width()));  // Set full width for centering
+		mTimeLabel->set_fixed_width(fixedWidth);
 		mTimeLabel->set_font_size(36);
 		mTimeLabel->set_alignment(nanogui::TextBox::Alignment::Center);
-		
-		// Center the text horizontally
 		mTimeLabel->set_background_color(nanogui::Color(0, 0, 0, 0));
-		
 		mTimeLabel->set_value("00:00:00:00");
 		
+		// Buttons Horizontal Layout
 		nanogui::Widget* buttonWrapper = new nanogui::Widget(buttonWrapperWrapper);
 		buttonWrapper->set_layout(new nanogui::BoxLayout(nanogui::Orientation::Horizontal, nanogui::Alignment::Middle, 10, 5));
 		
 		// Rewind Button
 		nanogui::Button* rewindBtn = new nanogui::Button(buttonWrapper, "", FA_FAST_BACKWARD);
-		rewindBtn->set_fixed_width(int(this->fixed_width() * 0.08));  // 8% of SceneTimeBar width
-		rewindBtn->set_fixed_height(int(this->fixed_height() * 0.10));  // 8% of SceneTimeBar height
-
+		rewindBtn->set_fixed_width(buttonWidth);
+		rewindBtn->set_fixed_height(buttonHeight);
+		rewindBtn->set_tooltip("Rewind to Start");
+		rewindBtn->set_callback([this]() {
+			stop_playback(); // Ensure playback is stopped
+			mCurrentTime = 0;
+			update_time_display(mCurrentTime);
+			mTimelineSlider->set_value(0.0f);
+			evaluate_animations();
+		});
+		
 		// Previous Frame Button
 		nanogui::Button* prevFrameBtn = new nanogui::Button(buttonWrapper, "", FA_STEP_BACKWARD);
-		prevFrameBtn->set_fixed_width(int(this->fixed_width() * 0.08));  // 8% of SceneTimeBar width
-		prevFrameBtn->set_fixed_height(int(this->fixed_height() * 0.10));  // 8% of SceneTimeBar height
-
-		// Play/Pause Button
-		nanogui::Button* playPauseBtn = new nanogui::ToolButton(buttonWrapper, FA_PLAY);
-		
-		auto normalPlayColor = playPauseBtn->text_color();
-
-		playPauseBtn->set_fixed_width(int(this->fixed_width() * 0.08));  // 8% of SceneTimeBar width
-		playPauseBtn->set_fixed_height(int(this->fixed_height() * 0.10));  // 8% of SceneTimeBar height
-
-		playPauseBtn->set_change_callback([this, playPauseBtn, normalPlayColor](bool active) {
-			toggle_play_pause();
-			
-			if (active) {
-				playPauseBtn->set_icon(FA_PAUSE);
-				playPauseBtn->set_text_color(nanogui::Color(0.0f, 0.0f, 1.0f, 1.0f));
-			} else {
-				playPauseBtn->set_text_color(normalPlayColor);
-				playPauseBtn->set_icon(FA_PLAY);
+		prevFrameBtn->set_fixed_width(buttonWidth);
+		prevFrameBtn->set_fixed_height(buttonHeight);
+		prevFrameBtn->set_tooltip("Previous Frame");
+		prevFrameBtn->set_callback([this]() {
+			if (mCurrentTime > 0) {
+				mCurrentTime--;
+				update_time_display(mCurrentTime);
+				mTimelineSlider->set_value(static_cast<float>(mCurrentTime) / mTotalFrames);
+				evaluate_animations();
 			}
-
+		});
+		
+		// Play/Pause Button
+		mPlayPauseBtn = new nanogui::ToolButton(buttonWrapper, FA_PLAY);
+		mPlayPauseBtn->set_fixed_width(buttonWidth);
+		mPlayPauseBtn->set_fixed_height(buttonHeight);
+		mPlayPauseBtn->set_tooltip("Play");
+		mPlayPauseBtn->set_flags(nanogui::Button::ToggleButton);
+		auto normalPlayColor = mPlayPauseBtn->text_color();
+		
+		mPlayPauseBtn->set_change_callback([this, normalPlayColor](bool active) {
+			if (active) {
+				// Play
+				toggle_play_pause(true);
+				mPlayPauseBtn->set_icon(FA_PAUSE);
+				mPlayPauseBtn->set_tooltip("Pause");
+				mPlayPauseBtn->set_text_color(nanogui::Color(0.0f, 0.0f, 1.0f, 1.0f)); // Blue
+			} else {
+				// Pause
+				toggle_play_pause(false);
+				mPlayPauseBtn->set_icon(FA_PLAY);
+				mPlayPauseBtn->set_tooltip("Play");
+				mPlayPauseBtn->set_text_color(normalPlayColor);
+			}
+			
+			mRecordBtn->set_text_color(normalPlayColor);
+		});
+		
+		// Stop Button
+		nanogui::Button* stopBtn = new nanogui::Button(buttonWrapper, "", FA_STOP);
+		stopBtn->set_fixed_width(buttonWidth);
+		stopBtn->set_fixed_height(buttonHeight);
+		stopBtn->set_tooltip("Stop");
+		stopBtn->set_callback([this]() {
+			stop_playback();
+			mCurrentTime = 0;
+			update_time_display(mCurrentTime);
+			mTimelineSlider->set_value(0.0f);
+			evaluate_animations();
 		});
 		
 		// Record Button
-		nanogui::Button* recordBtn = new nanogui::ToolButton(buttonWrapper,  FA_CIRCLE);
-		recordBtn->set_fixed_width(int(this->fixed_width() * 0.08));  // 8% of SceneTimeBar width
-		recordBtn->set_fixed_height(int(this->fixed_height() * 0.10));  // 8% of SceneTimeBar height
+		mRecordBtn = new nanogui::ToolButton(buttonWrapper, FA_CIRCLE);
+		mRecordBtn->set_fixed_width(buttonWidth);
+		mRecordBtn->set_fixed_height(buttonHeight);
+		mRecordBtn->set_tooltip("Record");
+		mRecordBtn->set_flags(nanogui::Button::ToggleButton);
+		auto normalRecordColor = mRecordBtn->text_color();
 		
-		auto normalRecordColor = recordBtn->text_color();
-		
-		recordBtn->set_change_callback([recordBtn, normalRecordColor](bool active) {
-			if (active) {
-				recordBtn->set_text_color(nanogui::Color(1.0f, 0.0f, 0.0f, 1.0f));
-			} else {
-				recordBtn->set_text_color(normalRecordColor);
+		mRecordBtn->set_change_callback([this, normalRecordColor](bool active) {
+			if (!mPlaying) {
+				mRecording = active;
+				mRecordBtn->set_text_color(active ? nanogui::Color(1.0f, 0.0f, 0.0f, 1.0f) : normalRecordColor); // Red when recording
 			}
 		});
-
+		
 		// Next Frame Button
 		nanogui::Button* nextFrameBtn = new nanogui::Button(buttonWrapper, "", FA_STEP_FORWARD);
-		nextFrameBtn->set_fixed_width(int(this->fixed_width() * 0.08));  // 8% of SceneTimeBar width
-		nextFrameBtn->set_fixed_height(int(this->fixed_height() * 0.10));  // 8% of SceneTimeBar height
-
+		nextFrameBtn->set_fixed_width(buttonWidth);
+		nextFrameBtn->set_fixed_height(buttonHeight);
+		nextFrameBtn->set_tooltip("Next Frame");
+		nextFrameBtn->set_callback([this]() {
+			if (mCurrentTime < mTotalFrames) {
+				mCurrentTime++;
+				update_time_display(mCurrentTime);
+				mTimelineSlider->set_value(static_cast<float>(mCurrentTime) / mTotalFrames);
+				evaluate_animations();
+			}
+		});
+		
 		// Seek to End Button
 		nanogui::Button* seekEndBtn = new nanogui::Button(buttonWrapper, "", FA_FAST_FORWARD);
-		seekEndBtn->set_fixed_width(int(this->fixed_width() * 0.08));  // 8% of SceneTimeBar width
-		seekEndBtn->set_fixed_height(int(this->fixed_height() * 0.10));  // 8% of SceneTimeBar height
-
+		seekEndBtn->set_fixed_width(buttonWidth);
+		seekEndBtn->set_fixed_height(buttonHeight);
+		seekEndBtn->set_tooltip("Seek to End");
+		seekEndBtn->set_callback([this]() {
+			stop_playback(); // Ensure playback is stopped
+			mCurrentTime = mTotalFrames;
+			update_time_display(mCurrentTime);
+			mTimelineSlider->set_value(1.0f);
+			evaluate_animations();
+		});
 	}
 	
-	bool mouse_button_event(const nanogui::Vector2i &p, int button, bool down, int modifiers) override {
-		Widget::mouse_button_event(p, button, down, modifiers);
+	// Override OnActorSelected from IActorSelectedCallback
+	void OnActorSelected(Actor& actor) override {
+		if (mActiveActor.has_value()) {
+			auto& transformComponent = mActiveActor->get().get_component<TransformComponent>();
+			transformComponent.unregister_on_transform_changed_callback(mTransformRegistrationId);
+		}
 		
-		return true; // force consume
+		mActiveActor = actor;
+		
+		auto& transformComponent = mActiveActor->get().get_component<TransformComponent>();
+		
+		auto& animationComponent = mActiveActor->get().get_component<AnimationComponent>();
+		
+		mTransformRegistrationId = transformComponent.register_on_transform_changed_callback([this, &animationComponent](const TransformComponent& transform) {
+			if (mRecording) {
+				animationComponent.addKeyframe(mCurrentTime, transform.get_translation(), transform.get_rotation(), transform.get_scale());
+			}
+		});
+	}
+	
+	// Override mouse events to consume them
+	bool mouse_button_event(const nanogui::Vector2i &p, int button, bool down, int modifiers) override {
+		nanogui::Widget::mouse_button_event(p, button, down, modifiers);
+		return true; // Consume the event
 	}
 	
 	bool mouse_motion_event(const nanogui::Vector2i &p, const nanogui::Vector2i &rel, int button, int modifiers) override {
-		
-		Widget::mouse_motion_event(p, rel, button, modifiers);
-		
-		return true; // force consume
+		nanogui::Widget::mouse_motion_event(p, rel, button, modifiers);
+		return true; // Consume the event
 	}
 	
-	void toggle_play_pause() {
-		// Logic to toggle play and pause (to be implemented)
+	// Override the draw method to handle time updates and rendering
+	virtual void draw(NVGcontext* ctx) override {
+		if (mPlaying) {
+			if (mCurrentTime < mTotalFrames) {
+				mCurrentTime++;
+				update_time_display(mCurrentTime);
+				mTimelineSlider->set_value(static_cast<float>(mCurrentTime) / mTotalFrames);
+			} else {
+				// Stop playing when end is reached
+				stop_playback();
+			}
+		}
+		
+		evaluate_animations();
+
+		// Draw background
+		nvgBeginPath(ctx);
+		nvgRect(ctx, m_pos.x(), m_pos.y(), m_size.x(), m_size.y());
+		nvgFillColor(ctx, mBackgroundColor);
+		nvgFill(ctx);
+		
+		// Call the parent class draw method to render the child widgets
+		nanogui::Widget::draw(ctx);
 	}
+	
+private:
+	// Helper method to toggle play/pause
+	void toggle_play_pause(bool play) {
+		mPlaying = play;
+
+		if (play) {
+			mRecording = false;
+			if (mActiveActor.has_value()) {
+				auto& transformComponent = mActiveActor->get().get_component<TransformComponent>();
+				transformComponent.unregister_on_transform_changed_callback(mTransformRegistrationId);
+			}
+			mAnimatableActors = mActorManager.get_actors_with_component<AnimationComponent>();
+		} else {
+			if (mActiveActor.has_value()) {
+				auto& transformComponent = mActiveActor->get().get_component<TransformComponent>();
+				auto& animationComponent = mActiveActor->get().get_component<AnimationComponent>();
+				
+				mTransformRegistrationId = transformComponent.register_on_transform_changed_callback([this, &animationComponent](const TransformComponent& transform) {
+					if (mRecording) {
+						animationComponent.addKeyframe(mCurrentTime, transform.get_translation(), transform.get_rotation(), transform.get_scale());
+					}
+				});
+			}
+		}
+	}
+	
+	// Helper method to stop playback
+	void stop_playback() {
+		if (mPlaying) {
+			mPlaying = false;
+			mPlayPauseBtn->set_pushed(false);
+			mPlayPauseBtn->set_icon(FA_PLAY);
+			mPlayPauseBtn->set_tooltip("Play");
+			// Reset play button color
+			mPlayPauseBtn->set_text_color(theme()->m_icon_color);
+		}
+		
+		mAnimatableActors.clear();
+	}
+	
+	// Helper method to update the time display
 	void update_time_display(int frameCount) {
 		const int framesPerSecond = 60; // 60 FPS
 		int totalSeconds = frameCount / framesPerSecond;
@@ -200,23 +350,42 @@ public:
 		mTimeLabel->set_value(buffer);
 	}
 	
-	virtual void draw(NVGcontext* ctx) override {
-		// Draw background
-		nvgBeginPath(ctx);
-		nvgRect(ctx, m_pos.x(), m_pos.y(), m_size.x(), m_size.y());
-		nvgFillColor(ctx, mBackgroundColor); // Set your preferred color (RGBA)
-		nvgFill(ctx);
-		
-		// Call the parent class draw method to render the child widgets
-		Widget::draw(ctx);
+	// Helper method to evaluate animations
+	void evaluate_animations() {
+		for (auto& animatableActor : mAnimatableActors) {
+			auto& animationComponent = animatableActor.get().get_component<AnimationComponent>();
+			auto& transformComponent = animatableActor.get().get_component<TransformComponent>();
+			
+			auto evaluationContainer = animationComponent.evaluate(mCurrentTime);
+			
+			if (evaluationContainer.has_value()) {
+				auto [t, r, s] = *evaluationContainer;
+				
+				transformComponent.set_translation(t);
+				transformComponent.set_rotation(r);
+				transformComponent.set_scale(s);
+			}
+		}
 	}
-
 	
 private:
+	ActorManager& mActorManager;
 	nanogui::TextBox* mTimeLabel;
+	nanogui::Slider* mTimelineSlider;
+	nanogui::Button* mRecordBtn;
+	nanogui::ToolButton* mPlayPauseBtn;
 	nanogui::Color mBackgroundColor;
+	
+	std::vector<std::reference_wrapper<Actor>> mAnimatableActors;
+	std::optional<std::reference_wrapper<Actor>> mActiveActor;
+	
+	bool mRecording;
+	bool mPlaying;
+	
+	int mTransformRegistrationId;
+	int mCurrentTime;
+	int mTotalFrames;
 };
-
 
 UiManager::UiManager(IActorSelectedRegistry& registry, IActorVisualManager& actorVisualManager, ActorManager& actorManager, MeshActorLoader& meshActorLoader, ShaderManager& shaderManager, ScenePanel& scenePanel, Canvas& canvas, nanogui::Widget& toolbox, nanogui::Widget& statusBar, CameraManager& cameraManager, std::function<void(std::function<void(int, int)>)> applicationClickRegistrator)
 : mRegistry(registry)
@@ -225,16 +394,18 @@ UiManager::UiManager(IActorSelectedRegistry& registry, IActorVisualManager& acto
 , mGizmoManager(std::make_unique<GizmoManager>(toolbox, shaderManager, actorManager))
 , mGrid(std::make_unique<Grid>(shaderManager)) {
 	mRegistry.RegisterOnActorSelectedCallback(*this);
-
-	// Initialize the scene time bar
-	SceneTimeBar* timeBar = new SceneTimeBar(&scenePanel, scenePanel.fixed_width(), scenePanel.fixed_height() * 0.2f);
-
-	// Attach it to the top of the canvas, making it stick at the top
-	timeBar->set_position(nanogui::Vector2i(0, 0));  // Stick to top
-	timeBar->set_size(nanogui::Vector2i(canvas.width(), 40));  // Full width of the canvas
 	
-
-	canvas.register_draw_callback([this, &actorManager, timeBar]() {
+	// Initialize the scene time bar
+	mSceneTimeBar = new SceneTimeBar(&scenePanel, mActorManager,  scenePanel.fixed_width(), scenePanel.fixed_height() * 0.2f);
+	
+	mRegistry.RegisterOnActorSelectedCallback(*mSceneTimeBar);
+	
+	// Attach it to the top of the canvas, making it stick at the top
+	mSceneTimeBar->set_position(nanogui::Vector2i(0, 0));  // Stick to top
+	mSceneTimeBar->set_size(nanogui::Vector2i(canvas.width(), 40));  // Full width of the canvas
+	
+	
+	canvas.register_draw_callback([this, &actorManager]() {
 		actorManager.draw();
 		draw();
 		mGizmoManager->draw();
@@ -281,7 +452,7 @@ UiManager::UiManager(IActorSelectedRegistry& registry, IActorVisualManager& acto
 				break;
 			}
 		}
-
+		
 		return id;
 	};
 	
@@ -325,7 +496,7 @@ UiManager::UiManager(IActorSelectedRegistry& registry, IActorVisualManager& acto
 		if (toolbox.contains(nanogui::Vector2f(x, y))) {
 			return;
 		}
-
+		
 		if (mActiveActor.has_value()) {
 			glm::mat4 viewMatrix = TransformComponent::nanogui_to_glm(cameraManager.get_view());
 			glm::mat4 projMatrix = TransformComponent::nanogui_to_glm(cameraManager.get_projection());
@@ -339,25 +510,25 @@ UiManager::UiManager(IActorSelectedRegistry& registry, IActorVisualManager& acto
 			// Calculate the scaling factors
 			float scaleX = viewport.second[0] / float(width);
 			float scaleY = viewport.second[1] / float(height);
-
-
+			
+			
 			int adjusted_y = height - y + canvas.parent()->position().y();
 			int adjusted_x = x + canvas.parent()->position().x();
-
+			
 			int adjusted_dx = x + canvas.parent()->position().x() + dx;
 			int adjusted_dy = height - y + canvas.parent()->position().y() + dy;
-
+			
 			// Scale x and y accordingly
 			adjusted_x *= scaleX;
 			adjusted_y *= scaleY;
-
+			
 			adjusted_dx *= scaleX;
 			adjusted_dy *= scaleY;
-
+			
 			auto world = ScreenToWorld(glm::vec2(adjusted_x, adjusted_y), cameraPosition.z, projMatrix, viewMatrix, width, height);
-
+			
 			auto offset = ScreenToWorld(glm::vec2(adjusted_dx, adjusted_dy), cameraPosition.z, projMatrix, viewMatrix, width, height);
-
+			
 			int id = readFromFramebuffer(width, height, x, y);
 			
 			if (id != 0 && !down) {
@@ -377,11 +548,12 @@ UiManager::UiManager(IActorSelectedRegistry& registry, IActorVisualManager& acto
 	statusBarPanel->set_fixed_width(statusBar.fixed_height());
 	statusBarPanel->set_fixed_height(statusBar.fixed_height());
 	statusBarPanel->set_layout(new nanogui::BoxLayout(nanogui::Orientation::Horizontal,
-													   nanogui::Alignment::Minimum, 4, 2));
+													  nanogui::Alignment::Minimum, 4, 2));
 }
 
 UiManager::~UiManager() {
 	mRegistry.UnregisterOnActorSelectedCallback(*this);
+	mRegistry.UnregisterOnActorSelectedCallback(*mSceneTimeBar);
 }
 
 void UiManager::OnActorSelected(Actor& actor) {
@@ -400,7 +572,7 @@ void UiManager::draw_content(const nanogui::Matrix4f& model, const nanogui::Matr
 	glStencilMask(0x00);
 	
 	mGrid->draw_content(model, view, projection);
-
+	
 	if(mActiveActor.has_value()){
 		auto& drawable = mActiveActor->get().get_component<DrawableComponent>();
 		auto& color = mActiveActor->get().get_component<ColorComponent>();
@@ -408,29 +580,29 @@ void UiManager::draw_content(const nanogui::Matrix4f& model, const nanogui::Matr
 		
 		// Target blue-ish color vector (choose a blend towards red, but not purely red)
 		glm::vec3 selection_color(0.83f, 0.68f, 0.21f); // A gold-ish color
-
+		
 		// Normalize the color to ensure its length is exactly 1.0
 		selection_color = glm::normalize(selection_color);
-
+		
 		color.apply(selection_color);
 		
 		nanogui::Matrix4f model = TransformComponent::glm_to_nanogui(transform.get_matrix());
-
+		
 		// Disable stencil test
 		glDisable(GL_STENCIL_TEST);
 		
 		mGrid->draw_content(model, view, projection);
-
+		
 		glClear(GL_DEPTH_BUFFER_BIT);
-
+		
 		glEnable(GL_DEPTH_TEST);
 		
 		drawable.draw_content(model, view, projection);
-
+		
 		glDisable(GL_DEPTH_TEST);
 	}
 	
 	// Disable stencil test
 	glDisable(GL_STENCIL_TEST);
 }
- 
+

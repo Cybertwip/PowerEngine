@@ -4,6 +4,7 @@
 
 #include "actors/Actor.hpp"
 
+#include "components/AnimationComponent.hpp"
 #include "components/ColorComponent.hpp"
 #include "components/DrawableComponent.hpp"
 #include "components/MeshComponent.hpp"
@@ -26,6 +27,8 @@ Actor& MeshActorBuilder::build(Actor& actor, const std::string& path,
 	actor.add_component<TransformComponent>();
 	actor.add_component<MetadataComponent>(actor.identifier(), std::filesystem::path(path).stem().string());
 	actor.add_component<ColorComponent>(actor.get_component<MetadataComponent>(), meshShaderWrapper);
+	
+	actor.add_component<AnimationComponent>();
 
 	return actor;
 }

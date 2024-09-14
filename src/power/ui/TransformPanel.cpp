@@ -11,7 +11,7 @@
 #include "components/TransformComponent.hpp"
 
 TransformPanel::TransformPanel(nanogui::Widget &parent)
-: Panel(parent, "Transform"), mActiveActor(std::nullopt) {
+: Panel(parent, "Transform"), mActiveActor(std::nullopt), mTransformRegistrationId(-1) {
 	set_position(nanogui::Vector2i(0, 0));
 	set_layout(new nanogui::GroupLayout());
 	
@@ -157,6 +157,13 @@ TransformPanel::TransformPanel(nanogui::Widget &parent)
 
 }
 
+TransformPanel::~TransformPanel() {
+	if (mActiveActor.has_value()) {
+		auto& transformComponent = mActiveActor->get().get_component<TransformComponent>();
+		transformComponent.unregister_on_transform_changed_callback(mTransformRegistrationId);
+	}
+}
+
 void TransformPanel::gather_values_into(TransformComponent &transform) {
 	transform.set_translation(
 							  glm::vec3(mXTranslate->value(), mYTranslate->value(), mZTranslate->value()));
@@ -170,7 +177,7 @@ void TransformPanel::gather_values_into(TransformComponent &transform) {
 												  (float)mZScale->value());
 }
 
-void TransformPanel::update_values_from(TransformComponent &transform) {
+void TransformPanel::update_values_from(const TransformComponent &transform) {
 	glm::vec3 translation = transform.get_translation();
 	mXTranslate->set_value((int)translation.x);
 	mYTranslate->set_value((int)translation.y);
@@ -190,5 +197,15 @@ void TransformPanel::update_values_from(TransformComponent &transform) {
 void TransformPanel::set_active_actor(std::reference_wrapper<Actor> actor) {
 	mActiveActor = actor;
 	
-	update_values_from(mActiveActor->get().get_component<TransformComponent>());
+	if (mActiveActor.has_value()) {
+		auto& transformComponent = mActiveActor->get().get_component<TransformComponent>();
+		transformComponent.unregister_on_transform_changed_callback(mTransformRegistrationId);
+	}
+	
+	auto& transformComponent = mActiveActor->get().get_component<TransformComponent>();
+	
+	mTransformRegistrationId = transformComponent.register_on_transform_changed_callback([this](const TransformComponent& transform) {
+		update_values_from(transform);
+	});
+
 }
