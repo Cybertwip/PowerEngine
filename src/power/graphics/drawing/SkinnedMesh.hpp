@@ -68,7 +68,7 @@ public:
     public:
         SkinnedMeshShader(ShaderManager& shader);
         
-        void upload_vertex_data(const std::vector<std::unique_ptr<Vertex>>& vertexData);
+        void upload_vertex_data(const SkinnedMesh& skinnedMesh);
         void upload_material_data(const std::vector<MaterialProperties>& materialData);
     };
 
@@ -84,6 +84,17 @@ private:
 	std::unique_ptr<MeshData> mMeshData;
 
     SkinnedMeshShader& mShader;
+	
+	
+	// Flattened data
+	std::vector<float> mFlattenedPositions;
+	std::vector<float> mFlattenedNormals;
+	std::vector<float> mFlattenedTexCoords1;
+	std::vector<float> mFlattenedTexCoords2;
+	std::vector<int> mFlattenedBoneIds;
+	std::vector<float> mFlattenedWeights;
+	std::vector<int> mFlattenedTextureIds;
+
 	
 	static std::unique_ptr<nanogui::Texture> mDummyTexture;
 };
