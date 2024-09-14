@@ -51,7 +51,7 @@ void main() {
         final_color = mix(final_color, color, darkness_factor); 
 
         // Adjust selectionOpacity dynamically based on the darkness factor
-        selectionOpacity = mix(0.3, 1.0, 1.0 - darkness_factor); // Blend between 0.3 and 1.0 opacity
+        selectionOpacity = selectionOpacity * mix(0.3, 1.0, 1.0 - darkness_factor); // Blend between 0.3 and 1.0 opacity
 
         // Add a thin layer of the `color` (tinting the final color)
         final_color = mix(final_color, color, 0.25); // Mix in 10% of the color

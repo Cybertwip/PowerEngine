@@ -72,6 +72,8 @@ void HierarchyPanel::populate_tree(Actor &actor, nanogui::TreeViewItem *parent_n
 		mTransformPanel.set_active_actor(std::ref(actor));
 		OnActorSelected(actor);
 	});
+	
+	perform_layout(screen()->nvg_context());
 }
 
 void HierarchyPanel::RegisterOnActorSelectedCallback(IActorSelectedCallback& callback) {

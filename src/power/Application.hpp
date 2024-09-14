@@ -45,9 +45,7 @@ class Application : public nanogui::Screen
 	std::unique_ptr<MeshActorLoader> mMeshActorLoader;
     std::unique_ptr<UiCommon> mUiCommon;
 	std::unique_ptr<UiManager> mUiManager;
-    
-    std::vector<std::reference_wrapper<Actor>> mActors;
-	
+    	
 	std::queue<std::tuple<bool, int, int, int, int>> mClickQueue;
 	std::vector<std::function<void(bool, int, int, int, int)>> mClickCallbacks;
 

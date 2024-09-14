@@ -233,16 +233,23 @@ void ResourcesPanel::refresh_file_view() {
 					mSelectedNode = child.get();
 					
 					// Handle double-click for action
-					static std::chrono::time_point<std::chrono::high_resolution_clock> lastClickTime;
+					// Handle double-click for action
+					static std::chrono::time_point<std::chrono::high_resolution_clock> lastClickTime = std::chrono::time_point<std::chrono::high_resolution_clock>::min();
 					auto currentClickTime = std::chrono::high_resolution_clock::now();
 					auto clickDuration = std::chrono::duration_cast<std::chrono::milliseconds>(currentClickTime - lastClickTime).count();
-					if (clickDuration < 400) {
+					
+					if (clickDuration < 400 && lastClickTime != std::chrono::time_point<std::chrono::high_resolution_clock>::min()) {
 						// Double-click detected
 						nanogui::async([this]() {
 							handle_file_interaction(*mSelectedNode);
 						});
+						
+						// Reset the double-click state
+						lastClickTime = std::chrono::time_point<std::chrono::high_resolution_clock>::min();
+					} else {
+						// Update lastClickTime for the next click
+						lastClickTime = currentClickTime;
 					}
-					lastClickTime = currentClickTime;
 				});
 			}
 		}
