@@ -51,6 +51,7 @@ add_executable(PowerEngine
     ${CMAKE_CURRENT_LIST_DIR}/actors/ActorManager.cpp
     ${CMAKE_CURRENT_LIST_DIR}/actors/ActorManager.hpp
     
+    ${CMAKE_CURRENT_LIST_DIR}/components/AnimationComponent.hpp
     ${CMAKE_CURRENT_LIST_DIR}/components/CameraComponent.cpp
     ${CMAKE_CURRENT_LIST_DIR}/components/CameraComponent.hpp
     ${CMAKE_CURRENT_LIST_DIR}/components/Component.cpp

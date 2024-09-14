@@ -49,17 +49,7 @@ void TranslationGizmo::select(int gizmoId) {
 }
 
 void TranslationGizmo::hover(int gizmoId) {
-	if (gizmoId != 0){
-		if (gizmoId == mMetadataComponents[0].identifier()) {
-			mHoverGizmoId = gizmoId;
-		} else if (gizmoId == mMetadataComponents[1].identifier()) {
-			mHoverGizmoId = gizmoId;
-		} else if (gizmoId == mMetadataComponents[2].identifier()) {
-			mHoverGizmoId = gizmoId;
-		}
-	} else {
-		mHoverGizmoId = gizmoId;
-	}
+	mHoverGizmoId = gizmoId != 0 ? gizmoId : 0;
 }
 
 void TranslationGizmo::transform(std::optional<std::reference_wrapper<Actor>> actor, float px, float py) {

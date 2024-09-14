@@ -14,10 +14,23 @@ ScenePanel::ScenePanel(nanogui::Widget &parent)
 }
 
 bool ScenePanel::mouse_button_event(const nanogui::Vector2i &p, int button, bool down, int modifiers) {
+	
+	if (Widget::mouse_button_event(p, button, down, modifiers)) {
+		
+		
+		// Queue the button up event
+		if (button == GLFW_MOUSE_BUTTON_1 && !down) {
+			mDragging = down;
+			mDragPosition = p;
+			mClickQueue.push(std::make_tuple(down, width(), height(), p.x(), p.y()));
+		}
+
+		return true;
+	}
+	
 	if (button == GLFW_MOUSE_BUTTON_1 && down && !m_focused) {
 		request_focus();
 	}
-	
 	
 	// Queue the click event
 	if (button == GLFW_MOUSE_BUTTON_1) {
@@ -25,11 +38,16 @@ bool ScenePanel::mouse_button_event(const nanogui::Vector2i &p, int button, bool
 		mDragPosition = p;
 		mClickQueue.push(std::make_tuple(down, width(), height(), p.x(), p.y()));
 	}
-
-	return Widget::mouse_button_event(p, button, down, modifiers);
+	
+	return false;
 }
 
 bool ScenePanel::mouse_motion_event(const nanogui::Vector2i &p, const nanogui::Vector2i &rel, int button, int modifiers) {
+	
+	if (Widget::mouse_motion_event(p, rel, button, modifiers)) {
+		return true;
+	}
+
 	// Queue the motion event
 	mMotionQueue.push(std::make_tuple(width(), height(), mDragPosition.x(), mDragPosition.y(), mDragPosition.x() - p.x(), mDragPosition.y() - p.y(), button, mDragging));
 	

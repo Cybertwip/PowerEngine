@@ -81,6 +81,10 @@ public:
 
     /// Sets the callback to execute when the value of this TextBox has changed.
     void set_callback(const std::function<bool(const std::string& str)> &callback) { m_callback = callback; }
+	
+	void set_background_color(const Color& color) {
+		mBackgroundColor = color;
+	}
 
     virtual bool mouse_enter_event(const Vector2i &p, bool enter) override;
     virtual bool mouse_button_event(const Vector2i &p, int button, bool down, int modifiers) override;
@@ -131,6 +135,8 @@ protected:
     int m_mouse_down_modifier;
     float m_text_offset;
     double m_last_click;
+	
+	Color mBackgroundColor;  // Add this to store the background color
 };
 
 /**
