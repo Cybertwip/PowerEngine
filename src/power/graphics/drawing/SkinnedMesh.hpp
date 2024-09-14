@@ -59,7 +59,7 @@ public:
 
 
     struct MeshData {
-        std::vector<std::unique_ptr<Vertex>> mVertices;
+        std::vector<Vertex> mVertices;
         std::vector<unsigned int> mIndices;
         std::vector<MaterialProperties> mMaterials;
     };

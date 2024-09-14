@@ -46,7 +46,7 @@ public:
     float getLocalStop() const;
     float getReferenceStart() const;
     float getReferenceStop() const;
-    span<std::shared_ptr<AnimationLayer>> getAnimationLayers() const;
+	std::span<const std::shared_ptr<AnimationLayer>> getAnimationLayers() const;
 
     std::shared_ptr<AnimationLayer> createLayer(string_view name = {});
 

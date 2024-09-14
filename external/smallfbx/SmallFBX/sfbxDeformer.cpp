@@ -4,6 +4,8 @@
 #include "sfbxDeformer.h"
 #include "sfbxDocument.h"
 
+#include <algorithm>
+
 namespace sfbx {
 
 ObjectClass Deformer::getClass() const { return ObjectClass::Deformer; }

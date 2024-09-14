@@ -17,8 +17,8 @@ void DirectoryNode::refresh() {
 		// Iterate through the directory again to rebuild the tree
 		for (const auto &entry : std::filesystem::directory_iterator(this->FullPath)) {
 			auto newNode = std::make_unique<DirectoryNode>();
-			newNode->FullPath = entry.path().u8string();
-			newNode->FileName = entry.path().filename().u8string();
+			newNode->FullPath = entry.path().string();
+			newNode->FileName = entry.path().filename().string();
 			newNode->IsDirectory = entry.is_directory();
 			
 			// If it's a directory, we might want to recursively refresh or at least mark for potential expansion

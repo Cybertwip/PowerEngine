@@ -1,6 +1,12 @@
 #pragma once
 
 #include "graphics/drawing/Drawable.hpp"
+
+#include "gizmo/TranslationGizmo.hpp"
+#include "gizmo/RotationGizmo.hpp"
+#include "gizmo/ScaleGizmo.hpp"
+
+
 #include <nanogui/nanogui.h>
 
 #include <functional>
@@ -10,9 +16,6 @@
 
 class Actor;
 class ActorManager;
-class TranslationGizmo;
-class RotationGizmo;
-class ScaleGizmo;
 class ShaderManager;
 
 class GizmoManager : public Drawable {
@@ -20,6 +23,7 @@ class GizmoManager : public Drawable {
 
 public:
     GizmoManager(nanogui::Widget& parent, ShaderManager& shaderManager, ActorManager& actorManager);
+	~GizmoManager() = default;
 	
 	void select(int gizmoId);
 

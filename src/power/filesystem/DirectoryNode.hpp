@@ -26,8 +26,8 @@ void RecursivelyAddDirectoryNodes(DirectoryNode& parentNode, std::filesystem::di
 			auto node = std::make_unique<DirectoryNode>();
 			DirectoryNode& childNode = *node;
 			parentNode.Children.push_back(std::move(node));
-			childNode.FullPath = entry.path().u8string();
-			childNode.FileName = entry.path().filename().u8string();
+			childNode.FullPath = entry.path().string();
+			childNode.FileName = entry.path().filename().string();
 			if (childNode.IsDirectory = entry.is_directory(); childNode.IsDirectory){
 				RecursivelyAddDirectoryNodes(childNode, std::filesystem::directory_iterator(entry));
 			}
@@ -37,8 +37,8 @@ void RecursivelyAddDirectoryNodes(DirectoryNode& parentNode, std::filesystem::di
 				auto node = std::make_unique<DirectoryNode>();
 				DirectoryNode& childNode = *node;
 				parentNode.Children.push_back(std::move(node));
-				childNode.FullPath = entry.path().u8string();
-				childNode.FileName = entry.path().filename().u8string();
+				childNode.FullPath = entry.path().string();
+				childNode.FileName = entry.path().filename().string();
 			}
 			
 		}
@@ -55,8 +55,8 @@ std::unique_ptr<DirectoryNode> CreateDirectoryNodeTreeFromPath(const std::filesy
 	}
 	
 	auto rootNode = std::make_unique<DirectoryNode>();
-	rootNode->FullPath = rootPath.u8string();
-	rootNode->FileName = rootPath.filename().u8string();
+	rootNode->FullPath = rootPath.string();
+	rootNode->FileName = rootPath.filename().string();
 	if (rootNode->IsDirectory = std::filesystem::is_directory(rootPath); rootNode->IsDirectory)
 		RecursivelyAddDirectoryNodes(*rootNode, std::filesystem::directory_iterator(rootPath));
 	

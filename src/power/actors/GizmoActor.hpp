@@ -3,13 +3,13 @@
 #include "actors/Actor.hpp"
 #include "graphics/drawing/Drawable.hpp"
 #include "graphics/drawing/GizmoMesh.hpp"
+#include "import/Fbx.hpp"
 
 #include <entt/entt.hpp>
 #include <memory>
 #include <string>
 
 class Canvas;
-class Fbx;
 class GizmoComponent;
 
 class GizmoActor : public Actor {

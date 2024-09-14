@@ -7,7 +7,6 @@
 #include "components/GizmoComponent.hpp"
 #include "components/MetadataComponent.hpp"
 #include "components/TransformComponent.hpp"
-#include "import/Fbx.hpp"
 
 GizmoActor::GizmoActor(entt::registry& registry, const std::string& path,
                        GizmoMesh::GizmoMeshShader& gizmoShaderWrapper)

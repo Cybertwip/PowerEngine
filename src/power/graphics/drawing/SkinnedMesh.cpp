@@ -139,7 +139,7 @@ SkinnedMesh::SkinnedMesh(std::unique_ptr<MeshData> meshData, SkinnedMeshShader& 
 		
 		// Flatten the vertex data
 		for (size_t i = 0; i < numVertices; ++i) {
-			const auto& vertex = *mMeshData->mVertices[i];
+			const auto& vertex = mMeshData->mVertices[i];
 			
 			// Positions
 			mFlattenedPositions[i * 3 + 0] = vertex.get_position().x;

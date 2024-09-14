@@ -100,7 +100,9 @@ float AnimationStack::getLocalStart() const { return m_local_start; }
 float AnimationStack::getLocalStop() const { return m_local_stop; }
 float AnimationStack::getReferenceStart() const { return m_reference_start; }
 float AnimationStack::getReferenceStop() const { return m_reference_stop; }
-span<std::shared_ptr<AnimationLayer>> AnimationStack::getAnimationLayers() const { return m_anim_layers; }
+std::span<const std::shared_ptr<AnimationLayer>> AnimationStack::getAnimationLayers() const {
+	return std::span<const std::shared_ptr<AnimationLayer>>(m_anim_layers.data(), m_anim_layers.size());
+}
 
 std::shared_ptr<AnimationLayer> AnimationStack::createLayer(string_view name)
 {
