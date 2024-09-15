@@ -90,7 +90,7 @@ Widget *Widget::find_widget(const Vector2i &p, bool absolute) {
 	for (auto it = m_children.rbegin(); it != m_children.rend(); ++it) {
 		Widget *child = *it;
 		if (child->visible() && child->contains(p - pos, absolute))
-			return child->find_widget(p - pos, absolute);
+			return child->find_widget(p - pos);
 	}
 	return contains(p, absolute) ? this : nullptr;
 }

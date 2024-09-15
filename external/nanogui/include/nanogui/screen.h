@@ -75,7 +75,6 @@ public:
      *     targeting OpenGL ES 2 or Metal.
      */
     Screen(
-        const Vector2i &size,
         const std::string &caption = "Unnamed",
         bool resizable = true,
         bool fullscreen = false,

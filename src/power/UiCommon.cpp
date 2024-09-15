@@ -61,18 +61,18 @@ UiCommon::UiCommon(nanogui::Widget& parent, ActorManager& actorManager) {
 
 	mHierarchyPanel = new HierarchyPanel(*mScenePanel, *mTransformPanel, *rightWrapper);
 
-	auto promptbox = new PromptBox(*rightWrapper);
+//	auto promptbox = new PromptBox(*rightWrapper);
 	
 	mHierarchyPanel->inc_ref();
 	mTransformPanel->inc_ref();
-	promptbox->inc_ref();
+//	promptbox->inc_ref();
 	
 	rightWrapper->remove_child(mHierarchyPanel);
 	rightWrapper->remove_child(mTransformPanel);
-	rightWrapper->remove_child(promptbox);
+//	rightWrapper->remove_child(promptbox);
 
 	rightWrapper->add_child(mHierarchyPanel); // Add HierarchyPanel first
 	rightWrapper->add_child(mTransformPanel); // Add TransformPanel second
-	rightWrapper->add_child(promptbox); // Add Grok third
+//	rightWrapper->add_child(promptbox); // Add Grok third
 }
 

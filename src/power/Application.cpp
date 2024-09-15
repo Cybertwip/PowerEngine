@@ -28,8 +28,8 @@
 #include "ui/TransformPanel.hpp"
 #include "ui/UiManager.hpp"
 
-Application::Application() : nanogui::Screen(nanogui::Vector2i(1280, 720), "Power Engine", false) {
-	
+Application::Application() : nanogui::Screen("Power Engine", true) {
+		
 	SkinnedMesh::init_dummy_texture();
 	
     theme()->m_window_drop_shadow_size = 0;

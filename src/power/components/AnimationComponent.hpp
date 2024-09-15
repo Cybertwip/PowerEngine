@@ -165,6 +165,33 @@ public:
 		return (time > prev.time && time < next.time);
 	}
 	
+	// New Methods to Get Previous and Next Keyframes
+	std::optional<Keyframe> get_previous_keyframe(float time) const {
+		if (keyframes_.empty()) return std::nullopt;
+		
+		// Find the first keyframe where time is greater than or equal to the given time
+		auto it = std::lower_bound(keyframes_.begin(), keyframes_.end(), time,
+								   [](const Keyframe& kf, float t) {
+			return kf.time < t;
+		});
+		
+		if (it == keyframes_.begin()) return std::nullopt; // No previous keyframe
+		--it;
+		return *it;
+	}
+
+	std::optional<Keyframe> get_next_keyframe(float time) const {
+		if (keyframes_.empty()) return std::nullopt;
+		
+		// Find the first keyframe with time greater than the given time
+		auto it = std::upper_bound(keyframes_.begin(), keyframes_.end(), time,
+								   [](const float t, const Keyframe& kf) {
+			return t < kf.time; // We are looking for the first keyframe where time is greater
+		});
+		if (it == keyframes_.end()) return std::nullopt; // No next keyframe
+		return *it;
+	}
+
 	
 private:
 	std::vector<Keyframe> keyframes_;

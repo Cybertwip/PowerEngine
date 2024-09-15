@@ -128,7 +128,7 @@ Screen::Screen()
 #endif
 }
 
-Screen::Screen(const Vector2i &size, const std::string &caption, bool resizable,
+Screen::Screen(const std::string &caption, bool resizable,
                bool fullscreen, bool depth_buffer, bool stencil_buffer,
                bool float_buffer, unsigned int gl_major, unsigned int gl_minor)
     : Widget(nullptr), m_glfw_window(nullptr), m_nvg_context(nullptr),
@@ -196,8 +196,10 @@ Screen::Screen(const Vector2i &size, const std::string &caption, bool resizable,
             m_glfw_window = glfwCreateWindow(mode->width, mode->height,
                                              caption.c_str(), monitor, nullptr);
         } else {
-            m_glfw_window = glfwCreateWindow(size.x(), size.y(),
-                                             caption.c_str(), nullptr, nullptr);
+			GLFWmonitor *monitor = glfwGetPrimaryMonitor();
+			const GLFWvidmode *mode = glfwGetVideoMode(monitor);
+			m_glfw_window = glfwCreateWindow(mode->width, mode->height,
+											 caption.c_str(), nullptr, nullptr);
         }
 
         if (m_glfw_window == nullptr && m_float_buffer) {
@@ -716,6 +718,9 @@ bool Screen::keyboard_character_event(unsigned int codepoint) {
 bool Screen::resize_event(const Vector2i& size) {
     if (m_resize_callback)
         m_resize_callback(size);
+	
+	perform_layout(nvg_context());
+	
     m_redraw = true;
     draw_all();
     return true;
