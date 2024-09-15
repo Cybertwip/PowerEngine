@@ -307,10 +307,6 @@ void SkinnedMesh::MeshBatch::draw_content(const nanogui::Matrix4f& view,
 	
 	mShader.set_uniform("aView", view);
 	mShader.set_uniform("aProjection", projection);
-	
-	// Begin shader program
-	mShader.begin();
-
 	for (size_t i = 0; i < mMeshes.size(); ++i) {
 		
 		auto& mesh = mMeshes[i].get();
@@ -319,7 +315,7 @@ void SkinnedMesh::MeshBatch::draw_content(const nanogui::Matrix4f& view,
 		mShader.set_uniform("aModel", mesh.mModelMatrix);
 		
 		// Apply color component (assuming it sets relevant uniforms)
-		mesh.mColorComponent.apply(glm::vec3(1.0f, 1.0f, 1.0f));
+		mesh.mColorComponent.apply();
 		
 		// Upload materials for the current mesh
 		mShader.upload_material_data(mesh.mMeshData->mMaterials);
@@ -329,13 +325,12 @@ void SkinnedMesh::MeshBatch::draw_content(const nanogui::Matrix4f& view,
 		size_t count = (i < mMeshes.size() - 1) ?
 		(mMeshStartIndices[i + 1] - startIdx) :
 		(mBatchIndices.size() - startIdx);
-			
+		
+		// Begin shader program
+		mShader.begin();
 		// Draw the mesh segment
 		mShader.draw_array(nanogui::Shader::PrimitiveType::Triangle, startIdx, count, true);
+		// End shader program
+		mShader.end();
 	}
-	
-	
-	// End shader program
-	mShader.end();
-
 }

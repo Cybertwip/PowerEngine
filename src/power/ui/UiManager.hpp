@@ -29,7 +29,7 @@ public:
 	UiManager(IActorSelectedRegistry& registry, IActorVisualManager& actorVisualManager, ActorManager& actorManager, MeshActorLoader& meshActorLoader, ShaderManager& shaderManager, ScenePanel& scenePanel, Canvas& canvas, nanogui::Widget& toolbox, nanogui::Widget& statusBar, CameraManager& cameraManager, std::function<void(std::function<void(int, int)>)> applicationClickRegistrator);
 	~UiManager();
 	
-	void OnActorSelected(Actor& actor) override;
+	void OnActorSelected(std::optional<std::reference_wrapper<Actor>> actor) override;
 	
 	void draw();
 	

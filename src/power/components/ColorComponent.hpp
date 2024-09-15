@@ -15,7 +15,9 @@ public:
 	
 	ColorComponent(MetadataComponent& metadataComponent, ShaderWrapper& shaderWrapper);
 
-	void apply(const glm::vec3& color);
+	void set_color(const glm::vec3& color);
+
+	void apply();
 
 	glm::vec3 get() const {
 		return mColor;

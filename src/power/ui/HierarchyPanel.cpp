@@ -49,12 +49,10 @@ void HierarchyPanel::populate_tree(Actor &actor, nanogui::TreeViewItem *parent_n
 	? parent_node->add_node(
 							std::string{actor.get_component<MetadataComponent>().name()},
 							[this, &actor]() {
-								mTransformPanel.set_active_actor(std::ref(actor));
 								OnActorSelected(actor);
 							})
 	: mTreeView->add_node(std::string{actor.get_component<MetadataComponent>().name()},
 						  [this, &actor]() {
-		mTransformPanel.set_active_actor(std::ref(actor));
 		OnActorSelected(actor);
 	});
 	// Uncomment and correctly iterate over the actor's children
@@ -69,7 +67,6 @@ void HierarchyPanel::populate_tree(Actor &actor, nanogui::TreeViewItem *parent_n
 	
 	actor.add_component<UiComponent>([this, &actor, node]() {
 		mTreeView->set_selected(node);
-		mTransformPanel.set_active_actor(std::ref(actor));
 		OnActorSelected(actor);
 	});
 	
@@ -93,9 +90,21 @@ void HierarchyPanel::UnregisterOnActorSelectedCallback(IActorSelectedCallback& c
 	}
 }
 
-void HierarchyPanel::OnActorSelected(Actor& actor) {
+void HierarchyPanel::OnActorSelected(std::optional<std::reference_wrapper<Actor>> actor) {
 	for (auto& callbackRef : mActorSelectedCallbacks) {
 		callbackRef.get().OnActorSelected(actor);
 	}
 }
+
+void HierarchyPanel::fire_actor_selected_event(std::optional<std::reference_wrapper<Actor>> actor) {
+	
+	mTransformPanel.set_active_actor(actor);
+
+	for (auto& callbackRef : mActorSelectedCallbacks) {
+		callbackRef.get().OnActorSelected(actor);
+	}
+}
+
+
+
 

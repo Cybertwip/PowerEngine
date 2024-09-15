@@ -10,7 +10,11 @@ ColorComponent::ColorComponent(MetadataComponent& metadataComponent, ShaderWrapp
 	
 }
 
-void ColorComponent::apply(const glm::vec3& color) {
+void ColorComponent::set_color(const glm::vec3& color) {
+	mColor = color;
+}
+
+void ColorComponent::apply() {
 	mShader.set_uniform("identifier", static_cast<int>(mMetadataComponent.identifier()));
-	mShader.set_uniform("color", glm_to_nanogui(color));
+	mShader.set_uniform("color", glm_to_nanogui(mColor));
 }

@@ -433,7 +433,7 @@ public:
 	}
 
 	// Override OnActorSelected from IActorSelectedCallback
-	void OnActorSelected(Actor& actor) override {
+	void OnActorSelected(std::optional<std::reference_wrapper<Actor>> actor) override {
 		unregister_actor_transform_callback(mActiveActor);
 		
 		mActiveActor = actor;
@@ -701,7 +701,7 @@ UiManager::UiManager(IActorSelectedRegistry& registry, IActorVisualManager& acto
 		return id;
 	};
 	
-	scenePanel.register_click_callback([this, &canvas, &toolbox, readFromFramebuffer](bool down, int width, int height, int x, int y){
+	scenePanel.register_click_callback([this, &canvas, &toolbox, readFromFramebuffer, &actorVisualManager](bool down, int width, int height, int x, int y){
 		
 		if (toolbox.contains(nanogui::Vector2f(x, y))) {
 			return;
@@ -725,15 +725,9 @@ UiManager::UiManager(IActorSelectedRegistry& registry, IActorVisualManager& acto
 				}
 				
 				mGizmoManager->select(id);
-			} else {
-				
-				if (mActiveActor.has_value()) {
-					auto& color = mActiveActor->get().get_component<ColorComponent>();
-					
-					color.apply(glm::vec3(1.0f, 1.0f, 1.0f));
-				}
-				
+			} else {				
 				mActiveActor = std::nullopt;
+				actorVisualManager.fire_actor_selected_event(mActiveActor);
 				mGizmoManager->select(mActiveActor);
 				mGizmoManager->select(0);
 			}
@@ -813,7 +807,7 @@ UiManager::~UiManager() {
 	mRegistry.UnregisterOnActorSelectedCallback(*mSceneTimeBar);
 }
 
-void UiManager::OnActorSelected(Actor& actor) {
+void UiManager::OnActorSelected(std::optional<std::reference_wrapper<Actor>> actor) {
 	mActiveActor = actor;
 	
 	mGizmoManager->select(std::nullopt);
@@ -823,7 +817,7 @@ void UiManager::draw() {
 	if (mActiveActor) {
 		auto& color = mActiveActor->get().get_component<ColorComponent>();
 		
-		color.apply(mSelectionColor);
+		color.set_color(mSelectionColor);
 	}
 
 	mActorManager.visit(mMeshActorLoader.mesh_batch());

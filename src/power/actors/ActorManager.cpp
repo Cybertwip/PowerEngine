@@ -40,6 +40,10 @@ void ActorManager::draw() {
 		auto& drawable = actor.get()->get_component<DrawableComponent>();
 		
 		auto& transform = actor.get()->get_component<TransformComponent>();
+		
+		auto& color = actor.get()->get_component<ColorComponent>();
+		
+		color.set_color(glm::vec3(1.0f, 1.0f, 1.0f));
 
         nanogui::Matrix4f model = TransformComponent::glm_to_nanogui(transform.get_matrix());
 

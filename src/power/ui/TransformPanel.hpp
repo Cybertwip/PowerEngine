@@ -15,7 +15,7 @@ public:
     void gather_values_into(TransformComponent& transform);
     void update_values_from(const TransformComponent& transform);
 
-    void set_active_actor(std::reference_wrapper<Actor> actor);
+    void set_active_actor(std::optional<std::reference_wrapper<Actor>> actor);
     
 private:
     nanogui::IntBox<int> *mXTranslate;

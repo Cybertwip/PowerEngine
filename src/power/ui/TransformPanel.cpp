@@ -194,7 +194,7 @@ void TransformPanel::update_values_from(const TransformComponent &transform) {
 	mZScale->set_value((int)scale.z);
 }
 
-void TransformPanel::set_active_actor(std::reference_wrapper<Actor> actor) {
+void TransformPanel::set_active_actor(std::optional<std::reference_wrapper<Actor>> actor) {
 	mActiveActor = actor;
 	
 	if (mActiveActor.has_value()) {
