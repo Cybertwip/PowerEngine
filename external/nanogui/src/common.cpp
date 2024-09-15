@@ -144,20 +144,25 @@ void mainloop(float refresh) {
 #endif
 
     mainloop_active = true;
-
-    std::thread refresh_thread;
-    std::chrono::microseconds quantum;
-    size_t quantum_count = 1;
-    if (refresh >= 0) {
-        quantum = std::chrono::microseconds((int64_t)(refresh * 1'000));
-        while (quantum.count() > 50'000) {
-            quantum /= 2;
-            quantum_count *= 2;
-        }
-    } else {
-        quantum = std::chrono::microseconds(50'000);
-        quantum_count = std::numeric_limits<size_t>::max();
-    }
+	
+	std::thread refresh_thread;
+	std::chrono::microseconds quantum;
+	size_t quantum_count = 1;
+	
+	// Ensure that the refresh is not less than 60 FPS (16.67 ms)
+	if (refresh >= 0) {
+		// Convert refresh rate to microseconds
+		quantum = std::chrono::microseconds(static_cast<int64_t>(refresh * 1'000));
+		
+		// Ensure the quantum does not exceed 16,667 microseconds (60 FPS)
+		if (quantum.count() > 16'667) {
+			quantum = std::chrono::microseconds(16'667); // Cap to 60 FPS
+		}
+	} else {
+		// Default to 60 FPS if no specific refresh rate is provided
+		quantum = std::chrono::microseconds(16'667); // 60 FPS
+		quantum_count = std::numeric_limits<size_t>::max();
+	}
 
     /* If there are no mouse/keyboard events, try to refresh the
        view roughly every 50 ms (default); this is to support animations

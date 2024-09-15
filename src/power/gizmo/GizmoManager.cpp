@@ -83,7 +83,7 @@ void GizmoManager::transform(float px, float py) {
 	mTranslationGizmo->transform(mActiveActor, px, py);
 	
 	mRotationGizmo->transform(mActiveActor, ((px + py) / 2.0f));
-
+	
 	mScaleGizmo->transform(mActiveActor, px, py);
 }
 
@@ -91,7 +91,6 @@ void GizmoManager::draw() { mActorManager.visit(*this); }
 
 void GizmoManager::draw_content(const nanogui::Matrix4f& model, const nanogui::Matrix4f& view,
 								const nanogui::Matrix4f& projection) {
-	
 	if (mActiveActor.has_value()) {
 		glClear(GL_DEPTH_BUFFER_BIT);
 		

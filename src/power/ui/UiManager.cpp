@@ -831,12 +831,7 @@ void UiManager::draw_content(const nanogui::Matrix4f& model, const nanogui::Matr
 		color.apply(selection_color);
 		
 		nanogui::Matrix4f model = TransformComponent::glm_to_nanogui(transform.get_matrix());
-		
-		// Disable stencil test
-		glDisable(GL_STENCIL_TEST);
-		
-		mGrid->draw_content(model, view, projection);
-		
+				
 		glClear(GL_DEPTH_BUFFER_BIT);
 		
 		glEnable(GL_DEPTH_TEST);
