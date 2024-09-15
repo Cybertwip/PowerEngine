@@ -6,6 +6,7 @@
 #include "MeshActorLoader.hpp"
 #include "actors/Actor.hpp"
 #include "components/CameraComponent.hpp"
+#include "components/ColorComponent.hpp"
 #include "components/DrawableComponent.hpp"
 #include "components/MeshComponent.hpp"
 #include "components/TransformComponent.hpp"
