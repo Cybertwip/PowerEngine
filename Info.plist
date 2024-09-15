@@ -29,6 +29,10 @@
     <key>CFBundleIconFile</key>
     <string>AppIcon</string>
 
+    <key>LSApplicationCategoryType</key>
+    <string>public.app-category.games</string>
+
+
     <!-- Specify the document types your app supports if any -->
     <!--<key>CFBundleDocumentTypes</key>-->
     <!--<array>-->

@@ -200,13 +200,14 @@ void TransformPanel::set_active_actor(std::optional<std::reference_wrapper<Actor
 	if (mActiveActor.has_value()) {
 		auto& transformComponent = mActiveActor->get().get_component<TransformComponent>();
 		transformComponent.unregister_on_transform_changed_callback(mTransformRegistrationId);
+		
+		
+		auto& transformComponent = mActiveActor->get().get_component<TransformComponent>();
+		
+		mTransformRegistrationId = transformComponent.register_on_transform_changed_callback([this](const TransformComponent& transform) {
+			update_values_from(transform);
+		});
+		
+		update_values_from(transformComponent);
 	}
-	
-	auto& transformComponent = mActiveActor->get().get_component<TransformComponent>();
-	
-	mTransformRegistrationId = transformComponent.register_on_transform_changed_callback([this](const TransformComponent& transform) {
-		update_values_from(transform);
-	});
-
-	update_values_from(transformComponent);
 }
