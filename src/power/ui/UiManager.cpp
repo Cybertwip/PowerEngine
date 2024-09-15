@@ -813,7 +813,7 @@ void UiManager::OnActorSelected(Actor& actor) {
 }
 
 void UiManager::draw() {
-	mActorManager.visit(mMeshActorLoader.prepared_mesh_batch());
+	mActorManager.visit(mMeshActorLoader.mesh_batch());
 	mActorManager.visit(*this);
 }
 

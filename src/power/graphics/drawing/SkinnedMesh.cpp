@@ -177,6 +177,9 @@ SkinnedMesh::SkinnedMesh(std::unique_ptr<MeshData> meshData, SkinnedMeshShader& 
 //			}
 		}
 
+		
+	mMeshBatch.add_mesh(*this);
+	mMeshBatch.prepare();
 }
 
 void SkinnedMesh::draw_content(const nanogui::Matrix4f& model, const nanogui::Matrix4f& view,
@@ -184,8 +187,7 @@ void SkinnedMesh::draw_content(const nanogui::Matrix4f& model, const nanogui::Ma
 	
 	
 	mModelMatrix = model;
-	mMeshBatch.add_mesh(*this);
-//	
+//
 //    using namespace nanogui;
 //	
 //	mShader.set_buffer("indices", nanogui::VariableType::UInt32, {mMeshData->mIndices.size()},
@@ -250,45 +252,44 @@ void SkinnedMesh::MeshBatch::clear() {
 void SkinnedMesh::MeshBatch::prepare() {
 	size_t vertexOffset = 0;
 	size_t indexOffset = 0;
-	
-	for (const auto& meshRef : mMeshes) {
-		auto& mesh = meshRef.get();
-		
-		// Append vertex data
-		mBatchPositions.insert(mBatchPositions.end(),
-							   mesh.mFlattenedPositions.begin(),
-							   mesh.mFlattenedPositions.end());
-		mBatchNormals.insert(mBatchNormals.end(),
-							 mesh.mFlattenedNormals.begin(),
-							 mesh.mFlattenedNormals.end());
-		mBatchTexCoords1.insert(mBatchTexCoords1.end(),
-								mesh.mFlattenedTexCoords1.begin(),
-								mesh.mFlattenedTexCoords1.end());
-		mBatchTexCoords2.insert(mBatchTexCoords2.end(),
-								mesh.mFlattenedTexCoords2.begin(),
-								mesh.mFlattenedTexCoords2.end());
-		mBatchTextureIds.insert(mBatchTextureIds.end(),
-								mesh.mFlattenedTextureIds.begin(),
-								mesh.mFlattenedTextureIds.end());
-		
-		// Adjust and append indices
-		for (auto index : mesh.mMeshData->mIndices) {
-			mBatchIndices.push_back(index + vertexOffset);
-		}
-		
-		for (const auto& material : mesh.mMeshData->mMaterials) {
-			// Check if the material is already in mBatchMaterials
-			if (std::find(mBatchMaterials.begin(), mBatchMaterials.end(), material) == mBatchMaterials.end()) {
-				// If not found, append the material
-				mBatchMaterials.push_back(material);
-			}
-		}
 
-		mMeshStartIndices.push_back(indexOffset);
-		indexOffset += mesh.mMeshData->mIndices.size();
-		vertexOffset += mesh.mMeshData->mVertices.size();
+	const auto& meshRef = mMeshes.back();
+	auto& mesh = meshRef.get();
+	
+	// Append vertex data
+	mBatchPositions.insert(mBatchPositions.end(),
+						   mesh.mFlattenedPositions.begin(),
+						   mesh.mFlattenedPositions.end());
+	mBatchNormals.insert(mBatchNormals.end(),
+						 mesh.mFlattenedNormals.begin(),
+						 mesh.mFlattenedNormals.end());
+	mBatchTexCoords1.insert(mBatchTexCoords1.end(),
+							mesh.mFlattenedTexCoords1.begin(),
+							mesh.mFlattenedTexCoords1.end());
+	mBatchTexCoords2.insert(mBatchTexCoords2.end(),
+							mesh.mFlattenedTexCoords2.begin(),
+							mesh.mFlattenedTexCoords2.end());
+	mBatchTextureIds.insert(mBatchTextureIds.end(),
+							mesh.mFlattenedTextureIds.begin(),
+							mesh.mFlattenedTextureIds.end());
+	
+	// Adjust and append indices
+	for (auto index : mesh.mMeshData->mIndices) {
+		mBatchIndices.push_back(index + vertexOffset);
 	}
 	
+	for (const auto& material : mesh.mMeshData->mMaterials) {
+		// Check if the material is already in mBatchMaterials
+		if (std::find(mBatchMaterials.begin(), mBatchMaterials.end(), material) == mBatchMaterials.end()) {
+			// If not found, append the material
+			mBatchMaterials.push_back(material);
+		}
+	}
+
+	mMeshStartIndices.push_back(indexOffset);
+	indexOffset += mesh.mMeshData->mIndices.size();
+	vertexOffset += mesh.mMeshData->mVertices.size();
+
 	// Upload consolidated data to GPU
 	mShader.set_buffer("aPosition", nanogui::VariableType::Float32, {mBatchPositions.size() / 3, 3},
 					   mBatchPositions.data());

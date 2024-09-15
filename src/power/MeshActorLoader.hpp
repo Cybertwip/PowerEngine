@@ -19,7 +19,7 @@ class MeshActorLoader
 	
     Actor& create_actor(const std::string& path);
 	
-	SkinnedMesh::MeshBatch& prepared_mesh_batch();
+	SkinnedMesh::MeshBatch& mesh_batch();
 
    private:
 	ActorManager& mActorManager;

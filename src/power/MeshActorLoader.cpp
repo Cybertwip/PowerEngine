@@ -15,11 +15,8 @@ MeshActorLoader::MeshActorLoader(ActorManager& actorManager, ShaderManager& shad
 MeshActorLoader::~MeshActorLoader() {
 }
 
-SkinnedMesh::MeshBatch& MeshActorLoader::prepared_mesh_batch() {
-	auto& meshBatch = mMeshActorBuilder->mesh_batch();
-	meshBatch.clear();
-	meshBatch.prepare();
-	return meshBatch;
+SkinnedMesh::MeshBatch& MeshActorLoader::mesh_batch() {
+	return mMeshActorBuilder->mesh_batch();
 }
 
 Actor& MeshActorLoader::create_actor(const std::string& path) {

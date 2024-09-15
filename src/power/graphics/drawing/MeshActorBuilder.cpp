@@ -19,8 +19,6 @@ MeshActorBuilder::MeshActorBuilder(SkinnedMesh::SkinnedMeshShader& shader)
 
 Actor& MeshActorBuilder::build(Actor& actor, const std::string& path) {
 	
-	actor.add_component<MetadataComponent>(actor.identifier(), std::filesystem::path(path).stem().string());
-
 	auto& colorComponent = actor.add_component<ColorComponent>(actor.get_component<MetadataComponent>(), mShader);
 
     auto model = Fbx(path);
