@@ -186,7 +186,7 @@ public:
     void draw_array(PrimitiveType primitive_type,
                     size_t offset, size_t count,
                     bool indexed = false);
-
+	
 #if defined(NANOGUI_USE_OPENGL) || defined(NANOGUI_USE_GLES)
     uint32_t shader_handle() const { return m_shader_handle; }
 #elif defined(NANOGUI_USE_METAL)

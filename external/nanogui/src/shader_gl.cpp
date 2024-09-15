@@ -11,6 +11,10 @@
 
 NAMESPACE_BEGIN(nanogui)
 
+GLenum get_gl_type(VariableType dtype);  // Converts VariableType to OpenGL enum type
+GLenum get_gl_primitive_type(PrimitiveType primitive_type);  // Converts PrimitiveType to OpenGL enum type
+void handle_uniform_buffer(const std::string &key, Buffer &buf);  // Handles the uniform buffer setup
+
 static GLuint compile_gl_shader(GLenum type,
 								const std::string &name,
 								const std::string &shader_string) {
@@ -352,7 +356,6 @@ void Shader::set_texture(const std::string &name, Texture *texture) {
 	buf.buffer = (void *)((uintptr_t)texture->texture_handle());
 	buf.dirty = true;
 }
-
 void Shader::begin() {
 	int texture_unit = 0;
 	
@@ -363,21 +366,16 @@ void Shader::begin() {
 #endif
 	
 	for (auto &[key, buf] : m_buffers) {
-		bool indices = key == "indices";
-		if (!buf.buffer) {
-			if (!indices)
-				continue;
-		}
+		if (!buf.buffer && key != "indices") continue;
 		
 		GLuint buffer_id = (GLuint)((uintptr_t)buf.buffer);
 		GLenum gl_type = 0;
 		
+		// Skip non-dirty buffers that aren't textures
 #if defined(NANOGUI_USE_OPENGL)
-		if (!buf.dirty && buf.type != VertexTexture && buf.type != FragmentTexture)
-			continue;
+		if (!buf.dirty && buf.type != VertexTexture && buf.type != FragmentTexture) continue;
 #endif
 		
-		bool uniform_error = false;
 		switch (buf.type) {
 			case IndexBuffer:
 				CHK(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, buffer_id));
@@ -390,35 +388,9 @@ void Shader::begin() {
 				if (buf.dirty) {
 					CHK(glEnableVertexAttribArray(buf.index));
 					
-					switch (buf.dtype) {
-						case VariableType::Int8:
-							gl_type = GL_BYTE;
-							break;
-						case VariableType::UInt8:
-							gl_type = GL_UNSIGNED_BYTE;
-							break;
-						case VariableType::Int16:
-							gl_type = GL_SHORT;
-							break;
-						case VariableType::UInt16:
-							gl_type = GL_UNSIGNED_SHORT;
-							break;
-						case VariableType::Int32:
-							gl_type = GL_INT;
-							break;
-						case VariableType::UInt32:
-							gl_type = GL_UNSIGNED_INT;
-							break;
-						case VariableType::Float16:
-							gl_type = GL_HALF_FLOAT;
-							break;
-						case VariableType::Float32:
-							gl_type = GL_FLOAT;
-							break;
-						default:
-							throw std::runtime_error(
-													 "Shader::begin(): unsupported vertex buffer type!");
-					}
+					gl_type = get_gl_type(buf.dtype);
+					if (gl_type == 0)
+						throw std::runtime_error("Shader::begin(): unsupported vertex buffer type!");
 					
 					if (buf.ndim != 2)
 						throw std::runtime_error("\"" + m_name + "\": vertex attribute \"" + key +
@@ -440,148 +412,13 @@ void Shader::begin() {
 				break;
 				
 			case UniformBuffer:
-				if (!buf.dirty)
-					continue;  // Skip if uniform hasn't changed
+				if (!buf.dirty) continue;
 				
-				if (buf.ndim > 2)
-					throw std::runtime_error("\"" + m_name + "\": uniform attribute \"" + key +
-											 "\" has an invalid dimension (expected ndim=0/1/2, got " +
-											 std::to_string(buf.ndim) + ")");
-				switch (buf.dtype) {
-					case VariableType::Float32:
-						if (buf.ndim < 2) {
-							const float *v = (const float *)buf.buffer;
-							switch (buf.shape[0]) {
-								case 1:
-									CHK(glUniform1f(buf.index, v[0]));
-									break;
-								case 2:
-									CHK(glUniform2f(buf.index, v[0], v[1]));
-									break;
-								case 3:
-									CHK(glUniform3f(buf.index, v[0], v[1], v[2]));
-									break;
-								case 4:
-									CHK(glUniform4f(buf.index, v[0], v[1], v[2], v[3]));
-									break;
-								default:
-									uniform_error = true;
-									break;
-							}
-						} else if (buf.ndim == 2 && buf.shape[0] == buf.shape[1]) {
-							const float *v = (const float *)buf.buffer;
-							switch (buf.shape[0]) {
-								case 2:
-									CHK(glUniformMatrix2fv(buf.index, 1, GL_FALSE, v));
-									break;
-								case 3:
-									CHK(glUniformMatrix3fv(buf.index, 1, GL_FALSE, v));
-									break;
-								case 4:
-									CHK(glUniformMatrix4fv(buf.index, 1, GL_FALSE, v));
-									break;
-								default:
-									uniform_error = true;
-									break;
-							}
-						} else {
-							uniform_error = true;
-						}
-						break;
-						
-#if defined(NANOGUI_USE_GLES)
-					case VariableType::UInt32:
-#endif
-					case VariableType::Int32: {
-						const int32_t *v = (const int32_t *)buf.buffer;
-						if (buf.ndim < 2) {
-							switch (buf.shape[0]) {
-								case 1:
-									CHK(glUniform1i(buf.index, v[0]));
-									break;
-								case 2:
-									CHK(glUniform2i(buf.index, v[0], v[1]));
-									break;
-								case 3:
-									CHK(glUniform3i(buf.index, v[0], v[1], v[2]));
-									break;
-								case 4:
-									CHK(glUniform4i(buf.index, v[0], v[1], v[2], v[3]));
-									break;
-								default:
-									uniform_error = true;
-									break;
-							}
-						} else {
-							uniform_error = true;
-						}
-					} break;
-						
-#if defined(NANOGUI_USE_OPENGL)
-					case VariableType::UInt32: {
-						const uint32_t *v = (const uint32_t *)buf.buffer;
-						if (buf.ndim < 2) {
-							switch (buf.shape[0]) {
-								case 1:
-									CHK(glUniform1ui(buf.index, v[0]));
-									break;
-								case 2:
-									CHK(glUniform2ui(buf.index, v[0], v[1]));
-									break;
-								case 3:
-									CHK(glUniform3ui(buf.index, v[0], v[1], v[2]));
-									break;
-								case 4:
-									CHK(glUniform4ui(buf.index, v[0], v[1], v[2], v[3]));
-									break;
-								default:
-									uniform_error = true;
-									break;
-							}
-						} else {
-							uniform_error = true;
-						}
-					} break;
-#endif
-						
-					case VariableType::Bool: {
-						const uint8_t *v = (const uint8_t *)buf.buffer;
-						if (buf.ndim < 2) {
-							switch (buf.shape[0]) {
-								case 1:
-									CHK(glUniform1i(buf.index, v[0]));
-									break;
-								case 2:
-									CHK(glUniform2i(buf.index, v[0], v[1]));
-									break;
-								case 3:
-									CHK(glUniform3i(buf.index, v[0], v[1], v[2]));
-									break;
-								case 4:
-									CHK(glUniform4i(buf.index, v[0], v[1], v[2], v[3]));
-									break;
-								default:
-									uniform_error = true;
-									break;
-							}
-						} else {
-							uniform_error = true;
-						}
-					} break;
-						
-					default:
-						uniform_error = true;
-						break;
-				}
-				
-				if (uniform_error)
-					throw std::runtime_error("\"" + m_name + "\": uniform attribute \"" + key +
-											 "\" has an unsupported dtype/shape configuration: " + buf.to_string());
+				handle_uniform_buffer(key, buf);
 				break;
 				
 			default:
-				throw std::runtime_error("\"" + m_name + "\": uniform attribute \"" + key +
-										 "\" has an unsupported dtype/shape configuration:" + buf.to_string());
+				throw std::runtime_error("\"" + m_name + "\": unsupported buffer type: " + buf.to_string());
 		}
 		
 		buf.dirty = false;
@@ -599,51 +436,87 @@ void Shader::begin() {
 }
 
 void Shader::end() {
-	if (m_blend_mode == BlendMode::AlphaBlend)
+	if (m_blend_mode == BlendMode::AlphaBlend) {
 		CHK(glDisable(GL_BLEND));
+	}
+	
 #if defined(NANOGUI_USE_OPENGL)
 	if (m_uses_point_size)
 		CHK(glDisable(GL_PROGRAM_POINT_SIZE));
+	
 	CHK(glBindVertexArray(0));
 #else
 	for (const auto &[key, buf] : m_buffers) {
-		if (buf.type != VertexBuffer)
-			continue;
-		CHK(glDisableVertexAttribArray(buf.index));
+		if (buf.type == VertexBuffer) {
+			CHK(glDisableVertexAttribArray(buf.index));
+		}
 	}
 #endif
 	CHK(glUseProgram(0));
 }
 
-void Shader::draw_array(PrimitiveType primitive_type,
-						size_t offset, size_t count,
-						bool indexed) {
-	GLenum primitive_type_gl;
+void Shader::draw_array(PrimitiveType primitive_type, size_t offset, size_t count, bool indexed) {
+	GLenum primitive_type_gl = get_gl_primitive_type(primitive_type);
+	if (!indexed) {
+		CHK(glDrawArrays(primitive_type_gl, (GLint)offset, (GLsizei)count));
+	} else {
+		CHK(glDrawElements(primitive_type_gl, (GLsizei)count, GL_UNSIGNED_INT,
+						   (const void *)(offset * sizeof(uint32_t))));
+	}
+}
+
+GLenum get_gl_type(VariableType dtype) {
+	switch (dtype) {
+		case VariableType::Int8: return GL_BYTE;
+		case VariableType::UInt8: return GL_UNSIGNED_BYTE;
+		case VariableType::Int16: return GL_SHORT;
+		case VariableType::UInt16: return GL_UNSIGNED_SHORT;
+		case VariableType::Int32: return GL_INT;
+		case VariableType::UInt32: return GL_UNSIGNED_INT;
+		case VariableType::Float16: return GL_HALF_FLOAT;
+		case VariableType::Float32: return GL_FLOAT;
+		default: return 0;
+	}
+}
+
+GLenum get_gl_primitive_type(PrimitiveType primitive_type) {
 	switch (primitive_type) {
-		case PrimitiveType::Point:
-			primitive_type_gl = GL_POINTS;
-			break;
-		case PrimitiveType::Line:
-			primitive_type_gl = GL_LINES;
-			break;
-		case PrimitiveType::LineStrip:
-			primitive_type_gl = GL_LINE_STRIP;
-			break;
-		case PrimitiveType::Triangle:
-			primitive_type_gl = GL_TRIANGLES;
-			break;
-		case PrimitiveType::TriangleStrip:
-			primitive_type_gl = GL_TRIANGLE_STRIP;
-			break;
+		case PrimitiveType::Point: return GL_POINTS;
+		case PrimitiveType::Line: return GL_LINES;
+		case PrimitiveType::LineStrip: return GL_LINE_STRIP;
+		case PrimitiveType::Triangle: return GL_TRIANGLES;
+		case PrimitiveType::TriangleStrip: return GL_TRIANGLE_STRIP;
 		default:
 			throw std::runtime_error("Shader::draw_array(): invalid primitive type!");
 	}
+}
+
+void handle_uniform_buffer(const std::string &key, Buffer &buf) {
+	bool uniform_error = false;
+	const float *v = (const float *)buf.buffer;
 	
-	if (!indexed)
-		CHK(glDrawArrays(primitive_type_gl, (GLint)offset, (GLsizei)count));
-	else
-		CHK(glDrawElements(primitive_type_gl, (GLsizei)count, GL_UNSIGNED_INT,
-						   (const void *)(offset * sizeof(uint32_t))));
+	if (buf.ndim < 2) {
+		switch (buf.shape[0]) {
+			case 1: CHK(glUniform1f(buf.index, v[0])); break;
+			case 2: CHK(glUniform2f(buf.index, v[0], v[1])); break;
+			case 3: CHK(glUniform3f(buf.index, v[0], v[1], v[2])); break;
+			case 4: CHK(glUniform4f(buf.index, v[0], v[1], v[2], v[3])); break;
+			default: uniform_error = true; break;
+		}
+	} else if (buf.ndim == 2 && buf.shape[0] == buf.shape[1]) {
+		switch (buf.shape[0]) {
+			case 2: CHK(glUniformMatrix2fv(buf.index, 1, GL_FALSE, v)); break;
+			case 3: CHK(glUniformMatrix3fv(buf.index, 1, GL_FALSE, v)); break;
+			case 4: CHK(glUniformMatrix4fv(buf.index, 1, GL_FALSE, v)); break;
+			default: uniform_error = true; break;
+		}
+	} else {
+		uniform_error = true;
+	}
+	
+	if (uniform_error)
+		throw std::runtime_error("\"" + m_name + "\": uniform attribute \"" + key +
+								 "\" has an unsupported dtype/shape configuration: " + buf.to_string());
 }
 
 NAMESPACE_END(nanogui)
