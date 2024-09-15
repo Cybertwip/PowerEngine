@@ -280,7 +280,7 @@ public:
 					auto& animationComponent = mActiveActor->get().get_component<AnimationComponent>();
 					
 					if (animationComponent.is_keyframe(mCurrentTime)) {
-						animationComponent.removeKeyframe(mCurrentTIme);
+						animationComponent.removeKeyframe(mCurrentTime);
 					} else {
 						animationComponent.addKeyframe(mCurrentTime, transformComponent.get_translation(), transformComponent.get_rotation(), transformComponent.get_scale());
 					}
