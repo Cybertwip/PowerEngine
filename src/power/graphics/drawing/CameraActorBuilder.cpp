@@ -4,6 +4,7 @@
 
 #include "actors/Actor.hpp"
 
+#include "components/AnimationComponent.hpp"
 #include "components/CameraComponent.hpp"
 #include "components/ColorComponent.hpp"
 #include "components/DrawableComponent.hpp"
