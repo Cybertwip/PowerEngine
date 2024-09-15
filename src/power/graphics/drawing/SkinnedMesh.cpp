@@ -176,7 +176,6 @@ SkinnedMesh::SkinnedMesh(std::unique_ptr<MeshData> meshData, SkinnedMeshShader& 
 //				mFlattenedWeights[i * Vertex::MAX_BONE_INFLUENCE + j] = vertexWeights[j];
 //			}
 		}
-
 		
 	mMeshBatch.add_mesh(*this);
 	mMeshBatch.prepare();
@@ -279,9 +278,17 @@ void SkinnedMesh::MeshBatch::prepare() {
 	}
 	
 	for (const auto& material : mesh.mMeshData->mMaterials) {
-		// Check if the material is already in mBatchMaterials
-		if (std::find(mBatchMaterials.begin(), mBatchMaterials.end(), material) == mBatchMaterials.end()) {
-			// If not found, append the material
+		// Compute the hash of the material identifier (assuming mIdentifier is the hashed value)
+		std::size_t materialHash = material->mIdentifier;
+		
+		// Check if a material with the same hash is already in mBatchMaterials
+		bool exists = std::any_of(mBatchMaterials.begin(), mBatchMaterials.end(),
+								  [&](const std::shared_ptr<MaterialProperties>& existingMat) {
+			return existingMat->mIdentifier == materialHash;
+		});
+		
+		// If the material is not already in the batch, append it
+		if (!exists) {
 			mBatchMaterials.push_back(material);
 		}
 	}

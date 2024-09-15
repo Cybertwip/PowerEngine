@@ -2,8 +2,13 @@
 
 #include <glm/glm.hpp>
 
+#include <functional> // For std::hash
+
+
 struct MaterialProperties
 {
+	uint64_t mIdentifier;
+	
 	glm::vec3 mAmbient{0.8f, 0.8f, 0.8f};
 	glm::vec3 mDiffuse{1.0f, 1.0f, 1.0f};
 	glm::vec3 mSpecular{0.9f, 0.9f, 0.9f};

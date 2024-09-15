@@ -104,6 +104,9 @@ void Fbx::ProcessNode(const std::shared_ptr<sfbx::Model>& node) {
 }
 
 void Fbx::ProcessMesh(const std::shared_ptr<sfbx::Mesh>& mesh) {
+	
+	auto path = std::filesystem::absolute(mesh->document().global_settings.path).string();
+
 	auto& resultMesh = mMeshes.emplace_back(std::make_unique<SkinnedMesh::MeshData>());
 	
 	// Precompute transformation matrices
@@ -256,9 +259,17 @@ void Fbx::ProcessMesh(const std::shared_ptr<sfbx::Mesh>& mesh) {
 	resultMesh->mMaterials.reserve(materials.size());
 	for (size_t i = 0; i < materials.size(); ++i) {
 		const auto& material = materials[i];
-		
 		auto matPtr = std::make_shared<MaterialProperties>();
 		MaterialProperties& matData = *matPtr;
+		
+		// Combine the path and index into a single string
+		std::string combined = path + std::to_string(i);
+		
+		// Compute the hash of the combined string
+		std::size_t hashValue = std::hash<std::string>{}(combined);
+		
+		// Assign to mIdentifier
+		matData.mIdentifier = hashValue;
 		
 		// Set material properties
 		auto color = material->getAmbientColor();
