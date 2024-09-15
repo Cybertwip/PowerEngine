@@ -256,7 +256,9 @@ void Fbx::ProcessMesh(const std::shared_ptr<sfbx::Mesh>& mesh) {
 	resultMesh->mMaterials.reserve(materials.size());
 	for (size_t i = 0; i < materials.size(); ++i) {
 		const auto& material = materials[i];
-		MaterialProperties matData;
+		
+		auto matPtr = std::make_shared<MaterialProperties>();
+		MaterialProperties& matData = *matPtr;
 		
 		// Set material properties
 		auto color = material->getAmbientColor();
@@ -276,7 +278,7 @@ void Fbx::ProcessMesh(const std::shared_ptr<sfbx::Mesh>& mesh) {
 			matData.mHasDiffuseTexture = true;
 		}
 		
-		resultMesh->mMaterials.push_back(std::move(matData));
+		resultMesh->mMaterials.push_back(matPtr);
 	}
 }
 

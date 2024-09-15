@@ -61,7 +61,7 @@ public:
     struct MeshData {
         std::vector<Vertex> mVertices;
         std::vector<unsigned int> mIndices;
-        std::vector<MaterialProperties> mMaterials;
+        std::vector<std::shared_ptr<MaterialProperties>> mMaterials;
     };
 
     class SkinnedMeshShader : public ShaderWrapper {
@@ -69,11 +69,39 @@ public:
         SkinnedMeshShader(ShaderManager& shader);
         
         void upload_vertex_data(const SkinnedMesh& skinnedMesh);
-        void upload_material_data(const std::vector<MaterialProperties>& materialData);
+        void upload_material_data(const std::vector<std::shared_ptr<MaterialProperties>>& materialData);
     };
+	
+	class MeshBatch {
+	public:
+		MeshBatch(SkinnedMesh::SkinnedMeshShader& shader);
+		
+		void add_mesh(std::reference_wrapper<SkinnedMesh> mesh);
+		void clear();
+		void prepare();
+		void draw_content(const nanogui::Matrix4f& model, const nanogui::Matrix4f& view,
+				  const nanogui::Matrix4f& projection);
+		
+	private:
+		SkinnedMesh::SkinnedMeshShader& mShader;
+		std::vector<std::reference_wrapper<SkinnedMesh>> mMeshes;
+		
+		// Consolidated buffers
+		std::vector<float> mBatchPositions;
+		std::vector<float> mBatchNormals;
+		std::vector<float> mBatchTexCoords1;
+		std::vector<float> mBatchTexCoords2;
+		std::vector<int> mBatchTextureIds;
+		std::vector<unsigned int> mBatchIndices;
+		std::vector<std::shared_ptr<MaterialProperties>> mBatchMaterials;
+		
+		// Offset tracking
+		std::vector<size_t> mMeshStartIndices;
+	};
+
 
 public:
-    SkinnedMesh(std::unique_ptr<MeshData> meshData, SkinnedMeshShader& shader);
+    SkinnedMesh(std::unique_ptr<MeshData> meshData, SkinnedMeshShader& shader, MeshBatch& meshBatch);
 	~SkinnedMesh() override = default;
     
     void draw_content(const nanogui::Matrix4f& model, const nanogui::Matrix4f& view, const nanogui::Matrix4f& projection) override;
@@ -95,6 +123,7 @@ private:
 	std::vector<float> mFlattenedWeights;
 	std::vector<int> mFlattenedTextureIds;
 
+	MeshBatch& mMeshBatch;
 	
 	static std::unique_ptr<nanogui::Texture> mDummyTexture;
 };

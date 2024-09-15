@@ -49,13 +49,9 @@ void main() {
     vec3 final_color = mat_diffuse;
     float selectionOpacity = mat.opacity;
 
-    // **Optimization 4: Replace length(color) == 1.0 with a more reliable condition**
-    // Assuming color is either exactly red (vec3(1.0, 0.0, 0.0)) or white (vec3(1.0)), use a dot product for comparison
-    float isRed = step(0.999, dot(color, vec3(1.0, 0.0, 0.0))); // 1.0 if color is red, else 0.0
-
     // **Optimization 5: Conditionally apply color adjustments using multiplication with isRed**
     // This avoids branching and leverages GPU parallelism
-    if (isRed > 0.5) { // Only execute if color is red
+    if (length(color) == 1.0) { // Only execute if color is red
         // Calculate brightness using the luminance model
         float brightness = dot(final_color, vec3(0.299, 0.587, 0.114));
 

@@ -12,21 +12,25 @@
 #include "components/TransformComponent.hpp"
 #include "import/Fbx.hpp"
 
-Actor& MeshActorBuilder::build(Actor& actor, const std::string& path,
-                     SkinnedMesh::SkinnedMeshShader& meshShaderWrapper) {
+MeshActorBuilder::MeshActorBuilder(SkinnedMesh::SkinnedMeshShader& shader)
+: mShader(shader), mMeshBatch(std::make_unique<SkinnedMesh::MeshBatch>(shader)) {
+	
+}
+
+Actor& MeshActorBuilder::build(Actor& actor, const std::string& path) {
     auto model = Fbx(path);
 
     std::vector<std::unique_ptr<SkinnedMesh>> meshComponentData;
 
     for (auto& meshData : model.GetMeshData()) {
-        meshComponentData.push_back(std::make_unique<SkinnedMesh>(std::move(meshData), meshShaderWrapper));
+        meshComponentData.push_back(std::make_unique<SkinnedMesh>(std::move(meshData), mShader, *mMeshBatch));
     }
 
 	std::unique_ptr<Drawable> meshComponent = std::make_unique<MeshComponent>(meshComponentData);
 	actor.add_component<DrawableComponent>(std::move(meshComponent));
 	actor.add_component<TransformComponent>();
 	actor.add_component<MetadataComponent>(actor.identifier(), std::filesystem::path(path).stem().string());
-	actor.add_component<ColorComponent>(actor.get_component<MetadataComponent>(), meshShaderWrapper);
+	actor.add_component<ColorComponent>(actor.get_component<MetadataComponent>(), mShader);
 	
 	actor.add_component<AnimationComponent>();
 

@@ -47,6 +47,8 @@ private:
 	
 	std::unique_ptr<Grid> mGrid;
 	
+	MeshActorLoader& mMeshActorLoader;
+	
 	SceneTimeBar* mSceneTimeBar;
 	
 	glm::vec3 mSelectionColor;

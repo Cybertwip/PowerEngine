@@ -65,3 +65,11 @@ void ActorManager::visit(UiManager& uiManager) {
 							  mCameraManager.get_projection());
 }
 
+void ActorManager::visit(SkinnedMesh::MeshBatch& meshBatch) {
+	mCameraManager.update_view();
+	
+	meshBatch.draw_content(nanogui::Matrix4f::identity(), mCameraManager.get_view(),
+						   mCameraManager.get_projection());
+}
+
+

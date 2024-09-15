@@ -3,6 +3,8 @@
 #include "Canvas.hpp"
 #include "CameraManager.hpp"
 
+#include "MeshActorLoader.hpp"
+
 #include "ShaderManager.hpp"
 
 #include "actors/IActorSelectedRegistry.hpp"
@@ -637,7 +639,8 @@ UiManager::UiManager(IActorSelectedRegistry& registry, IActorVisualManager& acto
 , mActorManager(actorManager)
 , mShader(*shaderManager.get_shader("mesh"))
 , mGizmoManager(std::make_unique<GizmoManager>(toolbox, shaderManager, actorManager))
-, mGrid(std::make_unique<Grid>(shaderManager)) {
+, mGrid(std::make_unique<Grid>(shaderManager))
+, mMeshActorLoader(meshActorLoader) {
 	mRegistry.RegisterOnActorSelectedCallback(*this);
 	
 	// Initialize the scene time bar
@@ -795,6 +798,8 @@ UiManager::UiManager(IActorSelectedRegistry& registry, IActorVisualManager& acto
 													  nanogui::Alignment::Minimum, 4, 2));
 	
 	mSelectionColor = glm::vec3(0.83f, 0.68f, 0.21f); // A gold-ish color
+	
+	mSelectionColor = glm::normalize(mSelectionColor);
 
 }
 
@@ -810,6 +815,7 @@ void UiManager::OnActorSelected(Actor& actor) {
 }
 
 void UiManager::draw() {
+	mActorManager.visit(mMeshActorLoader.prepared_mesh_batch());
 	mActorManager.visit(*this);
 }
 
@@ -818,8 +824,9 @@ void UiManager::draw_content(const nanogui::Matrix4f& model, const nanogui::Matr
 	// Batch OpenGL state changes to minimize state changes
 	glDisable(GL_STENCIL_TEST);
 	glStencilMask(0x00);
-	glClear(GL_DEPTH_BUFFER_BIT);
 	glEnable(GL_DEPTH_TEST);
+	// Disable stencil test
+	glDisable(GL_STENCIL_TEST);
 	
 	// Draw the grid first
 	if (mGrid) {
@@ -846,11 +853,11 @@ void UiManager::draw_content(const nanogui::Matrix4f& model, const nanogui::Matr
 	// Convert transform matrix once
 	const nanogui::Matrix4f model_matrix = TransformComponent::glm_to_nanogui(transform.get_matrix());
 	
+	glClear(GL_DEPTH_BUFFER_BIT);
+
 	// Draw the drawable content
 	drawable.draw_content(model_matrix, view, projection);
 	
-	// Disable depth test if no further depth-dependent drawing is needed
-	glDisable(GL_DEPTH_TEST);
-	
 	// No need to disable stencil mask as it's already disabled at the start
 }
+

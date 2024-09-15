@@ -92,42 +92,43 @@ void SkinnedMesh::SkinnedMeshShader::upload_vertex_data(const SkinnedMesh& skinn
 	
 }
 
-void SkinnedMesh::SkinnedMeshShader::upload_material_data(const std::vector<MaterialProperties>& materialData) {
+void SkinnedMesh::SkinnedMeshShader::upload_material_data(const std::vector<std::shared_ptr<MaterialProperties>>& materialData) {
 	for (int i = 0; i < materialData.size(); ++i) {
 		// Create the uniform name dynamically for each material (e.g., "materials[0].ambient")
+		
+		auto& material = *materialData[i];
 		std::string baseName = "materials[" + std::to_string(i) + "].";
 
 		std::string textureBaseName = "textures[" + std::to_string(i) + "].";
 
 		// Uploading vec3 uniforms for each material
 		mShader.set_uniform(baseName + "ambient",
-							nanogui::Vector3f(materialData[i].mAmbient.x, materialData[i].mAmbient.y,
-											  materialData[i].mAmbient.z));
+							nanogui::Vector3f(material.mAmbient.x, material.mAmbient.y,
+											  material.mAmbient.z));
 		mShader.set_uniform(baseName + "diffuse",
-							nanogui::Vector3f(materialData[i].mDiffuse.x, materialData[i].mDiffuse.y,
-											  materialData[i].mDiffuse.z));
+							nanogui::Vector3f(material.mDiffuse.x, material.mDiffuse.y,
+											  material.mDiffuse.z));
 		mShader.set_uniform(baseName + "specular",
-							nanogui::Vector3f(materialData[i].mSpecular.x, materialData[i].mSpecular.y,
-											  materialData[i].mSpecular.z));
+							nanogui::Vector3f(material.mSpecular.x, material.mSpecular.y,
+											  material.mSpecular.z));
 		
 		// Uploading float uniforms for shininess and opacity
-		mShader.set_uniform(baseName + "shininess", materialData[i].mShininess);
-		mShader.set_uniform(baseName + "opacity", materialData[i].mOpacity);
+		mShader.set_uniform(baseName + "shininess", material.mShininess);
+		mShader.set_uniform(baseName + "opacity", material.mOpacity);
 		
 		// Uploading boolean for texture presence
-		mShader.set_uniform(baseName + "has_diffuse_texture", materialData[i].mHasDiffuseTexture);
+		mShader.set_uniform(baseName + "has_diffuse_texture", material.mHasDiffuseTexture);
 
-		if (materialData[i].mHasDiffuseTexture) {
-			mShader.set_texture(textureBaseName + "diffuse", materialData[i].mTextureDiffuse.get());
+		if (material.mHasDiffuseTexture) {
+			mShader.set_texture(textureBaseName + "diffuse", material.mTextureDiffuse.get());
 		} else {
 			mShader.set_texture(textureBaseName + "diffuse", mDummyTexture.get());
 		}
 	}
 }
 
-SkinnedMesh::SkinnedMesh(std::unique_ptr<MeshData> meshData, SkinnedMeshShader& shader)
-    : mMeshData(std::move(meshData)), mShader(shader) {
-		
+SkinnedMesh::SkinnedMesh(std::unique_ptr<MeshData> meshData, SkinnedMeshShader& shader, MeshBatch& meshBatch)
+    : mMeshData(std::move(meshData)), mShader(shader), mMeshBatch(meshBatch) {
 		size_t numVertices = mMeshData->mVertices.size();
 		
 		// Pre-allocate flattened data vectors
@@ -179,35 +180,38 @@ SkinnedMesh::SkinnedMesh(std::unique_ptr<MeshData> meshData, SkinnedMeshShader& 
 
 void SkinnedMesh::draw_content(const nanogui::Matrix4f& model, const nanogui::Matrix4f& view,
                                const nanogui::Matrix4f& projection) {
-    using namespace nanogui;
 	
-	mShader.set_buffer("indices", nanogui::VariableType::UInt32, {mMeshData->mIndices.size()},
-					   mMeshData->mIndices.data());
-	mShader.upload_vertex_data(*this);
-	mShader.upload_material_data(mMeshData->mMaterials);
-
-    //
-    // Calculate bounding box to center the model
-//    glm::vec3 minPos(std::numeric_limits<float>::max());
-//    glm::vec3 maxPos(std::numeric_limits<float>::lowest());
+	mMeshBatch.add_mesh(*this);
+//	
+//    using namespace nanogui;
+//	
+//	mShader.set_buffer("indices", nanogui::VariableType::UInt32, {mMeshData->mIndices.size()},
+//					   mMeshData->mIndices.data());
+//	mShader.upload_vertex_data(*this);
+//	mShader.upload_material_data(mMeshData->mMaterials);
 //
-//	for (const auto& vertex : mMeshData->mVertices) {
-//        minPos = glm::min(minPos, vertex->get_position());
-//        maxPos = glm::max(maxPos, vertex->get_position());
-//    }
+//    //
+//    // Calculate bounding box to center the model
+////    glm::vec3 minPos(std::numeric_limits<float>::max());
+////    glm::vec3 maxPos(std::numeric_limits<float>::lowest());
+////
+////	for (const auto& vertex : mMeshData->mVertices) {
+////        minPos = glm::min(minPos, vertex->get_position());
+////        maxPos = glm::max(maxPos, vertex->get_position());
+////    }
+////
+////    auto center = (minPos + maxPos) / 2.0f;
+////
+////    Matrix4f m = model * Matrix4f::rotate(Vector3f(0, 1, 0), (float)glfwGetTime()) *
+////                 Matrix4f::translate(-Vector3f(center.x, center.y, center.z));
 //
-//    auto center = (minPos + maxPos) / 2.0f;
+//    mShader.set_uniform("aModel", model);
+//    mShader.set_uniform("aView", view);
+//	mShader.set_uniform("aProjection", projection);
 //
-//    Matrix4f m = model * Matrix4f::rotate(Vector3f(0, 1, 0), (float)glfwGetTime()) *
-//                 Matrix4f::translate(-Vector3f(center.x, center.y, center.z));
-
-    mShader.set_uniform("aModel", model);
-    mShader.set_uniform("aView", view);
-	mShader.set_uniform("aProjection", projection);
-
-	mShader.begin();
-	mShader.draw_array(Shader::PrimitiveType::Triangle, 0, mMeshData->mIndices.size(), true);
-	mShader.end();
+//	mShader.begin();
+//	mShader.draw_array(Shader::PrimitiveType::Triangle, 0, mMeshData->mIndices.size(), true);
+//	mShader.end();
 }
 
 // Create a dummy 1x1 white texture using the Texture constructor
@@ -221,3 +225,91 @@ void SkinnedMesh::init_dummy_texture() {
 }
 
 std::unique_ptr<nanogui::Texture> SkinnedMesh::mDummyTexture;
+
+SkinnedMesh::MeshBatch::MeshBatch(SkinnedMesh::SkinnedMeshShader& shader)
+: mShader(shader) {}
+
+void SkinnedMesh::MeshBatch::add_mesh(std::reference_wrapper<SkinnedMesh> mesh) {
+	mMeshes.push_back(mesh);
+}
+
+void SkinnedMesh::MeshBatch::clear() {
+	mBatchPositions.clear();
+	mBatchNormals.clear();
+	mBatchTexCoords1.clear();
+	mBatchTexCoords2.clear();
+	mBatchTextureIds.clear();
+	mBatchIndices.clear();
+	mBatchMaterials.clear();
+	mMeshStartIndices.clear();
+}
+
+void SkinnedMesh::MeshBatch::prepare() {
+	size_t vertexOffset = 0;
+	size_t indexOffset = 0;
+	
+	for (const auto& meshRef : mMeshes) {
+		auto& mesh = meshRef.get();
+		
+		// Append vertex data
+		mBatchPositions.insert(mBatchPositions.end(),
+							   mesh.mFlattenedPositions.begin(),
+							   mesh.mFlattenedPositions.end());
+		mBatchNormals.insert(mBatchNormals.end(),
+							 mesh.mFlattenedNormals.begin(),
+							 mesh.mFlattenedNormals.end());
+		mBatchTexCoords1.insert(mBatchTexCoords1.end(),
+								mesh.mFlattenedTexCoords1.begin(),
+								mesh.mFlattenedTexCoords1.end());
+		mBatchTexCoords2.insert(mBatchTexCoords2.end(),
+								mesh.mFlattenedTexCoords2.begin(),
+								mesh.mFlattenedTexCoords2.end());
+		mBatchTextureIds.insert(mBatchTextureIds.end(),
+								mesh.mFlattenedTextureIds.begin(),
+								mesh.mFlattenedTextureIds.end());
+		
+		// Adjust and append indices
+		for (auto index : mesh.mMeshData->mIndices) {
+			mBatchIndices.push_back(index + vertexOffset);
+		}
+		
+		// Append materials
+		mBatchMaterials.insert(mBatchMaterials.end(),
+							   mesh.mMeshData->mMaterials.begin(),
+							   mesh.mMeshData->mMaterials.end());
+		
+		mMeshStartIndices.push_back(indexOffset);
+		indexOffset += mesh.mMeshData->mIndices.size();
+		vertexOffset += mesh.mMeshData->mVertices.size();
+	}
+	
+	// Upload consolidated data to GPU
+	mShader.set_buffer("aPosition", nanogui::VariableType::Float32, {mBatchPositions.size() / 3, 3},
+					   mBatchPositions.data());
+	mShader.set_buffer("aNormal", nanogui::VariableType::Float32, {mBatchNormals.size() / 3, 3},
+					   mBatchNormals.data());
+	mShader.set_buffer("aTexcoords1", nanogui::VariableType::Float32, {mBatchTexCoords1.size() / 2, 2},
+					   mBatchTexCoords1.data());
+	mShader.set_buffer("aTexcoords2", nanogui::VariableType::Float32, {mBatchTexCoords2.size() / 2, 2},
+					   mBatchTexCoords2.data());
+	mShader.set_buffer("aTextureId", nanogui::VariableType::Int32, {mBatchTextureIds.size() / 2, 2},
+					   mBatchTextureIds.data());
+	
+	// Upload indices
+	mShader.set_buffer("indices", nanogui::VariableType::UInt32, {mBatchIndices.size()},
+					   mBatchIndices.data());
+	
+	// Upload materials
+	mShader.upload_material_data(mBatchMaterials);
+}
+
+void SkinnedMesh::MeshBatch::draw_content(const nanogui::Matrix4f& model, const nanogui::Matrix4f& view,
+					 const nanogui::Matrix4f& projection) {
+	mShader.set_uniform("aModel", model);
+	mShader.set_uniform("aView", view);
+	mShader.set_uniform("aProjection", projection);
+	
+	mShader.begin();
+	mShader.draw_array(nanogui::Shader::PrimitiveType::Triangle, 0, mBatchIndices.size(), true);
+	mShader.end();
+}

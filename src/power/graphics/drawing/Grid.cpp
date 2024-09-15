@@ -27,16 +27,6 @@ void Grid::draw_content(const nanogui::Matrix4f& model, const nanogui::Matrix4f&
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glEnable(GL_BLEND);
 	
-	glDepthMask(true);
-
-	// Enable stencil test for grid drawing
-	glEnable(GL_STENCIL_TEST);
-	glStencilFunc(GL_ALWAYS, 1, 0xFF); // Set stencil to 1 where drawing occurs
-	glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE); // Replace stencil value on drawing
-	glStencilMask(0xFF); // Enable stencil writing
-	
-	glStencilMask(0x00); // Disable stencil writing
-	
 	// Set up vertex buffer
 	mShaderWrapper.set_buffer("aPosition", nanogui::VariableType::Float32, {mGridVertices.size() / 2, 2}, mGridVertices.data());
 	
