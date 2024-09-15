@@ -6,7 +6,6 @@
 #include "MeshActorLoader.hpp"
 #include "actors/Actor.hpp"
 #include "components/CameraComponent.hpp"
-#include "components/ColorComponent.hpp"
 #include "components/DrawableComponent.hpp"
 #include "components/MeshComponent.hpp"
 #include "components/TransformComponent.hpp"
@@ -39,9 +38,6 @@ void ActorManager::draw() {
 
 	for (auto& actor : mActors) {
 		auto& drawable = actor.get()->get_component<DrawableComponent>();
-		auto& color = actor.get()->get_component<ColorComponent>();
-		
-		color.apply(glm::vec3(1.0f, 1.0f, 1.0f));
 		
 		auto& transform = actor.get()->get_component<TransformComponent>();
 
@@ -68,7 +64,7 @@ void ActorManager::visit(UiManager& uiManager) {
 void ActorManager::visit(SkinnedMesh::MeshBatch& meshBatch) {
 	mCameraManager.update_view();
 	
-	meshBatch.draw_content(nanogui::Matrix4f::identity(), mCameraManager.get_view(),
+	meshBatch.draw_content(mCameraManager.get_view(),
 						   mCameraManager.get_projection());
 }
 

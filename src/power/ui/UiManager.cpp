@@ -359,7 +359,6 @@ public:
 			}
 		});
 		
-		
 		// Next Frame Button
 		mNextKeyBtn = new nanogui::Button(keyBtnWrapper, "", FA_STEP_FORWARD);
 		
@@ -454,7 +453,6 @@ public:
 	void register_actor_transform_callback(std::optional<std::reference_wrapper<Actor>> actor) {
 		
 		if (actor != std::nullopt) {
-			
 			auto& transformComponent = actor->get().get_component<TransformComponent>();
 			
 			auto& animationComponent = actor->get().get_component<AnimationComponent>();

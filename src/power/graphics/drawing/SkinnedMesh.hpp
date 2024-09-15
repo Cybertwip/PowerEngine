@@ -11,6 +11,7 @@
 
 #include <array>
 
+class ColorComponent;
 class ShaderManager;
 
 class SkinnedMesh : public Drawable {
@@ -79,7 +80,7 @@ public:
 		void add_mesh(std::reference_wrapper<SkinnedMesh> mesh);
 		void clear();
 		void prepare();
-		void draw_content(const nanogui::Matrix4f& model, const nanogui::Matrix4f& view,
+		void draw_content(const nanogui::Matrix4f& view,
 				  const nanogui::Matrix4f& projection);
 		
 	private:
@@ -101,7 +102,7 @@ public:
 
 
 public:
-    SkinnedMesh(std::unique_ptr<MeshData> meshData, SkinnedMeshShader& shader, MeshBatch& meshBatch);
+    SkinnedMesh(std::unique_ptr<MeshData> meshData, SkinnedMeshShader& shader, MeshBatch& meshBatch, ColorComponent& colorComponent);
 	~SkinnedMesh() override = default;
     
     void draw_content(const nanogui::Matrix4f& model, const nanogui::Matrix4f& view, const nanogui::Matrix4f& projection) override;
@@ -124,6 +125,9 @@ private:
 	std::vector<int> mFlattenedTextureIds;
 
 	MeshBatch& mMeshBatch;
+	ColorComponent& mColorComponent;
+	
+	nanogui::Matrix4f mModelMatrix;
 	
 	static std::unique_ptr<nanogui::Texture> mDummyTexture;
 };

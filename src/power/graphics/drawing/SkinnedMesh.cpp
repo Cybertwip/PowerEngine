@@ -9,6 +9,7 @@
 #include "CameraManager.hpp"
 #include "Canvas.hpp"
 #include "ShaderManager.hpp"
+#include "components/ColorComponent.hpp"
 #include "graphics/shading/ShaderWrapper.hpp"
 #include "import/Fbx.hpp"
 
@@ -127,8 +128,8 @@ void SkinnedMesh::SkinnedMeshShader::upload_material_data(const std::vector<std:
 	}
 }
 
-SkinnedMesh::SkinnedMesh(std::unique_ptr<MeshData> meshData, SkinnedMeshShader& shader, MeshBatch& meshBatch)
-    : mMeshData(std::move(meshData)), mShader(shader), mMeshBatch(meshBatch) {
+SkinnedMesh::SkinnedMesh(std::unique_ptr<MeshData> meshData, SkinnedMeshShader& shader, MeshBatch& meshBatch, ColorComponent& colorComponent)
+    : mMeshData(std::move(meshData)), mShader(shader), mMeshBatch(meshBatch), mColorComponent(colorComponent), mModelMatrix(nanogui::Matrix4f::identity()) {
 		size_t numVertices = mMeshData->mVertices.size();
 		
 		// Pre-allocate flattened data vectors
@@ -181,6 +182,8 @@ SkinnedMesh::SkinnedMesh(std::unique_ptr<MeshData> meshData, SkinnedMeshShader& 
 void SkinnedMesh::draw_content(const nanogui::Matrix4f& model, const nanogui::Matrix4f& view,
                                const nanogui::Matrix4f& projection) {
 	
+	
+	mModelMatrix = model;
 	mMeshBatch.add_mesh(*this);
 //	
 //    using namespace nanogui;
@@ -273,11 +276,14 @@ void SkinnedMesh::MeshBatch::prepare() {
 			mBatchIndices.push_back(index + vertexOffset);
 		}
 		
-		// Append materials
-		mBatchMaterials.insert(mBatchMaterials.end(),
-							   mesh.mMeshData->mMaterials.begin(),
-							   mesh.mMeshData->mMaterials.end());
-		
+		for (const auto& material : mesh.mMeshData->mMaterials) {
+			// Check if the material is already in mBatchMaterials
+			if (std::find(mBatchMaterials.begin(), mBatchMaterials.end(), material) == mBatchMaterials.end()) {
+				// If not found, append the material
+				mBatchMaterials.push_back(material);
+			}
+		}
+
 		mMeshStartIndices.push_back(indexOffset);
 		indexOffset += mesh.mMeshData->mIndices.size();
 		vertexOffset += mesh.mMeshData->mVertices.size();
@@ -303,13 +309,26 @@ void SkinnedMesh::MeshBatch::prepare() {
 	mShader.upload_material_data(mBatchMaterials);
 }
 
-void SkinnedMesh::MeshBatch::draw_content(const nanogui::Matrix4f& model, const nanogui::Matrix4f& view,
-					 const nanogui::Matrix4f& projection) {
-	mShader.set_uniform("aModel", model);
+void SkinnedMesh::MeshBatch::draw_content(const nanogui::Matrix4f& view,
+										  const nanogui::Matrix4f& projection) {
 	mShader.set_uniform("aView", view);
 	mShader.set_uniform("aProjection", projection);
 	
 	mShader.begin();
-	mShader.draw_array(nanogui::Shader::PrimitiveType::Triangle, 0, mBatchIndices.size(), true);
+	
+	for (size_t i = 0; i < mMeshes.size(); ++i) {
+		auto& mesh = mMeshes[i].get();
+		
+		mShader.set_uniform("aModel", mesh.mModelMatrix);  // Assuming each mesh has a mModelMatrix
+		
+		mesh.mColorComponent.apply(glm::vec3(1.0f, 1.0f, 1.0f));
+
+		// Draw this mesh's part of the batch
+		size_t startIdx = mMeshStartIndices[i];
+		size_t count = (i < mMeshes.size() - 1) ? mMeshStartIndices[i + 1] - startIdx : mBatchIndices.size() - startIdx;
+		
+		mShader.draw_array(nanogui::Shader::PrimitiveType::Triangle, startIdx, count, true);
+	}
+	
 	mShader.end();
 }
