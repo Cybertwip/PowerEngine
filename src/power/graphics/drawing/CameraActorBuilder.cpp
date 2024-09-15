@@ -21,5 +21,7 @@ Actor& CameraActorBuilder::build(Actor& actor,
 	actor.add_component<ColorComponent>(actor.get_component<MetadataComponent>(), meshShaderWrapper);
 	actor.add_component<CameraComponent>(actor.get_component<TransformComponent>(), fov, near, far, aspect);
 	
+	actor.add_component<AnimationComponent>();
+	
 	return actor;
 }
