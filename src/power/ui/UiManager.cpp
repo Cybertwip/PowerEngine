@@ -726,6 +726,13 @@ UiManager::UiManager(IActorSelectedRegistry& registry, IActorVisualManager& acto
 				
 				mGizmoManager->select(id);
 			} else {
+				
+				if (mActiveActor.has_value()) {
+					auto& color = mActiveActor.get()->get_component<ColorComponent>();
+					
+					color.apply(glm::vec3(1.0f, 1.0f, 1.0f));
+
+				}
 				mActiveActor = std::nullopt;
 				mGizmoManager->select(mActiveActor);
 				mGizmoManager->select(0);
@@ -813,8 +820,14 @@ void UiManager::OnActorSelected(Actor& actor) {
 }
 
 void UiManager::draw() {
+	if (mActiveActor) {
+		auto& color = mActiveActor->get().get_component<ColorComponent>();
+		
+		color.apply(mSelectionColor);
+	}
+
 	mActorManager.visit(mMeshActorLoader.mesh_batch());
-	mActorManager.visit(*this);
+//	mActorManager.visit(*this);
 }
 
 void UiManager::draw_content(const nanogui::Matrix4f& model, const nanogui::Matrix4f& view,
@@ -831,31 +844,5 @@ void UiManager::draw_content(const nanogui::Matrix4f& model, const nanogui::Matr
 		mGrid->draw_content(model, view, projection);
 	}
 	
-	// Early exit if there's no active actor
-	if (!mActiveActor) {
-		// Restore any necessary state if modified by mGrid->draw_content
-		return;
-	}
-	
-	// Cache the active actor to avoid multiple dereferences
-	auto& actor = mActiveActor.value().get();
-	
-	// Access components directly without multiple get_component calls
-	DrawableComponent& drawable = actor.get_component<DrawableComponent>();
-	ColorComponent& color = actor.get_component<ColorComponent>();
-	TransformComponent& transform = actor.get_component<TransformComponent>();
-	
-	// Apply the precomputed normalized selection color
-	color.apply(mSelectionColor);
-	
-	// Convert transform matrix once
-	const nanogui::Matrix4f model_matrix = TransformComponent::glm_to_nanogui(transform.get_matrix());
-	
-	glClear(GL_DEPTH_BUFFER_BIT);
-
-	// Draw the drawable content
-	drawable.draw_content(model_matrix, view, projection);
-	
-	// No need to disable stencil mask as it's already disabled at the start
 }
 
