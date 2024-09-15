@@ -731,8 +731,8 @@ UiManager::UiManager(IActorSelectedRegistry& registry, IActorVisualManager& acto
 					auto& color = mActiveActor.get()->get_component<ColorComponent>();
 					
 					color.apply(glm::vec3(1.0f, 1.0f, 1.0f));
-
 				}
+				
 				mActiveActor = std::nullopt;
 				mGizmoManager->select(mActiveActor);
 				mGizmoManager->select(0);
@@ -827,7 +827,7 @@ void UiManager::draw() {
 	}
 
 	mActorManager.visit(mMeshActorLoader.mesh_batch());
-//	mActorManager.visit(*this);
+	mActorManager.visit(*this);
 }
 
 void UiManager::draw_content(const nanogui::Matrix4f& model, const nanogui::Matrix4f& view,
@@ -836,13 +836,14 @@ void UiManager::draw_content(const nanogui::Matrix4f& model, const nanogui::Matr
 	glDisable(GL_STENCIL_TEST);
 	glStencilMask(0x00);
 	glEnable(GL_DEPTH_TEST);
-	// Disable stencil test
-	glDisable(GL_STENCIL_TEST);
 	
 	// Draw the grid first
 	if (mGrid) {
 		mGrid->draw_content(model, view, projection);
 	}
+	
+	glDisable(GL_DEPTH_TEST);
+
 	
 }
 
