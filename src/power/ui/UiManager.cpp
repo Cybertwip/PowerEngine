@@ -100,6 +100,8 @@ public:
 		nanogui::Widget* sliderWrapper = new nanogui::Widget(this);
 		sliderWrapper->set_layout(new nanogui::BoxLayout(nanogui::Orientation::Horizontal, nanogui::Alignment::Fill, 10, 5));
 		
+		auto normalButtonColor = theme()->m_text_color;
+		
 		// Timeline Slider
 		mTimelineSlider = new nanogui::Slider(sliderWrapper);
 		mTimelineSlider->set_value(0.0f);  // Start at 0%
@@ -110,7 +112,13 @@ public:
 		mTimelineSlider->set_callback([this](float value) {
 			mCurrentTime = static_cast<int>(value * mTotalFrames);
 			update_time_display(mCurrentTime);
-			// Optionally, evaluate animations immediately when scrubbing
+
+			stop_playback();
+			
+			mAnimatableActors = mActorManager.get_actors_with_component<AnimationComponent>();
+			
+			mRecordBtn->set_text_color(mNormalButtonColor);
+			
 			evaluate_animations();
 		});
 		
@@ -140,6 +148,9 @@ public:
 			mCurrentTime = 0;
 			update_time_display(mCurrentTime);
 			mTimelineSlider->set_value(0.0f);
+			
+			mAnimatableActors = mActorManager.get_actors_with_component<AnimationComponent>();
+
 			evaluate_animations();
 		});
 		
@@ -150,9 +161,14 @@ public:
 		prevFrameBtn->set_tooltip("Previous Frame");
 		prevFrameBtn->set_callback([this]() {
 			if (mCurrentTime > 0) {
+				stop_playback();
+				
 				mCurrentTime--;
 				update_time_display(mCurrentTime);
 				mTimelineSlider->set_value(static_cast<float>(mCurrentTime) / mTotalFrames);
+				
+				mAnimatableActors = mActorManager.get_actors_with_component<AnimationComponent>();
+
 				evaluate_animations();
 			}
 		});
@@ -163,9 +179,8 @@ public:
 		mPlayPauseBtn->set_fixed_height(buttonHeight);
 		mPlayPauseBtn->set_tooltip("Play");
 		mPlayPauseBtn->set_flags(nanogui::Button::ToggleButton);
-		auto normalPlayColor = mPlayPauseBtn->text_color();
 		
-		mPlayPauseBtn->set_change_callback([this, normalPlayColor](bool active) {
+		mPlayPauseBtn->set_change_callback([this](bool active) {
 			if (active) {
 				// Play
 				toggle_play_pause(true);
@@ -177,10 +192,8 @@ public:
 				toggle_play_pause(false);
 				mPlayPauseBtn->set_icon(FA_PLAY);
 				mPlayPauseBtn->set_tooltip("Play");
-				mPlayPauseBtn->set_text_color(normalPlayColor);
+				mPlayPauseBtn->set_text_color(mNormalButtonColor);
 			}
-			
-			mRecordBtn->set_text_color(normalPlayColor);
 		});
 		
 		// Stop Button
@@ -194,6 +207,8 @@ public:
 			update_time_display(mCurrentTime);
 			mTimelineSlider->set_value(0.0f);
 			evaluate_animations();
+			
+			mAnimatableActors.clear();
 		});
 		
 		// Record Button
@@ -220,9 +235,14 @@ public:
 		nextFrameBtn->set_tooltip("Next Frame");
 		nextFrameBtn->set_callback([this]() {
 			if (mCurrentTime < mTotalFrames) {
+				stop_playback();
+				
 				mCurrentTime++;
 				update_time_display(mCurrentTime);
 				mTimelineSlider->set_value(static_cast<float>(mCurrentTime) / mTotalFrames);
+				
+				mAnimatableActors = mActorManager.get_actors_with_component<AnimationComponent>();
+
 				evaluate_animations();
 			}
 		});
@@ -237,9 +257,67 @@ public:
 			mCurrentTime = mTotalFrames;
 			update_time_display(mCurrentTime);
 			mTimelineSlider->set_value(1.0f);
+			
+			mAnimatableActors = mActorManager.get_actors_with_component<AnimationComponent>();
+
 			evaluate_animations();
 		});
+		
+		// Add Key-Icon Button
+		mKeyBtn = new nanogui::Button(buttonWrapper, "", FA_KEY);
+		mKeyBtn->set_fixed_width(buttonWidth);
+		mKeyBtn->set_fixed_height(buttonHeight);
+		mKeyBtn->set_tooltip("Keyframe Status");
+		
+		// Initially set to the normal button color
+		mKeyBtn->set_text_color(mNormalButtonColor);
+		
+		mKeyBtn->set_callback([this](){
+			if (mActiveActor.has_value()) {
+				if (!mPlaying) {
+					auto& transformComponent = mActiveActor->get().get_component<TransformComponent>();
+					
+					auto& animationComponent = mActiveActor->get().get_component<AnimationComponent>();
+					
+					if (animationComponent.is_keyframe(mCurrentTime)) {
+						animationComponent.removeKeyframe(mCurrentTIme);
+					} else {
+						animationComponent.addKeyframe(mCurrentTime, transformComponent.get_translation(), transformComponent.get_rotation(), transformComponent.get_scale());
+					}
+
+				}
+			}
+		});
+
 	}
+	
+	void evaluate_keyframe_status() {
+		bool atKeyframe = false;
+		bool betweenKeyframes = false;
+		
+		// Loop through animatable actors to determine keyframe status
+		if (mActiveActor.has_value()) {
+			auto& animatableActor = mActiveActor;
+			
+			auto& animationComponent = animatableActor->get().get_component<AnimationComponent>();
+			
+			if (animationComponent.is_keyframe(mCurrentTime)) {
+				atKeyframe = true;
+			} else if (animationComponent.is_between_keyframes(mCurrentTime)) {
+				betweenKeyframes = true;
+			}
+		}
+		
+		// Set the color based on keyframe status
+		if (atKeyframe) {
+			mKeyBtn->set_text_color(nanogui::Color(0.0f, 0.0f, 1.0f, 1.0f)); // Blue
+		} else if (betweenKeyframes) {
+			mKeyBtn->set_text_color(nanogui::Color(1.0f, 1.0f, 0.0f, 1.0f)); // Yellow
+		} else {
+			mKeyBtn->set_text_color(mNormalButtonColor); // Normal
+		}
+	}
+
 	
 	// Override OnActorSelected from IActorSelectedCallback
 	void OnActorSelected(Actor& actor) override {
@@ -266,7 +344,7 @@ public:
 			auto& animationComponent = actor->get().get_component<AnimationComponent>();
 			
 			mTransformRegistrationId = transformComponent.register_on_transform_changed_callback([this, &animationComponent](const TransformComponent& transform) {
-				if (mRecording) {
+				if (mRecording && !mPlaying) {
 					animationComponent.addKeyframe(mCurrentTime, transform.get_translation(), transform.get_rotation(), transform.get_scale());
 				}
 			});
@@ -296,9 +374,11 @@ public:
 				// Stop playing when end is reached
 				stop_playback();
 			}
+			
+			evaluate_animations();
 		}
 		
-		evaluate_animations();
+		evaluate_keyframe_status();
 
 		// Draw background
 		nvgBeginPath(ctx);
@@ -314,15 +394,10 @@ private:
 	// Helper method to toggle play/pause
 	void toggle_play_pause(bool play) {
 		mPlaying = play;
-
 		if (play) {
-			mRecording = false;
-			
 			unregister_actor_transform_callback(mActiveActor);
-
 			mAnimatableActors = mActorManager.get_actors_with_component<AnimationComponent>();
 		} else {
-			
 			register_actor_transform_callback(mActiveActor);
 		}
 	}
@@ -335,7 +410,7 @@ private:
 			mPlayPauseBtn->set_icon(FA_PLAY);
 			mPlayPauseBtn->set_tooltip("Play");
 			// Reset play button color
-			mPlayPauseBtn->set_text_color(theme()->m_icon_color);
+			mPlayPauseBtn->set_text_color(mNormalButtonColor);
 		}
 	}
 	
@@ -378,7 +453,9 @@ private:
 	nanogui::Slider* mTimelineSlider;
 	nanogui::Button* mRecordBtn;
 	nanogui::ToolButton* mPlayPauseBtn;
+	nanogui::Button* mKeyBtn;
 	nanogui::Color mBackgroundColor;
+	nanogui::Color mNormalButtonColor;
 	
 	std::vector<std::reference_wrapper<Actor>> mAnimatableActors;
 	std::optional<std::reference_wrapper<Actor>> mActiveActor;

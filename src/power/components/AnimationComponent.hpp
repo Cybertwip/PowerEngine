@@ -44,7 +44,7 @@ public:
 			it->scale = scale;
 		} else {
 			// Optionally handle the case where the keyframe does not exist
-			// For example, you could add the keyframe if it doesn't exist			
+			// For example, you could add the keyframe if it doesn't exist
 			addKeyframe(time, position, rotation, scale);
 		}
 	}
@@ -96,6 +96,36 @@ public:
 		// Compose the transformation matrix
 		return std::make_tuple(position, rotation, scale);
 	}
+	
+	// Check if the current time corresponds to an exact keyframe
+	bool is_keyframe(float time) const {
+		return keyframeExists(time);
+	}
+	
+	// Check if the current time is between two keyframes
+	bool is_between_keyframes(float time) const {
+		if (keyframes_.size() < 2) {
+			return false; // No "between" state if fewer than 2 keyframes
+		}
+		
+		// Find the two keyframes surrounding the given time
+		auto it = std::lower_bound(keyframes_.begin(), keyframes_.end(), time,
+								   [](const Keyframe& kf, float t) {
+			return kf.time < t;
+		});
+		
+		// If it's not between any valid keyframes, return false
+		if (it == keyframes_.begin() || it == keyframes_.end()) {
+			return false;
+		}
+		
+		const Keyframe& prev = *(it - 1);
+		const Keyframe& next = *it;
+		
+		// Return true if time is between two keyframes
+		return (time > prev.time && time < next.time);
+	}
+	
 	
 private:
 	std::vector<Keyframe> keyframes_;
