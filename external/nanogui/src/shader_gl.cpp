@@ -12,8 +12,8 @@
 NAMESPACE_BEGIN(nanogui)
 
 GLenum get_gl_type(VariableType dtype);  // Converts VariableType to OpenGL enum type
-GLenum get_gl_primitive_type(PrimitiveType primitive_type);  // Converts PrimitiveType to OpenGL enum type
-void handle_uniform_buffer(const std::string &key, Buffer &buf);  // Handles the uniform buffer setup
+GLenum get_gl_primitive_type(Shader::PrimitiveType primitive_type);  // Converts PrimitiveType to OpenGL enum type
+void handle_uniform_buffer(const std::string& shader_name, const std::string &key, Shader::Buffer &buf);  // Handles the uniform buffer setup
 
 static GLuint compile_gl_shader(GLenum type,
 								const std::string &name,
@@ -414,7 +414,7 @@ void Shader::begin() {
 			case UniformBuffer:
 				if (!buf.dirty) continue;
 				
-				handle_uniform_buffer(key, buf);
+				handle_uniform_buffer(m_name, key, buf);
 				break;
 				
 			default:
@@ -479,19 +479,19 @@ GLenum get_gl_type(VariableType dtype) {
 	}
 }
 
-GLenum get_gl_primitive_type(PrimitiveType primitive_type) {
+GLenum get_gl_primitive_type(Shader::PrimitiveType primitive_type) {
 	switch (primitive_type) {
-		case PrimitiveType::Point: return GL_POINTS;
-		case PrimitiveType::Line: return GL_LINES;
-		case PrimitiveType::LineStrip: return GL_LINE_STRIP;
-		case PrimitiveType::Triangle: return GL_TRIANGLES;
-		case PrimitiveType::TriangleStrip: return GL_TRIANGLE_STRIP;
+		case Shader::PrimitiveType::Point: return GL_POINTS;
+		case Shader::PrimitiveType::Line: return GL_LINES;
+		case Shader::PrimitiveType::LineStrip: return GL_LINE_STRIP;
+		case Shader::PrimitiveType::Triangle: return GL_TRIANGLES;
+		case Shader::PrimitiveType::TriangleStrip: return GL_TRIANGLE_STRIP;
 		default:
 			throw std::runtime_error("Shader::draw_array(): invalid primitive type!");
 	}
 }
 
-void handle_uniform_buffer(const std::string &key, Buffer &buf) {
+void handle_uniform_buffer(const std::string& shader_name, const std::string &key, Shader::Buffer &buf) {
 	bool uniform_error = false;
 	const float *v = (const float *)buf.buffer;
 	
@@ -515,7 +515,7 @@ void handle_uniform_buffer(const std::string &key, Buffer &buf) {
 	}
 	
 	if (uniform_error)
-		throw std::runtime_error("\"" + m_name + "\": uniform attribute \"" + key +
+		throw std::runtime_error("\"" + shader_name + "\": uniform attribute \"" + key +
 								 "\" has an unsupported dtype/shape configuration: " + buf.to_string());
 }
 

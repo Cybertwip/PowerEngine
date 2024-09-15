@@ -197,7 +197,7 @@ public:
     uint32_t vertex_array_handle() const { return m_vertex_array_handle; }
 #endif
 
-protected:
+public:
     enum BufferType {
         Unknown = 0,
         VertexBuffer,
