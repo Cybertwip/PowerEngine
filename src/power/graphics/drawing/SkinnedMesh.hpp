@@ -98,6 +98,9 @@ public:
 		
 		// Offset tracking
 		std::vector<size_t> mMeshStartIndices;
+		
+		size_t mVertexOffset = 0;
+		size_t mIndexOffset = 0;
 	};
 
 
