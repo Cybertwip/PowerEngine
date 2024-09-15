@@ -91,6 +91,8 @@ void HierarchyPanel::UnregisterOnActorSelectedCallback(IActorSelectedCallback& c
 }
 
 void HierarchyPanel::OnActorSelected(std::optional<std::reference_wrapper<Actor>> actor) {
+	mTransformPanel.set_active_actor(actor);
+	
 	for (auto& callbackRef : mActorSelectedCallbacks) {
 		callbackRef.get().OnActorSelected(actor);
 	}
