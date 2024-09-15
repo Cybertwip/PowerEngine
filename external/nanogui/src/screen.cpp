@@ -264,7 +264,7 @@ m_stencil_buffer(stencil_buffer), m_float_buffer(float_buffer), m_redraw(false) 
 	CHK(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT |
 				GL_STENCIL_BUFFER_BIT));
 	
-	glfwSwapInterval(0);
+	glfwSwapInterval(60);
 	glfwSwapBuffers(m_glfw_window);
 #endif
 	
