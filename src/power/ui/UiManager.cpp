@@ -728,7 +728,7 @@ UiManager::UiManager(IActorSelectedRegistry& registry, IActorVisualManager& acto
 			} else {
 				
 				if (mActiveActor.has_value()) {
-					auto& color = mActiveActor.get()->get_component<ColorComponent>();
+					auto& color = mActiveActor->get().get_component<ColorComponent>();
 					
 					color.apply(glm::vec3(1.0f, 1.0f, 1.0f));
 				}
@@ -843,7 +843,5 @@ void UiManager::draw_content(const nanogui::Matrix4f& model, const nanogui::Matr
 	}
 	
 	glDisable(GL_DEPTH_TEST);
-
-	
 }
 
