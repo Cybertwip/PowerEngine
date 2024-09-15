@@ -96,7 +96,9 @@ void SkinnedMesh::SkinnedMeshShader::upload_material_data(const std::vector<Mate
 	for (int i = 0; i < materialData.size(); ++i) {
 		// Create the uniform name dynamically for each material (e.g., "materials[0].ambient")
 		std::string baseName = "materials[" + std::to_string(i) + "].";
-		
+
+		std::string textureBaseName = "textures[" + std::to_string(i) + "].";
+
 		// Uploading vec3 uniforms for each material
 		mShader.set_uniform(baseName + "ambient",
 							nanogui::Vector3f(materialData[i].mAmbient.x, materialData[i].mAmbient.y,
@@ -116,9 +118,9 @@ void SkinnedMesh::SkinnedMeshShader::upload_material_data(const std::vector<Mate
 		mShader.set_uniform(baseName + "has_diffuse_texture", materialData[i].mHasDiffuseTexture);
 
 		if (materialData[i].mHasDiffuseTexture) {
-			mShader.set_texture(baseName + "texture_diffuse", materialData[i].mTextureDiffuse.get());
+			mShader.set_texture(textureBaseName + "diffuse", materialData[i].mTextureDiffuse.get());
 		} else {
-			mShader.set_texture(baseName + "texture_diffuse", mDummyTexture.get());
+			mShader.set_texture(textureBaseName + "diffuse", mDummyTexture.get());
 		}
 	}
 }

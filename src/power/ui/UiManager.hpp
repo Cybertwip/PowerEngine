@@ -4,6 +4,8 @@
 #include "graphics/drawing/Drawable.hpp"
 #include "graphics/shading/ShaderWrapper.hpp"
 
+#include <glm/glm.hpp>
+
 #include <memory>
 #include <optional>
 #include <functional>
@@ -46,4 +48,6 @@ private:
 	std::unique_ptr<Grid> mGrid;
 	
 	SceneTimeBar* mSceneTimeBar;
+	
+	glm::vec3 mSelectionColor;
 };

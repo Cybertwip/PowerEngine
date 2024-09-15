@@ -793,6 +793,9 @@ UiManager::UiManager(IActorSelectedRegistry& registry, IActorVisualManager& acto
 	statusBarPanel->set_fixed_height(statusBar.fixed_height());
 	statusBarPanel->set_layout(new nanogui::BoxLayout(nanogui::Orientation::Horizontal,
 													  nanogui::Alignment::Minimum, 4, 2));
+	
+	mSelectionColor = glm::vec3(0.83f, 0.68f, 0.21f); // A gold-ish color
+
 }
 
 UiManager::~UiManager() {
@@ -806,42 +809,44 @@ void UiManager::OnActorSelected(Actor& actor) {
 	mGizmoManager->select(std::nullopt);
 }
 
-void UiManager::draw() {
-	mActorManager.visit(*this);
-}
-
 void UiManager::draw_content(const nanogui::Matrix4f& model, const nanogui::Matrix4f& view,
 							 const nanogui::Matrix4f& projection) {
-	// Disable writing to the stencil buffer
+	// Batch OpenGL state changes to minimize state changes
+	glDisable(GL_STENCIL_TEST);
 	glStencilMask(0x00);
+	glClear(GL_DEPTH_BUFFER_BIT);
+	glEnable(GL_DEPTH_TEST);
 	
-	mGrid->draw_content(model, view, projection);
-	
-	if(mActiveActor.has_value()){
-		auto& drawable = mActiveActor->get().get_component<DrawableComponent>();
-		auto& color = mActiveActor->get().get_component<ColorComponent>();
-		auto& transform = mActiveActor->get().get_component<TransformComponent>();
-		
-		// Target blue-ish color vector (choose a blend towards red, but not purely red)
-		glm::vec3 selection_color(0.83f, 0.68f, 0.21f); // A gold-ish color
-		
-		// Normalize the color to ensure its length is exactly 1.0
-		selection_color = glm::normalize(selection_color);
-		
-		color.apply(selection_color);
-		
-		nanogui::Matrix4f model = TransformComponent::glm_to_nanogui(transform.get_matrix());
-				
-		glClear(GL_DEPTH_BUFFER_BIT);
-		
-		glEnable(GL_DEPTH_TEST);
-		
-		drawable.draw_content(model, view, projection);
-		
-		glDisable(GL_DEPTH_TEST);
+	// Draw the grid first
+	if (mGrid) {
+		mGrid->draw_content(model, view, projection);
 	}
 	
-	// Disable stencil test
-	glDisable(GL_STENCIL_TEST);
+	// Early exit if there's no active actor
+	if (!mActiveActor) {
+		// Restore any necessary state if modified by mGrid->draw_content
+		return;
+	}
+	
+	// Cache the active actor to avoid multiple dereferences
+	auto& actor = mActiveActor.value().get();
+	
+	// Access components directly without multiple get_component calls
+	DrawableComponent& drawable = actor.get_component<DrawableComponent>();
+	ColorComponent& color = actor.get_component<ColorComponent>();
+	TransformComponent& transform = actor.get_component<TransformComponent>();
+	
+	// Apply the precomputed normalized selection color
+	color.apply(mSelectionColor);
+	
+	// Convert transform matrix once
+	const nanogui::Matrix4f model_matrix = TransformComponent::glm_to_nanogui(transform.get_matrix());
+	
+	// Draw the drawable content
+	drawable.draw_content(model_matrix, view, projection);
+	
+	// Disable depth test if no further depth-dependent drawing is needed
+	glDisable(GL_DEPTH_TEST);
+	
+	// No need to disable stencil mask as it's already disabled at the start
 }
-
