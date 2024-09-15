@@ -809,6 +809,10 @@ void UiManager::OnActorSelected(Actor& actor) {
 	mGizmoManager->select(std::nullopt);
 }
 
+void UiManager::draw() {
+	mActorManager.visit(*this);
+}
+
 void UiManager::draw_content(const nanogui::Matrix4f& model, const nanogui::Matrix4f& view,
 							 const nanogui::Matrix4f& projection) {
 	// Batch OpenGL state changes to minimize state changes
