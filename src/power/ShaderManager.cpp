@@ -18,24 +18,33 @@ std::string ShaderManager::read_file(const std::string &file_path) {
 
 ShaderManager::ShaderManager(Canvas &canvas) : mRenderPass(*canvas.render_pass()) {
 	// load_default_shaders();
-	load_shader("mesh", "shaders/simple_model.vs", "shaders/diffuse.fs");
-	load_shader("gizmo", "shaders/gizmo.vs", "shaders/gizmo.fs");
-	load_shader("grid", "shaders/grid.vs", "shaders/grid.fs");
+
+#if defined(NANOGUI_USE_OPENGL) || defined(NANOGUI_USE_GLES)
+	load_shader("mesh", "shaders/gl/diffuse.vs", "shaders/gl/diffuse.fs");
+	load_shader("gizmo", "shaders/gl/gizmo.vs", "shaders/gl/gizmo.fs");
+	load_shader("grid", "shaders/gl/grid.vs", "shaders/gl/grid.fs");
+#elif defined(NANOGUI_USE_METAL)
+	load_shader("mesh", "shaders/metal/diffuse_vertex.metal", "shaders/metal/diffuse_fragment.metal");
+	load_shader("gizmo", "shaders/metal/gizmo_vertex.metal", "shaders/metal/gizmo_fragment.metal");
+	load_shader("grid", "shaders/metal/grid_vertex.metal", "shaders/metal/grid_fragment.metal");
+#endif
+
+	
 }
 
 nanogui::ref<nanogui::Shader> ShaderManager::load_shader(const std::string &name,
-                                                         const std::string &vertex_path,
-                                                         const std::string &fragment_path) {
-    if (mShaderCache.find(name) != mShaderCache.end()) {
-        return mShaderCache[name];
-    }
-
-    std::string vertex_code = read_file(vertex_path);
-    std::string fragment_code = read_file(fragment_path);
-    nanogui::ref<nanogui::Shader> shader =
-        new nanogui::Shader(&mRenderPass, name, vertex_code, fragment_code);
-    mShaderCache[name] = shader;
-    return shader;
+														 const std::string &vertex_path,
+														 const std::string &fragment_path) {
+	if (mShaderCache.find(name) != mShaderCache.end()) {
+		return mShaderCache[name];
+	}
+	
+	std::string vertex_code = read_file(vertex_path);
+	std::string fragment_code = read_file(fragment_path);
+	nanogui::ref<nanogui::Shader> shader =
+	new nanogui::Shader(&mRenderPass, name, vertex_code, fragment_code);
+	mShaderCache[name] = shader;
+	return shader;
 }
 
 nanogui::ref<nanogui::Shader> ShaderManager::get_shader(const std::string &name) {

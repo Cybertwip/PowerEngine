@@ -161,6 +161,7 @@ public:
 #elif defined(NANOGUI_USE_METAL)
     void *command_encoder() const { return m_command_encoder; }
     void *command_buffer() const { return m_command_buffer; }
+	void *pass_descriptor() const { return m_pass_descriptor; }
 #endif
 
 protected:

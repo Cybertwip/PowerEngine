@@ -107,8 +107,6 @@ void ScaleGizmo::draw_content(std::optional<std::reference_wrapper<Actor>> actor
 		auto translation = transformComponent.get_translation();
 		auto rotation = transformComponent.get_rotation();
 		
-		glEnable(GL_DEPTH_TEST);
-
 		auto viewInverse = view.inverse();
 		glm::vec3 cameraPosition(view.m[3][0], view.m[3][1], view.m[3][2]);
 		
@@ -140,8 +138,6 @@ void ScaleGizmo::draw_content(std::optional<std::reference_wrapper<Actor>> actor
 			
 			mGizmo[i]->draw_content(gizmoMatrix, view, projection);
 		}
-		
-		glDisable(GL_DEPTH_TEST);
 	}
 
 }

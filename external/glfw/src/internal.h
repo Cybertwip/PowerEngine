@@ -80,6 +80,10 @@ typedef struct _GLFWjoystick    _GLFWjoystick;
 typedef struct _GLFWtls         _GLFWtls;
 typedef struct _GLFWmutex       _GLFWmutex;
 
+#if defined(__APPLE__)
+typedef struct _GLFWcondvar     _GLFWcondvar;
+#endif
+
 #define GL_VERSION 0x1f02
 #define GL_NONE 0
 #define GL_COLOR_BUFFER_BIT 0x00004000
@@ -669,14 +673,6 @@ struct _GLFWtls
     GLFW_PLATFORM_TLS_STATE
 };
 
-// Mutex structure
-//
-struct _GLFWmutex
-{
-    // This is defined in platform.h
-    GLFW_PLATFORM_MUTEX_STATE
-};
-
 // Platform API structure
 //
 struct _GLFWplatform
@@ -908,6 +904,13 @@ GLFWbool _glfwPlatformCreateMutex(_GLFWmutex* mutex);
 void _glfwPlatformDestroyMutex(_GLFWmutex* mutex);
 void _glfwPlatformLockMutex(_GLFWmutex* mutex);
 void _glfwPlatformUnlockMutex(_GLFWmutex* mutex);
+
+#if defined(__APPLE__)
+GLFWbool _glfwPlatformCreateCondVar(_GLFWcondvar* condvar);
+void _glfwPlatformDestroyCondvar(_GLFWcondvar* condvar);
+void _glfwPlatformCondWait(_GLFWcondvar* condvar, _GLFWmutex* mutex);
+void _glfwPlatformCondSignal(_GLFWcondvar* condvar);
+#endif 
 
 void* _glfwPlatformLoadModule(const char* path);
 void _glfwPlatformFreeModule(void* module);

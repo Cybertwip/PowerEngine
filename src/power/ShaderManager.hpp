@@ -15,6 +15,10 @@ class ShaderManager
 
     nanogui::ref<nanogui::Shader> get_shader(const std::string &name);
 
+	nanogui::RenderPass& render_pass() const {
+		return mRenderPass;
+	}
+	
    private:
     nanogui::ref<nanogui::Shader> load_shader(const std::string &name,
                                               const std::string &vertex_path,

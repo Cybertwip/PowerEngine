@@ -5,8 +5,12 @@
 
 #include <glm/gtc/matrix_transform.hpp>
 
-#include <nanogui/opengl.h>
 
+#if defined(NANOGUI_USE_OPENGL) || defined(NANOGUI_USE_GLES)
+#include <nanogui/opengl.h>
+#elif defined(NANOGUI_USE_METAL)
+#include "MetalHelper.hpp"
+#endif
 Grid::Grid(ShaderManager& shaderManager)
 : mShaderWrapper(*shaderManager.get_shader("grid"))
 {
@@ -21,32 +25,46 @@ Grid::Grid(ShaderManager& shaderManager)
 	};
 
 }
-void Grid::draw_content(const nanogui::Matrix4f& model, const nanogui::Matrix4f& view, const nanogui::Matrix4f& projection)
-{
+
+void Grid::draw_content(const nanogui::Matrix4f& model, const nanogui::Matrix4f& view, const nanogui::Matrix4f& projection) {
+	// API-specific setup for depth testing and blending
+#if defined(NANOGUI_USE_OPENGL) || defined(NANOGUI_USE_GLES)
+	// OpenGL: Enable depth test and blending
 	glEnable(GL_DEPTH_TEST);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glEnable(GL_BLEND);
+#elif defined(NANOGUI_USE_METAL)
 	
-	// Set up vertex buffer
+	auto descriptor = mShaderWrapper.render_pass().pass_descriptor();
+	// Metal: Use MetalHelper to set up depth and blending
+	MetalHelper::enableDepth(descriptor);
+	MetalHelper::setDepthClear(descriptor);
+	MetalHelper::disableStencil(descriptor); // You can omit this if stencil isn't needed.
+#endif
+	
+	// Common code: Set up vertex buffer
 	mShaderWrapper.set_buffer("aPosition", nanogui::VariableType::Float32, {mGridVertices.size() / 2, 2}, mGridVertices.data());
 	
+	// Common code: Near and far planes
 	float nearPlane = 0.01f;   // Example value for near plane
-	float farPlane = 5e3; // Example value for far plane
+	float farPlane = 5e3;      // Example value for far plane
 	
-	// Pass the near and far plane distances to the fragment shader
+	// Common code: Set uniforms
 	mShaderWrapper.set_uniform("u_near", nearPlane);
 	mShaderWrapper.set_uniform("u_far", farPlane);
-
-	// Set shader uniforms
-//	mShaderWrapper.set_uniform("color", nanogui::Vector3f{ 1.0f, 1.0f, 1.0f });
 	mShaderWrapper.set_uniform("aView", view);
 	mShaderWrapper.set_uniform("aProjection", projection);
-
+	
+	// Common code: Begin shader, draw, and end
 	mShaderWrapper.begin();
-	
-	// Draw the grid
 	mShaderWrapper.draw_array(nanogui::Shader::PrimitiveType::Triangle, 0, 6, false);
-	
 	mShaderWrapper.end();
+	
+	// API-specific cleanup for depth testing (if needed)
+#if defined(NANOGUI_USE_OPENGL) || defined(NANOGUI_USE_GLES)
+	glDisable(GL_DEPTH_TEST);
+#elif defined(NANOGUI_USE_METAL)
+	MetalHelper::disableDepth(descriptor);
+	MetalHelper::disableStencil(descriptor);
+#endif
 }
-

@@ -20,10 +20,22 @@ endif()
 #Add the shaders
 file(GLOB SHADERS ${CMAKE_CURRENT_LIST_DIR}/shaders/*.vs ${CMAKE_CURRENT_LIST_DIR}/shaders/*.fs)
 
+set(platform_specific_libraries)
+
+if(APPLE)
+    add_library(power_metal
+    ${CMAKE_CURRENT_LIST_DIR}/MetalHelper.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/MetalHelper.mm)
+
+    set(platform_specific_libraries power_metal)
+endif()
+
+
 add_executable(PowerEngine
     ${BUNDLE}
     ${APP_ICON}
     ${BUNDLE_MENU}
+    ${PLATFORM_SPECIFIC_SOURCES}
     ${CMAKE_CURRENT_LIST_DIR}/Application.cpp
     ${CMAKE_CURRENT_LIST_DIR}/Application.hpp
     ${CMAKE_CURRENT_LIST_DIR}/Canvas.cpp
@@ -143,7 +155,7 @@ add_executable(PowerEngine
 target_include_directories(PowerEngine PUBLIC ../../external/smallfbx)
 target_include_directories(PowerEngine PUBLIC ../../external/stb)
 target_include_directories(PowerEngine PUBLIC ${CMAKE_CURRENT_LIST_DIR})
-target_link_libraries(PowerEngine PRIVATE nanogui ozz_animation EnTT imgui-feature-layout imgui-node-editor json fbx2ozz SmallFBX grpc++)
+target_link_libraries(PowerEngine PRIVATE nanogui ozz_animation EnTT imgui-feature-layout imgui-node-editor json fbx2ozz SmallFBX grpc++ ${platform_specific_libraries})
 
 # Set the resource files to be included in the bundle
 set(RESOURCE_DIRECTORIES

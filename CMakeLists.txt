@@ -81,8 +81,11 @@ option(JSONCPP_WITH_TESTS OFF)
 option(GLFW_BUILD_DOCS OFF)
 option(GLFW_BUILD_EXAMPLES ON)
 
-set(NANOGUI_BACKEND "OpenGL" CACHE STRING "OpenGL Backend")
-
+if(APPLE)
+  set(NANOGUI_BACKEND "Metal" CACHE STRING "Metal Backend")
+else()
+  set(NANOGUI_BACKEND "OpenGL" CACHE STRING "OpenGL Backend")
+endif()
 
 
 # add external libraries

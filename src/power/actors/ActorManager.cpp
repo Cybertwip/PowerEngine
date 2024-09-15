@@ -24,18 +24,6 @@ Actor& ActorManager::create_actor() {
 
 void ActorManager::draw() {
     mCameraManager.update_view();
-	
-	// Enable stencil test
-	glEnable(GL_STENCIL_TEST);
-	glEnable(GL_DEPTH_TEST);
-
-	// Clear stencil buffer and depth buffer
-	glClear(GL_STENCIL_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	
-	// First pass: Mark the stencil buffer
-	glStencilFunc(GL_ALWAYS, 1, 0xFF);  // Always pass stencil test
-	glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);  // Replace stencil buffer with 1 where actors are drawn
-	glStencilMask(0xFF);  // Enable writing to the stencil buffer
 
 	for (auto& actor : mActors) {
 		auto& drawable = actor.get()->get_component<DrawableComponent>();
@@ -55,8 +43,9 @@ void ActorManager::draw() {
 void ActorManager::visit(GizmoManager& gizmoManager) {
     mCameraManager.update_view();
 
-    gizmoManager.draw_content(nanogui::Matrix4f::identity(), mCameraManager.get_view(),
-                              mCameraManager.get_projection());
+	gizmoManager.draw_content(nanogui::Matrix4f::identity(), mCameraManager.get_view(),
+							  mCameraManager.get_projection());
+
 }
 
 void ActorManager::visit(UiManager& uiManager) {

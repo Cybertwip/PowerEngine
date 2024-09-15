@@ -29,7 +29,15 @@
 #include "ui/ScenePanel.hpp"
 #include "ui/StatusBarPanel.hpp"
 
+#if defined(NANOGUI_USE_OPENGL) || defined(NANOGUI_USE_GLES)
+
 #include <nanogui/opengl.h>
+
+#elif defined(NANOGUI_USE_METAL)
+
+#include "MetalHelper.hpp"
+
+#endif
 
 #include <iostream>
 
@@ -655,7 +663,7 @@ UiManager::UiManager(IActorSelectedRegistry& registry, IActorVisualManager& acto
 		draw();
 		mGizmoManager->draw();
 	});
-	
+
 	auto readFromFramebuffer = [&canvas](int width, int height, int x, int y){
 		auto viewport = canvas.render_pass()->viewport();
 		
@@ -670,27 +678,35 @@ UiManager::UiManager(IActorSelectedRegistry& registry, IActorVisualManager& acto
 		adjusted_x *= scaleX;
 		adjusted_y *= scaleY;
 		
-		// Bind the framebuffer from which you want to read pixels
-		glBindFramebuffer(GL_READ_FRAMEBUFFER, canvas.render_pass()->framebuffer_handle());
-		
 		int image_width = 4;
 		int image_height = 4;
 		
 		// Buffer to store the pixel data (16 integers for a 4x4 region)
 		std::vector<int> pixels(image_width * image_height);
 		
+#if defined(NANOGUI_USE_OPENGL) || defined(NANOGUI_USE_GLES)
+		// Bind the framebuffer from which you want to read pixels (OpenGL/GLES)
+		glBindFramebuffer(GL_READ_FRAMEBUFFER, canvas.render_pass()->framebuffer_handle());
+		
 		// Adjust the y-coordinate according to OpenGL's coordinate system
 		// Set the read buffer to the appropriate color attachment
 		glReadBuffer(GL_COLOR_ATTACHMENT1);
 		
-		// Read the pixel data from the specified region
+		// Read the pixel data from the specified region (OpenGL)
 		glReadPixels(adjusted_x, adjusted_y, image_width, image_height, GL_RED_INTEGER, GL_INT, pixels.data());
 		
+		// Restore the default buffer and unbind the framebuffer
 		glReadBuffer(GL_COLOR_ATTACHMENT0);
 		glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
 		
+#elif defined(NANOGUI_USE_METAL)
+		// Metal specific code using MetalHelper
+		MetalHelper::readPixelsFromMetal(adjusted_x, adjusted_y, image_width, image_height, pixels.data());
+#endif
+		
 		int id = 0;
 		
+		// Find the first non-zero pixel value
 		for (auto& pixel : pixels) {
 			if (pixel != 0) {
 				id = pixel;
@@ -700,6 +716,7 @@ UiManager::UiManager(IActorSelectedRegistry& registry, IActorVisualManager& acto
 		
 		return id;
 	};
+
 	
 	scenePanel.register_click_callback([this, &canvas, &toolbox, readFromFramebuffer, &actorVisualManager](bool down, int width, int height, int x, int y){
 		
@@ -727,6 +744,7 @@ UiManager::UiManager(IActorSelectedRegistry& registry, IActorVisualManager& acto
 				mGizmoManager->select(id);
 			} else {				
 				mActiveActor = std::nullopt;
+				
 				actorVisualManager.fire_actor_selected_event(mActiveActor);
 				mGizmoManager->select(mActiveActor);
 				mGizmoManager->select(0);
@@ -827,15 +845,10 @@ void UiManager::draw() {
 void UiManager::draw_content(const nanogui::Matrix4f& model, const nanogui::Matrix4f& view,
 							 const nanogui::Matrix4f& projection) {
 	// Batch OpenGL state changes to minimize state changes
-	glDisable(GL_STENCIL_TEST);
-	glStencilMask(0x00);
-	glEnable(GL_DEPTH_TEST);
 	
 	// Draw the grid first
 	if (mGrid) {
 		mGrid->draw_content(model, view, projection);
 	}
-	
-	glDisable(GL_DEPTH_TEST);
 }
 

@@ -1,6 +1,10 @@
 cmake_minimum_required(VERSION 3.4...3.28 FATAL_ERROR)
 
+if(APPLE)
+project(GLFW VERSION 3.5.0 LANGUAGES C OBJC)
+else()
 project(GLFW VERSION 3.5.0 LANGUAGES C)
+endif()
 
 if (POLICY CMP0069)
     cmake_policy(SET CMP0069 NEW)
@@ -15,7 +19,7 @@ set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 string(COMPARE EQUAL "${CMAKE_CURRENT_SOURCE_DIR}" "${CMAKE_SOURCE_DIR}" GLFW_STANDALONE)
 
 option(BUILD_SHARED_LIBS "Build shared libraries" OFF)
-option(GLFW_BUILD_EXAMPLES "Build the GLFW example programs" ${GLFW_BUILD_EXAMPLES})
+option(GLFW_BUILD_EXAMPLES "Build the GLFW example programs" ${GLFW_STANDALONE})
 option(GLFW_BUILD_TESTS "Build the GLFW test programs" ${GLFW_STANDALONE})
 option(GLFW_BUILD_DOCS "Build the GLFW documentation" ON)
 option(GLFW_INSTALL "Generate installation target" ON)

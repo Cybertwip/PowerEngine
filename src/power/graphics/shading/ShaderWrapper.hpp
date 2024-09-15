@@ -28,6 +28,10 @@ public:
 	void draw_array(nanogui::Shader::PrimitiveType primitive_type,
 					size_t offset, size_t count,
 					bool indexed = false);
+	
+	nanogui::RenderPass& render_pass() const {
+		return *mShader.render_pass();
+	}
 
 protected:
 	nanogui::Shader& mShader;

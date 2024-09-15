@@ -2,8 +2,13 @@
 
 
 #include <nanogui/icons.h>
+
+#if defined(NANOGUI_USE_OPENGL) || defined(NANOGUI_USE_GLES)
 #include <nanogui/opengl.h>
 
+#elif defined(NANOGUI_USE_METAL)
+#include "MetalHelper.hpp"
+#endif
 
 #include <cmath>
 
@@ -87,13 +92,29 @@ void GizmoManager::transform(float px, float py) {
 	mScaleGizmo->transform(mActiveActor, px, py);
 }
 
-void GizmoManager::draw() { mActorManager.visit(*this); }
+void GizmoManager::draw() {
+#if defined(NANOGUI_USE_OPENGL) || defined(NANOGUI_USE_GLES)
+	glEnable(GL_DEPTH_TEST);
+#elif defined(NANOGUI_USE_METAL)
+	auto descriptor = mShaderManager.render_pass().pass_descriptor();
+
+	MetalHelper::enableDepth(descriptor);
+	MetalHelper::setDepthClear(descriptor);
+#endif
+
+	mActorManager.visit(*this);
+
+#if defined(NANOGUI_USE_OPENGL) || defined(NANOGUI_USE_GLES)
+	glDisable(GL_DEPTH_TEST);
+#elif defined(NANOGUI_USE_METAL)
+	
+	MetalHelper::disableDepth(descriptor);
+#endif
+}
 
 void GizmoManager::draw_content(const nanogui::Matrix4f& model, const nanogui::Matrix4f& view,
 								const nanogui::Matrix4f& projection) {
 	if (mActiveActor.has_value()) {
-		glClear(GL_DEPTH_BUFFER_BIT);
-		
 		switch (mCurrentMode) {
 			case GizmoMode::Translation:
 				mTranslationGizmo->draw_content(mActiveActor, model, view, projection);

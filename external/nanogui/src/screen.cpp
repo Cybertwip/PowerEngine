@@ -142,10 +142,42 @@ m_stencil_buffer(stencil_buffer), m_float_buffer(float_buffer), m_redraw(false) 
 	
 	/* Request a forward compatible OpenGL gl_major.gl_minor core profile context.
 	 Default value is an OpenGL 3.3 core profile context. */
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, gl_major);
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, gl_minor);
-	glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+	// Framebuffer configuration for performance
+	glfwWindowHint(GLFW_RED_BITS, 8);
+	glfwWindowHint(GLFW_GREEN_BITS, 8);
+	glfwWindowHint(GLFW_BLUE_BITS, 8);
+	glfwWindowHint(GLFW_ALPHA_BITS, 0); // Disable alpha if not needed
+	glfwWindowHint(GLFW_DEPTH_BITS, 16); // Minimal depth buffer
+	glfwWindowHint(GLFW_STENCIL_BITS, 0); // Disable stencil buffer
+	glfwWindowHint(GLFW_ACCUM_RED_BITS, 0);
+	glfwWindowHint(GLFW_ACCUM_GREEN_BITS, 0);
+	glfwWindowHint(GLFW_ACCUM_BLUE_BITS, 0);
+	glfwWindowHint(GLFW_ACCUM_ALPHA_BITS, 0);
+	glfwWindowHint(GLFW_AUX_BUFFERS, 0);
+	glfwWindowHint(GLFW_SAMPLES, 0); // Disable multisampling
+	glfwWindowHint(GLFW_SRGB_CAPABLE, GLFW_FALSE); // Disable sRGB
+	glfwWindowHint(GLFW_STEREO, GLFW_FALSE); // Disable stereo
+	glfwWindowHint(GLFW_TRANSPARENT_FRAMEBUFFER, GLFW_FALSE); // Disable transparency
+	
+	// Context creation for performance
+	glfwWindowHint(GLFW_CLIENT_API, GLFW_OPENGL_API);
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4); // Choose appropriate version
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+	glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GLFW_FALSE);
+	glfwWindowHint(GLFW_CONTEXT_ROBUSTNESS, GLFW_NO_ROBUSTNESS);
+	glfwWindowHint(GLFW_CONTEXT_DEBUG, GLFW_FALSE);
+	glfwWindowHint(GLFW_CONTEXT_NO_ERROR, GLFW_TRUE);
+	glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE); // Initially invisible
+	glfwWindowHint(GLFW_FLOATING, GLFW_FALSE); // Disable floating
+	glfwWindowHint(GLFW_TRANSPARENT_FRAMEBUFFER, GLFW_FALSE); // Disable transparency
+	
+#if defined(__APPLE__)
+	glfwWindowHint(GLFW_COCOA_GRAPHICS_SWITCHING, GLFW_FALSE); // Disable graphics switching
+#endif
+	
+	glfwWindowHint(GLFW_DOUBLEBUFFER, GLFW_TRUE);
+	
 #elif defined(NANOGUI_USE_GLES)
 	glfwWindowHint(GLFW_CLIENT_API, GLFW_OPENGL_ES_API);
 	glfwWindowHint(GLFW_CONTEXT_CREATION_API, GLFW_EGL_CONTEXT_API);
@@ -157,8 +189,6 @@ m_stencil_buffer(stencil_buffer), m_float_buffer(float_buffer), m_redraw(false) 
 #else
 #  error Did not select a graphics API!
 #endif
-	
-	glfwWindowHint(GLFW_REFRESH_RATE, 60);
 	
 	int color_bits = 8, depth_bits = 0, stencil_bits = 0;
 	
@@ -186,10 +216,6 @@ m_stencil_buffer(stencil_buffer), m_float_buffer(float_buffer), m_redraw(false) 
 #else
 	m_float_buffer = false;
 #endif
-	
-	glfwWindowHint(GLFW_VISIBLE, GL_FALSE);
-	glfwWindowHint(GLFW_RESIZABLE, resizable ? GL_TRUE : GL_FALSE);
-	glfwWindowHint(GLFW_SCALE_TO_MONITOR, GLFW_TRUE);
 	
 	for (int i = 0; i < 2; ++i) {
 		if (fullscreen) {
@@ -264,7 +290,8 @@ m_stencil_buffer(stencil_buffer), m_float_buffer(float_buffer), m_redraw(false) 
 	CHK(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT |
 				GL_STENCIL_BUFFER_BIT));
 	
-	glfwSwapInterval(60);
+	glfwSwapInterval(0);
+
 	glfwSwapBuffers(m_glfw_window);
 #endif
 	
@@ -594,7 +621,9 @@ void Screen::draw_setup() {
 
 void Screen::draw_teardown() {
 #if defined(NANOGUI_USE_OPENGL) || defined(NANOGUI_USE_GLES)
+	
 	glfwSwapBuffers(m_glfw_window);
+
 #elif defined(NANOGUI_USE_METAL)
 	mnvgSetColorTexture(m_nvg_context, nullptr);
 	metal_present_and_release_drawable(m_metal_drawable);
@@ -638,7 +667,7 @@ void Screen::draw_widgets() {
 	
 	double elapsed = glfwGetTime() - m_last_interaction;
 	
-	if (elapsed > 0.5f) {
+	if (true) {
 		/* Draw tooltips */
 		const Widget *widget = find_widget(m_mouse_pos);
 		if (widget && !widget->tooltip().empty()) {

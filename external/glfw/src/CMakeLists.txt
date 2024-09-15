@@ -137,10 +137,10 @@ target_include_directories(glfw PRIVATE
                            "${GLFW_BINARY_DIR}/src")
 target_link_libraries(glfw PRIVATE Threads::Threads)
 
-# Workaround for CMake not knowing about .m files before version 3.16
+# Workaround for CMake not knowing about .m files
 set_source_files_properties(cocoa_init.m cocoa_joystick.m cocoa_monitor.m
-cocoa_window.m nsgl_context.m PROPERTIES
-LANGUAGE OBJC)
+                            cocoa_window.m nsgl_context.m PROPERTIES
+                            LANGUAGE OBJC)
 
 if (GLFW_BUILD_WIN32)
     list(APPEND glfw_PKG_LIBS "-lgdi32")
