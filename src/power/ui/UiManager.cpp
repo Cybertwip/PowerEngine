@@ -357,7 +357,14 @@ public:
 					animationComponent.addKeyframe(mCurrentTime, transform.get_translation(), transform.get_rotation(), transform.get_scale());
 				} else if (!mRecording && !mPlaying) {
 					if (animationComponent.is_keyframe(mCurrentTime)) {
-						mUncommittedKey = true;
+						
+						auto m1 = transform.get_matrix();
+						
+						auto m2 = animationComponent.evaluate_as_matrix(mCurrentTime);
+						
+						if (m1 != *m2) {
+							mUncommittedKey = true;
+						}
 					}
 				}
 			});

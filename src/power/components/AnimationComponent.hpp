@@ -97,6 +97,45 @@ public:
 		return std::make_tuple(position, rotation, scale);
 	}
 	
+	std::optional<glm::mat4> evaluate_as_matrix(float time) const {
+		if (keyframes_.empty()) {
+			return std::nullopt;
+		}
+		
+		// Clamp time to the bounds of the keyframes
+		if (time <= keyframes_.front().time) {
+			return decomposeKeyframeAsMatrix(keyframes_.front());
+		}
+		if (time >= keyframes_.back().time) {
+			return decomposeKeyframeAsMatrix(keyframes_.back());
+		}
+		
+		// Find the two keyframes surrounding the given time
+		auto it = std::lower_bound(keyframes_.begin(), keyframes_.end(), time,
+								   [](const Keyframe& kf, float t) {
+			return kf.time < t;
+		});
+		
+		const Keyframe& next = *it;
+		const Keyframe& prev = *(it - 1);
+		
+		// Compute interpolation factor
+		float factor = (time - prev.time) / (next.time - prev.time);
+		
+		// Interpolate position
+		glm::vec3 position = glm::mix(prev.position, next.position, factor);
+		
+		// Interpolate rotation
+		glm::quat rotation = glm::slerp(prev.rotation, next.rotation, factor);
+		
+		// Interpolate scale
+		glm::vec3 scale = glm::mix(prev.scale, next.scale, factor);
+		
+		// Compose the transformation matrix
+		return composeTransform(position, rotation, scale);
+	}
+
+	
 	// Check if the current time corresponds to an exact keyframe
 	bool is_keyframe(float time) const {
 		return keyframeExists(time);
@@ -134,6 +173,11 @@ private:
 	std::tuple<glm::vec3, glm::quat, glm::vec3> decomposeKeyframe(const Keyframe& kf) const {
 		return std::make_tuple(kf.position, kf.rotation, kf.scale);
 	}
+	
+	glm::mat4 decomposeKeyframeAsMatrix(const Keyframe& kf) const {
+		return composeTransform(kf.position, kf.rotation, kf.scale);
+	}
+
 	
 	// Helper to compose a transformation matrix from components
 	glm::mat4 composeTransform(const glm::vec3& position,
