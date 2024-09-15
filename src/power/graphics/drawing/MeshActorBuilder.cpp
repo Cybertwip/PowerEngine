@@ -19,6 +19,8 @@ MeshActorBuilder::MeshActorBuilder(SkinnedMesh::SkinnedMeshShader& shader)
 
 Actor& MeshActorBuilder::build(Actor& actor, const std::string& path) {
 	
+	actor.add_component<MetadataComponent>(actor.identifier(), std::filesystem::path(path).stem().string());
+
 	auto& colorComponent = actor.add_component<ColorComponent>(actor.get_component<MetadataComponent>(), mShader);
 
     auto model = Fbx(path);
@@ -32,7 +34,6 @@ Actor& MeshActorBuilder::build(Actor& actor, const std::string& path) {
 	std::unique_ptr<Drawable> meshComponent = std::make_unique<MeshComponent>(meshComponentData);
 	actor.add_component<DrawableComponent>(std::move(meshComponent));
 	actor.add_component<TransformComponent>();
-	actor.add_component<MetadataComponent>(actor.identifier(), std::filesystem::path(path).stem().string());
 	actor.add_component<AnimationComponent>();
 
 	return actor;
