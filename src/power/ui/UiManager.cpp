@@ -279,7 +279,11 @@ public:
 					
 					auto& animationComponent = mActiveActor->get().get_component<AnimationComponent>();
 					
-					if (animationComponent.is_keyframe(mCurrentTime)) {
+					if (mUncommittedKey){
+						mUncommittedKey = false;
+						animationComponent.updateKeyframe(mCurrentTime, transformComponent.get_translation(), transformComponent.get_rotation(), transformComponent.get_scale());
+
+					} else if (animationComponent.is_keyframe(mCurrentTime)) {
 						animationComponent.removeKeyframe(mCurrentTime);
 					} else {
 						animationComponent.addKeyframe(mCurrentTime, transformComponent.get_translation(), transformComponent.get_rotation(), transformComponent.get_scale());
@@ -316,9 +320,14 @@ public:
 		} else {
 			mKeyBtn->set_text_color(mNormalButtonColor); // Normal
 		}
+		
+		if (atKeyframe || betweenKeyframes) {
+			if (mUncommittedKey) {
+				mKeyBtn->set_text_color(nanogui::Color(1.0f, 0.0f, 0.0f, 1.0f));
+			}
+		}
 	}
 
-	
 	// Override OnActorSelected from IActorSelectedCallback
 	void OnActorSelected(Actor& actor) override {
 		unregister_actor_transform_callback(mActiveActor);
@@ -346,6 +355,10 @@ public:
 			mTransformRegistrationId = transformComponent.register_on_transform_changed_callback([this, &animationComponent](const TransformComponent& transform) {
 				if (mRecording && !mPlaying) {
 					animationComponent.addKeyframe(mCurrentTime, transform.get_translation(), transform.get_rotation(), transform.get_scale());
+				} else if (!mRecording && !mPlaying) {
+					if (animationComponent.is_keyframe(mCurrentTime)) {
+						mUncommittedKey = true;
+					}
 				}
 			});
 		}
@@ -404,6 +417,9 @@ private:
 	
 	// Helper method to stop playback
 	void stop_playback() {
+		
+		mUncommittedKey = false;
+		
 		if (mPlaying) {
 			mPlaying = false;
 			mPlayPauseBtn->set_pushed(false);
@@ -462,6 +478,8 @@ private:
 	
 	bool mRecording;
 	bool mPlaying;
+	
+	bool mUncommittedKey;
 	
 	int mTransformRegistrationId;
 	int mCurrentTime;
