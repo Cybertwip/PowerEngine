@@ -42,20 +42,18 @@ GizmoMesh::GizmoMesh(MeshData& meshData, GizmoMeshShader& shader)
 
 void GizmoMesh::draw_content(const nanogui::Matrix4f& model, const nanogui::Matrix4f& view,
                              const nanogui::Matrix4f& projection) {
-    using namespace nanogui;
-
 	mShader.set_buffer("indices", nanogui::VariableType::UInt32, {mMeshData.mIndices.size()},
 					   mMeshData.mIndices.data());
 	mShader.upload_vertex_data(mMeshData.mVertices);
 
-    // mShader.set_uniform("aModel", m);
     mShader.set_uniform("u_color",
-                        Vector3f(mMeshData.mColor.x, mMeshData.mColor.y, mMeshData.mColor.z));
+                        nanogui::Vector4f(mMeshData.mColor.x, mMeshData.mColor.y, mMeshData.mColor.z,
+						    mMeshData.mColor.w));
     mShader.set_uniform("aModel", model);
     mShader.set_uniform("aView", view);
     mShader.set_uniform("aProjection", projection);
 
     mShader.begin();
-    mShader.draw_array(Shader::PrimitiveType::Triangle, 0, mMeshData.mIndices.size(), true);
+    mShader.draw_array(nanogui::Shader::PrimitiveType::Triangle, 0, mMeshData.mIndices.size(), true);
     mShader.end();
 }

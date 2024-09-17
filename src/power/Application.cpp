@@ -28,7 +28,7 @@
 #include "ui/TransformPanel.hpp"
 #include "ui/UiManager.hpp"
 
-Application::Application() : nanogui::Screen("Power Engine", true) {
+Application::Application() : nanogui::Screen("Power Engine") {
 		
 	SkinnedMesh::init_dummy_texture();
 	
@@ -60,8 +60,6 @@ Application::Application() : nanogui::Screen("Power Engine", true) {
 
 	mUiManager = std::make_unique<UiManager>(mUiCommon->hierarchy_panel(), mUiCommon->hierarchy_panel(), *mActorManager, *mMeshActorLoader, mRenderCommon->shader_manager(), mUiCommon->scene_panel(), mRenderCommon->canvas(), mUiCommon->toolbox(), mUiCommon->status_bar(), *mCameraManager, applicationClickCallbackRegistrator);
 
-//	mActors.push_back(
-//	mMeshActorLoader->create_actor("models/DeepMotionBot.fbx"));
     std::vector<std::reference_wrapper<Actor>> actors;
     actors.push_back(mMeshActorLoader->create_actor("models/Venasaur/Venasaur.fbx"));
 

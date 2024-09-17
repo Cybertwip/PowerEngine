@@ -32,6 +32,6 @@ private:
 	std::vector<MetadataComponent> mMetadataComponents;
 	
 	std::vector<std::unique_ptr<GizmoMesh::MeshData>> create_axis_mesh_data();
-	std::unique_ptr<GizmoMesh::MeshData> create_axis_plane_mesh_data(const glm::vec3& color);
+	std::unique_ptr<GizmoMesh::MeshData> create_axis_plane_mesh_data(const glm::vec4& color);
 };
 

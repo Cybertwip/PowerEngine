@@ -12,6 +12,7 @@
 
 #include <cmath>
 
+#include "MeshActorLoader.hpp"
 #include "ShaderManager.hpp"
 #include "actors/Actor.hpp"
 #include "actors/ActorManager.hpp"
@@ -21,13 +22,13 @@
 #include "gizmo/RotationGizmo.hpp"
 #include "gizmo/ScaleGizmo.hpp"
 
+GizmoManager::GizmoManager(nanogui::Widget& parent, ShaderManager& shaderManager, ActorManager& actorManager, MeshActorLoader& meshActorLoader)
+: mShaderManager(shaderManager), mActorManager(actorManager),
+	mMeshActorLoader(meshActorLoader),
+mTranslationGizmo(mMeshActorLoader.create_actor("models/Gizmo/Rotation.fbx"))
+//mRotationGizmo(mMeshActorLoader.create_actor("models/Gizmo/Rotation.fbx"))
+/*mScaleGizmo(mMeshActorLoader.create_actor("models/Gizmo/Translation.fbx"))*/ {
 
-GizmoManager::GizmoManager(nanogui::Widget& parent, ShaderManager& shaderManager, ActorManager& actorManager)
-: mShaderManager(shaderManager), mActorManager(actorManager) {
-	mTranslationGizmo = std::make_unique<TranslationGizmo>(mShaderManager);
-	mRotationGizmo = std::make_unique<RotationGizmo>(mShaderManager);
-	mScaleGizmo = std::make_unique<ScaleGizmo>(mShaderManager);
-	
 	// Translation Button
 	translationButton = new nanogui::ToolButton(&parent, FA_ARROWS_ALT);
 	translationButton->set_flags(nanogui::Button::ToggleButton);
@@ -69,15 +70,15 @@ GizmoManager::GizmoManager(nanogui::Widget& parent, ShaderManager& shaderManager
 }
 
 void GizmoManager::select(int gizmoId) {
-	mTranslationGizmo->select(gizmoId);
-	mRotationGizmo->select(gizmoId);
-	mScaleGizmo->select(gizmoId);
+//	mTranslationGizmo->select(gizmoId);
+//	mRotationGizmo->select(gizmoId);
+//	mScaleGizmo->select(gizmoId);
 }
 
 void GizmoManager::hover(int gizmoId) {
-	mTranslationGizmo->hover(gizmoId);
-	mRotationGizmo->hover(gizmoId);
-	mScaleGizmo->hover(gizmoId);
+//	mTranslationGizmo->hover(gizmoId);
+//	mRotationGizmo->hover(gizmoId);
+//	mScaleGizmo->hover(gizmoId);
 }
 
 void GizmoManager::select(std::optional<std::reference_wrapper<Actor>> actor) {
@@ -85,47 +86,31 @@ void GizmoManager::select(std::optional<std::reference_wrapper<Actor>> actor) {
 }
 
 void GizmoManager::transform(float px, float py) {
-	mTranslationGizmo->transform(mActiveActor, px, py);
-	
-	mRotationGizmo->transform(mActiveActor, ((px + py) / 2.0f));
-	
-	mScaleGizmo->transform(mActiveActor, px, py);
+//	mTranslationGizmo->transform(mActiveActor, px, py);
+//	
+//	mRotationGizmo->transform(mActiveActor, ((px + py) / 2.0f));
+//	
+//	mScaleGizmo->transform(mActiveActor, px, py);
 }
 
 void GizmoManager::draw() {
-#if defined(NANOGUI_USE_OPENGL) || defined(NANOGUI_USE_GLES)
-	glEnable(GL_DEPTH_TEST);
-#elif defined(NANOGUI_USE_METAL)
-	auto descriptor = mShaderManager.render_pass().pass_descriptor();
-
-	MetalHelper::enableDepth(descriptor);
-	MetalHelper::setDepthClear(descriptor);
-#endif
-
 	mActorManager.visit(*this);
-
-#if defined(NANOGUI_USE_OPENGL) || defined(NANOGUI_USE_GLES)
-	glDisable(GL_DEPTH_TEST);
-#elif defined(NANOGUI_USE_METAL)
-	
-	MetalHelper::disableDepth(descriptor);
-#endif
 }
 
 void GizmoManager::draw_content(const nanogui::Matrix4f& model, const nanogui::Matrix4f& view,
 								const nanogui::Matrix4f& projection) {
-	if (mActiveActor.has_value()) {
-		switch (mCurrentMode) {
-			case GizmoMode::Translation:
-				mTranslationGizmo->draw_content(mActiveActor, model, view, projection);
-				break;
-			case GizmoMode::Rotation:
-				mRotationGizmo->draw_content(mActiveActor, model, view, projection);
-				break;
-			case GizmoMode::Scale:
-				mScaleGizmo->draw_content(mActiveActor, model, view, projection);
-				break;
-		}
-	}
+//	if (mActiveActor.has_value()) {
+//		switch (mCurrentMode) {
+//			case GizmoMode::Translation:
+//				mTranslationGizmo->draw_content(mActiveActor, model, view, projection);
+//				break;
+//			case GizmoMode::Rotation:
+//				mRotationGizmo->draw_content(mActiveActor, model, view, projection);
+//				break;
+//			case GizmoMode::Scale:
+//				mScaleGizmo->draw_content(mActiveActor, model, view, projection);
+//				break;
+//		}
+//	}
 }
 

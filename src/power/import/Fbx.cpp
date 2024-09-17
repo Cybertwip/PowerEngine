@@ -273,11 +273,11 @@ void Fbx::ProcessMesh(const std::shared_ptr<sfbx::Mesh>& mesh) {
 		
 		// Set material properties
 		auto color = material->getAmbientColor();
-		matData.mAmbient = { color.x, color.y, color.z };
+		matData.mAmbient = glm::vec4{ color.x, color.y, color.z, 1.0f };
 		color = material->getDiffuseColor();
-		matData.mDiffuse = { color.x, color.y, color.z };
+		matData.mDiffuse = glm::vec4{ color.x, color.y, color.z, 1.0f };
 		color = material->getSpecularColor();
-		matData.mSpecular = { color.x, color.y, color.z };
+		matData.mSpecular = glm::vec4{ color.x, color.y, color.z, 1.0f};
 		matData.mShininess = 0.1f;
 		matData.mOpacity = material->getOpacity();
 		matData.mHasDiffuseTexture = false;

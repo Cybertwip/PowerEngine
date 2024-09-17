@@ -28,6 +28,8 @@ if(APPLE)
     ${CMAKE_CURRENT_LIST_DIR}/MetalHelper.mm)
 
     set(platform_specific_libraries power_metal)
+    
+    target_link_libraries(power_metal nanogui)
 endif()
 
 

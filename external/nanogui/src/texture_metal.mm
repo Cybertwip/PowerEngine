@@ -167,11 +167,6 @@ void Texture::resize(const Vector2i &size) {
         m_texture_handle = nullptr;
     }
 
-    if (m_component_format == ComponentFormat::UInt32)
-        m_component_format = ComponentFormat::UInt16;
-    else if (m_component_format == ComponentFormat::Int32)
-        m_component_format = ComponentFormat::Int16;
-
     if (m_pixel_format == PixelFormat::RGB)
         m_pixel_format = PixelFormat::RGBA;
     else if (m_pixel_format == PixelFormat::BGR)
@@ -187,8 +182,12 @@ void Texture::resize(const Vector2i &size) {
             switch (m_component_format) {
                 case ComponentFormat::UInt8:   pixel_format_mtl = MTLPixelFormatR8Unorm;  break;
                 case ComponentFormat::Int8:    pixel_format_mtl = MTLPixelFormatR8Snorm;  break;
-                case ComponentFormat::UInt16:  pixel_format_mtl = MTLPixelFormatR16Unorm; break;
-                case ComponentFormat::Int16:   pixel_format_mtl = MTLPixelFormatR16Snorm; break;
+				case ComponentFormat::UInt16:  pixel_format_mtl = MTLPixelFormatR16Unorm; break;
+				case ComponentFormat::UInt32:  pixel_format_mtl = MTLPixelFormatR32Uint; break;
+				case ComponentFormat::Int16:   pixel_format_mtl = MTLPixelFormatR16Snorm;
+					break;
+				case ComponentFormat::Int32:   pixel_format_mtl = MTLPixelFormatR32Sint;
+					break;
                 case ComponentFormat::Float16: pixel_format_mtl = MTLPixelFormatR16Float; break;
                 case ComponentFormat::Float32: pixel_format_mtl = MTLPixelFormatR32Float; break;
                 default: throw std::runtime_error("Texture::Texture(): invalid component format!");
@@ -199,8 +198,10 @@ void Texture::resize(const Vector2i &size) {
             switch (m_component_format) {
                 case ComponentFormat::UInt8:   pixel_format_mtl = MTLPixelFormatRG8Unorm;  break;
                 case ComponentFormat::Int8:    pixel_format_mtl = MTLPixelFormatRG8Snorm;  break;
-                case ComponentFormat::UInt16:  pixel_format_mtl = MTLPixelFormatRG16Unorm; break;
-                case ComponentFormat::Int16:   pixel_format_mtl = MTLPixelFormatRG16Snorm; break;
+				case ComponentFormat::UInt16:  pixel_format_mtl = MTLPixelFormatRG16Unorm; break;
+				case ComponentFormat::UInt32:  pixel_format_mtl = MTLPixelFormatRG32Uint; break;
+				case ComponentFormat::Int16:   pixel_format_mtl = MTLPixelFormatRG16Snorm; break;
+				case ComponentFormat::Int32:   pixel_format_mtl = MTLPixelFormatRG32Sint; break;
                 case ComponentFormat::Float16: pixel_format_mtl = MTLPixelFormatRG16Float; break;
                 case ComponentFormat::Float32: pixel_format_mtl = MTLPixelFormatRG32Float; break;
                 default: throw std::runtime_error("Texture::Texture(): invalid component format!");
@@ -218,8 +219,10 @@ void Texture::resize(const Vector2i &size) {
             switch (m_component_format) {
                 case ComponentFormat::UInt8:   pixel_format_mtl = MTLPixelFormatRGBA8Unorm;  break;
                 case ComponentFormat::Int8:    pixel_format_mtl = MTLPixelFormatRGBA8Snorm;  break;
-                case ComponentFormat::UInt16:  pixel_format_mtl = MTLPixelFormatRGBA16Unorm; break;
-                case ComponentFormat::Int16:   pixel_format_mtl = MTLPixelFormatRGBA16Snorm; break;
+				case ComponentFormat::UInt16:  pixel_format_mtl = MTLPixelFormatRGBA16Unorm; break;
+				case ComponentFormat::UInt32:  pixel_format_mtl = MTLPixelFormatRGBA32Uint; break;
+				case ComponentFormat::Int16:   pixel_format_mtl = MTLPixelFormatRGBA16Snorm; break;
+				case ComponentFormat::Int32:   pixel_format_mtl = MTLPixelFormatRGBA32Sint; break;
                 case ComponentFormat::Float16: pixel_format_mtl = MTLPixelFormatRGBA16Float; break;
                 case ComponentFormat::Float32: pixel_format_mtl = MTLPixelFormatRGBA32Float; break;
                 default: throw std::runtime_error("Texture::Texture(): invalid component format!");

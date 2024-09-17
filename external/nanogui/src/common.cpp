@@ -119,7 +119,6 @@ void mainloop() {
 				screen->redraw();
 #endif
 			screen->draw_all();
-			screen->process_events();
 			num_screens++;
 		}
 		

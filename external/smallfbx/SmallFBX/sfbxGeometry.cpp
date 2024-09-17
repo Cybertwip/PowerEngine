@@ -211,6 +211,39 @@ void GeomMesh::importFBXObjects()
 			m_layers.push_back(std::move(layer_descs));
 		}
 	}
+	
+	// Prefill the vertex-to-material map
+	if (!m_material_layers.empty()) {
+		const auto& material_layer = m_material_layers[0]; // Assuming the first material layer
+		LayerMappingMode mapping_mode = material_layer.mapping_mode;
+		
+		size_t vertex_count = 0;
+		for (size_t i = 0; i < m_counts.size(); ++i) {
+			size_t polygon_size = m_counts[i];
+			
+			// Get the material index for this polygon
+			int material_index = -1;
+			if (mapping_mode == LayerMappingMode::AllSame) {
+				material_index = 0; // All faces have the same material
+			}
+			else if (mapping_mode == LayerMappingMode::ByPolygon) {
+				if (i < material_layer.indices.size()) {
+					material_index = material_layer.indices[i];
+				} else {
+					material_index = -1; // Out of bounds
+				}
+			}
+			
+			// Prefill the map for each vertex in this polygon
+			for (size_t j = 0; j < polygon_size; ++j) {
+				m_vertex_to_material_map[vertex_count + j] = material_index;
+			}
+			
+			// Increment the vertex count by the number of vertices in this polygon
+			vertex_count += polygon_size;
+		}
+	}
+
 }
 
 void GeomMesh::exportFBXObjects()
@@ -367,37 +400,11 @@ span<float3> GeomMesh::getNormalsDeformed(size_t layer_index, bool apply_transfo
 }
 int GeomMesh::getMaterialForVertexIndex(size_t vertex_index) const
 {
-	if (m_material_layers.empty())
-		return -1; // No material layer found
-	
-	const auto& material_layer = m_material_layers[0]; // Assuming first material layer
-	LayerMappingMode mapping_mode = material_layer.mapping_mode;
-	
-	// Determine the polygon index for the given vertex index
-	size_t polygon_index = 0;
-	size_t vertex_count = 0;
-	for (size_t i = 0; i < m_counts.size(); ++i) {
-		vertex_count += m_counts[i];
-		if (vertex_index < vertex_count) {
-			polygon_index = i;
-			break;
-		}
+	auto it = m_vertex_to_material_map.find(vertex_index);
+	if (it != m_vertex_to_material_map.end()) {
+		return it->second; // Return the material index for this vertex
 	}
-	
-	if (mapping_mode == LayerMappingMode::AllSame) {
-		// All faces have the same material
-		return 0; // Index of the first material connected to the mesh
-	}
-	else if (mapping_mode == LayerMappingMode::ByPolygon) {
-		if (polygon_index >= material_layer.indices.size())
-			return -1; // Out of bounds
-		int material_index = material_layer.indices[polygon_index];
-		return material_index; // Index into the materials connected to the mesh
-	}
-	else {
-		// Unsupported mapping mode
-		return -1;
-	}
+	return -1; // Material not found for this vertex
 }
 
 ObjectSubClass Shape::getSubClass() const { return ObjectSubClass::Shape; }

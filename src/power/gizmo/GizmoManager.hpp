@@ -15,13 +15,14 @@
 
 class Actor;
 class ActorManager;
+class MeshActorLoader;
 class ShaderManager;
 
 class GizmoManager : public Drawable {
 	enum class GizmoMode { Translation, Rotation, Scale };
 
 public:
-    GizmoManager(nanogui::Widget& parent, ShaderManager& shaderManager, ActorManager& actorManager);
+    GizmoManager(nanogui::Widget& parent, ShaderManager& shaderManager, ActorManager& actorManager, MeshActorLoader& meshActorLoader);
 	~GizmoManager() = default;
 	
 	void select(int gizmoId);
@@ -40,10 +41,11 @@ private:
 	void set_mode(GizmoMode mode) { mCurrentMode = mode; }
 
     ShaderManager& mShaderManager;
-    ActorManager& mActorManager;    
-	std::unique_ptr<TranslationGizmo> mTranslationGizmo;
-	std::unique_ptr<RotationGizmo> mRotationGizmo;
-	std::unique_ptr<ScaleGizmo> mScaleGizmo;
+    ActorManager& mActorManager;
+	MeshActorLoader& mMeshActorLoader;
+	Actor& mTranslationGizmo;
+	//Actor& mRotationGizmo;
+//	Actor& mScaleGizmo;
 
 	std::optional<std::reference_wrapper<Actor>> mActiveActor;
 	

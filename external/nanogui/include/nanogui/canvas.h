@@ -62,8 +62,7 @@ public:
         Widget *parent,
         uint8_t samples = 4,
         bool has_depth_buffer = true,
-        bool has_stencil_buffer = true,
-        bool clear = true
+        bool has_stencil_buffer = true
     );
 
     /// Return the render pass associated with the canvas object
@@ -99,9 +98,6 @@ public:
 
 protected:
     ref<RenderPass> m_render_pass;
-#if defined(NANOGUI_USE_METAL)
-    ref<RenderPass> m_render_pass_resolved;
-#endif
     bool m_draw_border;
     Color m_border_color;
     bool m_render_to_texture;

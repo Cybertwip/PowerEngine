@@ -76,10 +76,9 @@ public:
      */
     Screen(
         const std::string &caption = "Unnamed",
-        bool resizable = true,
         bool fullscreen = false,
         bool depth_buffer = true,
-        bool stencil_buffer = false,
+        bool stencil_buffer = true,
         bool float_buffer = false,
         unsigned int gl_major = 3,
         unsigned int gl_minor = 2
@@ -95,10 +94,14 @@ public:
     void set_caption(const std::string &caption);
 
     /// Return the screen's background color
-    const Color &background() const { return m_background; }
+	const Color &background() const {
+		return m_background;
+	}
 
     /// Set the screen's background color
-    void set_background(const Color &background) { m_background = background; }
+	void set_background(const Color &background) {
+		m_background = background;
+	}
 
     /// Set the top-level window visibility (no effect on full-screen windows)
     void set_visible(bool visible);
@@ -213,9 +216,9 @@ public:
 
     /// Return the texure of the currently active Metal drawable (or NULL)
     void *metal_texture() const { return m_metal_texture; }
-
-    /// Return the associated depth/stencil texture
-    Texture *depth_stencil_texture() { return m_depth_stencil_texture; }
+	
+	/// Return the associated depth/stencil texture
+	Texture *depth_stencil_texture() { return m_depth_texture; }
 #endif
 
     /// Flush all queued up NanoVG rendering commands
@@ -236,21 +239,6 @@ public:
     }
 
 public:
-    /********* API for applications which manage GLFW themselves *********/
-
-    /**
-     * \brief Default constructor
-     *
-     * Performs no initialization at all. Use this if the application is
-     * responsible for setting up GLFW, OpenGL, etc.
-     *
-     * In this case, override \ref Screen and call \ref initalize() with a
-     * pointer to an existing \c GLFWwindow instance
-     *
-     * You will also be responsible in this case to deliver GLFW callbacks
-     * to the appropriate callback event handlers below
-     */
-    Screen();
 
     /// Initialize the \ref Screen
     void initialize(GLFWwindow *window, bool shutdown_glfw);
@@ -272,6 +260,11 @@ public:
     void move_window_to_front(Window *window);
     void draw_widgets();
 	virtual void process_events() {}
+	
+#if defined(NANOGUI_USE_METAL)
+	void * nswin() { return m_nswin; }
+#endif
+	
 protected:
     GLFWwindow *m_glfw_window = nullptr;
     NVGcontext *m_nvg_context = nullptr;
@@ -298,7 +291,8 @@ protected:
 #if defined(NANOGUI_USE_METAL)
     void *m_metal_texture = nullptr;
     void *m_metal_drawable = nullptr;
-    ref<Texture> m_depth_stencil_texture;
+	void *m_nswin = nullptr;
+	ref<Texture> m_depth_texture;
 #endif
 };
 

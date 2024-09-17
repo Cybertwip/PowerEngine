@@ -12,9 +12,9 @@ mGizmoShader(std::make_unique<GizmoMesh::GizmoMeshShader>(shaderManager)) {
 	mMeshData = create_axis_mesh_data();
 	
 	// Add plane meshes
-	mMeshData.push_back(create_axis_plane_mesh_data(glm::vec3(0.0, 0.0, 1.0)));  // Blue plane
-	mMeshData.push_back(create_axis_plane_mesh_data(glm::vec3(1.0f, 0.0f, 0.0)));  // Red plane
-	mMeshData.push_back(create_axis_plane_mesh_data(glm::vec3(0.0f, 1.0, 0.0)));  // Green plane
+	mMeshData.push_back(create_axis_plane_mesh_data(glm::vec4(0.0f, 0.0f, 1.0f, 1.0f)));  // Blue plane
+	mMeshData.push_back(create_axis_plane_mesh_data(glm::vec4(1.0f, 0.0f, 0.0f, 1.0f)));  // Red plane
+	mMeshData.push_back(create_axis_plane_mesh_data(glm::vec4(0.0f, 1.0f, 0.0f, 1.0f)));  // Green plane
 	
 	for (auto& data : mMeshData) {
 		mGizmo.push_back(std::make_unique<GizmoMesh>(*data, *mGizmoShader));
@@ -34,8 +34,6 @@ mGizmoShader(std::make_unique<GizmoMesh::GizmoMeshShader>(shaderManager)) {
 									 nanogui::Matrix4f::rotate(nanogui::Vector3f(0.0f, 1.0f, 0.0f), glm::radians(90.0f)));  // Red plane
 	mTransforms.push_back(planeTransform * nanogui::Matrix4f::translate(nanogui::Vector3f(10.0f, 0.0f, 10.0f)) *
 									 nanogui::Matrix4f::rotate(nanogui::Vector3f(1.0f, 0.0f, 0.0f), glm::radians(90.0f)));  // Green plane
-	
-	
 	
 	for (int i = 0; i<6; ++i){
 		int identifier = static_cast<int>(reinterpret_cast<long long>(&mTransforms[i]));
@@ -186,9 +184,9 @@ std::vector<std::unique_ptr<GizmoMesh::MeshData>> ScaleGizmo::create_axis_mesh_d
 	meshDataZ.mIndices = cubeIndices;
 	
 	// Assign colors
-	meshDataX.mColor = glm::vec3(1.0f, 0.0f, 0.0f); // Red for X-axis
-	meshDataY.mColor = glm::vec3(0.0f, 1.0f, 0.0f); // Green for Y-axis
-	meshDataZ.mColor = glm::vec3(0.0f, 0.0f, 1.0f); // Blue for Z-axis
+	meshDataX.mColor = glm::vec4(1.0f, 0.0f, 0.0f, 1.0f); // Red for X-axis
+	meshDataY.mColor = glm::vec4(0.0f, 1.0f, 0.0f, 1.0f); // Green for Y-axis
+	meshDataZ.mColor = glm::vec4(0.0f, 0.0f, 1.0f, 1.0f); // Blue for Z-axis
 	
 	std::vector<std::unique_ptr<GizmoMesh::MeshData>> meshDataVector;
 	meshDataVector.push_back(std::move(meshDataPtrX));
@@ -198,7 +196,7 @@ std::vector<std::unique_ptr<GizmoMesh::MeshData>> ScaleGizmo::create_axis_mesh_d
 	return meshDataVector;
 }
 
-std::unique_ptr<GizmoMesh::MeshData> ScaleGizmo::create_axis_plane_mesh_data(const glm::vec3& color) {
+std::unique_ptr<GizmoMesh::MeshData> ScaleGizmo::create_axis_plane_mesh_data(const glm::vec4& color) {
 	const float size = 2.5;  // Size of the square
 	
 	std::unique_ptr<GizmoMesh::MeshData> meshDataPtr = std::make_unique<GizmoMesh::MeshData>();

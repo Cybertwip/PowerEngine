@@ -9,9 +9,9 @@ struct MaterialProperties
 {
 	uint64_t mIdentifier;
 	
-	glm::vec3 mAmbient{0.8f, 0.8f, 0.8f};
-	glm::vec3 mDiffuse{1.0f, 1.0f, 1.0f};
-	glm::vec3 mSpecular{0.9f, 0.9f, 0.9f};
+	glm::vec4 mAmbient{0.8f, 0.8f, 0.8f, 1.0f};
+	glm::vec4 mDiffuse{1.0f, 1.0f, 1.0f, 1.0f};
+	glm::vec4 mSpecular{0.9f, 0.9f, 0.9f, 1.0f};
 	float mShininess{1.0f};
 	float mOpacity{1.0f};
 	bool mHasDiffuseTexture{false};
@@ -58,3 +58,18 @@ struct MaterialProperties
 	MaterialProperties(const MaterialProperties&) = delete; // Disable copy constructor
 	MaterialProperties& operator=(const MaterialProperties&) = delete; // Disable copy assignment
 };
+
+#if defined(NANOGUI_USE_METAL)
+
+struct MaterialCPU
+{
+	float mAmbient[4] = {0.8f, 0.8f, 0.8f, 1.0f};
+	float mDiffuse[4] = {1.0f, 1.0f, 1.0f, 1.0f};
+	float mSpecular[4] = {0.9f, 0.9f, 0.9f, 1.0f};
+	float mShininess{1.0f};
+	float mOpacity{1.0f};
+	float mHasDiffuseTexture{0.0f};
+	float _1 = 0.0f;
+};
+
+#endif

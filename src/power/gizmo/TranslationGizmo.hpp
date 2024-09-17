@@ -16,7 +16,7 @@ public:
 	void hover(int gizmoId);
 	void transform(std::optional<std::reference_wrapper<Actor>> actor, float px, float py);
 
-	void draw_content(std::optional<std::reference_wrapper<Actor>> actor, const nanogui::Matrix4f& model, const nanogui::Matrix4f& view, const nanogui::Matrix4f& projection);
+	void draw_content(const nanogui::Matrix4f& model, const nanogui::Matrix4f& view, const nanogui::Matrix4f& projection);
 	
 private:
 	int mGizmoId;
@@ -32,6 +32,6 @@ private:
 	std::vector<MetadataComponent> mMetadataComponents;
 	
 	std::vector<std::unique_ptr<GizmoMesh::MeshData>> create_axis_mesh_data();
-	std::unique_ptr<GizmoMesh::MeshData> create_axis_plane_mesh_data(const glm::vec3& color);
+	std::unique_ptr<GizmoMesh::MeshData> create_axis_plane_mesh_data(const glm::vec4& color);
 };
 

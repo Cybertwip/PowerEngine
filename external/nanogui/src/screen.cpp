@@ -19,6 +19,7 @@
 #include <nanogui/metal.h>
 #include <map>
 #include <iostream>
+#include <future>
 
 #if defined(EMSCRIPTEN)
 #  include <emscripten/emscripten.h>
@@ -108,28 +109,9 @@ static EM_BOOL nanogui_emscripten_resize_callback(int eventType, const Emscripte
 }
 #endif
 
-Screen::Screen()
-: Widget(nullptr), m_glfw_window(nullptr), m_nvg_context(nullptr),
-m_cursor(Cursor::Arrow), m_background(0.3f, 0.3f, 0.32f, 1.f),
-m_shutdown_glfw(false), m_fullscreen(false), m_depth_buffer(false),
-m_stencil_buffer(false), m_float_buffer(false), m_redraw(false) {
-	memset(m_cursors, 0, sizeof(GLFWcursor *) * (size_t) Cursor::CursorCount);
-#if defined(NANOGUI_USE_OPENGL)
-	GLint n_stencil_bits = 0, n_depth_bits = 0;
-	GLboolean float_mode;
-	CHK(glGetFramebufferAttachmentParameteriv(GL_DRAW_FRAMEBUFFER,
-											  GL_DEPTH, GL_FRAMEBUFFER_ATTACHMENT_DEPTH_SIZE, &n_depth_bits));
-	CHK(glGetFramebufferAttachmentParameteriv(GL_DRAW_FRAMEBUFFER,
-											  GL_STENCIL, GL_FRAMEBUFFER_ATTACHMENT_STENCIL_SIZE, &n_stencil_bits));
-	CHK(glGetBooleanv(GL_RGBA_FLOAT_MODE, &float_mode));
-	m_depth_buffer = n_depth_bits > 0;
-	m_stencil_buffer = n_stencil_bits > 0;
-	m_float_buffer = (bool) float_mode;
-#endif
-}
-
-Screen::Screen(const std::string &caption, bool resizable,
-			   bool fullscreen, bool depth_buffer, bool stencil_buffer,
+Screen::Screen(const std::string &caption,
+			   bool fullscreen,
+			   bool depth_buffer, bool stencil_buffer,
 			   bool float_buffer, unsigned int gl_major, unsigned int gl_minor)
 : Widget(nullptr), m_glfw_window(nullptr), m_nvg_context(nullptr),
 m_cursor(Cursor::Arrow), m_background(0.3f, 0.3f, 0.32f, 1.f), m_caption(caption),
@@ -137,47 +119,26 @@ m_shutdown_glfw(false), m_fullscreen(fullscreen), m_depth_buffer(depth_buffer),
 m_stencil_buffer(stencil_buffer), m_float_buffer(float_buffer), m_redraw(false) {
 	memset(m_cursors, 0, sizeof(GLFWcursor *) * (int) Cursor::CursorCount);
 	
+	// Framebuffer configuration for performance
+	glfwWindowHint(GLFW_DOUBLEBUFFER, GLFW_TRUE);
+
+#if defined(__APPLE__)
+	glfwWindowHint(GLFW_COCOA_GRAPHICS_SWITCHING, GLFW_FALSE); // Disable graphics switching
+
+//	glfwWindowHint(GLFW_SCALE_TO_MONITOR, GLFW_FALSE);
+//	glfwWindowHint(GLFW_SCALE_FRAMEBUFFER, GLFW_FALSE);
+//	glfwWindowHint(GLFW_COCOA_RETINA_FRAMEBUFFER, GLFW_FALSE);
+#endif
+	
 #if defined(NANOGUI_USE_OPENGL)
 	glfwWindowHint(GLFW_CLIENT_API, GLFW_OPENGL_API);
-	
-	/* Request a forward compatible OpenGL gl_major.gl_minor core profile context.
-	 Default value is an OpenGL 3.3 core profile context. */
-	// Framebuffer configuration for performance
-	glfwWindowHint(GLFW_RED_BITS, 8);
-	glfwWindowHint(GLFW_GREEN_BITS, 8);
-	glfwWindowHint(GLFW_BLUE_BITS, 8);
-	glfwWindowHint(GLFW_ALPHA_BITS, 0); // Disable alpha if not needed
-	glfwWindowHint(GLFW_DEPTH_BITS, 16); // Minimal depth buffer
-	glfwWindowHint(GLFW_STENCIL_BITS, 0); // Disable stencil buffer
-	glfwWindowHint(GLFW_ACCUM_RED_BITS, 0);
-	glfwWindowHint(GLFW_ACCUM_GREEN_BITS, 0);
-	glfwWindowHint(GLFW_ACCUM_BLUE_BITS, 0);
-	glfwWindowHint(GLFW_ACCUM_ALPHA_BITS, 0);
-	glfwWindowHint(GLFW_AUX_BUFFERS, 0);
-	glfwWindowHint(GLFW_SAMPLES, 0); // Disable multisampling
-	glfwWindowHint(GLFW_SRGB_CAPABLE, GLFW_FALSE); // Disable sRGB
-	glfwWindowHint(GLFW_STEREO, GLFW_FALSE); // Disable stereo
-	glfwWindowHint(GLFW_TRANSPARENT_FRAMEBUFFER, GLFW_FALSE); // Disable transparency
-	
 	// Context creation for performance
 	glfwWindowHint(GLFW_CLIENT_API, GLFW_OPENGL_API);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4); // Choose appropriate version
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 	glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GLFW_FALSE);
-	glfwWindowHint(GLFW_CONTEXT_ROBUSTNESS, GLFW_NO_ROBUSTNESS);
-	glfwWindowHint(GLFW_CONTEXT_DEBUG, GLFW_FALSE);
-	glfwWindowHint(GLFW_CONTEXT_NO_ERROR, GLFW_TRUE);
-	glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE); // Initially invisible
-	glfwWindowHint(GLFW_FLOATING, GLFW_FALSE); // Disable floating
-	glfwWindowHint(GLFW_TRANSPARENT_FRAMEBUFFER, GLFW_FALSE); // Disable transparency
-	
-#if defined(__APPLE__)
-	glfwWindowHint(GLFW_COCOA_GRAPHICS_SWITCHING, GLFW_FALSE); // Disable graphics switching
-#endif
-	
-	glfwWindowHint(GLFW_DOUBLEBUFFER, GLFW_TRUE);
-	
+		
 #elif defined(NANOGUI_USE_GLES)
 	glfwWindowHint(GLFW_CLIENT_API, GLFW_OPENGL_ES_API);
 	glfwWindowHint(GLFW_CONTEXT_CREATION_API, GLFW_EGL_CONTEXT_API);
@@ -185,7 +146,6 @@ m_stencil_buffer(stencil_buffer), m_float_buffer(float_buffer), m_redraw(false) 
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
 #elif defined(NANOGUI_USE_METAL)
 	glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-	m_stencil_buffer = stencil_buffer = false;
 #else
 #  error Did not select a graphics API!
 #endif
@@ -195,15 +155,12 @@ m_stencil_buffer(stencil_buffer), m_float_buffer(float_buffer), m_redraw(false) 
 	if (stencil_buffer && !depth_buffer)
 		throw std::runtime_error(
 								 "Screen::Screen(): stencil_buffer = True requires depth_buffer = True");
-	if (depth_buffer)
-		depth_bits = 32;
-	if (stencil_buffer) {
-		depth_bits = 24;
-		stencil_bits = 8;
-	}
+	depth_bits = 32;
+	depth_bits = 24;
+	stencil_bits = 8;
 	if (m_float_buffer)
 		color_bits = 16;
-	
+
 	glfwWindowHint(GLFW_RED_BITS, color_bits);
 	glfwWindowHint(GLFW_GREEN_BITS, color_bits);
 	glfwWindowHint(GLFW_BLUE_BITS, color_bits);
@@ -214,7 +171,7 @@ m_stencil_buffer(stencil_buffer), m_float_buffer(float_buffer), m_redraw(false) 
 #if (defined(NANOGUI_USE_OPENGL) || defined(NANOGUI_USE_METAL)) && defined(GLFW_FLOATBUFFER)
 	glfwWindowHint(GLFW_FLOATBUFFER, m_float_buffer ? GL_TRUE : GL_FALSE);
 #else
-	m_float_buffer = false;
+	m_float_buffer = true;
 #endif
 	
 	for (int i = 0; i < 2; ++i) {
@@ -394,6 +351,7 @@ m_stencil_buffer(stencil_buffer), m_float_buffer(float_buffer), m_redraw(false) 
 		s->resize_callback_event(width, height);
 	}
 								   );
+
 	
 	// notify when the screen has lost focus (e.g. application switch)
 	glfwSetWindowFocusCallback(m_glfw_window,
@@ -424,19 +382,21 @@ m_stencil_buffer(stencil_buffer), m_float_buffer(float_buffer), m_redraw(false) 
 	
 #if defined(NANOGUI_USE_METAL)
 	if (depth_buffer) {
-		m_depth_stencil_texture = new Texture(
-											  stencil_buffer ? Texture::PixelFormat::DepthStencil
-											  : Texture::PixelFormat::Depth,
-											  Texture::ComponentFormat::Float32,
-											  framebuffer_size(),
-											  Texture::InterpolationMode::Bilinear,
-											  Texture::InterpolationMode::Bilinear,
-											  Texture::WrapMode::ClampToEdge,
-											  1,
-											  Texture::TextureFlags::RenderTarget
-											  );
+		m_depth_texture = new Texture(
+									m_stencil_buffer ? Texture::PixelFormat::DepthStencil
+									: Texture::PixelFormat::DepthStencil,
+									Texture::ComponentFormat::Float32,
+									m_fbsize,
+									Texture::InterpolationMode::Bilinear,
+									Texture::InterpolationMode::Bilinear,
+									Texture::WrapMode::ClampToEdge,
+									1,
+									Texture::TextureFlags::RenderTarget
+									);
 	}
+
 #endif
+
 }
 
 void Screen::initialize(GLFWwindow *window, bool shutdown_glfw) {
@@ -493,7 +453,8 @@ void Screen::initialize(GLFWwindow *window, bool shutdown_glfw) {
 #elif defined(NANOGUI_USE_GLES)
 	m_nvg_context = nvgCreateGLES2(flags);
 #elif defined(NANOGUI_USE_METAL)
-	void *nswin = glfwGetCocoaWindow(window);
+	void *nswin;
+	m_nswin = nswin = glfwGetCocoaWindow(window);
 	metal_window_init(nswin, m_float_buffer);
 	metal_window_set_size(nswin, m_fbsize);
 	m_nvg_context = nvgCreateMTL(metal_layer(),
@@ -642,6 +603,7 @@ void Screen::draw_all() {
 		draw_setup();
 		draw_contents();
 		draw_widgets();
+		process_events();
 		draw_teardown();
 		
 #if defined(NANOGUI_USE_METAL)
@@ -919,10 +881,10 @@ void Screen::resize_callback_event(int, int) {
 	m_last_interaction = glfwGetTime();
 	
 #if defined(NANOGUI_USE_METAL)
-	if (m_depth_stencil_texture)
-		m_depth_stencil_texture->resize(fb_size);
+	if (m_depth_texture)
+		m_depth_texture->resize(fb_size);
 #endif
-	
+
 	try {
 		resize_event(m_size);
 	} catch (const std::exception &e) {

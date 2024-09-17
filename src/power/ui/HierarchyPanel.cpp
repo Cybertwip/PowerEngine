@@ -91,19 +91,31 @@ void HierarchyPanel::UnregisterOnActorSelectedCallback(IActorSelectedCallback& c
 }
 
 void HierarchyPanel::OnActorSelected(std::optional<std::reference_wrapper<Actor>> actor) {
-	mTransformPanel.set_active_actor(actor);
 	
-	for (auto& callbackRef : mActorSelectedCallbacks) {
-		callbackRef.get().OnActorSelected(actor);
+	if (actor.has_value()) {
+		mTransformPanel.set_active_actor(actor);
+		
+		for (auto& callbackRef : mActorSelectedCallbacks) {
+			callbackRef.get().OnActorSelected(actor);
+		}
+
+	} else {
+		mTreeView->set_selected(nullptr);
 	}
+	
 }
 
 void HierarchyPanel::fire_actor_selected_event(std::optional<std::reference_wrapper<Actor>> actor) {
 	
-	mTransformPanel.set_active_actor(actor);
-
-	for (auto& callbackRef : mActorSelectedCallbacks) {
-		callbackRef.get().OnActorSelected(actor);
+	if (actor.has_value()) {
+		mTransformPanel.set_active_actor(actor);
+		
+		for (auto& callbackRef : mActorSelectedCallbacks) {
+			callbackRef.get().OnActorSelected(actor);
+		}
+		
+	} else {
+		mTreeView->set_selected(nullptr);
 	}
 }
 

@@ -15,7 +15,7 @@ public:
 	ShaderWrapper(nanogui::Shader& shader);
 	
 	void set_buffer(const std::string &name, nanogui::VariableType type,
-			   std::initializer_list<size_t> shape, const void *data);
+			   std::initializer_list<size_t> shape, const void *data, int index = -1);
 	
 	template <typename Array> void set_uniform(const std::string &name,
 															  const Array &value) {

@@ -18,18 +18,15 @@ std::string ShaderManager::read_file(const std::string &file_path) {
 
 ShaderManager::ShaderManager(Canvas &canvas) : mRenderPass(*canvas.render_pass()) {
 	// load_default_shaders();
-
 #if defined(NANOGUI_USE_OPENGL) || defined(NANOGUI_USE_GLES)
 	load_shader("mesh", "shaders/gl/diffuse.vs", "shaders/gl/diffuse.fs");
 	load_shader("gizmo", "shaders/gl/gizmo.vs", "shaders/gl/gizmo.fs");
 	load_shader("grid", "shaders/gl/grid.vs", "shaders/gl/grid.fs");
 #elif defined(NANOGUI_USE_METAL)
-	load_shader("mesh", "shaders/metal/diffuse_vertex.metal", "shaders/metal/diffuse_fragment.metal");
-	load_shader("gizmo", "shaders/metal/gizmo_vertex.metal", "shaders/metal/gizmo_fragment.metal");
-	load_shader("grid", "shaders/metal/grid_vertex.metal", "shaders/metal/grid_fragment.metal");
+	load_shader("mesh", "shaders/metal/diffuse_vs.metal", "shaders/metal/diffuse_fs.metal");
+	load_shader("gizmo", "shaders/metal/gizmo_vs.metal", "shaders/metal/gizmo_fs.metal");
+	load_shader("grid", "shaders/metal/grid_vs.metal", "shaders/metal/grid_fs.metal");
 #endif
-
-	
 }
 
 nanogui::ref<nanogui::Shader> ShaderManager::load_shader(const std::string &name,
@@ -42,7 +39,7 @@ nanogui::ref<nanogui::Shader> ShaderManager::load_shader(const std::string &name
 	std::string vertex_code = read_file(vertex_path);
 	std::string fragment_code = read_file(fragment_path);
 	nanogui::ref<nanogui::Shader> shader =
-	new nanogui::Shader(&mRenderPass, name, vertex_code, fragment_code);
+	new nanogui::Shader(&mRenderPass, name, vertex_code, fragment_code, nanogui::Shader::BlendMode::None);
 	mShaderCache[name] = shader;
 	return shader;
 }

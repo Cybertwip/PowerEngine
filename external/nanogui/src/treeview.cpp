@@ -35,9 +35,11 @@ void TreeView::set_selected(TreeViewItem* item) {
         m_selected_item->set_selected(false);
     }
     
-    m_selected_item = item;
-    
-    m_selected_item->set_selected(true);
+	if (item) {
+		m_selected_item = item;
+		
+		m_selected_item->set_selected(true);
+	}
 }
 
 NAMESPACE_END(nanogui)

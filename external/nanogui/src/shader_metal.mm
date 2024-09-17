@@ -79,18 +79,18 @@ Shader::Shader(RenderPass *render_pass,
         MTLPixelFormat pixel_format;
         if (targets[i] == nullptr) {
             continue;
-        } else if (screen) {
-            if (i == 0 || i == 1) {
-                Texture *depth_stencil_texture = screen->depth_stencil_texture();
-                if (!depth_stencil_texture ||
-                    (i == 1 && depth_stencil_texture->pixel_format() !=
-                                   Texture::PixelFormat::DepthStencil))
-                    throw std::runtime_error("Shader::Shader(): Screen not configured for depth/stencil rendering");
-                pixel_format = ((__bridge id<MTLTexture>) depth_stencil_texture->texture_handle()).pixelFormat;
-            } else {
-                pixel_format = ((__bridge CAMetalLayer *) screen->metal_layer()).pixelFormat;
-            }
-        } else if (texture) {
+		} else if (screen) {
+			if (i == 0 || i == 1) {
+				Texture *depth_stencil_texture = screen->depth_stencil_texture();
+				if (!depth_stencil_texture ||
+					(i == 1 && depth_stencil_texture->pixel_format() !=
+					 Texture::PixelFormat::DepthStencil))
+					throw std::runtime_error("Shader::Shader(): Screen not configured for depth/stencil rendering");
+				pixel_format = ((__bridge id<MTLTexture>) depth_stencil_texture->texture_handle()).pixelFormat;
+			} else {
+				pixel_format = ((__bridge CAMetalLayer *) screen->metal_layer()).pixelFormat;
+			}
+		} else if (texture) {
             pixel_format = ((__bridge id<MTLTexture>) texture->texture_handle()).pixelFormat;
             sample_count = std::max((int) texture->samples(), sample_count);
         } else {
@@ -140,11 +140,12 @@ Shader::Shader(RenderPass *render_pass,
 
     for (MTLArgument *arg in [reflection vertexArguments]) {
         std::string name = [arg.name UTF8String];
-        if (m_buffers.find(name) != m_buffers.end())
-            throw std::runtime_error(
-                "Shader::Shader(): \"" + name +
-                "\": duplicate argument name in shader code!");
-        else if (name == "indices")
+//        if (m_buffers.find(name) != m_buffers.end())
+//            throw std::runtime_error(
+//                "Shader::Shader(): \"" + name +
+//                "\": duplicate argument name in shader code!");
+//        else
+			if (name == "indices")
             throw std::runtime_error(
                 "Shader::Shader(): argument name 'indices' is reserved!");
 
@@ -152,10 +153,14 @@ Shader::Shader(RenderPass *render_pass,
         buf.index = arg.index;
         if (arg.type == MTLArgumentTypeBuffer)
             buf.type = VertexBuffer;
-        else if (arg.type == MTLArgumentTypeTexture)
-            buf.type = VertexTexture;
-        else if (arg.type == MTLArgumentTypeSampler)
-            buf.type = VertexSampler;
+		else if (arg.type == MTLArgumentTypeTexture) {
+			buf.type = VertexTexture;
+			buf.size = arg.arrayLength;
+		}
+		else if (arg.type == MTLArgumentTypeSampler) {
+			buf.type = VertexSampler;
+			buf.size = arg.arrayLength;
+		}
         else
             throw std::runtime_error("Shader::Shader(): \"" + name +
                                      "\": unsupported argument type!");
@@ -163,11 +168,7 @@ Shader::Shader(RenderPass *render_pass,
 
     for (MTLArgument *arg in [reflection fragmentArguments]) {
         std::string name = [arg.name UTF8String];
-        if (m_buffers.find(name) != m_buffers.end())
-            throw std::runtime_error(
-                "Shader::Shader(): \"" + name +
-                "\": duplicate argument name in shader code!");
-        else if (name == "indices")
+			if (name == "indices")
             throw std::runtime_error(
                 "Shader::Shader(): argument name 'indices' is reserved!");
 
@@ -175,10 +176,14 @@ Shader::Shader(RenderPass *render_pass,
         buf.index = arg.index;
         if (arg.type == MTLArgumentTypeBuffer)
             buf.type = FragmentBuffer;
-        else if (arg.type == MTLArgumentTypeTexture)
-            buf.type = FragmentTexture;
-        else if (arg.type == MTLArgumentTypeSampler)
-            buf.type = FragmentSampler;
+		else if (arg.type == MTLArgumentTypeTexture) {
+			buf.type = FragmentTexture;
+			buf.size = arg.arrayLength;
+		}
+		else if (arg.type == MTLArgumentTypeSampler) {
+			buf.type = FragmentSampler;
+			buf.size = arg.arrayLength;
+		}
         else
             throw std::runtime_error("Shader::Shader(): \"" + name +
                                      "\": unsupported argument type!");
@@ -217,7 +222,8 @@ void Shader::set_buffer(const std::string &name,
                         VariableType dtype,
                         size_t ndim,
                         const size_t *shape,
-                        const void *data) {
+                        const void *data,
+						int index) {
     auto it = m_buffers.find(name);
     if (it == m_buffers.end())
         throw std::runtime_error(
@@ -285,121 +291,155 @@ void Shader::set_buffer(const std::string &name,
     buf.dtype = dtype;
     buf.ndim  = ndim;
     buf.size  = size;
+	
+	if (name == "indices") {
+		buf.index = -1;
+	} else if (index != -1) {
+		buf.index = index;
+	}
+	
+	m_queued_buffers[name][buf.index] = buf;
 }
 
-void Shader::set_texture(const std::string &name, Texture *texture) {
-    auto it = m_buffers.find(name);
-    if (it == m_buffers.end())
-        throw std::runtime_error(
-            "Shader::set_texture(): could not find argument named \"" + name + "\"");
-    Buffer &buf = m_buffers[name];
-    if (!(buf.type == VertexTexture || buf.type == FragmentTexture))
-        throw std::runtime_error(
-            "Shader::set_texture(): argument named \"" + name + "\" is not a texture!");
+size_t Shader::get_buffer_size(const std::string &name) {
+	Buffer &buf = m_buffers[name];
+	return buf.size;
+}
 
-    if (buf.buffer) {
-        (void) (__bridge_transfer id<MTLTexture>) buf.buffer;
-        buf.buffer = nullptr;
-    }
+void Shader::set_texture(const std::string &name, Texture *texture, int index) {
+	auto it = m_buffers.find(name);
+	if (it == m_buffers.end())
+		throw std::runtime_error(
+								 "Shader::set_texture(): could not find argument named \"" + name + "\"");
+	
+	Buffer &buf = m_buffers[name];
+	if (!(buf.type == VertexTexture || buf.type == FragmentTexture))
+		throw std::runtime_error(
+								 "Shader::set_texture(): argument named \"" + name + "\" is not a texture!");
+	
+	if (buf.buffer) {
+		(void)(__bridge_transfer id<MTLTexture>)buf.buffer;
+		buf.buffer = nullptr;
+	}
+	
+	// Set the texture buffer at the specified index
+	buf.buffer = (__bridge_retained void *)((__bridge id<MTLTexture>)texture->texture_handle());
+	buf.index = index;
+	
+	// Handle the sampler as well
+	std::string sampler_name;
+	if (name.length() > 8 && name.compare(name.length() - 8, 8, "_texture") == 0)
+		sampler_name = name.substr(0, name.length() - 8) + "_sampler";
+	else
+		sampler_name = name + "_sampler";
+	
+	if (m_buffers.find(sampler_name) != m_buffers.end()) {
+		Buffer &buf2 = m_buffers[sampler_name];
+		
+		if (buf2.buffer) {
+			(void)(__bridge_transfer id<MTLSamplerState>)buf2.buffer;
+			buf2.buffer = nullptr;
+		}
+		
+		buf2.buffer = (__bridge_retained void *)((__bridge id<MTLSamplerState>)texture->sampler_state_handle());
+		
+		buf2.index = index;
+		
+		m_queued_buffers[name][buf.index] = buf;
+		m_queued_buffers[sampler_name][buf2.index] = buf2;
 
-    buf.buffer = (__bridge_retained void *) ((__bridge id<MTLTexture>)
-                                                 texture->texture_handle());
-
-    std::string sampler_name;
-    if (name.length() > 8 && name.compare(name.length() - 8, 8, "_texture") == 0)
-        sampler_name = name.substr(0, name.length()-8) + "_sampler";
-    else
-        sampler_name = name + "_sampler";
-
-    if (m_buffers.find(sampler_name) != m_buffers.end()) {
-        /* Also set the sampler state */
-        Buffer &buf2 = m_buffers[sampler_name];
-
-        if (buf2.buffer) {
-            (void) (__bridge_transfer id<MTLTexture>) buf2.buffer;
-            buf2.buffer = nullptr;
-        }
-
-        buf2.buffer =
-            (__bridge_retained void *) ((__bridge id<MTLSamplerState>)
-                                            texture->sampler_state_handle());
-    }
+	} else {
+		// Only queue the texture if there's no corresponding sampler
+		m_queued_buffers[name][buf.index] = buf;
+	}
 }
 
 void Shader::begin() {
-    id<MTLRenderPipelineState> pipeline_state =
-        (__bridge id<MTLRenderPipelineState>) m_pipeline_state;
-    id<MTLRenderCommandEncoder> command_enc =
-        (__bridge id<MTLRenderCommandEncoder>) m_render_pass->command_encoder();
+	
+	m_queued_buffers["indices"][m_buffers["indices"].index] = m_buffers["indices"];
+	id<MTLRenderPipelineState> pipeline_state = (__bridge id<MTLRenderPipelineState>)m_pipeline_state;
+	id<MTLRenderCommandEncoder> command_enc = (__bridge id<MTLRenderCommandEncoder>)m_render_pass->command_encoder();
+	
+	[command_enc setRenderPipelineState: pipeline_state];
+	
+	// Process all queued buffers grouped by name
+	for (auto &[key, buffers] : m_queued_buffers) {
+		for (auto &[index, buf] : buffers) {
+			bool indices = buf.type == IndexBuffer;
+			if (!buf.buffer) {
+				if (!indices)
+					fprintf(stderr,
+							"Shader::begin(): shader \"%s\" has an unbound "
+							"argument \"%s\"!\n",
+							m_name.c_str(), key.c_str());
+				continue;
+			}
 
-    [command_enc setRenderPipelineState: pipeline_state];
-
-    for (const auto &[key, buf] : m_buffers) {
-        bool indices = buf.type == IndexBuffer;
-        if (!buf.buffer) {
-            if (!indices)
-                fprintf(stderr,
-                        "Shader::begin(): shader \"%s\" has an unbound "
-                        "argument \"%s\"!\n",
-                        m_name.c_str(), key.c_str());
-            continue;
-        }
-
-        switch (buf.type) {
-            case VertexTexture: {
-                    id<MTLTexture> texture = (__bridge id<MTLTexture>) buf.buffer;
-                    [command_enc setVertexTexture: texture atIndex: buf.index];
-                }
-                break;
-
-            case FragmentTexture: {
-                    id<MTLTexture> texture = (__bridge id<MTLTexture>) buf.buffer;
-                    [command_enc setFragmentTexture: texture atIndex: buf.index];
-                }
-                break;
-
-            case VertexSampler: {
-                    id<MTLSamplerState> state = (__bridge id<MTLSamplerState>) buf.buffer;
-                    [command_enc setVertexSamplerState: state atIndex: buf.index];
-                }
-                break;
-
-            case FragmentSampler: {
-                    id<MTLSamplerState> state = (__bridge id<MTLSamplerState>) buf.buffer;
-                    [command_enc setFragmentSamplerState: state atIndex: buf.index];
-                }
-                break;
-
-            default:
-                if (buf.size <= NANOGUI_BUFFER_THRESHOLD && !indices) {
-                    if (buf.type == VertexBuffer)
-                        [command_enc setVertexBytes: buf.buffer
-                                             length: buf.size
-                                            atIndex: buf.index];
-                    else if (buf.type == FragmentBuffer)
-                        [command_enc setFragmentBytes: buf.buffer
-                                               length: buf.size
-                                              atIndex: buf.index];
-                    else
-                        throw std::runtime_error("Shader::begin(): unexpected buffer type!");
-                } else {
-                    id<MTLBuffer> buffer = (__bridge id<MTLBuffer>) buf.buffer;
-                    if (buf.type == VertexBuffer)
-                        [command_enc setVertexBuffer: buffer
-                                              offset: 0
-                                             atIndex: buf.index];
-                    else if (buf.type == FragmentBuffer)
-                        [command_enc setFragmentBuffer: buffer
-                                                offset: 0
-                                               atIndex: buf.index];
-                }
-                break;
-        }
-    }
+			if (!buf.buffer) {
+				bool indices = buf.type == IndexBuffer;
+				if (!indices) {
+					fprintf(stderr, "Shader::begin(): shader \"%s\" has an unbound argument \"%s\"!\n",
+							m_name.c_str(), key.c_str());
+				}
+				continue;
+			}
+			
+			switch (buf.type) {
+				case VertexTexture: {
+					id<MTLTexture> texture = (__bridge id<MTLTexture>)buf.buffer;
+					[command_enc setVertexTexture: texture atIndex: index];
+					break;
+				}
+					
+				case FragmentTexture: {
+					id<MTLTexture> texture = (__bridge id<MTLTexture>)buf.buffer;
+					[command_enc setFragmentTexture: texture atIndex: index];
+					break;
+				}
+					
+				case VertexSampler: {
+					id<MTLSamplerState> state = (__bridge id<MTLSamplerState>)buf.buffer;
+					[command_enc setVertexSamplerState: state atIndex: index];
+					break;
+				}
+					
+				case FragmentSampler: {
+					id<MTLSamplerState> state = (__bridge id<MTLSamplerState>)buf.buffer;
+					[command_enc setFragmentSamplerState: state atIndex: index];
+					break;
+				}
+					
+				default:
+					if (buf.size <= NANOGUI_BUFFER_THRESHOLD && !indices) {
+						if (buf.type == VertexBuffer)
+							[command_enc setVertexBytes: buf.buffer
+												 length: buf.size
+												atIndex: buf.index];
+						else if (buf.type == FragmentBuffer)
+							[command_enc setFragmentBytes: buf.buffer
+												   length: buf.size
+												  atIndex: buf.index];
+						else
+							throw std::runtime_error("Shader::begin(): unexpected buffer type!");
+					} else {
+						id<MTLBuffer> buffer = (__bridge id<MTLBuffer>) buf.buffer;
+						if (buf.type == VertexBuffer)
+							[command_enc setVertexBuffer: buffer
+												  offset: 0
+												 atIndex: buf.index];
+						else if (buf.type == FragmentBuffer)
+							[command_enc setFragmentBuffer: buffer
+													offset: 0
+												   atIndex: buf.index];
+					}
+					break;
+			}
+		}
+	}
 }
 
+
 void Shader::end() {
-    /* No-op */
 }
 
 void Shader::draw_array(PrimitiveType primitive_type,
@@ -424,7 +464,7 @@ void Shader::draw_array(PrimitiveType primitive_type,
                         vertexCount: count];
     } else {
         id<MTLBuffer> index_buffer =
-            (__bridge id<MTLBuffer>) m_buffers["indices"].buffer;
+		(__bridge id<MTLBuffer>) m_queued_buffers["indices"][-1].buffer;
         [command_enc drawIndexedPrimitives: primitive_type_mtl
                                 indexCount: count
                                  indexType: MTLIndexTypeUInt32

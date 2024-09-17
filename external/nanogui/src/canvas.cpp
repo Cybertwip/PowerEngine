@@ -23,8 +23,7 @@
 NAMESPACE_BEGIN(nanogui)
 
 Canvas::Canvas(Widget *parent, uint8_t samples,
-			   bool has_depth_buffer, bool has_stencil_buffer,
-			   bool clear)
+			   bool has_depth_buffer, bool has_stencil_buffer)
 : Widget(parent), m_draw_border(true) {
 	m_size = Vector2i(250, 250);
 	m_border_color = m_theme->m_border_light;
@@ -40,7 +39,7 @@ Canvas::Canvas(Widget *parent, uint8_t samples,
 	m_render_to_texture = samples != 1
 	|| (has_depth_buffer && !scr->has_depth_buffer())
 	|| (has_stencil_buffer && !scr->has_stencil_buffer());
-	
+
 	Object 	*color_texture = nullptr,
 	*attachment_texture = nullptr,
 	*depth_texture = nullptr;
@@ -52,12 +51,18 @@ Canvas::Canvas(Widget *parent, uint8_t samples,
 		color_texture = scr;
 		
 		if (has_depth_buffer) {
-#if defined(NANOGUI_USE_METAL)
-			depth_texture = scr->depth_stencil_texture();
-#else
 			depth_texture = scr;
-#endif
 		}
+		
+		attachment_texture = new Texture(
+										 Texture::PixelFormat::R,
+										 Texture::ComponentFormat::Int32,
+										 m_size,
+										 Texture::InterpolationMode::Bilinear,
+										 Texture::InterpolationMode::Bilinear,
+										 Texture::WrapMode::ClampToEdge,
+										 samples, 					 Texture::TextureFlags::RenderTarget
+										 );
 	} else {
 		color_texture = new Texture(
 									scr->pixel_format(),
@@ -70,41 +75,11 @@ Canvas::Canvas(Widget *parent, uint8_t samples,
 									Texture::TextureFlags::RenderTarget
 									);
 		
-		attachment_texture = new Texture(
-										 Texture::PixelFormat::R,
-										 Texture::ComponentFormat::Int32,
-										 m_size,
-										 Texture::InterpolationMode::Bilinear,
-										 Texture::InterpolationMode::Bilinear,
-										 Texture::WrapMode::ClampToEdge,
-										 samples, 					 Texture::TextureFlags::RenderTarget
-										 );
-		
-#if defined(NANOGUI_USE_METAL)
-		Texture *color_texture_resolved = nullptr;
-		
-		if (samples > 1) {
-			color_texture_resolved = new Texture(
-												 scr->pixel_format(),
-												 scr->component_format(),
-												 m_size,
-												 Texture::InterpolationMode::Bilinear,
-												 Texture::InterpolationMode::Bilinear,
-												 Texture::WrapMode::ClampToEdge,
-												 1,
-												 Texture::TextureFlags::RenderTarget
-												 );
-			
-			m_render_pass_resolved = new RenderPass(
-													{ color_texture_resolved }
-													);
-		}
-#endif
 		
 		depth_texture = new Texture(
 									has_stencil_buffer ? Texture::PixelFormat::DepthStencil
-									: Texture::PixelFormat::Depth,
-									Texture::ComponentFormat::Int32,
+									: Texture::PixelFormat::DepthStencil,
+									Texture::ComponentFormat::Float32,
 									m_size,
 									Texture::InterpolationMode::Bilinear,
 									Texture::InterpolationMode::Bilinear,
@@ -118,13 +93,7 @@ Canvas::Canvas(Widget *parent, uint8_t samples,
 								   { color_texture, attachment_texture},
 								   depth_texture,
 								   has_stencil_buffer ? depth_texture : nullptr,
-#if defined(NANOGUI_USE_METAL)
-								   m_render_pass_resolved,
-#else
-								   nullptr,
-#endif
-								   clear
-								   );
+								   nullptr								   );
 }
 
 void Canvas::set_background_color(const Color &background_color) {
@@ -153,11 +122,6 @@ void Canvas::draw(NVGcontext *ctx) {
 	if (m_draw_border)
 		fbsize -= 2;
 	
-#if defined(NANOGUI_USE_OPENGL) || defined(NANOGUI_USE_GLES)
-	if (m_render_to_texture)
-		offset = Vector2i(offset.x(), scr->size().y() - offset.y() - m_size.y());
-#endif
-	
 	if (m_draw_border)
 		offset += Vector2i(1, 1);
 	
@@ -166,18 +130,14 @@ void Canvas::draw(NVGcontext *ctx) {
 	
 	if (m_render_to_texture) {
 		m_render_pass->resize(fbsize);
-#if defined(NANOGUI_USE_METAL)
-		if (m_render_pass_resolved)
-			m_render_pass_resolved->resize(fbsize);
-#endif
 	} else {
 		m_render_pass->resize(scr->framebuffer_size());
 		m_render_pass->set_viewport(offset, fbsize);
 	}
 	
-	m_render_pass->begin();
+//	m_render_pass->begin();
 	draw_contents();
-	m_render_pass->end();
+//	m_render_pass->end();
 	
 	if (m_draw_border) {
 		nvgBeginPath(ctx);
@@ -191,10 +151,6 @@ void Canvas::draw(NVGcontext *ctx) {
 	
 	if (m_render_to_texture) {
 		RenderPass *rp = m_render_pass;
-#if defined(NANOGUI_USE_METAL)
-		if (m_render_pass_resolved)
-			rp = m_render_pass_resolved;
-#endif
 		rp->blit_to(Vector2i(0, 0), fbsize, scr, offset);
 	}
 }

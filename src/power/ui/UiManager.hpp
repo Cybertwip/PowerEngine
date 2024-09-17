@@ -10,6 +10,10 @@
 #include <optional>
 #include <functional>
 
+namespace nanogui {
+class RenderPass;
+}
+
 class IActorSelectedRegistry;
 class IActorVisualManager;
 class ActorManager;
@@ -43,13 +47,17 @@ private:
 
 	ShaderWrapper mShader;
 	
-	std::unique_ptr<GizmoManager> mGizmoManager;
 	
 	std::unique_ptr<Grid> mGrid;
 	
 	MeshActorLoader& mMeshActorLoader;
+	std::unique_ptr<GizmoManager> mGizmoManager;
+
+	Canvas& mCanvas;
+	nanogui::RenderPass* mRenderPass;
 	
 	SceneTimeBar* mSceneTimeBar;
 	
-	glm::vec3 mSelectionColor;
+	glm::vec4 mSelectionColor;
+	
 };

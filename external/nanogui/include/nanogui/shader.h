@@ -84,12 +84,14 @@ public:
      * The buffer will be replaced if it is already present.
      */
     void set_buffer(const std::string &name, VariableType type, size_t ndim,
-                    const size_t *shape, const void *data);
+                    const size_t *shape, const void *data, int index = -1);
 
     void set_buffer(const std::string &name, VariableType type,
-                    std::initializer_list<size_t> shape, const void *data) {
-        set_buffer(name, type, shape.end() - shape.begin(), shape.begin(), data);
+                    std::initializer_list<size_t> shape, const void *data, int index = -1) {
+        set_buffer(name, type, shape.end() - shape.begin(), shape.begin(), data, index);
     }
+	
+	size_t get_buffer_size(const std::string& name);
 
     /**
      * \brief Upload a uniform variable (e.g. a vector or matrix) that will be
@@ -146,7 +148,7 @@ public:
      *
      * The association will be replaced if it is already present.
      */
-    void set_texture(const std::string &name, Texture *texture);
+    void set_texture(const std::string &name, Texture *texture, int index = 0);
 
     /**
      * \brief Begin drawing using this shader
@@ -226,7 +228,8 @@ public:
 protected:
     RenderPass* m_render_pass;
     std::string m_name;
-    std::unordered_map<std::string, Buffer> m_buffers;
+	std::unordered_map<std::string, Buffer> m_buffers;
+	std::unordered_map<std::string, std::unordered_map<int, Buffer>> m_queued_buffers;
     BlendMode m_blend_mode;
 
     #if defined(NANOGUI_USE_OPENGL) || defined(NANOGUI_USE_GLES)

@@ -75,8 +75,7 @@ public:
     RenderPass(const std::vector<Object *> &color_targets,
                Object *depth_target = nullptr,
                Object *stencil_target = nullptr,
-               Object *blit_target = nullptr,
-               bool clear = true);
+               Object *blit_target = nullptr);
 
     // Polymorphic destructor
     virtual ~RenderPass();
@@ -98,6 +97,8 @@ public:
     /// Finish the render pass
     void end();
 
+	void clear_color(size_t index, const Color &color);
+	
     /// Return the clear color for a given color attachment
     const Color &clear_color(size_t index) const { return m_clear_color.at(index); }
 
@@ -106,6 +107,8 @@ public:
 
     /// Return the clear depth for the depth attachment
     float clear_depth() const { return m_clear_depth; }
+	
+	void clear_depth(float depth);
 
     /// Set the clear depth for the depth attachment
     void set_clear_depth(float depth);

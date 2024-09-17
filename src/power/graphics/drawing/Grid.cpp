@@ -37,9 +37,9 @@ void Grid::draw_content(const nanogui::Matrix4f& model, const nanogui::Matrix4f&
 	
 	auto descriptor = mShaderWrapper.render_pass().pass_descriptor();
 	// Metal: Use MetalHelper to set up depth and blending
-	MetalHelper::enableDepth(descriptor);
-	MetalHelper::setDepthClear(descriptor);
-	MetalHelper::disableStencil(descriptor); // You can omit this if stencil isn't needed.
+//	MetalHelper::enableDepth(descriptor);
+	//MetalHelper::setDepthClear(descriptor);
+//	MetalHelper::disableStencil(descriptor); // You can omit this if stencil isn't needed.
 #endif
 	
 	// Common code: Set up vertex buffer
@@ -55,6 +55,13 @@ void Grid::draw_content(const nanogui::Matrix4f& model, const nanogui::Matrix4f&
 	mShaderWrapper.set_uniform("aView", view);
 	mShaderWrapper.set_uniform("aProjection", projection);
 	
+	nanogui::Matrix4f projectionView = projection * view;
+	
+	nanogui::Matrix4f projectionViewInverse = projectionView.inverse();
+
+	mShaderWrapper.set_uniform("aInvProjectionView", projectionViewInverse); // Pass inverse matrix
+
+	
 	// Common code: Begin shader, draw, and end
 	mShaderWrapper.begin();
 	mShaderWrapper.draw_array(nanogui::Shader::PrimitiveType::Triangle, 0, 6, false);
@@ -64,7 +71,7 @@ void Grid::draw_content(const nanogui::Matrix4f& model, const nanogui::Matrix4f&
 #if defined(NANOGUI_USE_OPENGL) || defined(NANOGUI_USE_GLES)
 	glDisable(GL_DEPTH_TEST);
 #elif defined(NANOGUI_USE_METAL)
-	MetalHelper::disableDepth(descriptor);
-	MetalHelper::disableStencil(descriptor);
+//	MetalHelper::disableDepth(descriptor);
+//	MetalHelper::disableStencil(descriptor);
 #endif
 }

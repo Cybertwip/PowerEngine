@@ -156,9 +156,9 @@ std::vector<std::unique_ptr<GizmoMesh::MeshData>> RotationGizmo::create_axis_rot
 	}
 	
 	// Set colors for visualization
-	meshDataZ.mColor = glm::vec3(0.0, 0.0, 1.0);
-	meshDataX.mColor = glm::vec3(1.0, 0.0, 0.0);
-	meshDataY.mColor = glm::vec3(0.0, 1.0, 0.0);
+	meshDataZ.mColor = glm::vec4(0.0f, 1.0f, 1.0, 1.0f);
+	meshDataX.mColor = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
+	meshDataY.mColor = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
 	
 	std::vector<std::unique_ptr<GizmoMesh::MeshData>> meshDataVector;
 	meshDataVector.push_back(std::move(meshDataPtrZ));

@@ -32,7 +32,7 @@ void ActorManager::draw() {
 		
 		auto& color = actor.get()->get_component<ColorComponent>();
 		
-		color.set_color(glm::vec3(1.0f, 1.0f, 1.0f));
+		color.set_color(glm::vec4(1.0f, 1.0f, 1.0f, 1.0f));
 
         nanogui::Matrix4f model = TransformComponent::glm_to_nanogui(transform.get_matrix());
 
@@ -42,10 +42,9 @@ void ActorManager::draw() {
 
 void ActorManager::visit(GizmoManager& gizmoManager) {
     mCameraManager.update_view();
-
+	
 	gizmoManager.draw_content(nanogui::Matrix4f::identity(), mCameraManager.get_view(),
 							  mCameraManager.get_projection());
-
 }
 
 void ActorManager::visit(UiManager& uiManager) {

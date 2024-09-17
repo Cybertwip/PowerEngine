@@ -26,7 +26,7 @@ public:
     struct MeshData {
         std::vector<std::unique_ptr<Vertex>> mVertices;
         std::vector<unsigned int> mIndices;
-        glm::vec3 mColor;
+        glm::vec4 mColor;
     };
 
     class GizmoMeshShader : public ShaderWrapper {

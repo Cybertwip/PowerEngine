@@ -4,6 +4,12 @@
 #include <nanogui/renderpass.h>
 #include <nanogui/texture.h>
 
+#if defined(NANOGUI_USE_OPENGL) || defined(NANOGUI_USE_GLES)
+#include <nanogui/opengl.h>
+#elif defined(NANOGUI_USE_METAL)
+#include "MetalHelper.hpp"
+#endif
+
 #include <cmath>
 
 #include "CameraManager.hpp"
@@ -92,41 +98,88 @@ void SkinnedMesh::SkinnedMeshShader::upload_vertex_data(const SkinnedMesh& skinn
 					   skinnedMesh.mFlattenedTextureIds.data());
 	
 }
-
 void SkinnedMesh::SkinnedMeshShader::upload_material_data(const std::vector<std::shared_ptr<MaterialProperties>>& materialData) {
+#if defined(NANOGUI_USE_METAL)
+	// Ensure we have a valid number of materials
+	size_t numMaterials = materialData.size();
+	
+	// Create a CPU-side array of Material structs
+	std::vector<nanogui::Texture*> texturesCPU(numMaterials);
+	std::vector<MaterialCPU> materialsCPU(numMaterials);
+
+	for (size_t i = 0; i < numMaterials; ++i) {
+		auto& material = *materialData[i];
+		MaterialCPU& materialCPU = materialsCPU[i];
+		
+		// Copy ambient, diffuse, and specular as arrays
+		memcpy(&materialCPU.mAmbient[0], glm::value_ptr(material.mAmbient), sizeof(materialCPU.mAmbient));
+		
+		memcpy(&materialCPU.mDiffuse[0], glm::value_ptr(material.mDiffuse), sizeof(materialCPU.mDiffuse));
+		
+		memcpy(&materialCPU.mSpecular[0], glm::value_ptr(material.mSpecular), sizeof(materialCPU.mSpecular));
+		
+		// Copy the rest of the individual fields
+		materialCPU.mShininess = material.mShininess;
+		materialCPU.mOpacity = material.mOpacity;
+		materialCPU.mHasDiffuseTexture = material.mHasDiffuseTexture ? 1.0f : 0.0f;
+
+		// Set the diffuse texture (if it exists) or a dummy texture
+		std::string textureBaseName = "textures";
+		if (material.mHasDiffuseTexture) {
+			mShader.set_texture(textureBaseName, material.mTextureDiffuse.get(), i);
+		} else {
+			mShader.set_texture(textureBaseName, mDummyTexture.get(), i);
+		}
+
+	}
+	
+	mShader.set_buffer(
+					   "materials",
+					   nanogui::VariableType::Float32,
+					   {numMaterials, sizeof(MaterialCPU) / sizeof(float)},
+					   materialsCPU.data()
+					   );
+
+	size_t dummy_texture_count = mShader.get_buffer_size("textures");
+	
+	for (size_t i = numMaterials; i<dummy_texture_count; ++i) {
+		std::string textureBaseName = "textures";
+
+		mShader.set_texture(textureBaseName, mDummyTexture.get(), i);
+	}
+
+#else
 	for (int i = 0; i < materialData.size(); ++i) {
 		// Create the uniform name dynamically for each material (e.g., "materials[0].ambient")
-		
 		auto& material = *materialData[i];
 		std::string baseName = "materials[" + std::to_string(i) + "].";
 		
-		std::string textureBaseName = "textures[" + std::to_string(i) + "].";
-		
-		// Uploading vec3 uniforms for each material
+		// Uploading vec3 uniforms for each material (ambient, diffuse, specular)
 		mShader.set_uniform(baseName + "ambient",
-							nanogui::Vector3f(material.mAmbient.x, material.mAmbient.y,
-											  material.mAmbient.z));
+							nanogui::Vector3f(material.mAmbient.x, material.mAmbient.y, material.mAmbient.z));
 		mShader.set_uniform(baseName + "diffuse",
-							nanogui::Vector3f(material.mDiffuse.x, material.mDiffuse.y,
-											  material.mDiffuse.z));
+							nanogui::Vector3f(material.mDiffuse.x, material.mDiffuse.y, material.mDiffuse.z));
 		mShader.set_uniform(baseName + "specular",
-							nanogui::Vector3f(material.mSpecular.x, material.mSpecular.y,
-											  material.mSpecular.z));
+							nanogui::Vector3f(material.mSpecular.x, material.mSpecular.y, material.mSpecular.z));
 		
-		// Uploading float uniforms for shininess and opacity
+		// Upload float uniforms for shininess and opacity
 		mShader.set_uniform(baseName + "shininess", material.mShininess);
 		mShader.set_uniform(baseName + "opacity", material.mOpacity);
 		
-		// Uploading boolean for texture presence
-		mShader.set_uniform(baseName + "has_diffuse_texture", material.mHasDiffuseTexture);
+		// Convert boolean to integer for setting in the shader (0 or 1)
+		mShader.set_uniform(baseName + "diffuse_texture", material.mHasDiffuseTexture ? 1.0f : 0.0f);
 		
+		// Set the diffuse texture (if it exists) or a dummy texture
+		std::string textureBaseName = "textures[" + std::to_string(i) + "]";
 		if (material.mHasDiffuseTexture) {
-			mShader.set_texture(textureBaseName + "diffuse", material.mTextureDiffuse.get());
+			mShader.set_texture(textureBaseName, material.mTextureDiffuse.get());
 		} else {
-			mShader.set_texture(textureBaseName + "diffuse", mDummyTexture.get());
+			mShader.set_texture(textureBaseName, mDummyTexture.get());
 		}
 	}
+#endif
 }
+
 
 SkinnedMesh::SkinnedMesh(std::unique_ptr<MeshData> meshData, SkinnedMeshShader& shader, MeshBatch& meshBatch, ColorComponent& colorComponent)
 : mMeshData(std::move(meshData)), mShader(shader), mMeshBatch(meshBatch), mColorComponent(colorComponent), mModelMatrix(nanogui::Matrix4f::identity()) {
@@ -253,9 +306,6 @@ void SkinnedMesh::MeshBatch::clear() {
 }
 
 void SkinnedMesh::MeshBatch::prepare() {
-	mVertexOffset;
-	mIndexOffset;
-	
 	const auto& meshRef = mMeshes.back();
 	auto& mesh = meshRef.get();
 	
@@ -284,6 +334,45 @@ void SkinnedMesh::MeshBatch::prepare() {
 	mMeshStartIndices.push_back(mIndexOffset);
 	mIndexOffset += mesh.mMeshData->mIndices.size();
 	mVertexOffset += mesh.mMeshData->mVertices.size();
+}
+
+void SkinnedMesh::MeshBatch::draw_content(const nanogui::Matrix4f& view,
+										  const nanogui::Matrix4f& projection) {
+	
+#if defined(NANOGUI_USE_OPENGL) || defined(NANOGUI_USE_GLES)
+	// Enable stencil test
+	glEnable(GL_STENCIL_TEST);
+	glEnable(GL_DEPTH_TEST);
+	
+	// Clear stencil buffer and depth buffer
+	glClear(GL_STENCIL_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	
+	// First pass: Mark the stencil buffer
+	glStencilFunc(GL_ALWAYS, 1, 0xFF);  // Always pass stencil test
+	glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);  // Replace stencil buffer with 1 where actors are drawn
+	glStencilMask(0xFF);  // Enable writing to the stencil buffer
+#elif defined(NANOGUI_USE_METAL)
+//	
+//	auto descriptor = mShader.render_pass().pass_descriptor();
+//	auto encoder = mShader.render_pass().command_encoder();
+//
+//	// Get the Metal device and command encoder (ensure you have valid pointers to these)
+//	void* mtlDevice = nanogui::metal_device();
+//	void* mtlCommandEncoder = encoder;
+//	
+//	// Create a depth-stencil state for this draw call
+//	void* depthStencilState = MetalHelper::createDepthStencilState(mtlDevice, CompareFunction::Always,
+//																   StencilOperation::Keep, StencilOperation::Keep,
+//																   StencilOperation::Replace, 0xFF, 0xFF);
+//	
+//	// Set the depth-stencil state on the command encoder
+//	MetalHelper::setDepthStencilState(mtlCommandEncoder, depthStencilState);
+//	
+//	// Clear stencil and depth buffers
+//	MetalHelper::setStencilClear(descriptor);
+//	MetalHelper::setDepthClear(descriptor);
+#endif
+	
 	
 	// Upload consolidated data to GPU
 	mShader.set_buffer("aPosition", nanogui::VariableType::Float32, {mBatchPositions.size() / 3, 3},
@@ -300,15 +389,12 @@ void SkinnedMesh::MeshBatch::prepare() {
 	// Upload indices
 	mShader.set_buffer("indices", nanogui::VariableType::UInt32, {mBatchIndices.size()},
 					   mBatchIndices.data());
-}
 
-void SkinnedMesh::MeshBatch::draw_content(const nanogui::Matrix4f& view,
-										  const nanogui::Matrix4f& projection) {
-	
+	// Set uniforms and draw the mesh content
 	mShader.set_uniform("aView", view);
 	mShader.set_uniform("aProjection", projection);
+	
 	for (size_t i = 0; i < mMeshes.size(); ++i) {
-		
 		auto& mesh = mMeshes[i].get();
 		
 		// Set the model matrix for the current mesh
@@ -328,9 +414,14 @@ void SkinnedMesh::MeshBatch::draw_content(const nanogui::Matrix4f& view,
 		
 		// Begin shader program
 		mShader.begin();
+		
 		// Draw the mesh segment
-		mShader.draw_array(nanogui::Shader::PrimitiveType::Triangle, startIdx, count, true);
+		mShader.draw_array(nanogui::Shader::PrimitiveType::Triangle,
+						   startIdx, count, true);
+
 		// End shader program
 		mShader.end();
 	}
+
+
 }

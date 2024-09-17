@@ -161,6 +161,9 @@ protected:
     std::vector<LayerElementF4> m_color_layers;
     std::vector<LayerElementI1> m_material_layers;
     std::vector<std::vector<LayerElementDesc>> m_layers;
+	
+private:
+	std::unordered_map<size_t, int> m_vertex_to_material_map;
 };
 
 

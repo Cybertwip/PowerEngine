@@ -137,7 +137,7 @@ public:
 			
 			// Verify keyframes after time update
 			verify_previous_next_keyframes(mActiveActor);
-
+			
 		});
 		
 		// Buttons Wrapper
@@ -171,7 +171,7 @@ public:
 			mTimelineSlider->set_value(0.0f);
 			
 			mAnimatableActors = mActorManager.get_actors_with_component<AnimationComponent>();
-
+			
 			evaluate_animations();
 		});
 		
@@ -184,13 +184,13 @@ public:
 			if (mCurrentTime > 0) {
 				stop_playback();
 				verify_previous_next_keyframes(mActiveActor);
-
+				
 				mCurrentTime--;
 				update_time_display(mCurrentTime);
 				mTimelineSlider->set_value(static_cast<float>(mCurrentTime) / mTotalFrames);
 				
 				mAnimatableActors = mActorManager.get_actors_with_component<AnimationComponent>();
-
+				
 				evaluate_animations();
 			}
 		});
@@ -203,7 +203,7 @@ public:
 		stopBtn->set_callback([this]() {
 			stop_playback();
 			verify_previous_next_keyframes(mActiveActor);
-
+			
 			mCurrentTime = 0;
 			update_time_display(mCurrentTime);
 			mTimelineSlider->set_value(0.0f);
@@ -221,7 +221,7 @@ public:
 		mPlayPauseBtn->set_change_callback([this](bool active) {
 			
 			verify_previous_next_keyframes(mActiveActor);
-
+			
 			if (active) {
 				// Play
 				toggle_play_pause(true);
@@ -249,7 +249,7 @@ public:
 		mRecordBtn->set_change_callback([this, normalRecordColor](bool active) {
 			
 			verify_previous_next_keyframes(mActiveActor);
-
+			
 			if (!mPlaying) {
 				mRecording = active;
 				mRecordBtn->set_text_color(active ? nanogui::Color(1.0f, 0.0f, 0.0f, 1.0f) : normalRecordColor); // Red when recording
@@ -272,7 +272,7 @@ public:
 				mTimelineSlider->set_value(static_cast<float>(mCurrentTime) / mTotalFrames);
 				
 				mAnimatableActors = mActorManager.get_actors_with_component<AnimationComponent>();
-
+				
 				evaluate_animations();
 			}
 		});
@@ -286,19 +286,19 @@ public:
 			stop_playback(); // Ensure playback is stopped
 			
 			verify_previous_next_keyframes(mActiveActor);
-
+			
 			mCurrentTime = mTotalFrames;
 			update_time_display(mCurrentTime);
 			mTimelineSlider->set_value(1.0f);
 			
 			mAnimatableActors = mActorManager.get_actors_with_component<AnimationComponent>();
-
+			
 			evaluate_animations();
 		});
 		
 		nanogui::Widget* keyBtnWrapper = new nanogui::Widget(this);
 		keyBtnWrapper->set_layout(new nanogui::BoxLayout(nanogui::Orientation::Horizontal, nanogui::Alignment::Middle, 1, 1));
-
+		
 		mPrevKeyBtn = new nanogui::Button(keyBtnWrapper, "", FA_STEP_BACKWARD);
 		
 		mPrevKeyBtn->set_enabled(false);
@@ -333,7 +333,7 @@ public:
 				// For simplicity, we'll just print to the console
 				std::cout << "No previous keyframe available." << std::endl;
 			}
-
+			
 		});
 		
 		mKeyBtn = new nanogui::Button(keyBtnWrapper, "", FA_KEY);
@@ -343,7 +343,7 @@ public:
 		
 		// Initially set to the normal button color
 		mKeyBtn->set_text_color(mNormalButtonColor);
-
+		
 		mKeyBtn->set_callback([this](){
 			if (mActiveActor.has_value()) {
 				if (!mPlaying) {
@@ -371,7 +371,7 @@ public:
 		mNextKeyBtn = new nanogui::Button(keyBtnWrapper, "", FA_STEP_FORWARD);
 		
 		mNextKeyBtn->set_enabled(false);
-
+		
 		mNextKeyBtn->set_fixed_width(keyBtnWidth);
 		mNextKeyBtn->set_fixed_height(keyBtnHeight);
 		mNextKeyBtn->set_tooltip("Next Frame");
@@ -403,7 +403,7 @@ public:
 				// For simplicity, we'll just print to the console
 				std::cout << "No next keyframe available." << std::endl;
 			}
-
+			
 		});
 	}
 	
@@ -439,7 +439,7 @@ public:
 			}
 		}
 	}
-
+	
 	// Override OnActorSelected from IActorSelectedCallback
 	void OnActorSelected(std::optional<std::reference_wrapper<Actor>> actor) override {
 		unregister_actor_transform_callback(mActiveActor);
@@ -512,7 +512,7 @@ public:
 		}
 		
 		evaluate_keyframe_status();
-
+		
 		// Draw background
 		nvgBeginPath(ctx);
 		nvgRect(ctx, m_pos.x(), m_pos.y(), m_size.x(), m_size.y());
@@ -644,9 +644,15 @@ UiManager::UiManager(IActorSelectedRegistry& registry, IActorVisualManager& acto
 : mRegistry(registry)
 , mActorManager(actorManager)
 , mShader(*shaderManager.get_shader("mesh"))
-, mGizmoManager(std::make_unique<GizmoManager>(toolbox, shaderManager, actorManager))
 , mGrid(std::make_unique<Grid>(shaderManager))
-, mMeshActorLoader(meshActorLoader) {
+, mMeshActorLoader(meshActorLoader)
+, mGizmoManager(std::make_unique<GizmoManager>(toolbox, shaderManager, actorManager, mMeshActorLoader))
+
+, mCanvas(canvas) {
+	//
+	//	mRenderPass = new nanogui::RenderPass({mCanvas.render_pass()->targets()[2],
+	//		mCanvas.render_pass()->targets()[3]}, mCanvas.render_pass()->targets()[0], mCanvas.render_pass()->targets()[1], nullptr);
+	
 	mRegistry.RegisterOnActorSelectedCallback(*this);
 	
 	// Initialize the scene time bar
@@ -658,12 +664,10 @@ UiManager::UiManager(IActorSelectedRegistry& registry, IActorVisualManager& acto
 	mSceneTimeBar->set_position(nanogui::Vector2i(0, 0));  // Stick to top
 	
 	
-	canvas.register_draw_callback([this, &actorManager]() {
-		actorManager.draw();
+	canvas.register_draw_callback([this]() {
 		draw();
-		mGizmoManager->draw();
 	});
-
+	
 	auto readFromFramebuffer = [&canvas](int width, int height, int x, int y){
 		auto viewport = canvas.render_pass()->viewport();
 		
@@ -678,11 +682,13 @@ UiManager::UiManager(IActorSelectedRegistry& registry, IActorVisualManager& acto
 		adjusted_x *= scaleX;
 		adjusted_y *= scaleY;
 		
-		int image_width = 4;
-		int image_height = 4;
+		int image_width = 2;
+		int image_height = 2;
 		
 		// Buffer to store the pixel data (16 integers for a 4x4 region)
-		std::vector<int> pixels(image_width * image_height);
+		std::vector<int> pixels;
+		
+		pixels.resize(image_width * image_height);
 		
 #if defined(NANOGUI_USE_OPENGL) || defined(NANOGUI_USE_GLES)
 		// Bind the framebuffer from which you want to read pixels (OpenGL/GLES)
@@ -700,8 +706,12 @@ UiManager::UiManager(IActorSelectedRegistry& registry, IActorVisualManager& acto
 		glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
 		
 #elif defined(NANOGUI_USE_METAL)
+		
+		nanogui::Texture *attachment_texture =
+		dynamic_cast<nanogui::Texture *>(canvas.render_pass()->targets()[3]);
+		
 		// Metal specific code using MetalHelper
-		MetalHelper::readPixelsFromMetal(adjusted_x, adjusted_y, image_width, image_height, pixels.data());
+		MetalHelper::readPixelsFromMetal(canvas.screen()->nswin(), attachment_texture->texture_handle(), adjusted_x, adjusted_y, image_width, image_height, pixels);
 #endif
 		
 		int id = 0;
@@ -716,7 +726,7 @@ UiManager::UiManager(IActorSelectedRegistry& registry, IActorVisualManager& acto
 		
 		return id;
 	};
-
+	
 	
 	scenePanel.register_click_callback([this, &canvas, &toolbox, readFromFramebuffer, &actorVisualManager](bool down, int width, int height, int x, int y){
 		
@@ -742,7 +752,7 @@ UiManager::UiManager(IActorSelectedRegistry& registry, IActorVisualManager& acto
 				}
 				
 				mGizmoManager->select(id);
-			} else {				
+			} else {
 				mActiveActor = std::nullopt;
 				
 				actorVisualManager.fire_actor_selected_event(mActiveActor);
@@ -814,10 +824,10 @@ UiManager::UiManager(IActorSelectedRegistry& registry, IActorVisualManager& acto
 	statusBarPanel->set_layout(new nanogui::BoxLayout(nanogui::Orientation::Horizontal,
 													  nanogui::Alignment::Minimum, 4, 2));
 	
-	mSelectionColor = glm::vec3(0.83f, 0.68f, 0.21f); // A gold-ish color
+	mSelectionColor = glm::vec4(0.83f, 0.68f, 0.21f, 1.0f); // A gold-ish color
 	
 	mSelectionColor = glm::normalize(mSelectionColor);
-
+	
 }
 
 UiManager::~UiManager() {
@@ -832,20 +842,38 @@ void UiManager::OnActorSelected(std::optional<std::reference_wrapper<Actor>> act
 }
 
 void UiManager::draw() {
+	// Begin the first render pass for actors
+	mCanvas.render_pass()->begin();
+//	mCanvas.render_pass()->clear_depth(1.0f);
+	
+	// Set depth test to Less and enable depth writing
+	mCanvas.render_pass()->set_depth_test(nanogui::RenderPass::DepthTest::Less, true);
+	
+	// Draw all actors
+	mActorManager.draw();
+	
 	if (mActiveActor) {
 		auto& color = mActiveActor->get().get_component<ColorComponent>();
-		
 		color.set_color(mSelectionColor);
 	}
-
+	
 	mActorManager.visit(mMeshActorLoader.mesh_batch());
-	mActorManager.visit(*this);
+	
+	mCanvas.render_pass()->end();
+	
+//	mCanvas.render_pass()->begin();
+//	// Disable depth testing for gizmos (always render on top)
+//	mCanvas.render_pass()->set_depth_test(nanogui::RenderPass::DepthTest::Always, true);
+//	
+//	// Draw gizmos
+//	mGizmoManager->draw();
+//	
+//	// End the second render pass
+//	mCanvas.render_pass()->end();
 }
 
 void UiManager::draw_content(const nanogui::Matrix4f& model, const nanogui::Matrix4f& view,
 							 const nanogui::Matrix4f& projection) {
-	// Batch OpenGL state changes to minimize state changes
-	
 	// Draw the grid first
 	if (mGrid) {
 		mGrid->draw_content(model, view, projection);
