@@ -50,7 +50,7 @@ Application::Application() : nanogui::Screen("Power Engine") {
 
 	mSkinnedMeshShader = std::make_unique<SkinnedMesh::SkinnedMeshShader>(mRenderCommon->shader_manager());
 	
-	mMeshBatch = std::make_unique<SkinnedMesh::MeshBatch>();
+	mMeshBatch = std::make_unique<SkinnedMesh::MeshBatch>(*mRenderCommon->canvas().render_pass());
 
 	mMeshActorLoader = std::make_unique<MeshActorLoader>(*mActorManager, mRenderCommon->shader_manager(), *mMeshBatch);
 

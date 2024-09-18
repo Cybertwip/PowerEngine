@@ -78,7 +78,7 @@ public:
 		};
 		
 	public:
-		MeshBatch();
+		MeshBatch(nanogui::RenderPass& renderPass);
 		
 		void add_mesh(std::reference_wrapper<SkinnedMesh> mesh);
 		void clear();
@@ -104,6 +104,8 @@ public:
 		std::unordered_map<int, std::vector<size_t>> mMeshStartIndices;
 		
 		std::unordered_map<int, VertexIndexer> mVertexIndexingMap;
+		
+		nanogui::RenderPass& mRenderPass;
 	};
 
 

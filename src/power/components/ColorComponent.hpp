@@ -9,11 +9,11 @@ class ShaderWrapper;
 
 class ColorComponent {
 public:
-    static nanogui::Vector4f glm_to_nanogui(glm::vec3 color){
-		return nanogui::Vector4f(color.x, color.y, color.z, 1.0f);
+    static nanogui::Vector4f glm_to_nanogui(glm::vec4 color){
+		return nanogui::Vector4f(color.x, color.y, color.z, color.w);
     }
 	
-	ColorComponent(MetadataComponent& metadataComponent, ShaderWrapper& shaderWrapper);
+	ColorComponent(MetadataComponent& metadataComponent);
 
 	void set_color(const glm::vec4& color);
 	
@@ -26,12 +26,10 @@ public:
 		return mVisible;
 	}
 	
-	void apply();
-
+	void apply_to(ShaderWrapper& shaderWrapper);
 	
 private:
 	MetadataComponent& mMetadataComponent;
-	ShaderWrapper& mShader;
 	glm::vec4 mColor;
 	bool mVisible;
 };

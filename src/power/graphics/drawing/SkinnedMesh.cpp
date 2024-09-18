@@ -270,7 +270,7 @@ void SkinnedMesh::init_dummy_texture() {
 
 std::unique_ptr<nanogui::Texture> SkinnedMesh::mDummyTexture;
 
-SkinnedMesh::MeshBatch::MeshBatch() {
+SkinnedMesh::MeshBatch::MeshBatch(nanogui::RenderPass& renderPass) : mRenderPass(renderPass) {
 }
 
 void SkinnedMesh::MeshBatch::add_mesh(std::reference_wrapper<SkinnedMesh> mesh) {
@@ -278,7 +278,7 @@ void SkinnedMesh::MeshBatch::add_mesh(std::reference_wrapper<SkinnedMesh> mesh) 
 	auto it = std::find_if(mMeshes.begin(), mMeshes.end(), [mesh](auto kp) {
 		return kp.first->identifier() == mesh.get().get_shader().identifier();
 	});
-							  
+
 	if (it != mMeshes.end()) {
 		it->second.push_back(mesh);
 	} else {
@@ -390,6 +390,8 @@ void SkinnedMesh::MeshBatch::draw_content(const nanogui::Matrix4f& view,
 		auto& shader = *shader_pointer;
 		int identifier = shader.identifier();
 		
+		mRenderPass.pop_depth_test_state(identifier);
+		
 		for (int i = 0; i<mesh_vector.size(); ++i) {
 			auto& mesh = mesh_vector[i].get();
 			
@@ -406,9 +408,9 @@ void SkinnedMesh::MeshBatch::draw_content(const nanogui::Matrix4f& view,
 
 			// Set the model matrix for the current mesh
 			shader.set_uniform("aModel", mesh.mModelMatrix);
-			
+
 			// Apply color component (assuming it sets relevant uniforms)
-			mesh.mColorComponent.apply();
+			mesh.mColorComponent.apply_to(shader);
 			
 			// Upload materials for the current mesh
 			upload_material_data(shader, mesh.mMeshData->mMaterials);

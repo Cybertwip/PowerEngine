@@ -45,9 +45,8 @@ private:
 	ActorManager& mActorManager;
 	std::optional<std::reference_wrapper<Actor>> mActiveActor;
 
-	ShaderWrapper mShader;
-	
-	
+	ShaderManager& mShaderManager;
+
 	std::unique_ptr<Grid> mGrid;
 	
 	MeshActorLoader& mMeshActorLoader;

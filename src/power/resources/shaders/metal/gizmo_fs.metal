@@ -29,6 +29,7 @@ fragment FragmentOut fragment_main(VertexOut vert [[stage_in]],
                               constant Material *materials [[buffer(0)]],  
                               constant float4 &color [[buffer(1)]],
                               constant int &identifier [[buffer(2)]],
+                              constant float4x4 &aView [[buffer(3)]],
                               array<texture2d<float, access::sample>, 4> textures,
                               array<sampler, 4> textures_sampler) {
     Material mat = materials[vert.TextureId];
@@ -46,18 +47,7 @@ fragment FragmentOut fragment_main(VertexOut vert [[stage_in]],
         mat_diffuse = float4(mat.diffuse * mat.specular);  // Use material opacity
         mat_diffuse.a = mat.opacity;
     }
-
-    float3 final_color = mat_diffuse.rgb;
-    float selectionOpacity = mat_diffuse.a;  // Use the alpha from the texture
-
-    if (length(color.rgba) == 1.0) { // Red selection color
-        float brightness = dot(final_color, float3(0.299, 0.587, 0.114));
-        float darkness_factor = clamp(1.0 - brightness / 0.05, 0.0, 1.0);
-        final_color = mix(final_color, color.rgb, darkness_factor);
-        selectionOpacity *= mix(0.3, 1.0, 1.0 - darkness_factor);
-        final_color = mix(final_color, color.rgb, 0.25);
-    }
-
+        
     int entityId = identifier;
 
     if (mat.diffuse.r != 0.0) {
@@ -70,7 +60,7 @@ fragment FragmentOut fragment_main(VertexOut vert [[stage_in]],
 
     FragmentOut out;
 
-    out.color = float4(mat.diffuse.rgb, selectionOpacity);
+    out.color = mat_diffuse;
     out.entityId = entityId;
 
     return out;

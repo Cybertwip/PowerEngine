@@ -106,7 +106,7 @@ Shader::Shader(RenderPass *render_pass,
         else
             pipeline_desc.colorAttachments[i-2].pixelFormat = pixel_format;
 
-        if (i >= 2 && blend_mode == BlendMode::AlphaBlend) {
+        if (i == 2 && blend_mode == BlendMode::AlphaBlend) {
             MTLRenderPipelineColorAttachmentDescriptor *att =
                 pipeline_desc.colorAttachments[i - 2];
             att.blendingEnabled             = YES;

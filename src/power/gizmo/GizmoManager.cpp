@@ -251,14 +251,14 @@ void GizmoManager::draw() {
 }
 
 void GizmoManager::draw_content(const nanogui::Matrix4f& model, const nanogui::Matrix4f& view,
-								const nanogui::Matrix4f& projection) {
+	const nanogui::Matrix4f& projection) {
 	
 	if (mActiveActor.has_value()) {
 		if (mActiveGizmo.has_value()) {
 			auto& actor = mActiveActor;
 			
 			auto& transformComponent = actor->get().get_component<TransformComponent>();
-			
+
 			auto translation = transformComponent.get_translation();
 			auto rotation = transformComponent.get_rotation();
 			

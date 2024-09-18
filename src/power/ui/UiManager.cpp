@@ -643,7 +643,7 @@ private:
 UiManager::UiManager(IActorSelectedRegistry& registry, IActorVisualManager& actorVisualManager, ActorManager& actorManager, MeshActorLoader& meshActorLoader, ShaderManager& shaderManager, ScenePanel& scenePanel, Canvas& canvas, nanogui::Widget& toolbox, nanogui::Widget& statusBar, CameraManager& cameraManager, std::function<void(std::function<void(int, int)>)> applicationClickRegistrator)
 : mRegistry(registry)
 , mActorManager(actorManager)
-, mShader(*shaderManager.get_shader("mesh"))
+, mShaderManager(shaderManager)
 , mGrid(std::make_unique<Grid>(shaderManager))
 , mMeshActorLoader(meshActorLoader)
 , mGizmoManager(std::make_unique<GizmoManager>(toolbox, shaderManager, actorManager, mMeshActorLoader))
@@ -856,7 +856,7 @@ void UiManager::draw() {
 	mCanvas.render_pass()->clear_depth(1.0f);
 
 	// Set depth test to Less and enable depth writing
-	mCanvas.render_pass()->set_depth_test(nanogui::RenderPass::DepthTest::Less, true);
+	mCanvas.render_pass()->push_depth_test_state(nanogui::RenderPass::DepthTest::Less, true, mShaderManager.identifier("mesh"));
 	
 	// Draw all actors
 	mActorManager.draw();
@@ -868,6 +868,8 @@ void UiManager::draw() {
 	
 	// Draw gizmos
 	mGizmoManager->draw();
+
+	mCanvas.render_pass()->push_depth_test_state(nanogui::RenderPass::DepthTest::Always, true, mShaderManager.identifier("gizmo"));
 
 	mActorManager.visit(mMeshActorLoader.mesh_batch());
 		

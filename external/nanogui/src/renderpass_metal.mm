@@ -319,6 +319,18 @@ void RenderPass::set_depth_test(DepthTest depth_test, bool depth_write) {
 	}
 }
 
+void RenderPass::push_depth_test_state(DepthTest depth_test, bool depth_write, int identifier) {
+	mDepthTestStates[identifier].push_back([this, depth_test, depth_write](){
+		set_depth_test(depth_test, depth_write);
+	});
+}
+
+void RenderPass::pop_depth_test_state(int identifier) {
+	auto state = mDepthTestStates[identifier].front();
+	mDepthTestStates[identifier].pop_front();
+	state();
+}
+
 void RenderPass::set_cull_mode(CullMode cull_mode) {
 	m_cull_mode = cull_mode;
 	if (m_active) {

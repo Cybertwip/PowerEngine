@@ -19,6 +19,8 @@
 #include <nanogui/object.h>
 #include <nanogui/vector.h>
 #include <unordered_map>
+#include <map>
+#include <deque>
 
 NAMESPACE_BEGIN(nanogui)
 
@@ -121,6 +123,10 @@ public:
 
     /// Specify the depth test and depth write mask of this render pass
     void set_depth_test(DepthTest depth_test, bool depth_write);
+	
+	void push_depth_test_state(DepthTest depth_test, bool depth_write, int identifier);
+	
+	void pop_depth_test_state(int identifier);
 
     /// Return the depth test and depth write mask of this render pass
     std::pair<DepthTest, bool> depth_test() const { return { m_depth_test, m_depth_write }; }
@@ -196,6 +202,8 @@ protected:
     void *m_pass_descriptor;
     ref<Shader> m_clear_shader;
 #endif
+	
+	std::map<int, std::deque<std::function<void()>>> mDepthTestStates;
 };
 
 NAMESPACE_END(nanogui)

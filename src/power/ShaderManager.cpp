@@ -39,7 +39,7 @@ nanogui::ref<nanogui::Shader> ShaderManager::load_shader(const std::string &name
 	std::string vertex_code = read_file(vertex_path);
 	std::string fragment_code = read_file(fragment_path);
 	nanogui::ref<nanogui::Shader> shader =
-	new nanogui::Shader(&mRenderPass, name, vertex_code, fragment_code, nanogui::Shader::BlendMode::None);
+	new nanogui::Shader(&mRenderPass, name, vertex_code, fragment_code, nanogui::Shader::BlendMode::AlphaBlend);
 	mShaderCache[name] = shader;
 	return shader;
 }
@@ -65,4 +65,8 @@ void ShaderManager::load_default_shaders() {
     load_shader("simple_model", "shaders/simple_model.vs", "shaders/simple_model.fs");
     load_shader("sprite_billboard", "shaders/sprite_billboard.vs", "shaders/sprite_billboard.fs");
     load_shader("ui_model", "shaders/ui_model.vs", "shaders/ui_model.fs");
+}
+
+int ShaderManager::identifier(const std::string& name) {
+	return std::hash<std::string>{}(get_shader(name)->name());
 }

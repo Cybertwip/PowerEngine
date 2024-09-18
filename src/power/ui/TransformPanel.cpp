@@ -165,13 +165,13 @@ TransformPanel::~TransformPanel() {
 }
 
 void TransformPanel::gather_values_into(TransformComponent &transform) {
-	transform.set_translation(
-							  glm::vec3(mXTranslate->value(), mYTranslate->value(), mZTranslate->value()));
 	
-	glm::quat rotation = glm::quat(glm::vec3(glm::radians((float)mPitchRotate->value()),
-											 glm::radians((float)mYawRotate->value()),
-											 glm::radians((float)mRollRotate->value())));
-	transform.set_rotation(rotation);
+	transform.transform.translation = ozz::math::Float3(mXTranslate->value(), mYTranslate->value(), mZTranslate->value());
+
+	auto rotation = glm::quat(glm::vec3(glm::radians((float)mPitchRotate->value()),
+									glm::radians((float)mYawRotate->value()),
+									glm::radians((float)mRollRotate->value())));
+	transform.transform.rotation = ozz::math::Quaternion(rotation.x, rotation.y, rotation.z, rotation.w);
 	
 	transform.transform.scale = ozz::math::Float3((float)mXScale->value(), (float)mYScale->value(),
 												  (float)mZScale->value());
@@ -188,7 +188,7 @@ void TransformPanel::update_values_from(const TransformComponent &transform) {
 	mYawRotate->set_value((int)glm::degrees(eulerAngles.y));
 	mRollRotate->set_value((int)glm::degrees(eulerAngles.z));
 	
-	ozz::math::Float3 scale = transform.transform.scale;
+	glm::vec3 scale = transform.get_scale();
 	mXScale->set_value((int)scale.x);
 	mYScale->set_value((int)scale.y);
 	mZScale->set_value((int)scale.z);
