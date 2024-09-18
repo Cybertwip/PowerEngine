@@ -195,6 +195,16 @@ void TransformPanel::update_values_from(const TransformComponent &transform) {
 }
 
 void TransformPanel::set_active_actor(std::optional<std::reference_wrapper<Actor>> actor) {
+
+	mXTranslate->commit();
+	mYTranslate->commit();
+	mZTranslate->commit();
+	mPitchRotate->commit();
+	mYawRotate->commit();
+	mRollRotate->commit();
+	mXScale->commit();
+	mYScale->commit();
+	mZScale->commit();
 	mActiveActor = actor;
 	
 	if (mActiveActor.has_value()) {
@@ -204,7 +214,9 @@ void TransformPanel::set_active_actor(std::optional<std::reference_wrapper<Actor
 		mTransformRegistrationId = transformComponent.register_on_transform_changed_callback([this](const TransformComponent& transform) {
 			update_values_from(transform);
 		});
-		
+
 		update_values_from(transformComponent);
 	}
+
+
 }

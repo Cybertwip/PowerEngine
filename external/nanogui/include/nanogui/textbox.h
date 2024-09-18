@@ -96,6 +96,14 @@ public:
 
     virtual Vector2i preferred_size(NVGcontext *ctx) const override;
     virtual void draw(NVGcontext* ctx) override;
+	
+	void commit() {
+		m_committed = true;
+		m_cursor_pos = -1;
+		m_selection_pos = -1;
+		m_focused = false;
+	}
+
 protected:
     bool check_format(const std::string &input, const std::string &format);
     bool copy_selection();
@@ -112,7 +120,6 @@ protected:
     /// The location (if any) for the spin area.
     enum class SpinArea { None, Top, Bottom };
     SpinArea spin_area(const Vector2i &pos);
-
 protected:
     bool m_editable;
     bool m_spinnable;
