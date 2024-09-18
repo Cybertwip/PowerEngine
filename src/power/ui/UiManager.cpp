@@ -339,7 +339,7 @@ public:
 		mKeyBtn = new nanogui::Button(keyBtnWrapper, "", FA_KEY);
 		mKeyBtn->set_fixed_width(keyBtnWidth);
 		mKeyBtn->set_fixed_height(keyBtnHeight);
-		mKeyBtn->set_tooltip("Keyframe Status");
+		mKeyBtn->set_tooltip("Keyframe Tool");
 		
 		// Initially set to the normal button color
 		mKeyBtn->set_text_color(mNormalButtonColor);

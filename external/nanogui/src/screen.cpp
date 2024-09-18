@@ -629,7 +629,7 @@ void Screen::draw_widgets() {
 	
 	double elapsed = glfwGetTime() - m_last_interaction;
 	
-	if (true) {
+	if (elapsed > 0.5f) {
 		/* Draw tooltips */
 		const Widget *widget = find_widget(m_mouse_pos);
 		if (widget && !widget->tooltip().empty()) {
@@ -664,8 +664,8 @@ void Screen::draw_widgets() {
 				bounds[2] -= shift;
 			}
 			
-			nvgGlobalAlpha(m_nvg_context,
-						   std::min(1.0, 2 * (elapsed - 0.5f)) * 0.8);
+//			nvgGlobalAlpha(m_nvg_context,
+//						   std::min(1.0, 2 * (elapsed - 0.5f)) * 0.8);
 			
 			nvgBeginPath(m_nvg_context);
 			nvgFillColor(m_nvg_context, Color(0, 255));

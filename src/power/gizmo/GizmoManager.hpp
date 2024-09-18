@@ -70,9 +70,9 @@ private:
 
 	GizmoAxis mGizmoAxis = GizmoAxis::None;
 	
-	nanogui::Button* translationButton;
-	nanogui::Button* rotationButton;
-	nanogui::Button* scaleButton;
+	nanogui::Button* mTranslationButton;
+	nanogui::Button* mRotationButton;
+	nanogui::Button* mScaleButton;
 	
 	std::optional<std::reference_wrapper<Actor>> mActiveGizmo;
 };
