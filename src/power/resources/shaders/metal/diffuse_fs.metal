@@ -29,8 +29,8 @@ fragment FragmentOut fragment_main(VertexOut vert [[stage_in]],
                               constant Material *materials [[buffer(0)]],  
                               constant float4 &color [[buffer(1)]],
                               constant int &identifier [[buffer(2)]],
-                              array<texture2d<float, access::sample>, 4> textures,
-                              array<sampler, 4> textures_sampler) {
+                              array<texture2d<float, access::sample>, 16> textures,
+                              array<sampler, 16> textures_sampler) {
     Material mat = materials[vert.TextureId];
     texture2d<float> diffuse_texture = textures[vert.TextureId];
     sampler diffuse_sampler = textures_sampler[vert.TextureId];

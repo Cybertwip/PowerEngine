@@ -11,6 +11,7 @@
 #endif
 
 #include <cmath>
+#include <algorithm>
 
 #include "CameraManager.hpp"
 #include "Canvas.hpp"
@@ -273,7 +274,16 @@ SkinnedMesh::MeshBatch::MeshBatch() {
 }
 
 void SkinnedMesh::MeshBatch::add_mesh(std::reference_wrapper<SkinnedMesh> mesh) {
-	mMeshes[&(mesh.get().get_shader())].push_back(mesh);
+	
+	auto it = std::find_if(mMeshes.begin(), mMeshes.end(), [mesh](auto kp) {
+		return kp.first->identifier() == mesh.get().get_shader().identifier();
+	});
+							  
+	if (it != mMeshes.end()) {
+		it->second.push_back(mesh);
+	} else {
+		mMeshes[&(mesh.get().get_shader())].push_back(mesh);
+	}
 }
 
 void SkinnedMesh::MeshBatch::clear() {
@@ -292,7 +302,7 @@ void SkinnedMesh::MeshBatch::append(std::reference_wrapper<SkinnedMesh> meshRef)
 	
 	auto& shader = mesh.get_shader();
 	int identifier = shader.identifier();
-	auto& indexer = mVertexIndexingMap[shader.identifier()];
+	auto& indexer = mVertexIndexingMap[identifier];
 	
 	// Append vertex data
 	mBatchPositions[identifier].insert(mBatchPositions[identifier].end(),
@@ -320,6 +330,23 @@ void SkinnedMesh::MeshBatch::append(std::reference_wrapper<SkinnedMesh> meshRef)
 	
 	indexer.mIndexOffset += mesh.mMeshData->mIndices.size();
 	indexer.mVertexOffset += mesh.mMeshData->mVertices.size();
+	
+	
+	// Upload consolidated data to GPU
+	shader.set_buffer("aPosition", nanogui::VariableType::Float32, {mBatchPositions[identifier].size() / 3, 3},
+					  mBatchPositions[identifier].data());
+	shader.set_buffer("aNormal", nanogui::VariableType::Float32, {mBatchNormals[identifier].size() / 3, 3},
+					  mBatchNormals[identifier].data());
+	shader.set_buffer("aTexcoords1", nanogui::VariableType::Float32, {mBatchTexCoords1[identifier].size() / 2, 2},
+					  mBatchTexCoords1[identifier].data());
+	shader.set_buffer("aTexcoords2", nanogui::VariableType::Float32, {mBatchTexCoords2[identifier].size() / 2, 2},
+					  mBatchTexCoords2[identifier].data());
+	shader.set_buffer("aTextureId", nanogui::VariableType::Int32, {mBatchTextureIds[identifier].size() / 2, 2},
+					  mBatchTextureIds[identifier].data());
+	
+	// Upload indices
+	shader.set_buffer("indices", nanogui::VariableType::UInt32, {mBatchIndices[identifier].size()},
+					  mBatchIndices[identifier].data());
 }
 
 void SkinnedMesh::MeshBatch::draw_content(const nanogui::Matrix4f& view,
@@ -361,37 +388,16 @@ void SkinnedMesh::MeshBatch::draw_content(const nanogui::Matrix4f& view,
 	
 	for (auto& [shader_pointer, mesh_vector] : mMeshes) {
 		auto& shader = *shader_pointer;
-		
-		int identifier = shader.identifier();
-		
-		// Upload consolidated data to GPU
-		shader.set_buffer("aPosition", nanogui::VariableType::Float32, {mBatchPositions[identifier].size() / 3, 3},
-						  mBatchPositions[identifier].data());
-		shader.set_buffer("aNormal", nanogui::VariableType::Float32, {mBatchNormals[identifier].size() / 3, 3},
-						  mBatchNormals[identifier].data());
-		shader.set_buffer("aTexcoords1", nanogui::VariableType::Float32, {mBatchTexCoords1[identifier].size() / 2, 2},
-						  mBatchTexCoords1[identifier].data());
-		shader.set_buffer("aTexcoords2", nanogui::VariableType::Float32, {mBatchTexCoords2[identifier].size() / 2, 2},
-						  mBatchTexCoords2[identifier].data());
-		shader.set_buffer("aTextureId", nanogui::VariableType::Int32, {mBatchTextureIds[identifier].size() / 2, 2},
-						  mBatchTextureIds[identifier].data());
-		
-		// Upload indices
-		shader.set_buffer("indices", nanogui::VariableType::UInt32, {mBatchIndices[identifier].size()},
-						  mBatchIndices[identifier].data());
-		
-		// Set uniforms and draw the mesh content
-		shader.set_uniform("aView", view);
-		shader.set_uniform("aProjection", projection);
-	}
-	
-	for (auto& [shader_pointer, mesh_vector] : mMeshes) {
-		auto& shader = *shader_pointer;
 		int identifier = shader.identifier();
 		
 		for (int i = 0; i<mesh_vector.size(); ++i) {
 			auto& mesh = mesh_vector[i].get();
 			auto& shader = mesh.get_shader();
+			
+			// Set uniforms and draw the mesh content
+			shader.set_uniform("aView", view);
+			shader.set_uniform("aProjection", projection);
+
 
 			// Set the model matrix for the current mesh
 			shader.set_uniform("aModel", mesh.mModelMatrix);
