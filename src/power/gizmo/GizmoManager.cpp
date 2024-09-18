@@ -24,10 +24,10 @@
 
 GizmoManager::GizmoManager(nanogui::Widget& parent, ShaderManager& shaderManager, ActorManager& actorManager, MeshActorLoader& meshActorLoader)
 : mShaderManager(shaderManager), mActorManager(actorManager),
-	mMeshActorLoader(meshActorLoader),
+mMeshActorLoader(meshActorLoader),
 mShader(std::make_unique<ShaderWrapper>(*shaderManager.get_shader("gizmo"))),
 mTranslationGizmo(mMeshActorLoader.create_actor("models/Gizmo/Translation.fbx", *mShader))
-//mRotationGizmo(mMeshActorLoader.create_actor("models/Gizmo/Rotation.fbx"))
+mRotationGizmo(mMeshActorLoader.create_actor("models/Gizmo/Rotation.fbx"), *mShader)
 /*mScaleGizmo(mMeshActorLoader.create_actor("models/Gizmo/Translation.fbx"))*/ {
 	
 	// Translation Button
@@ -70,28 +70,157 @@ mTranslationGizmo(mMeshActorLoader.create_actor("models/Gizmo/Translation.fbx", 
 	translationButton->set_pushed(true);  // Set default to Translation
 }
 
-void GizmoManager::select(int gizmoId) {
-//	mTranslationGizmo->select(gizmoId);
-//	mRotationGizmo->select(gizmoId);
-//	mScaleGizmo->select(gizmoId);
+void GizmoManager::select(GizmoAxis gizmoId) {
+	mGizmoAxis = gizmoId;
+	//	mTranslationGizmo->select(gizmoId);
+	//	mRotationGizmo->select(gizmoId);
+	//	mScaleGizmo->select(gizmoId);
 }
 
-void GizmoManager::hover(int gizmoId) {
-//	mTranslationGizmo->hover(gizmoId);
-//	mRotationGizmo->hover(gizmoId);
-//	mScaleGizmo->hover(gizmoId);
+void GizmoManager::hover(GizmoAxis gizmoId) {
+	//	mTranslationGizmo->hover(gizmoId);
+	//	mRotationGizmo->hover(gizmoId);
+	//	mScaleGizmo->hover(gizmoId);
 }
 
 void GizmoManager::select(std::optional<std::reference_wrapper<Actor>> actor) {
 	mActiveActor = actor;
 }
 
+void GizmoManager::translate(float px, float py) {
+	
+	auto& actor = mActiveActor.value().get();
+	
+	switch (mGizmoAxis) {
+		case GizmoAxis::X:{
+			auto& transformComponent = actor.get_component<TransformComponent>();
+			
+			auto translation = transformComponent.get_translation();
+			
+			translation.x += px;
+			
+			transformComponent.set_translation(translation);
+		}
+			break;
+			
+		case GizmoAxis::Y:{
+			auto& transformComponent = actor.get_component<TransformComponent>();
+			
+			auto translation = transformComponent.get_translation();
+			
+			translation.y += py;
+			
+			transformComponent.set_translation(translation);
+		}
+			break;
+			
+		case GizmoAxis::Z: {
+			auto& transformComponent = actor.get_component<TransformComponent>();
+			
+			auto translation = transformComponent.get_translation();
+			
+			translation.z += px;
+			
+			transformComponent.set_translation(translation);
+		}
+			break;
+			
+		default:
+			break;
+	}}
+
+
+void GizmoManager::rotate(float px, float py) {
+	float angle = ((px + py) / 2.0f);
+	
+	auto& actor = mActiveActor.value().get();
+	
+	switch (mGizmoAxis) {
+		case GizmoAxis::X:{
+			auto& transformComponent = actor.get_component<TransformComponent>();
+			
+			transformComponent.rotate(glm::vec3(0.0f, 0.0f, -1.0f), angle); // Rotate around Z-axis
+		}
+			break;
+			
+		case GizmoAxis::Y:{
+			auto& transformComponent = actor.get_component<TransformComponent>();
+			
+			transformComponent.rotate(glm::vec3(1.0f, 0.0f, 0.0f), angle); // Rotate around X-axis
+		}
+			break;
+			
+		case GizmoAxis::Z: {
+			auto& transformComponent = actor.get_component<TransformComponent>();
+
+			transformComponent.rotate(glm::vec3(0.0f, -1.0f, 0.0f), angle); // Rotate around Y-axis
+		}
+			break;
+			
+		default:
+			break;
+	}
+	
+}
+
+void GizmoManager::scale(float px, float py) {
+	auto& actor = mActiveActor.value().get();
+	switch (mGizmoAxis) {
+		case GizmoAxis::X:{
+			auto& transformComponent = actor.get_component<TransformComponent>();
+			
+			auto scale = transformComponent.get_scale();
+			
+			scale.x += px;
+			
+			transformComponent.set_scale(scale);
+		}
+			break;
+			
+		case GizmoAxis::Y:{
+			auto& transformComponent = actor.get_component<TransformComponent>();
+			
+			auto scale = transformComponent.get_scale();
+			
+			scale.y += py;
+			
+			transformComponent.set_scale(scale);
+		}
+			break;
+			
+		case GizmoAxis::Z: {
+			auto& transformComponent = actor.get_component<TransformComponent>();
+			
+			auto scale = transformComponent.get_scale();
+			
+			scale.z += px;
+			
+			transformComponent.set_scale(scale);
+		}
+			break;
+			
+		default:
+			break;
+	}
+}
+
 void GizmoManager::transform(float px, float py) {
-//	mTranslationGizmo->transform(mActiveActor, px, py);
-//	
-//	mRotationGizmo->transform(mActiveActor, ((px + py) / 2.0f));
-//	
-//	mScaleGizmo->transform(mActiveActor, px, py);
+	if (mActiveActor.has_value()) {
+		auto& actor = mActiveActor.value().get();
+		
+		switch (mCurrentMode) {
+			case GizmoMode::Translation:{
+				translate(px, py);
+			}
+				break;
+			case GizmoMode::Rotation:
+				rotate(px, py);
+				break;
+			case GizmoMode::Scale:
+				scale(px, py);
+				break;
+		}
+	}
 }
 
 void GizmoManager::draw() {
@@ -100,18 +229,6 @@ void GizmoManager::draw() {
 
 void GizmoManager::draw_content(const nanogui::Matrix4f& model, const nanogui::Matrix4f& view,
 								const nanogui::Matrix4f& projection) {
-//	if (mActiveActor.has_value()) {
-//		switch (mCurrentMode) {
-//			case GizmoMode::Translation:
-//				mTranslationGizmo->draw_content(mActiveActor, model, view, projection);
-//				break;
-//			case GizmoMode::Rotation:
-//				mRotationGizmo->draw_content(mActiveActor, model, view, projection);
-//				break;
-//			case GizmoMode::Scale:
-//				mScaleGizmo->draw_content(mActiveActor, model, view, projection);
-//				break;
-//		}
-//	}
+	
 }
 

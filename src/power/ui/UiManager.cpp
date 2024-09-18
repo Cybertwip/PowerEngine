@@ -759,17 +759,17 @@ UiManager::UiManager(IActorSelectedRegistry& registry, IActorVisualManager& acto
 					}
 				}
 				
-				mGizmoManager->select(id);
+				mGizmoManager->select(GizmoManager::GizmoAxis(id));
 			} else {
 				mActiveActor = std::nullopt;
 				
 				actorVisualManager.fire_actor_selected_event(mActiveActor);
 				mGizmoManager->select(mActiveActor);
-				mGizmoManager->select(0);
+				mGizmoManager->select(GizmoManager::GizmoAxis(0));
 			}
 		} else {
-			mGizmoManager->select(0);
-			mGizmoManager->hover(0);
+			mGizmoManager->select(GizmoManager::GizmoAxis(0));
+			mGizmoManager->hover(GizmoManager::GizmoAxis(0));
 		}
 	});
 	
@@ -814,11 +814,11 @@ UiManager::UiManager(IActorSelectedRegistry& registry, IActorVisualManager& acto
 			int id = readFromFramebuffer(width, height, x, y);
 			
 			if (id != 0 && !down) {
-				mGizmoManager->hover(id);
+				mGizmoManager->hover(GizmoManager::GizmoAxis(id));
 			} else if (id == 0 && !down){
-				mGizmoManager->hover(0);
+				mGizmoManager->hover(GizmoManager::GizmoAxis(0));
 			} else if (id != 0 && down) {
-				mGizmoManager->hover(id);
+				mGizmoManager->hover(GizmoManager::GizmoAxis(id));
 			}
 			
 			// Step 3: Apply the world-space delta transformation

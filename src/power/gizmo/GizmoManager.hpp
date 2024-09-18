@@ -22,15 +22,26 @@ class GizmoManager : public Drawable {
 	enum class GizmoMode { Translation, Rotation, Scale };
 
 public:
+	enum class GizmoAxis : int8_t {
+		None = 0,
+		X = -1,
+		Y = -2,
+		Z = -3
+	};
+	
     GizmoManager(nanogui::Widget& parent, ShaderManager& shaderManager, ActorManager& actorManager, MeshActorLoader& meshActorLoader);
 	~GizmoManager() = default;
 	
-	void select(int gizmoId);
+	void select(GizmoAxis gizmoId);
 
-	void hover(int gizmoId);
+	void hover(GizmoAxis gizmoId);
 
 	void select(std::optional<std::reference_wrapper<Actor>> actor);
     
+	void translate(float px, float py);
+	void rotate(float px, float py);
+	void scale(float px, float py);
+
 	void transform(float px, float py);
 	
     void draw();
@@ -45,13 +56,15 @@ private:
 	MeshActorLoader& mMeshActorLoader;
 	std::unique_ptr<ShaderWrapper> mShader;
 	Actor& mTranslationGizmo;
-	//Actor& mRotationGizmo;
+	Actor& mRotationGizmo;
 //	Actor& mScaleGizmo;
 
 	std::optional<std::reference_wrapper<Actor>> mActiveActor;
 	
 	GizmoMode mCurrentMode = GizmoMode::Translation;  // Default mode is Translation
 
+	GizmoAxis mGizmoAxis = GizmoAxis::None;
+	
 	nanogui::Button* translationButton;
 	nanogui::Button* rotationButton;
 	nanogui::Button* scaleButton;
