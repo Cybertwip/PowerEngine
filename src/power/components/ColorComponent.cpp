@@ -6,12 +6,17 @@
 ColorComponent::ColorComponent(MetadataComponent& metadataComponent, ShaderWrapper& shaderWrapper)
 : mMetadataComponent(metadataComponent)
 , mColor(1.0f, 1.0f, 1.0f, 1.0f)
+, mVisible(true)
 , mShader(shaderWrapper) {
 	
 }
 
 void ColorComponent::set_color(const glm::vec4& color) {
 	mColor = color;
+}
+
+void ColorComponent::set_visible(bool visible) {
+	mVisible = visible;
 }
 
 void ColorComponent::apply() {

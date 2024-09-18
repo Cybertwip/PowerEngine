@@ -62,9 +62,9 @@ fragment FragmentOut fragment_main(VertexOut vert [[stage_in]],
 
     if (mat.diffuse.r != 0.0) {
         entityId = -1;
-    } else if (mat.diffuse.g != 0.0) {
+    } else if (mat.diffuse.b != 0.0) {
         entityId = -2;
-    }  else if (mat.diffuse.b != 0.0) {
+    }  else if (mat.diffuse.g != 0.0) {
         entityId = -3;
     }
 

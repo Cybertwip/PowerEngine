@@ -392,6 +392,11 @@ void SkinnedMesh::MeshBatch::draw_content(const nanogui::Matrix4f& view,
 		
 		for (int i = 0; i<mesh_vector.size(); ++i) {
 			auto& mesh = mesh_vector[i].get();
+			
+			if (!mesh.mColorComponent.get_visible()) {
+				continue;
+			}
+			
 			auto& shader = mesh.get_shader();
 			
 			// Set uniforms and draw the mesh content

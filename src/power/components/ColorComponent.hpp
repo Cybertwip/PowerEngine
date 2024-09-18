@@ -16,14 +16,22 @@ public:
 	ColorComponent(MetadataComponent& metadataComponent, ShaderWrapper& shaderWrapper);
 
 	void set_color(const glm::vec4& color);
-
-	void apply();
-
-	glm::vec4 get() const {
+	
+	glm::vec4 get_color() const {
 		return mColor;
 	}
 	
+	void set_visible(bool visible);
+	bool get_visible() const {
+		return mVisible;
+	}
+	
+	void apply();
+
+	
+private:
 	MetadataComponent& mMetadataComponent;
 	ShaderWrapper& mShader;
 	glm::vec4 mColor;
+	bool mVisible;
 };

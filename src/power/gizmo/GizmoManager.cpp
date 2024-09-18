@@ -16,6 +16,7 @@
 #include "ShaderManager.hpp"
 #include "actors/Actor.hpp"
 #include "actors/ActorManager.hpp"
+#include "components/ColorComponent.hpp"
 #include "components/TransformComponent.hpp"
 
 #include "gizmo/TranslationGizmo.hpp"
@@ -69,6 +70,11 @@ mRotationGizmo(mMeshActorLoader.create_actor("models/Gizmo/Rotation.fbx", *mShad
 	// Set default mode button
 	translationButton->set_pushed(true);  // Set default to Translation
 	
+	
+	mTranslationGizmo.get_component<ColorComponent>().set_visible(false);
+	
+	mRotationGizmo.get_component<ColorComponent>().set_visible(false);
+
 	set_mode(GizmoMode::Translation);
 }
 
@@ -87,6 +93,12 @@ void GizmoManager::hover(GizmoAxis gizmoId) {
 
 void GizmoManager::select(std::optional<std::reference_wrapper<Actor>> actor) {
 	mActiveActor = actor;
+	
+	if (!mActiveActor.has_value()) {
+		mTranslationGizmo.get_component<ColorComponent>().set_visible(false);
+		
+		mRotationGizmo.get_component<ColorComponent>().set_visible(false);
+	}
 }
 
 void GizmoManager::translate(float px, float py) {
@@ -232,6 +244,10 @@ void GizmoManager::transform(float px, float py) {
 
 void GizmoManager::set_mode(GizmoMode mode) { mCurrentMode = mode;
 	
+	if (mActiveGizmo.has_value()) {
+		mActiveGizmo->get().get_component<ColorComponent>().set_visible(false);
+	}
+	
 	switch (mCurrentMode) {
 		case GizmoMode::Translation:{
 			mActiveGizmo = mTranslationGizmo;
@@ -247,6 +263,11 @@ void GizmoManager::set_mode(GizmoMode mode) { mCurrentMode = mode;
 			mActiveGizmo = std::nullopt;
 			break;
 	}
+	
+	if (mActiveGizmo.has_value()) {
+		mActiveGizmo->get().get_component<ColorComponent>().set_visible(true);
+	}
+
 }
 
 void GizmoManager::draw() {
@@ -277,9 +298,13 @@ void GizmoManager::draw_content(const nanogui::Matrix4f& model, const nanogui::M
 			float visualScaleFactor = std::max(0.005f, distance * 0.005f);
 			
 			glm::mat4 scaleMatrix = glm::scale(glm::mat4(1.0f), glm::vec3(visualScaleFactor, visualScaleFactor, visualScaleFactor));
+
+			glm::mat4 rotationMatrix = glm::mat4(1.0f); // Identity matrix
 			
+			rotationMatrix = glm::rotate(rotationMatrix, glm::radians(-90.0f), glm::vec3(0, 1, 0));
+
 			// Apply transformations in order: rotation, translation, then scale
-			auto gizmoModel = actorTranslationMatrix * scaleMatrix;
+			auto gizmoModel = actorTranslationMatrix * scaleMatrix * rotationMatrix;
 			
 			auto gizmoMatrix = TransformComponent::glm_to_nanogui(gizmoModel);
 
