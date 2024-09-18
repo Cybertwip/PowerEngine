@@ -43,6 +43,7 @@ private:
     ShaderManager& mShaderManager;
     ActorManager& mActorManager;
 	MeshActorLoader& mMeshActorLoader;
+	std::unique_ptr<ShaderWrapper> mShader;
 	Actor& mTranslationGizmo;
 	//Actor& mRotationGizmo;
 //	Actor& mScaleGizmo;

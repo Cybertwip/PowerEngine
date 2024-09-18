@@ -83,22 +83,7 @@ int SkinnedMesh::Vertex::get_texture_id() const {
 SkinnedMesh::SkinnedMeshShader::SkinnedMeshShader(ShaderManager& shaderManager)
 : ShaderWrapper(*shaderManager.get_shader("mesh")) {}
 
-void SkinnedMesh::SkinnedMeshShader::upload_vertex_data(const SkinnedMesh& skinnedMesh) {
-	size_t numVertices = skinnedMesh.mFlattenedPositions.size() / 3;
-	
-	mShader.set_buffer("aPosition", nanogui::VariableType::Float32, {numVertices, 3},
-					   skinnedMesh.mFlattenedPositions.data());
-	mShader.set_buffer("aNormal", nanogui::VariableType::Float32, {numVertices, 3},
-					   skinnedMesh.mFlattenedNormals.data());
-	mShader.set_buffer("aTexcoords1", nanogui::VariableType::Float32, {numVertices, 2},
-					   skinnedMesh.mFlattenedTexCoords1.data());
-	mShader.set_buffer("aTexcoords2", nanogui::VariableType::Float32, {numVertices, 2},
-					   skinnedMesh.mFlattenedTexCoords2.data());
-	mShader.set_buffer("aTextureId", nanogui::VariableType::Int32, {numVertices, 2},
-					   skinnedMesh.mFlattenedTextureIds.data());
-	
-}
-void SkinnedMesh::SkinnedMeshShader::upload_material_data(const std::vector<std::shared_ptr<MaterialProperties>>& materialData) {
+void SkinnedMesh::MeshBatch::upload_material_data(ShaderWrapper& shader, const std::vector<std::shared_ptr<MaterialProperties>>& materialData) {
 #if defined(NANOGUI_USE_METAL)
 	// Ensure we have a valid number of materials
 	size_t numMaterials = materialData.size();
@@ -126,26 +111,26 @@ void SkinnedMesh::SkinnedMeshShader::upload_material_data(const std::vector<std:
 		// Set the diffuse texture (if it exists) or a dummy texture
 		std::string textureBaseName = "textures";
 		if (material.mHasDiffuseTexture) {
-			mShader.set_texture(textureBaseName, material.mTextureDiffuse.get(), i);
+			shader.set_texture(textureBaseName, *material.mTextureDiffuse, i);
 		} else {
-			mShader.set_texture(textureBaseName, mDummyTexture.get(), i);
+			shader.set_texture(textureBaseName, *mDummyTexture, i);
 		}
 
 	}
 	
-	mShader.set_buffer(
+	shader.set_buffer(
 					   "materials",
 					   nanogui::VariableType::Float32,
 					   {numMaterials, sizeof(MaterialCPU) / sizeof(float)},
 					   materialsCPU.data()
 					   );
 
-	size_t dummy_texture_count = mShader.get_buffer_size("textures");
+	size_t dummy_texture_count = shader.get_buffer_size("textures");
 	
 	for (size_t i = numMaterials; i<dummy_texture_count; ++i) {
 		std::string textureBaseName = "textures";
 
-		mShader.set_texture(textureBaseName, mDummyTexture.get(), i);
+		shader.set_texture(textureBaseName, *mDummyTexture, i);
 	}
 
 #else
@@ -181,7 +166,7 @@ void SkinnedMesh::SkinnedMeshShader::upload_material_data(const std::vector<std:
 }
 
 
-SkinnedMesh::SkinnedMesh(std::unique_ptr<MeshData> meshData, SkinnedMeshShader& shader, MeshBatch& meshBatch, ColorComponent& colorComponent)
+SkinnedMesh::SkinnedMesh(std::unique_ptr<MeshData> meshData, ShaderWrapper& shader, MeshBatch& meshBatch, ColorComponent& colorComponent)
 : mMeshData(std::move(meshData)), mShader(shader), mMeshBatch(meshBatch), mColorComponent(colorComponent), mModelMatrix(nanogui::Matrix4f::identity()) {
 	size_t numVertices = mMeshData->mVertices.size();
 	
@@ -233,7 +218,7 @@ SkinnedMesh::SkinnedMesh(std::unique_ptr<MeshData> meshData, SkinnedMeshShader& 
 	mModelMatrix = nanogui::Matrix4f::identity(); // Or any other transformation
 	
 	mMeshBatch.add_mesh(*this);
-	mMeshBatch.prepare();
+	mMeshBatch.append(*this);
 }
 
 void SkinnedMesh::draw_content(const nanogui::Matrix4f& model, const nanogui::Matrix4f& view,
@@ -284,14 +269,11 @@ void SkinnedMesh::init_dummy_texture() {
 
 std::unique_ptr<nanogui::Texture> SkinnedMesh::mDummyTexture;
 
-SkinnedMesh::MeshBatch::MeshBatch(SkinnedMesh::SkinnedMeshShader& shader)
-: mShader(shader) {
-	mVertexOffset = 0;
-	mIndexOffset = 0;
+SkinnedMesh::MeshBatch::MeshBatch() {
 }
 
 void SkinnedMesh::MeshBatch::add_mesh(std::reference_wrapper<SkinnedMesh> mesh) {
-	mMeshes.push_back(mesh);
+	mMeshes[&(mesh.get().get_shader())].push_back(mesh);
 }
 
 void SkinnedMesh::MeshBatch::clear() {
@@ -305,35 +287,39 @@ void SkinnedMesh::MeshBatch::clear() {
 	mMeshStartIndices.clear();
 }
 
-void SkinnedMesh::MeshBatch::prepare() {
-	const auto& meshRef = mMeshes.back();
+void SkinnedMesh::MeshBatch::append(std::reference_wrapper<SkinnedMesh> meshRef) {
 	auto& mesh = meshRef.get();
 	
+	auto& shader = mesh.get_shader();
+	int identifier = shader.identifier();
+	auto& indexer = mVertexIndexingMap[shader.identifier()];
+	
 	// Append vertex data
-	mBatchPositions.insert(mBatchPositions.end(),
+	mBatchPositions[identifier].insert(mBatchPositions[identifier].end(),
 						   mesh.mFlattenedPositions.begin(),
 						   mesh.mFlattenedPositions.end());
-	mBatchNormals.insert(mBatchNormals.end(),
+	mBatchNormals[identifier].insert(mBatchNormals[identifier].end(),
 						 mesh.mFlattenedNormals.begin(),
 						 mesh.mFlattenedNormals.end());
-	mBatchTexCoords1.insert(mBatchTexCoords1.end(),
+	mBatchTexCoords1[shader.identifier()].insert(mBatchTexCoords1[shader.identifier()].end(),
 							mesh.mFlattenedTexCoords1.begin(),
 							mesh.mFlattenedTexCoords1.end());
-	mBatchTexCoords2.insert(mBatchTexCoords2.end(),
+	mBatchTexCoords2[shader.identifier()].insert(mBatchTexCoords2[shader.identifier()].end(),
 							mesh.mFlattenedTexCoords2.begin(),
 							mesh.mFlattenedTexCoords2.end());
-	mBatchTextureIds.insert(mBatchTextureIds.end(),
+	mBatchTextureIds[shader.identifier()].insert(mBatchTextureIds[shader.identifier()].end(),
 							mesh.mFlattenedTextureIds.begin(),
 							mesh.mFlattenedTextureIds.end());
 	
 	// Adjust and append indices
 	for (auto index : mesh.mMeshData->mIndices) {
-		mBatchIndices.push_back(index + mVertexOffset);
+		mBatchIndices[shader.identifier()].push_back(index + indexer.mVertexOffset);
 	}
 	
-	mMeshStartIndices.push_back(mIndexOffset);
-	mIndexOffset += mesh.mMeshData->mIndices.size();
-	mVertexOffset += mesh.mMeshData->mVertices.size();
+	mMeshStartIndices[shader.identifier()].push_back(indexer.mIndexOffset);
+	
+	indexer.mIndexOffset += mesh.mMeshData->mIndices.size();
+	indexer.mVertexOffset += mesh.mMeshData->mVertices.size();
 }
 
 void SkinnedMesh::MeshBatch::draw_content(const nanogui::Matrix4f& view,
@@ -373,54 +359,66 @@ void SkinnedMesh::MeshBatch::draw_content(const nanogui::Matrix4f& view,
 //	MetalHelper::setDepthClear(descriptor);
 #endif
 	
+	for (auto& [shader_pointer, mesh_vector] : mMeshes) {
+		auto& shader = *shader_pointer;
+		
+		int identifier = shader.identifier();
+		
+		// Upload consolidated data to GPU
+		shader.set_buffer("aPosition", nanogui::VariableType::Float32, {mBatchPositions[identifier].size() / 3, 3},
+						  mBatchPositions[identifier].data());
+		shader.set_buffer("aNormal", nanogui::VariableType::Float32, {mBatchNormals[identifier].size() / 3, 3},
+						  mBatchNormals[identifier].data());
+		shader.set_buffer("aTexcoords1", nanogui::VariableType::Float32, {mBatchTexCoords1[identifier].size() / 2, 2},
+						  mBatchTexCoords1[identifier].data());
+		shader.set_buffer("aTexcoords2", nanogui::VariableType::Float32, {mBatchTexCoords2[identifier].size() / 2, 2},
+						  mBatchTexCoords2[identifier].data());
+		shader.set_buffer("aTextureId", nanogui::VariableType::Int32, {mBatchTextureIds[identifier].size() / 2, 2},
+						  mBatchTextureIds[identifier].data());
+		
+		// Upload indices
+		shader.set_buffer("indices", nanogui::VariableType::UInt32, {mBatchIndices[identifier].size()},
+						  mBatchIndices[identifier].data());
+		
+		// Set uniforms and draw the mesh content
+		shader.set_uniform("aView", view);
+		shader.set_uniform("aProjection", projection);
+	}
 	
-	// Upload consolidated data to GPU
-	mShader.set_buffer("aPosition", nanogui::VariableType::Float32, {mBatchPositions.size() / 3, 3},
-					   mBatchPositions.data());
-	mShader.set_buffer("aNormal", nanogui::VariableType::Float32, {mBatchNormals.size() / 3, 3},
-					   mBatchNormals.data());
-	mShader.set_buffer("aTexcoords1", nanogui::VariableType::Float32, {mBatchTexCoords1.size() / 2, 2},
-					   mBatchTexCoords1.data());
-	mShader.set_buffer("aTexcoords2", nanogui::VariableType::Float32, {mBatchTexCoords2.size() / 2, 2},
-					   mBatchTexCoords2.data());
-	mShader.set_buffer("aTextureId", nanogui::VariableType::Int32, {mBatchTextureIds.size() / 2, 2},
-					   mBatchTextureIds.data());
-	
-	// Upload indices
-	mShader.set_buffer("indices", nanogui::VariableType::UInt32, {mBatchIndices.size()},
-					   mBatchIndices.data());
+	for (auto& [shader_pointer, mesh_vector] : mMeshes) {
+		auto& shader = *shader_pointer;
+		int identifier = shader.identifier();
+		
+		for (int i = 0; i<mesh_vector.size(); ++i) {
+			auto& mesh = mesh_vector[i].get();
+			auto& shader = mesh.get_shader();
 
-	// Set uniforms and draw the mesh content
-	mShader.set_uniform("aView", view);
-	mShader.set_uniform("aProjection", projection);
-	
-	for (size_t i = 0; i < mMeshes.size(); ++i) {
-		auto& mesh = mMeshes[i].get();
-		
-		// Set the model matrix for the current mesh
-		mShader.set_uniform("aModel", mesh.mModelMatrix);
-		
-		// Apply color component (assuming it sets relevant uniforms)
-		mesh.mColorComponent.apply();
-		
-		// Upload materials for the current mesh
-		mShader.upload_material_data(mesh.mMeshData->mMaterials);
-		
-		// Calculate the range of indices to draw for this mesh
-		size_t startIdx = mMeshStartIndices[i];
-		size_t count = (i < mMeshes.size() - 1) ?
-		(mMeshStartIndices[i + 1] - startIdx) :
-		(mBatchIndices.size() - startIdx);
-		
-		// Begin shader program
-		mShader.begin();
-		
-		// Draw the mesh segment
-		mShader.draw_array(nanogui::Shader::PrimitiveType::Triangle,
-						   startIdx, count, true);
+			// Set the model matrix for the current mesh
+			shader.set_uniform("aModel", mesh.mModelMatrix);
+			
+			// Apply color component (assuming it sets relevant uniforms)
+			mesh.mColorComponent.apply();
+			
+			// Upload materials for the current mesh
+			upload_material_data(shader, mesh.mMeshData->mMaterials);
+			
+			// Calculate the range of indices to draw for this mesh
+			size_t startIdx = mMeshStartIndices[identifier][i];
+			size_t count = (i < mesh_vector.size() - 1) ?
+			(mMeshStartIndices[identifier][i + 1] - startIdx) :
+			(mBatchIndices[identifier].size() - startIdx);
+			
+			// Begin shader program
+			shader.begin();
+			
+			// Draw the mesh segment
+			shader.draw_array(nanogui::Shader::PrimitiveType::Triangle,
+							  startIdx, count, true);
+			
+			// End shader program
+			shader.end();
+		}
 
-		// End shader program
-		mShader.end();
 	}
 
 

@@ -7,21 +7,14 @@
 class Actor;
 class MeshBatch;
 class MeshComponent;
-
+class ShaderWrapper;
 
 class MeshActorBuilder {
 public:
-	MeshActorBuilder(SkinnedMesh::SkinnedMeshShader& shader);
-	
-	Actor& build(Actor& actor, const std::string& path);
-	
-	
-	SkinnedMesh::MeshBatch& mesh_batch() {
-		return *mMeshBatch;
-	}
+	MeshActorBuilder(SkinnedMesh::MeshBatch& meshBatch);
+
+	Actor& build(Actor& actor, const std::string& path, ShaderWrapper& shader);
 	
 private:
-	SkinnedMesh::SkinnedMeshShader& mShader;
-	
-	std::unique_ptr<SkinnedMesh::MeshBatch> mMeshBatch;
+	SkinnedMesh::MeshBatch& mMeshBatch;
 };

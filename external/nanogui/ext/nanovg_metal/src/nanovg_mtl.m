@@ -529,6 +529,7 @@ void mnvgClearWithColor(NVGcontext* ctx, NVGcolor color) {
                                      (float)color.g * alpha,
                                      (float)color.b * alpha,
                                      (float)color.a);
+	
   mtl.clearBufferOnFlush = YES;
 }
 

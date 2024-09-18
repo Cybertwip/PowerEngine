@@ -25,10 +25,11 @@
 GizmoManager::GizmoManager(nanogui::Widget& parent, ShaderManager& shaderManager, ActorManager& actorManager, MeshActorLoader& meshActorLoader)
 : mShaderManager(shaderManager), mActorManager(actorManager),
 	mMeshActorLoader(meshActorLoader),
-mTranslationGizmo(mMeshActorLoader.create_actor("models/Gizmo/Rotation.fbx"))
+mShader(std::make_unique<ShaderWrapper>(*shaderManager.get_shader("gizmo"))),
+mTranslationGizmo(mMeshActorLoader.create_actor("models/Gizmo/Translation.fbx", *mShader))
 //mRotationGizmo(mMeshActorLoader.create_actor("models/Gizmo/Rotation.fbx"))
 /*mScaleGizmo(mMeshActorLoader.create_actor("models/Gizmo/Translation.fbx"))*/ {
-
+	
 	// Translation Button
 	translationButton = new nanogui::ToolButton(&parent, FA_ARROWS_ALT);
 	translationButton->set_flags(nanogui::Button::ToggleButton);

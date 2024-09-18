@@ -24,7 +24,7 @@ ShaderManager::ShaderManager(Canvas &canvas) : mRenderPass(*canvas.render_pass()
 	load_shader("grid", "shaders/gl/grid.vs", "shaders/gl/grid.fs");
 #elif defined(NANOGUI_USE_METAL)
 	load_shader("mesh", "shaders/metal/diffuse_vs.metal", "shaders/metal/diffuse_fs.metal");
-	load_shader("gizmo", "shaders/metal/gizmo_vs.metal", "shaders/metal/gizmo_fs.metal");
+	load_shader("gizmo", "shaders/metal/diffuse_vs.metal", "shaders/metal/gizmo_fs.metal");
 	load_shader("grid", "shaders/metal/grid_vs.metal", "shaders/metal/grid_fs.metal");
 #endif
 }

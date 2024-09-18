@@ -48,7 +48,11 @@ Application::Application() : nanogui::Screen("Power Engine") {
 	mRenderCommon =
         std::make_unique<RenderCommon>(mUiCommon->scene_panel(), *mEntityRegistry, *mActorManager, *mCameraManager);
 
-	mMeshActorLoader = std::make_unique<MeshActorLoader>(*mActorManager, mRenderCommon->shader_manager());
+	mSkinnedMeshShader = std::make_unique<SkinnedMesh::SkinnedMeshShader>(mRenderCommon->shader_manager());
+	
+	mMeshBatch = std::make_unique<SkinnedMesh::MeshBatch>();
+
+	mMeshActorLoader = std::make_unique<MeshActorLoader>(*mActorManager, mRenderCommon->shader_manager(), *mMeshBatch);
 
 	auto applicationClickCallbackRegistrator = [this](std::function<void(int, int)> callback){
 		auto callbackWrapee = [this, callback](bool down, int width, int height, int x, int y){
@@ -59,9 +63,9 @@ Application::Application() : nanogui::Screen("Power Engine") {
 	};
 
 	mUiManager = std::make_unique<UiManager>(mUiCommon->hierarchy_panel(), mUiCommon->hierarchy_panel(), *mActorManager, *mMeshActorLoader, mRenderCommon->shader_manager(), mUiCommon->scene_panel(), mRenderCommon->canvas(), mUiCommon->toolbox(), mUiCommon->status_bar(), *mCameraManager, applicationClickCallbackRegistrator);
-
+	
     std::vector<std::reference_wrapper<Actor>> actors;
-    actors.push_back(mMeshActorLoader->create_actor("models/Venasaur/Venasaur.fbx"));
+    actors.push_back(mMeshActorLoader->create_actor("models/Venasaur/Venasaur.fbx", *mSkinnedMeshShader));
 
     if (mCameraManager->active_camera().has_value()) {
         actors.push_back(mCameraManager->active_camera()->get());
@@ -77,6 +81,9 @@ Application::Application() : nanogui::Screen("Power Engine") {
 	}
 	
     mUiCommon->hierarchy_panel().add_actors(std::move(actors));
+
+	
+	set_background(mRenderCommon->canvas().background_color());
 	
     perform_layout();
 }

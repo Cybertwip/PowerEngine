@@ -3,6 +3,7 @@
 #include "actors/IActorSelectedRegistry.hpp"
 
 #include "MeshActorLoader.hpp"
+#include "ShaderManager.hpp"
 
 #include <nanogui/nanogui.h>
 #include <nanogui/icons.h>
@@ -101,11 +102,12 @@ const DirectoryNode* FindNodeByPath(const DirectoryNode& currentNode, const std:
 }
 }
 
-ResourcesPanel::ResourcesPanel(nanogui::Widget& parent, const DirectoryNode& root_directory_node, IActorVisualManager& actorVisualManager,  MeshActorLoader& meshActorLoader)
+ResourcesPanel::ResourcesPanel(nanogui::Widget& parent, const DirectoryNode& root_directory_node, IActorVisualManager& actorVisualManager,  MeshActorLoader& meshActorLoader, ShaderManager& shaderManager)
 : Panel(parent, "Resources"),
 mRootDirectoryNode(root_directory_node),
 mActorVisualManager(actorVisualManager),
 mMeshActorLoader(meshActorLoader),
+mShader(std::make_unique<ShaderWrapper>(*shaderManager.get_shader("mesh"))),
 mSelectedButton(nullptr),
 mSelectedNode(nullptr),
 mNormalButtonColor(nanogui::Color(0.7f, 0.7f, 0.7f, 1.0f)),
@@ -298,7 +300,7 @@ void ResourcesPanel::handle_file_interaction(DirectoryNode& node) {
 		if (node.FileName.find(".seq") != std::string::npos || node.FileName.find(".cmp") != std::string::npos) {
 			// Logic for opening sequence or composition
 		} else if (node.FileName.find(".fbx") != std::string::npos) {
-			mActorVisualManager.add_actor(mMeshActorLoader.create_actor(node.FullPath));
+			mActorVisualManager.add_actor(mMeshActorLoader.create_actor(node.FullPath, *mShader));
 		}
 		// Handle other file type interactions...
 	}

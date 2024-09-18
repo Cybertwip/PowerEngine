@@ -68,54 +68,59 @@ public:
     class SkinnedMeshShader : public ShaderWrapper {
     public:
         SkinnedMeshShader(ShaderManager& shader);
-        
-        void upload_vertex_data(const SkinnedMesh& skinnedMesh);
-        void upload_material_data(const std::vector<std::shared_ptr<MaterialProperties>>& materialData);
     };
 	
 	class MeshBatch {
+	private:
+		struct VertexIndexer {
+			size_t mVertexOffset = 0;
+			size_t mIndexOffset = 0;
+		};
+		
 	public:
-		MeshBatch(SkinnedMesh::SkinnedMeshShader& shader);
+		MeshBatch();
 		
 		void add_mesh(std::reference_wrapper<SkinnedMesh> mesh);
 		void clear();
-		void prepare();
+		void append(std::reference_wrapper<SkinnedMesh> meshRef);
 		void draw_content(const nanogui::Matrix4f& view,
 				  const nanogui::Matrix4f& projection);
 		
 	private:
-		SkinnedMesh::SkinnedMeshShader& mShader;
-		std::vector<std::reference_wrapper<SkinnedMesh>> mMeshes;
+		void upload_material_data(ShaderWrapper& shader, const std::vector<std::shared_ptr<MaterialProperties>>& materialData);
+
+		std::unordered_map<ShaderWrapper*, std::vector<std::reference_wrapper<SkinnedMesh>>> mMeshes;
 		
 		// Consolidated buffers
-		std::vector<float> mBatchPositions;
-		std::vector<float> mBatchNormals;
-		std::vector<float> mBatchTexCoords1;
-		std::vector<float> mBatchTexCoords2;
-		std::vector<int> mBatchTextureIds;
-		std::vector<unsigned int> mBatchIndices;
+		std::unordered_map<int, std::vector<float>> mBatchPositions;
+		std::unordered_map<int, std::vector<float>> mBatchNormals;
+		std::unordered_map<int, std::vector<float>> mBatchTexCoords1;
+		std::unordered_map<int, std::vector<float>> mBatchTexCoords2;
+		std::unordered_map<int, std::vector<int>> mBatchTextureIds;
+		std::unordered_map<int, std::vector<unsigned int>> mBatchIndices;
 		std::vector<std::shared_ptr<MaterialProperties>> mBatchMaterials;
 		
 		// Offset tracking
-		std::vector<size_t> mMeshStartIndices;
+		std::unordered_map<int, std::vector<size_t>> mMeshStartIndices;
 		
-		size_t mVertexOffset = 0;
-		size_t mIndexOffset = 0;
+		std::unordered_map<int, VertexIndexer> mVertexIndexingMap;
 	};
 
 
 public:
-    SkinnedMesh(std::unique_ptr<MeshData> meshData, SkinnedMeshShader& shader, MeshBatch& meshBatch, ColorComponent& colorComponent);
+    SkinnedMesh(std::unique_ptr<MeshData> meshData, ShaderWrapper& shader, MeshBatch& meshBatch, ColorComponent& colorComponent);
 	~SkinnedMesh() override = default;
     
     void draw_content(const nanogui::Matrix4f& model, const nanogui::Matrix4f& view, const nanogui::Matrix4f& projection) override;
+	
+	ShaderWrapper& get_shader() const { return mShader; }
     
 	static void init_dummy_texture();
 
 private:
 	std::unique_ptr<MeshData> mMeshData;
 
-    SkinnedMeshShader& mShader;
+    ShaderWrapper& mShader;
 	
 	
 	// Flattened data

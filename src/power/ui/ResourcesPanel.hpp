@@ -8,11 +8,12 @@
 
 class IActorVisualManager;
 class MeshActorLoader;
+class ShaderManager;
 
 class ResourcesPanel : public Panel {
 public:
 	ResourcesPanel(nanogui::Widget &parent,
-				   const DirectoryNode& root_directory_node, IActorVisualManager& actorVisualManager,  MeshActorLoader& meshActorLoader);
+				   const DirectoryNode& root_directory_node, IActorVisualManager& actorVisualManager,  MeshActorLoader& meshActorLoader, ShaderManager& shaderManager);
 	
 	void refresh_file_view();
 	int get_icon_for_file(const DirectoryNode& node);
@@ -48,6 +49,7 @@ private:
 
 	IActorVisualManager& mActorVisualManager;
 	MeshActorLoader& mMeshActorLoader;
+	std::unique_ptr<ShaderWrapper> mShader;
 	
 	std::vector<nanogui::Button*> mFileButtons;
 	nanogui::Button* mSelectedButton;

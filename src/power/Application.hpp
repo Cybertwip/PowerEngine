@@ -20,6 +20,7 @@ class ShaderManager;
 class ShaderWrapper;
 class UiCommon;
 class UiManager;
+class MeshBatch;
 
 class Application : public nanogui::Screen
 {
@@ -39,13 +40,15 @@ class Application : public nanogui::Screen
     std::unique_ptr<entt::registry> mEntityRegistry;
     std::unique_ptr<CameraManager> mCameraManager;
     std::unique_ptr<Canvas> mCanvas;
-    std::unique_ptr<ShaderManager> mShaderManager;
 	std::unique_ptr<ActorManager> mActorManager;
 	std::unique_ptr<RenderCommon> mRenderCommon;
 	std::unique_ptr<MeshActorLoader> mMeshActorLoader;
     std::unique_ptr<UiCommon> mUiCommon;
 	std::unique_ptr<UiManager> mUiManager;
-    	
+	
+	std::unique_ptr<SkinnedMesh::SkinnedMeshShader> mSkinnedMeshShader;
+	std::unique_ptr<SkinnedMesh::MeshBatch> mMeshBatch;
+
 	std::queue<std::tuple<bool, int, int, int, int>> mClickQueue;
 	std::vector<std::function<void(bool, int, int, int, int)>> mClickCallbacks;
 

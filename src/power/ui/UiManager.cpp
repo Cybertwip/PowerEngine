@@ -675,17 +675,23 @@ UiManager::UiManager(IActorSelectedRegistry& registry, IActorVisualManager& acto
 		float scaleX = viewport.second[0] / float(width);
 		float scaleY = viewport.second[1] / float(height);
 		
+		
+#if defined(NANOGUI_USE_METAL)
+		int adjusted_y = y;
+		int adjusted_x = x;
+#else
 		int adjusted_y = height - y + canvas.parent()->position().y();
 		int adjusted_x = x + canvas.parent()->position().x();
+#endif
 		
 		// Scale x and y accordingly
 		adjusted_x *= scaleX;
 		adjusted_y *= scaleY;
+
 		
 		int image_width = 2;
 		int image_height = 2;
 		
-		// Buffer to store the pixel data (16 integers for a 4x4 region)
 		std::vector<int> pixels;
 		
 		pixels.resize(image_width * image_height);
@@ -744,7 +750,9 @@ UiManager::UiManager(IActorSelectedRegistry& registry, IActorVisualManager& acto
 					auto metadata = actor.get().get_component<MetadataComponent>();
 					
 					if (id == metadata.identifier()) {
-						actor.get().get_component<UiComponent>().select();
+						if (actor.get().find_component<UiComponent>()) {
+							actor.get().get_component<UiComponent>().select();
+						}
 						OnActorSelected(actor.get());
 						mGizmoManager->select(mActiveActor);
 						break;
@@ -818,7 +826,7 @@ UiManager::UiManager(IActorSelectedRegistry& registry, IActorVisualManager& acto
 		}
 	});
 	
-	StatusBarPanel* statusBarPanel = new StatusBarPanel(statusBar, actorVisualManager, meshActorLoader, applicationClickRegistrator);
+	StatusBarPanel* statusBarPanel = new StatusBarPanel(statusBar, actorVisualManager, meshActorLoader, shaderManager, applicationClickRegistrator);
 	statusBarPanel->set_fixed_width(statusBar.fixed_height());
 	statusBarPanel->set_fixed_height(statusBar.fixed_height());
 	statusBarPanel->set_layout(new nanogui::BoxLayout(nanogui::Orientation::Horizontal,
@@ -843,9 +851,10 @@ void UiManager::OnActorSelected(std::optional<std::reference_wrapper<Actor>> act
 
 void UiManager::draw() {
 	// Begin the first render pass for actors
-	mCanvas.render_pass()->begin();
-//	mCanvas.render_pass()->clear_depth(1.0f);
-	
+//	mCanvas.render_pass()->set_clear_color(0, mCanvas.background_color());
+	mCanvas.render_pass()->clear_color(1, nanogui::Color(0.0f, 0.0f, 0.0f, 0.0f));
+	mCanvas.render_pass()->clear_depth(1.0f);
+
 	// Set depth test to Less and enable depth writing
 	mCanvas.render_pass()->set_depth_test(nanogui::RenderPass::DepthTest::Less, true);
 	
@@ -858,9 +867,7 @@ void UiManager::draw() {
 	}
 	
 	mActorManager.visit(mMeshActorLoader.mesh_batch());
-	
-	mCanvas.render_pass()->end();
-	
+		
 //	mCanvas.render_pass()->begin();
 //	// Disable depth testing for gizmos (always render on top)
 //	mCanvas.render_pass()->set_depth_test(nanogui::RenderPass::DepthTest::Always, true);

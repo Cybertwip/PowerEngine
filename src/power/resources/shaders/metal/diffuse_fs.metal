@@ -49,7 +49,7 @@ fragment FragmentOut fragment_main(VertexOut vert [[stage_in]],
     float3 final_color = mat_diffuse.rgb;
     float selectionOpacity = mat_diffuse.a;  // Use the alpha from the texture
 
-    if (length(color.rgba) == 1.0) { // Red selection color
+    if (length(color.rgba) != 2.0) { 
         float brightness = dot(final_color, float3(0.299, 0.587, 0.114));
         float darkness_factor = clamp(1.0 - brightness / 0.05, 0.0, 1.0);
         final_color = mix(final_color, color.rgb, darkness_factor);

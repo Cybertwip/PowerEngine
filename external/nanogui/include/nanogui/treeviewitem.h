@@ -18,7 +18,12 @@ public:
 
     TreeViewItem* add_node(const std::string &caption, std::function<void()> callback);
 
-    void set_selected(bool selected) { m_selected = selected; m_selection_callback(); }
+	void set_selected(bool selected) {
+		m_selected = selected;
+		if (m_selected) {
+			m_selection_callback();
+		}
+	}
     void set_expanded(bool expanded) { m_expanded = expanded; }
     bool selected() const { return m_selected; }
     bool expanded() const { return m_expanded; }

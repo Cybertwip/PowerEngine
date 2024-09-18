@@ -438,8 +438,12 @@ void Shader::begin() {
 	}
 }
 
-
 void Shader::end() {
+//	for (auto& indexed_buffer : m_queued_buffers) {
+//		for (auto& buf : indexed_buffer.second) {
+//			buf.second.buffer = nullptr;
+//		}
+//	}
 }
 
 void Shader::draw_array(PrimitiveType primitive_type,

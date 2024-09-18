@@ -141,7 +141,9 @@ void RenderPass::begin() {
 			// Re-apply existing settings
 			MTLLoadAction loadAction = att.loadAction;
 			MTLStoreAction storeAction = att.storeAction;
-			MTLClearColor clearColor = att.clearColor;
+			
+			auto& color = m_clear_color[i - 2];
+			MTLClearColor clearColor = 			MTLClearColorMake(color.r(), color.g(), color.b(), color.w());
 			
 			// Set the texture
 			att.texture = texture_handle;

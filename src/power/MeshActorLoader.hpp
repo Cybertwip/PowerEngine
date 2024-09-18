@@ -9,21 +9,23 @@ class Actor;
 class ActorManager;
 class MeshActorBuilder;
 class ShaderManager;
+class ShaderWrapper;
 
 class MeshActorLoader
 {
    public:
-    MeshActorLoader(ActorManager& actorManager, ShaderManager& shaderManager);
+    MeshActorLoader(ActorManager& actorManager, ShaderManager& shaderManager, SkinnedMesh::MeshBatch& meshBatch);
 
 	~MeshActorLoader();
 	
-    Actor& create_actor(const std::string& path);
+    Actor& create_actor(const std::string& path, ShaderWrapper& shader);
 	
 	SkinnedMesh::MeshBatch& mesh_batch();
 
    private:
 	ActorManager& mActorManager;
-    std::unique_ptr<SkinnedMesh::SkinnedMeshShader> mMeshShaderWrapper;
 	
 	std::unique_ptr<MeshActorBuilder> mMeshActorBuilder;
+	
+	SkinnedMesh::MeshBatch& mMeshBatch;
 };

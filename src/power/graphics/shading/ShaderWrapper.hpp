@@ -1,5 +1,7 @@
 #pragma once
 
+#include "components/MetadataComponent.hpp"
+
 #include <nanogui/shader.h>
 #include <nanogui/texture.h>
 
@@ -22,7 +24,12 @@ public:
 		mShader.set_uniform(name, value);
 	}
 
-	void set_texture(const std::string &name, nanogui::Texture& texture);
+	void set_texture(const std::string &name, nanogui::Texture& texture, int index = 0);
+	
+	size_t get_buffer_size(const std::string& name);
+	
+	int identifier() const;
+
 	void begin();
 	void end();
 	void draw_array(nanogui::Shader::PrimitiveType primitive_type,
@@ -35,4 +42,7 @@ public:
 
 protected:
 	nanogui::Shader& mShader;
+	
+private:
+	MetadataComponent mMetadata;
 };

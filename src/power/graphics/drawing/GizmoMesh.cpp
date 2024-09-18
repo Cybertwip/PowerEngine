@@ -21,7 +21,7 @@ void GizmoMesh::Vertex::set_position(const glm::vec3& vec) { mPosition = vec; }
 glm::vec3 GizmoMesh::Vertex::get_position() const { return mPosition; }
 
 GizmoMesh::GizmoMeshShader::GizmoMeshShader(ShaderManager& shaderManager)
-    : ShaderWrapper(*shaderManager.get_shader("gizmo")) {}
+    : ShaderWrapper(*shaderManager.get_shader("mesh")) {}
 
 void GizmoMesh::GizmoMeshShader::upload_vertex_data(
     const std::vector<std::unique_ptr<Vertex>>& vertexData) {
