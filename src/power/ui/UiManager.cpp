@@ -866,17 +866,12 @@ void UiManager::draw() {
 		color.set_color(mSelectionColor);
 	}
 	
+	// Draw gizmos
+	mGizmoManager->draw();
+
 	mActorManager.visit(mMeshActorLoader.mesh_batch());
 		
-//	mCanvas.render_pass()->begin();
-//	// Disable depth testing for gizmos (always render on top)
 //	mCanvas.render_pass()->set_depth_test(nanogui::RenderPass::DepthTest::Always, true);
-//	
-//	// Draw gizmos
-//	mGizmoManager->draw();
-//	
-//	// End the second render pass
-//	mCanvas.render_pass()->end();
 }
 
 void UiManager::draw_content(const nanogui::Matrix4f& model, const nanogui::Matrix4f& view,

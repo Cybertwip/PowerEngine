@@ -61,7 +61,7 @@ void TranslationGizmo::transform(std::optional<std::reference_wrapper<Actor>> ac
 				auto translation = transformComponent.get_translation();
 				
 				translation.x += px;
-				
+
 				transformComponent.set_translation(translation);
 			}
 		} else if (mGizmoId == mMetadataComponents[1].identifier()) {
@@ -89,32 +89,7 @@ void TranslationGizmo::transform(std::optional<std::reference_wrapper<Actor>> ac
 }
 
 void TranslationGizmo::draw_content( const nanogui::Matrix4f& model, const nanogui::Matrix4f& view, const nanogui::Matrix4f& projection) {
-	auto viewInverse = TransformComponent::nanogui_to_glm(view.inverse());
-	glm::vec3 cameraPosition(view.m[3][0], view.m[3][1], view.m[3][2]);
 	
-	for (size_t i = 0; i < mTranslationGizmo.size(); ++i) {
-		// Convert nanogui::Matrix4f to glm::mat4 for consistent operations
-		glm::mat4 gizmoModel = TransformComponent::nanogui_to_glm(mTranslationTransforms[i]);
-		
-		//      float distance = glm::distance(cameraPosition, glm::vec3(translation.x, translation.y, translation.z)); // Now using actor's position for distance
-		float visualScaleFactor = mScaleFactor = std::max(0.005f, 0.005f);
-		
-		if (mHoverGizmoId != 0){
-			if (mHoverGizmoId == mMetadataComponents[i].identifier()) {
-				visualScaleFactor *= 1.5f;
-			}
-		}
-		
-		glm::mat4 scaleMatrix = glm::scale(glm::mat4(1.0f), glm::vec3(visualScaleFactor, visualScaleFactor, visualScaleFactor));
-		
-		//      gizmoModel *= scaleMatrix;
-		
-		auto gizmoMatrix = TransformComponent::glm_to_nanogui(gizmoModel);
-		
-		mGizmoShader->set_uniform("identifier", mMetadataComponents[i].identifier());
-		
-		mTranslationGizmo[i]->draw_content(gizmoMatrix, view, projection);
-	}
 }
 
 std::vector<std::unique_ptr<GizmoMesh::MeshData>> TranslationGizmo::create_axis_mesh_data() {
@@ -132,181 +107,116 @@ std::vector<std::unique_ptr<GizmoMesh::MeshData>> TranslationGizmo::create_axis_
 	auto& meshDataZ = *meshDataPtrZ;
 	
 	// Generate cylinder for X axis
-	// Cylinder vertices
 	for (int i = 0; i <= numSegments; ++i) {
 		float theta = 2.0f * M_PI * float(i) / float(numSegments);
 		float y = radius * cosf(theta);
 		float z = radius * sinf(theta);
 		
-		// Vertex at x=0
 		meshDataX.mVertices.push_back(std::make_unique<GizmoMesh::Vertex>(glm::vec3({0.0f, y, z})));
-		// Vertex at x=length
-		meshDataX.mVertices.push_back(std::make_unique<GizmoMesh::Vertex>(glm::vec3({length, y, z})));
+		meshDataX.mVertices.push_back(
+									  std::make_unique<GizmoMesh::Vertex>(glm::vec3({length, y, z})));
 	}
 	
-	// Cone vertices
-	int baseIndexCone = meshDataX.mVertices.size();
+	// Generate cone for X axis arrowhead
 	for (int i = 0; i <= numSegments; ++i) {
 		float theta = 2.0f * M_PI * float(i) / float(numSegments);
 		float y = coneBaseRadius * cosf(theta);
 		float z = coneBaseRadius * sinf(theta);
 		
-		// Base circle at x=length
-		meshDataX.mVertices.push_back(std::make_unique<GizmoMesh::Vertex>(glm::vec3({length, y, z})));
-	}
-	
-	// Tip vertex
-	int tipIndex = meshDataX.mVertices.size();
-	meshDataX.mVertices.push_back(std::make_unique<GizmoMesh::Vertex>(glm::vec3({length + coneHeight, 0.0f, 0.0f})));
-	
-	// Indices for cylinder
-	for (int i = 0; i < numSegments; ++i) {
-		int idx0 = 2 * i;
-		int idx1 = 2 * i + 1;
-		int idx2 = 2 * (i + 1);
-		int idx3 = 2 * (i + 1) + 1;
-		
-		// First triangle
-		meshDataX.mIndices.push_back(idx0);
-		meshDataX.mIndices.push_back(idx2);
-		meshDataX.mIndices.push_back(idx1);
-		
-		// Second triangle
-		meshDataX.mIndices.push_back(idx1);
-		meshDataX.mIndices.push_back(idx2);
-		meshDataX.mIndices.push_back(idx3);
-	}
-	
-	// Indices for cone
-	for (int i = 0; i < numSegments; ++i) {
-		int idx0 = baseIndexCone + i;
-		int idx1 = baseIndexCone + i + 1;
-		
-		meshDataX.mIndices.push_back(idx0);
-		meshDataX.mIndices.push_back(idx1);
-		meshDataX.mIndices.push_back(tipIndex);
+		meshDataX.mVertices.push_back(
+									  std::make_unique<GizmoMesh::Vertex>(glm::vec3({length, y, z})));
+		meshDataX.mVertices.push_back(
+									  std::make_unique<GizmoMesh::Vertex>(glm::vec3({length + coneHeight, 0.0f, 0.0f})));
 	}
 	
 	// Generate cylinder for Y axis
-	// Cylinder vertices
 	for (int i = 0; i <= numSegments; ++i) {
 		float theta = 2.0f * M_PI * float(i) / float(numSegments);
 		float x = radius * cosf(theta);
 		float z = radius * sinf(theta);
 		
-		// Vertex at y=0
 		meshDataY.mVertices.push_back(std::make_unique<GizmoMesh::Vertex>(glm::vec3({x, 0.0f, z})));
-		// Vertex at y=length
-		meshDataY.mVertices.push_back(std::make_unique<GizmoMesh::Vertex>(glm::vec3({x, length, z})));
+		meshDataY.mVertices.push_back(
+									  std::make_unique<GizmoMesh::Vertex>(glm::vec3({x, length, z})));
 	}
 	
-	// Cone vertices
-	baseIndexCone = meshDataY.mVertices.size();
+	// Generate cone for Y axis arrowhead
 	for (int i = 0; i <= numSegments; ++i) {
 		float theta = 2.0f * M_PI * float(i) / float(numSegments);
 		float x = coneBaseRadius * cosf(theta);
 		float z = coneBaseRadius * sinf(theta);
 		
-		// Base circle at y=length
-		meshDataY.mVertices.push_back(std::make_unique<GizmoMesh::Vertex>(glm::vec3({x, length, z})));
+		meshDataY.mVertices.push_back(
+									  std::make_unique<GizmoMesh::Vertex>(glm::vec3({x, length, z})));
+		meshDataY.mVertices.push_back(
+									  std::make_unique<GizmoMesh::Vertex>(glm::vec3({0.0f, length + coneHeight, 0.0f})));
 	}
 	
-	// Tip vertex
-	tipIndex = meshDataY.mVertices.size();
-	meshDataY.mVertices.push_back(std::make_unique<GizmoMesh::Vertex>(glm::vec3({0.0f, length + coneHeight, 0.0f})));
-	
-	// Indices for cylinder
-	for (int i = 0; i < numSegments; ++i) {
-		int idx0 = 2 * i;
-		int idx1 = 2 * i + 1;
-		int idx2 = 2 * (i + 1);
-		int idx3 = 2 * (i + 1) + 1;
-		
-		meshDataY.mIndices.push_back(idx0);
-		meshDataY.mIndices.push_back(idx2);
-		meshDataY.mIndices.push_back(idx1);
-		
-		meshDataY.mIndices.push_back(idx1);
-		meshDataY.mIndices.push_back(idx2);
-		meshDataY.mIndices.push_back(idx3);
-	}
-	
-	// Indices for cone
-	for (int i = 0; i < numSegments; ++i) {
-		int idx0 = baseIndexCone + i;
-		int idx1 = baseIndexCone + i + 1;
-		
-		meshDataY.mIndices.push_back(idx0);
-		meshDataY.mIndices.push_back(idx1);
-		meshDataY.mIndices.push_back(tipIndex);
-	}
-	
-	// Generate cylinder for Z axis
-	// Cylinder vertices
 	for (int i = 0; i <= numSegments; ++i) {
 		float theta = 2.0f * M_PI * float(i) / float(numSegments);
 		float x = radius * cosf(theta);
 		float y = radius * sinf(theta);
 		
-		// Vertex at z=0
 		meshDataZ.mVertices.push_back(std::make_unique<GizmoMesh::Vertex>(glm::vec3({x, y, 0.0f})));
-		// Vertex at z=length
-		meshDataZ.mVertices.push_back(std::make_unique<GizmoMesh::Vertex>(glm::vec3({x, y, length})));
+		meshDataZ.mVertices.push_back(
+									  std::make_unique<GizmoMesh::Vertex>(glm::vec3({x, y, length})));
 	}
 	
-	// Cone vertices
-	baseIndexCone = meshDataZ.mVertices.size();
 	for (int i = 0; i <= numSegments; ++i) {
 		float theta = 2.0f * M_PI * float(i) / float(numSegments);
 		float x = coneBaseRadius * cosf(theta);
 		float y = coneBaseRadius * sinf(theta);
 		
-		// Base circle at z=length
-		meshDataZ.mVertices.push_back(std::make_unique<GizmoMesh::Vertex>(glm::vec3({x, y, length})));
+		meshDataZ.mVertices.push_back(
+									  std::make_unique<GizmoMesh::Vertex>(glm::vec3({x, y, length})));
+		meshDataZ.mVertices.push_back(
+									  std::make_unique<GizmoMesh::Vertex>(glm::vec3({0.0f, 0.0f, length + coneHeight})));
 	}
-	
-	// Tip vertex
-	tipIndex = meshDataZ.mVertices.size();
-	meshDataZ.mVertices.push_back(std::make_unique<GizmoMesh::Vertex>(glm::vec3({0.0f, 0.0f, length + coneHeight})));
-	
-	// Indices for cylinder
-	for (int i = 0; i < numSegments; ++i) {
-		int idx0 = 2 * i;
-		int idx1 = 2 * i + 1;
-		int idx2 = 2 * (i + 1);
-		int idx3 = 2 * (i + 1) + 1;
-		
-		meshDataZ.mIndices.push_back(idx0);
-		meshDataZ.mIndices.push_back(idx2);
-		meshDataZ.mIndices.push_back(idx1);
-		
-		meshDataZ.mIndices.push_back(idx1);
-		meshDataZ.mIndices.push_back(idx2);
-		meshDataZ.mIndices.push_back(idx3);
-	}
-	
-	// Indices for cone
-	for (int i = 0; i < numSegments; ++i) {
-		int idx0 = baseIndexCone + i;
-		int idx1 = baseIndexCone + i + 1;
-		
-		meshDataZ.mIndices.push_back(idx0);
-		meshDataZ.mIndices.push_back(idx1);
-		meshDataZ.mIndices.push_back(tipIndex);
-	}
-	
-	// Set colors
-	meshDataX.mColor = glm::vec4(1.0f, 0.0f, 0.0f, 1.0f);
-	meshDataY.mColor = glm::vec4(0.0f, 1.0f, 0.0f, 1.0f);
-	meshDataZ.mColor = glm::vec4(0.0f, 0.0f, 1.0f, 1.0f);
 	
 	std::vector<std::unique_ptr<GizmoMesh::MeshData>> meshDataVector;
 	meshDataVector.push_back(std::move(meshDataPtrX));
 	meshDataVector.push_back(std::move(meshDataPtrY));
 	meshDataVector.push_back(std::move(meshDataPtrZ));
 	
-	return meshDataVector;
-}
+	for (unsigned int k = 0; k < meshDataVector.size(); ++k) {
+		for (int i = 0; i <= numSegments; ++i) {
+			auto& meshData = meshDataVector[k];
+			// Indexing
+			int index1 = 2 * i;
+			int index2 = 2 * i + 1;
+			
+			if (i < numSegments) {
+				meshData->mIndices.push_back(index1);
+				meshData->mIndices.push_back(index1 + 2);
+				meshData->mIndices.push_back(index2);
+				
+				meshData->mIndices.push_back(index2);
+				meshData->mIndices.push_back(index1 + 2);
+				meshData->mIndices.push_back(index2 + 2);
+			}
+		}
+		
+		int baseIndex = 2 * (numSegments + 1);
+		for (int i = 0; i <= numSegments; ++i) {
+			auto& meshData = meshDataVector[k];
+			
+			// Indexing
+			int index1 = baseIndex + 2 * i;
+			int index2 = baseIndex + 2 * i + 1;
+			
+			if (i < numSegments) {
+				meshData->mIndices.push_back(index1);
+				meshData->mIndices.push_back(index1 + 2);
+				meshData->mIndices.push_back(index2);
+			}
+		}
+	}
+	
+	meshDataVector[0]->mColor = glm::vec4(1.0f, 0.0f, 0.0f, 1.0f);
+	meshDataVector[1]->mColor = glm::vec4(0.0f, 1.0f, 0.0f, 1.0f);
+	meshDataVector[2]->mColor = glm::vec4(0.0f, 0.0f, 1.0f, 1.0f);
+	
+	return meshDataVector;}
 
 std::unique_ptr<GizmoMesh::MeshData> TranslationGizmo::create_axis_plane_mesh_data(const glm::vec4& color) {
 	const float size = 2.5;  // Size of the square
@@ -324,12 +234,20 @@ std::unique_ptr<GizmoMesh::MeshData> TranslationGizmo::create_axis_plane_mesh_da
 	meshData.mVertices.push_back(
 								 std::make_unique<GizmoMesh::Vertex>(glm::vec3({-size / 2, size / 2, 0.0f})));
 	
-	// Define the indices for the square (two triangles)
+	// Define the indices for the front face (two triangles forming the square)
 	meshData.mIndices.push_back(0);
 	meshData.mIndices.push_back(1);
 	meshData.mIndices.push_back(2);
+	meshData.mIndices.push_back(0);
 	meshData.mIndices.push_back(2);
 	meshData.mIndices.push_back(3);
+	
+	// Define the indices for the back face (two triangles forming the square)
+	meshData.mIndices.push_back(2);
+	meshData.mIndices.push_back(1);
+	meshData.mIndices.push_back(0);
+	meshData.mIndices.push_back(3);
+	meshData.mIndices.push_back(2);
 	meshData.mIndices.push_back(0);
 	
 	// Set the color of the square

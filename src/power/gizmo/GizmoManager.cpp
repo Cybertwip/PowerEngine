@@ -68,6 +68,8 @@ mRotationGizmo(mMeshActorLoader.create_actor("models/Gizmo/Rotation.fbx", *mShad
 	
 	// Set default mode button
 	translationButton->set_pushed(true);  // Set default to Translation
+	
+	set_mode(GizmoMode::Translation);
 }
 
 void GizmoManager::select(GizmoAxis gizmoId) {
@@ -213,13 +215,37 @@ void GizmoManager::transform(float px, float py) {
 				translate(px, py);
 			}
 				break;
-			case GizmoMode::Rotation:
+			case GizmoMode::Rotation:{
 				rotate(px, py);
+			}
 				break;
-			case GizmoMode::Scale:
+			case GizmoMode::Scale:{
 				scale(px, py);
+			}
+				break;
+				
+			default:
 				break;
 		}
+	}
+}
+
+void GizmoManager::set_mode(GizmoMode mode) { mCurrentMode = mode;
+	
+	switch (mCurrentMode) {
+		case GizmoMode::Translation:{
+			mActiveGizmo = mTranslationGizmo;
+		}
+			break;
+		case GizmoMode::Rotation:
+			mActiveGizmo = mRotationGizmo;
+			break;
+		case GizmoMode::Scale:
+			break;
+			
+		default:
+			mActiveGizmo = std::nullopt;
+			break;
 	}
 }
 
@@ -230,5 +256,42 @@ void GizmoManager::draw() {
 void GizmoManager::draw_content(const nanogui::Matrix4f& model, const nanogui::Matrix4f& view,
 								const nanogui::Matrix4f& projection) {
 	
+	
+	if (mActiveActor.has_value()) {
+		
+		if (mActiveGizmo.has_value()) {
+			auto& actor = mActiveActor;
+			
+			auto& transformComponent = actor->get().get_component<TransformComponent>();
+			
+			auto translation = transformComponent.get_translation();
+			auto rotation = transformComponent.get_rotation();
+			
+			auto viewInverse = view.inverse();
+			glm::vec3 cameraPosition(view.m[3][0], view.m[3][1], view.m[3][2]);
+			
+			// Use GLM for translation matrix
+			glm::mat4 actorTranslationMatrix = glm::translate(glm::mat4(1.0f), glm::vec3(translation.x, translation.y, -translation.z));
+			
+			float distance = glm::distance(cameraPosition, glm::vec3(translation.x, translation.y, translation.z)); // Now using actor's position for distance
+			float visualScaleFactor = std::max(0.005f, distance * 0.005f);
+			
+			glm::mat4 scaleMatrix = glm::scale(glm::mat4(1.0f), glm::vec3(visualScaleFactor, visualScaleFactor, visualScaleFactor));
+			
+			// Apply transformations in order: rotation, translation, then scale
+			auto gizmoModel = actorTranslationMatrix * scaleMatrix;
+			
+			auto gizmoMatrix = TransformComponent::glm_to_nanogui(gizmoModel);
+
+			
+			auto& drawable = mActiveGizmo->get().get_component<DrawableComponent>();
+						
+			drawable.draw_content(gizmoMatrix, view, projection);
+
+		}
+
+		
+
+	}
 }
 

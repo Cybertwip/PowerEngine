@@ -19,7 +19,12 @@ class MeshActorLoader;
 class ShaderManager;
 
 class GizmoManager : public Drawable {
-	enum class GizmoMode { Translation, Rotation, Scale };
+	enum class GizmoMode {
+		None,
+		Translation,
+		Rotation,
+		Scale
+	};
 
 public:
 	enum class GizmoAxis : int8_t {
@@ -49,7 +54,7 @@ public:
     void draw_content(const nanogui::Matrix4f& model, const nanogui::Matrix4f& view, const nanogui::Matrix4f& projection) override;
 
 private:
-	void set_mode(GizmoMode mode) { mCurrentMode = mode; }
+	void set_mode(GizmoMode mode);
 
     ShaderManager& mShaderManager;
     ActorManager& mActorManager;
@@ -68,5 +73,7 @@ private:
 	nanogui::Button* translationButton;
 	nanogui::Button* rotationButton;
 	nanogui::Button* scaleButton;
+	
+	std::optional<std::reference_wrapper<Actor>> mActiveGizmo;
 };
 
