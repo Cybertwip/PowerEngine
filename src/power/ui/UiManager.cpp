@@ -347,13 +347,17 @@ public:
 		mKeyBtn->set_text_color(mNormalButtonColor);
 		
 		mKeyBtn->set_callback([this](){
+			bool wasUncommitted = mUncommittedKey;
+			
+			stop_playback();
+
 			if (mActiveActor.has_value()) {
 				if (!mPlaying) {
 					auto& transformComponent = mActiveActor->get().get_component<TransformComponent>();
 					
 					auto& animationComponent = mActiveActor->get().get_component<AnimationComponent>();
 					
-					if (mUncommittedKey){
+					if (wasUncommitted){
 						mUncommittedKey = false;
 						animationComponent.updateKeyframe(mCurrentTime, transformComponent.get_translation(), transformComponent.get_rotation(), transformComponent.get_scale());
 						
@@ -367,8 +371,6 @@ public:
 				
 				verify_previous_next_keyframes(mActiveActor);
 			}
-			
-			stop_playback();
 		});
 		
 		// Next Frame Button
