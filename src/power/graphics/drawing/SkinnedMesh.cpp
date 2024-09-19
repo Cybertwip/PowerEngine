@@ -54,6 +54,7 @@ void SkinnedMesh::Vertex::set_bone(int boneId, float weight) {
 void SkinnedMesh::Vertex::set_position(const glm::vec3& vec) { mPosition = vec; }
 
 void SkinnedMesh::Vertex::set_normal(const glm::vec3& vec) { mNormal = vec; }
+void SkinnedMesh::Vertex::set_color(const glm::vec4& vec) { mColor = vec; }
 
 void SkinnedMesh::Vertex::set_texture_coords1(const glm::vec2& vec) { mTexCoords1 = vec; }
 
@@ -64,6 +65,8 @@ void SkinnedMesh::Vertex::set_texture_id(int textureId) { mTextureId = textureId
 glm::vec3 SkinnedMesh::Vertex::get_position() const { return mPosition; }
 
 glm::vec3 SkinnedMesh::Vertex::get_normal() const { return mNormal; }
+
+glm::vec4 SkinnedMesh::Vertex::get_color() const { return mColor; }
 
 glm::vec2 SkinnedMesh::Vertex::get_tex_coords1() const { return mTexCoords1; }
 
@@ -176,6 +179,8 @@ SkinnedMesh::SkinnedMesh(std::unique_ptr<MeshData> meshData, ShaderWrapper& shad
 	mFlattenedNormals.resize(numVertices * 3);
 	mFlattenedTexCoords1.resize(numVertices * 2);
 	mFlattenedTexCoords2.resize(numVertices * 2);
+	mFlattenedColors.resize(numVertices * 4); // vec4 per vertex
+
 	//		mFlattenedBoneIds.resize(numVertices * Vertex::MAX_BONE_INFLUENCE);
 	//		mFlattenedWeights.resize(numVertices * Vertex::MAX_BONE_INFLUENCE);
 	mFlattenedTextureIds.resize(numVertices * 2); // Assuming two texture IDs per vertex
@@ -206,6 +211,13 @@ SkinnedMesh::SkinnedMesh(std::unique_ptr<MeshData> meshData, ShaderWrapper& shad
 		mFlattenedTextureIds[i * 2 + 0] = vertex.get_texture_id();
 		mFlattenedTextureIds[i * 2 + 1] = vertex.get_texture_id();
 		
+		// **Flattened Colors**
+		const glm::vec4& color = vertex.get_color();
+		mFlattenedColors[i * 4 + 0] = color.r;
+		mFlattenedColors[i * 4 + 1] = color.g;
+		mFlattenedColors[i * 4 + 2] = color.b;
+		mFlattenedColors[i * 4 + 3] = color.a;
+
 		// Bone IDs and Weights
 		//			const auto& vertexBoneIds = vertex.get_bone_ids();
 		//			const auto& vertexWeights = vertex.get_weights();
@@ -295,6 +307,7 @@ void SkinnedMesh::MeshBatch::clear() {
 	mBatchIndices.clear();
 	mBatchMaterials.clear();
 	mMeshStartIndices.clear();
+	
 }
 
 void SkinnedMesh::MeshBatch::append(std::reference_wrapper<SkinnedMesh> meshRef) {
@@ -321,6 +334,10 @@ void SkinnedMesh::MeshBatch::append(std::reference_wrapper<SkinnedMesh> meshRef)
 							mesh.mFlattenedTextureIds.begin(),
 							mesh.mFlattenedTextureIds.end());
 	
+	mBatchColors[shader.identifier()].insert(mBatchColors[shader.identifier()].end(),
+											 mesh.mFlattenedColors.begin(),
+											 mesh.mFlattenedColors.end());
+
 	// Adjust and append indices
 	for (auto index : mesh.mMeshData->mIndices) {
 		mBatchIndices[shader.identifier()].push_back(index + indexer.mVertexOffset);
@@ -344,6 +361,9 @@ void SkinnedMesh::MeshBatch::append(std::reference_wrapper<SkinnedMesh> meshRef)
 	shader.set_buffer("aTextureId", nanogui::VariableType::Int32, {mBatchTextureIds[identifier].size() / 2, 2},
 					  mBatchTextureIds[identifier].data());
 	
+	// **Set Buffer for Vertex Colors**
+	shader.set_buffer("aColor", nanogui::VariableType::Float32, {mBatchColors[identifier].size() / 4, 4},
+					  mBatchColors[identifier].data());
 	// Upload indices
 	shader.set_buffer("indices", nanogui::VariableType::UInt32, {mBatchIndices[identifier].size()},
 					  mBatchIndices[identifier].data());

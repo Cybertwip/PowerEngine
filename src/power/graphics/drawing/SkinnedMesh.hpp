@@ -28,6 +28,7 @@ public:
 		void set_bone(int boneId, float weight);
 		void set_position(const glm::vec3 &vec);
 		void set_normal(const glm::vec3 &vec);
+		void set_color(const glm::vec4 &vec);
 		void set_texture_coords1(const glm::vec2 &vec);
 		void set_texture_coords2(const glm::vec2 &vec);
 		
@@ -37,6 +38,7 @@ public:
 		// Accessors
 		glm::vec3 get_position() const;
 		glm::vec3 get_normal() const;
+		glm::vec4 get_color() const;
 		glm::vec2 get_tex_coords1() const;
 		glm::vec2 get_tex_coords2() const;
 		std::array<int, MAX_BONE_INFLUENCE> get_bone_ids() const;
@@ -49,6 +51,7 @@ public:
 	private:
 		glm::vec3 mPosition;
 		glm::vec3 mNormal;
+		glm::vec4 mColor;
 		glm::vec2 mTexCoords1;
 		glm::vec2 mTexCoords2;
 		std::array<int, Vertex::MAX_BONE_INFLUENCE> mBoneIds;
@@ -98,6 +101,7 @@ public:
 		std::unordered_map<int, std::vector<float>> mBatchTexCoords2;
 		std::unordered_map<int, std::vector<int>> mBatchTextureIds;
 		std::unordered_map<int, std::vector<unsigned int>> mBatchIndices;
+		std::unordered_map<int, std::vector<float>> mBatchColors;
 		std::vector<std::shared_ptr<MaterialProperties>> mBatchMaterials;
 		
 		// Offset tracking
@@ -133,6 +137,7 @@ private:
 	std::vector<int> mFlattenedBoneIds;
 	std::vector<float> mFlattenedWeights;
 	std::vector<int> mFlattenedTextureIds;
+	std::vector<float> mFlattenedColors; // Added to store flattened color data
 
 	MeshBatch& mMeshBatch;
 	ColorComponent& mColorComponent;

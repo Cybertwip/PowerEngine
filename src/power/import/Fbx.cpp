@@ -172,6 +172,28 @@ void Fbx::ProcessMesh(const std::shared_ptr<sfbx::Mesh>& mesh) {
 		}
 	}
 	
+	//Precompute Color Indices**
+	const auto& colorLayers = geometry->getColorLayers();
+	std::vector<int> colorIndices(vertexCount, -1);
+	sfbx::RawVector<sfbx::float4> colorData; // Assuming colors are RGBA
+	if (!colorLayers.empty()) {
+		const auto& colorLayer = colorLayers[0]; // Use the first color layer
+		colorData = colorLayer.data;
+		const auto mappingMode = colorLayer.mapping_mode;
+		const auto referenceMode = colorLayer.reference_mode;
+		const auto& colorLayerIndices = colorLayer.indices;
+		
+		for (size_t i = 0; i < vertexCount; ++i) {
+			int controlPointIndex = vertexIndices[i];
+			if (mappingMode == sfbx::LayerMappingMode::ByPolygonVertex) {
+				colorIndices[i] = (referenceMode == sfbx::LayerReferenceMode::Direct) ? static_cast<int>(i) : colorLayerIndices[i];
+			} else if (mappingMode == sfbx::LayerMappingMode::ByControlPoint) {
+				colorIndices[i] = (referenceMode == sfbx::LayerReferenceMode::Direct) ? controlPointIndex : colorLayerIndices[controlPointIndex];
+			}
+		}
+	}
+
+	
 	// Precompute material indices per vertex
 	std::vector<int> materialIndices(vertexCount, -1);
 	for (size_t i = 0; i < vertexCount; ++i) {
@@ -229,6 +251,15 @@ void Fbx::ProcessMesh(const std::shared_ptr<sfbx::Mesh>& mesh) {
 					}
 				}
 			}
+			
+			// Assign Vertex Color
+			if (!colorData.empty() && colorIndices[i] >= 0) {
+				const auto& color = colorData[colorIndices[i]];
+				vertex.set_color({ color.x, color.y, color.z, color.w }); // Ignoring alpha channel
+			} else {
+				vertex.set_color({ 1.0f, 1.0f, 1.0f, 1.0f }); // Default color (white)
+			}
+
 			
 			// Set material ID
 			int matIndex = materialIndices[i];

@@ -15,6 +15,7 @@ struct VertexOut {
     float2 TexCoords1;
     float2 TexCoords2;
     float3 Normal;
+    float4 Color;
     float3 FragPos;
     int TextureId;
     int VertexId;
@@ -45,6 +46,8 @@ fragment FragmentOut fragment_main(VertexOut vert [[stage_in]],
         mat_diffuse = float4(mat.diffuse * mat.specular);  // Use material opacity
         mat_diffuse.a = mat.opacity;
     }
+
+    mat_diffuse = mix(mat_diffuse, vert.Color, 0.5);
 
     float3 final_color = mat_diffuse.rgb;
     float selectionOpacity = mat_diffuse.a;  // Use the alpha from the texture

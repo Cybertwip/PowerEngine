@@ -15,6 +15,7 @@ struct VertexOut {
     float2 TexCoords1;
     float2 TexCoords2;
     float3 Normal;
+    float4 Color;
     float3 FragPos;
     int TextureId;
     int VertexId;
@@ -26,7 +27,7 @@ struct FragmentOut {
 };
 
 fragment FragmentOut fragment_main(VertexOut vert [[stage_in]],
-                              constant Material *materials [[buffer(0)]],  
+                              constant Material *materials [[buffer(0)]], 
                               constant float4 &color [[buffer(1)]],
                               constant int &identifier [[buffer(2)]],
                               constant float4x4 &aView [[buffer(3)]],
@@ -47,6 +48,9 @@ fragment FragmentOut fragment_main(VertexOut vert [[stage_in]],
         mat_diffuse = float4(mat.diffuse * mat.specular);  // Use material opacity
         mat_diffuse.a = mat.opacity;
     }
+
+    mat_diffuse = mix(mat_diffuse, vert.Color, 0.5);
+
         
     int entityId = identifier;
 

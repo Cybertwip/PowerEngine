@@ -65,7 +65,7 @@ Application::Application() : nanogui::Screen("Power Engine") {
 	mUiManager = std::make_unique<UiManager>(mUiCommon->hierarchy_panel(), mUiCommon->hierarchy_panel(), *mActorManager, *mMeshActorLoader, mRenderCommon->shader_manager(), mUiCommon->scene_panel(), mRenderCommon->canvas(), mUiCommon->toolbox(), mUiCommon->status_bar(), *mCameraManager, applicationClickCallbackRegistrator);
 	
     std::vector<std::reference_wrapper<Actor>> actors;
-    actors.push_back(mMeshActorLoader->create_actor("models/Venasaur/Venasaur.fbx", *mSkinnedMeshShader));
+    actors.push_back(mMeshActorLoader->create_actor("models/TMNT/Donatello.fbx", *mSkinnedMeshShader));
 
     if (mCameraManager->active_camera().has_value()) {
         actors.push_back(mCameraManager->active_camera()->get());
