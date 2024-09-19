@@ -865,10 +865,14 @@ void UiManager::draw() {
 	
 	
 	
-	mCanvas.render_pass()->push_depth_test_state(nanogui::RenderPass::DepthTest::Less, true, mShaderManager.identifier("mesh"));
 	
 	mCanvas.render_pass()->push_depth_test_state(nanogui::RenderPass::DepthTest::Always, true, mShaderManager.identifier("gizmo"));
-
+	
+	// Draw gizmos
+	mGizmoManager->draw();
+	
+	mCanvas.render_pass()->push_depth_test_state(nanogui::RenderPass::DepthTest::Less, true, mShaderManager.identifier("mesh"));
+	
 
 	mActorManager.visit(mMeshActorLoader.mesh_batch());
 		
@@ -876,11 +880,6 @@ void UiManager::draw() {
 	mCanvas.render_pass()->set_depth_test(nanogui::RenderPass::DepthTest::Less, true);
 
 	mActorManager.visit(*this);
-
-	// Draw gizmos
-	mGizmoManager->draw();
-
-//	mCanvas.render_pass()->set_depth_test(nanogui::RenderPass::DepthTest::Always, true);
 }
 
 void UiManager::draw_content(const nanogui::Matrix4f& model, const nanogui::Matrix4f& view,
