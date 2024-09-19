@@ -89,7 +89,7 @@ public:
 	void rotate(const glm::vec3& axis, float angle) {
 		glm::quat rotationQuat = glm::angleAxis(glm::radians(angle), glm::normalize(axis));
 		glm::quat currentRotation = get_rotation();
-		glm::quat newRotation = rotationQuat * currentRotation;
+		glm::quat newRotation = currentRotation * rotationQuat;
 		set_rotation(newRotation);
 	}
 	
