@@ -67,7 +67,6 @@ void HierarchyPanel::populate_tree(Actor &actor, nanogui::TreeViewItem *parent_n
 	
 	actor.add_component<UiComponent>([this, &actor, node]() {
 		mTreeView->set_selected(node);
-		OnActorSelected(actor);
 	});
 	
 	perform_layout(screen()->nvg_context());

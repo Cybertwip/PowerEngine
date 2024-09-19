@@ -175,6 +175,8 @@ void TransformPanel::gather_values_into(TransformComponent &transform) {
 	
 	transform.transform.scale = ozz::math::Float3((float)mXScale->value(), (float)mYScale->value(),
 												  (float)mZScale->value());
+	
+	transform.set_translation(transform.get_translation()); // force event firing
 }
 
 void TransformPanel::update_values_from(const TransformComponent &transform) {

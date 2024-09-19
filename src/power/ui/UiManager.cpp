@@ -306,6 +306,8 @@ public:
 		mPrevKeyBtn->set_fixed_height(keyBtnHeight);
 		mPrevKeyBtn->set_tooltip("Previous Frame");
 		mPrevKeyBtn->set_callback([this]() {
+			stop_playback();
+			
 			if (!mActiveActor.has_value()) return; // No active actor selected
 			
 			const AnimationComponent& animComp = mActiveActor->get().get_component<AnimationComponent>();
@@ -365,6 +367,8 @@ public:
 				
 				verify_previous_next_keyframes(mActiveActor);
 			}
+			
+			stop_playback();
 		});
 		
 		// Next Frame Button
@@ -376,6 +380,8 @@ public:
 		mNextKeyBtn->set_fixed_height(keyBtnHeight);
 		mNextKeyBtn->set_tooltip("Next Frame");
 		mNextKeyBtn->set_callback([this]() {
+			stop_playback();
+			
 			if (!mActiveActor.has_value()) return; // No active actor selected
 			
 			const AnimationComponent& animComp = mActiveActor->get().get_component<AnimationComponent>();
