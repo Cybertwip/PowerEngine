@@ -2,10 +2,6 @@
 
 #include "graphics/drawing/Drawable.hpp"
 
-#include "gizmo/TranslationGizmo.hpp"
-#include "gizmo/RotationGizmo.hpp"
-#include "gizmo/ScaleGizmo.hpp"
-
 #include <nanogui/nanogui.h>
 
 #include <functional>
@@ -17,6 +13,7 @@ class Actor;
 class ActorManager;
 class MeshActorLoader;
 class ShaderManager;
+class ShaderWrapper;
 
 class GizmoManager : public Drawable {
 	enum class GizmoMode {

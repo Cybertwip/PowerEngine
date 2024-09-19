@@ -1,5 +1,12 @@
 #include "SkinnedMesh.hpp"
 
+#include "CameraManager.hpp"
+#include "Canvas.hpp"
+#include "ShaderManager.hpp"
+#include "components/ColorComponent.hpp"
+#include "graphics/shading/ShaderWrapper.hpp"
+#include "import/Fbx.hpp"
+
 #include <GLFW/glfw3.h>
 #include <nanogui/renderpass.h>
 #include <nanogui/texture.h>
@@ -10,15 +17,11 @@
 #include "MetalHelper.hpp"
 #endif
 
+#include <glm/gtc/type_ptr.hpp>
+
 #include <cmath>
 #include <algorithm>
 
-#include "CameraManager.hpp"
-#include "Canvas.hpp"
-#include "ShaderManager.hpp"
-#include "components/ColorComponent.hpp"
-#include "graphics/shading/ShaderWrapper.hpp"
-#include "import/Fbx.hpp"
 
 SkinnedMesh::Vertex::Vertex() {}
 

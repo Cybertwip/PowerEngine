@@ -3,7 +3,6 @@
 #include "graphics/drawing/Drawable.hpp"
 #include "graphics/shading/MaterialProperties.hpp"
 #include "graphics/shading/ShaderWrapper.hpp"
-#include "graphics/drawing/SkinnedMesh.hpp"
 
 #include <nanogui/vector.h>
 

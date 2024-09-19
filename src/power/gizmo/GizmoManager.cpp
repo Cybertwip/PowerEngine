@@ -17,11 +17,8 @@
 #include "actors/Actor.hpp"
 #include "actors/ActorManager.hpp"
 #include "components/ColorComponent.hpp"
+#include "components/DrawableComponent.hpp"
 #include "components/TransformComponent.hpp"
-
-#include "gizmo/TranslationGizmo.hpp"
-#include "gizmo/RotationGizmo.hpp"
-#include "gizmo/ScaleGizmo.hpp"
 
 GizmoManager::GizmoManager(nanogui::Widget& parent, ShaderManager& shaderManager, ActorManager& actorManager, MeshActorLoader& meshActorLoader)
 : mShaderManager(shaderManager), mActorManager(actorManager),

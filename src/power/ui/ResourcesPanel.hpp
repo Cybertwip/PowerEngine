@@ -9,6 +9,7 @@
 class IActorVisualManager;
 class MeshActorLoader;
 class ShaderManager;
+class ShaderWrapper;
 
 class ResourcesPanel : public Panel {
 public:

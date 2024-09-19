@@ -2,6 +2,7 @@
 
 #include <filesystem>
 #include <memory>
+#include <set>
 
 struct DirectoryNode
 {

@@ -82,26 +82,11 @@ add_executable(PowerEngine
     ${CMAKE_CURRENT_LIST_DIR}/components/MeshComponent.cpp
     ${CMAKE_CURRENT_LIST_DIR}/components/MeshComponent.hpp
 
-    ${CMAKE_CURRENT_LIST_DIR}/actors/GizmoActor.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/actors/GizmoActor.hpp
-
-    ${CMAKE_CURRENT_LIST_DIR}/components/GizmoComponent.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/components/GizmoComponent.hpp
-
     ${CMAKE_CURRENT_LIST_DIR}/filesystem/DirectoryNode.hpp
     ${CMAKE_CURRENT_LIST_DIR}/filesystem/DirectoryNode.cpp
 
     ${CMAKE_CURRENT_LIST_DIR}/gizmo/GizmoManager.hpp
     ${CMAKE_CURRENT_LIST_DIR}/gizmo/GizmoManager.cpp
-
-    ${CMAKE_CURRENT_LIST_DIR}/gizmo/TranslationGizmo.hpp
-    ${CMAKE_CURRENT_LIST_DIR}/gizmo/TranslationGizmo.cpp
-
-    ${CMAKE_CURRENT_LIST_DIR}/gizmo/RotationGizmo.hpp
-    ${CMAKE_CURRENT_LIST_DIR}/gizmo/RotationGizmo.cpp
-
-    ${CMAKE_CURRENT_LIST_DIR}/gizmo/ScaleGizmo.hpp
-    ${CMAKE_CURRENT_LIST_DIR}/gizmo/ScaleGizmo.cpp
 
     ${CMAKE_CURRENT_LIST_DIR}/grok/Client.hpp
     ${CMAKE_CURRENT_LIST_DIR}/grok/Client.cpp
@@ -116,11 +101,11 @@ add_executable(PowerEngine
     ${CMAKE_CURRENT_LIST_DIR}/graphics/shading/ShaderWrapper.cpp
 
     ${CMAKE_CURRENT_LIST_DIR}/graphics/drawing/Drawable.hpp
-    ${CMAKE_CURRENT_LIST_DIR}/graphics/drawing/GizmoMesh.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/graphics/drawing/GizmoMesh.hpp
     ${CMAKE_CURRENT_LIST_DIR}/graphics/drawing/Grid.cpp
     ${CMAKE_CURRENT_LIST_DIR}/graphics/drawing/Grid.hpp
     ${CMAKE_CURRENT_LIST_DIR}/graphics/drawing/NullDrawable.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/graphics/drawing/Mesh.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/graphics/drawing/Mesh.cpp
     ${CMAKE_CURRENT_LIST_DIR}/graphics/drawing/Model.hpp
     ${CMAKE_CURRENT_LIST_DIR}/graphics/drawing/Model.cpp
     ${CMAKE_CURRENT_LIST_DIR}/graphics/drawing/SkinnedMesh.hpp

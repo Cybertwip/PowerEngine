@@ -20,9 +20,6 @@
 #include "components/UiComponent.hpp"
 
 #include "gizmo/GizmoManager.hpp"
-#include "gizmo/TranslationGizmo.hpp"
-#include "gizmo/RotationGizmo.hpp"
-#include "gizmo/ScaleGizmo.hpp"
 
 #include "graphics/drawing/Grid.hpp"
 
