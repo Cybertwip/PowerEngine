@@ -377,9 +377,12 @@ bool TextBox::focus_event(bool focused) {
 	return true;
 }
 
-bool TextBox::keyboard_event(int key, int /* scancode */, int action, int modifiers) {
+bool TextBox::keyboard_event(int key, int  scancode, int action, int modifiers) {
 	if (m_editable && focused()) {
 		if (action == GLFW_PRESS || action == GLFW_REPEAT) {
+			
+			bool is_focus_change = false;
+			
 			if (key == GLFW_KEY_LEFT) {
 				if (modifiers == GLFW_MOD_SHIFT) {
 					if (m_selection_pos == -1)
@@ -432,7 +435,10 @@ bool TextBox::keyboard_event(int key, int /* scancode */, int action, int modifi
 				}
 			} else if (key == GLFW_KEY_ENTER) {
 				if (!m_committed)
+				{
+					is_focus_change = true;
 					focus_event(false);
+				}
 			} else if (key == GLFW_KEY_A && modifiers == SYSTEM_COMMAND_MOD) {
 				m_cursor_pos = (int) m_value_temp.length();
 				m_selection_pos = 0;
@@ -448,10 +454,11 @@ bool TextBox::keyboard_event(int key, int /* scancode */, int action, int modifi
 			
 			m_valid_format =
 			(m_value_temp == "") || check_format(m_value_temp, m_format);
+			
+			if (m_valid_format && !is_focus_change && glfwGetKeyName(key, scancode) != nullptr){
+				m_callback(m_value_temp + std::string{glfwGetKeyName(key, scancode)});
+			}
 		}
-		
-		if (m_callback)
-			m_callback(m_value_temp);
 		
 		return true;
 	}

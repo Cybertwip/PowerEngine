@@ -450,7 +450,6 @@ public:
 	
 	// Override OnActorSelected from IActorSelectedCallback
 	void OnActorSelected(std::optional<std::reference_wrapper<Actor>> actor) override {
-		unregister_actor_transform_callback(mActiveActor);
 		
 		mActiveActor = actor;
 		
@@ -458,22 +457,21 @@ public:
 		
 		verify_previous_next_keyframes(mActiveActor);
 	}
-	
-	void unregister_actor_transform_callback(std::optional<std::reference_wrapper<Actor>> actor) {
-		if (actor != std::nullopt) {
-			auto& transformComponent = actor->get().get_component<TransformComponent>();
-			transformComponent.unregister_on_transform_changed_callback(mTransformRegistrationId);
-		}
-	}
-	
+
 	void register_actor_transform_callback(std::optional<std::reference_wrapper<Actor>> actor) {
 		
+		if(mTransformRegistrationId != -1) {
+			mRegisteredTransformComponent->get()
+			.unregister_on_transform_changed_callback(mTransformRegistrationId);
+		}
+		
 		if (actor != std::nullopt) {
-			auto& transformComponent = actor->get().get_component<TransformComponent>();
+			mRegisteredTransformComponent = actor->get().get_component<TransformComponent>();
 			
+
 			auto& animationComponent = actor->get().get_component<AnimationComponent>();
 			
-			mTransformRegistrationId = transformComponent.register_on_transform_changed_callback([this, &animationComponent](const TransformComponent& transform) {
+			mTransformRegistrationId = mRegisteredTransformComponent->get().register_on_transform_changed_callback([this, &animationComponent](const TransformComponent& transform) {
 				if (mRecording && !mPlaying) {
 					animationComponent.addKeyframe(mCurrentTime, transform.get_translation(), transform.get_rotation(), transform.get_scale());
 				} else if (!mRecording && !mPlaying) {
@@ -536,7 +534,6 @@ private:
 	void toggle_play_pause(bool play) {
 		mPlaying = play;
 		if (play) {
-			unregister_actor_transform_callback(mActiveActor);
 			mAnimatableActors = mActorManager.get_actors_with_component<AnimationComponent>();
 		} else {
 			register_actor_transform_callback(mActiveActor);
@@ -545,7 +542,6 @@ private:
 	
 	// Helper method to stop playback
 	void stop_playback() {
-		
 		mUncommittedKey = false;
 		
 		if (mPlaying) {
@@ -643,6 +639,7 @@ private:
 	
 	bool mUncommittedKey;
 	
+	std::optional<std::reference_wrapper<TransformComponent>> mRegisteredTransformComponent;
 	int mTransformRegistrationId;
 	int mCurrentTime;
 	int mTotalFrames;

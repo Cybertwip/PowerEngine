@@ -219,6 +219,4 @@ void TransformPanel::set_active_actor(std::optional<std::reference_wrapper<Actor
 
 		update_values_from(transformComponent);
 	}
-
-
 }
