@@ -2,7 +2,7 @@
 using namespace metal;
 
 struct VertexOut {
-    float4 position_image [[position]];
+    float4 position [[position]];
     float3 near;
     float3 far;
 };
@@ -25,7 +25,7 @@ vertex VertexOut vertex_main(const device packed_float2 *const aPosition [[buffe
     vert.near = unproject_point(p.x, p.y, -1.0);
     vert.far = unproject_point(p.x, p.y, 1.0);
     
-    vert.position_image = float4(p, 0.0, 1.0);
+    vert.position = float4(p, 0.0, 1.0);
 
     return vert;
 }

@@ -109,13 +109,16 @@ Shader::Shader(RenderPass *render_pass,
         if (i == 2 && blend_mode == BlendMode::AlphaBlend) {
             MTLRenderPipelineColorAttachmentDescriptor *att =
                 pipeline_desc.colorAttachments[i - 2];
-            att.blendingEnabled             = YES;
-            att.rgbBlendOperation           = MTLBlendOperationAdd;
-            att.alphaBlendOperation         = MTLBlendOperationAdd;
-            att.sourceRGBBlendFactor        = MTLBlendFactorSourceAlpha;
-            att.sourceAlphaBlendFactor      = MTLBlendFactorSourceAlpha;
-            att.destinationRGBBlendFactor   = MTLBlendFactorOneMinusSourceAlpha;
-            att.destinationAlphaBlendFactor = MTLBlendFactorOneMinusSourceAlpha;
+			
+			att.blendingEnabled             = YES;
+			att.rgbBlendOperation           = MTLBlendOperationAdd;
+			att.alphaBlendOperation         = MTLBlendOperationAdd;
+			
+			att.sourceRGBBlendFactor        = MTLBlendFactorSourceAlpha;
+			att.sourceAlphaBlendFactor      = MTLBlendFactorSourceAlpha;
+			
+			att.destinationRGBBlendFactor   = MTLBlendFactorOneMinusSourceAlpha;
+			att.destinationAlphaBlendFactor = MTLBlendFactorOneMinusSourceAlpha;
         }
     }
 

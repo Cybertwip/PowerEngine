@@ -24,7 +24,7 @@ class ShaderManager
    private:
     nanogui::ref<nanogui::Shader> load_shader(const std::string &name,
                                               const std::string &vertex_path,
-                                              const std::string &fragment_path);
+                                              const std::string &fragment_path, nanogui::Shader::BlendMode blendMode = nanogui::Shader::BlendMode::None);
 
     std::unordered_map<std::string, nanogui::ref<nanogui::Shader>> mShaderCache;
     nanogui::RenderPass &mRenderPass;

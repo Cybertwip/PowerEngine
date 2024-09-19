@@ -23,15 +23,15 @@ ShaderManager::ShaderManager(Canvas &canvas) : mRenderPass(*canvas.render_pass()
 	load_shader("gizmo", "shaders/gl/gizmo.vs", "shaders/gl/gizmo.fs");
 	load_shader("grid", "shaders/gl/grid.vs", "shaders/gl/grid.fs");
 #elif defined(NANOGUI_USE_METAL)
-	load_shader("mesh", "shaders/metal/diffuse_vs.metal", "shaders/metal/diffuse_fs.metal");
-	load_shader("gizmo", "shaders/metal/diffuse_vs.metal", "shaders/metal/gizmo_fs.metal");
-	load_shader("grid", "shaders/metal/grid_vs.metal", "shaders/metal/grid_fs.metal");
+	load_shader("mesh", "shaders/metal/diffuse_vs.metal", "shaders/metal/diffuse_fs.metal", nanogui::Shader::BlendMode::None);
+	load_shader("gizmo", "shaders/metal/diffuse_vs.metal", "shaders/metal/gizmo_fs.metal", nanogui::Shader::BlendMode::AlphaBlend);
+	load_shader("grid", "shaders/metal/grid_vs.metal", "shaders/metal/grid_fs.metal", nanogui::Shader::BlendMode::AlphaBlend);
 #endif
 }
 
 nanogui::ref<nanogui::Shader> ShaderManager::load_shader(const std::string &name,
 														 const std::string &vertex_path,
-														 const std::string &fragment_path) {
+														 const std::string &fragment_path, nanogui::Shader::BlendMode blendMode) {
 	if (mShaderCache.find(name) != mShaderCache.end()) {
 		return mShaderCache[name];
 	}

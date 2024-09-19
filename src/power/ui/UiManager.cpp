@@ -851,12 +851,9 @@ void UiManager::OnActorSelected(std::optional<std::reference_wrapper<Actor>> act
 
 void UiManager::draw() {
 	// Begin the first render pass for actors
-//	mCanvas.render_pass()->set_clear_color(0, mCanvas.background_color());
+	mCanvas.render_pass()->clear_color(0, mCanvas.background_color());
 	mCanvas.render_pass()->clear_color(1, nanogui::Color(0.0f, 0.0f, 0.0f, 0.0f));
 	mCanvas.render_pass()->clear_depth(1.0f);
-
-	// Set depth test to Less and enable depth writing
-	mCanvas.render_pass()->push_depth_test_state(nanogui::RenderPass::DepthTest::Less, true, mShaderManager.identifier("mesh"));
 	
 	// Draw all actors
 	mActorManager.draw();
@@ -866,21 +863,29 @@ void UiManager::draw() {
 		color.set_color(mSelectionColor);
 	}
 	
-	// Draw gizmos
-	mGizmoManager->draw();
-
+	
+	
+	mCanvas.render_pass()->push_depth_test_state(nanogui::RenderPass::DepthTest::Less, true, mShaderManager.identifier("mesh"));
+	
 	mCanvas.render_pass()->push_depth_test_state(nanogui::RenderPass::DepthTest::Always, true, mShaderManager.identifier("gizmo"));
+
 
 	mActorManager.visit(mMeshActorLoader.mesh_batch());
 		
+	
+	mCanvas.render_pass()->set_depth_test(nanogui::RenderPass::DepthTest::Less, true);
+
+	mActorManager.visit(*this);
+
+	// Draw gizmos
+	mGizmoManager->draw();
+
 //	mCanvas.render_pass()->set_depth_test(nanogui::RenderPass::DepthTest::Always, true);
 }
 
 void UiManager::draw_content(const nanogui::Matrix4f& model, const nanogui::Matrix4f& view,
 							 const nanogui::Matrix4f& projection) {
 	// Draw the grid first
-	if (mGrid) {
-		mGrid->draw_content(model, view, projection);
-	}
+	mGrid->draw_content(model, view, projection);
 }
 

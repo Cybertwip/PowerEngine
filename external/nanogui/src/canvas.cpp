@@ -130,13 +130,15 @@ void Canvas::draw(NVGcontext *ctx) {
 	
 	if (m_render_to_texture) {
 		m_render_pass->resize(fbsize);
-		m_render_pass->set_viewport(offset, fbsize);
 	} else {
 		m_render_pass->resize(scr->framebuffer_size());
-		m_render_pass->set_viewport(offset, fbsize);
 	}
 	
+	m_render_pass->set_viewport(offset, fbsize);
+
+	
 	m_render_pass->begin();
+
 	draw_contents();
 	m_render_pass->end();
 	

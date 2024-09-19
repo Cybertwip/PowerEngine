@@ -33,13 +33,6 @@ void Grid::draw_content(const nanogui::Matrix4f& model, const nanogui::Matrix4f&
 	glEnable(GL_DEPTH_TEST);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glEnable(GL_BLEND);
-#elif defined(NANOGUI_USE_METAL)
-	
-	auto descriptor = mShaderWrapper.render_pass().pass_descriptor();
-	// Metal: Use MetalHelper to set up depth and blending
-//	MetalHelper::enableDepth(descriptor);
-	//MetalHelper::setDepthClear(descriptor);
-//	MetalHelper::disableStencil(descriptor); // You can omit this if stencil isn't needed.
 #endif
 	
 	// Common code: Set up vertex buffer
@@ -47,7 +40,7 @@ void Grid::draw_content(const nanogui::Matrix4f& model, const nanogui::Matrix4f&
 	
 	// Common code: Near and far planes
 	float nearPlane = 0.01f;   // Example value for near plane
-	float farPlane = 5e3;      // Example value for far plane
+	float farPlane = 5e3f;      // Example value for far plane
 	
 	// Common code: Set uniforms
 	mShaderWrapper.set_uniform("u_near", nearPlane);
@@ -70,8 +63,5 @@ void Grid::draw_content(const nanogui::Matrix4f& model, const nanogui::Matrix4f&
 	// API-specific cleanup for depth testing (if needed)
 #if defined(NANOGUI_USE_OPENGL) || defined(NANOGUI_USE_GLES)
 	glDisable(GL_DEPTH_TEST);
-#elif defined(NANOGUI_USE_METAL)
-//	MetalHelper::disableDepth(descriptor);
-//	MetalHelper::disableStencil(descriptor);
 #endif
 }

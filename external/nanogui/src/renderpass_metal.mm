@@ -209,17 +209,83 @@ void RenderPass::set_clear_color(size_t index, const Color &color) {
 void RenderPass::clear_color(size_t index, const Color &color) {
 	set_clear_color(index, color);
 	
-	// Ensure the render pass descriptor has the correct load action to clear the color buffer
-	MTLRenderPassDescriptor *pass_descriptor =
-	(__bridge MTLRenderPassDescriptor *) m_pass_descriptor;
-	
-	if (pass_descriptor.colorAttachments[index].texture) {
-		pass_descriptor.colorAttachments[index].loadAction = MTLLoadActionClear;
-		pass_descriptor.colorAttachments[index].clearColor = MTLClearColorMake(
-																			   color.r(), color.g(), color.b(), color.w()
-																			   );
-	} else {
-		throw std::runtime_error("RenderPass::clear_color(): No valid color attachment to clear.");
+	if (m_active) {
+		if (index == 0) {
+			id<MTLRenderCommandEncoder> command_encoder =
+			(__bridge id<MTLRenderCommandEncoder>) m_command_encoder;
+			
+			MTLDepthStencilDescriptor *depth_desc = [MTLDepthStencilDescriptor new];
+			depth_desc.depthCompareFunction = MTLCompareFunctionAlways;
+			depth_desc.depthWriteEnabled = m_targets[0] != nullptr;
+			id<MTLDevice> device = (__bridge id<MTLDevice>) metal_device();
+			id<MTLDepthStencilState> depth_state =
+			[device newDepthStencilStateWithDescriptor: depth_desc];
+			[command_encoder setDepthStencilState: depth_state];
+			
+			if (!m_clear_shader) {
+				m_clear_shader = new Shader(
+											this,
+											
+											"clear_shader",
+											
+											/* Vertex shader */
+ R"(using namespace metal;
+ 
+ struct VertexOut {
+  float4 position [[position]];
+ };
+ 
+ vertex VertexOut vertex_main(const device float2 *position,
+   constant float &clear_depth,
+   uint id [[vertex_id]]) {
+  VertexOut vert;
+  vert.position = float4(position[id], clear_depth, 1.f);
+  return vert;
+ })",
+											
+											/* Fragment shader */
+ R"(using namespace metal;
+ 
+ struct VertexOut {
+  float4 position [[position]];
+ };
+ 
+ fragment float4 fragment_main(VertexOut vert [[stage_in]],
+ constant float4 &clear_color) {
+  return clear_color;
+ })"
+											);
+				
+				const float positions[] = {
+					-1.f, -1.f, 1.f, -1.f, -1.f, 1.f,
+					1.f, -1.f, 1.f,  1.f, -1.f, 1.f
+				};
+				
+				m_clear_shader->set_buffer("position", VariableType::Float32,
+										   { 6, 2 }, positions);
+			}
+			
+			m_clear_shader->set_uniform("clear_color", m_clear_color.at(0));
+			m_clear_shader->set_uniform("clear_depth", m_clear_depth);
+			m_clear_shader->begin();
+			m_clear_shader->draw_array(Shader::PrimitiveType::Triangle, 0, 6, false);
+			m_clear_shader->end();
+		} else {
+			
+			// Ensure the render pass descriptor has the correct load action to clear the color buffer
+			MTLRenderPassDescriptor *pass_descriptor =
+			(__bridge MTLRenderPassDescriptor *) m_pass_descriptor;
+			
+			if (pass_descriptor.colorAttachments[index].texture) {
+				pass_descriptor.colorAttachments[index].loadAction = MTLLoadActionClear;
+				pass_descriptor.colorAttachments[index].clearColor = MTLClearColorMake(
+																					   color.r(), color.g(), color.b(), color.w()
+																					   );
+			} else {
+				throw std::runtime_error("RenderPass::clear_color(): No valid color attachment to clear.");
+			}
+		}
+
 	}
 }
 
@@ -274,6 +340,7 @@ void RenderPass::set_viewport(const Vector2i &offset, const Vector2i &size) {
 			(double) size.x(),   (double) size.y(),
 			0.0, 1.0 }
 		];
+		
 		Vector2i scissor_size = max(min(offset + size, m_framebuffer_size) - offset, Vector2i(0));
 		Vector2i scissor_offset = max(min(offset, m_framebuffer_size), Vector2i(0));
 		[command_encoder setScissorRect: (MTLScissorRect) {
@@ -326,9 +393,12 @@ void RenderPass::push_depth_test_state(DepthTest depth_test, bool depth_write, i
 }
 
 void RenderPass::pop_depth_test_state(int identifier) {
-	auto state = mDepthTestStates[identifier].front();
-	mDepthTestStates[identifier].pop_front();
-	state();
+	
+	if (mDepthTestStates.find(identifier) != mDepthTestStates.end()) {
+		auto state = mDepthTestStates[identifier].front();
+		mDepthTestStates[identifier].pop_front();
+		state();
+	}
 }
 
 void RenderPass::set_cull_mode(CullMode cull_mode) {

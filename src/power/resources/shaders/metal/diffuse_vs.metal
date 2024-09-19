@@ -8,7 +8,6 @@ struct VertexOut {
     float3 Normal;
     float3 FragPos;
     int TextureId;
-    int VertexId;
 };
 
 vertex VertexOut vertex_main(const device packed_float3 *const aPosition [[buffer(0)]],
