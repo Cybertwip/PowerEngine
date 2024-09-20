@@ -12,6 +12,17 @@
 #include <glm/gtc/quaternion.hpp>
 
 namespace SkinnedFbxUtil {
+
+
+glm::vec3 ExtractScale(const glm::mat4& matrix) {
+	glm::vec3 scale;
+	scale.x = glm::length(glm::vec3(matrix[0]));
+	scale.y = glm::length(glm::vec3(matrix[1]));
+	scale.z = glm::length(glm::vec3(matrix[2]));
+	return scale;
+}
+
+
 inline glm::mat4 SfbxMatToGlmMat(const sfbx::float4x4 &from)
 {
 	glm::mat4 to;
@@ -28,73 +39,75 @@ inline glm::mat4 SfbxMatToGlmMat(const sfbx::float4x4 &from)
 
 SkinnedFbx::SkinnedFbx(const std::string& path) : Fbx(path) {
 }
-
 void SkinnedFbx::ProcessBones(const std::shared_ptr<sfbx::Mesh>& mesh) {
+	// Get the geometry from the mesh and its deformers
 	auto geometry = mesh->getGeometry();
 	auto deformers = geometry->getDeformers();
 	std::shared_ptr<sfbx::Skin> skin;
 	
-	// Find the skin deformer
+	// Find the skin deformer in the mesh
 	for (auto& deformer : deformers) {
 		if (skin = sfbx::as<sfbx::Skin>(deformer); skin) {
 			break;
 		}
 	}
-	
+	int boneId = -1;
+	// If a skin deformer is found, proceed with processing bones
 	if (skin) {
+		// Get the last processed mesh data and push it to the skinned meshes vector
 		auto& lastProcessedMesh = GetMeshData().back();
-		
 		mSkinnedMeshes.push_back(std::make_unique<SkinnedMeshData>(std::move(lastProcessedMesh)));
 		
+		// Get all the skin clusters (bones) attached to the mesh
 		auto skinClusters = skin->getChildren();
+		
+		// Iterate over all skin clusters
 		for (const auto& clusterObj : skinClusters) {
 			auto skinCluster = sfbx::as<sfbx::Cluster>(clusterObj);
 			std::string boneName = std::string{skinCluster->getChild()->getName()};
 			
-			// Assign bone ID if not already assigned
+			// If the bone is not already mapped, assign a new bone ID
 			if (mBoneMapping.find(boneName) == mBoneMapping.end()) {
-				int newBoneID = static_cast<int>(mBoneMapping.size());
-				mBoneMapping[boneName] = newBoneID;
+				mBoneMapping[boneName] = boneId;
 				
-				// Retrieve the local bind pose matrix using getLocalMatrix
+				// Retrieve the local bind pose matrix
 				glm::mat4 localBindPose = SkinnedFbxUtil::SfbxMatToGlmMat(skinCluster->getTransform());
 				
-				// Store bind pose and parent information
+				// Store the bind pose and parent information
 				BoneHierarchyInfo boneInfo;
-				boneInfo.boneID = newBoneID;
+				boneInfo.boneID = boneId;
 				boneInfo.localBindPose = localBindPose;
 				
-				// Determine parent bone
-				auto parentNode = skinCluster->getChild()->getParent(); // Assuming getParent() returns the parent node
-				if (parentNode && parentNode->getSubClass() == sfbx::ObjectSubClass::LimbNode) { // Adjust Type as per your FBX SDK
+				// Determine parent bone (if any)
+				auto parentNode = skinCluster->getChild()->getParent();
+				if (parentNode && parentNode->getSubClass() == sfbx::ObjectSubClass::LimbNode) {
 					std::string parentBoneName = std::string{parentNode->getName()};
 					boneInfo.parentBoneName = parentBoneName;
 				} else {
 					boneInfo.parentBoneName = ""; // No parent (root bone)
 				}
 				
+				// Push the bone info to the bone hierarchy
 				mBoneHierarchy.push_back(boneInfo);
+				
+				boneId++;
 			}
 			
-			std::size_t boneID = mBoneMapping[boneName];
+			// Get the bone ID for the current bone
 			auto weights = skinCluster->getWeights();
 			auto indices = skinCluster->getIndices();
 			
+			// Assign weights to vertices for the current bone
 			for (size_t i = 0; i < weights.size(); ++i) {
 				int vertexID = indices[i];
 				float weight = weights[i];
-				for (int j = 0; j < 4; ++j) {
-					if (mSkinnedMeshes.back()->get_skinned_vertices()[vertexID].get_weights()[j] == 0.0f) {
-						mSkinnedMeshes.back()->get_skinned_vertices()[vertexID].set_bone(static_cast<int>(boneID), weight);
-						break;
-					}
-				}
+				
+				// Set the bone and weight for the corresponding vertex in the skinned mesh
+				mSkinnedMeshes.back()->get_skinned_vertices()[vertexID].set_bone(boneId, weight);
 			}
 		}
 	}
-}
-
-void SkinnedFbx::TryBuildSkeleton() {
+	
 	auto skeletonPointer = std::make_unique<Skeleton>();
 	auto& skeleton = *skeletonPointer;
 	
@@ -110,7 +123,7 @@ void SkinnedFbx::TryBuildSkeleton() {
 		
 		glm::vec3 translation = glm::vec3(boneInfo.localBindPose[3]); // Extract translation from matrix
 		glm::quat rotation = glm::quat_cast(boneInfo.localBindPose); // Extract rotation from matrix
-		glm::vec3 scale = ExtractScale(boneInfo.localBindPose); // Extract scale
+		glm::vec3 scale = SkinnedFbxUtil::ExtractScale(boneInfo.localBindPose); // Extract scale
 		
 		// Determine parent index
 		int parentIndex = -1;
@@ -134,7 +147,8 @@ void SkinnedFbx::TryBuildSkeleton() {
 	skeleton.compute_global_transforms();
 	skeleton.compute_inverse_bind_poses();
 	
-	mSkeleton = std::move(skeletonPointer);
+	mSkeleton = skeleton.num_bones() > 0 ? std::move(skeletonPointer) : nullptr;
+
 }
 
 std::string SkinnedFbx::GetBoneNameByID(int boneID) const {
@@ -145,15 +159,6 @@ std::string SkinnedFbx::GetBoneNameByID(int boneID) const {
 	}
 	return "";
 }
-
-glm::vec3 SkinnedFbx::ExtractScale(const glm::mat4& matrix) const {
-	glm::vec3 scale;
-	scale.x = glm::length(glm::vec3(matrix[0]));
-	scale.y = glm::length(glm::vec3(matrix[1]));
-	scale.z = glm::length(glm::vec3(matrix[2]));
-	return scale;
-}
-
 
 
 void SkinnedFbx::TryImportAnimations() {

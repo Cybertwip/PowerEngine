@@ -149,8 +149,8 @@ void SkinnedMeshBatch::append(std::reference_wrapper<SkinnedMesh> meshRef) {
 											 mesh.get_flattened_colors().end());
 	
 	mBatchBoneIds[shader.identifier()].insert(mBatchBoneIds[shader.identifier()].end(),
-											 mesh.get_flattened_bone_ids().begin(),
-											 mesh.get_flattened_bone_ids().end());
+mesh.get_flattened_bone_ids().begin(),
+mesh.get_flattened_bone_ids().end());
 
 	
 	mBatchBoneWeights[shader.identifier()].insert(mBatchBoneWeights[shader.identifier()].end(),

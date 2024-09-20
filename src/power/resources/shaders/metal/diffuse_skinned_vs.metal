@@ -11,6 +11,11 @@ struct VertexOut {
     int TextureId;
 };
 
+struct Bone {
+    float4x4 transform;
+};
+
+
 vertex VertexOut vertex_main(const device packed_float3 *const aPosition [[buffer(0)]],
                              const device packed_float3 *const aNormal [[buffer(1)]],
                              const device packed_float4 *const aColor [[buffer(2)]],
@@ -22,7 +27,7 @@ vertex VertexOut vertex_main(const device packed_float3 *const aPosition [[buffe
                              constant float4x4 &aProjection [[buffer(9)]],
                              constant float4x4 &aView [[buffer(10)]],
                              constant float4x4 &aModel [[buffer(11)]],
-                             const device float4x4 *const bones [[buffer(12)]],
+                             constant Bone *bones [[buffer(12)]],
                              uint id [[vertex_id]]) {
     const int MAX_BONES = 128;
     const int MAX_BONE_INFLUENCE = 4;
@@ -46,13 +51,13 @@ vertex VertexOut vertex_main(const device packed_float3 *const aPosition [[buffe
             break;
         }
 
-        float4 localPosition = bones[aBoneIds[id][i]] * pos;
+        float4 localPosition = bones[aBoneIds[id][i]].transform * pos;
 
         // Manually extract the 3x3 matrix from the 4x4 bone matrix
         float3x3 bonemat3 = float3x3(
-            bones[aBoneIds[id][i]][0].xyz,
-            bones[aBoneIds[id][i]][1].xyz,
-            bones[aBoneIds[id][i]][2].xyz
+            bones[aBoneIds[id][i]].transform[0].xyz,
+            bones[aBoneIds[id][i]].transform[1].xyz,
+            bones[aBoneIds[id][i]].transform[2].xyz
         );
 
         float3 localNormal = bonemat3 * norm;

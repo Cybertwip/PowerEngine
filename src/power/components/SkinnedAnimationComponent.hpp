@@ -4,9 +4,21 @@
 #include "animation/Transform.hpp"
 #include "animation/Skeleton.hpp"
 
+#include <glm/gtc/type_ptr.hpp>
+
 #include <iostream>
 #include <memory>
 
+struct BoneCPU
+{
+	float transform[4][4] =
+	{
+		0.0f, 0.0f, 0.0f, 0.0f,
+		0.0f, 0.0f, 0.0f, 0.0f,
+		0.0f, 0.0f, 0.0f, 0.0f,
+		0.0f, 0.0f, 0.0f, 0.0f
+	};
+};
 
 class SkinnedAnimationComponent {
 public:
@@ -33,14 +45,32 @@ public:
 		boneMatrices.reserve(mSkeleton.get().num_bones());
 		
 		mSkeleton.get().compute_global_transforms();
+				
+#if defined(NANOGUI_USE_METAL)
+		// Ensure we have a valid number of materials
+		size_t numBones = mSkeleton.get().num_bones();
 		
-		for (int i = 0; i < mSkeleton.get().num_bones(); ++i) {
-			boneMatrices.emplace_back(mSkeleton.get().get_bone(i).inverse_bind_pose);
+		std::vector<BoneCPU> bonesCPU(numBones);
+		
+		for (int i = 0; i < numBones; ++i) {
+			auto boneTransform = mSkeleton.get().get_bone(i).local_transform.to_matrix();
+			
+			BoneCPU& boneCPU = bonesCPU[i];
+			
+			std::memcpy(boneCPU.transform, glm::value_ptr(boneTransform), sizeof(float) * 16);
 		}
 		
-		// Set the "bones" buffer in the shader
-		shader.set_buffer("bones", nanogui::VariableType::Float32, { boneMatrices.size(), 4, 4 }, boneMatrices.data());
+		shader.set_buffer(
+						  "bones",
+						  nanogui::VariableType::Float32,
+						  {numBones, sizeof(BoneCPU) / sizeof(float)},
+						  bonesCPU.data()
+						  );
+#else
+		
+#endif
 
+		
 	}
 	
 	// Function to update the animation time (to be called externally)
@@ -48,6 +78,8 @@ public:
 		mCurrentTime += deltaTime;
 		// Handle looping or animation duration as needed
 	}
+	
+	auto& skeleton() const { return mSkeleton.get(); }
 	
 private:
 	std::reference_wrapper<Skeleton> mSkeleton;

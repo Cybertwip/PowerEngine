@@ -41,7 +41,14 @@ class SkinnedMeshVertex {
 public:
 	static constexpr int MAX_BONE_INFLUENCE = 4;
 	
-	explicit SkinnedMeshVertex(MeshVertex& meshVertex) : mMeshVertex(meshVertex) {}
+	explicit SkinnedMeshVertex(MeshVertex& meshVertex) : mMeshVertex(meshVertex) {
+		for (int i = 0; i < MAX_BONE_INFLUENCE; i++)
+		{
+			mBoneIds[i] = -1;
+			mWeights[i] = 0.0f;
+		}
+
+	}
 	
 
 	void set_bone(int boneId, float weight) {
@@ -120,7 +127,7 @@ public:
 	}
 	
 private:
-	MeshVertex& mMeshVertex;
+	MeshVertex mMeshVertex;
 	
 	std::array<int, MAX_BONE_INFLUENCE> mBoneIds;
 	std::array<float, MAX_BONE_INFLUENCE> mWeights;

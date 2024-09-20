@@ -30,8 +30,6 @@ public:
 	const std::vector<float>& get_flattened_normals() const { return mFlattenedNormals; }
 	const std::vector<float>& get_flattened_tex_coords1() const { return mFlattenedTexCoords1; }
 	const std::vector<float>& get_flattened_tex_coords2() const { return mFlattenedTexCoords2; }
-	const std::vector<int>& get_flattened_bone_ids() const { return mFlattenedBoneIds; }
-	const std::vector<float>& get_flattened_weights() const { return mFlattenedWeights; }
 	const std::vector<int>& get_flattened_texture_ids() const { return mFlattenedTextureIds; }
 	const std::vector<float>& get_flattened_colors() const { return mFlattenedColors; }
 
@@ -59,8 +57,6 @@ private:
 	std::vector<float> mFlattenedNormals;
 	std::vector<float> mFlattenedTexCoords1;
 	std::vector<float> mFlattenedTexCoords2;
-	std::vector<int> mFlattenedBoneIds;
-	std::vector<float> mFlattenedWeights;
 	std::vector<int> mFlattenedTextureIds;
 	std::vector<float> mFlattenedColors; // Added to store flattened color data
 

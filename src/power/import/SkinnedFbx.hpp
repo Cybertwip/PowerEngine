@@ -30,6 +30,7 @@ struct BoneHierarchyInfo {
 };
 
 
+
 class SkinnedFbx : public Fbx {
 public:
 	explicit SkinnedFbx(const std::string& path);
@@ -49,11 +50,11 @@ public:
 	void TryImportAnimations();
 	
 private:
+	std::string GetBoneNameByID(int boneID) const;
+
 	void ProcessBones(const std::shared_ptr<sfbx::Mesh>& mesh) override;
 	
 	std::unordered_map<std::string, int> mBoneMapping;
-	std::vector<BoneHierarchyInfo> mBoneHierarchy; // hierarchy info
-
 	std::vector<Transform> mBoneTransforms;
 	
 	std::unique_ptr<Skeleton> mSkeleton;
@@ -61,8 +62,6 @@ private:
 	
 	std::vector<std::unique_ptr<Animation>> mAnimations;
 	
-	// Helper functions
-	std::string GetBoneNameByID(int boneID) const;
-	glm::vec3 ExtractScale(const glm::mat4& matrix) const;
+	std::vector<BoneHierarchyInfo> mBoneHierarchy; // hierarchy info
 
 };
