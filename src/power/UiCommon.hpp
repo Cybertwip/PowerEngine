@@ -10,6 +10,7 @@ class Widget;
 
 class Actor;
 class ActorManager;
+class AnimationPanel;
 class HierarchyPanel;
 class ScenePanel;
 class ShaderManager;
@@ -33,17 +34,22 @@ public:
         return *mStatusBar;
     }
 
-    TransformPanel& transform_panel() {
-        return *mTransformPanel;
-    }
-	
+	TransformPanel& transform_panel() {
+		return *mTransformPanel;
+	}
+
+	AnimationPanel& animation_panel() {
+		return *mAnimationPanel;
+	}
+
 	nanogui::Widget& toolbox() {
 		return *mToolbox;
 	}
 	    
 private:
     ScenePanel* mScenePanel;
-    TransformPanel* mTransformPanel;
+	TransformPanel* mTransformPanel;
+	AnimationPanel* mAnimationPanel;
     HierarchyPanel* mHierarchyPanel;
 	nanogui::Widget* mStatusBar;
 	StatusBarPanel* mStatusBarPanel;

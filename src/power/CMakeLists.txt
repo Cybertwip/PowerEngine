@@ -66,6 +66,7 @@ add_executable(PowerEngine
     ${CMAKE_CURRENT_LIST_DIR}/actors/ActorManager.hpp
     
     ${CMAKE_CURRENT_LIST_DIR}/components/AnimationComponent.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/components/SkinnedAnimationComponent.hpp
     ${CMAKE_CURRENT_LIST_DIR}/components/CameraComponent.cpp
     ${CMAKE_CURRENT_LIST_DIR}/components/CameraComponent.hpp
     ${CMAKE_CURRENT_LIST_DIR}/components/Component.cpp
@@ -129,6 +130,8 @@ add_executable(PowerEngine
     ${CMAKE_CURRENT_LIST_DIR}/import/Fbx.cpp
 
 
+    ${CMAKE_CURRENT_LIST_DIR}/ui/AnimationPanel.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/ui/AnimationPanel.cpp
     ${CMAKE_CURRENT_LIST_DIR}/ui/HierarchyPanel.hpp
     ${CMAKE_CURRENT_LIST_DIR}/ui/HierarchyPanel.cpp
     ${CMAKE_CURRENT_LIST_DIR}/ui/Panel.hpp

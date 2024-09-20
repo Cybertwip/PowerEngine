@@ -3,6 +3,7 @@
 #include "actors/Actor.hpp"
 #include "components/UiComponent.hpp"
 #include "grok/PromptBox.hpp"
+#include "ui/AnimationPanel.hpp"
 #include "ui/HierarchyPanel.hpp"
 #include "ui/ScenePanel.hpp"
 #include "ui/TransformPanel.hpp"
@@ -59,20 +60,25 @@ UiCommon::UiCommon(nanogui::Widget& parent, ActorManager& actorManager) {
 
 	mTransformPanel = new TransformPanel(*rightWrapper);
 
+	mAnimationPanel = new AnimationPanel(*rightWrapper);
+
 	mHierarchyPanel = new HierarchyPanel(*mScenePanel, *mTransformPanel, *rightWrapper);
 
 //	auto promptbox = new PromptBox(*rightWrapper);
 	
 	mHierarchyPanel->inc_ref();
 	mTransformPanel->inc_ref();
+	mAnimationPanel->inc_ref();
 //	promptbox->inc_ref();
 	
 	rightWrapper->remove_child(mHierarchyPanel);
 	rightWrapper->remove_child(mTransformPanel);
+	rightWrapper->remove_child(mAnimationPanel);
 //	rightWrapper->remove_child(promptbox);
 
 	rightWrapper->add_child(mHierarchyPanel); // Add HierarchyPanel first
 	rightWrapper->add_child(mTransformPanel); // Add TransformPanel second
+	rightWrapper->add_child(mAnimationPanel); // Add AnimationPanel third
 //	rightWrapper->add_child(promptbox); // Add Grok third
 }
 
