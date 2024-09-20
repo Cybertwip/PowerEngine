@@ -36,6 +36,8 @@ protected:
 		
 	}
 
+	sfbx::DocumentPtr mDoc;
+	
 	std::string mPath;
 
 	std::vector<std::unique_ptr<MeshData>> mMeshes;

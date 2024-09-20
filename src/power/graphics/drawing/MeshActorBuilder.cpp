@@ -35,6 +35,7 @@ Actor& MeshActorBuilder::build(Actor& actor, const std::string& path, ShaderWrap
 
 	model.LoadModel();
 	model.TryBuildSkeleton();
+	model.TryImportAnimations();
 
 	std::unique_ptr<Drawable> drawableComponent;
 	

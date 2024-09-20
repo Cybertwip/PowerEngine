@@ -47,9 +47,9 @@ Fbx::Fbx(const std::string& path) : mPath(path) {
 }
 
 void Fbx::LoadModel() {
-    sfbx::DocumentPtr doc = sfbx::MakeDocument(std::string(mPath));
-    if (doc && doc->valid()) {
-        ProcessNode(doc->getRootModel());
+    mDoc = sfbx::MakeDocument(std::string(mPath));
+    if (mDoc && mDoc->valid()) {
+        ProcessNode(mDoc->getRootModel());
     }
 }
 

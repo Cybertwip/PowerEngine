@@ -10,6 +10,9 @@
 
 #include <ozz/base/memory/unique_ptr.h>
 
+#include <ozz/animation/runtime/animation.h>
+#include <ozz/animation/offline/animation_builder.h>
+#include <ozz/animation/offline/raw_animation.h>
 #include <ozz/animation/offline/raw_skeleton.h>
 #include <ozz/animation/offline/skeleton_builder.h>
 #include <ozz/animation/runtime/skeleton.h>
@@ -26,7 +29,7 @@ class Fbx;
 
 class SkinnedFbx : public Fbx {
 public:
-    explicit SkinnedFbx(const std::string& path);
+	explicit SkinnedFbx(const std::string& path);
 	
 	~SkinnedFbx() = default;
 	
@@ -36,14 +39,21 @@ public:
 	
 	std::vector<std::unique_ptr<SkinnedMeshData>>& GetSkinnedMeshData() { return mSkinnedMeshes; }
 
-	void TryBuildSkeleton();
+	std::vector<ozz::unique_ptr<ozz::animation::Animation>>& GetAnimationData() { return mAnimations;
+	}
 
-private:
-    void ProcessBones(const std::shared_ptr<sfbx::Mesh>& mesh) override;
+	void TryBuildSkeleton();
 	
-    std::unordered_map<std::string, int> mBoneMapping;
-    std::vector<ozz::math::Transform> mBoneTransforms;
-    ozz::unique_ptr<ozz::animation::Skeleton> mSkeleton;
+	void TryImportAnimations();
+	
+private:
+	void ProcessBones(const std::shared_ptr<sfbx::Mesh>& mesh) override;
+	
+	std::unordered_map<std::string, int> mBoneMapping;
+	std::vector<ozz::math::Transform> mBoneTransforms;
+	ozz::unique_ptr<ozz::animation::Skeleton> mSkeleton;
 	
 	std::vector<std::unique_ptr<SkinnedMeshData>> mSkinnedMeshes;
+	
+	std::vector<ozz::unique_ptr<ozz::animation::Animation>> mAnimations;
 };
