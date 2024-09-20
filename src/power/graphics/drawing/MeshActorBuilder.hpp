@@ -3,6 +3,7 @@
 #include "graphics/drawing/Mesh.hpp"
 
 #include <string>
+#include <unordered_map>
 
 class Actor;
 class MeshComponent;
@@ -18,4 +19,5 @@ public:
 	
 private:
 	BatchUnit& mBatchUnit;
+	std::unordered_map<std::string, SkinnedFbx> SkinnedFbx;
 };
