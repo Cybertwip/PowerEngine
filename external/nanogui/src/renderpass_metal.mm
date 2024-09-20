@@ -183,6 +183,8 @@ void RenderPass::end() {
 	m_command_encoder = nullptr;
 	m_command_buffer = nullptr;
 	m_active = false;
+	
+	mDepthTestStates.clear();
 }
 
 void RenderPass::resize(const Vector2i &size) {

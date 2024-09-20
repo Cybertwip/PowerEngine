@@ -36,10 +36,12 @@ protected:
 		
 	}
 
+	std::string mPath;
+
+	std::vector<std::unique_ptr<MeshData>> mMeshes;
+
 private:
     void ProcessNode(const std::shared_ptr<sfbx::Model>& node);
     void ProcessMesh(const std::shared_ptr<sfbx::Mesh>& mesh);
 
-	std::string mPath;
-	std::vector<std::unique_ptr<MeshData>> mMeshes;
 };

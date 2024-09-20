@@ -27,8 +27,8 @@ private:
 };
 
 struct SkinnedMeshData {
-	SkinnedMeshData(MeshData& meshData) : mMeshData(meshData) {
-		auto& vertices = meshData.get_vertices();
+	SkinnedMeshData(std::unique_ptr<MeshData> meshData) : mMeshData(std::move(meshData)) {
+		auto& vertices = mMeshData->get_vertices();
 		
 		for (auto& meshVertex : vertices) {
 			mVertices.push_back(SkinnedMeshVertex(meshVertex));
@@ -40,15 +40,15 @@ struct SkinnedMeshData {
 	}
 	
 	std::vector<unsigned int>& get_indices() {
-		return mMeshData.get_indices();
+		return mMeshData->get_indices();
 	}
 	
 	std::vector<std::shared_ptr<MaterialProperties>>& get_material_properties() const {
-		return mMeshData.get_material_properties();
+		return mMeshData->get_material_properties();
 	}
 	
 private:
-	MeshData& mMeshData;
+	std::unique_ptr<MeshData> mMeshData;
 	std::vector<SkinnedMeshVertex> mVertices;
 };
 

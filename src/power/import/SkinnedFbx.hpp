@@ -36,10 +36,10 @@ public:
 	
 	std::vector<std::unique_ptr<SkinnedMeshData>>& GetSkinnedMeshData() { return mSkinnedMeshes; }
 
+	void TryBuildSkeleton();
+
 private:
     void ProcessBones(const std::shared_ptr<sfbx::Mesh>& mesh) override;
-
-	void TryBuildSkeleton();
 	
     std::unordered_map<std::string, int> mBoneMapping;
     std::vector<ozz::math::Transform> mBoneTransforms;

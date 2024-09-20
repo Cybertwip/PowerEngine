@@ -33,15 +33,13 @@ ozz::math::Transform ToOzzTransform(const sfbx::float4x4& mat) {
 }  // namespace
 
 SkinnedFbx::SkinnedFbx(const std::string& path) : Fbx(path) {
-	LoadModel();
-	TryBuildSkeleton();
 }
 
 void SkinnedFbx::ProcessBones(const std::shared_ptr<sfbx::Mesh>& mesh) {
 		
 	auto& lastProcessedMesh = GetMeshData().back();
 	
-	mSkinnedMeshes.push_back(std::make_unique<SkinnedMeshData>(*lastProcessedMesh));
+	mSkinnedMeshes.push_back(std::make_unique<SkinnedMeshData>(std::move(lastProcessedMesh)));
 
     auto geometry = mesh->getGeometry();
     auto deformers = geometry->getDeformers();

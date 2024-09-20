@@ -246,9 +246,6 @@ void Fbx::ProcessMesh(const std::shared_ptr<sfbx::Mesh>& mesh) {
 	for (auto& thread : threads) {
 		thread.join();
 	}
-	
-	// Process bones no-op, must implement.
-	ProcessBones(mesh);
 
 	// Process materials
 	resultMesh->get_material_properties().reserve(materials.size());
@@ -286,4 +283,7 @@ void Fbx::ProcessMesh(const std::shared_ptr<sfbx::Mesh>& mesh) {
 		
 		resultMesh->get_material_properties().push_back(matPtr);
 	}
+	
+	// Process bones no-op, must implement.
+	ProcessBones(mesh);
 }

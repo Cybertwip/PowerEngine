@@ -33,6 +33,9 @@ Actor& MeshActorBuilder::build(Actor& actor, const std::string& path, ShaderWrap
 
     auto model = SkinnedFbx(path);
 
+	model.LoadModel();
+	model.TryBuildSkeleton();
+
 	std::unique_ptr<Drawable> drawableComponent;
 	
 	if (model.GetSkeleton() != nullptr) {
