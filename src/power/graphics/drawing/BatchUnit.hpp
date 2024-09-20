@@ -12,5 +12,4 @@ struct BatchUnit {
 	
 	MeshBatch& mMeshBatch;
 	SkinnedMeshBatch& mSkinnedMeshBatch;
-	
 };
