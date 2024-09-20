@@ -287,7 +287,7 @@ void RenderPass::clear_color(size_t index, const Color &color) {
 				throw std::runtime_error("RenderPass::clear_color(): No valid color attachment to clear.");
 			}
 		}
-
+		
 	}
 }
 
@@ -397,9 +397,13 @@ void RenderPass::push_depth_test_state(DepthTest depth_test, bool depth_write, i
 void RenderPass::pop_depth_test_state(int identifier) {
 	
 	if (mDepthTestStates.find(identifier) != mDepthTestStates.end()) {
-		auto state = mDepthTestStates[identifier].front();
-		mDepthTestStates[identifier].pop_front();
-		state();
+		
+		if (!mDepthTestStates[identifier].empty()) {
+			auto state = mDepthTestStates[identifier].front();
+			mDepthTestStates[identifier].pop_front();
+			state();
+		}
+		
 	}
 }
 
