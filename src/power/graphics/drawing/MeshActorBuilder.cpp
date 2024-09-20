@@ -32,7 +32,6 @@ Actor& MeshActorBuilder::build(Actor& actor, const std::string& path, ShaderWrap
 	
 	auto& colorComponent = actor.add_component<ColorComponent>(actor.get_component<MetadataComponent>());
 	
-	
 	if (mModels.find(path) == mModels.end()) {
 		// If the model does not exist, create and store it
 		mModels[path] = std::make_unique<SkinnedFbx>(path);

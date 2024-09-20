@@ -31,7 +31,7 @@ public:
 	
 	TransformComponent() {
 		transform.translation = glm::vec3(0.0f, 0.0f, 0.0f);
-		transform.rotation = glm::quat(0, 0, 0, 1);
+		transform.rotation = glm::quat(1, 0, 0, 0);
 		transform.scale = glm::vec3(1.0f, 1.0f, 1.0f);
 	}
 	

@@ -6,12 +6,6 @@
 
 #include <SmallFBX.h>
 
-#include <ozz/base/memory/unique_ptr.h>
-
-#include <ozz/animation/offline/raw_skeleton.h>
-#include <ozz/animation/offline/skeleton_builder.h>
-#include <ozz/animation/runtime/skeleton.h>
-
 #include <glm/glm.hpp>
 
 #include <string>

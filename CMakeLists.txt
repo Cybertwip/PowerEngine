@@ -102,16 +102,13 @@ add_subdirectory(external/imgui-node-editor/)
 add_subdirectory(external/cpp-httplib/)
 add_subdirectory(external/zstr/)
 add_subdirectory(external/nanogui/)
-add_subdirectory(external/ozz/)
 add_subdirectory(external/tinygizmo/) 
 
 add_subdirectory(src/power)
 
 target_link_libraries(nanogui PUBLIC glad glfw)
-#target_link_libraries(ozz_animation PUBLIC glad glfw json)
-#target_link_libraries(ozz_animation_tools json)
 
-#target_link_libraries(application nanogui ozz_animation entt)
+#target_link_libraries(application nanogui entt)
 
 target_link_libraries(imgui-feature-layout glm json)
 #target_link_libraries(test PUBLIC imgui-feature-layout imgui-node-editor httplib::httplib zstr::zstr)

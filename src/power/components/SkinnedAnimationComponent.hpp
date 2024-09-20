@@ -28,7 +28,19 @@ public:
 	}
 	
 	void apply_to(ShaderWrapper& shader) {
+		// Extract bone matrices and pass them to the shader
+		std::vector<glm::mat4> boneMatrices;
+		boneMatrices.reserve(mSkeleton.get().num_bones());
 		
+		mSkeleton.get().compute_global_transforms();
+		
+		for (int i = 0; i < mSkeleton.get().num_bones(); ++i) {
+			boneMatrices.emplace_back(mSkeleton.get().get_bone(i).inverse_bind_pose);
+		}
+		
+		// Set the "bones" buffer in the shader
+		shader.set_buffer("bones", nanogui::VariableType::Float32, { boneMatrices.size(), 4, 4 }, boneMatrices.data());
+
 	}
 	
 	// Function to update the animation time (to be called externally)
@@ -46,4 +58,5 @@ private:
 	// Buffers to store poses
 	std::vector<Transform> mLocalPose;
 	std::vector<glm::mat4> mModelPose;
+
 };
