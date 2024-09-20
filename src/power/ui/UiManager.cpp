@@ -883,7 +883,8 @@ void UiManager::draw() {
 	auto& batch_unit = mMeshActorLoader.get_batch_unit();
 
 	mActorManager.visit(batch_unit.mMeshBatch);
-	
+	mActorManager.visit(batch_unit.mSkinnedMeshBatch);
+
 	mCanvas.render_pass()->set_depth_test(nanogui::RenderPass::DepthTest::Less, true);
 
 	mActorManager.visit(*this);

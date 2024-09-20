@@ -16,7 +16,7 @@
 
 #include <glm/glm.hpp>
 
-#include <string_view>
+#include <string>
 #include <vector>
 #include <memory>
 #include <unordered_map>
@@ -26,7 +26,9 @@ class Fbx;
 
 class SkinnedFbx : public Fbx {
 public:
-    explicit SkinnedFbx(const std::string_view path);
+    explicit SkinnedFbx(const std::string& path);
+	
+	~SkinnedFbx() = default;
 	
 	const ozz::animation::Skeleton* GetSkeleton() const {
 		return mSkeleton.get();

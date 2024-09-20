@@ -32,7 +32,8 @@ ozz::math::Transform ToOzzTransform(const sfbx::float4x4& mat) {
 
 }  // namespace
 
-SkinnedFbx::SkinnedFbx(const std::string_view path) : Fbx(path) {
+SkinnedFbx::SkinnedFbx(const std::string& path) : Fbx(path) {
+	LoadModel();
 	TryBuildSkeleton();
 }
 
