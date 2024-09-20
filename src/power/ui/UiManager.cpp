@@ -875,8 +875,11 @@ void UiManager::draw() {
 	// Draw gizmos
 	mGizmoManager->draw();
 	
+	// One for each batch
 	mCanvas.render_pass()->push_depth_test_state(nanogui::RenderPass::DepthTest::Less, true, mShaderManager.identifier("mesh"));
-	
+
+	mCanvas.render_pass()->push_depth_test_state(nanogui::RenderPass::DepthTest::Less, true, mShaderManager.identifier("mesh"));
+
 	auto& batch_unit = mMeshActorLoader.get_batch_unit();
 
 	mActorManager.visit(batch_unit.mMeshBatch);
