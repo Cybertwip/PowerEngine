@@ -107,7 +107,8 @@ ResourcesPanel::ResourcesPanel(nanogui::Widget& parent, const DirectoryNode& roo
 mRootDirectoryNode(root_directory_node),
 mActorVisualManager(actorVisualManager),
 mMeshActorLoader(meshActorLoader),
-mShader(std::make_unique<ShaderWrapper>(*shaderManager.get_shader("mesh"))),
+mMeshShader(std::make_unique<ShaderWrapper>(*shaderManager.get_shader("mesh"))),
+mSkinnedShader(std::make_unique<ShaderWrapper>(*shaderManager.get_shader("skinned_mesh"))),
 mSelectedButton(nullptr),
 mSelectedNode(nullptr),
 mNormalButtonColor(nanogui::Color(0.7f, 0.7f, 0.7f, 1.0f)),
@@ -300,7 +301,7 @@ void ResourcesPanel::handle_file_interaction(DirectoryNode& node) {
 		if (node.FileName.find(".seq") != std::string::npos || node.FileName.find(".cmp") != std::string::npos) {
 			// Logic for opening sequence or composition
 		} else if (node.FileName.find(".fbx") != std::string::npos) {
-			mActorVisualManager.add_actor(mMeshActorLoader.create_actor(node.FullPath, *mShader));
+			mActorVisualManager.add_actor(mMeshActorLoader.create_actor(node.FullPath, *mMeshShader, *mSkinnedShader));
 		}
 		// Handle other file type interactions...
 	}

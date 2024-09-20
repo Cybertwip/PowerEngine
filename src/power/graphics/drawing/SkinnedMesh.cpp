@@ -23,9 +23,6 @@
 #include <cmath>
 #include <algorithm>
 
-SkinnedMesh::SkinnedMeshShader::SkinnedMeshShader(ShaderManager& shaderManager)
-: ShaderWrapper(*shaderManager.get_shader("mesh")) {}
-
 SkinnedMesh::SkinnedMesh(std::unique_ptr<SkinnedMeshData> skinnedMeshData, ShaderWrapper& shader, SkinnedMeshBatch& meshBatch, ColorComponent& colorComponent)
 : mSkinnedMeshData(std::move(skinnedMeshData)), mShader(shader), mMeshBatch(meshBatch), mColorComponent(colorComponent), mModelMatrix(nanogui::Matrix4f::identity()) {
 	size_t numVertices = mSkinnedMeshData->get_skinned_vertices().size();
@@ -76,14 +73,14 @@ SkinnedMesh::SkinnedMesh(std::unique_ptr<SkinnedMeshData> skinnedMeshData, Shade
 		mFlattenedColors[i * 4 + 3] = color.a;
 		
 		
-//		// Bone IDs and Weights
-//		const auto& vertexBoneIds = vertex.get_bone_ids();
-//		const auto& vertexWeights = vertex.get_weights();
-//		
-//		for (int j = 0; j < Vertex::MAX_BONE_INFLUENCE; ++j) {
-//			mFlattenedBoneIds[i * Vertex::MAX_BONE_INFLUENCE + j] = vertexBoneIds[j];
-//			mFlattenedWeights[i * Vertex::MAX_BONE_INFLUENCE + j] = vertexWeights[j];
-//		}
+		// Bone IDs and Weights
+		const auto& vertexBoneIds = vertex.get_bone_ids();
+		const auto& vertexWeights = vertex.get_weights();
+		
+		for (int j = 0; j < SkinnedMeshVertex::MAX_BONE_INFLUENCE; ++j) {
+			mFlattenedBoneIds[i * SkinnedMeshVertex::MAX_BONE_INFLUENCE + j] = vertexBoneIds[j];
+			mFlattenedWeights[i * SkinnedMeshVertex::MAX_BONE_INFLUENCE + j] = vertexWeights[j];
+		}
 		
 	}
 

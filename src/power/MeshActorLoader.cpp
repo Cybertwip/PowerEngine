@@ -21,7 +21,7 @@ const BatchUnit& MeshActorLoader::get_batch_unit() {
 	return mBatchUnit;
 }
 
-Actor& MeshActorLoader::create_actor(const std::string& path, ShaderWrapper& shader) {
-	return mMeshActorBuilder->build(mActorManager.create_actor(), path, shader);
+Actor& MeshActorLoader::create_actor(const std::string& path, ShaderWrapper& meshShader, ShaderWrapper& skinnedShader) {
+	return mMeshActorBuilder->build(mActorManager.create_actor(), path, meshShader, skinnedShader);
 }
 

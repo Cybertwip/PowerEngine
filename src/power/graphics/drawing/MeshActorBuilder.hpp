@@ -16,7 +16,7 @@ class MeshActorBuilder {
 public:
 	MeshActorBuilder(BatchUnit& batches);
 
-	Actor& build(Actor& actor, const std::string& path, ShaderWrapper& shader);
+	Actor& build(Actor& actor, const std::string& path, ShaderWrapper& meshShader, ShaderWrapper& skinnedShader);
 	
 private:
 	BatchUnit& mBatchUnit;

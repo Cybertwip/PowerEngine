@@ -50,8 +50,9 @@ private:
 
 	IActorVisualManager& mActorVisualManager;
 	MeshActorLoader& mMeshActorLoader;
-	std::unique_ptr<ShaderWrapper> mShader;
-	
+	std::unique_ptr<ShaderWrapper> mMeshShader;
+	std::unique_ptr<ShaderWrapper> mSkinnedShader;
+
 	std::vector<nanogui::Button*> mFileButtons;
 	nanogui::Button* mSelectedButton;
 	DirectoryNode* mSelectedNode;

@@ -17,14 +17,6 @@ class ShaderManager;
 
 class SkinnedMesh : public Drawable {
 public:
-	
-	class SkinnedMeshShader : public ShaderWrapper {
-	public:
-		SkinnedMeshShader(ShaderManager& shader);
-	};
-	
-	
-public:
 	SkinnedMesh(std::unique_ptr<SkinnedMeshData> skinnedMeshData, ShaderWrapper& shader, SkinnedMeshBatch& meshBatch, ColorComponent& colorComponent);
 	~SkinnedMesh() override = default;
 	

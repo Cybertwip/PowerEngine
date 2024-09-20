@@ -18,13 +18,6 @@ class ShaderManager;
 
 class Mesh : public Drawable {
 public:
-    class MeshShader : public ShaderWrapper {
-    public:
-        MeshShader(ShaderManager& shader);
-    };
-
-
-public:
 	Mesh(std::unique_ptr<MeshData> meshData, ShaderWrapper& shader, MeshBatch& meshBatch, ColorComponent& colorComponent);
 	~Mesh() override = default;
     

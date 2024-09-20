@@ -9,6 +9,7 @@ class Actor;
 class ActorManager;
 class CameraManager;
 class ShaderManager;
+class ShaderWrapper;
 
 class CameraActorLoader
 {
@@ -23,5 +24,5 @@ class CameraActorLoader
    private:
 	ActorManager& mActorManager;
 	CameraManager& mCameraManager;
-    std::unique_ptr<SkinnedMesh::SkinnedMeshShader> mMeshShaderWrapper;
+    std::unique_ptr<ShaderWrapper> mMeshShaderWrapper;
 };

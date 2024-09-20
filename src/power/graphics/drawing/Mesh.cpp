@@ -23,9 +23,6 @@
 #include <cmath>
 #include <algorithm>
 
-Mesh::MeshShader::MeshShader(ShaderManager& shaderManager)
-: ShaderWrapper(*shaderManager.get_shader("mesh")) {}
-
 Mesh::Mesh(std::unique_ptr<MeshData> meshData, ShaderWrapper& shader, MeshBatch& meshBatch, ColorComponent& colorComponent)
 : mMeshData(std::move(meshData)), mShader(shader), mMeshBatch(meshBatch), mColorComponent(colorComponent), mModelMatrix(nanogui::Matrix4f::identity()) {
 	size_t numVertices = mMeshData->get_vertices().size();

@@ -21,7 +21,7 @@ class MeshActorLoader
 
 	~MeshActorLoader();
 	
-    Actor& create_actor(const std::string& path, ShaderWrapper& shader);
+    Actor& create_actor(const std::string& path, ShaderWrapper& meshShader, ShaderWrapper& skinnedShader);
 	
 	const BatchUnit& get_batch_unit();
 

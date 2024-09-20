@@ -26,7 +26,7 @@ MeshActorBuilder::MeshActorBuilder(BatchUnit& batchUnit)
 	
 }
 
-Actor& MeshActorBuilder::build(Actor& actor, const std::string& path, ShaderWrapper& shader) {
+Actor& MeshActorBuilder::build(Actor& actor, const std::string& path, ShaderWrapper& meshShader, ShaderWrapper& skinnedShader) {
 	
 	actor.add_component<MetadataComponent>(actor.identifier(), std::filesystem::path(path).stem().string());
 
@@ -53,7 +53,7 @@ Actor& MeshActorBuilder::build(Actor& actor, const std::string& path, ShaderWrap
 		std::vector<std::unique_ptr<SkinnedMesh>> skinnedMeshComponentData;
 		
 		for (auto& skinnedMeshData : model.GetSkinnedMeshData()) {
-			skinnedMeshComponentData.push_back(std::make_unique<SkinnedMesh>(std::move(skinnedMeshData), shader, mBatchUnit.mSkinnedMeshBatch, colorComponent));
+			skinnedMeshComponentData.push_back(std::make_unique<SkinnedMesh>(std::move(skinnedMeshData), skinnedShader, mBatchUnit.mSkinnedMeshBatch, colorComponent));
 		}
 		
 		drawableComponent = std::make_unique<SkinnedMeshComponent>(skinnedMeshComponentData);
@@ -71,7 +71,7 @@ Actor& MeshActorBuilder::build(Actor& actor, const std::string& path, ShaderWrap
 		std::vector<std::unique_ptr<Mesh>> meshComponentData;
 		
 		for (auto& meshData : model.GetMeshData()) {
-			meshComponentData.push_back(std::make_unique<Mesh>(std::move(meshData), shader, mBatchUnit.mMeshBatch, colorComponent));
+			meshComponentData.push_back(std::make_unique<Mesh>(std::move(meshData), meshShader, mBatchUnit.mMeshBatch, colorComponent));
 		}
 		
 		drawableComponent = std::make_unique<MeshComponent>(meshComponentData);
