@@ -30,7 +30,6 @@ fragment FragmentOut fragment_main(VertexOut vert [[stage_in]],
                               constant Material *materials [[buffer(0)]], 
                               constant float4 &color [[buffer(1)]],
                               constant int &identifier [[buffer(2)]],
-                              constant float4x4 &aView [[buffer(3)]],
                               array<texture2d<float, access::sample>, 4> textures,
                               array<sampler, 4> textures_sampler) {
     Material mat = materials[vert.TextureId];
@@ -51,7 +50,6 @@ fragment FragmentOut fragment_main(VertexOut vert [[stage_in]],
 
     mat_diffuse = mix(mat_diffuse, vert.Color, 0.5);
 
-        
     int entityId = identifier;
 
     if (mat.diffuse.r != 0.0) {
@@ -69,3 +67,4 @@ fragment FragmentOut fragment_main(VertexOut vert [[stage_in]],
 
     return out;
 }
+    

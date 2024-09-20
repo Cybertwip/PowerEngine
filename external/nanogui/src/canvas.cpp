@@ -136,9 +136,7 @@ void Canvas::draw(NVGcontext *ctx) {
 	
 	m_render_pass->set_viewport(offset, fbsize);
 
-	
 	m_render_pass->begin();
-
 	draw_contents();
 	m_render_pass->end();
 	

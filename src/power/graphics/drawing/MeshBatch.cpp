@@ -117,7 +117,6 @@ void MeshBatch::clear() {
 	mBatchIndices.clear();
 	mBatchMaterials.clear();
 	mMeshStartIndices.clear();
-	
 }
 
 void MeshBatch::append(std::reference_wrapper<Mesh> meshRef) {
@@ -225,17 +224,15 @@ void MeshBatch::draw_content(const nanogui::Matrix4f& view,
 		
 		for (int i = 0; i<mesh_vector.size(); ++i) {
 			auto& mesh = mesh_vector[i].get();
-			
-			if (!mesh.get_color_component().get_visible()) {
-				continue;
-			}
-			
-			auto& shader = mesh.get_shader();
-			
+//			
+//			if (!mesh.get_color_component().get_visible()) {
+//				continue;
+//			}
+						
 			// Set uniforms and draw the mesh content
-			shader.set_uniform("aView", view);
 			shader.set_uniform("aProjection", projection);
 
+			shader.set_uniform("aView", view);
 
 			// Set the model matrix for the current mesh
 			shader.set_uniform("aModel", mesh.get_model_matrix());
