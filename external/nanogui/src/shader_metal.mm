@@ -358,7 +358,6 @@ void Shader::set_texture(const std::string &name, Texture *texture, int index) {
 }
 
 void Shader::begin() {
-	
 	m_queued_buffers["indices"][m_buffers["indices"].index] = m_buffers["indices"];
 	id<MTLRenderPipelineState> pipeline_state = (__bridge id<MTLRenderPipelineState>)m_pipeline_state;
 	id<MTLRenderCommandEncoder> command_enc = (__bridge id<MTLRenderCommandEncoder>)m_render_pass->command_encoder();

@@ -34,6 +34,8 @@ public:
 private:
 	void upload_material_data(ShaderWrapper& shader, const std::vector<std::shared_ptr<MaterialProperties>>& materialData);
 	
+	void upload_vertex_data(ShaderWrapper& shader, int identifier);
+
 	std::unordered_map<ShaderWrapper*, std::vector<std::reference_wrapper<Mesh>>> mMeshes;
 	
 	// Consolidated buffers

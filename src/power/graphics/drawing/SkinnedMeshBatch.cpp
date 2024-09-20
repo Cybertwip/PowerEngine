@@ -159,6 +159,11 @@ void SkinnedMeshBatch::append(std::reference_wrapper<SkinnedMesh> meshRef) {
 	indexer.mIndexOffset += mesh.get_mesh_data().get_indices().size();
 	indexer.mVertexOffset += mesh.get_mesh_data().get_skinned_vertices().size();
 	
+	upload_vertex_data(shader, identifier);
+}
+
+void SkinnedMeshBatch::upload_vertex_data(ShaderWrapper& shader, int identifier) {
+	
 	// Upload consolidated data to GPU
 	shader.set_buffer("aPosition", nanogui::VariableType::Float32, {mBatchPositions[identifier].size() / 3, 3},
 					  mBatchPositions[identifier].data());
@@ -174,6 +179,9 @@ void SkinnedMeshBatch::append(std::reference_wrapper<SkinnedMesh> meshRef) {
 	// Set Buffer for Vertex Colors
 	shader.set_buffer("aColor", nanogui::VariableType::Float32, {mBatchColors[identifier].size() / 4, 4},
 					  mBatchColors[identifier].data());
+	// Upload indices
+	shader.set_buffer("indices", nanogui::VariableType::UInt32, {mBatchIndices[identifier].size()},
+					  mBatchIndices[identifier].data());
 }
 
 void SkinnedMeshBatch::draw_content(const nanogui::Matrix4f& view,
@@ -212,15 +220,12 @@ void SkinnedMeshBatch::draw_content(const nanogui::Matrix4f& view,
 	//	MetalHelper::setStencilClear(descriptor);
 	//	MetalHelper::setDepthClear(descriptor);
 #endif
-		
+	
 	for (auto& [shader_pointer, mesh_vector] : mMeshes) {
 		auto& shader = *shader_pointer;
 		int identifier = shader.identifier();
 		
-		// Upload indices
-		shader.set_buffer("indices", nanogui::VariableType::UInt32, {mBatchIndices[identifier].size()},
-						  mBatchIndices[identifier].data());
-
+		upload_vertex_data(shader, identifier);
 		
 		mRenderPass.pop_depth_test_state(identifier);
 		

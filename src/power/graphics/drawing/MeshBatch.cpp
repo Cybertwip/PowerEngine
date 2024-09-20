@@ -159,6 +159,12 @@ void MeshBatch::append(std::reference_wrapper<Mesh> meshRef) {
 	indexer.mIndexOffset += mesh.get_mesh_data().get_indices().size();
 	indexer.mVertexOffset += mesh.get_mesh_data().get_indices().size();
 	
+	upload_vertex_data(shader, identifier);
+}
+
+
+void MeshBatch::upload_vertex_data(ShaderWrapper& shader, int identifier) {
+	
 	// Upload consolidated data to GPU
 	shader.set_buffer("aPosition", nanogui::VariableType::Float32, {mBatchPositions[identifier].size() / 3, 3},
 					  mBatchPositions[identifier].data());
@@ -174,7 +180,11 @@ void MeshBatch::append(std::reference_wrapper<Mesh> meshRef) {
 	// Set Buffer for Vertex Colors
 	shader.set_buffer("aColor", nanogui::VariableType::Float32, {mBatchColors[identifier].size() / 4, 4},
 					  mBatchColors[identifier].data());
+	// Upload indices
+	shader.set_buffer("indices", nanogui::VariableType::UInt32, {mBatchIndices[identifier].size()},
+					  mBatchIndices[identifier].data());
 }
+
 
 void MeshBatch::draw_content(const nanogui::Matrix4f& view,
 										  const nanogui::Matrix4f& projection) {
@@ -216,10 +226,9 @@ void MeshBatch::draw_content(const nanogui::Matrix4f& view,
 	for (auto& [shader_pointer, mesh_vector] : mMeshes) {
 		auto& shader = *shader_pointer;
 		int identifier = shader.identifier();
-		// Upload indices
-		shader.set_buffer("indices", nanogui::VariableType::UInt32, {mBatchIndices[identifier].size()},
-						  mBatchIndices[identifier].data());
-
+		
+		upload_vertex_data(shader, identifier);
+		
 		mRenderPass.pop_depth_test_state(identifier);
 		
 		for (int i = 0; i<mesh_vector.size(); ++i) {
