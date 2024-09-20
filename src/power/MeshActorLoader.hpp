@@ -2,30 +2,31 @@
 
 #include <memory>
 #include <string>
-
-#include "graphics/drawing/SkinnedMesh.hpp"
+#include <vector>
+#include <functional>
 
 class Actor;
 class ActorManager;
 class MeshActorBuilder;
 class ShaderManager;
 class ShaderWrapper;
+class Batch;
 
 class MeshActorLoader
 {
    public:
-    MeshActorLoader(ActorManager& actorManager, ShaderManager& shaderManager, SkinnedMesh::MeshBatch& meshBatch);
+    MeshActorLoader(ActorManager& actorManager, ShaderManager& shaderManager, std::vector<std::reference_wrapper<Batch>>& batches);
 
 	~MeshActorLoader();
 	
     Actor& create_actor(const std::string& path, ShaderWrapper& shader);
 	
-	SkinnedMesh::MeshBatch& mesh_batch();
+	const std::vector<std::reference_wrapper<Batch>>& get_mesh_batches();
 
    private:
 	ActorManager& mActorManager;
 	
 	std::unique_ptr<MeshActorBuilder> mMeshActorBuilder;
 	
-	SkinnedMesh::MeshBatch& mMeshBatch;
+	std::vector<std::reference_wrapper<Batch>> mMeshBatches;
 };

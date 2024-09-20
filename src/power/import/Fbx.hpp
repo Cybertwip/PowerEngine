@@ -1,6 +1,6 @@
 #pragma once
 
-#include "graphics/drawing/SkinnedMesh.hpp"
+#include "graphics/drawing/Mesh.hpp"
 
 #include "graphics/shading/MaterialProperties.hpp"
 
@@ -25,7 +25,7 @@ public:
     explicit Fbx(const std::string_view path);
 
     const ozz::animation::Skeleton& GetSkeleton() const { return *mSkeleton; }
-    std::vector<std::unique_ptr<SkinnedMesh::MeshData>>& GetMeshData() { return mMeshes; }
+    std::vector<std::unique_ptr<Mesh::MeshData>>& GetMeshData() { return mMeshes; }
 
 private:
     void LoadModel(const std::string_view path);
@@ -33,7 +33,7 @@ private:
     void ProcessMesh(const std::shared_ptr<sfbx::Mesh>& mesh);
     void ProcessBones(const std::shared_ptr<sfbx::Mesh>& mesh);
 
-    std::vector<std::unique_ptr<SkinnedMesh::MeshData>> mMeshes;
+    std::vector<std::unique_ptr<Mesh::MeshData>> mMeshes;
     std::unordered_map<std::string, int> mBoneMapping;
     std::vector<ozz::math::Transform> mBoneTransforms;
     ozz::unique_ptr<ozz::animation::Skeleton> mSkeleton;

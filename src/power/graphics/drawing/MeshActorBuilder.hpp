@@ -1,6 +1,6 @@
 #pragma once
 
-#include "graphics/drawing/SkinnedMesh.hpp"
+#include "graphics/drawing/Mesh.hpp"
 
 #include <string>
 
@@ -11,10 +11,10 @@ class ShaderWrapper;
 
 class MeshActorBuilder {
 public:
-	MeshActorBuilder(SkinnedMesh::MeshBatch& meshBatch);
+	MeshActorBuilder(std::vector<std::reference_wrapper<Batch>>& batches);
 
 	Actor& build(Actor& actor, const std::string& path, ShaderWrapper& shader);
 	
 private:
-	SkinnedMesh::MeshBatch& mMeshBatch;
+	std::vector<std::reference_wrapper<Batch>>& mMeshBatches;
 };

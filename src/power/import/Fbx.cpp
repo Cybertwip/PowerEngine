@@ -107,7 +107,7 @@ void Fbx::ProcessMesh(const std::shared_ptr<sfbx::Mesh>& mesh) {
 	
 	auto path = std::filesystem::absolute(mesh->document().global_settings.path).string();
 
-	auto& resultMesh = mMeshes.emplace_back(std::make_unique<SkinnedMesh::MeshData>());
+	auto& resultMesh = mMeshes.emplace_back(std::make_unique<Mesh::MeshData>());
 	
 	// Precompute transformation matrices
 	const glm::mat4 rotationMatrix = GetUpAxisRotation(mesh->document().global_settings.up_axis,
@@ -212,7 +212,7 @@ void Fbx::ProcessMesh(const std::shared_ptr<sfbx::Mesh>& mesh) {
 	auto processVertices = [&](size_t startIndex, size_t endIndex) {
 		for (size_t i = startIndex; i < endIndex; ++i) {
 			int controlPointIndex = vertexIndices[i];
-			SkinnedMesh::Vertex vertex;
+			Mesh::Vertex vertex;
 			
 			// Transform position
 			const auto& point = points[controlPointIndex];

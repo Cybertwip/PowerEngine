@@ -11,6 +11,7 @@
 #include "components/MeshComponent.hpp"
 #include "components/TransformComponent.hpp"
 #include "gizmo/GizmoManager.hpp"
+#include "graphics/drawing/Batch.hpp"
 #include "graphics/drawing/MeshActorBuilder.hpp"
 #include "import/Fbx.hpp"
 #include "ui/UiManager.hpp"
@@ -54,10 +55,10 @@ void ActorManager::visit(UiManager& uiManager) {
 							  mCameraManager.get_projection());
 }
 
-void ActorManager::visit(SkinnedMesh::MeshBatch& meshBatch) {
+void ActorManager::visit(Batch& batch) {
 	mCameraManager.update_view();
 	
-	meshBatch.draw_content(mCameraManager.get_view(),
+	batch.draw_content(mCameraManager.get_view(),
 						   mCameraManager.get_projection());
 }
 

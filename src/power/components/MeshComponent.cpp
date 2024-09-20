@@ -1,8 +1,8 @@
 #include "MeshComponent.hpp"
 
-#include "graphics/drawing/SkinnedMesh.hpp"
+#include "graphics/drawing/Mesh.hpp"
 
-MeshComponent::MeshComponent(std::vector<std::unique_ptr<SkinnedMesh>>& meshes) {
+MeshComponent::MeshComponent(std::vector<std::unique_ptr<Mesh>>& meshes) {
 		for (auto& mesh : meshes) {
 			mMeshes.push_back(std::move(mesh));
 		}

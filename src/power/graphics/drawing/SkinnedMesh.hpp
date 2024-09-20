@@ -10,7 +10,9 @@
 
 #include <array>
 
+class Batch;
 class ColorComponent;
+class MeshBatch;
 class ShaderManager;
 
 class SkinnedMesh : public Drawable {
@@ -59,74 +61,55 @@ public:
 		// New member to store texture ID
 		int mTextureId;
 	};
-
-
-    struct MeshData {
-        std::vector<Vertex> mVertices;
-        std::vector<unsigned int> mIndices;
-        std::vector<std::shared_ptr<MaterialProperties>> mMaterials;
-    };
-
-    class SkinnedMeshShader : public ShaderWrapper {
-    public:
-        SkinnedMeshShader(ShaderManager& shader);
-    };
 	
-	class MeshBatch {
-	private:
-		struct VertexIndexer {
-			size_t mVertexOffset = 0;
-			size_t mIndexOffset = 0;
-		};
-		
-	public:
-		MeshBatch(nanogui::RenderPass& renderPass);
-		
-		void add_mesh(std::reference_wrapper<SkinnedMesh> mesh);
-		void clear();
-		void append(std::reference_wrapper<SkinnedMesh> meshRef);
-		void draw_content(const nanogui::Matrix4f& view,
-				  const nanogui::Matrix4f& projection);
-		
-	private:
-		void upload_material_data(ShaderWrapper& shader, const std::vector<std::shared_ptr<MaterialProperties>>& materialData);
-
-		std::unordered_map<ShaderWrapper*, std::vector<std::reference_wrapper<SkinnedMesh>>> mMeshes;
-		
-		// Consolidated buffers
-		std::unordered_map<int, std::vector<float>> mBatchPositions;
-		std::unordered_map<int, std::vector<float>> mBatchNormals;
-		std::unordered_map<int, std::vector<float>> mBatchTexCoords1;
-		std::unordered_map<int, std::vector<float>> mBatchTexCoords2;
-		std::unordered_map<int, std::vector<int>> mBatchTextureIds;
-		std::unordered_map<int, std::vector<unsigned int>> mBatchIndices;
-		std::unordered_map<int, std::vector<float>> mBatchColors;
-		std::vector<std::shared_ptr<MaterialProperties>> mBatchMaterials;
-		
-		// Offset tracking
-		std::unordered_map<int, std::vector<size_t>> mMeshStartIndices;
-		
-		std::unordered_map<int, VertexIndexer> mVertexIndexingMap;
-		
-		nanogui::RenderPass& mRenderPass;
+	
+	struct MeshData {
+		std::vector<Vertex> mVertices;
+		std::vector<unsigned int> mIndices;
+		std::vector<std::shared_ptr<MaterialProperties>> mMaterials;
 	};
-
-
+	
+	class SkinnedMeshShader : public ShaderWrapper {
+	public:
+		SkinnedMeshShader(ShaderManager& shader);
+	};
+	
+	
 public:
-    SkinnedMesh(std::unique_ptr<MeshData> meshData, ShaderWrapper& shader, MeshBatch& meshBatch, ColorComponent& colorComponent);
+	SkinnedMesh(std::unique_ptr<MeshData> meshData, ShaderWrapper& shader, MeshBatch& meshBatch, ColorComponent& colorComponent);
 	~SkinnedMesh() override = default;
-    
-    void draw_content(const nanogui::Matrix4f& model, const nanogui::Matrix4f& view, const nanogui::Matrix4f& projection) override;
+	
+	void draw_content(const nanogui::Matrix4f& model, const nanogui::Matrix4f& view, const nanogui::Matrix4f& projection) override;
 	
 	ShaderWrapper& get_shader() const { return mShader; }
-    
-	static void init_dummy_texture();
-
+	
+	// Getters for flattened data
+	const std::vector<float>& get_flattened_positions() const { return mFlattenedPositions; }
+	const std::vector<float>& get_flattened_normals() const { return mFlattenedNormals; }
+	const std::vector<float>& get_flattened_tex_coords1() const { return mFlattenedTexCoords1; }
+	const std::vector<float>& get_flattened_tex_coords2() const { return mFlattenedTexCoords2; }
+	const std::vector<int>& get_flattened_bone_ids() const { return mFlattenedBoneIds; }
+	const std::vector<float>& get_flattened_weights() const { return mFlattenedWeights; }
+	const std::vector<int>& get_flattened_texture_ids() const { return mFlattenedTextureIds; }
+	const std::vector<float>& get_flattened_colors() const { return mFlattenedColors; }
+	
+	const MeshData& get_mesh_data() {
+		return *mMeshData;
+	}
+	
+	ColorComponent& get_color_component() const {
+		return mColorComponent;
+	}
+	
+	const nanogui::Matrix4f& get_model_matrix() {
+		return mModelMatrix;
+	}
+	
+	
 private:
 	std::unique_ptr<MeshData> mMeshData;
-
-    ShaderWrapper& mShader;
 	
+	ShaderWrapper& mShader;
 	
 	// Flattened data
 	std::vector<float> mFlattenedPositions;
@@ -137,7 +120,7 @@ private:
 	std::vector<float> mFlattenedWeights;
 	std::vector<int> mFlattenedTextureIds;
 	std::vector<float> mFlattenedColors; // Added to store flattened color data
-
+	
 	MeshBatch& mMeshBatch;
 	ColorComponent& mColorComponent;
 	

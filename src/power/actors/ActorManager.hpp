@@ -2,8 +2,6 @@
 
 #include "actors/Actor.hpp"
 
-#include "graphics/drawing/SkinnedMesh.hpp"
-
 #include <entt/entt.hpp>
 
 #include <memory>
@@ -15,6 +13,7 @@ class MeshActor;
 class MeshActorLoader;
 class GizmoManager;
 class UiManager;
+class Batch;
 
 class ActorManager {
 public:
@@ -37,7 +36,7 @@ public:
     void draw();
 	void visit(GizmoManager& gizmoManager);
 	void visit(UiManager& uiManager);
-	void visit(SkinnedMesh::MeshBatch& meshBatch);
+	void visit(Batch& batch);
 	
 private:
 	entt::registry& mRegistry;

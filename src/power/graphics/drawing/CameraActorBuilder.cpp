@@ -14,7 +14,7 @@
 #include "components/TransformComponent.hpp"
 
 Actor& CameraActorBuilder::build(Actor& actor,
-                     SkinnedMesh::SkinnedMeshShader& meshShaderWrapper, float fov, float near, float far, float aspect) {
+                     ShaderWrapper& meshShaderWrapper, float fov, float near, float far, float aspect) {
 	std::unique_ptr<Drawable> drawable = std::make_unique<NullDrawable>();
 	actor.add_component<DrawableComponent>(std::move(drawable));
 	actor.add_component<TransformComponent>();

@@ -1,14 +1,5 @@
 #include "Application.hpp"
 
-#include <GLFW/glfw3.h>
-#include <nanogui/label.h>
-#include <nanogui/layout.h>
-#include <nanogui/slider.h>
-#include <nanogui/textbox.h>
-#include <nanogui/theme.h>
-#include <nanogui/window.h>
-
-#include <cmath>
 #include "CameraActorLoader.hpp"
 #include "CameraManager.hpp"
 #include "Canvas.hpp"
@@ -21,17 +12,32 @@
 #include "components/CameraComponent.hpp"
 #include "components/TransformComponent.hpp"
 #include "gizmo/GizmoManager.hpp"
+#include "graphics/drawing/Mesh.hpp"
+#include "graphics/drawing/MeshBatch.hpp"
 #include "graphics/drawing/MeshActorBuilder.hpp"
+#include "graphics/drawing/SkinnedMesh.hpp"
+#include "graphics/drawing/SkinnedMeshBatch.hpp"
 #include "import/Fbx.hpp"
 #include "ui/HierarchyPanel.hpp"
 #include "ui/ScenePanel.hpp"
 #include "ui/TransformPanel.hpp"
 #include "ui/UiManager.hpp"
 
+#include <GLFW/glfw3.h>
+#include <nanogui/label.h>
+#include <nanogui/layout.h>
+#include <nanogui/slider.h>
+#include <nanogui/textbox.h>
+#include <nanogui/theme.h>
+#include <nanogui/window.h>
+
+#include <cmath>
+#include <functional>
+
 Application::Application() : nanogui::Screen("Power Engine") {
 		
-	SkinnedMesh::init_dummy_texture();
-	
+	Batch::init_dummy_texture();
+
     theme()->m_window_drop_shadow_size = 0;
 
     set_layout(new nanogui::GridLayout(nanogui::Orientation::Horizontal, 1,
@@ -47,12 +53,12 @@ Application::Application() : nanogui::Screen("Power Engine") {
 
 	mRenderCommon =
         std::make_unique<RenderCommon>(mUiCommon->scene_panel(), *mEntityRegistry, *mActorManager, *mCameraManager);
-
-	mSkinnedMeshShader = std::make_unique<SkinnedMesh::SkinnedMeshShader>(mRenderCommon->shader_manager());
 	
-	mMeshBatch = std::make_unique<SkinnedMesh::MeshBatch>(*mRenderCommon->canvas().render_pass());
+	mMeshBatch = std::make_unique<MeshBatch>(*mRenderCommon->canvas().render_pass());
+											 
+	mBatchUnit.push_back(std::ref(*mMeshBatch));
 
-	mMeshActorLoader = std::make_unique<MeshActorLoader>(*mActorManager, mRenderCommon->shader_manager(), *mMeshBatch);
+	mMeshActorLoader = std::make_unique<MeshActorLoader>(*mActorManager, mRenderCommon->shader_manager(), mBatchUnit);
 
 	auto applicationClickCallbackRegistrator = [this](std::function<void(int, int)> callback){
 		auto callbackWrapee = [this, callback](bool down, int width, int height, int x, int y){
@@ -65,7 +71,6 @@ Application::Application() : nanogui::Screen("Power Engine") {
 	mUiManager = std::make_unique<UiManager>(mUiCommon->hierarchy_panel(), mUiCommon->hierarchy_panel(), *mActorManager, *mMeshActorLoader, mRenderCommon->shader_manager(), mUiCommon->scene_panel(), mRenderCommon->canvas(), mUiCommon->toolbox(), mUiCommon->status_bar(), *mCameraManager, applicationClickCallbackRegistrator);
 	
     std::vector<std::reference_wrapper<Actor>> actors;
-    actors.push_back(mMeshActorLoader->create_actor("models/TMNT/Donatello.fbx", *mSkinnedMeshShader));
 
     if (mCameraManager->active_camera().has_value()) {
         actors.push_back(mCameraManager->active_camera()->get());

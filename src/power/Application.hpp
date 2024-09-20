@@ -6,16 +6,15 @@
 #include <memory>
 #include <vector>
 
-#include "graphics/drawing/SkinnedMesh.hpp"
-
 class Actor;
 class ActorManager;
+class Batch;
 class Canvas;
+class CameraManager;
 class GizmoManager;
 class MeshActor;
 class MeshActorLoader;
 class RenderCommon;
-class SkinnedMesh;
 class ShaderManager;
 class ShaderWrapper;
 class UiCommon;
@@ -46,8 +45,10 @@ class Application : public nanogui::Screen
     std::unique_ptr<UiCommon> mUiCommon;
 	std::unique_ptr<UiManager> mUiManager;
 	
-	std::unique_ptr<SkinnedMesh::SkinnedMeshShader> mSkinnedMeshShader;
-	std::unique_ptr<SkinnedMesh::MeshBatch> mMeshBatch;
+	std::unique_ptr<MeshBatch> mMeshBatch;
+	
+	std::vector<std::reference_wrapper<Batch>> mBatchUnit;
+
 
 	std::queue<std::tuple<bool, int, int, int, int>> mClickQueue;
 	std::vector<std::function<void(bool, int, int, int, int)>> mClickCallbacks;

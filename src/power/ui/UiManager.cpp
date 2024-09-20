@@ -876,8 +876,9 @@ void UiManager::draw() {
 	mCanvas.render_pass()->push_depth_test_state(nanogui::RenderPass::DepthTest::Less, true, mShaderManager.identifier("mesh"));
 	
 
-	mActorManager.visit(mMeshActorLoader.mesh_batch());
-		
+	for (auto& batch : mMeshActorLoader.get_mesh_batches()) {
+		mActorManager.visit(batch);
+	}
 	
 	mCanvas.render_pass()->set_depth_test(nanogui::RenderPass::DepthTest::Less, true);
 

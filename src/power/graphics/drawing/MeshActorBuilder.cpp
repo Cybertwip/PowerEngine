@@ -10,10 +10,14 @@
 #include "components/MeshComponent.hpp"
 #include "components/MetadataComponent.hpp"
 #include "components/TransformComponent.hpp"
+
+#include "graphics/drawing/Mesh.hpp"
+#include "graphics/drawing/SkinnedMesh.hpp"
+
 #include "import/Fbx.hpp"
 
-MeshActorBuilder::MeshActorBuilder(SkinnedMesh::MeshBatch& meshBatch)
-: mMeshBatch(meshBatch) {
+MeshActorBuilder::MeshActorBuilder(std::vector<std::reference_wrapper<Batch>>& batches)
+: mMeshBatches(batches) {
 	
 }
 
@@ -25,10 +29,10 @@ Actor& MeshActorBuilder::build(Actor& actor, const std::string& path, ShaderWrap
 
     auto model = Fbx(path);
 
-    std::vector<std::unique_ptr<SkinnedMesh>> meshComponentData;
+    std::vector<std::unique_ptr<Mesh>> meshComponentData;
 
     for (auto& meshData : model.GetMeshData()) {
-        meshComponentData.push_back(std::make_unique<SkinnedMesh>(std::move(meshData), shader, mMeshBatch, colorComponent));
+        meshComponentData.push_back(std::make_unique<Mesh>(std::move(meshData), shader, mMeshBatches[0].get(), colorComponent));
     }
 
 	std::unique_ptr<Drawable> meshComponent = std::make_unique<MeshComponent>(meshComponentData);
