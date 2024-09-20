@@ -9,18 +9,19 @@
 #include <iostream>
 #include <memory>
 
-struct BoneCPU
-{
-	float transform[4][4] =
-	{
-		0.0f, 0.0f, 0.0f, 0.0f,
-		0.0f, 0.0f, 0.0f, 0.0f,
-		0.0f, 0.0f, 0.0f, 0.0f,
-		0.0f, 0.0f, 0.0f, 0.0f
-	};
-};
-
 class SkinnedAnimationComponent {
+private:
+	struct BoneCPU
+	{
+		float transform[4][4] =
+		{
+			0.0f, 0.0f, 0.0f, 0.0f,
+			0.0f, 0.0f, 0.0f, 0.0f,
+			0.0f, 0.0f, 0.0f, 0.0f,
+			0.0f, 0.0f, 0.0f, 0.0f
+		};
+	};
+
 public:
 	struct SkinnedAnimationPdo {
 		SkinnedAnimationPdo(Skeleton& skeleton) : mSkeleton(skeleton) {}
