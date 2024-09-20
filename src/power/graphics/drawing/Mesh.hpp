@@ -10,7 +10,6 @@
 
 #include <array>
 
-class Batch;
 class ColorComponent;
 class MeshBatch;
 class ShaderManager;
@@ -76,7 +75,7 @@ public:
 
 
 public:
-	Mesh(std::unique_ptr<MeshData> meshData, ShaderWrapper& shader, Batch& meshBatch, ColorComponent& colorComponent);
+	Mesh(std::unique_ptr<MeshData> meshData, ShaderWrapper& shader, MeshBatch& meshBatch, ColorComponent& colorComponent);
 	~Mesh() override = default;
     
     void draw_content(const nanogui::Matrix4f& model, const nanogui::Matrix4f& view, const nanogui::Matrix4f& projection) override;
@@ -122,7 +121,7 @@ private:
 	std::vector<int> mFlattenedTextureIds;
 	std::vector<float> mFlattenedColors; // Added to store flattened color data
 
-	Batch& mMeshBatch;
+	MeshBatch& mMeshBatch;
 	ColorComponent& mColorComponent;
 	
 	nanogui::Matrix4f mModelMatrix;

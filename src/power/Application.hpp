@@ -14,12 +14,15 @@ class CameraManager;
 class GizmoManager;
 class MeshActor;
 class MeshActorLoader;
+class MeshBatch;
 class RenderCommon;
 class ShaderManager;
 class ShaderWrapper;
+class SkinnedMeshBatch;
 class UiCommon;
 class UiManager;
-class MeshBatch;
+
+struct BatchUnit;
 
 class Application : public nanogui::Screen
 {
@@ -46,8 +49,9 @@ class Application : public nanogui::Screen
 	std::unique_ptr<UiManager> mUiManager;
 	
 	std::unique_ptr<MeshBatch> mMeshBatch;
-	
-	std::vector<std::reference_wrapper<Batch>> mBatchUnit;
+	std::unique_ptr<SkinnedMeshBatch> mSkinnedMeshBatch;
+
+	std::unique_ptr<BatchUnit> mBatchUnit;
 
 
 	std::queue<std::tuple<bool, int, int, int, int>> mClickQueue;

@@ -12,6 +12,8 @@
 #include "components/CameraComponent.hpp"
 #include "components/TransformComponent.hpp"
 #include "gizmo/GizmoManager.hpp"
+
+#include "graphics/drawing/BatchUnit.hpp"
 #include "graphics/drawing/Mesh.hpp"
 #include "graphics/drawing/MeshBatch.hpp"
 #include "graphics/drawing/MeshActorBuilder.hpp"
@@ -55,10 +57,12 @@ Application::Application() : nanogui::Screen("Power Engine") {
         std::make_unique<RenderCommon>(mUiCommon->scene_panel(), *mEntityRegistry, *mActorManager, *mCameraManager);
 	
 	mMeshBatch = std::make_unique<MeshBatch>(*mRenderCommon->canvas().render_pass());
-											 
-	mBatchUnit.push_back(std::ref(*mMeshBatch));
 
-	mMeshActorLoader = std::make_unique<MeshActorLoader>(*mActorManager, mRenderCommon->shader_manager(), mBatchUnit);
+	mSkinnedMeshBatch = std::make_unique<SkinnedMeshBatch>(*mRenderCommon->canvas().render_pass());
+
+	mBatchUnit = std::make_unique<BatchUnit>(*mMeshBatch, *mSkinnedMeshBatch);
+
+	mMeshActorLoader = std::make_unique<MeshActorLoader>(*mActorManager, mRenderCommon->shader_manager(), *mBatchUnit);
 
 	auto applicationClickCallbackRegistrator = [this](std::function<void(int, int)> callback){
 		auto callbackWrapee = [this, callback](bool down, int width, int height, int x, int y){

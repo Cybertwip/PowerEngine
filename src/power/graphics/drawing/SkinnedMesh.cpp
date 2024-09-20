@@ -4,6 +4,7 @@
 #include "Canvas.hpp"
 #include "ShaderManager.hpp"
 #include "components/ColorComponent.hpp"
+#include "graphics/drawing/SkinnedMeshBatch.hpp"
 #include "graphics/shading/ShaderWrapper.hpp"
 #include "import/Fbx.hpp"
 
@@ -89,7 +90,7 @@ int SkinnedMesh::Vertex::get_texture_id() const {
 SkinnedMesh::SkinnedMeshShader::SkinnedMeshShader(ShaderManager& shaderManager)
 : ShaderWrapper(*shaderManager.get_shader("mesh")) {}
 
-SkinnedMesh::SkinnedMesh(std::unique_ptr<MeshData> meshData, ShaderWrapper& shader, MeshBatch& meshBatch, ColorComponent& colorComponent)
+SkinnedMesh::SkinnedMesh(std::unique_ptr<MeshData> meshData, ShaderWrapper& shader, SkinnedMeshBatch& meshBatch, ColorComponent& colorComponent)
 : mMeshData(std::move(meshData)), mShader(shader), mMeshBatch(meshBatch), mColorComponent(colorComponent), mModelMatrix(nanogui::Matrix4f::identity()) {
 	size_t numVertices = mMeshData->mVertices.size();
 	
@@ -140,8 +141,8 @@ SkinnedMesh::SkinnedMesh(std::unique_ptr<MeshData> meshData, ShaderWrapper& shad
 	
 	mModelMatrix = nanogui::Matrix4f::identity(); // Or any other transformation
 	
-	//	mMeshBatch.add_mesh(*this);
-	//	mMeshBatch.append(*this);
+	mMeshBatch.add_mesh(*this);
+	mMeshBatch.append(*this);
 }
 
 void SkinnedMesh::draw_content(const nanogui::Matrix4f& model, const nanogui::Matrix4f& view,

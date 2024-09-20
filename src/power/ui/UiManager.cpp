@@ -21,6 +21,9 @@
 
 #include "gizmo/GizmoManager.hpp"
 
+#include "graphics/drawing/BatchUnit.hpp"
+#include "graphics/drawing/MeshBatch.hpp"
+#include "graphics/drawing/SkinnedMeshBatch.hpp"
 #include "graphics/drawing/Grid.hpp"
 
 #include "ui/ScenePanel.hpp"
@@ -875,10 +878,9 @@ void UiManager::draw() {
 	
 	mCanvas.render_pass()->push_depth_test_state(nanogui::RenderPass::DepthTest::Less, true, mShaderManager.identifier("mesh"));
 	
+	auto& batch_unit = mMeshActorLoader.get_batch_unit();
 
-	for (auto& batch : mMeshActorLoader.get_mesh_batches()) {
-		mActorManager.visit(batch);
-	}
+	mActorManager.visit(batch_unit.mMeshBatch);
 	
 	mCanvas.render_pass()->set_depth_test(nanogui::RenderPass::DepthTest::Less, true);
 

@@ -12,6 +12,7 @@ namespace nanogui {
 class RenderPass;
 }
 
+class Mesh;
 class ShaderWrapper;
 
 class MeshBatch : public Batch {
@@ -28,7 +29,7 @@ public:
 	void clear();
 	void append(std::reference_wrapper<Mesh> meshRef);
 	void draw_content(const nanogui::Matrix4f& view,
-					  const nanogui::Matrix4f& projection);
+					  const nanogui::Matrix4f& projection) override;
 	
 private:
 	void upload_material_data(ShaderWrapper& shader, const std::vector<std::shared_ptr<MaterialProperties>>& materialData);

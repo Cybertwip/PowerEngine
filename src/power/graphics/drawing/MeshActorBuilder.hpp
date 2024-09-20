@@ -5,16 +5,17 @@
 #include <string>
 
 class Actor;
-class MeshBatch;
 class MeshComponent;
 class ShaderWrapper;
 
+struct BatchUnit;
+
 class MeshActorBuilder {
 public:
-	MeshActorBuilder(std::vector<std::reference_wrapper<Batch>>& batches);
+	MeshActorBuilder(BatchUnit& batches);
 
 	Actor& build(Actor& actor, const std::string& path, ShaderWrapper& shader);
 	
 private:
-	std::vector<std::reference_wrapper<Batch>>& mMeshBatches;
+	BatchUnit& mBatchUnit;
 };

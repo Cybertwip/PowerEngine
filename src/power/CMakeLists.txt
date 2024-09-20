@@ -103,6 +103,7 @@ add_executable(PowerEngine
 
     ${CMAKE_CURRENT_LIST_DIR}/graphics/drawing/Batch.hpp
     ${CMAKE_CURRENT_LIST_DIR}/graphics/drawing/Batch.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/graphics/drawing/BatchUnit.hpp
     ${CMAKE_CURRENT_LIST_DIR}/graphics/drawing/Drawable.hpp
     ${CMAKE_CURRENT_LIST_DIR}/graphics/drawing/Grid.cpp
     ${CMAKE_CURRENT_LIST_DIR}/graphics/drawing/Grid.hpp

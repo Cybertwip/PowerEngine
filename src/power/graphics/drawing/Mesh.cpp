@@ -4,7 +4,7 @@
 #include "Canvas.hpp"
 #include "ShaderManager.hpp"
 #include "components/ColorComponent.hpp"
-#include "graphics/drawing/Batch.hpp"
+#include "graphics/drawing/MeshBatch.hpp"
 #include "graphics/shading/ShaderWrapper.hpp"
 #include "import/Fbx.hpp"
 
@@ -90,7 +90,7 @@ int Mesh::Vertex::get_texture_id() const {
 Mesh::MeshShader::MeshShader(ShaderManager& shaderManager)
 : ShaderWrapper(*shaderManager.get_shader("mesh")) {}
 
-Mesh::Mesh(std::unique_ptr<MeshData> meshData, ShaderWrapper& shader, Batch& meshBatch, ColorComponent& colorComponent)
+Mesh::Mesh(std::unique_ptr<MeshData> meshData, ShaderWrapper& shader, MeshBatch& meshBatch, ColorComponent& colorComponent)
 : mMeshData(std::move(meshData)), mShader(shader), mMeshBatch(meshBatch), mColorComponent(colorComponent), mModelMatrix(nanogui::Matrix4f::identity()) {
 	size_t numVertices = mMeshData->mVertices.size();
 	
@@ -141,8 +141,8 @@ Mesh::Mesh(std::unique_ptr<MeshData> meshData, ShaderWrapper& shader, Batch& mes
 	
 	mModelMatrix = nanogui::Matrix4f::identity(); // Or any other transformation
 	
-//	mMeshBatch.add_mesh(*this);
-//	mMeshBatch.append(*this);
+	mMeshBatch.add_mesh(*this);
+	mMeshBatch.append(*this);
 }
 
 void Mesh::draw_content(const nanogui::Matrix4f& model, const nanogui::Matrix4f& view,

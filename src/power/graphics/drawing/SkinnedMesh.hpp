@@ -10,9 +10,8 @@
 
 #include <array>
 
-class Batch;
 class ColorComponent;
-class MeshBatch;
+class SkinnedMeshBatch;
 class ShaderManager;
 
 class SkinnedMesh : public Drawable {
@@ -76,7 +75,7 @@ public:
 	
 	
 public:
-	SkinnedMesh(std::unique_ptr<MeshData> meshData, ShaderWrapper& shader, MeshBatch& meshBatch, ColorComponent& colorComponent);
+	SkinnedMesh(std::unique_ptr<MeshData> meshData, ShaderWrapper& shader, SkinnedMeshBatch& meshBatch, ColorComponent& colorComponent);
 	~SkinnedMesh() override = default;
 	
 	void draw_content(const nanogui::Matrix4f& model, const nanogui::Matrix4f& view, const nanogui::Matrix4f& projection) override;
@@ -121,7 +120,7 @@ private:
 	std::vector<int> mFlattenedTextureIds;
 	std::vector<float> mFlattenedColors; // Added to store flattened color data
 	
-	MeshBatch& mMeshBatch;
+	SkinnedMeshBatch& mMeshBatch;
 	ColorComponent& mColorComponent;
 	
 	nanogui::Matrix4f mModelMatrix;

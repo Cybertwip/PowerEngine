@@ -1,7 +1,21 @@
 #pragma once
 
+#include "graphics/drawing/Batch.hpp"
 
-class SkinnedMeshBatch {
+#include "graphics/shading/MaterialProperties.hpp"
+
+#include <nanogui/vector.h>
+
+#include <functional>
+
+namespace nanogui {
+class RenderPass;
+}
+
+class ShaderWrapper;
+class SkinnedMesh;
+
+class SkinnedMeshBatch : public Batch {
 private:
 	struct VertexIndexer {
 		size_t mVertexOffset = 0;
@@ -15,7 +29,7 @@ public:
 	void clear();
 	void append(std::reference_wrapper<SkinnedMesh> meshRef);
 	void draw_content(const nanogui::Matrix4f& view,
-					  const nanogui::Matrix4f& projection);
+					  const nanogui::Matrix4f& projection) override;
 	
 private:
 	void upload_material_data(ShaderWrapper& shader, const std::vector<std::shared_ptr<MaterialProperties>>& materialData);

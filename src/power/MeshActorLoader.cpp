@@ -6,19 +6,19 @@
 #include "graphics/drawing/MeshActorBuilder.hpp"
 #include "import/Fbx.hpp"
 
-MeshActorLoader::MeshActorLoader(ActorManager& actorManager, ShaderManager& shaderManager, std::vector<std::reference_wrapper<Batch>>& batches)
+MeshActorLoader::MeshActorLoader(ActorManager& actorManager, ShaderManager& shaderManager, BatchUnit& batchUnit)
     
 : mActorManager(actorManager),
-mMeshActorBuilder(std::make_unique<MeshActorBuilder>(batches)),
-mMeshBatches(batches) {
+mMeshActorBuilder(std::make_unique<MeshActorBuilder>(batchUnit)),
+mBatchUnit(batchUnit) {
 		  
 	  }
 
 MeshActorLoader::~MeshActorLoader() {
 }
 
-const std::vector<std::reference_wrapper<Batch>>& MeshActorLoader::get_mesh_batches() {
-	return mMeshBatches;
+const BatchUnit& MeshActorLoader::get_batch_unit() {
+	return mBatchUnit;
 }
 
 Actor& MeshActorLoader::create_actor(const std::string& path, ShaderWrapper& shader) {
