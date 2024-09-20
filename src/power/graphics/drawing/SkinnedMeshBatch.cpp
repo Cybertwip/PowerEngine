@@ -149,14 +149,16 @@ void SkinnedMeshBatch::append(std::reference_wrapper<SkinnedMesh> meshRef) {
 											 mesh.get_flattened_colors().end());
 	
 	// Adjust and append indices
-	for (auto index : mesh.get_mesh_data().mIndices) {
+	auto& indices = mesh.get_mesh_data().get_indices()
+	;
+	for (auto index : indices) {
 		mBatchIndices[shader.identifier()].push_back(index + indexer.mVertexOffset);
 	}
 	
 	mMeshStartIndices[shader.identifier()].push_back(indexer.mIndexOffset);
 	
-	indexer.mIndexOffset += mesh.get_mesh_data().mIndices.size();
-	indexer.mVertexOffset += mesh.get_mesh_data().mVertices.size();
+	indexer.mIndexOffset += mesh.get_mesh_data().get_indices().size();
+	indexer.mVertexOffset += mesh.get_mesh_data().get_skinned_vertices().size();
 	
 	// Upload consolidated data to GPU
 	shader.set_buffer("aPosition", nanogui::VariableType::Float32, {mBatchPositions[identifier].size() / 3, 3},
@@ -242,7 +244,7 @@ void SkinnedMeshBatch::draw_content(const nanogui::Matrix4f& view,
 			mesh.get_color_component().apply_to(shader);
 			
 			// Upload materials for the current mesh
-			upload_material_data(shader, mesh.get_mesh_data().mMaterials);
+			upload_material_data(shader, mesh.get_mesh_data().get_material_properties());
 			
 			// Calculate the range of indices to draw for this mesh
 			size_t startIdx = mMeshStartIndices[identifier][i];

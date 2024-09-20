@@ -8,7 +8,7 @@
 #include <numeric>  // For std::iota
 #include <glm/gtc/quaternion.hpp>
 
-namespace {
+namespace FbxUtil {
 
 glm::mat4 GetUpAxisRotation(int up_axis, int up_axis_sign) {
 	glm::mat4 rotation = glm::mat4(1.0f); // Identity matrix
@@ -40,52 +40,16 @@ glm::mat4 GetUpAxisRotation(int up_axis, int up_axis_sign) {
 	return rotation;
 }
 
-
-ozz::math::Transform ToOzzTransform(const sfbx::float4x4& mat) {
-    // Extract translation
-    ozz::math::Float3 translation(mat[3].x, mat[3].y, mat[3].z);
-
-    // Extract scale
-    ozz::math::Float3 scale(glm::length(glm::vec3(mat[0].x, mat[0].y, mat[0].z)),
-                            glm::length(glm::vec3(mat[1].x, mat[1].y, mat[1].z)),
-                            glm::length(glm::vec3(mat[2].x, mat[2].y, mat[2].z)));
-
-    // Extract rotation
-    glm::mat3 rotationMatrix(glm::vec3(mat[0].x, mat[0].y, mat[0].z) / scale.x,
-                             glm::vec3(mat[1].x, mat[1].y, mat[1].z) / scale.y,
-                             glm::vec3(mat[2].x, mat[2].y, mat[2].z) / scale.z);
-
-    glm::quat rotationQuat = glm::quat_cast(rotationMatrix);
-    ozz::math::Quaternion rotation(rotationQuat.w, rotationQuat.x, rotationQuat.y, rotationQuat.z);
-
-    ozz::math::Transform transform = {translation, rotation, scale};
-    return transform;
-}
-
 }  // namespace
 
-Fbx::Fbx(const std::string_view path) { LoadModel(path); }
+Fbx::Fbx(const std::string_view path) {
+	LoadModel(path);
+}
 
 void Fbx::LoadModel(const std::string_view path) {
     sfbx::DocumentPtr doc = sfbx::MakeDocument(std::string(path));
     if (doc && doc->valid()) {
         ProcessNode(doc->getRootModel());
-
-        // Build the Ozz skeleton
-        ozz::animation::offline::RawSkeleton rawSkeleton;
-        rawSkeleton.roots.resize(mBoneMapping.size());
-
-        int index = 0;
-        for (const auto& bone : mBoneMapping) {
-            ozz::animation::offline::RawSkeleton::Joint joint;
-            joint.name = bone.first.c_str();
-            joint.transform = mBoneTransforms[bone.second];
-            rawSkeleton.roots[index] = joint;
-            index++;
-        }
-
-        ozz::animation::offline::SkeletonBuilder skeletonBuilder;
-        mSkeleton = skeletonBuilder(rawSkeleton);
     }
 }
 
@@ -107,10 +71,10 @@ void Fbx::ProcessMesh(const std::shared_ptr<sfbx::Mesh>& mesh) {
 	
 	auto path = std::filesystem::absolute(mesh->document().global_settings.path).string();
 
-	auto& resultMesh = mMeshes.emplace_back(std::make_unique<Mesh::MeshData>());
+	auto& resultMesh = mMeshes.emplace_back(std::make_unique<MeshData>());
 	
 	// Precompute transformation matrices
-	const glm::mat4 rotationMatrix = GetUpAxisRotation(mesh->document().global_settings.up_axis,
+	const glm::mat4 rotationMatrix = FbxUtil::GetUpAxisRotation(mesh->document().global_settings.up_axis,
 													   mesh->document().global_settings.up_axis_sign);
 	const float scaleFactor = static_cast<float>(mesh->document().global_settings.unit_scale);
 	const glm::mat4 scaleMatrix = glm::scale(glm::mat4(1.0f), glm::vec3(scaleFactor));
@@ -122,8 +86,8 @@ void Fbx::ProcessMesh(const std::shared_ptr<sfbx::Mesh>& mesh) {
 	
 	// Reserve space for vertices and indices
 	const size_t vertexCount = vertexIndices.size();
-	resultMesh->mVertices.resize(vertexCount);
-	resultMesh->mIndices.resize(vertexCount);
+	resultMesh->get_vertices().resize(vertexCount);
+	resultMesh->get_indices().resize(vertexCount);
 	
 	// Retrieve materials and map them to indices
 	const auto& materials = mesh->getMaterials();
@@ -212,7 +176,7 @@ void Fbx::ProcessMesh(const std::shared_ptr<sfbx::Mesh>& mesh) {
 	auto processVertices = [&](size_t startIndex, size_t endIndex) {
 		for (size_t i = startIndex; i < endIndex; ++i) {
 			int controlPointIndex = vertexIndices[i];
-			Mesh::Vertex vertex;
+			MeshVertex vertex;
 			
 			// Transform position
 			const auto& point = points[controlPointIndex];
@@ -266,8 +230,8 @@ void Fbx::ProcessMesh(const std::shared_ptr<sfbx::Mesh>& mesh) {
 			vertex.set_texture_id((matIndex >= 0 && matIndex < static_cast<int>(materials.size())) ? matIndex : -1);
 			
 			// Assign vertex and index
-			resultMesh->mVertices[i] = std::move(vertex);
-			resultMesh->mIndices[i] = static_cast<uint32_t>(i);
+			resultMesh->get_vertices()[i] = std::move(vertex);
+			resultMesh->get_indices()[i] = static_cast<uint32_t>(i);
 		}
 	};
 	
@@ -283,11 +247,11 @@ void Fbx::ProcessMesh(const std::shared_ptr<sfbx::Mesh>& mesh) {
 		thread.join();
 	}
 	
-	// Process bones (assuming ProcessBones is efficient)
+	// Process bones no-op, must implement.
 	ProcessBones(mesh);
-	
+
 	// Process materials
-	resultMesh->mMaterials.reserve(materials.size());
+	resultMesh->get_material_properties().reserve(materials.size());
 	for (size_t i = 0; i < materials.size(); ++i) {
 		const auto& material = materials[i];
 		auto matPtr = std::make_shared<MaterialProperties>();
@@ -320,46 +284,6 @@ void Fbx::ProcessMesh(const std::shared_ptr<sfbx::Mesh>& mesh) {
 			matData.mHasDiffuseTexture = true;
 		}
 		
-		resultMesh->mMaterials.push_back(matPtr);
+		resultMesh->get_material_properties().push_back(matPtr);
 	}
-}
-
-void Fbx::ProcessBones(const std::shared_ptr<sfbx::Mesh>& mesh) {
-    auto geometry = mesh->getGeometry();
-    auto deformers = geometry->getDeformers();
-    std::shared_ptr<sfbx::Skin> skin;
-
-    for (auto& deformer : deformers) {
-        if (skin = sfbx::as<sfbx::Skin>(deformer); skin) {
-            break;
-        }
-    }
-
-    if (skin) {
-        auto skinClusters = skin->getChildren();
-        for (const auto& clusterObj : skinClusters) {
-            auto skinCluster = sfbx::as<sfbx::Cluster>(clusterObj);
-            std::string boneName = std::string{skinCluster->getChild()->getName()};
-            if (mBoneMapping.find(boneName) == mBoneMapping.end()) {
-                mBoneMapping[boneName] = static_cast<int>(mBoneMapping.size());
-                mBoneTransforms.emplace_back(ToOzzTransform(skinCluster->getTransform()));
-            }
-
-            std::size_t boneID = mBoneMapping[boneName];
-            auto weights = skinCluster->getWeights();
-            auto indices = skinCluster->getIndices();
-
-            for (size_t i = 0; i < weights.size(); ++i) {
-                int vertexID = indices[i];
-                float weight = weights[i];
-                for (int j = 0; j < 4; ++j) {
-					if (mMeshes.back()->mVertices[vertexID].get_weights()[j] == 0.0f) {
-						mMeshes.back()->mVertices[vertexID].set_bone(static_cast<int>(boneID),
-                                                                      weight);
-                        break;
-                    }
-                }
-            }
-        }
-    }
 }

@@ -23,76 +23,12 @@
 #include <cmath>
 #include <algorithm>
 
-SkinnedMesh::Vertex::Vertex() {}
-
-SkinnedMesh::Vertex::Vertex(const glm::vec3& pos, const glm::vec2& tex)
-: mPosition(pos), mNormal(0.0f), mTexCoords1(tex), mTexCoords2(tex) {
-	init_bones();
-}
-
-void SkinnedMesh::Vertex::init_bones() {
-	for (int i = 0; i < MAX_BONE_INFLUENCE; i++) {
-		mBoneIds[i] = -1;
-		mWeights[i] = 0.0f;
-	}
-}
-
-void SkinnedMesh::Vertex::set_bone(int boneId, float weight) {
-	for (int i = 0; i < MAX_BONE_INFLUENCE; i++) {
-		if (mBoneIds[i] < 0) {
-			mBoneIds[i] = boneId;
-			mWeights[i] = weight;
-			return;
-		}
-	}
-	for (int i = 0; i < MAX_BONE_INFLUENCE; i++) {
-		if (mWeights[i] < weight) {
-			mBoneIds[i] = boneId;
-			mWeights[i] = weight;
-			return;
-		}
-	}
-}
-
-void SkinnedMesh::Vertex::set_position(const glm::vec3& vec) { mPosition = vec; }
-
-void SkinnedMesh::Vertex::set_normal(const glm::vec3& vec) { mNormal = vec; }
-void SkinnedMesh::Vertex::set_color(const glm::vec4& vec) { mColor = vec; }
-
-void SkinnedMesh::Vertex::set_texture_coords1(const glm::vec2& vec) { mTexCoords1 = vec; }
-
-void SkinnedMesh::Vertex::set_texture_coords2(const glm::vec2& vec) { mTexCoords2 = vec; }
-
-void SkinnedMesh::Vertex::set_texture_id(int textureId) { mTextureId = textureId; }
-
-glm::vec3 SkinnedMesh::Vertex::get_position() const { return mPosition; }
-
-glm::vec3 SkinnedMesh::Vertex::get_normal() const { return mNormal; }
-
-glm::vec4 SkinnedMesh::Vertex::get_color() const { return mColor; }
-
-glm::vec2 SkinnedMesh::Vertex::get_tex_coords1() const { return mTexCoords1; }
-
-glm::vec2 SkinnedMesh::Vertex::get_tex_coords2() const { return mTexCoords2; }
-
-std::array<int, SkinnedMesh::Vertex::MAX_BONE_INFLUENCE> SkinnedMesh::Vertex::get_bone_ids() const {
-	return mBoneIds;
-}
-std::array<float, SkinnedMesh::Vertex::MAX_BONE_INFLUENCE> SkinnedMesh::Vertex::get_weights()
-const {
-	return mWeights;
-}
-
-int SkinnedMesh::Vertex::get_texture_id() const {
-	return mTextureId;
-}
-
 SkinnedMesh::SkinnedMeshShader::SkinnedMeshShader(ShaderManager& shaderManager)
 : ShaderWrapper(*shaderManager.get_shader("mesh")) {}
 
-SkinnedMesh::SkinnedMesh(std::unique_ptr<MeshData> meshData, ShaderWrapper& shader, SkinnedMeshBatch& meshBatch, ColorComponent& colorComponent)
-: mMeshData(std::move(meshData)), mShader(shader), mMeshBatch(meshBatch), mColorComponent(colorComponent), mModelMatrix(nanogui::Matrix4f::identity()) {
-	size_t numVertices = mMeshData->mVertices.size();
+SkinnedMesh::SkinnedMesh(std::unique_ptr<SkinnedMeshData> skinnedMeshData, ShaderWrapper& shader, SkinnedMeshBatch& meshBatch, ColorComponent& colorComponent)
+: mSkinnedMeshData(std::move(skinnedMeshData)), mShader(shader), mMeshBatch(meshBatch), mColorComponent(colorComponent), mModelMatrix(nanogui::Matrix4f::identity()) {
+	size_t numVertices = mSkinnedMeshData->get_skinned_vertices().size();
 	
 	// Pre-allocate flattened data vectors
 	mFlattenedPositions.resize(numVertices * 3);
@@ -101,13 +37,14 @@ SkinnedMesh::SkinnedMesh(std::unique_ptr<MeshData> meshData, ShaderWrapper& shad
 	mFlattenedTexCoords2.resize(numVertices * 2);
 	mFlattenedColors.resize(numVertices * 4); // vec4 per vertex
 	
-	//		mFlattenedBoneIds.resize(numVertices * Vertex::MAX_BONE_INFLUENCE);
-	//		mFlattenedWeights.resize(numVertices * Vertex::MAX_BONE_INFLUENCE);
+	mFlattenedBoneIds.resize(numVertices * SkinnedMeshVertex::MAX_BONE_INFLUENCE);
+	mFlattenedWeights.resize(numVertices * SkinnedMeshVertex::MAX_BONE_INFLUENCE);
+	
 	mFlattenedTextureIds.resize(numVertices * 2); // Assuming two texture IDs per vertex
 	
 	// Flatten the vertex data
 	for (size_t i = 0; i < numVertices; ++i) {
-		const auto& vertex = mMeshData->mVertices[i];
+		const auto& vertex = mSkinnedMeshData->get_skinned_vertices()[i];
 		
 		// Positions
 		mFlattenedPositions[i * 3 + 0] = vertex.get_position().x;
@@ -137,7 +74,19 @@ SkinnedMesh::SkinnedMesh(std::unique_ptr<MeshData> meshData, ShaderWrapper& shad
 		mFlattenedColors[i * 4 + 1] = color.g;
 		mFlattenedColors[i * 4 + 2] = color.b;
 		mFlattenedColors[i * 4 + 3] = color.a;
+		
+		
+//		// Bone IDs and Weights
+//		const auto& vertexBoneIds = vertex.get_bone_ids();
+//		const auto& vertexWeights = vertex.get_weights();
+//		
+//		for (int j = 0; j < Vertex::MAX_BONE_INFLUENCE; ++j) {
+//			mFlattenedBoneIds[i * Vertex::MAX_BONE_INFLUENCE + j] = vertexBoneIds[j];
+//			mFlattenedWeights[i * Vertex::MAX_BONE_INFLUENCE + j] = vertexWeights[j];
+//		}
+		
 	}
+
 	
 	mModelMatrix = nanogui::Matrix4f::identity(); // Or any other transformation
 	
@@ -146,7 +95,7 @@ SkinnedMesh::SkinnedMesh(std::unique_ptr<MeshData> meshData, ShaderWrapper& shad
 }
 
 void SkinnedMesh::draw_content(const nanogui::Matrix4f& model, const nanogui::Matrix4f& view,
-						const nanogui::Matrix4f& projection) {
+							   const nanogui::Matrix4f& projection) {
 	
 	mModelMatrix = model;
 }

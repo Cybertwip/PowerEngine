@@ -83,6 +83,9 @@ add_executable(PowerEngine
     ${CMAKE_CURRENT_LIST_DIR}/components/MeshComponent.cpp
     ${CMAKE_CURRENT_LIST_DIR}/components/MeshComponent.hpp
 
+    ${CMAKE_CURRENT_LIST_DIR}/components/SkinnedMeshComponent.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/components/SkinnedMeshComponent.hpp
+
     ${CMAKE_CURRENT_LIST_DIR}/filesystem/DirectoryNode.hpp
     ${CMAKE_CURRENT_LIST_DIR}/filesystem/DirectoryNode.cpp
 
@@ -98,6 +101,9 @@ add_executable(PowerEngine
     ${CMAKE_CURRENT_LIST_DIR}/grok/PromptBox.cpp
 
     ${CMAKE_CURRENT_LIST_DIR}/graphics/shading/MaterialProperties.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/graphics/shading/MeshData.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/graphics/shading/MeshVertex.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/graphics/shading/MeshVertex.cpp
     ${CMAKE_CURRENT_LIST_DIR}/graphics/shading/ShaderWrapper.hpp
     ${CMAKE_CURRENT_LIST_DIR}/graphics/shading/ShaderWrapper.cpp
 
@@ -128,6 +134,9 @@ add_executable(PowerEngine
 
     ${CMAKE_CURRENT_LIST_DIR}/import/Fbx.hpp
     ${CMAKE_CURRENT_LIST_DIR}/import/Fbx.cpp
+
+    ${CMAKE_CURRENT_LIST_DIR}/import/SkinnedFbx.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/import/SkinnedFbx.cpp
 
 
     ${CMAKE_CURRENT_LIST_DIR}/ui/AnimationPanel.hpp

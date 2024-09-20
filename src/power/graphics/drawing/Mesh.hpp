@@ -2,6 +2,8 @@
 
 #include "graphics/drawing/Drawable.hpp"
 #include "graphics/shading/MaterialProperties.hpp"
+#include "graphics/shading/MeshData.hpp"
+#include "graphics/shading/MeshVertex.hpp"
 #include "graphics/shading/ShaderWrapper.hpp"
 
 #include <nanogui/vector.h>
@@ -16,58 +18,6 @@ class ShaderManager;
 
 class Mesh : public Drawable {
 public:
-	class Vertex {
-	private:
-		static constexpr int MAX_BONE_INFLUENCE = 4;
-		
-	public:
-		Vertex();
-		Vertex(const glm::vec3 &pos, const glm::vec2 &tex);
-		
-		// Bone and weight setters
-		void set_bone(int boneId, float weight);
-		void set_position(const glm::vec3 &vec);
-		void set_normal(const glm::vec3 &vec);
-		void set_color(const glm::vec4 &vec);
-		void set_texture_coords1(const glm::vec2 &vec);
-		void set_texture_coords2(const glm::vec2 &vec);
-		
-		// New method for setting texture ID
-		void set_texture_id(int textureId);
-		
-		// Accessors
-		glm::vec3 get_position() const;
-		glm::vec3 get_normal() const;
-		glm::vec4 get_color() const;
-		glm::vec2 get_tex_coords1() const;
-		glm::vec2 get_tex_coords2() const;
-		std::array<int, MAX_BONE_INFLUENCE> get_bone_ids() const;
-		std::array<float, MAX_BONE_INFLUENCE> get_weights() const;
-		int get_texture_id() const;  // New method to get texture ID
-		
-	private:
-		void init_bones();
-		
-	private:
-		glm::vec3 mPosition;
-		glm::vec3 mNormal;
-		glm::vec4 mColor;
-		glm::vec2 mTexCoords1;
-		glm::vec2 mTexCoords2;
-		std::array<int, Vertex::MAX_BONE_INFLUENCE> mBoneIds;
-		std::array<float, Vertex::MAX_BONE_INFLUENCE> mWeights;
-		
-		// New member to store texture ID
-		int mTextureId;
-	};
-
-
-    struct MeshData {
-        std::vector<Vertex> mVertices;
-        std::vector<unsigned int> mIndices;
-        std::vector<std::shared_ptr<MaterialProperties>> mMaterials;
-    };
-
     class MeshShader : public ShaderWrapper {
     public:
         MeshShader(ShaderManager& shader);
@@ -92,7 +42,7 @@ public:
 	const std::vector<int>& get_flattened_texture_ids() const { return mFlattenedTextureIds; }
 	const std::vector<float>& get_flattened_colors() const { return mFlattenedColors; }
 
-	const MeshData& get_mesh_data() {
+	MeshData& get_mesh_data() {
 		return *mMeshData;
 	}
 	

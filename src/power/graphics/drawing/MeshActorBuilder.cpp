@@ -9,13 +9,16 @@
 #include "components/DrawableComponent.hpp"
 #include "components/MeshComponent.hpp"
 #include "components/MetadataComponent.hpp"
+#include "components/SkinnedMeshComponent.hpp"
 #include "components/TransformComponent.hpp"
 
 #include "graphics/drawing/BatchUnit.hpp"
 #include "graphics/drawing/Mesh.hpp"
 #include "graphics/drawing/SkinnedMesh.hpp"
 
-#include "import/Fbx.hpp"
+#include "graphics/shading/MeshData.hpp"
+
+#include "import/SkinnedFbx.hpp"
 
 MeshActorBuilder::MeshActorBuilder(BatchUnit& batchUnit)
 : mBatchUnit(batchUnit) {
@@ -28,16 +31,29 @@ Actor& MeshActorBuilder::build(Actor& actor, const std::string& path, ShaderWrap
 
 	auto& colorComponent = actor.add_component<ColorComponent>(actor.get_component<MetadataComponent>());
 
-    auto model = Fbx(path);
+    auto model = SkinnedFbx(path);
 
-    std::vector<std::unique_ptr<Mesh>> meshComponentData;
+	std::unique_ptr<Drawable> drawableComponent;
+	
+	if (model.GetSkeleton() != nullptr) {
+		std::vector<std::unique_ptr<SkinnedMesh>> skinnedMeshComponentData;
+		
+		for (auto& skinnedMeshData : model.GetSkinnedMeshData()) {
+			skinnedMeshComponentData.push_back(std::make_unique<SkinnedMesh>(std::move(skinnedMeshData), shader, mBatchUnit.mSkinnedMeshBatch, colorComponent));
+		}
+		
+		drawableComponent = std::make_unique<SkinnedMeshComponent>(skinnedMeshComponentData);
+	} else {
+		std::vector<std::unique_ptr<Mesh>> meshComponentData;
+		
+		for (auto& meshData : model.GetMeshData()) {
+			meshComponentData.push_back(std::make_unique<Mesh>(std::move(meshData), shader, mBatchUnit.mMeshBatch, colorComponent));
+		}
+		
+		drawableComponent = std::make_unique<MeshComponent>(meshComponentData);
+	}
 
-    for (auto& meshData : model.GetMeshData()) {
-        meshComponentData.push_back(std::make_unique<Mesh>(std::move(meshData), shader, mBatchUnit.mMeshBatch, colorComponent));
-    }
-
-	std::unique_ptr<Drawable> meshComponent = std::make_unique<MeshComponent>(meshComponentData);
-	actor.add_component<DrawableComponent>(std::move(meshComponent));
+	actor.add_component<DrawableComponent>(std::move(drawableComponent));
 	actor.add_component<TransformComponent>();
 	actor.add_component<AnimationComponent>();
 

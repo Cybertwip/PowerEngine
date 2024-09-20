@@ -55,10 +55,6 @@ void HierarchyPanel::populate_tree(Actor &actor, nanogui::TreeViewItem *parent_n
 						  [this, &actor]() {
 		OnActorSelected(actor);
 	});
-	// Uncomment and correctly iterate over the actor's children
-	//    for (Actor *child : actor->children()) {
-	//        populate_tree(child, node);
-	//    }
 	
 	if (actor.find_component<UiComponent>()) {
 		actor.remove_component<UiComponent>();

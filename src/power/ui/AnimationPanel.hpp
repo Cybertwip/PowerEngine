@@ -2,7 +2,10 @@
 
 #include "Panel.hpp"
 
-#include <nanogui/textbox.h>
+namespace nanogui {
+class ToolButton;
+class Widget;
+}
 
 class Actor;
 class TransformComponent;
@@ -16,4 +19,8 @@ public:
     
 private:
     std::optional<std::reference_wrapper<Actor>> mActiveActor;
+	
+	nanogui::ToolButton* mReversePlayButton; // New reverse play button
+	nanogui::ToolButton* mPlayPauseButton;
+
 };

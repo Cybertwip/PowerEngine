@@ -20,21 +20,22 @@
 #include <unordered_map>
 #include <array>
 
+struct MeshData;
+
 class Fbx {
 public:
     explicit Fbx(const std::string_view path);
 
-    const ozz::animation::Skeleton& GetSkeleton() const { return *mSkeleton; }
-    std::vector<std::unique_ptr<Mesh::MeshData>>& GetMeshData() { return mMeshes; }
+    std::vector<std::unique_ptr<MeshData>>& GetMeshData() { return mMeshes; }
+protected:
+	virtual void ProcessBones(const std::shared_ptr<sfbx::Mesh>& mesh) {
+		
+	}
 
 private:
     void LoadModel(const std::string_view path);
     void ProcessNode(const std::shared_ptr<sfbx::Model>& node);
     void ProcessMesh(const std::shared_ptr<sfbx::Mesh>& mesh);
-    void ProcessBones(const std::shared_ptr<sfbx::Mesh>& mesh);
 
-    std::vector<std::unique_ptr<Mesh::MeshData>> mMeshes;
-    std::unordered_map<std::string, int> mBoneMapping;
-    std::vector<ozz::math::Transform> mBoneTransforms;
-    ozz::unique_ptr<ozz::animation::Skeleton> mSkeleton;
+	std::vector<std::unique_ptr<MeshData>> mMeshes;
 };

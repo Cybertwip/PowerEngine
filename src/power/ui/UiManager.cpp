@@ -39,6 +39,9 @@
 
 #endif
 
+#include <nanovg.h>
+
+
 #include <iostream>
 
 namespace {
@@ -216,7 +219,6 @@ public:
 		mPlayPauseBtn->set_fixed_width(buttonWidth);
 		mPlayPauseBtn->set_fixed_height(buttonHeight);
 		mPlayPauseBtn->set_tooltip("Play");
-		mPlayPauseBtn->set_flags(nanogui::Button::ToggleButton);
 		
 		mPlayPauseBtn->set_change_callback([this](bool active) {
 			
@@ -243,7 +245,7 @@ public:
 		mRecordBtn->set_fixed_width(buttonWidth);
 		mRecordBtn->set_fixed_height(buttonHeight);
 		mRecordBtn->set_tooltip("Record");
-		mRecordBtn->set_flags(nanogui::Button::ToggleButton);
+
 		auto normalRecordColor = mRecordBtn->text_color();
 		
 		mRecordBtn->set_change_callback([this, normalRecordColor](bool active) {
