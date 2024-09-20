@@ -9,6 +9,7 @@
 #include "components/DrawableComponent.hpp"
 #include "components/MeshComponent.hpp"
 #include "components/MetadataComponent.hpp"
+#include "components/SkinnedAnimationComponent.hpp"
 #include "components/SkinnedMeshComponent.hpp"
 #include "components/TransformComponent.hpp"
 
@@ -47,6 +48,16 @@ Actor& MeshActorBuilder::build(Actor& actor, const std::string& path, ShaderWrap
 		}
 		
 		drawableComponent = std::make_unique<SkinnedMeshComponent>(skinnedMeshComponentData);
+		
+		
+		auto pdo = SkinnedAnimationComponent::SkinnedAnimationPdo();
+
+		for (auto& animation : model.GetAnimationData()) {
+			pdo.mAnimationData.push_back(std::ref(*animation));
+		}
+		
+		actor.add_component<SkinnedAnimationComponent>(pdo);
+
 	} else {
 		std::vector<std::unique_ptr<Mesh>> meshComponentData;
 		

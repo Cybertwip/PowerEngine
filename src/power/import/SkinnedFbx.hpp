@@ -39,8 +39,7 @@ public:
 	
 	std::vector<std::unique_ptr<SkinnedMeshData>>& GetSkinnedMeshData() { return mSkinnedMeshes; }
 
-	std::vector<ozz::unique_ptr<ozz::animation::Animation>>& GetAnimationData() { return mAnimations;
-	}
+	std::vector<ozz::unique_ptr<ozz::animation::Animation>>& GetAnimationData() { return mAnimations; }
 
 	void TryBuildSkeleton();
 	

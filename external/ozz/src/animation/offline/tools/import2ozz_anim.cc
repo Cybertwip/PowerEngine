@@ -265,7 +265,7 @@ bool Export(OzzImporter& _importer, const RawAnimation& _input_animation,
   }
 
   // Builds runtime animation.
-  unique_ptr<Animation> animation;
+  std::shared_ptr<Animation> animation;
   if (!_config["raw"].asBool()) {
     ozz::log::Log() << "Builds runtime animation." << std::endl;
     AnimationBuilder builder;
