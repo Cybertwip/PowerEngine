@@ -37,13 +37,12 @@ public:
 	}
 	
 	void apply_to(ShaderWrapper& shader) {
-		if (mAnimationData.empty()) {
-			// If there are no animations, use the bind pose
-			compute_bind_pose();
-		} else {
+		compute_bind_pose();
+
+		if (!mAnimationData.empty()) {
 			// Sample the first animation for simplicity
 			sample_animation(mAnimationData[0].get(), mCurrentTime);
-		}
+		} 
 		
 		// Convert local pose to model-space pose
 		compute_model_pose();
