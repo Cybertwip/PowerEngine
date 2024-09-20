@@ -225,9 +225,9 @@ void MeshBatch::draw_content(const nanogui::Matrix4f& view,
 		for (int i = 0; i<mesh_vector.size(); ++i) {
 			auto& mesh = mesh_vector[i].get();
 //			
-//			if (!mesh.get_color_component().get_visible()) {
-//				continue;
-//			}
+			if (!mesh.get_color_component().get_visible()) {
+				continue;
+			}
 						
 			// Set uniforms and draw the mesh content
 			shader.set_uniform("aProjection", projection);
