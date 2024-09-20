@@ -8,7 +8,7 @@
 class SkinnedAnimationComponent {
 public:
 	struct SkinnedAnimationPdo {
-		std::vector<ozz::reference_wrapper<ozz::animation::Animation>> mAnimationData;
+		std::vector<std::reference_wrapper<ozz::animation::Animation>> mAnimationData;
 	};
 public:
 	

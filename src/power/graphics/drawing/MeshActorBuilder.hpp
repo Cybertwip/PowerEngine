@@ -8,6 +8,7 @@
 class Actor;
 class MeshComponent;
 class ShaderWrapper;
+class SkinnedFbx;
 
 struct BatchUnit;
 
@@ -19,5 +20,5 @@ public:
 	
 private:
 	BatchUnit& mBatchUnit;
-	std::unordered_map<std::string, SkinnedFbx> SkinnedFbx;
+	std::unordered_map<std::string, std::unique_ptr<SkinnedFbx>> mModels;
 };

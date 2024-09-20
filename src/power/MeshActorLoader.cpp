@@ -4,7 +4,7 @@
 
 #include "components/MeshComponent.hpp"
 #include "graphics/drawing/MeshActorBuilder.hpp"
-#include "import/Fbx.hpp"
+#include "import/SkinnedFbx.hpp"
 
 MeshActorLoader::MeshActorLoader(ActorManager& actorManager, ShaderManager& shaderManager, BatchUnit& batchUnit)
     
