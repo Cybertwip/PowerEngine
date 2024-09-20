@@ -23,8 +23,13 @@
 #include <cmath>
 #include <algorithm>
 
-SkinnedMesh::SkinnedMesh(std::unique_ptr<SkinnedMeshData> skinnedMeshData, ShaderWrapper& shader, SkinnedMeshBatch& meshBatch, ColorComponent& colorComponent)
-: mSkinnedMeshData(std::move(skinnedMeshData)), mShader(shader), mMeshBatch(meshBatch), mColorComponent(colorComponent), mModelMatrix(nanogui::Matrix4f::identity()) {
+SkinnedMesh::SkinnedMesh(std::unique_ptr<SkinnedMeshData> skinnedMeshData, ShaderWrapper& shader, SkinnedMeshBatch& meshBatch, ColorComponent& colorComponent, SkinnedAnimationComponent& skinnedComponent)
+: mSkinnedMeshData(std::move(skinnedMeshData)),
+mShader(shader),
+mMeshBatch(meshBatch),
+mColorComponent(colorComponent),
+mSkinnedComponent(skinnedComponent),
+mModelMatrix(nanogui::Matrix4f::identity()) {
 	size_t numVertices = mSkinnedMeshData->get_skinned_vertices().size();
 	
 	// Pre-allocate flattened data vectors
@@ -81,9 +86,7 @@ SkinnedMesh::SkinnedMesh(std::unique_ptr<SkinnedMeshData> skinnedMeshData, Shade
 			mFlattenedBoneIds[i * SkinnedMeshVertex::MAX_BONE_INFLUENCE + j] = vertexBoneIds[j];
 			mFlattenedWeights[i * SkinnedMeshVertex::MAX_BONE_INFLUENCE + j] = vertexWeights[j];
 		}
-		
 	}
-
 	
 	mModelMatrix = nanogui::Matrix4f::identity(); // Or any other transformation
 	

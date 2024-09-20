@@ -33,7 +33,7 @@ public:
 	
 	~SkinnedFbx() = default;
 	
-	const ozz::animation::Skeleton* GetSkeleton() const {
+	ozz::animation::Skeleton* GetSkeleton() const {
 		return mSkeleton.get();
 	}
 	

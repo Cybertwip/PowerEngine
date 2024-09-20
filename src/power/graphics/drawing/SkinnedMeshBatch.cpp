@@ -1,6 +1,7 @@
 #include "SkinnedMeshBatch.hpp"
 
 #include "components/ColorComponent.hpp"
+#include "components/SkinnedAnimationComponent.hpp"
 
 #include "graphics/drawing/Mesh.hpp"
 #include "graphics/shading/ShaderWrapper.hpp"
@@ -265,6 +266,9 @@ void SkinnedMeshBatch::draw_content(const nanogui::Matrix4f& view,
 			// Set the model matrix for the current mesh
 			shader.set_uniform("aModel", mesh.get_model_matrix());
 			
+			// Apply skinning and animations (if any)
+			mesh.get_skinned_component().apply_to(shader);
+
 			// Apply color component (assuming it sets relevant uniforms)
 			mesh.get_color_component().apply_to(shader);
 			
