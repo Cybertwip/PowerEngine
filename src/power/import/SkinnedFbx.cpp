@@ -1,5 +1,8 @@
 #include "import/SkinnedFbx.hpp"
 
+#include "animation/Skeleton.hpp"
+#include "animation/Animation.hpp"
+
 #include <algorithm>
 #include <execution>
 #include <thread>
@@ -9,12 +12,12 @@
 #include <glm/gtc/quaternion.hpp>
 
 namespace SkinnedFbxUtil {
-ozz::math::Transform ToOzzTransform(const sfbx::float4x4& mat) {
+Transform ToPowerTransform(const sfbx::float4x4& mat) {
     // Extract translation
-    ozz::math::Float3 translation(mat[3].x, mat[3].y, mat[3].z);
+    glm::vec3 translation(mat[3].x, mat[3].y, mat[3].z);
 
     // Extract scale
-    ozz::math::Float3 scale(glm::length(glm::vec3(mat[0].x, mat[0].y, mat[0].z)),
+    glm::vec3 scale(glm::length(glm::vec3(mat[0].x, mat[0].y, mat[0].z)),
                             glm::length(glm::vec3(mat[1].x, mat[1].y, mat[1].z)),
                             glm::length(glm::vec3(mat[2].x, mat[2].y, mat[2].z)));
 
@@ -24,10 +27,8 @@ ozz::math::Transform ToOzzTransform(const sfbx::float4x4& mat) {
                              glm::vec3(mat[2].x, mat[2].y, mat[2].z) / scale.z);
 
     glm::quat rotationQuat = glm::quat_cast(rotationMatrix);
-    ozz::math::Quaternion rotation(rotationQuat.w, rotationQuat.x, rotationQuat.y, rotationQuat.z);
 
-    ozz::math::Transform transform = {translation, rotation, scale};
-    return transform;
+	return {translation, rotationQuat, scale};
 }
 
 }  // namespace
@@ -58,7 +59,7 @@ void SkinnedFbx::ProcessBones(const std::shared_ptr<sfbx::Mesh>& mesh) {
             std::string boneName = std::string{skinCluster->getChild()->getName()};
             if (mBoneMapping.find(boneName) == mBoneMapping.end()) {
                 mBoneMapping[boneName] = static_cast<int>(mBoneMapping.size());
-				mBoneTransforms.emplace_back(SkinnedFbxUtil::ToOzzTransform(skinCluster->getTransform()));
+				mBoneTransforms.emplace_back(SkinnedFbxUtil::ToPowerTransform(skinCluster->getTransform()));
             }
 
             std::size_t boneID = mBoneMapping[boneName];
@@ -81,64 +82,59 @@ void SkinnedFbx::ProcessBones(const std::shared_ptr<sfbx::Mesh>& mesh) {
 }
 
 void SkinnedFbx::TryBuildSkeleton() {
+	auto skeletonPointer = std::make_unique<Skeleton>();
+	auto& skeleton = *skeletonPointer;
 	
-	// Build the Ozz skeleton
-	ozz::animation::offline::RawSkeleton rawSkeleton;
-	rawSkeleton.roots.resize(mBoneMapping.size());
-	
-	int index = 0;
 	for (const auto& bone : mBoneMapping) {
-		ozz::animation::offline::RawSkeleton::Joint joint;
-		joint.name = bone.first.c_str();
-		joint.transform = mBoneTransforms[bone.second];
-		rawSkeleton.roots[index] = joint;
-		index++;
+		const auto& transform = mBoneTransforms[bone.second];
+		glm::vec3 translation(transform.translation.x, transform.translation.y, transform.translation.z);
+		glm::quat rotation(transform.rotation.w, transform.rotation.x, transform.rotation.y, transform.rotation.z);
+		glm::vec3 scale(transform.scale.x, transform.scale.y, transform.scale.z);
+		
+		int parent_index = -1;  // Set this based on your hierarchy logic
+		
+		skeleton.add_bone(bone.first, translation, rotation, scale, parent_index);
 	}
 	
-	ozz::animation::offline::SkeletonBuilder skeletonBuilder;
-	auto skeleton = skeletonBuilder(rawSkeleton);
-	
-	mSkeleton = skeleton->num_joints() != 0 ? std::move(skeleton) : nullptr;
+	mSkeleton = std::move(skeletonPointer);
 }
 
 void SkinnedFbx::TryImportAnimations() {
-	// Iterate through animation stacks
 	for (auto& stack : mDoc->getAnimationStacks()) {
 		// Iterate through animation layers
-		for (auto& animationLayer : stack->getAnimationLayers()) {
-			ozz::animation::offline::RawAnimation rawAnimation;
+		for (auto& animation_layer : stack->getAnimationLayers()) {
+			auto animationPtr = std::make_unique<Animation>();
+			Animation& animation = *animationPtr;  // Custom Animation class
 			
 			// Variables to track min and max keyframe times
-			float minTime = std::numeric_limits<float>::max();
-			float maxTime = std::numeric_limits<float>::min();
-			
-			rawAnimation.tracks.resize(mBoneMapping.size());  // Resize tracks based on the number of bones
+			float min_time = std::numeric_limits<float>::max();
+			float max_time = std::numeric_limits<float>::min();
 			
 			// Iterate through bone mapping to create keyframes for each bone
 			for (const auto& bone : mBoneMapping) {
-				const std::string& boneName = bone.first;
-				int boneIndex = bone.second;
+				const std::string& bone_name = bone.first;
+				std::vector<Animation::KeyFrame> keyframes;  // Store keyframes for each bone
 				
 				// Retrieve all animation curve nodes
-				auto curveNodes = animationLayer->getAnimationCurveNodes();
+				auto curve_nodes = animation_layer->getAnimationCurveNodes();
 				
 				// Filter for position, rotation, and scale curves
-				std::shared_ptr<sfbx::AnimationCurveNode> positionCurve = nullptr;
-				std::shared_ptr<sfbx::AnimationCurveNode> rotationCurve = nullptr;
-				std::shared_ptr<sfbx::AnimationCurveNode> scaleCurve = nullptr;
+				std::shared_ptr<sfbx::AnimationCurveNode> position_curve = nullptr;
+				std::shared_ptr<sfbx::AnimationCurveNode> rotation_curve = nullptr;
+				std::shared_ptr<sfbx::AnimationCurveNode> scale_curve = nullptr;
 				
 				// Iterate over all curve nodes and assign them based on AnimationKind
-				for (const auto& curveNode : curveNodes) {
-					if (curveNode->getAnimationTarget()->getName() == boneName) {
-						switch (curveNode->getAnimationKind()) {
+				for (const auto& curve_node : curve_nodes) {
+					if (curve_node->getAnimationTarget()->getName() == bone_name) {
+						switch (curve_node->getAnimationKind()) {
 							case sfbx::AnimationKind::Position:
-								positionCurve = curveNode;
+								position_curve = curve_node;
 								break;
 							case sfbx::AnimationKind::Rotation:
-								rotationCurve = curveNode;
+								rotation_curve = curve_node;
 								break;
 							case sfbx::AnimationKind::Scale:
-								scaleCurve = curveNode;
+								scale_curve = curve_node;
 								break;
 							default:
 								break;
@@ -146,78 +142,77 @@ void SkinnedFbx::TryImportAnimations() {
 					}
 				}
 				
-				// RawAnimation::JointTrack reference for the current bone
-				ozz::animation::offline::RawAnimation::JointTrack& track = rawAnimation.tracks[boneIndex];
-				
-				// Populate translation keyframes
-				if (positionCurve) {
-					for (const auto& key : positionCurve->getAnimationCurves()[0]->getTimes()) {
-						ozz::animation::offline::RawAnimation::TranslationKey translationKey;
-						translationKey.time = static_cast<float>(key);
-						
-						auto evaluation = positionCurve->evaluateF3(translationKey.time);
-						translationKey.value = ozz::math::Float3(evaluation.x, evaluation.y, evaluation.z);
-						
-						track.translations.push_back(translationKey);
-						
-						// Update min and max times
-						minTime = std::min(minTime, translationKey.time);
-						maxTime = std::max(maxTime, translationKey.time);
-					}
+				// Collect all unique keyframe times from position, rotation, and scale curves
+				std::vector<float> all_times;
+				if (position_curve) {
+					auto pos_times = position_curve->getAnimationCurves()[0]->getTimes();
+					all_times.insert(all_times.end(), pos_times.begin(), pos_times.end());
+				}
+				if (rotation_curve) {
+					auto rot_times = rotation_curve->getAnimationCurves()[0]->getTimes();
+					all_times.insert(all_times.end(), rot_times.begin(), rot_times.end());
+				}
+				if (scale_curve) {
+					auto scale_times = scale_curve->getAnimationCurves()[0]->getTimes();
+					all_times.insert(all_times.end(), scale_times.begin(), scale_times.end());
 				}
 				
-				// Populate rotation keyframes
-				if (rotationCurve) {
-					for (const auto& key : rotationCurve->getAnimationCurves()[0]->getTimes()) {
-						ozz::animation::offline::RawAnimation::RotationKey rotationKey;
-						rotationKey.time = static_cast<float>(key);
-						
-						auto evaluation = rotationCurve->evaluateF3(rotationKey.time);
-						glm::vec3 eulerAngles = glm::vec3(evaluation.x, evaluation.y, evaluation.z);
-						
-						// Convert the Euler angles to a quaternion
-						glm::quat rotationQuat = glm::quat(glm::radians(eulerAngles)); // Assumes angles are in degrees; use radians() for safety
-						
-						// Set the quaternion into the ozz format
-						rotationKey.value = ozz::math::Quaternion(rotationQuat.w, rotationQuat.x, rotationQuat.y, rotationQuat.z);
-						
-						track.rotations.push_back(rotationKey);
-						
-						// Update min and max times
-						minTime = std::min(minTime, rotationKey.time);
-						maxTime = std::max(maxTime, rotationKey.time);
+				// Remove duplicate times and sort
+				std::sort(all_times.begin(), all_times.end());
+				all_times.erase(std::unique(all_times.begin(), all_times.end()), all_times.end());
+				
+				// Populate keyframes with translation, rotation, and scale for the current bone
+				for (const auto& key_time : all_times) {
+					Animation::KeyFrame keyframe;
+					keyframe.time = static_cast<float>(key_time);
+					
+					// Retrieve and evaluate the translation
+					if (position_curve) {
+						auto translation = position_curve->evaluateF3(key_time);
+						keyframe.translation = glm::vec3(translation.x, translation.y, translation.z);
+					} else {
+						keyframe.translation = glm::vec3(0.0f);  // Default to zero if no translation
 					}
+					
+					// Retrieve and evaluate the rotation
+					if (rotation_curve) {
+						auto rotation = rotation_curve->evaluateF3(key_time);
+						glm::vec3 euler_angles(rotation.x, rotation.y, rotation.z);
+						keyframe.rotation = glm::quat(glm::radians(euler_angles));  // Convert to quaternion
+					} else {
+						keyframe.rotation = glm::quat();  // Default to identity quaternion
+					}
+					
+					// Retrieve and evaluate the scale
+					if (scale_curve) {
+						auto scale = scale_curve->evaluateF3(key_time);
+						keyframe.scale = glm::vec3(scale.x, scale.y, scale.z);
+					} else {
+						keyframe.scale = glm::vec3(1.0f);  // Default to 1.0 if no scaling
+					}
+					
+					keyframes.push_back(keyframe);
+					
+					// Update min and max keyframe times
+					min_time = std::min(min_time, keyframe.time);
+					max_time = std::max(max_time, keyframe.time);
 				}
 				
-				// Populate scaling keyframes
-				if (scaleCurve) {
-					for (const auto& key : scaleCurve->getAnimationCurves()[0]->getTimes()) {
-						ozz::animation::offline::RawAnimation::ScaleKey scalingKey;
-						scalingKey.time = static_cast<float>(key);
-						
-						auto evaluation = scaleCurve->evaluateF3(scalingKey.time);
-						scalingKey.value = ozz::math::Float3(evaluation.x, evaluation.y, evaluation.z);
-						
-						track.scales.push_back(scalingKey);
-						
-						// Update min and max times
-						minTime = std::min(minTime, scalingKey.time);
-						maxTime = std::max(maxTime, scalingKey.time);
-					}
+				// Add the bone's keyframes to the animation
+				if (!keyframes.empty()) {
+					animation.add_bone_keyframes(bone_name, keyframes);
 				}
 			}
 			
-			// Set animation duration based on keyframe times
-			rawAnimation.duration = maxTime - minTime;
-			
-			// Build the final animation using ozz AnimationBuilder
-			ozz::animation::offline::AnimationBuilder animationBuilder;
-			auto animation = animationBuilder(rawAnimation);
+			// Set the animation's duration based on keyframe times
+			if (min_time < max_time) {
+				animation.set_duration(max_time - min_time);
+			} else {
+				animation.set_duration(0.0f);  // Handle case with single keyframe or no keyframes
+			}
 			
 			// Add the animation to the mAnimations vector
-			if (animation) {
-				mAnimations.push_back(std::move(animation));
-			}
+			mAnimations.push_back(std::move(animationPtr));
 		}
 	}
 }

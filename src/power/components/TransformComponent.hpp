@@ -1,10 +1,10 @@
 #pragma once
 
+#include "animation/Transform.hpp"
+
 #include <glm/glm.hpp>
 #include <glm/gtc/quaternion.hpp>
 #include <glm/gtc/type_ptr.hpp>
-
-#include <ozz/base/maths/transform.h>
 
 #include <nanogui/vector.h>
 #include <functional>
@@ -27,12 +27,12 @@ public:
 		return glmMatrix;
 	}
 	
-	ozz::math::Transform transform;
+	Transform transform;
 	
 	TransformComponent() {
-		transform.translation = ozz::math::Float3(0.0f, 0.0f, 0.0f);
-		transform.rotation = ozz::math::Quaternion(0, 0, 0, 1);
-		transform.scale = ozz::math::Float3(1.0f, 1.0f, 1.0f);
+		transform.translation = glm::vec3(0.0f, 0.0f, 0.0f);
+		transform.rotation = glm::quat(0, 0, 0, 1);
+		transform.scale = glm::vec3(1.0f, 1.0f, 1.0f);
 	}
 	
 	// Callback registration, returns an ID for future unregistration
@@ -48,17 +48,17 @@ public:
 	}
 	
 	void set_translation(const glm::vec3& translation) {
-		transform.translation = ozz::math::Float3(translation.x, translation.y, translation.z);
+		transform.translation = translation;
 		trigger_on_transform_changed();
 	}
 	
 	void set_rotation(const glm::quat& rotation) {
-		transform.rotation = ozz::math::Quaternion(rotation.x, rotation.y, rotation.z, rotation.w);
+		transform.rotation = rotation;
 		trigger_on_transform_changed();
 	}
 	
 	void set_scale(const glm::vec3& scale) {
-		transform.scale = ozz::math::Float3(scale.x, scale.y, scale.z);
+		transform.scale = scale;
 		trigger_on_transform_changed();
 	}
 	

@@ -166,14 +166,14 @@ TransformPanel::~TransformPanel() {
 
 void TransformPanel::gather_values_into(TransformComponent &transform) {
 	
-	transform.transform.translation = ozz::math::Float3(mXTranslate->value(), mYTranslate->value(), mZTranslate->value());
+	transform.transform.translation = glm::vec3(mXTranslate->value(), mYTranslate->value(), mZTranslate->value());
 
 	auto rotation = glm::quat(glm::vec3(glm::radians((float)mPitchRotate->value()),
 									glm::radians((float)mYawRotate->value()),
 									glm::radians((float)mRollRotate->value())));
-	transform.transform.rotation = ozz::math::Quaternion(rotation.x, rotation.y, rotation.z, rotation.w);
+	transform.transform.rotation = rotation;
 	
-	transform.transform.scale = ozz::math::Float3((float)mXScale->value(), (float)mYScale->value(),
+	transform.transform.scale = glm::vec3((float)mXScale->value(), (float)mYScale->value(),
 												  (float)mZScale->value());
 	
 	transform.set_translation(transform.get_translation()); // force event firing

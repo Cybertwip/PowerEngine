@@ -2,6 +2,9 @@
 
 #include "actors/ActorManager.hpp"
 
+#include "animation/Animation.hpp"
+#include "animation/Skeleton.hpp"
+
 #include "components/MeshComponent.hpp"
 #include "graphics/drawing/MeshActorBuilder.hpp"
 #include "import/SkinnedFbx.hpp"
