@@ -104,12 +104,14 @@ void HierarchyPanel::fire_actor_selected_event(std::optional<std::reference_wrap
 	
 	if (actor.has_value()) {
 		mTransformPanel.set_active_actor(actor);
-		
+
 		for (auto& callbackRef : mActorSelectedCallbacks) {
 			callbackRef.get().OnActorSelected(actor);
 		}
 		
 	} else {
+		mTransformPanel.set_active_actor(actor);
+
 		mTreeView->set_selected(nullptr);
 	}
 }

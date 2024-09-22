@@ -237,14 +237,16 @@ void ResourcesPanel::refresh_file_view() {
 					drag_widget->set_position(dragStartPosition);
 					drag_widget->perform_layout(screen()->nvg_context());
 
-					screen()->set_drag_widget(drag_widget, [content, drag_widget, event_owner = this, screen = screen()](){
+					screen()->set_drag_widget(drag_widget, [this, content, drag_widget](){
 						
 						// Remove drag widget
 						drag_widget->remove_child(content);
 						
-						screen->set_drag_widget(nullptr, nullptr);
+						screen()->set_drag_widget(nullptr, nullptr);
 						
-						screen->drop_event(event_owner, { ""});
+						std::string path = "";
+						
+						screen()->drop_event(this, { path });
 					});
 				};
 				
