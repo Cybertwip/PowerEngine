@@ -47,6 +47,9 @@ vertex VertexOut vertex_main(
             continue;
             
         float weight = aWeights[id][i]; // Correct indexing for bone weights
+       
+        if(boneId < 0 || weight == 0.0) 
+            continue;
 
         float4x4 boneTransform = bones[boneId].transform;
 

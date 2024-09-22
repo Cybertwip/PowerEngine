@@ -34,7 +34,7 @@ public:
 	
 public:
 	SkinnedAnimationComponent(SkinnedAnimationPdo& animationPdo)
-	: mSkeleton(animationPdo.mSkeleton.get()), mCurrentTime(0.0f)
+	: mSkeleton(animationPdo.mSkeleton.get()), mCurrentTime(0)
 	{
 		for (auto& animation : animationPdo.mAnimationData) {
 			mAnimationData.push_back(animation);
@@ -98,11 +98,19 @@ public:
 		
 		// For simplicity, use the first animation in the list
 		const Animation& animation = mAnimationData[0].get();
-		float duration = animation.get_duration();
+		int duration = animation.get_duration();
 		
 		// Update current time and wrap around if necessary
+		// Update current time and wrap around if necessary
 		mCurrentTime += deltaTime;
-		mCurrentTime = fmax(0, fmod(duration + mCurrentTime, duration));
+		
+		if (mCurrentTime <= 0) {
+			// Wrap around if time is negative
+			mCurrentTime = (mCurrentTime % duration + duration) % duration;
+		} else {
+			// Wrap around when exceeding the duration
+			mCurrentTime %= duration;
+		}
 
 		// Evaluate the animation at the current time
 		evaluate_animation(animation, mCurrentTime);
@@ -128,7 +136,7 @@ private:
 	std::reference_wrapper<Skeleton> mSkeleton;
 	std::vector<std::reference_wrapper<Animation>> mAnimationData;
 	
-	float mCurrentTime; // Current animation time
+	int mCurrentTime; // Current animation time
 	
 	// Buffers to store poses
 	std::vector<glm::mat4> mModelPose;

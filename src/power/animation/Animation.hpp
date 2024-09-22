@@ -42,12 +42,12 @@ public:
 	}
 	
 	// Set the total duration of the animation
-	void set_duration(float duration) {
+	void set_duration(int duration) {
 		m_duration = duration;
 	}
 	
 	// Get the total duration of the animation
-	float get_duration() const {
+	int get_duration() const {
 		return m_duration;
 	}
 	
@@ -55,50 +55,67 @@ public:
 	std::vector<glm::mat4> evaluate(float time) const {
 		std::vector<glm::mat4> bone_transforms;
 		
-		// Clamp time to animation duration
-		if (time > m_duration) {
-			time = std::fmod(time, m_duration);
-		}
-		
 		// For each bone animation
 		for (const auto& bone_anim : m_bone_animations) {
 			const auto& keyframes = bone_anim.keyframes;
 			
-			// Find the first keyframe after or at the given time
+			// If there are no keyframes, continue to the next bone
+			if (keyframes.empty()) {
+				continue;
+			}
+			
+			// If the time is before the first keyframe, return the first keyframe
+			if (time <= keyframes.front().time) {
+				const KeyFrame& first_keyframe = keyframes.front();
+				
+				glm::mat4 translation_matrix = glm::translate(glm::mat4(1.0f), first_keyframe.translation);
+				glm::mat4 rotation_matrix = glm::mat4_cast(first_keyframe.rotation);
+				glm::mat4 scale_matrix = glm::scale(glm::mat4(1.0f), first_keyframe.scale);
+				
+				glm::mat4 bone_transform = translation_matrix * rotation_matrix * scale_matrix;
+				bone_transforms.push_back(bone_transform);
+				continue;
+			}
+			
+			// If the time is after the last keyframe, return the last keyframe
+			if (time >= keyframes.back().time) {
+				const KeyFrame& last_keyframe = keyframes.back();
+				
+				glm::mat4 translation_matrix = glm::translate(glm::mat4(1.0f), last_keyframe.translation);
+				glm::mat4 rotation_matrix = glm::mat4_cast(last_keyframe.rotation);
+				glm::mat4 scale_matrix = glm::scale(glm::mat4(1.0f), last_keyframe.scale);
+				
+				glm::mat4 bone_transform = translation_matrix * rotation_matrix * scale_matrix;
+				bone_transforms.push_back(bone_transform);
+				continue;
+			}
+			
+			// Find the two keyframes surrounding the given time
 			auto it1 = std::find_if(keyframes.begin(), keyframes.end(), [&](const KeyFrame& kf) {
 				return kf.time >= time;
 			});
 			
-			// If the first keyframe is beyond the current time, use the previous one
-			if (it1 != keyframes.begin() && it1 != keyframes.end()) {
-				auto it0 = std::prev(it1);
-				
-				// Decide whether to use the previous, current, or next keyframe
-				const KeyFrame* selected_keyframe = nullptr;
-				if (time == it0->time) {
-					selected_keyframe = &(*it0); // Exact match with the previous keyframe
-				} else if (time == it1->time) {
-					selected_keyframe = &(*it1); // Exact match with the current keyframe
-				} else if (time < it0->time) {
-					selected_keyframe = &(*it0); // Use the previous keyframe if earlier than both
-				} else {
-					selected_keyframe = &(*it1); // Use the next keyframe
-				}
-				
-				// Construct the transformation matrix without interpolation
-				glm::mat4 translation_matrix = glm::translate(glm::mat4(1.0f), selected_keyframe->translation);
-				glm::mat4 rotation_matrix = glm::mat4_cast(selected_keyframe->rotation);
-				glm::mat4 scale_matrix = glm::scale(glm::mat4(1.0f), selected_keyframe->scale);
-				
-				// Combine into final bone transform
-				glm::mat4 bone_transform = translation_matrix * rotation_matrix * scale_matrix;
-				bone_transforms.push_back(bone_transform);
-			}
+			auto it0 = (it1 != keyframes.begin()) ? std::prev(it1) : it1;
+			
+			// Interpolate between keyframes
+			float t = (time - it0->time) / (it1->time - it0->time);
+			
+			glm::vec3 interpolated_translation = glm::mix(it0->translation, it1->translation, t);
+			glm::quat interpolated_rotation = glm::slerp(it0->rotation, it1->rotation, t);
+			glm::vec3 interpolated_scale = glm::mix(it0->scale, it1->scale, t);
+			
+			// Construct the transformation matrix
+			glm::mat4 translation_matrix = glm::translate(glm::mat4(1.0f), interpolated_translation);
+			glm::mat4 rotation_matrix = glm::mat4_cast(interpolated_rotation);
+			glm::mat4 scale_matrix = glm::scale(glm::mat4(1.0f), interpolated_scale);
+			
+			glm::mat4 bone_transform = translation_matrix * rotation_matrix * scale_matrix;
+			bone_transforms.push_back(bone_transform);
 		}
+		
 		return bone_transforms;
 	}
-	
 private:
 	std::vector<BoneAnimation> m_bone_animations;
-	float m_duration = 0.0f;  // Duration of the animation
+	int m_duration = 0;  // Duration of the animation
 };

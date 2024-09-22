@@ -157,7 +157,7 @@ void SkinnedFbx::ProcessBones(const std::shared_ptr<sfbx::Mesh>& mesh) {
 				mBoneHierarchy.push_back(boneInfo);
 				boneNameToIndex[boneName] = newBoneID;
 				
-				std::cout << "Assigned Bone: " << boneName << " with ID: " << newBoneID << std::endl;
+//				std::cout << "Assigned Bone: " << boneName << " with ID: " << newBoneID << std::endl;
 			}
 			
 			// Assign weights to vertices
@@ -175,11 +175,6 @@ void SkinnedFbx::ProcessBones(const std::shared_ptr<sfbx::Mesh>& mesh) {
 			for (size_t i = 0; i < weights.size(); ++i) {
 				int vertexID = indices[i];
 				float weight = weights[i];
-				
-				// Log first few assignments for debugging
-				if (i < 10) { // Adjust as needed
-					std::cout << "Bone " << boneName << " (ID: " << boneID << ") - Assigning weight " << weight << " to Vertex ID: " << vertexID << std::endl;
-				}
 				
 				// Validate weight
 				if (weight <= 0.0f) {
@@ -249,7 +244,7 @@ void SkinnedFbx::ProcessBones(const std::shared_ptr<sfbx::Mesh>& mesh) {
 		// Assign the skeleton if it has bones
 		mSkeleton = skeleton.num_bones() > 0 ? std::move(skeletonPointer) : nullptr;
 		
-		std::cout << "Finished processing bones for skinned mesh." << std::endl;
+//		std::cout << "Finished processing bones for skinned mesh." << std::endl;
 	} else {
 		std::cerr << "Warning: No skin deformer found for the mesh." << std::endl;
 	}
@@ -265,6 +260,9 @@ std::string SkinnedFbx::GetBoneNameByID(int boneID) const {
 
 
 void SkinnedFbx::TryImportAnimations() {
+	
+	float fps = mDoc->global_settings.frame_rate;
+	
 	for (auto& stack : mDoc->getAnimationStacks()) {
 		// Iterate through animation layers
 		for (auto& animation_layer : stack->getAnimationLayers()) {
@@ -272,8 +270,8 @@ void SkinnedFbx::TryImportAnimations() {
 			Animation& animation = *animationPtr;  // Custom Animation class
 			
 			// Variables to track min and max keyframe times
-			float min_time = 0;
-			float max_time = 0;
+			int min_time = 0;
+			int max_time = 0;
 			
 			// Iterate through bone mapping to create keyframes for each bone
 			for (const auto& bone : mBoneMapping) {
@@ -325,21 +323,20 @@ void SkinnedFbx::TryImportAnimations() {
 				// Get the inverse bind pose for this bone from the hierarchy
 				auto& bone_info = mBoneHierarchy[bone_index];
 				
-				
 				for (std::size_t frame_idx = 0; frame_idx < max_frames; ++frame_idx) {
 					// Retrieve and evaluate the translation
 					if (position_curve) {
-						position_curve->applyAnimation(frame_idx / 30.0f);
+						position_curve->applyAnimation(frame_idx / fps);
 					}
 					
 					// Retrieve and evaluate the rotation
 					if (rotation_curve) {
-						rotation_curve->applyAnimation(frame_idx / 30.0f);
+						rotation_curve->applyAnimation(frame_idx / fps);
 					}
 					
 					// Retrieve and evaluate the scale
 					if (scale_curve) {
-						scale_curve->applyAnimation(frame_idx / 30.0f);
+						scale_curve->applyAnimation(frame_idx / fps);
 					}
 					
 					auto model = sfbx::as<sfbx::Model>(rotation_curve->getAnimationTarget());
@@ -377,7 +374,7 @@ void SkinnedFbx::TryImportAnimations() {
 			if (min_time < max_time) {
 				animation.set_duration(max_time - min_time);
 			} else {
-				animation.set_duration(0.0f);  // Handle case with single keyframe or no keyframes
+				animation.set_duration(0);  // Handle case with single keyframe or no keyframes
 			}
 			
 			// Add the animation to the mAnimations vector

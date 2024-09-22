@@ -63,7 +63,7 @@ public:
 		return nullptr;
 	}
 	
-	void compute_offsets(const std::vector<glm::mat4>& withAnimation = {}) {
+	void compute_offsets(const std::vector<glm::mat4>& withAnimation) {
 		if (m_bones.empty()) return;
 		
 		if (!withAnimation.empty()) {

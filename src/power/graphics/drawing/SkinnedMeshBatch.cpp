@@ -260,7 +260,6 @@ void SkinnedMeshBatch::draw_content(const nanogui::Matrix4f& view,
 			shader.set_uniform("aView", view);
 			shader.set_uniform("aProjection", projection);
 			
-			
 			// Set the model matrix for the current mesh
 			shader.set_uniform("aModel", mesh.get_model_matrix());
 			

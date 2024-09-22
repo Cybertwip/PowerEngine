@@ -59,8 +59,6 @@ Actor& MeshActorBuilder::build(Actor& actor, const std::string& path, ShaderWrap
 		}
 		
 		drawableComponent = std::make_unique<SkinnedMeshComponent>(skinnedMeshComponentData);
-		
-		
 	} else {
 		std::vector<std::unique_ptr<Mesh>> meshComponentData;
 		
