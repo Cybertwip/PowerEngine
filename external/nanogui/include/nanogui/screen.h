@@ -163,7 +163,7 @@ public:
     float pixel_ratio() const { return m_pixel_ratio; }
 
     /// Handle a file drop event
-    virtual bool drop_event(const std::vector<std::string> & /* filenames */) {
+    virtual bool drop_event(Widget*, const std::vector<std::string> & /* filenames */) {
         return false; /* To be overridden */
     }
 
@@ -265,8 +265,9 @@ public:
 	void * nswin() { return m_nswin; }
 #endif
 	
-	virtual void set_drag_widget(Widget* widget) {
+	virtual void set_drag_widget(Widget* widget, std::function<void()> drag_callback) {
 		m_drag_widget = widget;
+		m_drag_callback = drag_callback;
 	}
 
 	virtual Widget* drag_widget() const { return m_drag_widget; }
@@ -286,6 +287,7 @@ protected:
     int m_mouse_state, m_modifiers;
     Vector2i m_mouse_pos;
     bool m_drag_active;
+	std::function<void()> m_drag_callback;
     Widget *m_drag_widget = nullptr;
     double m_last_interaction;
     bool m_process_events = true;

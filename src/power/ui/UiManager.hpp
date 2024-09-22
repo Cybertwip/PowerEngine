@@ -25,7 +25,7 @@ class MeshActorLoader;
 class ScenePanel;
 class SceneTimeBar;
 class ShaderManager;
-
+class StatusBarPanel;
 
 // UiManager class definition
 class UiManager : public IActorSelectedCallback, public Drawable {
@@ -40,6 +40,9 @@ public:
 	void draw_content(const nanogui::Matrix4f& model, const nanogui::Matrix4f& view,
 					  const nanogui::Matrix4f& projection) override;
 
+	StatusBarPanel& status_bar_panel() {
+		return *mStatusBarPanel;
+	}
 private:
 	IActorSelectedRegistry& mRegistry;
 	ActorManager& mActorManager;
@@ -58,5 +61,7 @@ private:
 	SceneTimeBar* mSceneTimeBar;
 	
 	glm::vec4 mSelectionColor;
+	
+	StatusBarPanel* mStatusBarPanel;
 	
 };

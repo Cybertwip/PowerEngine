@@ -842,7 +842,7 @@ void Screen::drop_callback_event(int count, const char **filenames) {
 	std::vector<std::string> arg(count);
 	for (int i = 0; i < count; ++i)
 		arg[i] = filenames[i];
-	m_redraw |= drop_event(arg);
+	m_redraw |= drop_event(this, arg);
 }
 
 void Screen::scroll_callback_event(double x, double y) {

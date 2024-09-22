@@ -22,6 +22,10 @@ class StatusBarPanel : public Panel {
 public:
 	StatusBarPanel(nanogui::Widget &parent, IActorVisualManager& actorVisualManager, MeshActorLoader& meshActorLoader, ShaderManager& shaderManager, std::function<void(std::function<void(int, int)>)> applicationClickRegistrator);
 	
+	ResourcesPanel& resources_panel() {
+		return *mResourcesPanel;
+	}
+	
 private:
 	ResourcesPanel *mResourcesPanel;
 	bool mIsPanelVisible = false;

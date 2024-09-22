@@ -20,8 +20,11 @@
 #include "graphics/drawing/SkinnedMesh.hpp"
 #include "graphics/drawing/SkinnedMeshBatch.hpp"
 #include "import/Fbx.hpp"
+#include "ui/AnimationPanel.hpp"
 #include "ui/HierarchyPanel.hpp"
 #include "ui/ScenePanel.hpp"
+#include "ui/StatusBarPanel.hpp"
+#include "ui/ResourcesPanel.hpp"
 #include "ui/TransformPanel.hpp"
 #include "ui/UiManager.hpp"
 
@@ -139,4 +142,14 @@ bool Application::mouse_button_event(const nanogui::Vector2i &p, int button, boo
 
 void Application::register_click_callback(std::function<void(bool, int, int, int, int)> callback) {
 	mClickCallbacks.push_back(callback);
+}
+
+bool Application::drop_event(nanogui::Widget* sender, const std::vector<std::string> & filenames) {
+	if (sender == &mUiManager->status_bar_panel().resources_panel()) {
+		
+		if (mUiCommon->animation_panel().contains(m_mouse_pos, true)) {
+			
+		}
+		
+	}
 }

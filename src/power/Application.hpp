@@ -14,6 +14,10 @@ public:
 		set_modal(false);   // We want it to be freely interactive
 	}
 	
+	void set_drag_callback(std::function<void()> drag_callback) {
+		m_drag_callback = drag_callback;
+	}
+	
 	bool mouse_button_event(const nanogui::Vector2i &p, int button, bool down, int modifiers) override {
 		if (!down) {
 			if (!screen()->drag_active()) {
@@ -33,6 +37,9 @@ public:
 		}
 		return true;
 	}
+	
+private:
+	std::function<void()> m_drag_callback;
 };
 
 namespace nanogui {
@@ -52,7 +59,7 @@ public:
 		m_draggable_window->set_fixed_width(0);
 		m_draggable_window->set_fixed_height(0);
 				
-		set_drag_widget(nullptr);
+		set_drag_widget(nullptr, nullptr);
 	}
 	
 protected:
@@ -115,16 +122,19 @@ protected:
 	}
 	
 private:
-	
-	void set_drag_widget(Widget *widget) override {
+	void set_drag_widget(Widget *widget, std::function<void()> drag_callback) override {
 		if(widget == nullptr){
 			m_draggable_window->set_visible(false);
+			m_draggable_window->set_drag_callback(nullptr);
 			m_drag_active = false;
 			m_drag_widget = nullptr;
+			m_drag_callback = nullptr;
 		} else {
 			m_draggable_window->set_visible(true);
+			m_draggable_window->set_drag_callback(drag_callback);
 			m_drag_widget = m_draggable_window;
 			m_drag_active = false;
+			m_drag_callback = nullptr;
 		}
 	}
 	Widget* drag_widget() const override { return m_draggable_window; }
@@ -177,7 +187,8 @@ class Application : public nanogui::DraggableScreen
 	void register_click_callback(std::function<void(bool, int, int, int, int)> callback);
 
    private:
-	
+	bool drop_event(Widget* sender, const std::vector<std::string> & filenames) override;
+
 	bool mouse_button_event(const nanogui::Vector2i &p, int button, bool down, int modifiers) override;
 
     std::unique_ptr<entt::registry> mEntityRegistry;

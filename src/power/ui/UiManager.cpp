@@ -833,10 +833,10 @@ UiManager::UiManager(IActorSelectedRegistry& registry, IActorVisualManager& acto
 		}
 	});
 	
-	StatusBarPanel* statusBarPanel = new StatusBarPanel(statusBar, actorVisualManager, meshActorLoader, shaderManager, applicationClickRegistrator);
-	statusBarPanel->set_fixed_width(statusBar.fixed_height());
-	statusBarPanel->set_fixed_height(statusBar.fixed_height());
-	statusBarPanel->set_layout(new nanogui::BoxLayout(nanogui::Orientation::Horizontal,
+	mStatusBarPanel = new StatusBarPanel(statusBar, actorVisualManager, meshActorLoader, shaderManager, applicationClickRegistrator);
+	mStatusBarPanel->set_fixed_width(statusBar.fixed_height());
+	mStatusBarPanel->set_fixed_height(statusBar.fixed_height());
+	mStatusBarPanel->set_layout(new nanogui::BoxLayout(nanogui::Orientation::Horizontal,
 													  nanogui::Alignment::Minimum, 4, 2));
 	
 	mSelectionColor = glm::vec4(0.83f, 0.68f, 0.21f, 1.0f); // A gold-ish color
