@@ -62,7 +62,7 @@ UiCommon::UiCommon(nanogui::Widget& parent, ActorManager& actorManager) {
 
 	mAnimationPanel = new AnimationPanel(*rightWrapper);
 
-	mHierarchyPanel = new HierarchyPanel(*mScenePanel, *mTransformPanel, *rightWrapper);
+	mHierarchyPanel = new HierarchyPanel(*mScenePanel, *mTransformPanel, *mAnimationPanel, *rightWrapper);
 
 //	auto promptbox = new PromptBox(*rightWrapper);
 	

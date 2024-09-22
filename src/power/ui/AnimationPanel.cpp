@@ -6,6 +6,7 @@
 #include <nanogui/screen.h>
 
 #include "actors/Actor.hpp"
+#include "components/SkinnedAnimationComponent.hpp"
 #include "components/TransformComponent.hpp"
 
 AnimationPanel::AnimationPanel(nanogui::Widget &parent)
@@ -36,13 +37,18 @@ AnimationPanel::~AnimationPanel() {
 
 void AnimationPanel::set_active_actor(std::optional<std::reference_wrapper<Actor>> actor) {
 
-	mActiveActor = actor;
-	
-	if (mActiveActor.has_value()) {
-		set_visible(true);
-		perform_layout(screen()->nvg_context());
-	} else {
-		set_visible(false);
-		perform_layout(screen()->nvg_context());
+	if (actor.has_value()) {
+		if (actor.find_component<SkinnedAnimationComponent>()) {
+			mActiveActor = actor;
+			
+			if (mActiveActor.has_value()) {
+				set_visible(true);
+				perform_layout(screen()->nvg_context());
+			} else {
+				set_visible(false);
+				perform_layout(screen()->nvg_context());
+			}
+		}
 	}
+
 }

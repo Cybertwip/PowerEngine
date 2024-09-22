@@ -1,6 +1,7 @@
 // HierarchyPanel.cpp
 #include "ui/HierarchyPanel.hpp"
 
+#include "ui/AnimationPanel.hpp"
 #include "ui/ScenePanel.hpp"
 #include "ui/TransformPanel.hpp"
 
@@ -13,7 +14,7 @@
 #include "components/MetadataComponent.hpp"
 #include "components/UiComponent.hpp"
 
-HierarchyPanel::HierarchyPanel(ScenePanel& scenePanel, TransformPanel& transformPanel, nanogui::Widget &parent) : Panel(parent, "Hierarchy"), mTransformPanel(transformPanel) {
+HierarchyPanel::HierarchyPanel(ScenePanel& scenePanel, TransformPanel& transformPanel, AnimationPanel& animationPanel, nanogui::Widget &parent) : Panel(parent, "Hierarchy"), mTransformPanel(transformPanel), mAnimationPanel(animationPanel) {
 	set_position(nanogui::Vector2i(0, 0));
 	set_layout(new nanogui::GroupLayout());
 	
@@ -88,7 +89,7 @@ void HierarchyPanel::OnActorSelected(std::optional<std::reference_wrapper<Actor>
 	
 	if (actor.has_value()) {
 		mTransformPanel.set_active_actor(actor);
-		
+		mAnimationPanel.set_active_actor(actor);
 		for (auto& callbackRef : mActorSelectedCallbacks) {
 			callbackRef.get().OnActorSelected(actor);
 		}
@@ -96,6 +97,7 @@ void HierarchyPanel::OnActorSelected(std::optional<std::reference_wrapper<Actor>
 	} else {
 		mTreeView->set_selected(nullptr);
 		mTransformPanel.set_active_actor(actor);
+		mAnimationPanel.set_active_actor(actor);
 	}
 	
 }
@@ -104,6 +106,7 @@ void HierarchyPanel::fire_actor_selected_event(std::optional<std::reference_wrap
 	
 	if (actor.has_value()) {
 		mTransformPanel.set_active_actor(actor);
+		mAnimationPanel.set_active_actor(actor);
 
 		for (auto& callbackRef : mActorSelectedCallbacks) {
 			callbackRef.get().OnActorSelected(actor);
@@ -111,6 +114,7 @@ void HierarchyPanel::fire_actor_selected_event(std::optional<std::reference_wrap
 		
 	} else {
 		mTransformPanel.set_active_actor(actor);
+		mAnimationPanel.set_active_actor(actor);
 
 		mTreeView->set_selected(nullptr);
 	}

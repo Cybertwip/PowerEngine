@@ -11,13 +11,14 @@
 
 class IActorSelectedCallback;
 
-class Actor; // Forward declaration
+class Actor;
+class AnimationPanel;
 class ScenePanel;
 class TransformPanel;
 
 class HierarchyPanel : public IActorSelectedRegistry, public IActorVisualManager, public Panel {
 public:
-	HierarchyPanel(ScenePanel& scenePanel, TransformPanel& transformPanel, nanogui::Widget &parent);
+	HierarchyPanel(ScenePanel& scenePanel, TransformPanel& transformPanel, AnimationPanel& animationPanel, nanogui::Widget &parent);
 	
 	~HierarchyPanel() = default;
 
@@ -41,6 +42,7 @@ private:
 
 private:
 	TransformPanel& mTransformPanel;
+	AnimationPanel& mAnimationPanel;
     nanogui::VScrollPanel *mScrollPanel;
     nanogui::TreeView *mTreeView;
     void populate_tree(Actor& actor, nanogui::TreeViewItem *parentNode = nullptr);
