@@ -105,7 +105,7 @@ const DirectoryNode* FindNodeByPath(const DirectoryNode& currentNode, const std:
 
 class DraggableWindow : public nanogui::Window {
 public:
-	DraggableWindow(nanogui::Widget *parent, const std::string &title) : nanogui::Window(parent, title) {
+	DraggableWindow(nanogui::Widget *parent, const std::string &title = "") : nanogui::Window(parent, title) {
 		set_modal(false);   // We want it to be freely interactive
 	}
 	// Override the perform_layout to ensure this widget doesn't affect layout
