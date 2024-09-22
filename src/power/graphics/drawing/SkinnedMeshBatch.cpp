@@ -247,6 +247,16 @@ void SkinnedMeshBatch::draw_content(const nanogui::Matrix4f& view,
 		
 		mRenderPass.pop_depth_test_state(identifier);
 		
+		std::vector<SkinnedAnimationComponent::BoneCPU> bone_collection;
+		for (int i = 0; i<mesh_vector.size(); ++i) {
+			auto& mesh = mesh_vector[i].get();
+			auto bones =
+			// Apply skinning and animations (if any)
+			mesh.get_skinned_component().get_bones();
+
+			bone_collection.insert(bone_collection.end(), bones.begin(), bones.end());
+		}
+
 		for (int i = 0; i<mesh_vector.size(); ++i) {
 			auto& mesh = mesh_vector[i].get();
 			
@@ -263,9 +273,14 @@ void SkinnedMeshBatch::draw_content(const nanogui::Matrix4f& view,
 			// Set the model matrix for the current mesh
 			shader.set_uniform("aModel", mesh.get_model_matrix());
 			
-			// Apply skinning and animations (if any)
-			mesh.get_skinned_component().apply_to(shader);
 
+			
+			shader.set_buffer(
+							  "bones",
+							  nanogui::VariableType::Float32,
+							  {bone_collection.size(), sizeof(BoneCPU) / sizeof(float)},
+							  bone_collection.data()
+							  -1, false);
 			// Apply color component (assuming it sets relevant uniforms)
 			mesh.get_color_component().apply_to(shader);
 			

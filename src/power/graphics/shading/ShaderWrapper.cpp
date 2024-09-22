@@ -12,8 +12,8 @@ void ShaderWrapper::persist_buffer(const std::string &name, nanogui::VariableTyp
 
 
 void ShaderWrapper::set_buffer(const std::string &name, nanogui::VariableType type,
-							   std::initializer_list<size_t> shape, const void *data, int index) {
-	mShader.set_buffer(name, type, shape.end() - shape.begin(), shape.begin(), data, index);
+							   std::initializer_list<size_t> shape, const void *data, int index, bool persist) {
+	mShader.set_buffer(name, type, shape.end() - shape.begin(), shape.begin(), data, index, persist);
 }
 
 void ShaderWrapper::set_texture(const std::string& name, nanogui::Texture& texture, int index) {

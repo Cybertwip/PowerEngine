@@ -13,7 +13,7 @@
 #include <algorithm>
 
 class SkinnedAnimationComponent {
-private:
+public:
 	struct BoneCPU {
 		float transform[4][4] =
 		{
@@ -23,8 +23,7 @@ private:
 			{ 0.0f, 0.0f, 0.0f, 0.0f }
 		};
 	};
-	
-public:
+
 	struct SkinnedAnimationPdo {
 		SkinnedAnimationPdo(Skeleton& skeleton) : mSkeleton(skeleton) {}
 		
@@ -53,7 +52,9 @@ public:
 		mPlaying = playing;
 	}
 	
-	void apply_to(ShaderWrapper& shader) {
+	
+	
+	std::vector<BoneCPU> get_bones() {
 		if (mPlaying) {
 			update(1);
 		} else {
@@ -81,13 +82,7 @@ public:
 				}
 			}
 		}
-		
-		shader.set_buffer(
-						  "bones",
-						  nanogui::VariableType::Float32,
-						  {numBones, sizeof(BoneCPU) / sizeof(float)},
-						  bonesCPU.data()
-						  );
+		return bonesCPU;
 #else
 		// OpenGL or other rendering API code to upload bone transforms
 		// For example, using a uniform array of matrices

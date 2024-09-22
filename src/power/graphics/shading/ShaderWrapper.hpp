@@ -20,7 +20,7 @@ public:
 					std::initializer_list<size_t> shape, const void *data, int index = -1);
 
 	void set_buffer(const std::string &name, nanogui::VariableType type,
-			   std::initializer_list<size_t> shape, const void *data, int index = -1);
+			   std::initializer_list<size_t> shape, const void *data, int index = -1, bool persist = false);
 	
 	template <typename Array> void set_uniform(const std::string &name,
 															  const Array &value) {
