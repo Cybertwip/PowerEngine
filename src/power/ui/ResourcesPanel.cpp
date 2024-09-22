@@ -102,31 +102,6 @@ const DirectoryNode* FindNodeByPath(const DirectoryNode& currentNode, const std:
 }
 }
 
-class DraggableButton : public nanogui::Button {
-public:
-	DraggableButton(Widget *parent, const std::string &caption = "", int icon = 0, const std::string &filePath = "")
-	: nanogui::Button(parent, caption, icon), mFilePath(filePath) {
-	}
-		
-	bool mouse_button_event(const nanogui::Vector2i &p, int button, bool down, int modifiers) override {
-		nanogui::Button::mouse_button_event(p, button, down, modifiers);
-		
-		if (button == GLFW_MOUSE_BUTTON_LEFT && down) {
-			mDragStartPosition = absolute_position();
-			auto drag_widget = screen()->drag_widget();
-			drag_widget->set_position(mDragStartPosition);
-			drag_widget->perform_layout(screen()->nvg_context());
-			return false;
-		}
-		return false;
-	}
-	
-private:
-	nanogui::Vector2i mDragStartPosition;
-	nanogui::Widget *mEventOwner;
-	std::string mFilePath;
-	std::function<void()> mDropCallback;
-};
 
 ResourcesPanel::ResourcesPanel(nanogui::Widget& parent, const DirectoryNode& root_directory_node, IActorVisualManager& actorVisualManager,  MeshActorLoader& meshActorLoader, ShaderManager& shaderManager)
 : Panel(parent, "Resources"),
@@ -237,34 +212,44 @@ void ResourcesPanel::refresh_file_view() {
 				nanogui::Widget *itemContainer = new nanogui::Widget(mFileView);
 				itemContainer->set_layout(new nanogui::BoxLayout(
 																 nanogui::Orientation::Vertical, nanogui::Alignment::Middle, 0, 5));
-				
-				auto drag_widget = screen()->drag_widget();
-				
-				auto content = new nanogui::TextBox(drag_widget, "");
-				
-				content->set_font_size(16);
-				content->set_background_color(nanogui::Color(0, 0, 0, 255));
-				
-				content->set_fixed_size(fixed_size() - 20);
-				
-				drag_widget->set_size(fixed_size());
-				
-				screen()->set_drag_widget(drag_widget, [content, drag_widget, event_owner = this, screen = screen()](){
-					
-					// Remove drag widget
-					drag_widget->remove_child(content);
-					
-					screen->set_drag_widget(nullptr, nullptr);
-					
-					screen->drop_event(event_owner, { ""});
-				});
-
-				auto icon = new DraggableButton(itemContainer, "", get_icon_for_file(*child), child->FullPath);
+				auto icon = new nanogui::Button(itemContainer, "", get_icon_for_file(*child));
 				
 				icon->set_icon(get_icon_for_file(*child));
 				icon->set_fixed_size(nanogui::Vector2i(120, 120));
-								
+				
 				icon->set_background_color(mNormalButtonColor);
+				
+				
+				icon->set_callback([this, icon](){
+					auto drag_widget = screen()->drag_widget();
+					
+					auto content = new nanogui::TextBox(drag_widget, "");
+					
+					content->set_font_size(16);
+					content->set_background_color(nanogui::Color(0, 0, 0, 255));
+					
+					content->set_fixed_size(icon->fixed_size() - 20);
+					
+					drag_widget->set_size(icon->fixed_size());
+
+					auto dragStartPosition = icon->absolute_position();
+
+					drag_widget->set_position(dragStartPosition);
+					drag_widget->perform_layout(screen()->nvg_context());
+
+					screen()->set_drag_widget(drag_widget, [content, drag_widget, event_owner = this, screen = screen()](){
+						
+						// Remove drag widget
+						drag_widget->remove_child(content);
+						
+						screen->set_drag_widget(nullptr, nullptr);
+						
+						screen->drop_event(event_owner, { ""});
+					});
+				});
+				
+
+
 				
 				auto name = new nanogui::Label(itemContainer, child->FileName);
 				name->set_fixed_width(120);

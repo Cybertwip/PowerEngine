@@ -30,6 +30,7 @@ public:
 				
 				if (m_drag_callback) {
 					m_drag_callback();
+					m_drag_callback = nullptr;
 				}
 			}
 		}
