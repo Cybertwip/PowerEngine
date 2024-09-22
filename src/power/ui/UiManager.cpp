@@ -782,7 +782,7 @@ UiManager::UiManager(IActorSelectedRegistry& registry, IActorVisualManager& acto
 	
 	scenePanel.register_motion_callback([this, &canvas, &toolbox, &cameraManager, readFromFramebuffer](int width, int height, int x, int y, int dx, int dy, int button, bool down){
 		
-		if (toolbox.contains(nanogui::Vector2f(x, y))) {
+		if (toolbox.contains(nanogui::Vector2f(x, y)) || !canvas.contains(nanogui::Vector2f(x, y))) {
 			return;
 		}
 		
@@ -829,7 +829,7 @@ UiManager::UiManager(IActorSelectedRegistry& registry, IActorVisualManager& acto
 			}
 			
 			// Step 3: Apply the world-space delta transformation
-			mGizmoManager->transform(world.x - offset.x, world.y - offset.y);
+			mGizmoManager->transform(offset.x - world.x, offset.y - world.y);
 		}
 	});
 	
