@@ -1,8 +1,9 @@
 #pragma once
 
 #include <glm/glm.hpp>
-
 #include <array>
+#include <algorithm> // For std::any_of
+
 
 class MeshVertex {
 public:
@@ -42,32 +43,34 @@ public:
 	static constexpr int MAX_BONE_INFLUENCE = 4;
 	
 	explicit SkinnedMeshVertex(MeshVertex& meshVertex) : mMeshVertex(meshVertex) {
+		mBoneIds.fill(-1);
+		mWeights.fill(0.0f);
+	}
+	
+	// Assigns a bone and its weight to the first available slot
+	void set_bone(int boneId, float weight) {
 		for (int i = 0; i < MAX_BONE_INFLUENCE; i++)
 		{
-			mBoneIds[i] = -1;
-			mWeights[i] = 0.0f;
-		}
-
-	}
-	
-
-	void set_bone(int boneId, float weight) {
-		for (int i = 0; i < MAX_BONE_INFLUENCE; i++) {
-			if (mBoneIds[i] < 0) {
+			if (mBoneIds[i] < 0)
+			{
 				mBoneIds[i] = boneId;
 				mWeights[i] = weight;
 				return;
 			}
 		}
-		for (int i = 0; i < MAX_BONE_INFLUENCE; i++) {
-			if (mWeights[i] < weight) {
+		for (int i = 0; i < MAX_BONE_INFLUENCE; i++)
+		{
+			if (mWeights[i] < weight)
+			{
 				mBoneIds[i] = boneId;
 				mWeights[i] = weight;
 				return;
 			}
 		}
+
 	}
 	
+	// Setters forwarding to MeshVertex
 	void set_position(const glm::vec3 &vec) {
 		mMeshVertex.set_position(vec);
 	}
@@ -118,12 +121,20 @@ public:
 		return mMeshVertex.get_texture_id();
 	}
 	
-	std::array<int, MAX_BONE_INFLUENCE> get_bone_ids() const {
+	// Returns a const reference to the bone IDs
+	const std::array<int, MAX_BONE_INFLUENCE>& get_bone_ids() const {
 		return mBoneIds;
 	}
-	std::array<float, MAX_BONE_INFLUENCE> get_weights()
-	const {
+	
+	// Returns a const reference to the weights
+	const std::array<float, MAX_BONE_INFLUENCE>& get_weights() const {
 		return mWeights;
+	}
+	
+	// Method to check if the vertex has no bone influences
+	bool has_no_bones() const {
+		// Returns true if all weights are zero
+		return !std::any_of(mWeights.begin(), mWeights.end(), [](float w) { return w > 0.0f; });
 	}
 	
 private:
@@ -131,5 +142,4 @@ private:
 	
 	std::array<int, MAX_BONE_INFLUENCE> mBoneIds;
 	std::array<float, MAX_BONE_INFLUENCE> mWeights;
-
 };

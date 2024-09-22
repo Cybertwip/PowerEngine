@@ -66,21 +66,34 @@ void Fbx::ProcessNode(const std::shared_ptr<sfbx::Model>& node) {
         }
     }
 }
-
 void Fbx::ProcessMesh(const std::shared_ptr<sfbx::Mesh>& mesh) {
+	if (!mesh) {
+		std::cerr << "Error: Invalid mesh pointer." << std::endl;
+		return;
+	}
 	
+	// Retrieve the absolute path of the mesh document
 	auto path = std::filesystem::absolute(mesh->document().global_settings.path).string();
-
+	
+	// Create a new MeshData instance and add it to mMeshes
 	auto& resultMesh = mMeshes.emplace_back(std::make_unique<MeshData>());
 	
 	// Precompute transformation matrices
-	const glm::mat4 rotationMatrix = FbxUtil::GetUpAxisRotation(mesh->document().global_settings.up_axis,
-													   mesh->document().global_settings.up_axis_sign);
+	const glm::mat4 rotationMatrix = FbxUtil::GetUpAxisRotation(
+																mesh->document().global_settings.up_axis,
+																mesh->document().global_settings.up_axis_sign
+																);
 	const float scaleFactor = static_cast<float>(mesh->document().global_settings.unit_scale);
 	const glm::mat4 scaleMatrix = glm::scale(glm::mat4(1.0f), glm::vec3(scaleFactor));
 	const glm::mat4 transformMatrix = rotationMatrix * scaleMatrix;
 	
+	// Retrieve geometry data
 	auto geometry = mesh->getGeometry();
+	if (!geometry) {
+		std::cerr << "Error: Mesh has no geometry." << std::endl;
+		return;
+	}
+	
 	const auto& points = geometry->getPointsDeformed();
 	const auto& vertexIndices = geometry->getIndices();
 	
@@ -136,7 +149,7 @@ void Fbx::ProcessMesh(const std::shared_ptr<sfbx::Mesh>& mesh) {
 		}
 	}
 	
-	//Precompute Color Indices**
+	// Precompute Color Indices
 	const auto& colorLayers = geometry->getColorLayers();
 	std::vector<int> colorIndices(vertexCount, -1);
 	sfbx::RawVector<sfbx::float4> colorData; // Assuming colors are RGBA
@@ -156,7 +169,6 @@ void Fbx::ProcessMesh(const std::shared_ptr<sfbx::Mesh>& mesh) {
 			}
 		}
 	}
-
 	
 	// Precompute material indices per vertex
 	std::vector<int> materialIndices(vertexCount, -1);
@@ -192,7 +204,7 @@ void Fbx::ProcessMesh(const std::shared_ptr<sfbx::Mesh>& mesh) {
 				normalVec = glm::normalize(normalVec);
 				vertex.set_normal({ normalVec.x, normalVec.y, normalVec.z });
 			} else {
-				vertex.set_normal({ 0.0f, 1.0f, 0.0f });
+				vertex.set_normal({ 0.0f, 1.0f, 0.0f }); // Default normal
 			}
 			
 			// Set UVs
@@ -223,7 +235,6 @@ void Fbx::ProcessMesh(const std::shared_ptr<sfbx::Mesh>& mesh) {
 			} else {
 				vertex.set_color({ 1.0f, 1.0f, 1.0f, 1.0f }); // Default color (white)
 			}
-
 			
 			// Set material ID
 			int matIndex = materialIndices[i];
@@ -246,7 +257,7 @@ void Fbx::ProcessMesh(const std::shared_ptr<sfbx::Mesh>& mesh) {
 	for (auto& thread : threads) {
 		thread.join();
 	}
-
+	
 	// Process materials
 	resultMesh->get_material_properties().reserve(materials.size());
 	for (size_t i = 0; i < materials.size(); ++i) {
@@ -269,21 +280,22 @@ void Fbx::ProcessMesh(const std::shared_ptr<sfbx::Mesh>& mesh) {
 		color = material->getDiffuseColor();
 		matData.mDiffuse = glm::vec4{ color.x, color.y, color.z, 1.0f };
 		color = material->getSpecularColor();
-		matData.mSpecular = glm::vec4{ color.x, color.y, color.z, 1.0f};
-		matData.mShininess = 0.1f;
+		matData.mSpecular = glm::vec4{ color.x, color.y, color.z, 1.0f };
+		matData.mShininess = 0.1f; // Default shininess; adjust as needed
 		matData.mOpacity = material->getOpacity();
 		matData.mHasDiffuseTexture = false;
 		
 		// Load texture if available
 		if (auto fbxTexture = material->getTexture("DiffuseColor"); fbxTexture && !fbxTexture->getData().empty()) {
 			matData.mTextureDiffuse = std::make_unique<nanogui::Texture>(
-																		 fbxTexture->getData().data(), static_cast<int>(fbxTexture->getData().size()));
+																		 fbxTexture->getData().data(), static_cast<int>(fbxTexture->getData().size())
+																		 );
 			matData.mHasDiffuseTexture = true;
 		}
 		
 		resultMesh->get_material_properties().push_back(matPtr);
 	}
 	
-	// Process bones no-op, must implement.
-	ProcessBones(mesh);
+	// Proceed to process bones separately
+	 ProcessBones(mesh); // This call should be handled externally or after ProcessMesh
 }

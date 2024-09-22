@@ -173,7 +173,6 @@ mesh.get_flattened_bone_ids().end());
 }
 
 void SkinnedMeshBatch::upload_vertex_data(ShaderWrapper& shader, int identifier) {
-	
 	// Upload consolidated data to GPU
 	shader.set_buffer("aPosition", nanogui::VariableType::Float32, {mBatchPositions[identifier].size() / 3, 3},
 					  mBatchPositions[identifier].data());
@@ -183,13 +182,13 @@ void SkinnedMeshBatch::upload_vertex_data(ShaderWrapper& shader, int identifier)
 					  mBatchTexCoords1[identifier].data());
 	shader.set_buffer("aTexcoords2", nanogui::VariableType::Float32, {mBatchTexCoords2[identifier].size() / 2, 2},
 					  mBatchTexCoords2[identifier].data());
-	shader.set_buffer("aTextureId", nanogui::VariableType::Int32, {mBatchTextureIds[identifier].size() / 2, 2},
+	shader.set_buffer("aTextureId", nanogui::VariableType::Int32, {mBatchTextureIds[identifier].size(), 1},
 					  mBatchTextureIds[identifier].data());
 	
 	// Set Buffer for Vertex Colors
 	shader.set_buffer("aColor", nanogui::VariableType::Float32, {mBatchColors[identifier].size() / 4, 4},
 					  mBatchColors[identifier].data());
-
+	
 	// Set Buffer for Bone IDs
 	shader.set_buffer("aBoneIds", nanogui::VariableType::Int32, {mBatchBoneIds[identifier].size() / 4, 4},
 					  mBatchBoneIds[identifier].data());
@@ -197,7 +196,6 @@ void SkinnedMeshBatch::upload_vertex_data(ShaderWrapper& shader, int identifier)
 	// Set Buffer for Weights
 	shader.set_buffer("aWeights", nanogui::VariableType::Float32, {mBatchBoneWeights[identifier].size() / 4, 4},
 					  mBatchBoneWeights[identifier].data());
-
 	
 	// Upload indices
 	shader.set_buffer("indices", nanogui::VariableType::UInt32, {mBatchIndices[identifier].size()},
@@ -245,7 +243,7 @@ void SkinnedMeshBatch::draw_content(const nanogui::Matrix4f& view,
 		auto& shader = *shader_pointer;
 		int identifier = shader.identifier();
 		
-		upload_vertex_data(shader, identifier);
+//		upload_vertex_data(shader, identifier);
 		
 		mRenderPass.pop_depth_test_state(identifier);
 		

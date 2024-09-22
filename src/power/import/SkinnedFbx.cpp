@@ -10,10 +10,22 @@
 #include <map>
 #include <numeric>  // For std::iota
 #include <glm/gtc/quaternion.hpp>
+#include <glm/gtx/matrix_decompose.hpp>
 
 namespace SkinnedFbxUtil {
 
 
+// return translate, rotate, scale
+inline std::tuple<glm::vec3, glm::quat, glm::vec3> DecomposeTransform(const glm::mat4 &transform)
+{
+	glm::vec3 scale;
+	glm::quat rotation;
+	glm::vec3 translation;
+	glm::vec3 skew;
+	glm::vec4 perspective;
+	glm::decompose(transform, scale, rotation, translation, skew, perspective);
+	return {translation, rotation, scale};
+}
 glm::vec3 ExtractScale(const glm::mat4& matrix) {
 	glm::vec3 scale;
 	scale.x = glm::length(glm::vec3(matrix[0]));
@@ -39,10 +51,23 @@ inline glm::mat4 SfbxMatToGlmMat(const sfbx::float4x4 &from)
 
 SkinnedFbx::SkinnedFbx(const std::string& path) : Fbx(path) {
 }
+
 void SkinnedFbx::ProcessBones(const std::shared_ptr<sfbx::Mesh>& mesh) {
+	if (!mesh) {
+		std::cerr << "Error: Invalid mesh pointer." << std::endl;
+		return;
+	}
+	
 	// Get the geometry from the mesh and its deformers
 	auto geometry = mesh->getGeometry();
+	if (!geometry) {
+		std::cerr << "Error: Mesh has no geometry." << std::endl;
+		return;
+	}
+	
 	auto deformers = geometry->getDeformers();
+	const auto& vertexIndices = geometry->getIndices();
+	
 	std::shared_ptr<sfbx::Skin> skin;
 	
 	// Find the skin deformer in the mesh
@@ -51,106 +76,184 @@ void SkinnedFbx::ProcessBones(const std::shared_ptr<sfbx::Mesh>& mesh) {
 			break;
 		}
 	}
-	int boneId = -1;
+	
 	// If a skin deformer is found, proceed with processing bones
 	if (skin) {
-		// Get the last processed mesh data and push it to the skinned meshes vector
+		// Retrieve the last processed mesh data
+		if (GetMeshData().empty()) {
+			std::cerr << "Error: No mesh data available to process bones." << std::endl;
+			return;
+		}
 		auto& lastProcessedMesh = GetMeshData().back();
+		
+		// Create a new SkinnedMeshData instance and add it to mSkinnedMeshes
 		mSkinnedMeshes.push_back(std::make_unique<SkinnedMeshData>(std::move(lastProcessedMesh)));
 		
-		// Get all the skin clusters (bones) attached to the mesh
-		auto skinClusters = skin->getChildren();
+		// Initialize skinned vertices
+		auto& skinnedVertices = mSkinnedMeshes.back()->get_skinned_vertices();
+		size_t totalVertices = skinnedVertices.size();
 		
-		// Iterate over all skin clusters
+		// Ensure that skinnedVertices are initialized properly
+		// This assumes that SkinnedMeshData's constructor initializes skinned_vertices appropriately
+		
+		// Get all the skin clusters (bones) attached to the mesh
+		auto skinClusters = skin->getClusters();
+		if (skinClusters.empty()) {
+			std::cerr << "Warning: No skin clusters found for the mesh." << std::endl;
+		}
+		
+		// Map to find bone indices by name
+		std::unordered_map<std::string, int> boneNameToIndex;
+		
+		// Constants
+		const int MAX_BONES = 128;
+		const int MAX_BONE_INFLUENCE = 4;
+		const int DEFAULT_BONE_ID = 0; // Ensure this bone exists in your shader and skeleton
+		
+		// Process skin clusters
 		for (const auto& clusterObj : skinClusters) {
 			auto skinCluster = sfbx::as<sfbx::Cluster>(clusterObj);
-			std::string boneName = std::string{skinCluster->getChild()->getName()};
-			
-			// If the bone is not already mapped, assign a new bone ID
-			if (mBoneMapping.find(boneName) == mBoneMapping.end()) {
-				mBoneMapping[boneName] = boneId;
-				
-				// Retrieve the local bind pose matrix
-				glm::mat4 localBindPose = SkinnedFbxUtil::SfbxMatToGlmMat(skinCluster->getTransform());
-				
-				// Store the bind pose and parent information
-				BoneHierarchyInfo boneInfo;
-				boneInfo.boneID = boneId;
-				boneInfo.localBindPose = localBindPose;
-				
-				// Determine parent bone (if any)
-				auto parentNode = skinCluster->getChild()->getParent();
-				if (parentNode && parentNode->getSubClass() == sfbx::ObjectSubClass::LimbNode) {
-					std::string parentBoneName = std::string{parentNode->getName()};
-					boneInfo.parentBoneName = parentBoneName;
-				} else {
-					boneInfo.parentBoneName = ""; // No parent (root bone)
-				}
-				
-				// Push the bone info to the bone hierarchy
-				mBoneHierarchy.push_back(boneInfo);
-				
-				boneId++;
+			if (!skinCluster) {
+				std::cerr << "Error: Invalid skin cluster object." << std::endl;
+				continue;
 			}
 			
-			// Get the bone ID for the current bone
+			auto model = sfbx::as<sfbx::Model>(skinCluster->getChild());
+			if (!model) {
+				std::cerr << "Error: Skin cluster's child is not a valid model." << std::endl;
+				continue;
+			}
+			
+			std::string boneName = std::string{ model->getName() };
+			if (boneName.empty()) {
+				std::cerr << "Error: Bone name is empty." << std::endl;
+				continue;
+			}
+			
+			// Assign bone ID if not already mapped
+			if (mBoneMapping.find(boneName) == mBoneMapping.end()) {
+				if (mBoneMapping.size() >= MAX_BONES) {
+					std::cerr << "Error: Exceeded maximum number of bones (" << MAX_BONES << "). Bone " << boneName << " cannot be assigned." << std::endl;
+					continue; // Skip this bone
+				}
+				
+				int newBoneID = static_cast<int>(mBoneMapping.size());
+				mBoneMapping[boneName] = newBoneID;
+				
+				// Get global bind pose matrix
+				glm::mat4 offsetMatrix = SkinnedFbxUtil::SfbxMatToGlmMat(skinCluster->getTransform());
+							
+				// Get local matrix
+				glm::mat4 poseMatrix = SkinnedFbxUtil::SfbxMatToGlmMat(model->getLocalMatrix());
+
+				// Store bone info
+				BoneHierarchyInfo boneInfo;
+				boneInfo.bone_id = newBoneID;
+				boneInfo.offset = offsetMatrix;
+				boneInfo.bindpose = poseMatrix;
+				boneInfo.model = model;
+				
+				// Add to hierarchy and mapping
+				mBoneHierarchy.push_back(boneInfo);
+				boneNameToIndex[boneName] = newBoneID;
+				
+				std::cout << "Assigned Bone: " << boneName << " with ID: " << newBoneID << std::endl;
+			}
+			
+			// Assign weights to vertices
+			int boneID = mBoneMapping[boneName];
 			auto weights = skinCluster->getWeights();
 			auto indices = skinCluster->getIndices();
 			
-			// Assign weights to vertices for the current bone
+			// Ensure weight and index sizes match
+			if (weights.size() != indices.size()) {
+				std::cerr << "Error: Mismatch between weights (" << weights.size() << ") and indices (" << indices.size() << ") for bone: " << boneName << std::endl;
+				continue;
+			}
+			
+			// Assign actual weights
 			for (size_t i = 0; i < weights.size(); ++i) {
 				int vertexID = indices[i];
 				float weight = weights[i];
 				
-				// Set the bone and weight for the corresponding vertex in the skinned mesh
-				mSkinnedMeshes.back()->get_skinned_vertices()[vertexID].set_bone(boneId, weight);
-			}
-		}
-	}
-	
-	auto skeletonPointer = std::make_unique<Skeleton>();
-	auto& skeleton = *skeletonPointer;
-	
-	// Temporary map to find bone indices by name
-	std::unordered_map<std::string, int> boneNameToIndex;
-	
-	for (const auto& boneInfo : mBoneHierarchy) {
-		std::string boneName = GetBoneNameByID(boneInfo.boneID);
-		if (boneName.empty()) {
-			std::cerr << "Warning: Bone name not found for bone ID " << boneInfo.boneID << std::endl;
-			continue;
-		}
-		
-		glm::vec3 translation = glm::vec3(boneInfo.localBindPose[3]); // Extract translation from matrix
-		glm::quat rotation = glm::quat_cast(boneInfo.localBindPose); // Extract rotation from matrix
-		glm::vec3 scale = SkinnedFbxUtil::ExtractScale(boneInfo.localBindPose); // Extract scale
-		
-		// Determine parent index
-		int parentIndex = -1;
-		if (!boneInfo.parentBoneName.empty()) {
-			auto it = boneNameToIndex.find(boneInfo.parentBoneName);
-			if (it != boneNameToIndex.end()) {
-				parentIndex = it->second;
-			} else {
-				std::cerr << "Parent bone '" << boneInfo.parentBoneName << "' not found for bone '" << boneName << "'. Setting parent_index to -1.\n";
+				// Log first few assignments for debugging
+				if (i < 10) { // Adjust as needed
+					std::cout << "Bone " << boneName << " (ID: " << boneID << ") - Assigning weight " << weight << " to Vertex ID: " << vertexID << std::endl;
+				}
+				
+				// Validate weight
+				if (weight <= 0.0f) {
+					std::cerr << "Warning: Non-positive weight (" << weight << ") for Vertex ID: " << vertexID << " in Bone: " << boneName << std::endl;
+					continue;
+				}
+				
+				// Ensure valid vertex ID
+				if (vertexID >= 0 && static_cast<size_t>(vertexID) < skinnedVertices.size()) {
+					
+					auto vertexIndices = geometry->getVertexIndicesForPointIndex(vertexID);
+					
+					for (auto vertexIndex : vertexIndices){
+						skinnedVertices[vertexIndex].set_bone(boneID, weight);
+					}
+					
+				} else {
+					std::cerr << "Error: Invalid vertex ID (" << vertexID << ") for bone: " << boneName << ". Skinned Vertices Size: " << skinnedVertices.size() << std::endl;
+				}
 			}
 		}
 		
-		// Add bone to the skeleton
-		skeleton.add_bone(boneName, translation, rotation, scale, parentIndex);
+		// Post-Processing: Assign default bone to vertices with no influences
+		for (size_t i = 0; i < skinnedVertices.size(); ++i) {
+			if (skinnedVertices[i].has_no_bones()) {
+				skinnedVertices[i].set_bone(DEFAULT_BONE_ID, 1.0f);
+				std::cerr << "Info: Vertex ID " << i << " had no bone influences. Assigned to Default Bone ID " << DEFAULT_BONE_ID << "." << std::endl;
+			}
+		}
 		
-		// Update the temporary map
-		boneNameToIndex[boneName] = skeleton.num_bones() - 1;
+		// Validate that all vertices have at least one bone influence
+		for (size_t i = 0; i < skinnedVertices.size(); ++i) {
+			if (skinnedVertices[i].has_no_bones()) {
+				std::cerr << "Error: Vertex ID " << i << " still has no bone influences after default assignment." << std::endl;
+			}
+		}
+		
+		// Build skeleton
+		auto skeletonPointer = std::make_unique<Skeleton>();
+		auto& skeleton = *skeletonPointer;
+		
+		for (const auto& boneInfo : mBoneHierarchy) {
+			std::string boneName = GetBoneNameByID(boneInfo.bone_id);
+			if (boneName.empty()) {
+				std::cerr << "Warning: Bone name not found for bone ID " << boneInfo.bone_id << std::endl;
+				continue;
+			}
+			
+			// Determine parent index
+			int parentIndex = -1;
+			auto parentNode = boneInfo.model->getParent();
+			if (parentNode) {
+				std::string parentBoneName = std::string{ parentNode->getName() };
+				auto it = boneNameToIndex.find(parentBoneName);
+				if (it != boneNameToIndex.end()) {
+					parentIndex = it->second;
+				} else {
+					std::cerr << "Warning: Parent bone not found for bone: " << boneName << std::endl;
+				}
+			}
+			
+						
+			// Add bone to skeleton
+			skeleton.add_bone(boneName, boneInfo.offset, boneInfo.bindpose, parentIndex);
+		}
+				
+		// Assign the skeleton if it has bones
+		mSkeleton = skeleton.num_bones() > 0 ? std::move(skeletonPointer) : nullptr;
+		
+		std::cout << "Finished processing bones for skinned mesh." << std::endl;
+	} else {
+		std::cerr << "Warning: No skin deformer found for the mesh." << std::endl;
 	}
-	
-	// Compute global transforms and inverse bind poses
-	skeleton.compute_global_transforms();
-	skeleton.compute_inverse_bind_poses();
-	
-	mSkeleton = skeleton.num_bones() > 0 ? std::move(skeletonPointer) : nullptr;
-
 }
-
 std::string SkinnedFbx::GetBoneNameByID(int boneID) const {
 	for (const auto& [name, id] : mBoneMapping) {
 		if (id == boneID) {
@@ -169,12 +272,13 @@ void SkinnedFbx::TryImportAnimations() {
 			Animation& animation = *animationPtr;  // Custom Animation class
 			
 			// Variables to track min and max keyframe times
-			float min_time = std::numeric_limits<float>::max();
-			float max_time = std::numeric_limits<float>::min();
+			float min_time = 0;
+			float max_time = 0;
 			
 			// Iterate through bone mapping to create keyframes for each bone
 			for (const auto& bone : mBoneMapping) {
 				const std::string& bone_name = bone.first;
+				int bone_index = bone.second;
 				std::vector<Animation::KeyFrame> keyframes;  // Store keyframes for each bone
 				
 				// Retrieve all animation curve nodes
@@ -204,65 +308,68 @@ void SkinnedFbx::TryImportAnimations() {
 					}
 				}
 				
-				// Collect all unique keyframe times from position, rotation, and scale curves
-				std::vector<float> all_times;
+				// Determine the maximum number of frames to process
+				std::size_t max_frames = 0;
 				if (position_curve) {
-					auto pos_times = position_curve->getAnimationCurves()[0]->getTimes();
-					all_times.insert(all_times.end(), pos_times.begin(), pos_times.end());
+					max_frames = std::max(max_frames, position_curve->getAnimationCurves()[0]->getTimes().size());
 				}
 				if (rotation_curve) {
-					auto rot_times = rotation_curve->getAnimationCurves()[0]->getTimes();
-					all_times.insert(all_times.end(), rot_times.begin(), rot_times.end());
+					max_frames = std::max(max_frames, rotation_curve->getAnimationCurves()[0]->getTimes().size());
 				}
 				if (scale_curve) {
-					auto scale_times = scale_curve->getAnimationCurves()[0]->getTimes();
-					all_times.insert(all_times.end(), scale_times.begin(), scale_times.end());
+					max_frames = std::max(max_frames, scale_curve->getAnimationCurves()[0]->getTimes().size());
 				}
+
+				max_time = max_frames;
 				
-				// Remove duplicate times and sort
-				std::sort(all_times.begin(), all_times.end());
-				all_times.erase(std::unique(all_times.begin(), all_times.end()), all_times.end());
+				// Get the inverse bind pose for this bone from the hierarchy
+				auto& bone_info = mBoneHierarchy[bone_index];
 				
-				// Populate keyframes with translation, rotation, and scale for the current bone
-				for (const auto& key_time : all_times) {
-					Animation::KeyFrame keyframe;
-					keyframe.time = static_cast<float>(key_time);
-					
+				
+				for (std::size_t frame_idx = 0; frame_idx < max_frames; ++frame_idx) {
 					// Retrieve and evaluate the translation
 					if (position_curve) {
-						auto translation = position_curve->evaluateF3(key_time);
-						keyframe.translation = glm::vec3(translation.x, translation.y, translation.z);
-					} else {
-						keyframe.translation = glm::vec3(0.0f);  // Default to zero if no translation
+						position_curve->applyAnimation(frame_idx / 30.0f);
 					}
 					
 					// Retrieve and evaluate the rotation
 					if (rotation_curve) {
-						auto rotation = rotation_curve->evaluateF3(key_time);
-						glm::vec3 euler_angles(rotation.x, rotation.y, rotation.z);
-						keyframe.rotation = glm::quat(glm::radians(euler_angles));  // Convert to quaternion
-					} else {
-						keyframe.rotation = glm::quat();  // Default to identity quaternion
+						rotation_curve->applyAnimation(frame_idx / 30.0f);
 					}
 					
 					// Retrieve and evaluate the scale
 					if (scale_curve) {
-						auto scale = scale_curve->evaluateF3(key_time);
-						keyframe.scale = glm::vec3(scale.x, scale.y, scale.z);
-					} else {
-						keyframe.scale = glm::vec3(1.0f);  // Default to 1.0 if no scaling
+						scale_curve->applyAnimation(frame_idx / 30.0f);
 					}
 					
-					keyframes.push_back(keyframe);
+					auto model = sfbx::as<sfbx::Model>(rotation_curve->getAnimationTarget());
 					
-					// Update min and max keyframe times
-					min_time = std::min(min_time, keyframe.time);
-					max_time = std::max(max_time, keyframe.time);
+					auto [tt, rr, ss] = SkinnedFbxUtil::DecomposeTransform(SkinnedFbxUtil::SfbxMatToGlmMat(model->getLocalMatrix()));
+					
+					glm::mat4 transformation = glm::translate(glm::mat4(1.0f), tt) * glm::toMat4(glm::normalize(rr)) * glm::scale(glm::mat4(1.0f), ss);
+					
+					transformation = glm::inverse(bone_info.bindpose) * transformation;
+					
+					// Decompose the final transformation matrix back into position, rotation, and scale
+					glm::vec3 final_position;
+					glm::quat final_rotation;
+					glm::vec3 final_scale;
+					std::tie(final_position, final_rotation, final_scale) = SkinnedFbxUtil::DecomposeTransform(transformation);
+					
+					// Store the decomposed values in the keyframe
+					
+					Animation::KeyFrame keyframe;
+					keyframe.time = frame_idx;
+					keyframe.translation = final_position;
+					keyframe.rotation = final_rotation;
+					keyframe.scale = final_scale;
+					
+					keyframes.push_back(keyframe);
 				}
-				
+
 				// Add the bone's keyframes to the animation
 				if (!keyframes.empty()) {
-					animation.add_bone_keyframes(bone_name, keyframes);
+					animation.add_bone_keyframes(bone_info.bone_id, keyframes);
 				}
 			}
 			
@@ -274,6 +381,7 @@ void SkinnedFbx::TryImportAnimations() {
 			}
 			
 			// Add the animation to the mAnimations vector
+			animationPtr->sort();
 			mAnimations.push_back(std::move(animationPtr));
 		}
 	}

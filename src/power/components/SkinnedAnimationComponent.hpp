@@ -5,23 +5,25 @@
 #include "animation/Skeleton.hpp"
 
 #include <glm/gtc/type_ptr.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtx/quaternion.hpp>
 
 #include <iostream>
 #include <memory>
+#include <algorithm>
 
 class SkinnedAnimationComponent {
 private:
-	struct BoneCPU
-	{
+	struct BoneCPU {
 		float transform[4][4] =
 		{
-			0.0f, 0.0f, 0.0f, 0.0f,
-			0.0f, 0.0f, 0.0f, 0.0f,
-			0.0f, 0.0f, 0.0f, 0.0f,
-			0.0f, 0.0f, 0.0f, 0.0f
+			{ 0.0f, 0.0f, 0.0f, 0.0f },
+			{ 0.0f, 0.0f, 0.0f, 0.0f },
+			{ 0.0f, 0.0f, 0.0f, 0.0f },
+			{ 0.0f, 0.0f, 0.0f, 0.0f }
 		};
 	};
-
+	
 public:
 	struct SkinnedAnimationPdo {
 		SkinnedAnimationPdo(Skeleton& skeleton) : mSkeleton(skeleton) {}
@@ -32,33 +34,40 @@ public:
 	
 public:
 	SkinnedAnimationComponent(SkinnedAnimationPdo& animationPdo)
-	: mSkeleton(animationPdo.mSkeleton.get()), mCurrentTime(0.0f) // Initialize current time
+	: mSkeleton(animationPdo.mSkeleton.get()), mCurrentTime(0.0f)
 	{
 		for (auto& animation : animationPdo.mAnimationData) {
 			mAnimationData.push_back(animation);
 		}
 		
+		// Initialize the pose buffers
+		size_t numBones = mSkeleton.get().num_bones();
+		mModelPose.resize(numBones);
 	}
 	
 	void apply_to(ShaderWrapper& shader) {
-		// Extract bone matrices and pass them to the shader
-		std::vector<glm::mat4> boneMatrices;
-		boneMatrices.reserve(mSkeleton.get().num_bones());
+		// Update the animation (you should pass the actual delta time)
+		update(1);
 		
-		mSkeleton.get().compute_global_transforms();
-				
 #if defined(NANOGUI_USE_METAL)
-		// Ensure we have a valid number of materials
+		// Ensure we have a valid number of bones
 		size_t numBones = mSkeleton.get().num_bones();
 		
 		std::vector<BoneCPU> bonesCPU(numBones);
 		
-		for (int i = 0; i < numBones; ++i) {
-			auto boneTransform = mSkeleton.get().get_bone(i).local_transform.to_matrix();
+		for (size_t i = 0; i < numBones; ++i) {
+			// Get the bone transform as a glm::mat4
+			glm::mat4 boneTransform = mSkeleton.get().get_bone(i).transform;
 			
+			// Reference to the BoneCPU structure
 			BoneCPU& boneCPU = bonesCPU[i];
 			
-			std::memcpy(boneCPU.transform, glm::value_ptr(boneTransform), sizeof(float) * 16);
+			// Copy each element from glm::mat4 to the BoneCPU's transform array
+			for (int row = 0; row < 4; ++row) {
+				for (int col = 0; col < 4; ++col) {
+					boneCPU.transform[row][col] = boneTransform[row][col];
+				}
+			}
 		}
 		
 		shader.set_buffer(
@@ -68,28 +77,59 @@ public:
 						  bonesCPU.data()
 						  );
 #else
+		// OpenGL or other rendering API code to upload bone transforms
+		// For example, using a uniform array of matrices
+		size_t numBones = mSkeleton.get().num_bones();
+		std::vector<glm::mat4> boneTransforms(numBones);
+		for (size_t i = 0; i < numBones; ++i) {
+			boneTransforms[i] = mSkeleton.get().get_bone(i).transform * boneTransforms[i] = mSkeleton.get().get_bone(i).offset;
+		}
 		
+		// Upload the boneTransforms to the shader
+		shader.set_uniform("bones", boneTransforms);
 #endif
-
-		
 	}
-	
-	// Function to update the animation time (to be called externally)
+
+	// Function to update the animation time
 	void update(float deltaTime) {
+		if (mAnimationData.empty()) {
+			return; // No animations to process
+		}
+		
+		// For simplicity, use the first animation in the list
+		const Animation& animation = mAnimationData[0].get();
+		float duration = animation.get_duration();
+		
+		// Update current time and wrap around if necessary
 		mCurrentTime += deltaTime;
-		// Handle looping or animation duration as needed
+		mCurrentTime = fmax(0, fmod(duration + mCurrentTime, duration));
+
+		// Evaluate the animation at the current time
+		evaluate_animation(animation, mCurrentTime);
+		
+		// Update the skeleton with the new transforms
+		apply_pose_to_skeleton();
 	}
 	
 	auto& skeleton() const { return mSkeleton.get(); }
 	
 private:
+	void evaluate_animation(const Animation& animation, float time) {
+		mModelPose = animation.evaluate(time);
+	}
+	
+	void apply_pose_to_skeleton() {
+		Skeleton& skeleton = mSkeleton.get();
+		skeleton.compute_offsets(mModelPose);
+	}
+
+	
+	
 	std::reference_wrapper<Skeleton> mSkeleton;
 	std::vector<std::reference_wrapper<Animation>> mAnimationData;
 	
 	float mCurrentTime; // Current animation time
 	
 	// Buffers to store poses
-	std::vector<Transform> mLocalPose;
 	std::vector<glm::mat4> mModelPose;
-
 };

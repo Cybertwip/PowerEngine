@@ -23,13 +23,19 @@
 #include <cmath>
 #include <algorithm>
 
-SkinnedMesh::SkinnedMesh(std::unique_ptr<SkinnedMeshData> skinnedMeshData, ShaderWrapper& shader, SkinnedMeshBatch& meshBatch, ColorComponent& colorComponent, SkinnedAnimationComponent& skinnedComponent)
+SkinnedMesh::SkinnedMesh(
+						 std::unique_ptr<SkinnedMeshData> skinnedMeshData,
+						 ShaderWrapper& shader,
+						 SkinnedMeshBatch& meshBatch,
+						 ColorComponent& colorComponent,
+						 SkinnedAnimationComponent& skinnedComponent)
 : mSkinnedMeshData(std::move(skinnedMeshData)),
 mShader(shader),
 mMeshBatch(meshBatch),
 mColorComponent(colorComponent),
 mSkinnedComponent(skinnedComponent),
 mModelMatrix(nanogui::Matrix4f::identity()) {
+	
 	size_t numVertices = mSkinnedMeshData->get_skinned_vertices().size();
 	
 	// Pre-allocate flattened data vectors
@@ -42,7 +48,7 @@ mModelMatrix(nanogui::Matrix4f::identity()) {
 	mFlattenedBoneIds.resize(numVertices * SkinnedMeshVertex::MAX_BONE_INFLUENCE);
 	mFlattenedWeights.resize(numVertices * SkinnedMeshVertex::MAX_BONE_INFLUENCE);
 	
-	mFlattenedTextureIds.resize(numVertices * 2); // Assuming two texture IDs per vertex
+	mFlattenedTextureIds.resize(numVertices); // One texture ID per vertex
 	
 	// Flatten the vertex data
 	for (size_t i = 0; i < numVertices; ++i) {
@@ -67,32 +73,33 @@ mModelMatrix(nanogui::Matrix4f::identity()) {
 		mFlattenedTexCoords2[i * 2 + 1] = vertex.get_tex_coords2().y;
 		
 		// Texture IDs
-		mFlattenedTextureIds[i * 2 + 0] = vertex.get_texture_id();
-		mFlattenedTextureIds[i * 2 + 1] = vertex.get_texture_id();
+		mFlattenedTextureIds[i] = vertex.get_texture_id();
 		
-		// **Flattened Colors**
-		const glm::vec4& color = vertex.get_color();
+		// Flattened Colors
+		const glm::vec4 color = vertex.get_color();
 		mFlattenedColors[i * 4 + 0] = color.r;
 		mFlattenedColors[i * 4 + 1] = color.g;
 		mFlattenedColors[i * 4 + 2] = color.b;
 		mFlattenedColors[i * 4 + 3] = color.a;
 		
-		
 		// Bone IDs and Weights
-		const auto& vertexBoneIds = vertex.get_bone_ids();
-		const auto& vertexWeights = vertex.get_weights();
+		const auto vertexBoneIds = vertex.get_bone_ids();
+		const auto vertexWeights = vertex.get_weights();
 		
 		for (int j = 0; j < SkinnedMeshVertex::MAX_BONE_INFLUENCE; ++j) {
 			mFlattenedBoneIds[i * SkinnedMeshVertex::MAX_BONE_INFLUENCE + j] = vertexBoneIds[j];
 			mFlattenedWeights[i * SkinnedMeshVertex::MAX_BONE_INFLUENCE + j] = vertexWeights[j];
 		}
+
 	}
 	
-	mModelMatrix = nanogui::Matrix4f::identity(); // Or any other transformation
+	mModelMatrix = nanogui::Matrix4f::identity();
 	
+	// Append the mesh to the batch
 	mMeshBatch.add_mesh(*this);
 	mMeshBatch.append(*this);
 }
+
 
 void SkinnedMesh::draw_content(const nanogui::Matrix4f& model, const nanogui::Matrix4f& view,
 							   const nanogui::Matrix4f& projection) {

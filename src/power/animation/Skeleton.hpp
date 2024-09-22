@@ -1,27 +1,39 @@
 #pragma once
 
+#include <string>
+#include <vector>
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <cassert>
+
 class Skeleton {
 public:
 	struct Bone {
 		std::string name;
-		Transform local_transform;    // Local transformation relative to parent
-		int parent_index;            // Index of the parent bone, -1 if root
-		glm::mat4 global_transform;  // Precomputed global transformation
-		glm::mat4 inverse_bind_pose; // Inverse bind pose matrix
+		int index;  // -1 if root
+		int parent_index;  // -1 if root
+		glm::mat4 offset;
+		glm::mat4 bindpose;
+		glm::mat4 local;
+		glm::mat4 global;
+		glm::mat4 transform;
+		std::vector<int> children;
+		
+		Bone(const std::string& name, int index, int parent_index, const glm::mat4& offset, const glm::mat4& bindpose, const glm::mat4& local)
+		: name(name), index(index), parent_index(parent_index), offset(offset), bindpose(bindpose), local(local), global(1.0f), transform(1.0f) {}
 	};
+	
 	
 	Skeleton() = default;
 	
-	// Add a bone to the skeleton
-	void add_bone(const std::string& name, const glm::vec3& translation, const glm::quat& rotation,
-				  const glm::vec3& scale, int parent_index) {
-		m_bones.emplace_back(Bone{
-			name,
-			Transform{translation, rotation, scale},
-			parent_index,
-			glm::mat4(1.0f),
-			glm::mat4(1.0f) // Initialize inverse_bind_pose to identity
-		});
+	void add_bone(const std::string& name, const glm::mat4& offset, const glm::mat4& bindpose, int parent_index) {
+		int new_bone_index = static_cast<int>(m_bones.size());
+		m_bones.emplace_back(name, new_bone_index, parent_index, offset, bindpose, glm::identity<glm::mat4>());
+		
+		if (parent_index != -1) {
+			assert(parent_index >= 0 && parent_index < new_bone_index);
+			m_bones[parent_index].children.push_back(new_bone_index);
+		}
 	}
 	
 	// Get the number of bones
@@ -51,35 +63,45 @@ public:
 		return nullptr;
 	}
 	
-	// Precompute global transformations for all bones
-	void compute_global_transforms() {
-		for (size_t i = 0; i < m_bones.size(); ++i) {
-			compute_bone_global_transform(static_cast<int>(i));
+	void compute_offsets(const std::vector<glm::mat4>& withAnimation = {}) {
+		if (m_bones.empty()) return;
+		
+		if (!withAnimation.empty()) {
+			assert(withAnimation.size() == m_bones.size() && "Unmatched animations and bones size");
 		}
-	}
-	
-	// Compute inverse bind poses after global transforms are computed
-	void compute_inverse_bind_poses() {
-		for (auto& bone : m_bones) {
-			bone.inverse_bind_pose = glm::inverse(bone.global_transform);
+		
+		for (Bone& bone : m_bones) {
+			if (bone.parent_index == -1) {
+				glm::mat4 identity = glm::mat4(1.0f);
+				compute_global_and_transform(bone, identity, withAnimation);
+			}
 		}
 	}
 	
 private:
 	std::vector<Bone> m_bones;
 	
-	// Helper function to compute global transform of a single bone
-	void compute_bone_global_transform(int bone_index) {
-		Bone& bone = m_bones[bone_index];
-		glm::mat4 local_matrix = bone.local_transform.to_matrix();
+	void compute_global_and_transform(Bone& bone, const glm::mat4& parentGlobal, const std::vector<glm::mat4>& withAnimation) {
 		
-		if (bone.parent_index == -1) {
-			// Root bone: global transform is the local transform
-			bone.global_transform = local_matrix;
-		} else {
-			// Child bone: global transform is parent's global transform * local transform
-			glm::mat4 parent_global = m_bones[bone.parent_index].global_transform;
-			bone.global_transform = parent_global * local_matrix;
+		// Start with the parent's global transformation
+		glm::mat4 global = parentGlobal;
+		
+		// Apply the bone's bind pose first
+		global *= bone.bindpose;
+		
+		// Only apply the special rotation to bone index 3
+		glm::mat4 transformation = glm::mat4(1.0f);
+
+		if (!withAnimation.empty()) {
+			transformation = withAnimation[bone.index];
+		}
+				
+		global *= bone.local * transformation;
+		
+		bone.transform = global * bone.offset;
+		
+		for (int childIndex : bone.children) {
+			compute_global_and_transform(m_bones[childIndex], global, withAnimation);
 		}
 	}
 };

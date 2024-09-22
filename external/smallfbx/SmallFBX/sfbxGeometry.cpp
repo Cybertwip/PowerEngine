@@ -243,6 +243,22 @@ void GeomMesh::importFBXObjects()
 			vertex_count += polygon_size;
 		}
 	}
+	m_point_to_vertex_map.clear(); // Clear the map to ensure no stale data
+	size_t vertex_counter = 0;
+	
+	// Loop through polygons to populate the point-to-vertex map
+	for (size_t polygon_index = 0; polygon_index < m_counts.size(); ++polygon_index) {
+		int polygon_size = m_counts[polygon_index];
+		
+		for (int i = 0; i < polygon_size; ++i) {
+			int point_index = m_indices[vertex_counter];
+			
+			// Append the vertex_counter to the vector for this point_index
+			m_point_to_vertex_map[point_index].push_back(static_cast<int>(vertex_counter));
+			
+			vertex_counter++;
+		}
+	}
 
 }
 
@@ -405,6 +421,13 @@ int GeomMesh::getMaterialForVertexIndex(size_t vertex_index) const
 		return it->second; // Return the material index for this vertex
 	}
 	return -1; // Material not found for this vertex
+}
+std::vector<int> GeomMesh::getVertexIndicesForPointIndex(int point_index) const {
+	auto it = m_point_to_vertex_map.find(point_index);
+	if (it != m_point_to_vertex_map.end()) {
+		return it->second; // Return all corresponding vertex indices
+	}
+	return {}; // Return empty vector if the point index is not found
 }
 
 ObjectSubClass Shape::getSubClass() const { return ObjectSubClass::Shape; }
