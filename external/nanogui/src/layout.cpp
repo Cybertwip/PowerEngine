@@ -189,7 +189,6 @@ void GroupLayout::perform_layout(NVGcontext *ctx, Widget *widget) const {
         c->set_size(target_size);
         c->perform_layout(ctx);
 
-		
 		if (c != widget->screen()->drag_widget())
 			height += target_size.y();
 

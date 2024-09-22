@@ -92,6 +92,8 @@ Application::Application() : nanogui::DraggableScreen("Power Engine") {
 
 	
 	set_background(mRenderCommon->canvas().background_color());
+
+	set_drag_widget(nullptr);
 	
     perform_layout();
 }

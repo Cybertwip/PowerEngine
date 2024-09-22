@@ -271,6 +271,10 @@ public:
 
 	Widget* drag_widget() const { return m_drag_widget; }
 	
+	bool drag_active() const {
+		return m_drag_active;
+	}
+	
 protected:
     GLFWwindow *m_glfw_window = nullptr;
     NVGcontext *m_nvg_context = nullptr;

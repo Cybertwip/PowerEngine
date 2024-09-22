@@ -2,10 +2,38 @@
 #include <entt/entt.hpp>
 
 #include <nanogui/screen.h>
+#include <nanogui/window.h>
 #include <GLFW/glfw3.h>
 
 #include <memory>
 #include <vector>
+
+class DraggableWindow : public nanogui::Window {
+public:
+	DraggableWindow(nanogui::Widget *parent, const std::string &title = "Drag Me") : nanogui::Window(parent, title) {
+		set_modal(false);   // We want it to be freely interactive
+	}
+	
+	bool mouse_button_event(const nanogui::Vector2i &p, int button, bool down, int modifiers) override {
+		if (!down) {
+			if (!screen()->drag_active()) {
+				set_visible(false);
+			}
+		}
+		
+		return false;
+	}
+	
+	bool mouse_motion_event(const nanogui::Vector2i &p, const nanogui::Vector2i &rel, int button, int modifiers) override {
+		// Custom behavior for dragging the window itself
+		if (screen()->drag_active()) {
+			set_position(m_pos + rel);
+		} else {
+			set_visible(false);
+		}
+		return true;
+	}
+};
 
 namespace nanogui {
 
@@ -19,11 +47,23 @@ public:
 					unsigned int gl_major = 3,
 					unsigned int gl_minor = 2)
 	: Screen(caption, fullscreen, depth_buffer, stencil_buffer, float_buffer, gl_major, gl_minor){
+		m_draggable_window = new DraggableWindow(this, "");
+		
+		m_draggable_window->set_fixed_width(0);
+		m_draggable_window->set_fixed_height(0);
+		
+		m_draggable_window->set_visible(false);
 	}
 	
 	void set_drag_widget(Widget *widget) override {
-		m_drag_widget = widget;
-		m_drag_active = false;
+		if(widget == nullptr){
+			m_drag_active = false;
+			m_drag_widget->set_visible(false);
+			m_drag_widget = nullptr;
+		} else {
+			m_drag_widget = m_draggable_window;
+			m_drag_active = false;
+		}
 	}
 	
 protected:
@@ -38,17 +78,20 @@ protected:
 			p -= Vector2i(1, 2);
 			bool ret = false;
 			if (!m_drag_active) {
-				Widget *widget = find_widget(p);
-				if (widget == m_drag_widget && m_drag_widget != nullptr) {
-					// Move the drag widget to the front of the hierarchy to ensure it is topmost
-					move_widget_to_top(m_drag_widget);
-					m_drag_active = true;
-					m_mouse_pos = p;
+				if (m_drag_widget != nullptr) {
+					if (m_drag_widget->contains(p)){
+						// Move the drag widget to the front of the hierarchy to ensure it is topmost
+						move_widget_to_top(m_drag_widget);
+						m_drag_active = true;
+						m_mouse_pos = p;
+					}
 				}
 			} else {
 				ret = m_drag_widget->mouse_drag_event(p - m_drag_widget->parent()->absolute_position(), p - m_mouse_pos, m_mouse_state, m_modifiers);
 				// Ensure the dragged widget stays on top during the drag
 				move_widget_to_top(m_drag_widget);
+				
+				m_drag_widget->set_visible(true);
 			}
 			
 			if (!ret) {
@@ -76,7 +119,6 @@ protected:
 			} else if (action == GLFW_RELEASE) {
 				m_mouse_state &= ~(1 << button);
 				m_drag_active = false;
-				m_drag_widget = nullptr;
 			}
 			
 			m_redraw |= mouse_button_event(m_mouse_pos, button, action == GLFW_PRESS, m_modifiers);
@@ -96,6 +138,9 @@ private:
 			children.push_back(widget);
 		}
 	}
+	
+private:
+	DraggableWindow* m_draggable_window;
 
 };
 
