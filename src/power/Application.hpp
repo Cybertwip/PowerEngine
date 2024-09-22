@@ -55,17 +55,6 @@ public:
 		m_draggable_window->set_visible(false);
 	}
 	
-	void set_drag_widget(Widget *widget) override {
-		if(widget == nullptr){
-			m_drag_active = false;
-			m_draggable_window->set_visible(false);
-			m_drag_widget = nullptr;
-		} else {
-			m_drag_widget = m_draggable_window;
-			m_drag_active = false;
-		}
-	}
-	
 protected:
 	virtual void cursor_pos_callback_event(double x, double y) override {
 		Vector2i p((int)x, (int)y);
@@ -90,8 +79,6 @@ protected:
 				ret = m_drag_widget->mouse_drag_event(p - m_drag_widget->parent()->absolute_position(), p - m_mouse_pos, m_mouse_state, m_modifiers);
 				// Ensure the dragged widget stays on top during the drag
 				move_widget_to_top(m_drag_widget);
-				
-				m_drag_widget->set_visible(true);
 			}
 			
 			if (!ret) {
@@ -128,6 +115,20 @@ protected:
 	}
 	
 private:
+	
+	void set_drag_widget(Widget *widget) override {
+		if(widget == nullptr){
+			m_draggable_window->set_visible(false);
+			m_drag_active = false;
+			m_drag_widget = nullptr;
+		} else {
+			m_draggable_window->set_visible(true);
+			m_drag_widget = m_draggable_window;
+			m_drag_active = false;
+		}
+	}
+	Widget* drag_widget() const override { return m_draggable_window; }
+
 	void move_widget_to_top(Widget *widget) {
 		if (!widget || !widget->parent()) return;
 		auto &children = const_cast<std::vector<Widget *> &>(widget->parent()->children());

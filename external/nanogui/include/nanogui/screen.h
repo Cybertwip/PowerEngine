@@ -269,7 +269,7 @@ public:
 		m_drag_widget = widget;
 	}
 
-	Widget* drag_widget() const { return m_drag_widget; }
+	virtual Widget* drag_widget() const { return m_drag_widget; }
 	
 	bool drag_active() const {
 		return m_drag_active;
