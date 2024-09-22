@@ -244,8 +244,8 @@ public:
     void initialize(GLFWwindow *window, bool shutdown_glfw);
 
     /* Event handlers */
-    void cursor_pos_callback_event(double x, double y);
-    void mouse_button_callback_event(int button, int action, int modifiers);
+    virtual void cursor_pos_callback_event(double x, double y);
+    virtual void mouse_button_callback_event(int button, int action, int modifiers);
     void key_callback_event(int key, int scancode, int action, int mods);
     void char_callback_event(unsigned int codepoint);
     void drop_callback_event(int count, const char **filenames);
@@ -264,6 +264,12 @@ public:
 #if defined(NANOGUI_USE_METAL)
 	void * nswin() { return m_nswin; }
 #endif
+	
+	virtual void set_drag_widget(Widget* widget) {
+		m_drag_widget = widget;
+	}
+
+	Widget* drag_widget() const { return m_drag_widget; }
 	
 protected:
     GLFWwindow *m_glfw_window = nullptr;

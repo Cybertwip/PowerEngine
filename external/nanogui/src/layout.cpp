@@ -16,6 +16,7 @@
 #include <nanogui/window.h>
 #include <nanogui/theme.h>
 #include <nanogui/label.h>
+#include <nanogui/screen.h>
 #include <numeric>
 
 NAMESPACE_BEGIN(nanogui)
@@ -168,6 +169,7 @@ void GroupLayout::perform_layout(NVGcontext *ctx, Widget *widget) const {
     for (auto c : widget->children()) {
         if (!c->visible())
             continue;
+		
         const Label *label = dynamic_cast<const Label *>(c);
         if (!first)
             height += (label == nullptr) ? m_spacing : m_group_spacing;
@@ -187,7 +189,9 @@ void GroupLayout::perform_layout(NVGcontext *ctx, Widget *widget) const {
         c->set_size(target_size);
         c->perform_layout(ctx);
 
-        height += target_size.y();
+		
+		if (c != widget->screen()->drag_widget())
+			height += target_size.y();
 
         if (label)
             indent = !label->caption().empty();

@@ -2,9 +2,104 @@
 #include <entt/entt.hpp>
 
 #include <nanogui/screen.h>
+#include <GLFW/glfw3.h>
 
 #include <memory>
 #include <vector>
+
+namespace nanogui {
+
+class DraggableScreen : public Screen {
+public:
+	DraggableScreen(const std::string &caption,
+					bool fullscreen = false,
+					bool depth_buffer = true,
+					bool stencil_buffer = true,
+					bool float_buffer = false,
+					unsigned int gl_major = 3,
+					unsigned int gl_minor = 2)
+	: Screen(caption, fullscreen, depth_buffer, stencil_buffer, float_buffer, gl_major, gl_minor){
+	}
+	
+	void set_drag_widget(Widget *widget) override {
+		m_drag_widget = widget;
+		m_drag_active = false;
+	}
+	
+protected:
+	virtual void cursor_pos_callback_event(double x, double y) override {
+		Vector2i p((int)x, (int)y);
+#if defined(_WIN32) || defined(__linux__) || defined(EMSCRIPTEN)
+		p = Vector2i(Vector2f(p) / m_pixel_ratio);
+#endif
+
+		m_last_interaction = glfwGetTime();
+		try {
+			p -= Vector2i(1, 2);
+			bool ret = false;
+			if (!m_drag_active) {
+				Widget *widget = find_widget(p);
+				if (widget == m_drag_widget && m_drag_widget != nullptr) {
+					// Move the drag widget to the front of the hierarchy to ensure it is topmost
+					move_widget_to_top(m_drag_widget);
+					m_drag_active = true;
+					m_mouse_pos = p;
+				}
+			} else {
+				ret = m_drag_widget->mouse_drag_event(p - m_drag_widget->parent()->absolute_position(), p - m_mouse_pos, m_mouse_state, m_modifiers);
+				// Ensure the dragged widget stays on top during the drag
+				move_widget_to_top(m_drag_widget);
+			}
+			
+			if (!ret) {
+				ret = mouse_motion_event(p, p - m_mouse_pos, m_mouse_state, m_modifiers);
+			}
+			
+			m_mouse_pos = p;
+			m_redraw |= ret;
+
+		} catch (const std::exception &e) {
+//			std::cerr << "Caught exception in event handler: " << e.what() << std::endl;
+		}
+	}
+	
+	virtual void mouse_button_callback_event(int button, int action, int modifiers) override {
+		m_modifiers = modifiers;
+		m_last_interaction = glfwGetTime();
+		
+		try {
+			if (action == GLFW_PRESS) {
+				m_mouse_state |= 1 << button;
+				if (m_drag_widget) {
+					m_drag_active = true;
+				}
+			} else if (action == GLFW_RELEASE) {
+				m_mouse_state &= ~(1 << button);
+				m_drag_active = false;
+				m_drag_widget = nullptr;
+			}
+			
+			m_redraw |= mouse_button_event(m_mouse_pos, button, action == GLFW_PRESS, m_modifiers);
+		} catch (const std::exception &e) {
+//			std::cerr << "Caught exception in event handler: " << e.what() << std::endl;
+		}
+	}
+	
+private:
+	void move_widget_to_top(Widget *widget) {
+		if (!widget || !widget->parent()) return;
+		auto &children = const_cast<std::vector<Widget *> &>(widget->parent()->children());
+		auto it = std::find(children.begin(), children.end(), widget);
+		if (it != children.end()) {
+			// Move the widget to the end of the list to make it topmost
+			children.erase(it);
+			children.push_back(widget);
+		}
+	}
+
+};
+
+}  // namespace nanogui
 
 class Actor;
 class ActorManager;
@@ -24,7 +119,7 @@ class UiManager;
 
 struct BatchUnit;
 
-class Application : public nanogui::Screen
+class Application : public nanogui::DraggableScreen
 {
    public:
     Application();

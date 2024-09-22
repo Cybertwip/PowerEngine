@@ -36,14 +36,13 @@
 #include <cmath>
 #include <functional>
 
-Application::Application() : nanogui::Screen("Power Engine") {
-		
+Application::Application() : nanogui::DraggableScreen("Power Engine") {
+				
 	Batch::init_dummy_texture();
 
     theme()->m_window_drop_shadow_size = 0;
 
-    set_layout(new nanogui::GridLayout(nanogui::Orientation::Horizontal, 1,
-                                       nanogui::Alignment::Fill, 0, 0));
+    set_layout(new nanogui::GroupLayout(0, 0, 0, 0));
 
     mEntityRegistry = std::make_unique<entt::registry>();
 

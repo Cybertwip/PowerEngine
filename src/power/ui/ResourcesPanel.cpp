@@ -102,6 +102,94 @@ const DirectoryNode* FindNodeByPath(const DirectoryNode& currentNode, const std:
 }
 }
 
+
+class DraggableWindow : public nanogui::Window {
+public:
+	DraggableWindow(nanogui::Widget *parent, const std::string &title) : nanogui::Window(parent, title) {
+		set_modal(false);   // We want it to be freely interactive
+	}
+	// Override the perform_layout to ensure this widget doesn't affect layout
+	virtual void perform_layout(NVGcontext *ctx) override {
+		// Do nothing: we don't want this window to affect the layout of its parent
+	}
+	
+	
+	virtual bool mouse_drag_event(const nanogui::Vector2i &p, const nanogui::Vector2i &rel, int button, int modifiers) override {
+		// Custom behavior for dragging the window itself
+		if (button == GLFW_MOUSE_BUTTON_1) {
+			set_position(m_pos + rel);
+			return true;
+		}
+		return nanogui::Window::mouse_drag_event(p, rel, button, modifiers);
+	}
+};
+
+class DraggableButton : public nanogui::Button {
+public:
+	DraggableButton(Widget *parent, const std::string &caption = "", int icon = 0, const std::string &filePath = "")
+	: nanogui::Button(parent, caption, icon), mIsDragging(false), mDragWidget(nullptr), mFilePath(filePath) {
+	}
+	
+	void set_drop_callback(const std::function<void(const nanogui::Vector2i &pos, const std::string &filePath)> &cb) {
+		mDropCallback = cb;
+	}
+	
+	virtual bool mouse_button_event(const nanogui::Vector2i &p, int button, bool down, int modifiers) override {
+		nanogui::Button::mouse_button_event(p, button, down, modifiers);
+		
+		if (button == GLFW_MOUSE_BUTTON_LEFT && down) {
+			mDragStartPosition = p;
+			mIsDragging = true;
+			// Create drag widget (e.g., an icon or label to follow the cursor)
+			mDragWidget = new DraggableWindow(screen());
+			
+			screen()->set_drag_widget(mDragWidget);
+			
+			mDragWidget->set_position(p - nanogui::Vector2i(10, 10));
+			
+			auto content = new nanogui::TextBox(mDragWidget, m_caption);
+
+			content->set_font_size(16);
+//			mDragWidget->set_font_color(nanogui::Color(255, 255, 255, 255));
+			content->set_background_color(nanogui::Color(255, 255, 255, 255));
+			return false;
+		} else if (button == GLFW_MOUSE_BUTTON_LEFT && !down) {
+			if (mIsDragging) {
+				mIsDragging = false;
+				// Remove drag widget
+				screen()->remove_child(mDragWidget);
+				mDragWidget = nullptr;
+				
+				// Handle drop
+				nanogui::Vector2i dropPosition = p;
+				if (mDropCallback) {
+					mDropCallback(dropPosition, mFilePath);
+				}
+				return true;
+			}
+		}
+		return false;
+	}
+	
+	virtual bool mouse_motion_event(const nanogui::Vector2i &p, const nanogui::Vector2i &rel, int button, int modifiers) override {
+		nanogui::Button::mouse_motion_event(p, rel, button, modifiers);
+		
+		if (mIsDragging && mDragWidget) {
+			// Update drag widget position
+			mDragWidget->set_position(p - nanogui::Vector2i(10, 10));
+			return true;
+		}
+		return false;
+	}
+	
+private:
+	bool mIsDragging;
+	nanogui::Vector2i mDragStartPosition;
+	nanogui::Window *mDragWidget;
+	std::string mFilePath;
+	std::function<void(const nanogui::Vector2i &pos, const std::string &filePath)> mDropCallback;
+};
+
 ResourcesPanel::ResourcesPanel(nanogui::Widget& parent, const DirectoryNode& root_directory_node, IActorVisualManager& actorVisualManager,  MeshActorLoader& meshActorLoader, ShaderManager& shaderManager)
 : Panel(parent, "Resources"),
 mRootDirectoryNode(root_directory_node),
@@ -212,7 +300,7 @@ void ResourcesPanel::refresh_file_view() {
 				itemContainer->set_layout(new nanogui::BoxLayout(
 																 nanogui::Orientation::Vertical, nanogui::Alignment::Middle, 0, 5));
 				
-				auto icon = new nanogui::Button(itemContainer, "");
+				auto icon = new DraggableButton(itemContainer, "", get_icon_for_file(*child), child->FullPath);
 				icon->set_icon(get_icon_for_file(*child));
 				icon->set_fixed_size(nanogui::Vector2i(120, 120));
 								
