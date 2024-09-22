@@ -185,7 +185,7 @@ public:
 private:
 	bool mIsDragging;
 	nanogui::Vector2i mDragStartPosition;
-	nanogui::Window *mDragWidget;
+	DraggableWindow *mDragWidget;
 	std::string mFilePath;
 	std::function<void(const nanogui::Vector2i &pos, const std::string &filePath)> mDropCallback;
 };
