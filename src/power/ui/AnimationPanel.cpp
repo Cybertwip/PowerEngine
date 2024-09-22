@@ -41,14 +41,15 @@ void AnimationPanel::set_active_actor(std::optional<std::reference_wrapper<Actor
 		if (actor->get().find_component<SkinnedAnimationComponent>()) {
 			mActiveActor = actor;
 			
-			if (mActiveActor.has_value()) {
-				set_visible(true);
-				perform_layout(screen()->nvg_context());
-			} else {
-				set_visible(false);
-				perform_layout(screen()->nvg_context());
-			}
+			set_visible(true);
+			parent()->perform_layout(screen()->nvg_context());
+		} else {
+			set_visible(false);
+			parent()->perform_layout(screen()->nvg_context());
 		}
+	} else {
+		set_visible(false);
+		parent()->perform_layout(screen()->nvg_context());
 	}
 
 }
