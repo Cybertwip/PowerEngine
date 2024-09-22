@@ -105,7 +105,7 @@ const DirectoryNode* FindNodeByPath(const DirectoryNode& currentNode, const std:
 class DraggableButton : public nanogui::Button {
 public:
 	DraggableButton(Widget *parent, const std::string &caption = "", int icon = 0, const std::string &filePath = "")
-	: nanogui::Button(parent, caption, icon), mIsDragging(false), mIsDragCommitted(true), mDragWidget(nullptr), mFilePath(filePath) {
+	: nanogui::Button(parent, caption, icon), mDragWidget(nullptr), mFilePath(filePath) {
 	}
 	
 	void set_drop_callback(const std::function<void(const nanogui::Vector2i &pos, const std::string &filePath)> &cb) {
@@ -117,38 +117,8 @@ public:
 		
 		if (button == GLFW_MOUSE_BUTTON_LEFT && down) {
 			mDragStartPosition = absolute_position();
-			mIsDragging = true;
-			mIsDragCommitted = false;
-			return false;
-		} else if (button == GLFW_MOUSE_BUTTON_LEFT && !down) {
-			if (mIsDragging) {
-				mIsDragging = false;
-				// Remove drag widget
-				mDragWidget->remove_child(mContent);
-				mDragWidget = nullptr;
-				
-				screen()->set_drag_widget(nullptr);
-
-				// Handle drop
-				nanogui::Vector2i dropPosition = p;
-				if (mDropCallback) {
-					mDropCallback(dropPosition, mFilePath);
-				}
-
-				return false;
-			}
-		}
-		return false;
-	}
-	
-	bool mouse_motion_event(const nanogui::Vector2i &p, const nanogui::Vector2i &rel, int button, int modifiers) override {
-		if (mIsDragging && !mIsDragCommitted) {
-			mIsDragCommitted = true;
-			// Create drag widget (e.g., an icon or label to follow the cursor)
 			mDragWidget = screen()->drag_widget();
-			
 			mDragWidget->set_position(mDragStartPosition);
-			
 			mDragWidget->set_layout(new nanogui::BoxLayout(nanogui::Orientation::Horizontal,
 														   nanogui::Alignment::Fill, 10, 10));
 			
@@ -167,15 +137,29 @@ public:
 			screen()->set_drag_widget(mDragWidget);
 			
 			mDragWidget->perform_layout(screen()->nvg_context());
-			
-			return true;
+
+			return false;
+		} else if (button == GLFW_MOUSE_BUTTON_LEFT && !down) {
+			if (mDragWidget != nullptr) {
+				// Remove drag widget
+				mDragWidget->remove_child(mContent);
+				mDragWidget = nullptr;
+				
+				screen()->set_drag_widget(nullptr);
+
+				// Handle drop
+				nanogui::Vector2i dropPosition = p;
+				if (mDropCallback) {
+					mDropCallback(dropPosition, mFilePath);
+				}
+
+				return false;
+			}
 		}
-		
 		return false;
 	}
+	
 private:
-	bool mIsDragging;
-	bool mIsDragCommitted;
 	nanogui::Vector2i mDragStartPosition;
 	nanogui::Widget *mDragWidget;
 	nanogui::Widget *mContent;
