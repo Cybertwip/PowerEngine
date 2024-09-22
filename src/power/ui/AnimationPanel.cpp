@@ -3,6 +3,7 @@
 #include <nanogui/toolbutton.h>
 #include <nanogui/icons.h>
 #include <nanogui/layout.h>
+#include <nanogui/screen.h>
 
 #include "actors/Actor.hpp"
 #include "components/TransformComponent.hpp"
@@ -26,6 +27,7 @@ AnimationPanel::AnimationPanel(nanogui::Widget &parent)
 
 	mPlayPauseButton = new nanogui::ToolButton(playbackPanel, FA_FORWARD);
 	mPlayPauseButton->set_tooltip("Play");
+	set_active_actor(std::nullopt);
 }
 
 AnimationPanel::~AnimationPanel() {
@@ -37,6 +39,10 @@ void AnimationPanel::set_active_actor(std::optional<std::reference_wrapper<Actor
 	mActiveActor = actor;
 	
 	if (mActiveActor.has_value()) {
-		
+		set_visible(true);
+		perform_layout(screen()->nvg_context());
+	} else {
+		set_visible(false);
+		perform_layout(screen()->nvg_context());
 	}
 }

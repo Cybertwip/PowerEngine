@@ -95,6 +95,7 @@ void HierarchyPanel::OnActorSelected(std::optional<std::reference_wrapper<Actor>
 
 	} else {
 		mTreeView->set_selected(nullptr);
+		mTransformPanel.set_active_actor(actor);
 	}
 	
 }

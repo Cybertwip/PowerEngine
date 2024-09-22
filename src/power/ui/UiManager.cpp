@@ -670,7 +670,6 @@ UiManager::UiManager(IActorSelectedRegistry& registry, IActorVisualManager& acto
 	// Attach it to the top of the canvas, making it stick at the top
 	mSceneTimeBar->set_position(nanogui::Vector2i(0, 0));  // Stick to top
 	
-	
 	canvas.register_draw_callback([this]() {
 		draw();
 	});

@@ -3,6 +3,7 @@
 
 #include <nanogui/screen.h>
 #include <nanogui/window.h>
+#include <nanogui/layout.h>
 #include <GLFW/glfw3.h>
 
 #include <memory>
@@ -12,6 +13,10 @@ class DraggableWindow : public nanogui::Window {
 public:
 	DraggableWindow(nanogui::Widget *parent, const std::string &title = "Drag Me") : nanogui::Window(parent, title) {
 		set_modal(false);   // We want it to be freely interactive
+		
+		set_layout(new nanogui::BoxLayout(nanogui::Orientation::Horizontal,
+													   nanogui::Alignment::Fill, 10, 10));
+
 	}
 	
 	void set_drag_callback(std::function<void()> drag_callback) {
@@ -22,6 +27,10 @@ public:
 		if (!down) {
 			if (!screen()->drag_active()) {
 				set_visible(false);
+				
+				if (m_drag_callback) {
+					m_drag_callback();
+				}
 			}
 		}
 		
