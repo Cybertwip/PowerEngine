@@ -220,7 +220,7 @@ void ResourcesPanel::refresh_file_view() {
 				icon->set_background_color(mNormalButtonColor);
 				
 				
-				icon->set_callback([this, icon](){
+				auto drag_callback = [this, icon](){
 					auto drag_widget = screen()->drag_widget();
 					
 					auto content = new nanogui::TextBox(drag_widget, "");
@@ -246,17 +246,16 @@ void ResourcesPanel::refresh_file_view() {
 						
 						screen->drop_event(event_owner, { ""});
 					});
-				});
-				
-
-
+				};
 				
 				auto name = new nanogui::Label(itemContainer, child->FileName);
 				name->set_fixed_width(120);
 				
 				mFileButtons.push_back(icon);
 
-				icon->set_callback([this, &child, icon]() {
+				icon->set_callback([this, drag_callback, &child, icon]() {
+					drag_callback();
+					
 					// Handle selection
 					if (mSelectedButton && mSelectedButton != icon) {
 						mSelectedButton->set_background_color(mNormalButtonColor);
