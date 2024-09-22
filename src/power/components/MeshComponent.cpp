@@ -3,7 +3,7 @@
 #include "graphics/drawing/Mesh.hpp"
 #include "import/SkinnedFbx.hpp"
 
-MeshComponent::MeshComponent(std::vector<std::unique_ptr<Mesh>>& meshes, std::unique_ptr<SkinnedFbx> model) : mModel(model) {
+MeshComponent::MeshComponent(std::vector<std::unique_ptr<Mesh>>& meshes, std::unique_ptr<SkinnedFbx> model) : mModel(std::move(model)) {
 		for (auto& mesh : meshes) {
 			mMeshes.push_back(std::move(mesh));
 		}
