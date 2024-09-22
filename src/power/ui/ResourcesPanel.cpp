@@ -141,7 +141,7 @@ public:
 		return false;
 	}
 	
-	bool mouse_motion_event(const Vector2i &p, const Vector2i &rel, int button, int modifiers) override {
+	bool mouse_motion_event(const nanogui::Vector2i &p, const nanogui::Vector2i &rel, int button, int modifiers) override {
 		if (mIsDragging && !mIsDragCommitted) {
 			mIsDragCommitted = true;
 			// Create drag widget (e.g., an icon or label to follow the cursor)
