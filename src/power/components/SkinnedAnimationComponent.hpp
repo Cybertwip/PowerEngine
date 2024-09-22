@@ -48,11 +48,11 @@ public:
 	void set_reverse(bool reverse) {
 		mReverse = reverse;
 	}
-
+	
 	void set_playing(bool playing) {
 		mPlaying = playing;
 	}
-
+	
 	void apply_to(ShaderWrapper& shader) {
 		if (mPlaying) {
 			update(1);
@@ -60,49 +60,49 @@ public:
 			Skeleton& skeleton = mSkeleton.get();
 			skeleton.compute_offsets({});
 		}
-
+		
 #if defined(NANOGUI_USE_METAL)
-			// Ensure we have a valid number of bones
-			size_t numBones = mSkeleton.get().num_bones();
+		// Ensure we have a valid number of bones
+		size_t numBones = mSkeleton.get().num_bones();
+		
+		std::vector<BoneCPU> bonesCPU(numBones);
+		
+		for (size_t i = 0; i < numBones; ++i) {
+			// Get the bone transform as a glm::mat4
+			glm::mat4 boneTransform = mSkeleton.get().get_bone(i).transform;
 			
-			std::vector<BoneCPU> bonesCPU(numBones);
+			// Reference to the BoneCPU structure
+			BoneCPU& boneCPU = bonesCPU[i];
 			
-			for (size_t i = 0; i < numBones; ++i) {
-				// Get the bone transform as a glm::mat4
-				glm::mat4 boneTransform = mSkeleton.get().get_bone(i).transform;
-				
-				// Reference to the BoneCPU structure
-				BoneCPU& boneCPU = bonesCPU[i];
-				
-				// Copy each element from glm::mat4 to the BoneCPU's transform array
-				for (int row = 0; row < 4; ++row) {
-					for (int col = 0; col < 4; ++col) {
-						boneCPU.transform[row][col] = boneTransform[row][col];
-					}
+			// Copy each element from glm::mat4 to the BoneCPU's transform array
+			for (int row = 0; row < 4; ++row) {
+				for (int col = 0; col < 4; ++col) {
+					boneCPU.transform[row][col] = boneTransform[row][col];
 				}
 			}
-			
-			shader.set_buffer(
-							  "bones",
-							  nanogui::VariableType::Float32,
-							  {numBones, sizeof(BoneCPU) / sizeof(float)},
-							  bonesCPU.data()
-							  );
+		}
+		
+		shader.set_buffer(
+						  "bones",
+						  nanogui::VariableType::Float32,
+						  {numBones, sizeof(BoneCPU) / sizeof(float)},
+						  bonesCPU.data()
+						  );
 #else
-			// OpenGL or other rendering API code to upload bone transforms
-			// For example, using a uniform array of matrices
-			size_t numBones = mSkeleton.get().num_bones();
-			std::vector<glm::mat4> boneTransforms(numBones);
-			for (size_t i = 0; i < numBones; ++i) {
-				boneTransforms[i] = mSkeleton.get().get_bone(i).transform * boneTransforms[i] = mSkeleton.get().get_bone(i).offset;
-			}
-			
-			// Upload the boneTransforms to the shader
-			shader.set_uniform("bones", boneTransforms);
+		// OpenGL or other rendering API code to upload bone transforms
+		// For example, using a uniform array of matrices
+		size_t numBones = mSkeleton.get().num_bones();
+		std::vector<glm::mat4> boneTransforms(numBones);
+		for (size_t i = 0; i < numBones; ++i) {
+			boneTransforms[i] = mSkeleton.get().get_bone(i).transform * boneTransforms[i] = mSkeleton.get().get_bone(i).offset;
+		}
+		
+		// Upload the boneTransforms to the shader
+		shader.set_uniform("bones", boneTransforms);
 #endif
-
+		
 	}
-
+	
 	// Function to update the animation time
 	void update(float deltaTime) {
 		if (mAnimationData.empty()) {
@@ -127,7 +127,7 @@ public:
 			// Wrap around when exceeding the duration
 			mCurrentTime %= duration;
 		}
-
+		
 		// Evaluate the animation at the current time
 		evaluate_animation(animation, mCurrentTime);
 		
@@ -146,7 +146,7 @@ private:
 		Skeleton& skeleton = mSkeleton.get();
 		skeleton.compute_offsets(mModelPose);
 	}
-
+	
 	
 	
 	std::reference_wrapper<Skeleton> mSkeleton;
@@ -155,7 +155,7 @@ private:
 	int mCurrentTime; // Current animation time
 	bool mReverse; // Current animation time
 	bool mPlaying; // Current animation time
-
+	
 	// Buffers to store poses
 	std::vector<glm::mat4> mModelPose;
 };

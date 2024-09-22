@@ -33,40 +33,38 @@ Actor& MeshActorBuilder::build(Actor& actor, const std::string& path, ShaderWrap
 	auto& colorComponent = actor.add_component<ColorComponent>(actor.get_component<MetadataComponent>());
 	
 	
-	mModels[path] = std::make_unique<SkinnedFbx>(path);
-	
-	SkinnedFbx& model = *mModels[path];
-	
-	model.LoadModel();
-	model.TryImportAnimations();
+	auto model = std::make_unique<SkinnedFbx>(path);
+		
+	model->LoadModel();
+	model->TryImportAnimations();
 	
 	std::unique_ptr<Drawable> drawableComponent;
 	
-	if (model.GetSkeleton() != nullptr) {
+	if (model->GetSkeleton() != nullptr) {
 		std::vector<std::unique_ptr<SkinnedMesh>> skinnedMeshComponentData;
 		
-		SkinnedAnimationComponent::SkinnedAnimationPdo pdo(*model.GetSkeleton());
+		SkinnedAnimationComponent::SkinnedAnimationPdo pdo(*model->GetSkeleton());
 		
-		for (auto& animation : model.GetAnimationData()) {
+		for (auto& animation : model->GetAnimationData()) {
 			pdo.mAnimationData.push_back(std::ref(*animation));
 		}
 		
 		auto& skinnedComponent = actor.add_component<SkinnedAnimationComponent>(pdo);
 		
-		for (auto& skinnedMeshData : model.GetSkinnedMeshData()) {
+		for (auto& skinnedMeshData : model->GetSkinnedMeshData()) {
 			skinnedMeshComponentData.push_back(std::make_unique<SkinnedMesh>(std::move(skinnedMeshData), skinnedShader, mBatchUnit.mSkinnedMeshBatch, colorComponent,
 				skinnedComponent));
 		}
 		
-		drawableComponent = std::make_unique<SkinnedMeshComponent>(skinnedMeshComponentData);
+		drawableComponent = std::make_unique<SkinnedMeshComponent>(skinnedMeshComponentData, std::move(model));
 	} else {
 		std::vector<std::unique_ptr<Mesh>> meshComponentData;
 		
-		for (auto& meshData : model.GetMeshData()) {
+		for (auto& meshData : model->GetMeshData()) {
 			meshComponentData.push_back(std::make_unique<Mesh>(std::move(meshData), meshShader, mBatchUnit.mMeshBatch, colorComponent));
 		}
 		
-		drawableComponent = std::make_unique<MeshComponent>(meshComponentData);
+		drawableComponent = std::make_unique<MeshComponent>(meshComponentData, std::move(model));
 	}
 	
 	actor.add_component<DrawableComponent>(std::move(drawableComponent));

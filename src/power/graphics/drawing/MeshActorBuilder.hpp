@@ -20,5 +20,4 @@ public:
 	
 private:
 	BatchUnit& mBatchUnit;
-	std::unordered_map<std::string, std::unique_ptr<SkinnedFbx>> mModels;
 };

@@ -1,8 +1,9 @@
 #include "SkinnedMeshComponent.hpp"
 
 #include "graphics/drawing/SkinnedMesh.hpp"
+#include "import/SkinnedFbx.hpp"
 
-SkinnedMeshComponent::SkinnedMeshComponent(std::vector<std::unique_ptr<SkinnedMesh>>& skinnedMeshes) {
+SkinnedMeshComponent::SkinnedMeshComponent(std::vector<std::unique_ptr<SkinnedMesh>>& skinnedMeshes, std::unique_ptr<SkinnedFbx> model) : mModel(std::move(model)) {
 		for (auto& skinnedMesh : skinnedMeshes) {
 			mSkinnedMeshes.push_back(std::move(skinnedMesh));
 		}
