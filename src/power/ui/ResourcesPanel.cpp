@@ -119,7 +119,7 @@ public:
 			mDragStartPosition = absolute_position();
 			mIsDragging = true;
 			mIsDragCommitted = false;
-			return true;
+			return false;
 		} else if (button == GLFW_MOUSE_BUTTON_LEFT && !down) {
 			if (mIsDragging) {
 				mIsDragging = false;
@@ -135,7 +135,7 @@ public:
 					mDropCallback(dropPosition, mFilePath);
 				}
 
-				return true;
+				return false;
 			}
 		}
 		return false;
@@ -167,7 +167,11 @@ public:
 			screen()->set_drag_widget(mDragWidget);
 			
 			mDragWidget->perform_layout(screen()->nvg_context());
+			
+			return true;
 		}
+		
+		return false;
 	}
 private:
 	bool mIsDragging;
