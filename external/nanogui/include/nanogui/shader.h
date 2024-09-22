@@ -140,7 +140,7 @@ public:
         if (ndim == (size_t) -1)
             throw std::runtime_error("Shader::set_uniform(): invalid input array dimension!");
 
-        set_buffer(name, vtype, ndim, shape, data, true);
+        set_buffer(name, vtype, ndim, shape, data, -1, true);
     }
 
     /**

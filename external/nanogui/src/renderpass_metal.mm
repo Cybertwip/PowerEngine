@@ -264,7 +264,7 @@ void RenderPass::clear_color(size_t index, const Color &color) {
 				};
 				
 				m_clear_shader->set_buffer("position", VariableType::Float32,
-										   { 6, 2 }, positions, true);
+										   { 6, 2 }, positions, -1, true);
 			}
 			
 			m_clear_shader->set_uniform("clear_color", m_clear_color.at(0));
