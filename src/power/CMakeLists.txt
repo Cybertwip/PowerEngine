@@ -123,8 +123,6 @@ add_executable(PowerEngine
     ${CMAKE_CURRENT_LIST_DIR}/graphics/drawing/Mesh.cpp
     ${CMAKE_CURRENT_LIST_DIR}/graphics/drawing/MeshBatch.hpp
     ${CMAKE_CURRENT_LIST_DIR}/graphics/drawing/MeshBatch.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/graphics/drawing/Model.hpp
-    ${CMAKE_CURRENT_LIST_DIR}/graphics/drawing/Model.cpp
     ${CMAKE_CURRENT_LIST_DIR}/graphics/drawing/SkinnedMesh.hpp
     ${CMAKE_CURRENT_LIST_DIR}/graphics/drawing/SkinnedMesh.cpp
     ${CMAKE_CURRENT_LIST_DIR}/graphics/drawing/SkinnedMeshBatch.hpp

@@ -84,11 +84,11 @@ public:
      * The buffer will be replaced if it is already present.
      */
     void set_buffer(const std::string &name, VariableType type, size_t ndim,
-                    const size_t *shape, const void *data, int index = -1);
+                    const size_t *shape, const void *data, int index = -1, bool persist = false);
 
     void set_buffer(const std::string &name, VariableType type,
-                    std::initializer_list<size_t> shape, const void *data, int index = -1) {
-        set_buffer(name, type, shape.end() - shape.begin(), shape.begin(), data, index);
+                    std::initializer_list<size_t> shape, const void *data, int index = -1, bool persist = false) {
+        set_buffer(name, type, shape.end() - shape.begin(), shape.begin(), data, index, persist);
     }
 	
 	size_t get_buffer_size(const std::string& name);
@@ -140,7 +140,7 @@ public:
         if (ndim == (size_t) -1)
             throw std::runtime_error("Shader::set_uniform(): invalid input array dimension!");
 
-        set_buffer(name, vtype, ndim, shape, data);
+        set_buffer(name, vtype, ndim, shape, data, true);
     }
 
     /**
@@ -229,6 +229,7 @@ protected:
     RenderPass* m_render_pass;
     std::string m_name;
 	std::unordered_map<std::string, Buffer> m_buffers;
+	std::unordered_map<std::string, std::unordered_map<int, Buffer>> m_persisted_buffers;
 	std::unordered_map<std::string, std::unordered_map<int, Buffer>> m_queued_buffers;
     BlendMode m_blend_mode;
 

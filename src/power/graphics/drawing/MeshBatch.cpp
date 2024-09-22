@@ -166,22 +166,22 @@ void MeshBatch::append(std::reference_wrapper<Mesh> meshRef) {
 void MeshBatch::upload_vertex_data(ShaderWrapper& shader, int identifier) {
 	
 	// Upload consolidated data to GPU
-	shader.set_buffer("aPosition", nanogui::VariableType::Float32, {mBatchPositions[identifier].size() / 3, 3},
+	shader.persist_buffer("aPosition", nanogui::VariableType::Float32, {mBatchPositions[identifier].size() / 3, 3},
 					  mBatchPositions[identifier].data());
-	shader.set_buffer("aNormal", nanogui::VariableType::Float32, {mBatchNormals[identifier].size() / 3, 3},
+	shader.persist_buffer("aNormal", nanogui::VariableType::Float32, {mBatchNormals[identifier].size() / 3, 3},
 					  mBatchNormals[identifier].data());
-	shader.set_buffer("aTexcoords1", nanogui::VariableType::Float32, {mBatchTexCoords1[identifier].size() / 2, 2},
+	shader.persist_buffer("aTexcoords1", nanogui::VariableType::Float32, {mBatchTexCoords1[identifier].size() / 2, 2},
 					  mBatchTexCoords1[identifier].data());
-	shader.set_buffer("aTexcoords2", nanogui::VariableType::Float32, {mBatchTexCoords2[identifier].size() / 2, 2},
+	shader.persist_buffer("aTexcoords2", nanogui::VariableType::Float32, {mBatchTexCoords2[identifier].size() / 2, 2},
 					  mBatchTexCoords2[identifier].data());
-	shader.set_buffer("aTextureId", nanogui::VariableType::Int32, {mBatchTextureIds[identifier].size() / 2, 2},
+	shader.persist_buffer("aTextureId", nanogui::VariableType::Int32, {mBatchTextureIds[identifier].size() / 2, 2},
 					  mBatchTextureIds[identifier].data());
 	
 	// Set Buffer for Vertex Colors
-	shader.set_buffer("aColor", nanogui::VariableType::Float32, {mBatchColors[identifier].size() / 4, 4},
+	shader.persist_buffer("aColor", nanogui::VariableType::Float32, {mBatchColors[identifier].size() / 4, 4},
 					  mBatchColors[identifier].data());
 	// Upload indices
-	shader.set_buffer("indices", nanogui::VariableType::UInt32, {mBatchIndices[identifier].size()},
+	shader.persist_buffer("indices", nanogui::VariableType::UInt32, {mBatchIndices[identifier].size()},
 					  mBatchIndices[identifier].data());
 }
 
@@ -226,9 +226,7 @@ void MeshBatch::draw_content(const nanogui::Matrix4f& view,
 	for (auto& [shader_pointer, mesh_vector] : mMeshes) {
 		auto& shader = *shader_pointer;
 		int identifier = shader.identifier();
-		
-		upload_vertex_data(shader, identifier);
-		
+				
 		mRenderPass.pop_depth_test_state(identifier);
 		
 		for (int i = 0; i<mesh_vector.size(); ++i) {

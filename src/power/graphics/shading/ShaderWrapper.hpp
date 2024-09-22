@@ -16,13 +16,9 @@ class ShaderWrapper
 public:
 	ShaderWrapper(nanogui::Shader& shader);
 	
-	void set_buffer(const std::string &name,
-			   nanogui::VariableType dtype,
-			   size_t ndim,
-			   const size_t *shape,
-			   const void *data,
-			   int index = -1);
-	
+	void persist_buffer(const std::string &name, nanogui::VariableType type,
+					std::initializer_list<size_t> shape, const void *data, int index = -1);
+
 	void set_buffer(const std::string &name, nanogui::VariableType type,
 			   std::initializer_list<size_t> shape, const void *data, int index = -1);
 	

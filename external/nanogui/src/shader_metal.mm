@@ -226,7 +226,8 @@ void Shader::set_buffer(const std::string &name,
                         size_t ndim,
                         const size_t *shape,
                         const void *data,
-						int index) {
+						int index,
+						bool persist) {
     auto it = m_buffers.find(name);
     if (it == m_buffers.end())
         throw std::runtime_error(
@@ -301,7 +302,11 @@ void Shader::set_buffer(const std::string &name,
 		buf.index = index;
 	}
 	
-	m_queued_buffers[name][buf.index] = buf;
+	if (persist) {
+		m_persisted_buffers[name][buf.index] = buf;
+	} else {
+		m_queued_buffers[name][buf.index] = buf;
+	}
 }
 
 size_t Shader::get_buffer_size(const std::string &name) {
@@ -348,21 +353,96 @@ void Shader::set_texture(const std::string &name, Texture *texture, int index) {
 		
 		buf2.index = index;
 		
-		m_queued_buffers[name][buf.index] = buf;
-		m_queued_buffers[sampler_name][buf2.index] = buf2;
+		m_persisted_buffers[name][buf.index] = buf;
+		m_persisted_buffers[sampler_name][buf2.index] = buf2;
 
 	} else {
 		// Only queue the texture if there's no corresponding sampler
-		m_queued_buffers[name][buf.index] = buf;
+		m_persisted_buffers[name][buf.index] = buf;
 	}
 }
 
 void Shader::begin() {
-	m_queued_buffers["indices"][m_buffers["indices"].index] = m_buffers["indices"];
 	id<MTLRenderPipelineState> pipeline_state = (__bridge id<MTLRenderPipelineState>)m_pipeline_state;
 	id<MTLRenderCommandEncoder> command_enc = (__bridge id<MTLRenderCommandEncoder>)m_render_pass->command_encoder();
 	
 	[command_enc setRenderPipelineState: pipeline_state];
+	
+	
+	// Process all queued buffers grouped by name
+	for (auto &[key, buffers] : m_persisted_buffers) {
+		for (auto &[index, buf] : buffers) {
+			bool indices = buf.type == IndexBuffer;
+			if (!buf.buffer) {
+				if (!indices)
+					fprintf(stderr,
+							"Shader::begin(): shader \"%s\" has an unbound "
+							"argument \"%s\"!\n",
+							m_name.c_str(), key.c_str());
+				continue;
+			}
+			
+			if (!buf.buffer) {
+				bool indices = buf.type == IndexBuffer;
+				if (!indices) {
+					fprintf(stderr, "Shader::begin(): shader \"%s\" has an unbound argument \"%s\"!\n",
+							m_name.c_str(), key.c_str());
+				}
+				continue;
+			}
+			
+			switch (buf.type) {
+				case VertexTexture: {
+					id<MTLTexture> texture = (__bridge id<MTLTexture>)buf.buffer;
+					[command_enc setVertexTexture: texture atIndex: index];
+					break;
+				}
+					
+				case FragmentTexture: {
+					id<MTLTexture> texture = (__bridge id<MTLTexture>)buf.buffer;
+					[command_enc setFragmentTexture: texture atIndex: index];
+					break;
+				}
+					
+				case VertexSampler: {
+					id<MTLSamplerState> state = (__bridge id<MTLSamplerState>)buf.buffer;
+					[command_enc setVertexSamplerState: state atIndex: index];
+					break;
+				}
+					
+				case FragmentSampler: {
+					id<MTLSamplerState> state = (__bridge id<MTLSamplerState>)buf.buffer;
+					[command_enc setFragmentSamplerState: state atIndex: index];
+					break;
+				}
+					
+				default:
+					if (buf.size <= NANOGUI_BUFFER_THRESHOLD && !indices) {
+						if (buf.type == VertexBuffer)
+							[command_enc setVertexBytes: buf.buffer
+												 length: buf.size
+												atIndex: buf.index];
+						else if (buf.type == FragmentBuffer)
+							[command_enc setFragmentBytes: buf.buffer
+												   length: buf.size
+												  atIndex: buf.index];
+						else
+							throw std::runtime_error("Shader::begin(): unexpected buffer type!");
+					} else {
+						id<MTLBuffer> buffer = (__bridge id<MTLBuffer>) buf.buffer;
+						if (buf.type == VertexBuffer)
+							[command_enc setVertexBuffer: buffer
+												  offset: 0
+												 atIndex: buf.index];
+						else if (buf.type == FragmentBuffer)
+							[command_enc setFragmentBuffer: buffer
+													offset: 0
+												   atIndex: buf.index];
+					}
+					break;
+			}
+		}
+	}
 	
 	// Process all queued buffers grouped by name
 	for (auto &[key, buffers] : m_queued_buffers) {
@@ -441,11 +521,13 @@ void Shader::begin() {
 }
 
 void Shader::end() {
-//	for (auto& indexed_buffer : m_queued_buffers) {
-//		for (auto& buf : indexed_buffer.second) {
-//			buf.second.buffer = nullptr;
-//		}
-//	}
+	for (auto& indexed_buffer : m_queued_buffers) {
+		for (auto& buf : indexed_buffer.second) {
+			buf.second.buffer = nullptr;
+		}
+	}
+	
+	m_queued_buffers.clear();
 }
 
 void Shader::draw_array(PrimitiveType primitive_type,
@@ -469,8 +551,15 @@ void Shader::draw_array(PrimitiveType primitive_type,
                         vertexStart: offset
                         vertexCount: count];
     } else {
-        id<MTLBuffer> index_buffer =
-		(__bridge id<MTLBuffer>) m_queued_buffers["indices"][-1].buffer;
+		id<MTLBuffer> index_buffer;
+		
+		if (m_persisted_buffers.find("indices") != m_persisted_buffers.end()) {
+			index_buffer = (__bridge id<MTLBuffer>) m_persisted_buffers["indices"][-1].buffer;
+
+		} else if(m_queued_buffers.find("indices") != m_queued_buffers.end()) {
+			assert(false && "index buffers, due to batching, can't be queued");
+		}
+		
         [command_enc drawIndexedPrimitives: primitive_type_mtl
                                 indexCount: count
                                  indexType: MTLIndexTypeUInt32

@@ -5,6 +5,7 @@
 #include <nanogui/label.h>
 #include <nanogui/layout.h>
 #include <nanogui/textbox.h>
+#include <nanogui/screen.h>
 #include <nanogui/window.h>
 
 #include "actors/Actor.hpp"

@@ -5,14 +5,11 @@
 ShaderWrapper::ShaderWrapper(nanogui::Shader& shader) : mShader(shader), mMetadata(std::hash<std::string>{}(shader.name()), shader.name())
  {}
 
-void ShaderWrapper::set_buffer(const std::string &name,
-		   nanogui::VariableType dtype,
-		   size_t ndim,
-		   const size_t *shape,
-		   const void *data,
-							   int index) {
-	mShader.set_buffer(name, dtype, ndim, shape, data, index);
+void ShaderWrapper::persist_buffer(const std::string &name, nanogui::VariableType type,
+							   std::initializer_list<size_t> shape, const void *data, int index) {
+	mShader.set_buffer(name, type, shape.end() - shape.begin(), shape.begin(), data, index, true);
 }
+
 
 void ShaderWrapper::set_buffer(const std::string &name, nanogui::VariableType type,
 							   std::initializer_list<size_t> shape, const void *data, int index) {
