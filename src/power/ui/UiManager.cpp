@@ -819,7 +819,7 @@ UiManager::UiManager(IActorSelectedRegistry& registry, IActorVisualManager& acto
 			auto offset = ScreenToWorld(glm::vec2(adjusted_dx, adjusted_dy), cameraPosition.z, projMatrix, viewMatrix, width, height);
 			
 			int id = readFromFramebuffer(width, height, x, y);
-			
+
 			if (id != 0 && !down) {
 				mGizmoManager->hover(GizmoManager::GizmoAxis(id));
 			} else if (id == 0 && !down){

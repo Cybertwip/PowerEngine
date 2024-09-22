@@ -27,6 +27,4 @@ private:
 	std::vector<std::function<void(int, int, int, int, int, int, int, bool)>> mMotionCallbacks;
 	
 	bool mDragging;
-	nanogui::Vector2i mDragPosition;
-
 };
