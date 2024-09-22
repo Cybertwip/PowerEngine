@@ -25,9 +25,29 @@ AnimationPanel::AnimationPanel(nanogui::Widget &parent)
 
 	mReversePlayButton = new nanogui::ToolButton(playbackPanel, FA_BACKWARD);
 	mReversePlayButton->set_tooltip("Reverse");
+	
+	mReversePlayButton->set_change_callback([this](bool active){
+		if (mActiveActor.has_value()) {
+			auto& animation = mActiveActor->get().get_component<SkinnedAnimationComponent>();
+			
+			animation.set_reverse(true);
+			animation.set_playing(active);
+		}
+	});
+
 
 	mPlayPauseButton = new nanogui::ToolButton(playbackPanel, FA_FORWARD);
 	mPlayPauseButton->set_tooltip("Play");
+	
+	mPlayPauseButton->set_change_callback([this](bool active){
+		if (mActiveActor.has_value()) {
+			auto& animation = mActiveActor->get().get_component<SkinnedAnimationComponent>();
+			
+			animation.set_reverse(false);
+			animation.set_playing(active);
+		}
+	});
+	
 	set_active_actor(std::nullopt);
 }
 

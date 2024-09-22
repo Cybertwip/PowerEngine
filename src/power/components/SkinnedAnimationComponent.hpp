@@ -34,7 +34,7 @@ public:
 	
 public:
 	SkinnedAnimationComponent(SkinnedAnimationPdo& animationPdo)
-	: mSkeleton(animationPdo.mSkeleton.get()), mCurrentTime(0)
+	: mSkeleton(animationPdo.mSkeleton.get()), mCurrentTime(0), mReverse(false), mPlaying(false)
 	{
 		for (auto& animation : animationPdo.mAnimationData) {
 			mAnimationData.push_back(animation);
@@ -45,49 +45,62 @@ public:
 		mModelPose.resize(numBones);
 	}
 	
+	void set_reverse(bool reverse) {
+		mReverse = reverse;
+	}
+
+	void set_playing(bool playing) {
+		mPlaying = playing;
+	}
+
 	void apply_to(ShaderWrapper& shader) {
-		// Update the animation (you should pass the actual delta time)
-		update(1);
-		
+		if (mPlaying) {
+			update(1);
+		} else {
+			Skeleton& skeleton = mSkeleton.get();
+			skeleton.compute_offsets({});
+		}
+
 #if defined(NANOGUI_USE_METAL)
-		// Ensure we have a valid number of bones
-		size_t numBones = mSkeleton.get().num_bones();
-		
-		std::vector<BoneCPU> bonesCPU(numBones);
-		
-		for (size_t i = 0; i < numBones; ++i) {
-			// Get the bone transform as a glm::mat4
-			glm::mat4 boneTransform = mSkeleton.get().get_bone(i).transform;
+			// Ensure we have a valid number of bones
+			size_t numBones = mSkeleton.get().num_bones();
 			
-			// Reference to the BoneCPU structure
-			BoneCPU& boneCPU = bonesCPU[i];
+			std::vector<BoneCPU> bonesCPU(numBones);
 			
-			// Copy each element from glm::mat4 to the BoneCPU's transform array
-			for (int row = 0; row < 4; ++row) {
-				for (int col = 0; col < 4; ++col) {
-					boneCPU.transform[row][col] = boneTransform[row][col];
+			for (size_t i = 0; i < numBones; ++i) {
+				// Get the bone transform as a glm::mat4
+				glm::mat4 boneTransform = mSkeleton.get().get_bone(i).transform;
+				
+				// Reference to the BoneCPU structure
+				BoneCPU& boneCPU = bonesCPU[i];
+				
+				// Copy each element from glm::mat4 to the BoneCPU's transform array
+				for (int row = 0; row < 4; ++row) {
+					for (int col = 0; col < 4; ++col) {
+						boneCPU.transform[row][col] = boneTransform[row][col];
+					}
 				}
 			}
-		}
-		
-		shader.set_buffer(
-						  "bones",
-						  nanogui::VariableType::Float32,
-						  {numBones, sizeof(BoneCPU) / sizeof(float)},
-						  bonesCPU.data()
-						  );
+			
+			shader.set_buffer(
+							  "bones",
+							  nanogui::VariableType::Float32,
+							  {numBones, sizeof(BoneCPU) / sizeof(float)},
+							  bonesCPU.data()
+							  );
 #else
-		// OpenGL or other rendering API code to upload bone transforms
-		// For example, using a uniform array of matrices
-		size_t numBones = mSkeleton.get().num_bones();
-		std::vector<glm::mat4> boneTransforms(numBones);
-		for (size_t i = 0; i < numBones; ++i) {
-			boneTransforms[i] = mSkeleton.get().get_bone(i).transform * boneTransforms[i] = mSkeleton.get().get_bone(i).offset;
-		}
-		
-		// Upload the boneTransforms to the shader
-		shader.set_uniform("bones", boneTransforms);
+			// OpenGL or other rendering API code to upload bone transforms
+			// For example, using a uniform array of matrices
+			size_t numBones = mSkeleton.get().num_bones();
+			std::vector<glm::mat4> boneTransforms(numBones);
+			for (size_t i = 0; i < numBones; ++i) {
+				boneTransforms[i] = mSkeleton.get().get_bone(i).transform * boneTransforms[i] = mSkeleton.get().get_bone(i).offset;
+			}
+			
+			// Upload the boneTransforms to the shader
+			shader.set_uniform("bones", boneTransforms);
 #endif
+
 	}
 
 	// Function to update the animation time
@@ -101,8 +114,11 @@ public:
 		int duration = animation.get_duration();
 		
 		// Update current time and wrap around if necessary
-		// Update current time and wrap around if necessary
-		mCurrentTime += deltaTime;
+		if (mReverse) {
+			mCurrentTime -= deltaTime;
+		} else {
+			mCurrentTime += deltaTime;
+		}
 		
 		if (mCurrentTime <= 0) {
 			// Wrap around if time is negative
@@ -137,7 +153,9 @@ private:
 	std::vector<std::reference_wrapper<Animation>> mAnimationData;
 	
 	int mCurrentTime; // Current animation time
-	
+	bool mReverse; // Current animation time
+	bool mPlaying; // Current animation time
+
 	// Buffers to store poses
 	std::vector<glm::mat4> mModelPose;
 };
