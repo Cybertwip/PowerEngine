@@ -1,5 +1,6 @@
 #include "SkinnedMeshComponent.hpp"
 
+#include "animation/Skeleton.hpp"
 #include "graphics/drawing/SkinnedMesh.hpp"
 #include "import/SkinnedFbx.hpp"
 
