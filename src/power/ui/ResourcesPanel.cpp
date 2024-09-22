@@ -112,10 +112,11 @@ public:
 		mDropCallback = cb;
 	}
 	
-	virtual bool mouse_button_event(const nanogui::Vector2i &p, int button, bool down, int modifiers) override {
-		nanogui::Button::mouse_button_event(p, button, down, modifiers);
+	bool mouse_drag_event(const nanogui::Vector2i &p, const nanogui::Vector2i &rel, int button, int modifiers) override {
 		
-		if (button == GLFW_MOUSE_BUTTON_LEFT && down) {
+		nanogui::Button::mouse_drag_event(p, rel, button, modifiers);
+		
+		if (button == GLFW_MOUSE_BUTTON_LEFT) {
 			mDragStartPosition = absolute_position();
 			mIsDragging = true;
 			// Create drag widget (e.g., an icon or label to follow the cursor)
@@ -124,26 +125,34 @@ public:
 			mDragWidget->set_position(mDragStartPosition);
 			
 			mDragWidget->set_layout(new nanogui::BoxLayout(nanogui::Orientation::Horizontal,
-				 nanogui::Alignment::Fill, 10, 10));
+														   nanogui::Alignment::Fill, 10, 10));
 			
 			auto content = new nanogui::TextBox(mDragWidget, m_caption);
-
+			
 			content->set_font_size(16);
 			content->set_background_color(nanogui::Color(0, 0, 0, 255));
 			
-
+			
 			mDragWidget->set_size(fixed_size());
-
+			
 			mContent = content;
-
+			
 			mContent->set_fixed_size(fixed_size() - 20);
 			
 			screen()->set_drag_widget(mDragWidget);
-
+			
 			mDragWidget->perform_layout(screen()->nvg_context());
-						
+			
 			return true;
-		} else if (button == GLFW_MOUSE_BUTTON_LEFT && !down) {
+		}
+		return false;
+	}
+	
+
+	bool mouse_button_event(const nanogui::Vector2i &p, int button, bool down, int modifiers) override {
+		nanogui::Button::mouse_button_event(p, button, down, modifiers);
+		
+		if (button == GLFW_MOUSE_BUTTON_LEFT && !down) {
 			if (mIsDragging) {
 				mIsDragging = false;
 				// Remove drag widget
