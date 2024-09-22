@@ -51,8 +51,8 @@ public:
 		
 		m_draggable_window->set_fixed_width(0);
 		m_draggable_window->set_fixed_height(0);
-		
-		m_draggable_window->set_visible(false);
+				
+		set_drag_widget(nullptr);
 	}
 	
 protected:
