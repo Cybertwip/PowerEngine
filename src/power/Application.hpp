@@ -58,7 +58,7 @@ public:
 	void set_drag_widget(Widget *widget) override {
 		if(widget == nullptr){
 			m_drag_active = false;
-			m_drag_widget->set_visible(false);
+			m_draggable_window->set_visible(false);
 			m_drag_widget = nullptr;
 		} else {
 			m_drag_widget = m_draggable_window;
