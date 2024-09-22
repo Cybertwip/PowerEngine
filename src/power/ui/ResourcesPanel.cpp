@@ -250,7 +250,7 @@ void ResourcesPanel::refresh_file_view() {
 				
 				drag_widget->set_size(fixed_size());
 				
-				screen()->set_drag_widget(drag_widget, [content, drag_widget, event_owner = this, file_path = mFilePath, screen = screen()](){
+				screen()->set_drag_widget(drag_widget, [content, drag_widget, event_owner = this, screen = screen()](){
 					
 					// Remove drag widget
 					drag_widget->remove_child(content);
