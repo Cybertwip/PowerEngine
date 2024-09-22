@@ -105,7 +105,7 @@ const DirectoryNode* FindNodeByPath(const DirectoryNode& currentNode, const std:
 class DraggableButton : public nanogui::Button {
 public:
 	DraggableButton(Widget *parent, const std::string &caption = "", int icon = 0, const std::string &filePath = "")
-	: nanogui::Button(parent, caption, icon), mIsDragging(false), mDragWidget(nullptr), mFilePath(filePath) {
+	: nanogui::Button(parent, caption, icon), mIsDragging(false), mIsDragCommitted(true), mDragWidget(nullptr), mFilePath(filePath) {
 	}
 	
 	void set_drop_callback(const std::function<void(const nanogui::Vector2i &pos, const std::string &filePath)> &cb) {
