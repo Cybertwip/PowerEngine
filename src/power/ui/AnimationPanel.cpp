@@ -38,7 +38,7 @@ AnimationPanel::~AnimationPanel() {
 void AnimationPanel::set_active_actor(std::optional<std::reference_wrapper<Actor>> actor) {
 
 	if (actor.has_value()) {
-		if (actor.get().find_component<SkinnedAnimationComponent>()) {
+		if (actor->get().find_component<SkinnedAnimationComponent>()) {
 			mActiveActor = actor;
 			
 			if (mActiveActor.has_value()) {
