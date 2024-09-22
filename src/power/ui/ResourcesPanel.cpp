@@ -241,7 +241,6 @@ void ResourcesPanel::refresh_file_view() {
 				auto drag_widget = screen()->drag_widget();
 				
 				auto content = new nanogui::TextBox(drag_widget, m_caption);
-				auto event_owner = mEventOwner;
 				
 				content->set_font_size(16);
 				content->set_background_color(nanogui::Color(0, 0, 0, 255));
