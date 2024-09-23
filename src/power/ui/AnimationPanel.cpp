@@ -83,6 +83,9 @@ void AnimationPanel::parse_file(const std::string& path) {
 			
 			
 			skinnedComponent.set_pdo(std::move(pdo));
+			
+			mPlayPauseButton->set_pushed(false);
+			mReversePlayButton->set_pushed(false);
 		}
 	}
 	
@@ -98,6 +101,10 @@ void AnimationPanel::set_active_actor(std::optional<std::reference_wrapper<Actor
 			
 			set_visible(true);
 			parent()->perform_layout(screen()->nvg_context());
+			
+			mPlayPauseButton->set_pushed(false);
+			mReversePlayButton->set_pushed(false);
+
 		} else {
 			set_visible(false);
 			parent()->perform_layout(screen()->nvg_context());

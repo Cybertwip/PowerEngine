@@ -217,18 +217,31 @@ public:
     void set_cursor(Cursor cursor) { m_cursor = cursor; }
 
     /// Check if the widget contains a certain position
-    bool contains(const Vector2i &p, bool absolute = false) const {
+	bool contains(const Vector2i &p, bool absolute = false) const {
+		// Check current widget
 		if (absolute) {
 			auto pos = absolute_position();
 			Vector2i d = p - pos;
-			return d.x() >= 0 && d.y() >= 0 &&
-			d.x() < m_size.x() && d.y() < m_size.y();
+			if (d.x() >= 0 && d.y() >= 0 && d.x() < m_size.x() && d.y() < m_size.y()) {
+				return true;
+			}
 		} else {
 			Vector2i d = p - m_pos;
-			return d.x() >= 0 && d.y() >= 0 &&
-			d.x() < m_size.x() && d.y() < m_size.y();
+			if (d.x() >= 0 && d.y() >= 0 && d.x() < m_size.x() && d.y() < m_size.y()) {
+				return true;
+			}
 		}
-    }
+		
+		// Check children widgets
+		for (const auto& child : m_children) {
+			if (child->contains(p, absolute)) {
+				return true;
+			}
+		}
+		
+		// Neither the widget nor its children contain the point
+		return false;
+	}
 
     /// Determine the widget located at the given position value (recursive)
     Widget *find_widget(const Vector2i &p, bool absolute = false);
