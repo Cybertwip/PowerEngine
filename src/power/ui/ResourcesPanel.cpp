@@ -231,7 +231,7 @@ void ResourcesPanel::refresh_file_view() {
 						
 						auto drag_widget = screen()->drag_widget();
 						
-						auto content = new nanogui::Button(drag_widget, "", nanogui::utf8(FA_PERSON_BOOTH).data());
+						auto content = new nanogui::Button(drag_widget, "", FA_PERSON_BOOTH);
 						
 						content->set_font_size(16);
 						content->set_background_color(mNormalButtonColor);
