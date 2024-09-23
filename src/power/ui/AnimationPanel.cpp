@@ -58,7 +58,7 @@ private:
 	void append(std::reference_wrapper<SkinnedMesh> meshRef) {
 		auto& mesh = meshRef.get();
 		
-		auto& shader = mesh.get_shader();
+		auto& shader = mSkinnedMeshPreviewShader;
 		int identifier = shader.identifier();
 		auto& indexer = mVertexIndexingMap[identifier];
 		
@@ -118,8 +118,8 @@ private:
 		glStencilMask(0xFF);  // Enable writing to the stencil buffer
 #endif
 		
-		for (auto& [shader_pointer, mesh_vector] : mMeshes) {
-			auto& shader = *shader_pointer;
+		for (auto& [_, mesh_vector] : mMeshes) {
+			auto& shader = mSkinnedMeshPreviewShader;
 			int identifier = shader.identifier();
 			
 			render_pass()->pop_depth_test_state(identifier);
@@ -127,7 +127,7 @@ private:
 			for (int i = 0; i<mesh_vector.size(); ++i) {
 				auto& mesh = mesh_vector[i].get();
 				
-				auto& shader = mesh.get_shader();
+				auto& shader = mSkinnedMeshPreviewShader;
 				
 				// Set uniforms and draw the mesh content
 				shader.set_uniform("aView", view);

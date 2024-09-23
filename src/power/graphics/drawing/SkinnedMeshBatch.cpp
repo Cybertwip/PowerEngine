@@ -248,7 +248,7 @@ void SkinnedMeshBatch::draw_content(const nanogui::Matrix4f& view,
 							  "bones",
 							  nanogui::VariableType::Float32,
 							  {bones.size(), sizeof(SkinnedAnimationComponent::BoneCPU) / sizeof(float)},
-							  bones.data(), 11);
+							  bones.data());
 			// Apply color component (assuming it sets relevant uniforms)
 			mesh.get_color_component().apply_to(shader);
 			
