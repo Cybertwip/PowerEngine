@@ -125,9 +125,10 @@ public:
 		size_t numBones = mSkeleton.get().num_bones();
 		mModelPose.resize(numBones);
 		
-		const Animation& animation = mAnimationData[0].get();
+		std::fill(mModelPose.begin(), mModelPose.end(), glm::identity<glm::mat4>());
+		std::fill(mEmptyPose.begin(), mEmptyPose.end(), glm::identity<glm::mat4>());
 
-		evaluate_animation(animation, mCurrentTime); // initial evaluation
+		apply_pose_to_skeleton();
 	}
 	
 	// Add a keyframe to the animation
@@ -170,34 +171,47 @@ public:
 	}
 	
 	// Evaluate the playback state at a given time
-	PlaybackState evaluate(float time) const {
+	PlaybackState evaluate(float time) {
 		if (keyframes_.empty()) {
 			return PlaybackState::Pause; // Default state if no keyframes
 		}
 		
-		// Clamp time to the bounds of the keyframes
+		// If time is before the first keyframe
 		if (time <= keyframes_.front().time) {
+			// Set the model pose to the first keyframe's pose
+			apply_pose_to_skeleton(mEmptyPose);
+
 			return keyframes_.front().getPlaybackState();
 		}
+		
+		// If time is after the last keyframe
 		if (time >= keyframes_.back().time) {
+			// Set the model pose to the last keyframe's pose
+			apply_pose_to_skeleton(mEmptyPose);
+			
 			return keyframes_.back().getPlaybackState();
 		}
 		
-		// Find the two keyframes surrounding the given time
+		// Find the first keyframe with time >= given time
 		auto it = std::lower_bound(keyframes_.begin(), keyframes_.end(), time,
 								   [](const Keyframe& kf, float t) {
 			return kf.time < t;
 		});
 		
-		const Keyframe& next = *it;
-		const Keyframe& prev = *(it - 1);
+		if (it != keyframes_.end()) {
+			if (it->time == time) {
+				return it->getPlaybackState();
+			} else if (it != keyframes_.begin()) {
+				// No exact match; use the closest keyframe to the left
+				const Keyframe& current = *(it - 1);
+				return current.getPlaybackState();
+			}
+		}
 		
-		// Compute interpolation factor (if needed for continuous properties)
-		float factor = (time - prev.time) / (next.time - prev.time);
-		
-		// For discrete properties like PlaybackState, choose based on factor
-		return (factor < 0.5f) ? prev.getPlaybackState() : next.getPlaybackState();
+		// Fallback (should not reach here if bounds are respected)
+		return PlaybackState::Pause;
 	}
+
 	
 	// Check if the current time corresponds to an exact keyframe
 	bool is_keyframe(float time) const {
@@ -239,6 +253,8 @@ public:
 		const Animation& animation = mAnimationData[0].get();
 		float duration = static_cast<float>(animation.get_duration());
 		
+		mCurrentTime = deltaTime;
+		
 		// Evaluate the playback state at the current time
 		PlaybackState currentState = evaluate(mCurrentTime);
 		
@@ -263,7 +279,7 @@ public:
 		}
 		
 		// Update current time based on playback direction
-		mCurrentTime += deltaTime * (reverse ? -1.0f : 1.0f);
+		mCurrentTime += (deltaTime - mCurrentTime) * (reverse ? -1.0f : 1.0f);
 		
 		// Wrap current time within the duration
 		if (mCurrentTime < 0.0f) mCurrentTime += duration;
@@ -288,8 +304,6 @@ public:
 	
 	// Retrieve the bones for rendering
 	std::vector<BoneCPU> get_bones() {
-		update(1);
-		
 		// Ensure we have a valid number of bones
 		size_t numBones = mSkeleton.get().num_bones();
 		
@@ -348,6 +362,9 @@ public:
 				}
 			}
 		}
+		
+		apply_pose_to_skeleton(); // return default pose
+
 		return bonesCPU;
 		
 	}
@@ -440,7 +457,8 @@ private:
 	
 	// Buffers to store poses
 	std::vector<glm::mat4> mModelPose;
-	
+	std::vector<glm::mat4> mEmptyPose;
+
 	// Keyframes for playback control
 	std::vector<Keyframe> keyframes_;
 };

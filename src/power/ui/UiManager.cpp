@@ -247,7 +247,7 @@ public:
 		mRecordBtn->set_fixed_width(buttonWidth);
 		mRecordBtn->set_fixed_height(buttonHeight);
 		mRecordBtn->set_tooltip("Record");
-
+		
 		auto normalRecordColor = mRecordBtn->text_color();
 		
 		mRecordBtn->set_change_callback([this, normalRecordColor](bool active) {
@@ -376,13 +376,13 @@ public:
 			bool wasUncommitted = mUncommittedKey;
 			
 			stop_playback();
-
+			
 			if (mActiveActor.has_value()) {
 				if (!mPlaying) {
 					auto& transformComponent = mActiveActor->get().get_component<TransformComponent>();
 					
 					auto& animationComponent = mActiveActor->get().get_component<AnimationComponent>();
-
+					
 					if (wasUncommitted){
 						mUncommittedKey = false;
 						animationComponent.updateKeyframe(mCurrentTime, transformComponent.get_translation(), transformComponent.get_rotation(), transformComponent.get_scale());
@@ -396,21 +396,21 @@ public:
 						auto& skinnedAnimationComponent = mActiveActor->get().get_component<SkinnedAnimationComponent>();
 						
 						auto& playback = mActiveActor->get().get_component<PlaybackComponent>();
-
+						
 						
 						auto state = playback.get_state();
 						
 						if (wasUncommitted){
 							mUncommittedKey = false;
-							skinnedAnimationComponent.updateKeyframe(mCurrentTime, playback.getPlaybackState(), playback.getPlaybackModifier(), playback.getPlaybackTrigger());
+							skinnedAnimationComponent.updateKeyframe(mCurrentTime, state.getPlaybackState(), state.getPlaybackModifier(), state.getPlaybackTrigger());
 						} else if (skinnedAnimationComponent.is_keyframe(mCurrentTime)) {
 							skinnedAnimationComponent.removeKeyframe(mCurrentTime);
 						} else {
-							skinnedAnimationComponent.addKeyframe(mCurrentTime, playback.getPlaybackState(), playback.getPlaybackModifier(), playback.getPlaybackTrigger());
+							skinnedAnimationComponent.addKeyframe(mCurrentTime, state.getPlaybackState(), state.getPlaybackModifier(), state.getPlaybackTrigger());
 						}
 					}
-
-
+					
+					
 				}
 				
 				verify_previous_next_keyframes(mActiveActor);
@@ -523,14 +523,14 @@ public:
 		
 		verify_previous_next_keyframes(mActiveActor);
 	}
-
+	
 	void register_actor_callbacks(std::optional<std::reference_wrapper<Actor>> actor) {
 		
 		if(mTransformRegistrationId != -1) {
 			mRegisteredTransformComponent->get()
 				.unregister_on_transform_changed_callback(mTransformRegistrationId);
 		}
-
+		
 		if(mPlaybackRegistrationId != -1) {
 			mRegisteredPlaybackComponent->get()
 				.unregister_on_playback_changed_callback(mPlaybackRegistrationId);
@@ -538,7 +538,7 @@ public:
 		
 		if (actor != std::nullopt) {
 			mRegisteredTransformComponent = actor->get().get_component<TransformComponent>();
-
+			
 			auto& animationComponent = actor->get().get_component<AnimationComponent>();
 			
 			mTransformRegistrationId = mRegisteredTransformComponent->get().register_on_transform_changed_callback([this, &animationComponent](const TransformComponent& transform) {
@@ -612,6 +612,7 @@ public:
 			}
 			
 			evaluate_animations();
+			
 		}
 		
 		evaluate_keyframe_status();
@@ -686,6 +687,13 @@ private:
 				transformComponent.set_rotation(r);
 				transformComponent.set_scale(s);
 			}
+			
+			if (animatableActor.get().find_component<SkinnedAnimationComponent>()) {
+				auto& skinnedAnimationComponent = animatableActor.get().get_component<SkinnedAnimationComponent>();
+				
+				skinnedAnimationComponent.update(mCurrentTime);
+			}
+
 		}
 	}
 	
@@ -763,7 +771,7 @@ private:
 		// Enable or disable the Next Keyframe button
 		mNextKeyBtn->set_enabled(hasNextKeyframe);
 	}
-
+	
 private:
 	ActorManager& mActorManager;
 	nanogui::TextBox* mTimeLabel;
@@ -839,7 +847,7 @@ UiManager::UiManager(IActorSelectedRegistry& registry, IActorVisualManager& acto
 		// Scale x and y accordingly
 		adjusted_x *= scaleX;
 		adjusted_y *= scaleY;
-
+		
 		
 		int image_width = 2;
 		int image_height = 2;
@@ -964,7 +972,7 @@ UiManager::UiManager(IActorSelectedRegistry& registry, IActorVisualManager& acto
 			auto offset = ScreenToWorld(glm::vec2(adjusted_dx, adjusted_dy), cameraPosition.z, projMatrix, viewMatrix, width, height);
 			
 			int id = readFromFramebuffer(width, height, x, y);
-
+			
 			if (id != 0 && !down) {
 				mGizmoManager->hover(GizmoManager::GizmoAxis(id));
 			} else if (id == 0 && !down){
@@ -982,7 +990,7 @@ UiManager::UiManager(IActorSelectedRegistry& registry, IActorVisualManager& acto
 	mStatusBarPanel->set_fixed_width(statusBar.fixed_height());
 	mStatusBarPanel->set_fixed_height(statusBar.fixed_height());
 	mStatusBarPanel->set_layout(new nanogui::BoxLayout(nanogui::Orientation::Horizontal,
-													  nanogui::Alignment::Minimum, 4, 2));
+													   nanogui::Alignment::Minimum, 4, 2));
 	
 	mSelectionColor = glm::vec4(0.83f, 0.68f, 0.21f, 1.0f); // A gold-ish color
 	
@@ -1020,23 +1028,23 @@ void UiManager::draw() {
 	
 	mCanvas.render_pass()->push_depth_test_state(nanogui::RenderPass::DepthTest::Always, true, mShaderManager.identifier("gizmo"));
 	mCanvas.render_pass()->push_depth_test_state(nanogui::RenderPass::DepthTest::Always, true, mShaderManager.identifier("gizmo"));
-
+	
 	// Draw gizmos
 	mGizmoManager->draw();
 	
 	// One for each batch
 	mCanvas.render_pass()->push_depth_test_state(nanogui::RenderPass::DepthTest::Less, true, mShaderManager.identifier("mesh"));
-
+	
 	mCanvas.render_pass()->push_depth_test_state(nanogui::RenderPass::DepthTest::Less, true, mShaderManager.identifier("skinned_mesh"));
-
+	
 	auto& batch_unit = mMeshActorLoader.get_batch_unit();
-
+	
 	mActorManager.visit(batch_unit.mMeshBatch);
 	
 	mActorManager.visit(batch_unit.mSkinnedMeshBatch);
-
+	
 	mCanvas.render_pass()->set_depth_test(nanogui::RenderPass::DepthTest::Less, true);
-
+	
 	mActorManager.visit(*this);
 }
 

@@ -476,8 +476,21 @@ void AnimationPanel::set_active_actor(std::optional<std::reference_wrapper<Actor
 		if (mActiveActor->get().find_component<SkinnedAnimationComponent>()) {
 			set_visible(true);
 			parent()->perform_layout(screen()->nvg_context());
-			mPlayPauseButton->set_pushed(false);
-			mReversePlayButton->set_pushed(false);
+
+			auto& playback = mActiveActor->get().get_component<PlaybackComponent>();
+			
+			auto state = playback.get_state();
+			
+			if (state.getPlaybackState() == SkinnedAnimationComponent::PlaybackState::Pause) {
+				mPlayPauseButton->set_pushed(false);
+				mReversePlayButton->set_pushed(false);
+			} else if (state.getPlaybackState() == SkinnedAnimationComponent::PlaybackState::Play && state.getPlaybackModifier() == SkinnedAnimationComponent::PlaybackModifier::Forward) {
+				mPlayPauseButton->set_pushed(true);
+				mReversePlayButton->set_pushed(false);
+			} else if (state.getPlaybackState() == SkinnedAnimationComponent::PlaybackState::Play && state.getPlaybackModifier() == SkinnedAnimationComponent::PlaybackModifier::Reverse) {
+				mPlayPauseButton->set_pushed(false);
+				mReversePlayButton->set_pushed(true);
+			}
 			
 		} else {
 			set_visible(false);
