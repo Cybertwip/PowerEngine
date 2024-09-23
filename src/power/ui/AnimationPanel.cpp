@@ -213,14 +213,15 @@ private:
 				auto& cameraTransform = mCamera.get_component<TransformComponent>();
 				
 
+				center.y = -center.y;
+				
 				cameraTransform.set_translation(center + glm::vec3(0.0f, 0.0f, distance));
 				camera.look_at(mPreviewActor->get());
 			}
-
 			
 			render_pass()->clear_color(0, background_color());
-			render_pass()->clear_color(1, nanogui::Color(0.0f, 0.0f, 0.0f, 0.0f));
 			render_pass()->clear_depth(1.0f);
+			render_pass()->set_depth_test(nanogui::RenderPass::DepthTest::Less, true);
 
 			draw_content(camera.get_view(),
 						 camera.get_projection());
