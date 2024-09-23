@@ -217,7 +217,7 @@ public:
     void set_cursor(Cursor cursor) { m_cursor = cursor; }
 
     /// Check if the widget contains a certain position
-	bool contains(const Vector2i &p, bool absolute = false bool recursive = false) const {
+	bool contains(const Vector2i &p, bool absolute = false, bool recursive = false) const {
 		// Check current widget
 		if (absolute) {
 			auto pos = absolute_position();
