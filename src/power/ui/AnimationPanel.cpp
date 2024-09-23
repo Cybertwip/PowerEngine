@@ -42,7 +42,7 @@ public:
 		if (mPreviewActor.has_value()) {
 			if (mPreviewActor->get().find_component<SkinnedAnimationComponent>()) {
 				
-				auto& meshComponent = mPreviewActor->get().get_component<SkinnedMeshComponent>();
+				auto& meshComponent = dynamic_cast<SkinnedMeshComponent&>(mPreviewActor->get().get_component<DrawableComponent>());
 				
 				for (auto& skinnedData : meshComponent.get_skinned_mesh_data()) {
 					append(*skinnedData);
