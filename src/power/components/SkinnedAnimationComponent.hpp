@@ -58,7 +58,7 @@ public:
 		
 		mAnimationData.clear();
 		
-		for (auto& animation : animationPdo->mAnimationData) {
+		for (auto& animation : mAnimationPdo->mAnimationData) {
 			mAnimationData.push_back(animation);
 		}
 

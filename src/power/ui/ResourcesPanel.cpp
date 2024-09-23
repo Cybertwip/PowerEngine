@@ -219,48 +219,46 @@ void ResourcesPanel::refresh_file_view() {
 				
 				icon->set_background_color(mNormalButtonColor);
 				
-				
-				auto drag_callback = [this, icon, element = get_icon_for_file(*child), child](){
-					
-					if (element != FA_PERSON_BOOTH) {
-						return;
-					}
-					
-					auto drag_widget = screen()->drag_widget();
-					
-					auto content = new nanogui::TextBox(drag_widget, "");
-					
-					content->set_font_size(16);
-					content->set_background_color(nanogui::Color(0, 0, 0, 255));
-					
-					content->set_fixed_size(icon->fixed_size() - 20);
-					
-					drag_widget->set_size(icon->fixed_size());
-
-					auto dragStartPosition = icon->absolute_position();
-
-					drag_widget->set_position(dragStartPosition);
-					drag_widget->perform_layout(screen()->nvg_context());
-
-					screen()->set_drag_widget(drag_widget, [this, content, drag_widget, child](){
-						
-						// Remove drag widget
-						drag_widget->remove_child(content);
-						
-						screen()->set_drag_widget(nullptr, nullptr);
-						
-						screen()->drop_event(this, { child->FullPath });
-					});
-				};
-				
 				auto name = new nanogui::Label(itemContainer, child->FileName);
 				name->set_fixed_width(120);
 				
 				mFileButtons.push_back(icon);
+				
 
-				icon->set_callback([this, drag_callback, &child, icon]() {
-					drag_callback();
-					
+				icon->set_callback([this, icon, child]() {
+
+					if (get_icon_for_file(*child) == FA_PERSON_BOOTH) {
+						
+						auto drag_widget = screen()->drag_widget();
+						
+						auto content = new nanogui::TextBox(drag_widget, "");
+						
+						content->set_font_size(16);
+						content->set_background_color(nanogui::Color(0, 0, 0, 255));
+						
+						content->set_fixed_size(icon->fixed_size() - 20);
+						
+						drag_widget->set_size(icon->fixed_size());
+						
+						auto dragStartPosition = icon->absolute_position();
+						
+						drag_widget->set_position(dragStartPosition);
+						drag_widget->perform_layout(screen()->nvg_context());
+						
+						screen()->set_drag_widget(drag_widget, [this, content, drag_widget, child](){
+							
+							auto path = child->FullPath;
+
+							// Remove drag widget
+							drag_widget->remove_child(content);
+							
+							screen()->set_drag_widget(nullptr, nullptr);
+							
+							std::vector<std::string> path_vector = { path };
+							
+							screen()->drop_event(this, path_vector);
+						});
+					}
 					// Handle selection
 					if (mSelectedButton && mSelectedButton != icon) {
 						mSelectedButton->set_background_color(mNormalButtonColor);
@@ -269,7 +267,7 @@ void ResourcesPanel::refresh_file_view() {
 					icon->set_background_color(mSelectedButtonColor);
 					
 					// Store the selected node for later use
-					mSelectedNode = child.get();
+					mSelectedNode = child;
 					
 					// Handle double-click for action
 					static std::chrono::time_point<std::chrono::high_resolution_clock> lastClickTime = std::chrono::time_point<std::chrono::high_resolution_clock>::min();

@@ -55,7 +55,7 @@ private:
 
 	std::vector<nanogui::Button*> mFileButtons;
 	nanogui::Button* mSelectedButton;
-	DirectoryNode* mSelectedNode;
+	std::shared_ptr<DirectoryNode> mSelectedNode;
 	nanogui::Color mNormalButtonColor;
 	nanogui::Color mSelectedButtonColor;
 
