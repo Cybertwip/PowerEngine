@@ -36,7 +36,7 @@ public:
 
 	void set_active_actor(std::optional<std::reference_wrapper<Actor>> actor) {
 		clear();
-		
+		mCurrentTime = 0;
 		mPreviewActor = actor;
 		
 		if (mPreviewActor.has_value()) {
