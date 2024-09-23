@@ -10,6 +10,7 @@
 #include "ShaderManager.hpp"
 
 #include "actors/Actor.hpp"
+#include "components/DrawableComponent.hpp"
 #include "components/SkinnedAnimationComponent.hpp"
 #include "components/SkinnedMeshComponent.hpp"
 #include "components/TransformComponent.hpp"
