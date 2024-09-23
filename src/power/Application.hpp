@@ -222,7 +222,9 @@ class Application : public nanogui::DraggableScreen
 	std::unique_ptr<SkinnedMeshBatch> mSkinnedMeshBatch;
 
 	std::unique_ptr<BatchUnit> mBatchUnit;
-
+	
+	std::unique_ptr<ShaderWrapper> mMeshShader;
+	std::unique_ptr<ShaderWrapper> mSkinnedShader;
 
 	std::queue<std::tuple<bool, int, int, int, int>> mClickQueue;
 	std::vector<std::function<void(bool, int, int, int, int)>> mClickCallbacks;

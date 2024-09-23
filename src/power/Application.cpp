@@ -63,6 +63,9 @@ Application::Application() : nanogui::DraggableScreen("Power Engine") {
 	mSkinnedMeshBatch = std::make_unique<SkinnedMeshBatch>(*mRenderCommon->canvas().render_pass());
 
 	mBatchUnit = std::make_unique<BatchUnit>(*mMeshBatch, *mSkinnedMeshBatch);
+	
+	mMeshShader = std::make_unique<ShaderWrapper>(*mRenderCommon->shader_manager().get_shader("mesh"));
+	mSkinnedShader = std::make_unique<ShaderWrapper>(*mRenderCommon->shader_manager().get_shader("skinned_mesh"));
 
 	mMeshActorLoader = std::make_unique<MeshActorLoader>(*mActorManager, mRenderCommon->shader_manager(), *mBatchUnit);
 
@@ -148,6 +151,10 @@ bool Application::drop_event(nanogui::Widget* sender, const std::vector<std::str
 
 		if (mUiCommon->animation_panel().contains(m_mouse_pos, true, true)) {
 			mUiCommon->animation_panel().parse_file(filenames[0]);
+		}
+
+		if (mRenderCommon->canvas().contains(m_mouse_pos, true, true)) {
+			mUiCommon->hierarchy_panel().add_actor(mMeshActorLoader->create_actor(filenames[0], *mMeshShader, *mSkinnedShader));
 		}
 	}
 }
