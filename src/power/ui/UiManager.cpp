@@ -382,7 +382,7 @@ public:
 					auto& transformComponent = mActiveActor->get().get_component<TransformComponent>();
 					
 					auto& animationComponent = mActiveActor->get().get_component<AnimationComponent>();
-					
+
 					if (wasUncommitted){
 						mUncommittedKey = false;
 						animationComponent.updateKeyframe(mCurrentTime, transformComponent.get_translation(), transformComponent.get_rotation(), transformComponent.get_scale());
@@ -392,6 +392,25 @@ public:
 						animationComponent.addKeyframe(mCurrentTime, transformComponent.get_translation(), transformComponent.get_rotation(), transformComponent.get_scale());
 					}
 					
+					if (mActiveActor->get().find_component<SkinnedAnimationComponent>()){
+						auto& skinnedAnimationComponent = mActiveActor->get().get_component<SkinnedAnimationComponent>();
+						
+						auto& playback = mActiveActor->get().get_component<PlaybackComponent>();
+
+						
+						auto state = playback.get_state();
+						
+						if (wasUncommitted){
+							mUncommittedKey = false;
+							skinnedAnimationComponent.updateKeyframe(mCurrentTime, playback.getPlaybackState(), playback.getPlaybackModifier(), playback.getPlaybackTrigger());
+						} else if (skinnedAnimationComponent.is_keyframe(mCurrentTime)) {
+							skinnedAnimationComponent.removeKeyframe(mCurrentTime);
+						} else {
+							skinnedAnimationComponent.addKeyframe(mCurrentTime, playback.getPlaybackState(), playback.getPlaybackModifier(), playback.getPlaybackTrigger());
+						}
+					}
+
+
 				}
 				
 				verify_previous_next_keyframes(mActiveActor);
@@ -539,26 +558,31 @@ public:
 				}
 			});
 			
-			mRegisteredPlaybackComponent = actor->get().get_component<PlaybackComponent>();
+			if (actor->get().find_component<PlaybackComponent>()) {
+				mRegisteredPlaybackComponent = actor->get().get_component<PlaybackComponent>();
+			}
 			
-			auto& skinnedAnimationComponent = actor->get().get_component<SkinnedAnimationComponent>();
-			
-			mPlaybackRegistrationId = mRegisteredPlaybackComponent->get().register_on_playback_changed_callback([this, &skinnedAnimationComponent](const PlaybackComponent& playback) {
-				if (mRecording && !mPlaying) {
-					skinnedAnimationComponent.addKeyframe(mCurrentTime, playback.getPlaybackState(), playback.getPlaybackModifier(), playback.getPlaybackTrigger());
-				} else if (!mRecording && !mPlaying) {
-					if (skinnedAnimationComponent.is_keyframe(mCurrentTime)) {
-						
-						auto m1 = playback.get_state();
-
-						auto m2 = skinnedAnimationComponent.get_keyframe(mCurrentTime);
-						
-						if (m1 != m2) {
-							mUncommittedKey = true;
+			if (mRegisteredPlaybackComponent.has_value()) {
+				auto& skinnedAnimationComponent = actor->get().get_component<SkinnedAnimationComponent>();
+				
+				mPlaybackRegistrationId = mRegisteredPlaybackComponent->get().register_on_playback_changed_callback([this, &skinnedAnimationComponent](const PlaybackComponent& playback) {
+					if (mRecording && !mPlaying) {
+						skinnedAnimationComponent.addKeyframe(mCurrentTime, playback.getPlaybackState(), playback.getPlaybackModifier(), playback.getPlaybackTrigger());
+					} else if (!mRecording && !mPlaying) {
+						if (skinnedAnimationComponent.is_keyframe(mCurrentTime)) {
+							
+							auto m1 = playback.get_state();
+							
+							auto m2 = skinnedAnimationComponent.get_keyframe(mCurrentTime);
+							
+							if (m1 != m2) {
+								mUncommittedKey = true;
+							}
 						}
 					}
-				}
-			});
+				});
+			}
+			
 
 		}
 		
