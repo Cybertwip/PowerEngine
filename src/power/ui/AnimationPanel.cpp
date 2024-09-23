@@ -45,7 +45,7 @@ public:
 				
 				DrawableComponent& drawableComponent = mPreviewActor->get().get_component<DrawableComponent>();
 				
-				const SkinnedMeshComponent& meshComponent = static_cast<SkinnedMeshComponent&>(drawableComponent.drawable());
+				const SkinnedMeshComponent& meshComponent = static_cast<const SkinnedMeshComponent&>(drawableComponent.drawable());
 				
 				for (auto& skinnedData : meshComponent.get_skinned_mesh_data()) {
 					append(*skinnedData);
