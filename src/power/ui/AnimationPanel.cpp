@@ -252,13 +252,13 @@ private:
 	void clear() {
 		mMeshes.clear();
 		mBatchPositions.clear();
-		mBatchNormals.clear();
 		mBatchTexCoords1.clear();
 		mBatchTexCoords2.clear();
 		mBatchTextureIds.clear();
 		mBatchIndices.clear();
 		mBatchMaterials.clear();
 		mMeshStartIndices.clear();
+		mVertexIndexingMap.clear();
 	}
 
 	void upload_vertex_data(ShaderWrapper& shader, int identifier) {
@@ -374,14 +374,12 @@ private:
 	
 	// Consolidated buffers
 	std::unordered_map<int, std::vector<float>> mBatchPositions;
-	std::unordered_map<int, std::vector<float>> mBatchNormals;
 	std::unordered_map<int, std::vector<float>> mBatchTexCoords1;
 	std::unordered_map<int, std::vector<float>> mBatchTexCoords2;
 	std::unordered_map<int, std::vector<int>> mBatchTextureIds;
 	std::unordered_map<int, std::vector<int>> mBatchBoneIds;
 	std::unordered_map<int, std::vector<float>> mBatchBoneWeights;
 	std::unordered_map<int, std::vector<unsigned int>> mBatchIndices;
-	std::unordered_map<int, std::vector<float>> mBatchColors;
 	std::vector<std::shared_ptr<MaterialProperties>> mBatchMaterials;
 	
 	// Offset tracking
