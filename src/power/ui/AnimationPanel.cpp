@@ -192,7 +192,7 @@ private:
 		}
 	}
 	
-	void draw_contents() override {1
+	void draw_contents() override {
 		if (mPreviewActor.has_value()) {
 			auto& camera = mCamera.get_component<CameraComponent>();
 			
