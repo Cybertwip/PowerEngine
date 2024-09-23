@@ -25,17 +25,17 @@ public:
 	};
 
 	struct SkinnedAnimationPdo {
-		SkinnedAnimationPdo(Skeleton& skeleton) : mSkeleton(skeleton) {}
+		SkinnedAnimationPdo(std::unique_ptr<Skeleton> skeleton) : mSkeleton(std::move(skeleton)) {}
 		
-		std::reference_wrapper<Skeleton> mSkeleton;
+		std::unique_ptr<Skeleton> mSkeleton;
 		std::vector<std::reference_wrapper<Animation>> mAnimationData;
 	};
 	
 public:
-	SkinnedAnimationComponent(SkinnedAnimationPdo& animationPdo)
-	: mSkeleton(animationPdo.mSkeleton.get()), mCurrentTime(0), mReverse(false), mPlaying(false)
+	SkinnedAnimationComponent(std::unique_ptr<SkinnedAnimationPdo> animationPdo)
+	: mAnimationPdo(std::move(animationPdo)), mSkeleton(*mAnimationPdo->mSkeleton), mCurrentTime(0), mReverse(false), mPlaying(false)
 	{
-		for (auto& animation : animationPdo.mAnimationData) {
+		for (auto& animation : mAnimationPdo->mAnimationData) {
 			mAnimationData.push_back(animation);
 		}
 		
@@ -43,6 +43,27 @@ public:
 		size_t numBones = mSkeleton.get().num_bones();
 		mModelPose.resize(numBones);
 	}
+	
+	void set_pdo(std::unique_ptr<SkinnedAnimationPdo> animationPdo){
+		
+		mAnimationPdo = std::move(animationPdo);
+		
+		// skeleton does not change but must match this animation.
+		
+		// do skeleton matching (index and bone naming)
+		
+		//@TODO
+		
+		//
+		
+		mAnimationData.clear();
+		
+		for (auto& animation : animationPdo->mAnimationData) {
+			mAnimationData.push_back(animation);
+		}
+
+	}
+	
 	
 	void set_reverse(bool reverse) {
 		mReverse = reverse;
@@ -142,7 +163,7 @@ private:
 		skeleton.compute_offsets(mModelPose);
 	}
 	
-	
+	std::unique_ptr<SkinnedAnimationPdo> mAnimationPdo;
 	
 	std::reference_wrapper<Skeleton> mSkeleton;
 	std::vector<std::reference_wrapper<Animation>> mAnimationData;

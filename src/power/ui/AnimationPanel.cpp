@@ -9,6 +9,12 @@
 #include "components/SkinnedAnimationComponent.hpp"
 #include "components/TransformComponent.hpp"
 
+#include "graphics/drawing/SkinnedMesh.hpp"
+
+#include "graphics/shading/MeshData.hpp"
+
+#include "import/SkinnedFbx.hpp"
+
 AnimationPanel::AnimationPanel(nanogui::Widget &parent)
 : Panel(parent, "Animation"), mActiveActor(std::nullopt) {
 	set_position(nanogui::Vector2i(0, 0));
@@ -53,6 +59,34 @@ AnimationPanel::AnimationPanel(nanogui::Widget &parent)
 
 AnimationPanel::~AnimationPanel() {
 	
+}
+
+void AnimationPanel::parse_file(const std::string& path) {
+	if (mActiveActor.has_value()) {
+		auto model = std::make_unique<SkinnedFbx>(path);
+		
+		model->TryImportAnimations();
+		
+		std::unique_ptr<Drawable> drawableComponent;
+		
+		if (model->GetSkeleton() != nullptr) {
+			std::vector<std::unique_ptr<SkinnedMesh>> skinnedMeshComponentData;
+			
+			auto pdo = std::make_unique<SkinnedAnimationComponent::SkinnedAnimationPdo> (std::move(model->GetSkeleton()));
+			
+			for (auto& animation : model->GetAnimationData()) {
+				pdo->mAnimationData.push_back(std::ref(*animation));
+			}
+			
+			auto& skinnedComponent = mActiveActor->get().get_component<SkinnedAnimationComponent>();
+			
+			
+			skinnedComponent.set_pdo(std::move(pdo));
+		}
+	}
+	
+	
+
 }
 
 void AnimationPanel::set_active_actor(std::optional<std::reference_wrapper<Actor>> actor) {

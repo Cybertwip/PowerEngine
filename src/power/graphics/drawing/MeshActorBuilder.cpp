@@ -43,13 +43,13 @@ Actor& MeshActorBuilder::build(Actor& actor, const std::string& path, ShaderWrap
 	if (model->GetSkeleton() != nullptr) {
 		std::vector<std::unique_ptr<SkinnedMesh>> skinnedMeshComponentData;
 		
-		SkinnedAnimationComponent::SkinnedAnimationPdo pdo(*model->GetSkeleton());
+		auto pdo = std::make_unique<SkinnedAnimationComponent::SkinnedAnimationPdo> (std::move(model->GetSkeleton()));
 		
 		for (auto& animation : model->GetAnimationData()) {
-			pdo.mAnimationData.push_back(std::ref(*animation));
+			pdo->mAnimationData.push_back(std::ref(*animation));
 		}
 		
-		auto& skinnedComponent = actor.add_component<SkinnedAnimationComponent>(pdo);
+		auto& skinnedComponent = actor.add_component<SkinnedAnimationComponent>(std::move(pdo));
 		
 		for (auto& skinnedMeshData : model->GetSkinnedMeshData()) {
 			skinnedMeshComponentData.push_back(std::make_unique<SkinnedMesh>(std::move(skinnedMeshData), skinnedShader, mBatchUnit.mSkinnedMeshBatch, colorComponent,

@@ -220,7 +220,12 @@ void ResourcesPanel::refresh_file_view() {
 				icon->set_background_color(mNormalButtonColor);
 				
 				
-				auto drag_callback = [this, icon](){
+				auto drag_callback = [this, icon, element = get_icon_for_file(*child), filename = child->FullPath](){
+					
+					if (element != FA_PERSON_BOOTH) {
+						return;
+					}
+					
 					auto drag_widget = screen()->drag_widget();
 					
 					auto content = new nanogui::TextBox(drag_widget, "");
@@ -237,14 +242,14 @@ void ResourcesPanel::refresh_file_view() {
 					drag_widget->set_position(dragStartPosition);
 					drag_widget->perform_layout(screen()->nvg_context());
 
-					screen()->set_drag_widget(drag_widget, [this, content, drag_widget](){
+					screen()->set_drag_widget(drag_widget, [this, content, drag_widget, filename](){
 						
 						// Remove drag widget
 						drag_widget->remove_child(content);
 						
 						screen()->set_drag_widget(nullptr, nullptr);
 						
-						std::string path = "";
+						std::string path = filename;
 						
 						screen()->drop_event(this, { path });
 					});
@@ -268,7 +273,6 @@ void ResourcesPanel::refresh_file_view() {
 					// Store the selected node for later use
 					mSelectedNode = child.get();
 					
-					// Handle double-click for action
 					// Handle double-click for action
 					static std::chrono::time_point<std::chrono::high_resolution_clock> lastClickTime = std::chrono::time_point<std::chrono::high_resolution_clock>::min();
 					auto currentClickTime = std::chrono::high_resolution_clock::now();

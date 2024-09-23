@@ -147,7 +147,7 @@ bool Application::drop_event(nanogui::Widget* sender, const std::vector<std::str
 	if (sender == &mUiManager->status_bar_panel().resources_panel()) {
 		
 		if (mUiCommon->animation_panel().contains(m_mouse_pos, true)) {
-			
+			mUiCommon->animation_panel().parse_file(filenames[0]);
 		}
 		
 	}

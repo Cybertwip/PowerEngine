@@ -16,6 +16,8 @@ public:
 	~AnimationPanel();
 
     void set_active_actor(std::optional<std::reference_wrapper<Actor>> actor);
+	
+	void parse_file(const std::string& path);
     
 private:
     std::optional<std::reference_wrapper<Actor>> mActiveActor;

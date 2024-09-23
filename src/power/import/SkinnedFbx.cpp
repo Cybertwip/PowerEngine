@@ -143,10 +143,10 @@ void SkinnedFbx::ProcessBones(const std::shared_ptr<sfbx::Mesh>& mesh) {
 				
 				// Get global bind pose matrix
 				glm::mat4 offsetMatrix = SkinnedFbxUtil::SfbxMatToGlmMat(skinCluster->getTransform());
-							
+				
 				// Get local matrix
 				glm::mat4 poseMatrix = SkinnedFbxUtil::SfbxMatToGlmMat(model->getLocalMatrix());
-
+				
 				// Store bone info
 				BoneHierarchyInfo boneInfo;
 				boneInfo.bone_id = newBoneID;
@@ -158,7 +158,7 @@ void SkinnedFbx::ProcessBones(const std::shared_ptr<sfbx::Mesh>& mesh) {
 				mBoneHierarchy.push_back(boneInfo);
 				boneNameToIndex[boneName] = newBoneID;
 				
-//				std::cout << "Assigned Bone: " << boneName << " with ID: " << newBoneID << std::endl;
+				//				std::cout << "Assigned Bone: " << boneName << " with ID: " << newBoneID << std::endl;
 			}
 			
 			// Assign weights to vertices
@@ -237,15 +237,15 @@ void SkinnedFbx::ProcessBones(const std::shared_ptr<sfbx::Mesh>& mesh) {
 				}
 			}
 			
-						
+			
 			// Add bone to skeleton
 			skeleton.add_bone(boneName, boneInfo.offset, boneInfo.bindpose, parentIndex);
 		}
-				
+		
 		// Assign the skeleton if it has bones
 		mSkeleton = skeleton.num_bones() > 0 ? std::move(skeletonPointer) : nullptr;
 		
-//		std::cout << "Finished processing bones for skinned mesh." << std::endl;
+		//		std::cout << "Finished processing bones for skinned mesh." << std::endl;
 	} else {
 		std::cerr << "Warning: No skin deformer found for the mesh." << std::endl;
 	}
@@ -261,126 +261,129 @@ std::string SkinnedFbx::GetBoneNameByID(int boneID) const {
 
 
 void SkinnedFbx::TryImportAnimations() {
-	
-	float fps = mDoc->global_settings.frame_rate;
-	
-	for (auto& stack : mDoc->getAnimationStacks()) {
-		// Iterate through animation layers
-		for (auto& animation_layer : stack->getAnimationLayers()) {
-			auto animationPtr = std::make_unique<Animation>();
-			Animation& animation = *animationPtr;  // Custom Animation class
-			
-			// Variables to track min and max keyframe times
-			int min_time = 0;
-			int max_time = 0;
-			
-			// Iterate through bone mapping to create keyframes for each bone
-			for (const auto& bone : mBoneMapping) {
-				const std::string& bone_name = bone.first;
-				int bone_index = bone.second;
-				std::vector<Animation::KeyFrame> keyframes;  // Store keyframes for each bone
+	if (mDoc && mDoc->valid()) {
+		
+		float fps = mDoc->global_settings.frame_rate;
+		
+		for (auto& stack : mDoc->getAnimationStacks()) {
+			// Iterate through animation layers
+			for (auto& animation_layer : stack->getAnimationLayers()) {
+				auto animationPtr = std::make_unique<Animation>();
+				Animation& animation = *animationPtr;  // Custom Animation class
 				
-				// Retrieve all animation curve nodes
-				auto curve_nodes = animation_layer->getAnimationCurveNodes();
+				// Variables to track min and max keyframe times
+				int min_time = 0;
+				int max_time = 0;
 				
-				// Filter for position, rotation, and scale curves
-				std::shared_ptr<sfbx::AnimationCurveNode> position_curve = nullptr;
-				std::shared_ptr<sfbx::AnimationCurveNode> rotation_curve = nullptr;
-				std::shared_ptr<sfbx::AnimationCurveNode> scale_curve = nullptr;
-				
-				// Iterate over all curve nodes and assign them based on AnimationKind
-				for (const auto& curve_node : curve_nodes) {
-					if (curve_node->getAnimationTarget()->getName() == bone_name) {
-						switch (curve_node->getAnimationKind()) {
-							case sfbx::AnimationKind::Position:
-								position_curve = curve_node;
-								break;
-							case sfbx::AnimationKind::Rotation:
-								rotation_curve = curve_node;
-								break;
-							case sfbx::AnimationKind::Scale:
-								scale_curve = curve_node;
-								break;
-							default:
-								break;
+				// Iterate through bone mapping to create keyframes for each bone
+				for (const auto& bone : mBoneMapping) {
+					const std::string& bone_name = bone.first;
+					int bone_index = bone.second;
+					std::vector<Animation::KeyFrame> keyframes;  // Store keyframes for each bone
+					
+					// Retrieve all animation curve nodes
+					auto curve_nodes = animation_layer->getAnimationCurveNodes();
+					
+					// Filter for position, rotation, and scale curves
+					std::shared_ptr<sfbx::AnimationCurveNode> position_curve = nullptr;
+					std::shared_ptr<sfbx::AnimationCurveNode> rotation_curve = nullptr;
+					std::shared_ptr<sfbx::AnimationCurveNode> scale_curve = nullptr;
+					
+					// Iterate over all curve nodes and assign them based on AnimationKind
+					for (const auto& curve_node : curve_nodes) {
+						if (curve_node->getAnimationTarget()->getName() == bone_name) {
+							switch (curve_node->getAnimationKind()) {
+								case sfbx::AnimationKind::Position:
+									position_curve = curve_node;
+									break;
+								case sfbx::AnimationKind::Rotation:
+									rotation_curve = curve_node;
+									break;
+								case sfbx::AnimationKind::Scale:
+									scale_curve = curve_node;
+									break;
+								default:
+									break;
+							}
 						}
 					}
-				}
-				
-				// Determine the maximum number of frames to process
-				std::size_t max_frames = 0;
-				if (position_curve) {
-					max_frames = std::max(max_frames, position_curve->getAnimationCurves()[0]->getTimes().size());
-				}
-				if (rotation_curve) {
-					max_frames = std::max(max_frames, rotation_curve->getAnimationCurves()[0]->getTimes().size());
-				}
-				if (scale_curve) {
-					max_frames = std::max(max_frames, scale_curve->getAnimationCurves()[0]->getTimes().size());
-				}
-
-				max_time = max_frames;
-				
-				// Get the inverse bind pose for this bone from the hierarchy
-				auto& bone_info = mBoneHierarchy[bone_index];
-				
-				for (std::size_t frame_idx = 0; frame_idx < max_frames; ++frame_idx) {
-					// Retrieve and evaluate the translation
+					
+					// Determine the maximum number of frames to process
+					std::size_t max_frames = 0;
 					if (position_curve) {
-						position_curve->applyAnimation(frame_idx / fps);
+						max_frames = std::max(max_frames, position_curve->getAnimationCurves()[0]->getTimes().size());
 					}
-					
-					// Retrieve and evaluate the rotation
 					if (rotation_curve) {
-						rotation_curve->applyAnimation(frame_idx / fps);
+						max_frames = std::max(max_frames, rotation_curve->getAnimationCurves()[0]->getTimes().size());
 					}
-					
-					// Retrieve and evaluate the scale
 					if (scale_curve) {
-						scale_curve->applyAnimation(frame_idx / fps);
+						max_frames = std::max(max_frames, scale_curve->getAnimationCurves()[0]->getTimes().size());
 					}
 					
-					auto model = sfbx::as<sfbx::Model>(rotation_curve->getAnimationTarget());
+					max_time = max_frames;
 					
-					auto [tt, rr, ss] = SkinnedFbxUtil::DecomposeTransform(SkinnedFbxUtil::SfbxMatToGlmMat(model->getLocalMatrix()));
+					// Get the inverse bind pose for this bone from the hierarchy
+					auto& bone_info = mBoneHierarchy[bone_index];
 					
-					glm::mat4 transformation = glm::translate(glm::mat4(1.0f), tt) * glm::toMat4(glm::normalize(rr)) * glm::scale(glm::mat4(1.0f), ss);
+					for (std::size_t frame_idx = 0; frame_idx < max_frames; ++frame_idx) {
+						// Retrieve and evaluate the translation
+						if (position_curve) {
+							position_curve->applyAnimation(frame_idx / fps);
+						}
+						
+						// Retrieve and evaluate the rotation
+						if (rotation_curve) {
+							rotation_curve->applyAnimation(frame_idx / fps);
+						}
+						
+						// Retrieve and evaluate the scale
+						if (scale_curve) {
+							scale_curve->applyAnimation(frame_idx / fps);
+						}
+						
+						auto model = sfbx::as<sfbx::Model>(rotation_curve->getAnimationTarget());
+						
+						auto [tt, rr, ss] = SkinnedFbxUtil::DecomposeTransform(SkinnedFbxUtil::SfbxMatToGlmMat(model->getLocalMatrix()));
+						
+						glm::mat4 transformation = glm::translate(glm::mat4(1.0f), tt) * glm::toMat4(glm::normalize(rr)) * glm::scale(glm::mat4(1.0f), ss);
+						
+						transformation = glm::inverse(bone_info.bindpose) * transformation;
+						
+						// Decompose the final transformation matrix back into position, rotation, and scale
+						glm::vec3 final_position;
+						glm::quat final_rotation;
+						glm::vec3 final_scale;
+						std::tie(final_position, final_rotation, final_scale) = SkinnedFbxUtil::DecomposeTransform(transformation);
+						
+						// Store the decomposed values in the keyframe
+						
+						Animation::KeyFrame keyframe;
+						keyframe.time = frame_idx;
+						keyframe.translation = final_position;
+						keyframe.rotation = final_rotation;
+						keyframe.scale = final_scale;
+						
+						keyframes.push_back(keyframe);
+					}
 					
-					transformation = glm::inverse(bone_info.bindpose) * transformation;
-					
-					// Decompose the final transformation matrix back into position, rotation, and scale
-					glm::vec3 final_position;
-					glm::quat final_rotation;
-					glm::vec3 final_scale;
-					std::tie(final_position, final_rotation, final_scale) = SkinnedFbxUtil::DecomposeTransform(transformation);
-					
-					// Store the decomposed values in the keyframe
-					
-					Animation::KeyFrame keyframe;
-					keyframe.time = frame_idx;
-					keyframe.translation = final_position;
-					keyframe.rotation = final_rotation;
-					keyframe.scale = final_scale;
-					
-					keyframes.push_back(keyframe);
+					// Add the bone's keyframes to the animation
+					if (!keyframes.empty()) {
+						animation.add_bone_keyframes(bone_info.bone_id, keyframes);
+					}
 				}
-
-				// Add the bone's keyframes to the animation
-				if (!keyframes.empty()) {
-					animation.add_bone_keyframes(bone_info.bone_id, keyframes);
+				
+				// Set the animation's duration based on keyframe times
+				if (min_time < max_time) {
+					animation.set_duration(max_time - min_time);
+				} else {
+					animation.set_duration(0);  // Handle case with single keyframe or no keyframes
 				}
+				
+				// Add the animation to the mAnimations vector
+				animationPtr->sort();
+				mAnimations.push_back(std::move(animationPtr));
 			}
-			
-			// Set the animation's duration based on keyframe times
-			if (min_time < max_time) {
-				animation.set_duration(max_time - min_time);
-			} else {
-				animation.set_duration(0);  // Handle case with single keyframe or no keyframes
-			}
-			
-			// Add the animation to the mAnimations vector
-			animationPtr->sort();
-			mAnimations.push_back(std::move(animationPtr));
 		}
 	}
+	
 }

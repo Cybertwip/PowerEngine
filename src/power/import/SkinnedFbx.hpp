@@ -39,8 +39,8 @@ public:
 	
 	~SkinnedFbx() = default;
 	
-	Skeleton* GetSkeleton() const {
-		return mSkeleton.get();
+	std::unique_ptr<Skeleton>& GetSkeleton() {
+		return mSkeleton;
 	}
 	
 	std::vector<std::unique_ptr<SkinnedMeshData>>& GetSkinnedMeshData() { return mSkinnedMeshes; }
