@@ -46,7 +46,7 @@ Actor& MeshActorBuilder::build(Actor& actor, const std::string& path, ShaderWrap
 		auto pdo = std::make_unique<SkinnedAnimationComponent::SkinnedAnimationPdo> (std::move(model->GetSkeleton()));
 		
 		for (auto& animation : model->GetAnimationData()) {
-			pdo->mAnimationData.push_back(std::ref(*animation));
+			pdo->mAnimationData.push_back(std::move(animation));
 		}
 		
 		auto& skinnedComponent = actor.add_component<SkinnedAnimationComponent>(std::move(pdo));

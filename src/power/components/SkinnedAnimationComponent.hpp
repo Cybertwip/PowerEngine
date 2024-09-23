@@ -28,7 +28,7 @@ public:
 		SkinnedAnimationPdo(std::unique_ptr<Skeleton> skeleton) : mSkeleton(std::move(skeleton)) {}
 		
 		std::unique_ptr<Skeleton> mSkeleton;
-		std::vector<std::reference_wrapper<Animation>> mAnimationData;
+		std::vector<std::unique_ptr<Animation>> mAnimationData;
 	};
 	
 public:
@@ -36,7 +36,7 @@ public:
 	: mAnimationPdo(std::move(animationPdo)), mSkeleton(*mAnimationPdo->mSkeleton), mCurrentTime(0), mReverse(false), mPlaying(false)
 	{
 		for (auto& animation : mAnimationPdo->mAnimationData) {
-			mAnimationData.push_back(animation);
+			mAnimationData.push_back(*animation);
 		}
 		
 		// Initialize the pose buffers
@@ -45,26 +45,23 @@ public:
 	}
 	
 	void set_pdo(std::unique_ptr<SkinnedAnimationPdo> animationPdo){
-		
-		// skeleton does not change but must match this animation.
+		mAnimationData.clear();
 
+		// skeleton does not change but must match this animation.
 		animationPdo->mSkeleton = std::move(mAnimationPdo->mSkeleton);
-		
-		
-		
+				
 		// do skeleton matching (index and bone naming)
 		
 		//@TODO
 		
 		//
 		
+
 		mAnimationPdo = std::move(animationPdo);
 
-		
-		mAnimationData.clear();
-		
+			
 		for (auto& animation : mAnimationPdo->mAnimationData) {
-			mAnimationData.push_back(animation);
+			mAnimationData.push_back(*animation);
 		}
 
 	}
@@ -77,8 +74,6 @@ public:
 	void set_playing(bool playing) {
 		mPlaying = playing;
 	}
-	
-	
 	
 	std::vector<BoneCPU> get_bones() {
 		if (mPlaying) {
