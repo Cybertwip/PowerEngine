@@ -25,7 +25,7 @@ NAMESPACE_BEGIN(nanogui)
 Canvas::Canvas(Widget *parent, uint8_t samples,
 			   bool has_depth_buffer, bool has_stencil_buffer)
 : Widget(parent), m_draw_border(true) {
-	m_size = Vector2i(128, 128);
+	m_size = Vector2i(192, 128);
 	m_border_color = m_theme->m_border_light;
 	
 #if defined(NANOGUI_USE_GLES)

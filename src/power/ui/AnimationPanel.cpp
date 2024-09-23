@@ -31,8 +31,7 @@ public:
 		set_background_color(nanogui::Color{70, 130, 180, 255});
 		
 		mCamera.add_component<TransformComponent>();
-		mCamera.add_component<CameraComponent>(mCamera.get_component<TransformComponent>(), 45.0f, 0.01f, 5e3f, 1.0f);
-		
+		mCamera.add_component<CameraComponent>(mCamera.get_component<TransformComponent>(), 45.0f, 0.01f, 5e3f, 192.0f / 128.0f);
 	}
 
 	void set_active_actor(std::optional<std::reference_wrapper<Actor>> actor) {
@@ -157,6 +156,8 @@ private:
 //				} else {
 //					mCurrentTime += 0.016 * 1;
 //				}
+				int duration = mesh.get_skinned_component().get_animation_duration();
+				
 				mCurrentTime += 1;
 
 				mCurrentTime = fmax(0, fmod(duration + mCurrentTime, duration));
@@ -228,7 +229,7 @@ private:
 				camera.look_at(mPreviewActor->get());
 			}
 			
-			render_pass()->clear_color(0, background_color());
+			render_pass()->clear_color(0, nanogui::Color(0.0f, 0.0f, 0.0f, 1.0f));
 			render_pass()->clear_depth(1.0f);
 			render_pass()->set_depth_test(nanogui::RenderPass::DepthTest::Less, true);
 

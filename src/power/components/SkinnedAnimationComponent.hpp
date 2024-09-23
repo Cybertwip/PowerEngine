@@ -105,6 +105,16 @@ public:
 		
 	}
 	
+	int get_animation_duration() {
+		if (mAnimationData.empty()) {
+			return 0; // No animations to process
+		}
+		
+		// For simplicity, use the first animation in the list
+		const Animation& animation = mAnimationData[0].get();
+		
+		return animation.get_duration();
+	}
 	
 	std::vector<BoneCPU> get_bones_at_time(int time) {
 		if (mAnimationData.empty()) {

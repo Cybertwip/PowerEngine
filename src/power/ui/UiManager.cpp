@@ -140,7 +140,6 @@ public:
 			
 			// Verify keyframes after time update
 			verify_previous_next_keyframes(mActiveActor);
-			
 		});
 		
 		// Buttons Wrapper
