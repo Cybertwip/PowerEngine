@@ -13,5 +13,7 @@ RenderCommon::RenderCommon(nanogui::Widget& parent, entt::registry& registry,
 						   ActorManager& actorManager, CameraManager& cameraManager) {
     mCanvas = new Canvas(&parent, nanogui::Color{70, 130, 180, 255});
     mShaderManager = std::make_unique<ShaderManager>(*mCanvas);
+	mShaderManager->load_default_shaders();
+	
 	mCameraActorLoader = std::make_unique<CameraActorLoader>(actorManager, cameraManager, *mShaderManager);
 }

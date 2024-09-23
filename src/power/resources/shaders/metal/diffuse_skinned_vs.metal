@@ -5,9 +5,6 @@ struct VertexOut {
     float4 Position [[position]];
     float2 TexCoords1;
     float2 TexCoords2;
-    float3 Normal;
-    float4 Color;
-    float3 FragPos;
     int TextureId;
 };
 
@@ -17,8 +14,6 @@ struct Bone {
 
 vertex VertexOut vertex_main(
     const device packed_float3 *const aPosition [[buffer(0)]],
-    const device packed_float3 *const aNormal [[buffer(1)]],
-    const device packed_float4 *const aColor [[buffer(2)]],
     const device packed_float2 *const aTexcoords1 [[buffer(3)]],
     const device packed_float2 *const aTexcoords2 [[buffer(4)]],
     const device packed_int4 *const aBoneIds [[buffer(5)]],
@@ -35,10 +30,8 @@ vertex VertexOut vertex_main(
     VertexOut vert;
 
     float4 pos = float4(aPosition[id], 1.0);
-    float3 norm = aNormal[id];
 
     float4 skinnedPosition = float4(0.0);
-    float3 skinnedNormal = float3(0.0);
 
     // Loop through the bone influences
     for(int i = 0; i < MAX_BONE_INFLUENCE; i++) {
@@ -54,28 +47,16 @@ vertex VertexOut vertex_main(
         float4x4 boneTransform = bones[boneId].transform;
 
         skinnedPosition += weight * (boneTransform * pos);
-        skinnedNormal += weight * ((boneTransform * float4(norm, 0.0)).xyz);
     }
 
-    // Normalize the accumulated normal
-    skinnedNormal = normalize(skinnedNormal);
 
-    // Transform the position and normal to clip space
     float4 worldPosition = aModel * skinnedPosition;
     vert.Position = aProjection * aView * worldPosition;
-
-    // Transform the normal to world space
-    float3 worldNormal = normalize((aModel * float4(skinnedNormal, 0.0)).xyz);
-    vert.Normal = worldNormal;
-
-    // Position in world space for fragment shader calculations
-    vert.FragPos = worldPosition.xyz;
 
     vert.TexCoords1 = aTexcoords1[id];
     vert.TexCoords2 = aTexcoords2[id];
 
     vert.TextureId = aTextureId[id];
-    vert.Color = aColor[id];
 
     return vert;
 }

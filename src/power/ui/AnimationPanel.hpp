@@ -3,11 +3,13 @@
 #include "Panel.hpp"
 
 namespace nanogui {
+class Canvas;
 class ToolButton;
 class Widget;
 }
 
 class Actor;
+class SelfContainedMeshCanvas;
 class TransformComponent;
 
 class AnimationPanel : public Panel {
@@ -24,5 +26,7 @@ private:
 	
 	nanogui::ToolButton* mReversePlayButton; // New reverse play button
 	nanogui::ToolButton* mPlayPauseButton;
+	
+	SelfContainedMeshCanvas* mPreviewCanvas;
 
 };

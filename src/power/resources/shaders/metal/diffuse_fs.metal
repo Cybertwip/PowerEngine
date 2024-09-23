@@ -18,7 +18,6 @@ struct VertexOut {
     float4 Color;
     float3 FragPos;
     int TextureId;
-    int VertexId;
 };
 
 struct FragmentOut {

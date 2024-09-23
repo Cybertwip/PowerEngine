@@ -59,20 +59,6 @@ const nanogui::Matrix4f CameraManager::get_projection() const {
 
 void CameraManager::look_at(Actor& actor) {
     if (mActiveCamera.has_value()) {
-        auto& cameraTransform = mActiveCamera->get().get_component<TransformComponent>();
-        auto& actorTransform = actor.get_component<TransformComponent>();
-
-        glm::vec3 cameraPosition = cameraTransform.get_translation();
-        glm::vec3 targetPosition = actorTransform.get_translation();
-
-        glm::vec3 direction = glm::normalize(targetPosition - cameraPosition);
-
-        // Assuming the up vector is the world up vector (0, 1, 0)
-        glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f);
-
-        glm::mat4 lookAtMatrix = glm::lookAt(cameraPosition, targetPosition, up);
-        glm::quat orientation = glm::quat_cast(lookAtMatrix);
-
-        cameraTransform.set_rotation(orientation);
+		mActiveCamera->get().get_component<CameraComponent>().look_at(actor);
     }
 }

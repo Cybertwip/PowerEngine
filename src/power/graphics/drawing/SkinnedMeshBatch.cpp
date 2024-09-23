@@ -217,34 +217,12 @@ void SkinnedMeshBatch::draw_content(const nanogui::Matrix4f& view,
 	glStencilFunc(GL_ALWAYS, 1, 0xFF);  // Always pass stencil test
 	glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);  // Replace stencil buffer with 1 where actors are drawn
 	glStencilMask(0xFF);  // Enable writing to the stencil buffer
-#elif defined(NANOGUI_USE_METAL)
-	//
-	//	auto descriptor = mShader.render_pass().pass_descriptor();
-	//	auto encoder = mShader.render_pass().command_encoder();
-	//
-	//	// Get the Metal device and command encoder (ensure you have valid pointers to these)
-	//	void* mtlDevice = nanogui::metal_device();
-	//	void* mtlCommandEncoder = encoder;
-	//
-	//	// Create a depth-stencil state for this draw call
-	//	void* depthStencilState = MetalHelper::createDepthStencilState(mtlDevice, CompareFunction::Always,
-	//																   StencilOperation::Keep, StencilOperation::Keep,
-	//																   StencilOperation::Replace, 0xFF, 0xFF);
-	//
-	//	// Set the depth-stencil state on the command encoder
-	//	MetalHelper::setDepthStencilState(mtlCommandEncoder, depthStencilState);
-	//
-	//	// Clear stencil and depth buffers
-	//	MetalHelper::setStencilClear(descriptor);
-	//	MetalHelper::setDepthClear(descriptor);
 #endif
 	
 	for (auto& [shader_pointer, mesh_vector] : mMeshes) {
 		auto& shader = *shader_pointer;
 		int identifier = shader.identifier();
-		
-//		upload_vertex_data(shader, identifier);
-		
+				
 		mRenderPass.pop_depth_test_state(identifier);
 		
 		for (int i = 0; i<mesh_vector.size(); ++i) {

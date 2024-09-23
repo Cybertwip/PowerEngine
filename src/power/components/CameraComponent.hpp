@@ -19,7 +19,8 @@ public:
     const nanogui::Matrix4f& get_projection() const {
         return mProjection;
     }
-    
+	
+	void look_at(Actor& actor);
 private:
 	TransformComponent& mTransformComponent;
 	
