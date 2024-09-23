@@ -46,15 +46,20 @@ public:
 	
 	void set_pdo(std::unique_ptr<SkinnedAnimationPdo> animationPdo){
 		
-		mAnimationPdo = std::move(animationPdo);
-		
 		// skeleton does not change but must match this animation.
+
+		animationPdo->mSkeleton = std::move(mAnimationPdo->mSkeleton);
+		
+		
 		
 		// do skeleton matching (index and bone naming)
 		
 		//@TODO
 		
 		//
+		
+		mAnimationPdo = std::move(animationPdo);
+
 		
 		mAnimationData.clear();
 		
@@ -131,19 +136,13 @@ public:
 		
 		// Update current time and wrap around if necessary
 		if (mReverse) {
-			mCurrentTime -= deltaTime;
+			mCurrentTime += deltaTime * -1;
 		} else {
-			mCurrentTime += deltaTime;
+			mCurrentTime += deltaTime * 1;
 		}
-		
-		if (mCurrentTime <= 0) {
-			// Wrap around if time is negative
-			mCurrentTime = (mCurrentTime % duration + duration) % duration;
-		} else {
-			// Wrap around when exceeding the duration
-			mCurrentTime %= duration;
-		}
-		
+				
+		mCurrentTime = fmax(0, fmod(duration + mCurrentTime, duration));
+
 		// Evaluate the animation at the current time
 		evaluate_animation(animation, mCurrentTime);
 		
