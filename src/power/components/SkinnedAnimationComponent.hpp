@@ -124,6 +124,10 @@ public:
 		// Initialize the pose buffers
 		size_t numBones = mSkeleton.get().num_bones();
 		mModelPose.resize(numBones);
+		
+		const Animation& animation = mAnimationData[0].get();
+
+		evaluate_animation(animation, mCurrentTime); // initial evaluation
 	}
 	
 	// Add a keyframe to the animation
