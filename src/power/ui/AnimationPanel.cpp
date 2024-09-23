@@ -26,7 +26,7 @@
 
 class SelfContainedMeshCanvas : public nanogui::Canvas {
 public:
-	SelfContainedMeshCanvas(Widget* parent) : nanogui::Canvas(parent, 1, true, true), mCamera(mRegistry), mShaderManager(*this), mSkinnedMeshPreviewShader(*mShaderManager.load_shader("skinned_mesh_preview", "shaders/metal/preview_diffuse_skinned_vs.metal", "shaders/metal/preview_diffuse_fs.metal.metal", nanogui::Shader::BlendMode::None)) {
+	SelfContainedMeshCanvas(Widget* parent) : nanogui::Canvas(parent, 1, true, true), mCamera(mRegistry), mShaderManager(*this), mSkinnedMeshPreviewShader(*mShaderManager.load_shader("skinned_mesh_preview", "shaders/metal/preview_diffuse_skinned_vs.metal", "shaders/metal/preview_diffuse_fs.metal", nanogui::Shader::BlendMode::None)) {
 		set_background_color(nanogui::Color{70, 130, 180, 255});
 		
 		mCamera.add_component<TransformComponent>();
