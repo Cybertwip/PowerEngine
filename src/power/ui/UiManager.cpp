@@ -571,7 +571,9 @@ public:
 					} else if (!mRecording && !mPlaying) {
 						if (skinnedAnimationComponent.is_keyframe(mCurrentTime)) {
 							
-							auto m1 = playback.get_state();
+							auto m1 = const_cast<SkinnedAnimationComponent::Keyframe&>(playback.get_state());
+							
+							m1.time = mCurrentTime;
 							
 							auto m2 = skinnedAnimationComponent.get_keyframe(mCurrentTime);
 							

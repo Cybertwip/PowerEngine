@@ -43,10 +43,6 @@ public:
 		// Constructors
 		Keyframe(float t, PlaybackState state, PlaybackModifier modifier, PlaybackTrigger trigger)
 		: time(t), mPlaybackState(state), mPlaybackModifier(modifier), mPlaybackTrigger(trigger) {
-			// Apply logic: setting modifier sets state to Play
-			if (modifier == PlaybackModifier::Forward || modifier == PlaybackModifier::Reverse) {
-				mPlaybackState = PlaybackState::Play;
-			}
 			// Setting trigger sets state to Pause
 			if (trigger == PlaybackTrigger::Rewind || trigger == PlaybackTrigger::FastForward) {
 				mPlaybackState = PlaybackState::Pause;
@@ -324,10 +320,10 @@ public:
 		time = fmax(0, fmod(duration + time, duration));
 		
 		// Evaluate the animation at the current time
-		evaluate_animation(animation, time);
+		auto model = evaluate_animation_once(animation, time);
 		
 		// Update the skeleton with the new transforms
-		apply_pose_to_skeleton();
+		apply_pose_to_skeleton(model);
 		
 		// Ensure we have a valid number of bones
 		size_t numBones = mSkeleton.get().num_bones();
@@ -411,6 +407,11 @@ private:
 		return std::nullopt;
 	}
 	
+	std::vector<glm::mat4> evaluate_animation_once(const Animation& animation, float time) {
+		return animation.evaluate(time);
+	}
+
+	
 	void evaluate_animation(const Animation& animation, float time) {
 		mModelPose = animation.evaluate(time);
 	}
@@ -420,6 +421,12 @@ private:
 		skeleton.compute_offsets(mModelPose);
 	}
 	
+	void apply_pose_to_skeleton(std::vector<glm::mat4> modelPose) {
+		Skeleton& skeleton = mSkeleton.get();
+		skeleton.compute_offsets(modelPose);
+	}
+
+
 	std::unique_ptr<SkinnedAnimationPdo> mAnimationPdo;
 	
 	std::reference_wrapper<Skeleton> mSkeleton;
