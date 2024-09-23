@@ -35,5 +35,6 @@ void CameraComponent::look_at(Actor& actor)
 	glm::mat4 lookAtMatrix = glm::lookAt(cameraPosition, targetPosition, up);
 	glm::quat orientation = glm::quat_cast(lookAtMatrix);
 	
-	cameraTransform.set_rotation(orientation);	}
+	cameraTransform.set_rotation(orientation);
+}
 

@@ -16,6 +16,7 @@
 #include "components/ColorComponent.hpp"
 #include "components/DrawableComponent.hpp"
 #include "components/MetadataComponent.hpp"
+#include "components/PlaybackComponent.hpp"
 #include "components/TransformComponent.hpp"
 #include "components/UiComponent.hpp"
 
@@ -26,6 +27,7 @@
 #include "graphics/drawing/SkinnedMeshBatch.hpp"
 #include "graphics/drawing/Grid.hpp"
 
+#include "ui/AnimationPanel.hpp"
 #include "ui/ScenePanel.hpp"
 #include "ui/StatusBarPanel.hpp"
 
@@ -88,6 +90,7 @@ public:
 	: nanogui::Widget(parent),
 	mActorManager(actorManager),
 	mTransformRegistrationId(-1),
+	mPlaybackRegistrationId(-1),
 	mCurrentTime(0),
 	mTotalFrames(1800), // 30 seconds at 60 FPS
 	mRecording(false),
@@ -255,7 +258,7 @@ public:
 				mRecording = active;
 				mRecordBtn->set_text_color(active ? nanogui::Color(1.0f, 0.0f, 0.0f, 1.0f) : normalRecordColor); // Red when recording
 				
-				register_actor_transform_callback(mActiveActor);
+				register_actor_callbacks(mActiveActor);
 			}
 		});
 		
@@ -311,15 +314,41 @@ public:
 			
 			if (!mActiveActor.has_value()) return; // No active actor selected
 			
-			const AnimationComponent& animComp = mActiveActor->get().get_component<AnimationComponent>();
 			float currentTimeFloat = static_cast<float>(mCurrentTime);
+			float latestPrevTime = -std::numeric_limits<float>::infinity();
+			bool hasPrevKeyframe = false;
 			
-			// Get the previous keyframe
+			// Get the AnimationComponent
+			const AnimationComponent& animComp = mActiveActor->get().get_component<AnimationComponent>();
+			
+			// Get previous keyframe from AnimationComponent
 			std::optional<AnimationComponent::Keyframe> prevKeyframe = animComp.get_previous_keyframe(currentTimeFloat);
 			
-			if (prevKeyframe.has_value()) {
-				// Update current time to the previous keyframe's time
-				mCurrentTime = static_cast<int>(prevKeyframe->time);
+			if (prevKeyframe) {
+				hasPrevKeyframe = true;
+				if (prevKeyframe->time > latestPrevTime) {
+					latestPrevTime = prevKeyframe->time;
+				}
+			}
+			
+			// If SkinnedAnimationComponent exists, consider its keyframes as well
+			if (mActiveActor->get().find_component<SkinnedAnimationComponent>()) {
+				const SkinnedAnimationComponent& skinnedComponent = mActiveActor->get().get_component<SkinnedAnimationComponent>();
+				
+				// Get previous keyframe from SkinnedAnimationComponent
+				std::optional<SkinnedAnimationComponent::Keyframe> prevSkinnedKeyframe = skinnedComponent.get_previous_keyframe(currentTimeFloat);
+				
+				if (prevSkinnedKeyframe) {
+					hasPrevKeyframe = true;
+					if (prevSkinnedKeyframe->time > latestPrevTime) {
+						latestPrevTime = prevSkinnedKeyframe->time;
+					}
+				}
+			}
+			
+			if (hasPrevKeyframe) {
+				// Update current time to the latest previous keyframe's time
+				mCurrentTime = static_cast<int>(latestPrevTime);
 				update_time_display(mCurrentTime);
 				mTimelineSlider->set_value(static_cast<float>(mCurrentTime) / mTotalFrames);
 				
@@ -329,14 +358,10 @@ public:
 				
 				// Verify keyframes after time update
 				verify_previous_next_keyframes(mActiveActor);
-			}
-			// Optionally, you can provide feedback if there is no previous keyframe
-			else {
-				// Example: Display a message or disable the button
-				// For simplicity, we'll just print to the console
+			} else {
+				// No previous keyframe available
 				std::cout << "No previous keyframe available." << std::endl;
 			}
-			
 		});
 		
 		mKeyBtn = new nanogui::Button(keyBtnWrapper, "", FA_KEY);
@@ -361,7 +386,6 @@ public:
 					if (wasUncommitted){
 						mUncommittedKey = false;
 						animationComponent.updateKeyframe(mCurrentTime, transformComponent.get_translation(), transformComponent.get_rotation(), transformComponent.get_scale());
-						
 					} else if (animationComponent.is_keyframe(mCurrentTime)) {
 						animationComponent.removeKeyframe(mCurrentTime);
 					} else {
@@ -387,15 +411,41 @@ public:
 			
 			if (!mActiveActor.has_value()) return; // No active actor selected
 			
-			const AnimationComponent& animComp = mActiveActor->get().get_component<AnimationComponent>();
 			float currentTimeFloat = static_cast<float>(mCurrentTime);
+			float earliestNextTime = std::numeric_limits<float>::infinity();
+			bool hasNextKeyframe = false;
 			
-			// Get the next keyframe
+			// Get the AnimationComponent
+			const AnimationComponent& animComp = mActiveActor->get().get_component<AnimationComponent>();
+			
+			// Get next keyframe from AnimationComponent
 			std::optional<AnimationComponent::Keyframe> nextKeyframe = animComp.get_next_keyframe(currentTimeFloat);
 			
-			if (nextKeyframe.has_value()) {
-				// Update current time to the next keyframe's time
-				mCurrentTime = static_cast<int>(nextKeyframe->time);
+			if (nextKeyframe) {
+				hasNextKeyframe = true;
+				if (nextKeyframe->time < earliestNextTime) {
+					earliestNextTime = nextKeyframe->time;
+				}
+			}
+			
+			// If SkinnedAnimationComponent exists, consider its keyframes as well
+			if (mActiveActor->get().find_component<SkinnedAnimationComponent>()) {
+				const SkinnedAnimationComponent& skinnedComponent = mActiveActor->get().get_component<SkinnedAnimationComponent>();
+				
+				// Get next keyframe from SkinnedAnimationComponent
+				std::optional<SkinnedAnimationComponent::Keyframe> nextSkinnedKeyframe = skinnedComponent.get_next_keyframe(currentTimeFloat);
+				
+				if (nextSkinnedKeyframe) {
+					hasNextKeyframe = true;
+					if (nextSkinnedKeyframe->time < earliestNextTime) {
+						earliestNextTime = nextSkinnedKeyframe->time;
+					}
+				}
+			}
+			
+			if (hasNextKeyframe) {
+				// Update current time to the earliest next keyframe's time
+				mCurrentTime = static_cast<int>(earliestNextTime);
 				update_time_display(mCurrentTime);
 				mTimelineSlider->set_value(static_cast<float>(mCurrentTime) / mTotalFrames);
 				
@@ -405,14 +455,10 @@ public:
 				
 				// Verify keyframes after time update
 				verify_previous_next_keyframes(mActiveActor);
-			}
-			// Optionally, you can provide feedback if there is no next keyframe
-			else {
-				// Example: Display a message or disable the button
-				// For simplicity, we'll just print to the console
+			} else {
+				// No next keyframe available
 				std::cout << "No next keyframe available." << std::endl;
 			}
-			
 		});
 	}
 	
@@ -454,21 +500,25 @@ public:
 		
 		mActiveActor = actor;
 		
-		register_actor_transform_callback(mActiveActor);
+		register_actor_callbacks(mActiveActor);
 		
 		verify_previous_next_keyframes(mActiveActor);
 	}
 
-	void register_actor_transform_callback(std::optional<std::reference_wrapper<Actor>> actor) {
+	void register_actor_callbacks(std::optional<std::reference_wrapper<Actor>> actor) {
 		
 		if(mTransformRegistrationId != -1) {
 			mRegisteredTransformComponent->get()
-			.unregister_on_transform_changed_callback(mTransformRegistrationId);
+				.unregister_on_transform_changed_callback(mTransformRegistrationId);
+		}
+
+		if(mPlaybackRegistrationId != -1) {
+			mRegisteredPlaybackComponent->get()
+				.unregister_on_playback_changed_callback(mPlaybackRegistrationId);
 		}
 		
 		if (actor != std::nullopt) {
 			mRegisteredTransformComponent = actor->get().get_component<TransformComponent>();
-			
 
 			auto& animationComponent = actor->get().get_component<AnimationComponent>();
 			
@@ -488,6 +538,28 @@ public:
 					}
 				}
 			});
+			
+			mRegisteredPlaybackComponent = actor->get().get_component<PlaybackComponent>();
+			
+			auto& skinnedAnimationComponent = actor->get().get_component<SkinnedAnimationComponent>();
+			
+			mPlaybackRegistrationId = mRegisteredPlaybackComponent->get().register_on_playback_changed_callback([this, &skinnedAnimationComponent](const PlaybackComponent& playback) {
+				if (mRecording && !mPlaying) {
+					skinnedAnimationComponent.addKeyframe(mCurrentTime, playback.getPlaybackState(), playback.getPlaybackModifier(), playback.getPlaybackTrigger());
+				} else if (!mRecording && !mPlaying) {
+					if (skinnedAnimationComponent.is_keyframe(mCurrentTime)) {
+						
+						auto m1 = playback.get_state();
+
+						auto m2 = skinnedAnimationComponent.get_keyframe(mCurrentTime);
+						
+						if (m1 != m2) {
+							mUncommittedKey = true;
+						}
+					}
+				}
+			});
+
 		}
 		
 	}
@@ -504,7 +576,7 @@ public:
 	}
 	
 	// Override the draw method to handle time updates and rendering
-	virtual void draw(NVGcontext* ctx) override {
+	void update() {
 		if (mPlaying) {
 			if (mCurrentTime < mTotalFrames) {
 				mCurrentTime++;
@@ -520,6 +592,7 @@ public:
 		
 		evaluate_keyframe_status();
 		
+		auto ctx = screen()->nvg_context();
 		// Draw background
 		nvgBeginPath(ctx);
 		nvgRect(ctx, m_pos.x(), m_pos.y(), m_size.x(), m_size.y());
@@ -530,6 +603,10 @@ public:
 		nanogui::Widget::draw(ctx);
 	}
 	
+	int current_time() const {
+		return mCurrentTime;
+	}
+	
 private:
 	// Helper method to toggle play/pause
 	void toggle_play_pause(bool play) {
@@ -537,7 +614,7 @@ private:
 		if (play) {
 			mAnimatableActors = mActorManager.get_actors_with_component<AnimationComponent>();
 		} else {
-			register_actor_transform_callback(mActiveActor);
+			register_actor_callbacks(mActiveActor);
 		}
 	}
 	
@@ -598,28 +675,71 @@ private:
 			return;
 		}
 		
-		const AnimationComponent& animComp = activeActor->get().get_component<AnimationComponent>();
 		float currentTimeFloat = static_cast<float>(mCurrentTime);
 		
-		// Get previous and next keyframes
+		// Get the AnimationComponent
+		const AnimationComponent& animComp = activeActor->get().get_component<AnimationComponent>();
+		
+		// Get previous and next keyframes from AnimationComponent
 		std::optional<AnimationComponent::Keyframe> prevKeyframe = animComp.get_previous_keyframe(currentTimeFloat);
 		std::optional<AnimationComponent::Keyframe> nextKeyframe = animComp.get_next_keyframe(currentTimeFloat);
 		
-		// Enable or disable the Previous Keyframe button
-		if (prevKeyframe.has_value()) {
-			mPrevKeyBtn->set_enabled(true);
-		} else {
-			mPrevKeyBtn->set_enabled(false);
+		// Variables to track the latest previous keyframe and earliest next keyframe times
+		float latestPrevTime = -std::numeric_limits<float>::infinity();
+		float earliestNextTime = std::numeric_limits<float>::infinity();
+		
+		// Flags to indicate if we have previous or next keyframes
+		bool hasPrevKeyframe = false;
+		bool hasNextKeyframe = false;
+		
+		// Check previous keyframe from AnimationComponent
+		if (prevKeyframe) {
+			hasPrevKeyframe = true;
+			if (prevKeyframe->time > latestPrevTime) {
+				latestPrevTime = prevKeyframe->time;
+			}
 		}
 		
-		// Enable or disable the Next Keyframe button
-		if (nextKeyframe.has_value()) {
-			mNextKeyBtn->set_enabled(true);
-		} else {
-			mNextKeyBtn->set_enabled(false);
+		// Check next keyframe from AnimationComponent
+		if (nextKeyframe) {
+			hasNextKeyframe = true;
+			if (nextKeyframe->time < earliestNextTime) {
+				earliestNextTime = nextKeyframe->time;
+			}
 		}
+		
+		// If SkinnedAnimationComponent exists, consider its keyframes as well
+		if (activeActor->get().find_component<SkinnedAnimationComponent>()) {
+			const SkinnedAnimationComponent& skinnedComponent = activeActor->get().get_component<SkinnedAnimationComponent>();
+			
+			// Get previous and next keyframes from SkinnedAnimationComponent
+			std::optional<SkinnedAnimationComponent::Keyframe> prevSkinnedKeyframe = skinnedComponent.get_previous_keyframe(currentTimeFloat);
+			std::optional<SkinnedAnimationComponent::Keyframe> nextSkinnedKeyframe = skinnedComponent.get_next_keyframe(currentTimeFloat);
+			
+			// Check previous keyframe from SkinnedAnimationComponent
+			if (prevSkinnedKeyframe) {
+				hasPrevKeyframe = true;
+				if (prevSkinnedKeyframe->time > latestPrevTime) {
+					latestPrevTime = prevSkinnedKeyframe->time;
+				}
+			}
+			
+			// Check next keyframe from SkinnedAnimationComponent
+			if (nextSkinnedKeyframe) {
+				hasNextKeyframe = true;
+				if (nextSkinnedKeyframe->time < earliestNextTime) {
+					earliestNextTime = nextSkinnedKeyframe->time;
+				}
+			}
+		}
+		
+		// Enable or disable the Previous Keyframe button
+		mPrevKeyBtn->set_enabled(hasPrevKeyframe);
+		
+		// Enable or disable the Next Keyframe button
+		mNextKeyBtn->set_enabled(hasNextKeyframe);
 	}
-	
+
 private:
 	ActorManager& mActorManager;
 	nanogui::TextBox* mTimeLabel;
@@ -641,12 +761,14 @@ private:
 	bool mUncommittedKey;
 	
 	std::optional<std::reference_wrapper<TransformComponent>> mRegisteredTransformComponent;
+	std::optional<std::reference_wrapper<PlaybackComponent>> mRegisteredPlaybackComponent;
 	int mTransformRegistrationId;
+	int mPlaybackRegistrationId;
 	int mCurrentTime;
 	int mTotalFrames;
 };
 
-UiManager::UiManager(IActorSelectedRegistry& registry, IActorVisualManager& actorVisualManager, ActorManager& actorManager, MeshActorLoader& meshActorLoader, ShaderManager& shaderManager, ScenePanel& scenePanel, Canvas& canvas, nanogui::Widget& toolbox, nanogui::Widget& statusBar, CameraManager& cameraManager, std::function<void(std::function<void(int, int)>)> applicationClickRegistrator)
+UiManager::UiManager(IActorSelectedRegistry& registry, IActorVisualManager& actorVisualManager, ActorManager& actorManager, MeshActorLoader& meshActorLoader, ShaderManager& shaderManager, ScenePanel& scenePanel, Canvas& canvas, nanogui::Widget& toolbox, nanogui::Widget& statusBar, AnimationPanel& animationPanel, CameraManager& cameraManager, std::function<void(std::function<void(int, int)>)> applicationClickRegistrator)
 : mRegistry(registry)
 , mActorManager(actorManager)
 , mShaderManager(shaderManager)
@@ -654,7 +776,8 @@ UiManager::UiManager(IActorSelectedRegistry& registry, IActorVisualManager& acto
 , mMeshActorLoader(meshActorLoader)
 , mGizmoManager(std::make_unique<GizmoManager>(toolbox, shaderManager, actorManager, mMeshActorLoader))
 
-, mCanvas(canvas) {
+, mCanvas(canvas)
+, mAnimationPanel(animationPanel) {
 	//
 	//	mRenderPass = new nanogui::RenderPass({mCanvas.render_pass()->targets()[2],
 	//		mCanvas.render_pass()->targets()[3]}, mCanvas.render_pass()->targets()[0], mCanvas.render_pass()->targets()[1], nullptr);
@@ -855,6 +978,9 @@ void UiManager::OnActorSelected(std::optional<std::reference_wrapper<Actor>> act
 }
 
 void UiManager::draw() {
+	mSceneTimeBar->update();
+	mAnimationPanel.update_with(mSceneTimeBar->current_time());
+	
 	// Begin the first render pass for actors
 	mCanvas.render_pass()->clear_color(0, mCanvas.background_color());
 	mCanvas.render_pass()->clear_color(1, nanogui::Color(0.0f, 0.0f, 0.0f, 0.0f));

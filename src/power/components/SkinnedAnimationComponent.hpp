@@ -11,9 +11,98 @@
 #include <iostream>
 #include <memory>
 #include <algorithm>
+#include <vector>
+#include <optional>
 
 class SkinnedAnimationComponent {
 public:
+	enum class PlaybackState {
+		Play,
+		Pause
+	};
+	
+	enum class PlaybackModifier {
+		Forward,
+		Reverse
+	};
+	
+	enum class PlaybackTrigger {
+		None,
+		Rewind,
+		FastForward
+	};
+	
+	struct Keyframe {
+		float time; // Keyframe time
+	private:
+		PlaybackState mPlaybackState;
+		PlaybackModifier mPlaybackModifier;
+		PlaybackTrigger mPlaybackTrigger;
+		
+	public:
+		// Constructors
+		Keyframe(float t, PlaybackState state, PlaybackModifier modifier, PlaybackTrigger trigger)
+		: time(t), mPlaybackState(state), mPlaybackModifier(modifier), mPlaybackTrigger(trigger) {
+			// Apply logic: setting modifier sets state to Play
+			if (modifier == PlaybackModifier::Forward || modifier == PlaybackModifier::Reverse) {
+				mPlaybackState = PlaybackState::Play;
+			}
+			// Setting trigger sets state to Pause
+			if (trigger == PlaybackTrigger::Rewind || trigger == PlaybackTrigger::FastForward) {
+				mPlaybackState = PlaybackState::Pause;
+			}
+		}
+		
+		// Getter for PlaybackState
+		PlaybackState getPlaybackState() const {
+			return mPlaybackState;
+		}
+		
+		// Setter for PlaybackState
+		void setPlaybackState(PlaybackState state) {
+			mPlaybackState = state;
+		}
+		
+		// Getter for PlaybackModifier
+		PlaybackModifier getPlaybackModifier() const {
+			return mPlaybackModifier;
+		}
+		
+		// Setter for PlaybackModifier
+		void setPlaybackModifier(PlaybackModifier modifier) {
+			mPlaybackModifier = modifier;
+			// Setting the modifier should also set PlaybackState to Play
+			mPlaybackState = PlaybackState::Play;
+		}
+		
+		// Getter for PlaybackTrigger
+		PlaybackTrigger getPlaybackTrigger() const {
+			return mPlaybackTrigger;
+		}
+		
+		// Setter for PlaybackTrigger
+		void setPlaybackTrigger(PlaybackTrigger trigger) {
+			mPlaybackTrigger = trigger;
+			// Setting the trigger should also set PlaybackState to Pause
+			if (mPlaybackTrigger != PlaybackTrigger::None) {
+				mPlaybackState = PlaybackState::Pause;
+			}
+		}
+		
+		// Overloaded == operator for Keyframe
+		bool operator==(const Keyframe& rhs) {
+			return time == rhs.time &&
+			getPlaybackState() == rhs.getPlaybackState() &&
+			getPlaybackModifier() == rhs.getPlaybackModifier() &&
+			getPlaybackTrigger() == rhs.getPlaybackTrigger();
+		}
+		
+		// Overloaded != operator for Keyframe
+		bool operator!=(const Keyframe& rhs) {
+			return !(*this == rhs);
+		}
+	};
+	
 	struct BoneCPU {
 		float transform[4][4] =
 		{
@@ -23,7 +112,7 @@ public:
 			{ 0.0f, 0.0f, 0.0f, 0.0f }
 		};
 	};
-
+	
 	struct SkinnedAnimationPdo {
 		SkinnedAnimationPdo(std::unique_ptr<Skeleton> skeleton) : mSkeleton(std::move(skeleton)) {}
 		
@@ -33,8 +122,7 @@ public:
 	
 public:
 	SkinnedAnimationComponent(std::unique_ptr<SkinnedAnimationPdo> animationPdo)
-	: mAnimationPdo(std::move(animationPdo)), mSkeleton(*mAnimationPdo->mSkeleton), mCurrentTime(0), mReverse(false), mPlaying(false)
-	{
+	: mAnimationPdo(std::move(animationPdo)), mSkeleton(*mAnimationPdo->mSkeleton), mCurrentTime(0.0f) {
 		for (auto& animation : mAnimationPdo->mAnimationData) {
 			mAnimationData.push_back(*animation);
 		}
@@ -44,44 +132,166 @@ public:
 		mModelPose.resize(numBones);
 	}
 	
-	void set_pdo(std::unique_ptr<SkinnedAnimationPdo> animationPdo){
-		mAnimationData.clear();
-
-		// skeleton does not change but must match this animation.
-		animationPdo->mSkeleton = std::move(mAnimationPdo->mSkeleton);
-				
-		// do skeleton matching (index and bone naming)
-		
-		//@TODO
-		
-		//
-		
-
-		mAnimationPdo = std::move(animationPdo);
-
-			
-		for (auto& animation : mAnimationPdo->mAnimationData) {
-			mAnimationData.push_back(*animation);
+	// Add a keyframe to the animation
+	void addKeyframe(float time, PlaybackState state, PlaybackModifier modifier, PlaybackTrigger trigger) {
+		// Check if a keyframe at this time already exists
+		if (keyframeExists(time)) {
+			// Update the existing keyframe
+			updateKeyframe(time, state, modifier, trigger);
+			return;
 		}
-
+		Keyframe keyframe(time, state, modifier, trigger);
+		keyframes_.push_back(keyframe);
+		// Keep keyframes sorted
+		std::sort(keyframes_.begin(), keyframes_.end(),
+				  [](const Keyframe& a, const Keyframe& b) {
+			return a.time < b.time;
+		});
 	}
 	
-	
-	void set_reverse(bool reverse) {
-		mReverse = reverse;
-	}
-	
-	void set_playing(bool playing) {
-		mPlaying = playing;
-	}
-	
-	std::vector<BoneCPU> get_bones() {
-		if (mPlaying) {
-			update(1);
+	// Update an existing keyframe at a specified time
+	void updateKeyframe(float time, PlaybackState state, PlaybackModifier modifier, PlaybackTrigger trigger) {
+		auto it = findKeyframe(time);
+		if (it != keyframes_.end()) {
+			it->setPlaybackState(state);
+			it->setPlaybackModifier(modifier);
+			it->setPlaybackTrigger(trigger);
 		} else {
-			Skeleton& skeleton = mSkeleton.get();
-			skeleton.compute_offsets({});
+			// If the keyframe does not exist, add it
+			addKeyframe(time, state, modifier, trigger);
 		}
+	}
+	
+	// Remove a keyframe at the specified time
+	void removeKeyframe(float time) {
+		auto it = findKeyframe(time);
+		if (it != keyframes_.end()) {
+			keyframes_.erase(it);
+		}
+		// Optionally handle the case where the keyframe does not exist
+	}
+	
+	// Evaluate the playback state at a given time
+	PlaybackState evaluate(float time) const {
+		if (keyframes_.empty()) {
+			return PlaybackState::Pause; // Default state if no keyframes
+		}
+		
+		// Clamp time to the bounds of the keyframes
+		if (time <= keyframes_.front().time) {
+			return keyframes_.front().getPlaybackState();
+		}
+		if (time >= keyframes_.back().time) {
+			return keyframes_.back().getPlaybackState();
+		}
+		
+		// Find the two keyframes surrounding the given time
+		auto it = std::lower_bound(keyframes_.begin(), keyframes_.end(), time,
+								   [](const Keyframe& kf, float t) {
+			return kf.time < t;
+		});
+		
+		const Keyframe& next = *it;
+		const Keyframe& prev = *(it - 1);
+		
+		// Compute interpolation factor (if needed for continuous properties)
+		float factor = (time - prev.time) / (next.time - prev.time);
+		
+		// For discrete properties like PlaybackState, choose based on factor
+		return (factor < 0.5f) ? prev.getPlaybackState() : next.getPlaybackState();
+	}
+	
+	// Check if the current time corresponds to an exact keyframe
+	bool is_keyframe(float time) const {
+		return keyframeExists(time);
+	}
+	
+	// Get the previous keyframe before the given time
+	std::optional<Keyframe> get_previous_keyframe(float time) const {
+		if (keyframes_.empty()) return std::nullopt;
+		
+		auto it = std::lower_bound(keyframes_.begin(), keyframes_.end(), time,
+								   [](const Keyframe& kf, float t) {
+			return kf.time < t;
+		});
+		
+		if (it == keyframes_.begin()) return std::nullopt; // No previous keyframe
+		--it;
+		return *it;
+	}
+	
+	// Get the next keyframe after the given time
+	std::optional<Keyframe> get_next_keyframe(float time) const {
+		if (keyframes_.empty()) return std::nullopt;
+		
+		auto it = std::upper_bound(keyframes_.begin(), keyframes_.end(), time,
+								   [](float t, const Keyframe& kf) {
+			return t < kf.time;
+		});
+		if (it == keyframes_.end()) return std::nullopt; // No next keyframe
+		return *it;
+	}
+	
+	// Update the animation based on the keyframes
+	void update(float deltaTime) {
+		if (mAnimationData.empty()) {
+			return; // No animations to process
+		}
+		
+		const Animation& animation = mAnimationData[0].get();
+		float duration = static_cast<float>(animation.get_duration());
+		
+		// Evaluate the playback state at the current time
+		PlaybackState currentState = evaluate(mCurrentTime);
+		
+		// If paused, do not advance time
+		if (currentState == PlaybackState::Pause) {
+			// Optionally, you can still update the skeleton pose if needed
+			
+			if (keyframes_.empty()) {
+				Skeleton& skeleton = mSkeleton.get();
+				skeleton.compute_offsets({});
+			} else {
+				apply_pose_to_skeleton();
+			}
+
+			return;
+		}
+		
+		// Determine playback direction
+		bool reverse = false;
+		if (auto modifierOpt = get_current_playback_modifier(mCurrentTime)) {
+			reverse = (*modifierOpt == PlaybackModifier::Reverse);
+		}
+		
+		// Update current time based on playback direction
+		mCurrentTime += deltaTime * (reverse ? -1.0f : 1.0f);
+		
+		// Wrap current time within the duration
+		if (mCurrentTime < 0.0f) mCurrentTime += duration;
+		if (mCurrentTime > duration) mCurrentTime = std::fmod(mCurrentTime, duration);
+		
+		// Evaluate the animation at the current time
+		evaluate_animation(animation, mCurrentTime);
+		
+		// Update the skeleton with the new transforms
+		apply_pose_to_skeleton();
+	}
+	
+	int get_animation_duration() {
+		if (mAnimationData.empty()) {
+			return 0;
+		}
+		
+		const Animation& animation = mAnimationData[0].get();
+		
+		return animation.get_duration();
+	}
+	
+	// Retrieve the bones for rendering
+	std::vector<BoneCPU> get_bones() {
+		update(1);
+		
 		// Ensure we have a valid number of bones
 		size_t numBones = mSkeleton.get().num_bones();
 		
@@ -102,18 +312,6 @@ public:
 			}
 		}
 		return bonesCPU;
-		
-	}
-	
-	int get_animation_duration() {
-		if (mAnimationData.empty()) {
-			return 0; // No animations to process
-		}
-		
-		// For simplicity, use the first animation in the list
-		const Animation& animation = mAnimationData[0].get();
-		
-		return animation.get_duration();
 	}
 	
 	std::vector<BoneCPU> get_bones_at_time(int time) {
@@ -132,7 +330,7 @@ public:
 		
 		// Update the skeleton with the new transforms
 		apply_pose_to_skeleton();
-
+		
 		// Ensure we have a valid number of bones
 		size_t numBones = mSkeleton.get().num_bones();
 		
@@ -156,35 +354,65 @@ public:
 		
 	}
 	
-	// Function to update the animation time
-	void update(float deltaTime) {
-		if (mAnimationData.empty()) {
-			return; // No animations to process
+	
+	void set_pdo(std::unique_ptr<SkinnedAnimationPdo> animationPdo){
+		mAnimationData.clear();
+		
+		// skeleton does not change but must match this animation.
+		animationPdo->mSkeleton = std::move(mAnimationPdo->mSkeleton);
+		
+		// do skeleton matching (index and bone naming)
+		
+		//@TODO
+		
+		//
+		
+		
+		mAnimationPdo = std::move(animationPdo);
+		
+		
+		for (auto& animation : mAnimationPdo->mAnimationData) {
+			mAnimationData.push_back(*animation);
 		}
 		
-		// For simplicity, use the first animation in the list
-		const Animation& animation = mAnimationData[0].get();
-		int duration = animation.get_duration();
-		
-		// Update current time and wrap around if necessary
-		if (mReverse) {
-			mCurrentTime += deltaTime * -1;
-		} else {
-			mCurrentTime += deltaTime * 1;
-		}
-				
-		mCurrentTime = fmax(0, fmod(duration + mCurrentTime, duration));
-
-		// Evaluate the animation at the current time
-		evaluate_animation(animation, mCurrentTime);
-		
-		// Update the skeleton with the new transforms
-		apply_pose_to_skeleton();
 	}
 	
-	auto& skeleton() const { return mSkeleton.get(); }
-	
+	Keyframe get_keyframe(float time) const {
+		return *findKeyframe(time);
+	}
+
 private:
+	// Helper to check if a keyframe exists at the given time
+	bool keyframeExists(float time) const {
+		return std::any_of(keyframes_.begin(), keyframes_.end(),
+						   [time](const Keyframe& kf) { return kf.time == time; });
+	}
+	
+	// Helper to find a keyframe at the given time
+	typename std::vector<Keyframe>::iterator findKeyframe(float time) {
+		return std::find_if(keyframes_.begin(), keyframes_.end(),
+							[time](const Keyframe& kf) { return kf.time == time; });
+	}
+	
+	typename std::vector<Keyframe>::const_iterator findKeyframe(float time) const {
+		return std::find_if(keyframes_.cbegin(), keyframes_.cend(),
+							[time](const Keyframe& kf) { return kf.time == time; });
+	}
+	
+	// Helper to get the current playback modifier at a given time
+	std::optional<PlaybackModifier> get_current_playback_modifier(float time) const {
+		if (keyframes_.empty()) {
+			return std::nullopt;
+		}
+		
+		// Find the keyframe at or before the current time
+		auto prevKeyframeOpt = get_previous_keyframe(time);
+		if (prevKeyframeOpt) {
+			return prevKeyframeOpt->getPlaybackModifier();
+		}
+		return std::nullopt;
+	}
+	
 	void evaluate_animation(const Animation& animation, float time) {
 		mModelPose = animation.evaluate(time);
 	}
@@ -199,10 +427,11 @@ private:
 	std::reference_wrapper<Skeleton> mSkeleton;
 	std::vector<std::reference_wrapper<Animation>> mAnimationData;
 	
-	int mCurrentTime; // Current animation time
-	bool mReverse; // Current animation time
-	bool mPlaying; // Current animation time
+	float mCurrentTime; // Current animation time
 	
 	// Buffers to store poses
 	std::vector<glm::mat4> mModelPose;
+	
+	// Keyframes for playback control
+	std::vector<Keyframe> keyframes_;
 };

@@ -9,6 +9,7 @@
 #include "components/DrawableComponent.hpp"
 #include "components/MeshComponent.hpp"
 #include "components/MetadataComponent.hpp"
+#include "components/PlaybackComponent.hpp"
 #include "components/SkinnedAnimationComponent.hpp"
 #include "components/SkinnedMeshComponent.hpp"
 #include "components/TransformComponent.hpp"
@@ -50,6 +51,8 @@ Actor& MeshActorBuilder::build(Actor& actor, const std::string& path, ShaderWrap
 		}
 		
 		auto& skinnedComponent = actor.add_component<SkinnedAnimationComponent>(std::move(pdo));
+		
+		actor.add_component<PlaybackComponent>();
 		
 		for (auto& skinnedMeshData : model->GetSkinnedMeshData()) {
 			skinnedMeshComponentData.push_back(std::make_unique<SkinnedMesh>(std::move(skinnedMeshData), skinnedShader, mBatchUnit.mSkinnedMeshBatch, colorComponent,

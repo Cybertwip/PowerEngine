@@ -11,6 +11,7 @@
 
 #include "actors/Actor.hpp"
 #include "components/DrawableComponent.hpp"
+#include "components/PlaybackComponent.hpp"
 #include "components/SkinnedAnimationComponent.hpp"
 #include "components/SkinnedMeshComponent.hpp"
 #include "components/TransformComponent.hpp"
@@ -99,8 +100,8 @@ private:
 													  mesh.get_flattened_weights().end());
 		
 		// Adjust and append indices
-		auto& indices = mesh.get_mesh_data().get_indices()
-		;
+		auto& indices = mesh.get_mesh_data().get_indices();
+		
 		for (auto index : indices) {
 			mBatchIndices[shader.identifier()].push_back(index + indexer.mVertexOffset);
 		}
@@ -130,7 +131,6 @@ private:
 		glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);  // Replace stencil buffer with 1 where actors are drawn
 		glStencilMask(0xFF);  // Enable writing to the stencil buffer
 #endif
-		
 		for (auto& [_, mesh_vector] : mMeshes) {
 			auto& shader = mSkinnedMeshPreviewShader;
 			int identifier = shader.identifier();
@@ -389,7 +389,7 @@ private:
 };
 
 AnimationPanel::AnimationPanel(nanogui::Widget &parent)
-: Panel(parent, "Animation"), mActiveActor(std::nullopt) {
+: Panel(parent, "Animation"), mActiveActor(std::nullopt), mCurrentTime(0) {
 	set_position(nanogui::Vector2i(0, 0));
 	set_layout(new nanogui::BoxLayout(nanogui::Orientation::Vertical, nanogui::Alignment::Fill, 10, 10));
 	
@@ -413,8 +413,11 @@ AnimationPanel::AnimationPanel(nanogui::Widget &parent)
 		if (mActiveActor.has_value()) {
 			auto& animation = mActiveActor->get().get_component<SkinnedAnimationComponent>();
 			
-			animation.set_reverse(true);
-			animation.set_playing(active);
+			if (animation.is_keyframe(mCurrentTime)) {
+				auto& playback = mActiveActor->get().get_component<PlaybackComponent>();
+				
+				playback.update_state(active ? SkinnedAnimationComponent::PlaybackState::Play : SkinnedAnimationComponent::PlaybackState::Pause, SkinnedAnimationComponent::PlaybackModifier::Reverse, SkinnedAnimationComponent::PlaybackTrigger::None);
+			}
 		}
 	});
 	
@@ -425,9 +428,12 @@ AnimationPanel::AnimationPanel(nanogui::Widget &parent)
 	mPlayPauseButton->set_change_callback([this](bool active){
 		if (mActiveActor.has_value()) {
 			auto& animation = mActiveActor->get().get_component<SkinnedAnimationComponent>();
-			
-			animation.set_reverse(false);
-			animation.set_playing(active);
+			if (animation.is_keyframe(mCurrentTime)) {
+				
+				auto& playback = mActiveActor->get().get_component<PlaybackComponent>();
+				
+				playback.update_state(active ? SkinnedAnimationComponent::PlaybackState::Play : SkinnedAnimationComponent::PlaybackState::Pause, SkinnedAnimationComponent::PlaybackModifier::Forward, SkinnedAnimationComponent::PlaybackTrigger::None);
+			}
 		}
 	});
 	

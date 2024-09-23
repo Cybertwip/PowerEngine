@@ -20,6 +20,10 @@ public:
     void set_active_actor(std::optional<std::reference_wrapper<Actor>> actor);
 	
 	void parse_file(const std::string& path);
+	
+	void update_with(int currentTime) {
+		mCurrentTime = currentTime;
+	}
     
 private:
     std::optional<std::reference_wrapper<Actor>> mActiveActor;
@@ -28,5 +32,7 @@ private:
 	nanogui::ToolButton* mPlayPauseButton;
 	
 	SelfContainedMeshCanvas* mPreviewCanvas;
+	
+	int mCurrentTime;
 
 };

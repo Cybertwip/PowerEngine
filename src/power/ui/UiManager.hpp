@@ -17,6 +17,7 @@ class RenderPass;
 class IActorSelectedRegistry;
 class IActorVisualManager;
 class ActorManager;
+class AnimationPanel;
 class Canvas;
 class CameraManager;
 class GizmoManager;
@@ -30,7 +31,7 @@ class StatusBarPanel;
 // UiManager class definition
 class UiManager : public IActorSelectedCallback, public Drawable {
 public:
-	UiManager(IActorSelectedRegistry& registry, IActorVisualManager& actorVisualManager, ActorManager& actorManager, MeshActorLoader& meshActorLoader, ShaderManager& shaderManager, ScenePanel& scenePanel, Canvas& canvas, nanogui::Widget& toolbox, nanogui::Widget& statusBar, CameraManager& cameraManager, std::function<void(std::function<void(int, int)>)> applicationClickRegistrator);
+	UiManager(IActorSelectedRegistry& registry, IActorVisualManager& actorVisualManager, ActorManager& actorManager, MeshActorLoader& meshActorLoader, ShaderManager& shaderManager, ScenePanel& scenePanel, Canvas& canvas, nanogui::Widget& toolbox, nanogui::Widget& statusBar, AnimationPanel& animationPanel, CameraManager& cameraManager, std::function<void(std::function<void(int, int)>)> applicationClickRegistrator);
 	~UiManager();
 	
 	void OnActorSelected(std::optional<std::reference_wrapper<Actor>> actor) override;
@@ -56,6 +57,7 @@ private:
 	std::unique_ptr<GizmoManager> mGizmoManager;
 
 	Canvas& mCanvas;
+	AnimationPanel& mAnimationPanel;
 	nanogui::RenderPass* mRenderPass;
 	
 	SceneTimeBar* mSceneTimeBar;

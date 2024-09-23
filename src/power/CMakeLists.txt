@@ -80,6 +80,7 @@ add_executable(PowerEngine
     ${CMAKE_CURRENT_LIST_DIR}/components/DrawableComponent.cpp
     ${CMAKE_CURRENT_LIST_DIR}/components/DrawableComponent.hpp
     ${CMAKE_CURRENT_LIST_DIR}/components/MetadataComponent.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/components/PlaybackComponent.hpp
     ${CMAKE_CURRENT_LIST_DIR}/components/TransformComponent.hpp
     ${CMAKE_CURRENT_LIST_DIR}/components/UiComponent.hpp
 

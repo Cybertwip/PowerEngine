@@ -14,7 +14,7 @@
 #include "components/MetadataComponent.hpp"
 #include "components/UiComponent.hpp"
 
-HierarchyPanel::HierarchyPanel(ScenePanel& scenePanel, TransformPanel& transformPanel, AnimationPanel& animationPanel, nanogui::Widget &parent) : Panel(parent, "Hierarchy"), mTransformPanel(transformPanel), mAnimationPanel(animationPanel) {
+HierarchyPanel::HierarchyPanel(ScenePanel& scenePanel, TransformPanel& transformPanel, AnimationPanel& animationPanel, nanogui::Widget &parent) : Panel(parent, "Scene"), mTransformPanel(transformPanel), mAnimationPanel(animationPanel) {
 	set_position(nanogui::Vector2i(0, 0));
 	set_layout(new nanogui::GroupLayout());
 	
