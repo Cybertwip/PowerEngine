@@ -71,8 +71,6 @@ public:
 		// Setter for PlaybackModifier
 		void setPlaybackModifier(PlaybackModifier modifier) {
 			mPlaybackModifier = modifier;
-			// Setting the modifier should also set PlaybackState to Play
-			mPlaybackState = PlaybackState::Play;
 		}
 		
 		// Getter for PlaybackTrigger

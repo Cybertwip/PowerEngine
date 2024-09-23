@@ -411,13 +411,9 @@ AnimationPanel::AnimationPanel(nanogui::Widget &parent)
 	
 	mReversePlayButton->set_change_callback([this](bool active){
 		if (mActiveActor.has_value()) {
-			auto& animation = mActiveActor->get().get_component<SkinnedAnimationComponent>();
+			auto& playback = mActiveActor->get().get_component<PlaybackComponent>();
 			
-			if (animation.is_keyframe(mCurrentTime)) {
-				auto& playback = mActiveActor->get().get_component<PlaybackComponent>();
-				
-				playback.update_state(active ? SkinnedAnimationComponent::PlaybackState::Play : SkinnedAnimationComponent::PlaybackState::Pause, SkinnedAnimationComponent::PlaybackModifier::Reverse, SkinnedAnimationComponent::PlaybackTrigger::None);
-			}
+			playback.update_state(active ? SkinnedAnimationComponent::PlaybackState::Play : SkinnedAnimationComponent::PlaybackState::Pause, SkinnedAnimationComponent::PlaybackModifier::Reverse, SkinnedAnimationComponent::PlaybackTrigger::None);
 		}
 	});
 	
@@ -427,13 +423,9 @@ AnimationPanel::AnimationPanel(nanogui::Widget &parent)
 	
 	mPlayPauseButton->set_change_callback([this](bool active){
 		if (mActiveActor.has_value()) {
-			auto& animation = mActiveActor->get().get_component<SkinnedAnimationComponent>();
-			if (animation.is_keyframe(mCurrentTime)) {
-				
-				auto& playback = mActiveActor->get().get_component<PlaybackComponent>();
-				
-				playback.update_state(active ? SkinnedAnimationComponent::PlaybackState::Play : SkinnedAnimationComponent::PlaybackState::Pause, SkinnedAnimationComponent::PlaybackModifier::Forward, SkinnedAnimationComponent::PlaybackTrigger::None);
-			}
+			auto& playback = mActiveActor->get().get_component<PlaybackComponent>();
+			
+			playback.update_state(active ? SkinnedAnimationComponent::PlaybackState::Play : SkinnedAnimationComponent::PlaybackState::Pause, SkinnedAnimationComponent::PlaybackModifier::Forward, SkinnedAnimationComponent::PlaybackTrigger::None);
 		}
 	});
 	

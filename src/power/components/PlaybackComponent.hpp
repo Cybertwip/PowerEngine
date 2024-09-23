@@ -73,6 +73,7 @@ public:
 		mState.setPlaybackModifier(modifier);
 
 		mState.setPlaybackTrigger(trigger);
+		
 		trigger_on_playback_changed();
 	}
 	
