@@ -48,6 +48,7 @@ public:
 				const SkinnedMeshComponent& meshComponent = static_cast<const SkinnedMeshComponent&>(drawableComponent.drawable());
 				
 				for (auto& skinnedData : meshComponent.get_skinned_mesh_data()) {
+					add_mesh(*skinnedData);
 					append(*skinnedData);
 				}
 			}
@@ -55,6 +56,19 @@ public:
 	}
 	
 private:
+	void add_mesh(std::reference_wrapper<SkinnedMesh> mesh) {
+		
+		auto it = std::find_if(mMeshes.begin(), mMeshes.end(), [mesh](auto kp) {
+			return kp.first->identifier() == mesh.get().get_shader().identifier();
+		});
+		
+		if (it != mMeshes.end()) {
+			it->second.push_back(mesh);
+		} else {
+			mMeshes[&(mesh.get().get_shader())].push_back(mesh);
+		}
+	}
+
 	void append(std::reference_wrapper<SkinnedMesh> meshRef) {
 		auto& mesh = meshRef.get();
 		
@@ -98,6 +112,8 @@ private:
 		indexer.mVertexOffset += mesh.get_mesh_data().get_skinned_vertices().size();
 		
 		upload_vertex_data(shader, identifier);
+		
+		
 	}
 	
 	
@@ -195,6 +211,8 @@ private:
 				
 				// Set the camera position and view direction
 				auto& cameraTransform = mCamera.get_component<TransformComponent>();
+				
+
 				cameraTransform.set_translation(center + glm::vec3(0.0f, 0.0f, distance));
 				camera.look_at(mPreviewActor->get());
 			}
@@ -234,19 +252,12 @@ private:
 		// Upload consolidated data to GPU
 		shader.persist_buffer("aPosition", nanogui::VariableType::Float32, {mBatchPositions[identifier].size() / 3, 3},
 							  mBatchPositions[identifier].data());
-		shader.persist_buffer("aNormal", nanogui::VariableType::Float32, {mBatchNormals[identifier].size() / 3, 3},
-							  mBatchNormals[identifier].data());
 		shader.persist_buffer("aTexcoords1", nanogui::VariableType::Float32, {mBatchTexCoords1[identifier].size() / 2, 2},
 							  mBatchTexCoords1[identifier].data());
 		shader.persist_buffer("aTexcoords2", nanogui::VariableType::Float32, {mBatchTexCoords2[identifier].size() / 2, 2},
 							  mBatchTexCoords2[identifier].data());
 		shader.persist_buffer("aTextureId", nanogui::VariableType::Int32, {mBatchTextureIds[identifier].size(), 1},
 							  mBatchTextureIds[identifier].data());
-		
-		// Set Buffer for Vertex Colors
-		shader.persist_buffer("aColor", nanogui::VariableType::Float32, {mBatchColors[identifier].size() / 4, 4},
-							  mBatchColors[identifier].data());
-		
 		// Set Buffer for Bone IDs
 		shader.persist_buffer("aBoneIds", nanogui::VariableType::Int32, {mBatchBoneIds[identifier].size() / 4, 4},
 							  mBatchBoneIds[identifier].data());
@@ -254,7 +265,6 @@ private:
 		// Set Buffer for Weights
 		shader.persist_buffer("aWeights", nanogui::VariableType::Float32, {mBatchBoneWeights[identifier].size() / 4, 4},
 							  mBatchBoneWeights[identifier].data());
-		
 		// Upload indices
 		shader.persist_buffer("indices", nanogui::VariableType::UInt32, {mBatchIndices[identifier].size()},
 							  mBatchIndices[identifier].data());
