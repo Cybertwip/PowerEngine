@@ -22,22 +22,7 @@ public:
 	void set_drag_callback(std::function<void()> drag_callback) {
 		m_drag_callback = drag_callback;
 	}
-	
-	bool mouse_button_event(const nanogui::Vector2i &p, int button, bool down, int modifiers) override {
-		if (!down) {
-			if (!screen()->drag_active()) {
-				set_visible(false);
-				
-				if (m_drag_callback) {
-					m_drag_callback();
-					m_drag_callback = nullptr;
-				}
-			}
-		}
 		
-		return false;
-	}
-	
 	bool mouse_drag_event(const nanogui::Vector2i &p, const nanogui::Vector2i &rel, int button, int modifiers) override {
 		// Custom behavior for dragging the window itself
 		if (screen()->drag_active()) {
@@ -48,6 +33,13 @@ public:
 		}
 		
 		return false;
+	}
+	
+	void do_drag_finish() {
+		if (m_drag_callback) {
+			m_drag_callback();
+			m_drag_callback = nullptr;
+		}
 	}
 	
 private:
@@ -128,9 +120,11 @@ protected:
 				m_drag_active = false;
 				if (m_drag_widget != nullptr) {
 					m_drag_widget->set_visible(false);
+					m_draggable_window->do_drag_finish();
+					
+					m_drag_widget = nullptr;
 				}
 				
-				m_drag_widget = nullptr;
 			}
 			
 			m_redraw |= mouse_button_event(m_mouse_pos, button, action == GLFW_PRESS, m_modifiers);

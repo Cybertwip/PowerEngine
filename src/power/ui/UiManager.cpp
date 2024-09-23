@@ -529,11 +529,19 @@ public:
 		if(mTransformRegistrationId != -1) {
 			mRegisteredTransformComponent->get()
 				.unregister_on_transform_changed_callback(mTransformRegistrationId);
+			
+			mTransformRegistrationId = -1;
+			
+			mRegisteredTransformComponent = std::nullopt;
 		}
 		
 		if(mPlaybackRegistrationId != -1) {
 			mRegisteredPlaybackComponent->get()
 				.unregister_on_playback_changed_callback(mPlaybackRegistrationId);
+			
+			mPlaybackRegistrationId = -1;
+			
+			mRegisteredPlaybackComponent = std::nullopt;
 		}
 		
 		if (actor != std::nullopt) {
