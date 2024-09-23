@@ -27,7 +27,7 @@
 
 class SelfContainedMeshCanvas : public nanogui::Canvas {
 public:
-	SelfContainedMeshCanvas(Widget* parent) : nanogui::Canvas(parent, 1, true, true), mCamera(mRegistry), mShaderManager(*this), mSkinnedMeshPreviewShader(*mShaderManager.load_shader("skinned_mesh_preview", "shaders/metal/preview_diffuse_skinned_vs.metal", "shaders/metal/preview_diffuse_fs.metal", nanogui::Shader::BlendMode::None)) {
+	SelfContainedMeshCanvas(Widget* parent) : nanogui::Canvas(parent, 1, true, true), mCurrentTime(0), mCamera(mRegistry), mShaderManager(*this), mSkinnedMeshPreviewShader(*mShaderManager.load_shader("skinned_mesh_preview", "shaders/metal/preview_diffuse_skinned_vs.metal", "shaders/metal/preview_diffuse_fs.metal", nanogui::Shader::BlendMode::None)) {
 		set_background_color(nanogui::Color{70, 130, 180, 255});
 		
 		mCamera.add_component<TransformComponent>();
@@ -152,8 +152,17 @@ private:
 				// Set the model matrix for the current mesh
 				shader.set_uniform("aModel", nanogui::Matrix4f::identity());
 				
+//				if (mReverse) {
+//					mCurrentTime += 0.016 * -1;
+//				} else {
+//					mCurrentTime += 0.016 * 1;
+//				}
+				mCurrentTime += 1;
+
+				mCurrentTime = fmax(0, fmod(duration + mCurrentTime, duration));
+
 				// Apply skinning and animations (if any)
-				auto bones = mesh.get_skinned_component().get_bones();
+				auto bones = mesh.get_skinned_component().get_bones_at_time(mCurrentTime);
 				
 				shader.set_buffer(
 								  "bones",
@@ -231,6 +240,7 @@ private:
 	std::optional<std::reference_wrapper<Actor>> mPreviewActor;
 	
 	entt::registry mRegistry;
+	int mCurrentTime;
 	Actor mCamera;
 	
 	ShaderManager mShaderManager;

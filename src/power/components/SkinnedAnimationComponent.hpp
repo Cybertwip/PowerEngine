@@ -82,8 +82,6 @@ public:
 			Skeleton& skeleton = mSkeleton.get();
 			skeleton.compute_offsets({});
 		}
-		
-#if defined(NANOGUI_USE_METAL)
 		// Ensure we have a valid number of bones
 		size_t numBones = mSkeleton.get().num_bones();
 		
@@ -104,18 +102,47 @@ public:
 			}
 		}
 		return bonesCPU;
-#else
-		// OpenGL or other rendering API code to upload bone transforms
-		// For example, using a uniform array of matrices
-		size_t numBones = mSkeleton.get().num_bones();
-		std::vector<glm::mat4> boneTransforms(numBones);
-		for (size_t i = 0; i < numBones; ++i) {
-			boneTransforms[i] = mSkeleton.get().get_bone(i).transform * boneTransforms[i] = mSkeleton.get().get_bone(i).offset;
+		
+	}
+	
+	
+	std::vector<BoneCPU> get_bones_at_time(int time) {
+		if (mAnimationData.empty()) {
+			return; // No animations to process
 		}
 		
-		// Upload the boneTransforms to the shader
-		shader.set_uniform("bones", boneTransforms);
-#endif
+		// For simplicity, use the first animation in the list
+		const Animation& animation = mAnimationData[0].get();
+		int duration = animation.get_duration();
+		
+		time = fmax(0, fmod(duration + time, duration));
+		
+		// Evaluate the animation at the current time
+		evaluate_animation(animation, time);
+		
+		// Update the skeleton with the new transforms
+		apply_pose_to_skeleton();
+
+		// Ensure we have a valid number of bones
+		size_t numBones = mSkeleton.get().num_bones();
+		
+		std::vector<BoneCPU> bonesCPU(numBones);
+		
+		for (size_t i = 0; i < numBones; ++i) {
+			// Get the bone transform as a glm::mat4
+			glm::mat4 boneTransform = mSkeleton.get().get_bone(i).transform;
+			
+			// Reference to the BoneCPU structure
+			BoneCPU& boneCPU = bonesCPU[i];
+			
+			// Copy each element from glm::mat4 to the BoneCPU's transform array
+			for (int row = 0; row < 4; ++row) {
+				for (int col = 0; col < 4; ++col) {
+					boneCPU.transform[row][col] = boneTransform[row][col];
+				}
+			}
+		}
+		return bonesCPU;
 		
 	}
 	
