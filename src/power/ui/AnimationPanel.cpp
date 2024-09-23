@@ -111,8 +111,6 @@ private:
 		indexer.mVertexOffset += mesh.get_mesh_data().get_skinned_vertices().size();
 		
 		upload_vertex_data(shader, identifier);
-		
-		
 	}
 	
 	
@@ -194,7 +192,7 @@ private:
 		}
 	}
 	
-	void draw_contents() override {
+	void draw_contents() override {1
 		if (mPreviewActor.has_value()) {
 			auto& camera = mCamera.get_component<CameraComponent>();
 			
@@ -230,7 +228,9 @@ private:
 			}
 			
 			render_pass()->clear_color(0, nanogui::Color(0.0f, 0.0f, 0.0f, 1.0f));
+			
 			render_pass()->clear_depth(1.0f);
+			
 			render_pass()->set_depth_test(nanogui::RenderPass::DepthTest::Less, true);
 
 			draw_content(camera.get_view(),
@@ -250,6 +250,7 @@ private:
 private:
 	
 	void clear() {
+		mMeshes.clear();
 		mBatchPositions.clear();
 		mBatchNormals.clear();
 		mBatchTexCoords1.clear();
