@@ -220,7 +220,7 @@ void ResourcesPanel::refresh_file_view() {
 				icon->set_background_color(mNormalButtonColor);
 				
 				
-				auto drag_callback = [this, icon, element = get_icon_for_file(*child), filename = child->FullPath](){
+				auto drag_callback = [this, icon, element = get_icon_for_file(*child), child](){
 					
 					if (element != FA_PERSON_BOOTH) {
 						return;
@@ -242,16 +242,14 @@ void ResourcesPanel::refresh_file_view() {
 					drag_widget->set_position(dragStartPosition);
 					drag_widget->perform_layout(screen()->nvg_context());
 
-					screen()->set_drag_widget(drag_widget, [this, content, drag_widget, filename](){
+					screen()->set_drag_widget(drag_widget, [this, content, drag_widget, child](){
 						
 						// Remove drag widget
 						drag_widget->remove_child(content);
 						
 						screen()->set_drag_widget(nullptr, nullptr);
 						
-						std::string path = filename;
-						
-						screen()->drop_event(this, { path });
+						screen()->drop_event(this, { child->FullPath });
 					});
 				};
 				

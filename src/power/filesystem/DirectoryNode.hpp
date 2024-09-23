@@ -12,6 +12,6 @@ struct DirectoryNode
 	
 	std::string FullPath;
 	std::string FileName;
-	std::vector<std::unique_ptr<DirectoryNode>> Children;
+	std::vector<std::shared_ptr<DirectoryNode>> Children;
 	bool IsDirectory;
 };

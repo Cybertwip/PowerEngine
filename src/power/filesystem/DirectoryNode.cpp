@@ -29,7 +29,7 @@ bool DirectoryNode::refresh(const std::set<std::string>& allowedExtensions) {
 		for (const auto& entry : std::filesystem::directory_iterator(this->FullPath)) {
 			// If it's a directory, refresh its contents recursively
 			if (entry.is_directory()) {
-				auto newNode = std::make_unique<DirectoryNode>();
+				auto newNode = std::make_shared<DirectoryNode>();
 				newNode->FullPath = entry.path().string();
 				newNode->FileName = entry.path().filename().string();
 				newNode->IsDirectory = true;
@@ -42,13 +42,13 @@ bool DirectoryNode::refresh(const std::set<std::string>& allowedExtensions) {
 			}
 			// If it's a regular file, filter it by allowed extensions
 			else if (entry.is_regular_file() && allowedExtensions.count(entry.path().extension().string()) > 0) {
-				auto newNode = std::make_unique<DirectoryNode>();
+				auto newNode = std::make_shared<DirectoryNode>();
 				newNode->FullPath = entry.path().string();
 				newNode->FileName = entry.path().filename().string();
 				newNode->IsDirectory = false;
 				
 				// Add the file node to the children of the current node
-				this->Children.push_back(std::move(newNode));
+				this->Children.push_back(newNode);
 				hasValidChildren = true; // Mark this node as having valid children
 			}
 		}

@@ -65,8 +65,9 @@ void AnimationPanel::parse_file(const std::string& path) {
 	if (mActiveActor.has_value()) {
 		auto model = std::make_unique<SkinnedFbx>(path);
 		
+		model->LoadModel();
 		model->TryImportAnimations();
-		
+
 		std::unique_ptr<Drawable> drawableComponent;
 		
 		if (model->GetSkeleton() != nullptr) {

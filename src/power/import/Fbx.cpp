@@ -43,10 +43,11 @@ glm::mat4 GetUpAxisRotation(int up_axis, int up_axis_sign) {
 }  // namespace
 
 Fbx::Fbx(const std::string& path) : mPath(path) {
-	mDoc = sfbx::MakeDocument(std::string(mPath));
 }
 
 void Fbx::LoadModel() {
+	mDoc = sfbx::MakeDocument(std::string(mPath));
+
     if (mDoc && mDoc->valid()) {
         ProcessNode(mDoc->getRootModel());
     }
