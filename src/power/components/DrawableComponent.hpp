@@ -11,6 +11,10 @@ public:
     DrawableComponent(std::unique_ptr<Drawable> drawable);
     
     void draw_content(const nanogui::Matrix4f& model, const nanogui::Matrix4f& view, const nanogui::Matrix4f& projection) override;
+	
+	const Drawable& drawable() const {
+		return *mDrawable;
+	}
     
 private:
 	std::unique_ptr<Drawable> mDrawable;
