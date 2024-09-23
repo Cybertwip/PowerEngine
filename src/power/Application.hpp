@@ -38,14 +38,16 @@ public:
 		return false;
 	}
 	
-	bool mouse_motion_event(const nanogui::Vector2i &p, const nanogui::Vector2i &rel, int button, int modifiers) override {
+	bool mouse_drag_event(const nanogui::Vector2i &p, const nanogui::Vector2i &rel, int button, int modifiers) override {
 		// Custom behavior for dragging the window itself
 		if (screen()->drag_active()) {
+			set_visible(true);
 			set_position(m_pos + rel);
 		} else {
 			set_visible(false);
 		}
-		return true;
+		
+		return false;
 	}
 	
 private:
@@ -90,6 +92,7 @@ protected:
 						move_widget_to_top(m_drag_widget);
 						m_drag_active = true;
 						m_mouse_pos = p;
+
 					}
 				}
 			} else {
@@ -123,6 +126,11 @@ protected:
 			} else if (action == GLFW_RELEASE) {
 				m_mouse_state &= ~(1 << button);
 				m_drag_active = false;
+				if (m_drag_widget != nullptr) {
+					m_drag_widget->set_visible(false);
+				}
+				
+				m_drag_widget = nullptr;
 			}
 			
 			m_redraw |= mouse_button_event(m_mouse_pos, button, action == GLFW_PRESS, m_modifiers);
@@ -140,7 +148,7 @@ private:
 			m_drag_widget = nullptr;
 			m_drag_callback = nullptr;
 		} else {
-			m_draggable_window->set_visible(true);
+			m_draggable_window->set_visible(false);
 			m_draggable_window->set_drag_callback(drag_callback);
 			m_drag_widget = m_draggable_window;
 			m_drag_active = false;
