@@ -231,10 +231,10 @@ void ResourcesPanel::refresh_file_view() {
 						
 						auto drag_widget = screen()->drag_widget();
 						
-						auto content = new nanogui::TextBox(drag_widget, "");
+						auto content = new nanogui::TextBox(drag_widget, nanogui::utf8(FA_PERSON_BOOTH).data());
 						
 						content->set_font_size(16);
-						content->set_background_color(nanogui::Color(0, 0, 0, 255));
+						content->set_background_color(mSelectedButtonColor);
 						
 						content->set_fixed_size(icon->fixed_size() - 20);
 						
