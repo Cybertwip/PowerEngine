@@ -124,35 +124,35 @@ TransformPanel::TransformPanel(nanogui::Widget &parent)
 	scalePanel->set_layout(scaleLayout);
 	
 	new nanogui::Label(scalePanel, "X", "sans-bold");
-	mXScale = new nanogui::IntBox<float>(scalePanel);
+	mXScale = new nanogui::FloatBox<float>(scalePanel);
 	mXScale->set_editable(true);
 	mXScale->set_value(1);
 	mXScale->set_default_value("1");
 	mXScale->set_font_size(16);
-	mXScale->set_format("[1-9][0-9]*");
 	mXScale->set_spinnable(true);
 	mXScale->set_value_increment(0.01f);
+	mXScale->number_format("%.2f");
 	mXScale->set_callback(gatherValuesCallback);
 
 	new nanogui::Label(scalePanel, "Y", "sans-bold");
-	mYScale = new nanogui::IntBox<float>(scalePanel);
+	mYScale = new nanogui::FloatBox<float>(scalePanel);
 	mYScale->set_editable(true);
 	mYScale->set_value(1);
 	mYScale->set_default_value("1");
 	mYScale->set_font_size(16);
-	mYScale->set_format("[1-9][0-9]*");
 	mYScale->set_spinnable(true);
 	mYScale->set_value_increment(0.01f);
+	mYScale->number_format("%.2f");
 	mYScale->set_callback(gatherValuesCallback);
 
-	new nanogui::Label(scalePanel, "Z", "sans-bold");
-	mZScale = new nanogui::IntBox<float>(scalePanel);
+	new nanogui::Label(scalePanel, "float", "sans-bold");
+	mZScale = new nanogui::FloatBox<float>(scalePanel);
 	mZScale->set_editable(true);
 	mZScale->set_value(1);
 	mZScale->set_default_value("1");
 	mZScale->set_font_size(16);
-	mZScale->set_format("[1-9][0-9]*");
 	mZScale->set_spinnable(true);
+	mZScale->number_format("%.2f");
 	mZScale->set_value_increment(0.01f);
 	mZScale->set_callback(gatherValuesCallback);
 	set_active_actor(std::nullopt);
@@ -193,9 +193,9 @@ void TransformPanel::update_values_from(const TransformComponent &transform) {
 	mRollRotate->set_value((int)glm::degrees(eulerAngles.z));
 	
 	glm::vec3 scale = transform.get_scale();
-	mXScale->set_value((int)scale.x);
-	mYScale->set_value((int)scale.y);
-	mZScale->set_value((int)scale.z);
+	mXScale->set_value(scale.x);
+	mYScale->set_value(scale.y);
+	mZScale->set_value(scale.z);
 }
 
 void TransformPanel::set_active_actor(std::optional<std::reference_wrapper<Actor>> actor) {
