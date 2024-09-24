@@ -91,7 +91,7 @@ Application::Application() : nanogui::DraggableScreen("Power Engine") {
     }
 
 	if (mCameraManager->active_camera().has_value()) {
-		mCameraManager->active_camera()->get().get_component<TransformComponent>().set_translation(glm::vec3(0, -100, 250));
+		mCameraManager->active_camera()->get().get_component<TransformComponent>().set_translation(glm::vec3(0, -100, -250));
 	}
 	
     mUiCommon->hierarchy_panel().add_actors(std::move(actors));

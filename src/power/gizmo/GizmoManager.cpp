@@ -264,7 +264,7 @@ void GizmoManager::draw_content(const nanogui::Matrix4f& model, const nanogui::M
 			glm::vec3 cameraPosition(view.m[3][0], view.m[3][1], view.m[3][2]);
 			
 			// Use GLM for translation matrix
-			glm::mat4 actorTranslationMatrix = glm::translate(glm::mat4(1.0f), glm::vec3(translation.x, translation.y, -translation.z));
+			glm::mat4 actorTranslationMatrix = glm::translate(glm::mat4(1.0f), glm::vec3(translation.x, translation.y, translation.z));
 			
 			float distance = glm::distance(cameraPosition, glm::vec3(translation.x, translation.y, translation.z)); // Now using actor's position for distance
 			float visualScaleFactor = std::max(0.005f, distance * 0.005f);
@@ -282,14 +282,12 @@ void GizmoManager::draw_content(const nanogui::Matrix4f& model, const nanogui::M
 				rotationMatrix = glm::rotate(rotationMatrix, glm::radians(270.0f), glm::vec3(0, 1, 0));
 				
 				rotationMatrix = glm::rotate(rotationMatrix, glm::radians(90.0f), glm::vec3(0, 0, 1));
-
 			}
 
 			// Apply transformations in order: rotation, translation, then scale
 			auto gizmoModel = actorTranslationMatrix * rotationMatrix * scaleMatrix;
 			
 			auto gizmoMatrix = TransformComponent::glm_to_nanogui(gizmoModel);
-
 			
 			auto& drawable = mActiveGizmo->get().get_component<DrawableComponent>();
 						
