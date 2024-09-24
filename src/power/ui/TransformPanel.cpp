@@ -124,36 +124,36 @@ TransformPanel::TransformPanel(nanogui::Widget &parent)
 	scalePanel->set_layout(scaleLayout);
 	
 	new nanogui::Label(scalePanel, "X", "sans-bold");
-	mXScale = new nanogui::IntBox<int>(scalePanel);
+	mXScale = new nanogui::IntBox<float>(scalePanel);
 	mXScale->set_editable(true);
 	mXScale->set_value(1);
 	mXScale->set_default_value("1");
 	mXScale->set_font_size(16);
 	mXScale->set_format("[1-9][0-9]*");
 	mXScale->set_spinnable(true);
-	mXScale->set_value_increment(1);
+	mXScale->set_value_increment(0.01f);
 	mXScale->set_callback(gatherValuesCallback);
 
 	new nanogui::Label(scalePanel, "Y", "sans-bold");
-	mYScale = new nanogui::IntBox<int>(scalePanel);
+	mYScale = new nanogui::IntBox<float>(scalePanel);
 	mYScale->set_editable(true);
 	mYScale->set_value(1);
 	mYScale->set_default_value("1");
 	mYScale->set_font_size(16);
 	mYScale->set_format("[1-9][0-9]*");
 	mYScale->set_spinnable(true);
-	mYScale->set_value_increment(1);
+	mYScale->set_value_increment(0.01f);
 	mYScale->set_callback(gatherValuesCallback);
 
 	new nanogui::Label(scalePanel, "Z", "sans-bold");
-	mZScale = new nanogui::IntBox<int>(scalePanel);
+	mZScale = new nanogui::IntBox<float>(scalePanel);
 	mZScale->set_editable(true);
 	mZScale->set_value(1);
 	mZScale->set_default_value("1");
 	mZScale->set_font_size(16);
 	mZScale->set_format("[1-9][0-9]*");
 	mZScale->set_spinnable(true);
-	mZScale->set_value_increment(1);
+	mZScale->set_value_increment(0.01f);
 	mZScale->set_callback(gatherValuesCallback);
 	set_active_actor(std::nullopt);
 }

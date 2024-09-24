@@ -26,9 +26,9 @@ private:
     nanogui::IntBox<int> *mYawRotate;
     nanogui::IntBox<int> *mRollRotate;
 
-    nanogui::IntBox<int> *mXScale;
-    nanogui::IntBox<int> *mYScale;
-    nanogui::IntBox<int> *mZScale;
+    nanogui::IntBox<float> *mXScale;
+    nanogui::IntBox<float> *mYScale;
+    nanogui::IntBox<float> *mZScale;
 	
 	nanogui::Widget *mTranslateWidget;
 	nanogui::Widget *mRotateWidget;

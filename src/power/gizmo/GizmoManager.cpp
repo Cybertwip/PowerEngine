@@ -209,7 +209,7 @@ void GizmoManager::transform(float px, float py) {
 			}
 				break;
 			case GizmoMode::Scale:{
-				scale(px, py);
+				scale(px * 0.01f, py * 0.01f);
 			}
 				break;
 				
@@ -278,7 +278,7 @@ void GizmoManager::draw_content(const nanogui::Matrix4f& model, const nanogui::M
 
 			glm::mat4 rotationMatrix = glm::mat4(1.0f); // Identity matrix
 			
-			if (&mActiveGizmo->get() == &mTranslationGizmo) {
+			if (&mActiveGizmo->get() == &mTranslationGizmo || &mActiveGizmo->get() == &mScaleGizmo) {
 				rotationMatrix = glm::rotate(rotationMatrix, glm::radians(-90.0f), glm::vec3(0, 1, 0));
 			} else if (&mActiveGizmo->get() == &mRotationGizmo) {
 				// First rotate around Z-axis by 90 degrees (as in your original code)
