@@ -119,8 +119,12 @@ protected:
 				m_mouse_state &= ~(1 << button);
 				m_drag_active = false;
 				if (m_drag_widget != nullptr) {
-					m_drag_widget->set_visible(false);
-					m_draggable_window->do_drag_finish();
+					
+					if (m_drag_widget->visible()) {
+						m_drag_widget->set_visible(false);
+
+						m_draggable_window->do_drag_finish();
+					}
 					
 					m_drag_widget = nullptr;
 				}

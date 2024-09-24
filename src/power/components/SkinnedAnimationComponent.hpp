@@ -179,15 +179,20 @@ public:
 		// If time is before the first keyframe
 		if (time <= keyframes_.front().time) {
 			// Set the model pose to the first keyframe's pose
-			apply_pose_to_skeleton(mEmptyPose);
+			const Animation& animation = mAnimationData[0].get();
 
-			return keyframes_.front().getPlaybackState();
+			evaluate_animation(animation, keyframes_.front().time);
+			
+			return PlaybackState::Pause;
 		}
 		
 		// If time is after the last keyframe
 		if (time >= keyframes_.back().time) {
 			// Set the model pose to the last keyframe's pose
-			apply_pose_to_skeleton(mEmptyPose);
+			
+			const Animation& animation = mAnimationData[0].get();
+
+			evaluate_animation(animation, keyframes_.back().time);
 			
 			return keyframes_.back().getPlaybackState();
 		}
@@ -261,13 +266,8 @@ public:
 		// If paused, do not advance time
 		if (currentState == PlaybackState::Pause) {
 			// Optionally, you can still update the skeleton pose if needed
-			
-			if (keyframes_.empty()) {
-				Skeleton& skeleton = mSkeleton.get();
-				skeleton.compute_offsets({});
-			} else {
-				apply_pose_to_skeleton();
-			}
+
+			apply_pose_to_skeleton();
 
 			return;
 		}

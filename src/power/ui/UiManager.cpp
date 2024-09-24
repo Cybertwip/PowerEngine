@@ -413,6 +413,7 @@ public:
 					
 				}
 				
+				evaluate_animations();
 				verify_previous_next_keyframes(mActiveActor);
 			}
 		});
