@@ -60,7 +60,7 @@ private:
 	std::unique_ptr<ShaderWrapper> mSkinnedShader;
 	Actor& mTranslationGizmo;
 	Actor& mRotationGizmo;
-//	Actor& mScaleGizmo;
+	Actor& mScaleGizmo;
 
 	std::optional<std::reference_wrapper<Actor>> mActiveActor;
 	

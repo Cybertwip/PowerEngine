@@ -26,8 +26,8 @@ mMeshActorLoader(meshActorLoader),
 mMeshShader(std::make_unique<ShaderWrapper>(*shaderManager.get_shader("gizmo"))),
 mSkinnedShader(std::make_unique<ShaderWrapper>(*shaderManager.get_shader("skinned_mesh"))),
 mTranslationGizmo(mMeshActorLoader.create_actor("models/Gizmo/Translation.fbx", *mMeshShader, *mSkinnedShader)),
-mRotationGizmo(mMeshActorLoader.create_actor("models/Gizmo/Rotation.fbx", *mMeshShader, *mSkinnedShader))
-/*mScaleGizmo(mMeshActorLoader.create_actor("models/Gizmo/Translation.fbx"))*/ {
+mRotationGizmo(mMeshActorLoader.create_actor("models/Gizmo/Rotation.fbx", *mMeshShader, *mSkinnedShader)),
+mScaleGizmo(mMeshActorLoader.create_actor("models/Gizmo/Scale.fbx", *mMeshShader, *mSkinnedShader)){
 	
 	// Translation Button
 	mTranslationButton = new nanogui::Button(&parent, "", FA_ARROWS_ALT);
@@ -74,6 +74,8 @@ void GizmoManager::select(std::optional<std::reference_wrapper<Actor>> actor) {
 		mTranslationGizmo.get_component<ColorComponent>().set_visible(false);
 		
 		mRotationGizmo.get_component<ColorComponent>().set_visible(false);
+
+		mScaleGizmo.get_component<ColorComponent>().set_visible(false);
 	}
 }
 
@@ -224,6 +226,8 @@ void GizmoManager::set_mode(GizmoMode mode) {
 	
 	mRotationGizmo.get_component<ColorComponent>().set_visible(false);
 
+	mScaleGizmo.get_component<ColorComponent>().set_visible(false);
+
 	switch (mCurrentMode) {
 		case GizmoMode::Translation:{
 			mActiveGizmo = mTranslationGizmo;
@@ -233,6 +237,7 @@ void GizmoManager::set_mode(GizmoMode mode) {
 			mActiveGizmo = mRotationGizmo;
 			break;
 		case GizmoMode::Scale:
+			mActiveGizmo = mScaleGizmo;
 			break;
 		default:
 			mActiveGizmo = std::nullopt;
