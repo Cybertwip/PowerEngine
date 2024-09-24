@@ -128,21 +128,21 @@ void GizmoManager::rotate(float px, float py) {
 		case GizmoAxis::X:{
 			auto& transformComponent = actor.get_component<TransformComponent>();
 			
-			transformComponent.rotate(glm::vec3(1.0f, 0.0f, 0.0f), angle); // Rotate around X-axis
+			transformComponent.rotate(glm::vec3(1.0f, 0.0f, 0.0f), -angle); // Rotate around X-axis
 		}
 			break;
 			
 		case GizmoAxis::Y:{
 			auto& transformComponent = actor.get_component<TransformComponent>();
 			
-			transformComponent.rotate(glm::vec3(0.0f, 0.0f, -1.0f), angle); // Rotate around Z-axis
+			transformComponent.rotate(glm::vec3(0.0f, 0.0f, -1.0f), -angle); // Rotate around Z-axis
 		}
 			break;
 			
 		case GizmoAxis::Z: {
 			auto& transformComponent = actor.get_component<TransformComponent>();
 
-			transformComponent.rotate(glm::vec3(0.0f, -1.0f, 0.0f), angle); // Rotate around Y-axis
+			transformComponent.rotate(glm::vec3(0.0f, 1.0f, 0.0f), angle); // Rotate around Y-axis
 		}
 			break;
 			
