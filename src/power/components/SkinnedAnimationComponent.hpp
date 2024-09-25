@@ -257,73 +257,101 @@ public:
 		return *it;
 	}
 	
-	// Update the animation based on the keyframes
+	float getAdjustedAnimationTime(float currentTime, float duration) {
+		float accumulatedPlayTime = 0.0f;
+		
+		// If there are no keyframes, the animation remains at the initial offset
+		if (keyframes_.empty()) {
+			return 0.0f;
+		}
+		
+		// Initialize lastState and lastStateChangeTime based on the first keyframe
+		float lastStateChangeTime = mAnimationOffset;
+		PlaybackState lastState = keyframes_[0].getPlaybackState();
+		
+		size_t keyframeIndex = 0;
+		
+		// If the first keyframe is after currentTime, the animation hasn't started yet
+		if (keyframes_[0].time > currentTime) {
+			return 0.0f;
+		}
+		
+		// Process keyframes
+		for (; keyframeIndex < keyframes_.size(); ++keyframeIndex) {
+			const auto& keyframe = keyframes_[keyframeIndex];
+			if (keyframe.time > currentTime) {
+				break;
+			}
+			
+			// Handle state changes
+			PlaybackState currentState = keyframe.getPlaybackState();
+			
+			if (currentState != lastState) {
+				if (lastState == PlaybackState::Play) {
+					// Accumulate the duration from the last play state to the current keyframe time
+					accumulatedPlayTime += keyframe.time - lastStateChangeTime;
+				}
+				lastState = currentState;
+				lastStateChangeTime = keyframe.time;
+			}
+		}
+		
+		// After processing keyframes up to currentTime
+		if (lastState == PlaybackState::Play) {
+			// Accumulate time from last state change to current time
+			accumulatedPlayTime += currentTime - lastStateChangeTime;
+		}
+		
+		// Wrap the accumulated play time around the animation duration
+		float adjustedTime = fmod(accumulatedPlayTime, duration);
+		
+		return adjustedTime;
+	}
+
 	void evaluate_time(float time) {
 		if (mAnimationData.empty()) {
 			return; // No animations to process
 		}
 		
 		const Animation& animation = mAnimationData[0].get();
-		
 		float duration = static_cast<float>(animation.get_duration());
-						
-		// Evaluate the playback state at the current time
-		auto keyframe = evaluate(time);
 		
-		PlaybackState currentState = keyframe == std::nullopt ? PlaybackState::Pause : keyframe->getPlaybackState();
-		
-		PlaybackModifier currentModifier = keyframe == std::nullopt ? PlaybackModifier::Forward : keyframe->getPlaybackModifier();
-
-		// Determine playback direction
-		bool reverse = currentModifier == PlaybackModifier::Reverse;
-		
-		float animationTime = time;
-		
-		// Update current time based on playback direction
-		// If paused, do not advance time
-		if (currentState == PlaybackState::Play) {
-			animationTime += (time - animationTime) * (reverse ? -1.0f : 1.0f);
-			if (keyframe.has_value()) {
-				auto previousPauseStateKeyFrame = getPreviousPauseStateKeyframe(keyframe->time);
-
-				if (previousPauseStateKeyFrame.has_value()) {
-					animationTime = adjust_wrapped_time(animationTime, keyframe->time, keyframe->time + duration, mAnimationOffset + previousPauseStateKeyFrame->time, duration);
-				} else {
-					animationTime = adjust_wrapped_time(animationTime, mAnimationOffset, keyframe->time + duration, keyframe->time, duration);
-				}
-			}
+		// Set mAnimationOffset based on the first keyframe
+		if (!keyframes_.empty()) {
+			mAnimationOffset = keyframes_[0].time;
 		} else {
-			if (keyframe.has_value()) {
-				
-				auto previousPlayStateKeyFrame = getPreviousPlayStateKeyframe(keyframe->time);
-
-				auto previousPauseStateKeyFrame = getFirstButPreviousPauseStateKeyframe(keyframe->time);
-				
-				if (previousPauseStateKeyFrame.has_value() && previousPlayStateKeyFrame.has_value()) {
-					animationTime = adjust_wrapped_time(previousPauseStateKeyFrame->time, previousPlayStateKeyFrame->time, previousPauseStateKeyFrame->time + duration, previousPauseStateKeyFrame->time, duration);
-				} else if(previousPlayStateKeyFrame.has_value()) {
-					animationTime = adjust_wrapped_time(keyframe->time, previousPlayStateKeyFrame->time, keyframe->time + duration, mAnimationOffset, duration);
-				} else if(previousPauseStateKeyFrame.has_value()) {
-					animationTime = adjust_wrapped_time(previousPauseStateKeyFrame->time, previousPauseStateKeyFrame->time, previousPauseStateKeyFrame->time + duration, mAnimationOffset, duration);
-				} else {
-					if (keyframes_.empty()) {
-						animationTime = 0.0f;
-					} else {
-						animationTime = adjust_wrapped_time(keyframe->time, keyframe->time, keyframe->time + duration, mAnimationOffset, duration);
-					}
-				}
-			} else {
-				animationTime = 0.0f;
-			}
+			mAnimationOffset = 0.0f;
 		}
 		
-		// Evaluate the animation at the current time
+		auto keyframe = evaluate(time);
+		
+		// Default playback state and modifier
+		PlaybackState currentState = PlaybackState::Pause; // Default to Pause
+		PlaybackModifier currentModifier = PlaybackModifier::Forward;
+		
+		if (keyframe.has_value()) {
+			currentState = keyframe->getPlaybackState();
+			currentModifier = keyframe->getPlaybackModifier();
+		}
+		
+		bool reverse = currentModifier == PlaybackModifier::Reverse;
+		float animationTime = 0.0f;
+		
+		// Calculate adjusted animation time
+		animationTime = getAdjustedAnimationTime(time, duration);
+		
+		// Handle reverse playback
+		if (reverse) {
+			animationTime = fmod(duration - animationTime, duration);
+		}
+		
+		// Evaluate the animation at the adjusted time
 		evaluate_animation(animation, animationTime);
 		
 		// Update the skeleton with the new transforms
 		apply_pose_to_skeleton();
 	}
-	
+
 	
 	int adjust_wrapped_time(int currentTime, int start_time, int end_time, int offset, int duration) {
 		int wrapped_time = currentTime;
@@ -512,7 +540,6 @@ private:
 	}
 	
 	std::optional<Keyframe> getPreviousPlayStateKeyframe(float fromTime) {
-		// Iterate through keyframes in reverse to find the first one before fromTime with PlaybackState::Play
 		for (auto it = keyframes_.rbegin(); it != keyframes_.rend(); ++it) {
 			const Keyframe& kf = *it;
 			if (kf.time < fromTime && kf.getPlaybackState() == PlaybackState::Play) {
@@ -523,9 +550,19 @@ private:
 		return std::nullopt;
 	}
 	
-	std::optional<Keyframe> getFirstButPreviousPauseStateKeyframe(float fromTime) {
-		// Iterate through keyframes in reverse to find the first one before fromTime with PlaybackState::Play
+	
+	std::optional<Keyframe> getPreviousPauseStateKeyframe(float fromTime) {
+		for (auto it = keyframes_.rbegin(); it != keyframes_.rend(); ++it) {
+			const Keyframe& kf = *it;
+			if (kf.time < fromTime && kf.getPlaybackState() == PlaybackState::Pause) {
+				return kf;
+			}
+		}
 		
+		return std::nullopt;
+	}
+	
+	std::optional<Keyframe> getFirstButPreviousPauseStateKeyframe(float fromTime) {
 		std::optional<Keyframe> keyframe;
 		for (auto it = keyframes_.rbegin(); it != keyframes_.rend(); ++it) {
 			const Keyframe& kf = *it;
@@ -539,11 +576,14 @@ private:
 		return std::nullopt;
 	}
 	
-	std::optional<Keyframe> getPreviousPauseStateKeyframe(float fromTime) {
+	std::optional<Keyframe> getFirstButPreviousPlayStateKeyframe(float fromTime) {
+		std::optional<Keyframe> keyframe;
 		for (auto it = keyframes_.rbegin(); it != keyframes_.rend(); ++it) {
 			const Keyframe& kf = *it;
 			if (kf.time < fromTime && kf.getPlaybackState() == PlaybackState::Pause) {
-				return kf;
+				return keyframe;
+			} else if (kf.time < fromTime) {
+				keyframe = kf;
 			}
 		}
 		
