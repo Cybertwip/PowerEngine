@@ -52,8 +52,8 @@ public:
 	void TryImportAnimations();
 	
 private:
-	std::string GetBoneNameByID(int boneID) const;
-
+	std::string GetBoneNameByID(int boneId) const;
+	int GetBoneIdByName(const std::string& boneName) const;
 	void ProcessBones(const std::shared_ptr<sfbx::Mesh>& mesh) override;
 	
 	std::unordered_map<std::string, int> mBoneMapping;

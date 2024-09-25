@@ -103,9 +103,6 @@ void SkinnedFbx::ProcessBones(const std::shared_ptr<sfbx::Mesh>& mesh) {
 			std::cerr << "Warning: No skin clusters found for the mesh." << std::endl;
 		}
 		
-		// Map to find bone indices by name
-		std::unordered_map<std::string, int> boneNameToIndex;
-		
 		// Constants
 		const int MAX_BONES = 128;
 		const int MAX_BONE_INFLUENCE = 4;
@@ -156,8 +153,6 @@ void SkinnedFbx::ProcessBones(const std::shared_ptr<sfbx::Mesh>& mesh) {
 				
 				// Add to hierarchy and mapping
 				mBoneHierarchy.push_back(boneInfo);
-				boneNameToIndex[boneName] = newBoneID;
-				
 				//				std::cout << "Assigned Bone: " << boneName << " with ID: " << newBoneID << std::endl;
 			}
 			
@@ -217,7 +212,7 @@ void SkinnedFbx::ProcessBones(const std::shared_ptr<sfbx::Mesh>& mesh) {
 		auto skeletonPointer = std::make_unique<Skeleton>();
 		auto& skeleton = *skeletonPointer;
 		
-		for (const auto& boneInfo : mBoneHierarchy) {
+		for (int i = 0; i<mBoneHierarchy.size(); ++i) {
 			std::string boneName = GetBoneNameByID(boneInfo.bone_id);
 			if (boneName.empty()) {
 				std::cerr << "Warning: Bone name not found for bone ID " << boneInfo.bone_id << std::endl;
@@ -227,16 +222,17 @@ void SkinnedFbx::ProcessBones(const std::shared_ptr<sfbx::Mesh>& mesh) {
 			// Determine parent index
 			int parentIndex = -1;
 			auto parentNode = as<sfbx::LimbNode>(boneInfo.limb->getParent());
-			if (parentNode) {				
+			if (parentNode) {
 				std::string parentBoneName = std::string{ parentNode->getName() };
-				auto it = boneNameToIndex.find(parentBoneName);
-				if (it != boneNameToIndex.end()) {
-					parentIndex = it->second;
+				
+				int parentId = GetBoneIdByName(parentBoneName);
+				
+				if (parentId != -1) {
+					parentIndex = parentId;
 				} else {
 					std::cerr << "Warning: Parent bone not found for bone: " << boneName << std::endl;
 				}
 			}
-			
 			
 			// Add bone to skeleton
 			skeleton.add_bone(boneName, boneInfo.offset, boneInfo.bindpose, parentIndex);
@@ -250,14 +246,24 @@ void SkinnedFbx::ProcessBones(const std::shared_ptr<sfbx::Mesh>& mesh) {
 		std::cerr << "Warning: No skin deformer found for the mesh." << std::endl;
 	}
 }
-std::string SkinnedFbx::GetBoneNameByID(int boneID) const {
+std::string SkinnedFbx::GetBoneNameById(int boneId) const {
 	for (const auto& [name, id] : mBoneMapping) {
-		if (id == boneID) {
+		if (id == boneId) {
 			return name;
 		}
 	}
 	return "";
 }
+
+int SkinnedFbx::GetBoneIdByName(const std::string& boneName) const {
+	for (const auto& [name, id] : mBoneMapping) {
+		if (name == boneName) {
+			return id;
+		}
+	}
+	return -1;
+}
+
 
 
 void SkinnedFbx::TryImportAnimations() {
