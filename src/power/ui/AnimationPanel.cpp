@@ -26,6 +26,18 @@
 
 #include "import/SkinnedFbx.hpp"
 
+#include <glm/glm.hpp>
+#include <glm/gtc/quaternion.hpp>
+
+namespace CanvasUtils {
+static nanogui::Matrix4f glm_to_nanogui(glm::mat4 glmMatrix) {
+	nanogui::Matrix4f matrix;
+	std::memcpy(matrix.m, glm::value_ptr(glmMatrix), sizeof(float) * 16);
+	return matrix;
+}
+
+}
+
 class SelfContainedMeshCanvas : public nanogui::Canvas {
 public:
 	SelfContainedMeshCanvas(Widget* parent) : nanogui::Canvas(parent, 1, true, true), mCurrentTime(0), mCamera(mRegistry), mShaderManager(*this), mSkinnedMeshPreviewShader(*mShaderManager.load_shader("skinned_mesh_preview", "shaders/metal/preview_diffuse_skinned_vs.metal", "shaders/metal/preview_diffuse_fs.metal", nanogui::Shader::BlendMode::None)) {
@@ -33,6 +45,10 @@ public:
 		
 		mCamera.add_component<TransformComponent>();
 		mCamera.add_component<CameraComponent>(mCamera.get_component<TransformComponent>(), 45.0f, 0.01f, 5e3f, 192.0f / 128.0f);
+		
+		glm::quat rotationQuat = glm::angleAxis(glm::radians(180.0f), glm::normalize(glm::vec3(0.0f, 1.0f, 0.0f)));
+
+		mModelMatrix = glm::mat4_cast(rotationQuat);
 	}
 
 	void set_active_actor(std::optional<std::reference_wrapper<Actor>> actor) {
@@ -147,7 +163,7 @@ private:
 				shader.set_uniform("aProjection", projection);
 				
 				// Set the model matrix for the current mesh
-				shader.set_uniform("aModel", nanogui::Matrix4f::rotate(nanogui::Vector3f(0.0f, 0.0f, 1.0f), glm::radians(180.0f)));
+				shader.set_uniform("aModel", CanvasUtils::glm_to_nanogui(mModelMatrix));
 				
 //				if (mReverse) {
 //					mCurrentTime += 0.016 * -1;
@@ -385,6 +401,8 @@ private:
 	std::unordered_map<int, std::vector<size_t>> mMeshStartIndices;
 	
 	std::unordered_map<int, VertexIndexer> mVertexIndexingMap;
+	
+	glm::mat4 mModelMatrix;
 };
 
 AnimationPanel::AnimationPanel(nanogui::Widget &parent)
