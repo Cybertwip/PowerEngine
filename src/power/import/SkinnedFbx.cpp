@@ -214,7 +214,7 @@ void SkinnedFbx::ProcessBones(const std::shared_ptr<sfbx::Mesh>& mesh) {
 		
 		for (int i = 0; i<mBoneHierarchy.size(); ++i) {
 			auto& boneInfo = mBoneHierarchy[i];
-			std::string boneName = GetBoneNameByID(boneInfo.bone_id);
+			std::string boneName = GetBoneNameById(boneInfo.bone_id);
 			if (boneName.empty()) {
 				std::cerr << "Warning: Bone name not found for bone ID " << boneInfo.bone_id << std::endl;
 				continue;
