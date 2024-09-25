@@ -70,7 +70,6 @@ std::string base64_encode(const unsigned char* bytes_to_encode, size_t in_len) {
 DeepMotionSettingsWindow::DeepMotionSettingsWindow(nanogui::Widget* parent)
 : nanogui::Window(parent, "DeepMotion Settings"),
 is_visible_(false),
-_client(std::make_unique<httplib::Client>(api_base_url.c_str())),
 data_saved_(false)
 {
 	// Window configuration to mimic ImGui flags
@@ -166,7 +165,7 @@ data_saved_(false)
 		api_base_url_box_->set_value(api_base_url_);
 		client_id_box_->set_value(client_id_);
 		client_secret_box_->set_value(client_secret_);
-		
+
 		// Perform synchronization
 		on_sync();
 	}
