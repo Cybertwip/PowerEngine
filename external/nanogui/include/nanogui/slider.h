@@ -44,7 +44,7 @@ public:
     void set_final_callback(const std::function<void(float)> &callback) { m_final_callback = callback; }
 
     virtual Vector2i preferred_size(NVGcontext *ctx) const override;
-    virtual bool mouse_drag_event(const Vector2i &p, const Vector2i &rel, int button, int modifiers) override;
+    virtual bool mouse_motion_event(const Vector2i &p, const Vector2i &rel, int button, int modifiers) override;
     virtual bool mouse_button_event(const Vector2i &p, int button, bool down, int modifiers) override;
     virtual void draw(NVGcontext* ctx) override;
 
@@ -55,6 +55,8 @@ protected:
     std::pair<float, float> m_range;
     std::pair<float, float> m_highlighted_range;
     Color m_highlight_color;
+	
+	bool m_dragging;
 };
 
 NAMESPACE_END(nanogui)

@@ -100,10 +100,11 @@ bool Button::mouse_button_event(const Vector2i &p, int button, bool down, int mo
         }
 		
 		if (m_pushed || (m_flags & MenuButton)) {
-            if (contains(p) && m_callback)
-                m_callback();
             if (m_flags & NormalButton)
                 m_pushed = false;
+			
+			if (contains(p) && m_callback)
+				m_callback();
         }
 		
         if (pushed_backup != m_pushed && m_change_callback)

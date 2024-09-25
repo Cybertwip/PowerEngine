@@ -17,7 +17,7 @@ NAMESPACE_BEGIN(nanogui)
 
 Slider::Slider(Widget *parent)
     : Widget(parent), m_value(0.0f), m_range(0.f, 1.f),
-      m_highlighted_range(0.f, 0.f) {
+      m_highlighted_range(0.f, 0.f), m_dragging(false) {
     m_highlight_color = Color(255, 80, 80, 70);
 }
 
@@ -25,27 +25,32 @@ Vector2i Slider::preferred_size(NVGcontext *) const {
     return Vector2i(70, 16);
 }
 
-bool Slider::mouse_drag_event(const Vector2i &p, const Vector2i & /* rel */,
+bool Slider::mouse_motion_event(const Vector2i &p, const Vector2i & /* rel */,
                               int /* button */, int /* modifiers */) {
     if (!m_enabled)
         return false;
+	
+	if (m_dragging) {
+		const float kr = (int) (m_size.y() * 0.4f), kshadow = 3;
+		const float start_x = kr + kshadow + m_pos.x() - 1;
+		const float width_x = m_size.x() - 2 * (kr + kshadow);
+		
+		float value = (p.x() - start_x) / width_x, old_value = m_value;
+		value = value * (m_range.second - m_range.first) + m_range.first;
+		m_value = std::min(std::max(value, m_range.first), m_range.second);
+		if (m_callback && m_value != old_value)
+			m_callback(m_value);
+	}
 
-    const float kr = (int) (m_size.y() * 0.4f), kshadow = 3;
-    const float start_x = kr + kshadow + m_pos.x() - 1;
-    const float width_x = m_size.x() - 2 * (kr + kshadow);
-
-    float value = (p.x() - start_x) / width_x, old_value = m_value;
-    value = value * (m_range.second - m_range.first) + m_range.first;
-    m_value = std::min(std::max(value, m_range.first), m_range.second);
-    if (m_callback && m_value != old_value)
-        m_callback(m_value);
     return true;
 }
 
 bool Slider::mouse_button_event(const Vector2i &p, int /* button */, bool down, int /* modifiers */) {
     if (!m_enabled)
         return false;
-
+	
+	m_dragging = down;
+	
     const float kr = (int) (m_size.y() * 0.4f), kshadow = 3;
     const float start_x = kr + kshadow + m_pos.x() - 1;
     const float width_x = m_size.x() - 2 * (kr + kshadow);
