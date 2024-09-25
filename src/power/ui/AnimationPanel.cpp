@@ -147,7 +147,7 @@ private:
 				shader.set_uniform("aProjection", projection);
 				
 				// Set the model matrix for the current mesh
-				shader.set_uniform("aModel", nanogui::Matrix4f::identity());
+				shader.set_uniform("aModel", nanogui::Matrix4f::rotate(nanogui::Vector3f(0.0f, 0.0f, 1.0f), glm::radians(180.0f)));
 				
 //				if (mReverse) {
 //					mCurrentTime += 0.016 * -1;
@@ -222,7 +222,7 @@ private:
 				
 				center.y = -center.y;
 				
-				cameraTransform.set_translation(center - glm::vec3(0.0f, 0.0f, -distance));
+				cameraTransform.set_translation(center + glm::vec3(0.0f, 0.0f, distance));
 				camera.look_at(mPreviewActor->get());
 			}
 			
