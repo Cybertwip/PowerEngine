@@ -76,7 +76,7 @@ data_saved_(false)
 	// Window configuration to mimic ImGui flags
 	set_fixed_size(nanogui::Vector2i(400, 320));
 	set_layout(new nanogui::GroupLayout());
-	set_title("DeepMotion API");
+	set_title("Sync With DeepMotion");
 	
 	// Close Button
 	auto close_button = new nanogui::Button(button_panel(), "X");

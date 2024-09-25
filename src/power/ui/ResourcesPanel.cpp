@@ -246,7 +246,7 @@ void ResourcesPanel::refresh_file_view() {
 				auto icon = new nanogui::Button(itemContainer, "", get_icon_for_file(*child));
 				
 				icon->set_icon(get_icon_for_file(*child));
-				icon->set_fixed_size(nanogui::Vector2i(120, 120));
+				icon->set_fixed_size(nanogui::Vector2i(128, 128));
 				
 				icon->set_background_color(mNormalButtonColor);
 				
