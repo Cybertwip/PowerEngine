@@ -226,7 +226,7 @@ private:
 				// Calculate center and size of the bounding box
 				glm::vec3 center = (minBounds + maxBounds) * 0.5f;
 				glm::vec3 size = maxBounds - minBounds;
-				float distance = glm::length(size) * 1.125f; // Camera distance from object based on size
+				float distance = glm::length(size); // Camera distance from object based on size
 				
 				// Set the camera position and view direction
 				auto& cameraTransform = mCamera.get_component<TransformComponent>();
