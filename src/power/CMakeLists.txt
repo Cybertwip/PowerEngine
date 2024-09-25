@@ -164,10 +164,24 @@ add_executable(PowerEngine
     ${SHADERS}
 )
 
+find_package(OpenSSL 3.0 REQUIRED COMPONENTS Crypto SSL)
+
 target_include_directories(PowerEngine PUBLIC ../../external/smallfbx)
 target_include_directories(PowerEngine PUBLIC ../../external/stb)
 target_include_directories(PowerEngine PUBLIC ${CMAKE_CURRENT_LIST_DIR})
-target_link_libraries(PowerEngine PRIVATE nanogui EnTT imgui-feature-layout imgui-node-editor json SmallFBX grpc++ httplib::httplib ${platform_specific_libraries})
+target_link_libraries(PowerEngine 
+PRIVATE 
+nanogui 
+EnTT 
+imgui-feature-layout 
+imgui-node-editor 
+json 
+SmallFBX 
+httplib::httplib 
+OpenSSL::SSL
+OpenSSL::Crypto
+#grpc++ 
+${platform_specific_libraries})
 
 # Set the resource files to be included in the bundle
 set(RESOURCE_DIRECTORIES

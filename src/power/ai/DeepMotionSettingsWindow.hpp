@@ -69,7 +69,7 @@ private:
 	 * @param client_id The Client ID to save.
 	 * @param client_secret The Client Secret to save.
 	 */
-	void save_to_file(const std::string& filename, const std::string& api_base_url, const std::string& client_id, const std::string& client_secret);
+	void save_to_file(const std::string& filename, const std::string& api_base_url, const std::string& api_base_port, const std::string& client_id, const std::string& client_secret);
 	
 	/**
 	 * @brief Represents a DeepMotion model.
@@ -88,6 +88,7 @@ private:
 	std::string last_deepmotion_model_;
 	
 	std::string api_base_url_;
+	int api_base_port_;
 	std::string client_id_;
 	std::string client_secret_;
 };

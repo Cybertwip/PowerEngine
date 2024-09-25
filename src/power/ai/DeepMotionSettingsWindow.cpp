@@ -5,13 +5,14 @@
 #include <nanogui/layout.h>
 #include <nanogui/theme.h>
 
-#include <httplib.h>      // Ensure httplib is correctly included in your project
-#include <json/json.h>    // Ensure JsonCpp is correctly included in your project
+#include <httplib.h>
+#include <json/json.h>
 
 #include <fstream>
 #include <iostream>
 #include <algorithm>
 #include <cctype>
+#include <regex>
 
 // Base64 encoding implementation
 static const std::string base64_chars =
@@ -75,7 +76,17 @@ data_saved_(false)
 	// Window configuration to mimic ImGui flags
 	set_fixed_size(nanogui::Vector2i(400, 320));
 	set_layout(new nanogui::GroupLayout());
+	set_title("DeepMotion API");
 	
+	// Close Button
+	auto close_button = new nanogui::Button(button_panel(), "X");
+	close_button->set_fixed_size(nanogui::Vector2i(20, 20));
+	close_button->set_callback([this]() {
+		this->set_visible(false);
+		this->set_modal(false);
+		is_visible_ = false;
+	});
+
 	// Position the close button at the top-right corner
 	// Using a horizontal BoxLayout with a spacer
 	auto top_panel = new nanogui::Widget(this);
@@ -173,6 +184,30 @@ void DeepMotionSettingsWindow::toggle_visibility() {
 void DeepMotionSettingsWindow::on_sync() {
 	// Retrieve input values
 	std::string api_base_url = api_base_url_box_->value();
+	int api_base_port = 443;
+
+	// Inside the callback
+	std::regex url_regex(R"(^(?:https?://)?([^:/\s]+)(?::(\d+))?)");
+	std::smatch matches;
+	
+	if (std::regex_match(api_base_url, matches, url_regex)) {
+		api_base_url = matches[1].str();
+		if (matches[2].matched) {
+			try {
+				api_base_port = std::stoi(matches[2].str());
+				// Add port range validation here if necessary
+			} catch (...) {
+				api_base_port = 443; // Default port
+			}
+		} else {
+			api_base_port = 443; // Default port
+		}
+	} else {
+		// Handle invalid URL format
+		api_base_url = "";
+		api_base_port = 443;
+	}
+
 	std::string client_id = client_id_box_->value();
 	std::string client_secret = client_secret_box_->value();
 	
@@ -188,7 +223,7 @@ void DeepMotionSettingsWindow::on_sync() {
 	std::string encoded_credentials = base64_encode(reinterpret_cast<const unsigned char*>(credentials.c_str()), credentials.length());
 	
 	// Initialize or update the HTTP client with the new API base URL
-	_client = std::make_unique<httplib::SSLClient>(api_base_url.c_str(), 443);
+	_client = std::make_unique<httplib::SSLClient>(api_base_url.c_str(), api_base_port);
 	
 	// Set Authorization header
 	_client->set_default_headers({
@@ -225,7 +260,7 @@ void DeepMotionSettingsWindow::on_sync() {
 			
 			// Save credentials and API Base URL if not already saved
 			if (!data_saved_) {
-				save_to_file("powerkey.dat", api_base_url, client_id, client_secret);
+				save_to_file("powerkey.dat", api_base_url, std::to_string(api_base_port), client_id, client_secret);
 				data_saved_ = true;
 			}
 			
@@ -272,6 +307,8 @@ bool DeepMotionSettingsWindow::load_from_file(const std::string& filename) {
 		
 		if (key == "APIBaseURL") {
 			api_base_url_ = value;
+		} else if (key == "APIBasePort") {
+			api_base_port_ = std::stoi(value);
 		} else if (key == "ClientID") {
 			client_id_ = value;
 		} else if (key == "ClientSecret") {
@@ -290,10 +327,11 @@ bool DeepMotionSettingsWindow::load_from_file(const std::string& filename) {
 	return true;
 }
 
-void DeepMotionSettingsWindow::save_to_file(const std::string& filename, const std::string& api_base_url, const std::string& client_id, const std::string& client_secret) {
+void DeepMotionSettingsWindow::save_to_file(const std::string& filename, const std::string& api_base_url, const std::string& api_base_port, const std::string& client_id, const std::string& client_secret) {
 	std::ofstream file(filename, std::ios::out | std::ios::binary);
 	if (file.is_open()) {
 		file << "APIBaseURL:" << api_base_url << "\n";
+		file << "APIBasePort:" << api_base_port << "\n";
 		file << "ClientID:" << client_id << "\n";
 		file << "ClientSecret:" << client_secret << "\n";
 		file.close();

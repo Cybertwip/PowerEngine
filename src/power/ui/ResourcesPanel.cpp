@@ -147,10 +147,11 @@ mSelectedButtonColor(nanogui::Color(0.5f, 0.5f, 0.8f, 1.0f))
 	animationButton->set_icon(FA_RUNNING);
 	
 	animationButton->set_callback([deepmotion_settings, this](){
-		if (deepmotion_settings->session_cookie().empty()) {
+//		if (deepmotion_settings->session_cookie().empty()) {
 			deepmotion_settings->toggle_visibility();
+			mAddButton->set_pushed(false);
 			mAddButton->popup()->set_visible(false);
-		}
+//		}
 	});
 
 	mAddButton->popup()->perform_layout(screen()->nvg_context());
