@@ -68,28 +68,19 @@ std::string base64_encode(const unsigned char* bytes_to_encode, size_t in_len) {
 }
 
 DeepMotionSettingsWindow::DeepMotionSettingsWindow(nanogui::Widget* parent)
-: nanogui::Window(parent, "DeepMotion Settings"),
+: nanogui::Window(parent->screen()),
 is_visible_(false),
 data_saved_(false)
 {
 	// Window configuration to mimic ImGui flags
-	set_fixed_size(nanogui::Vector2i(400, 250));
+	set_fixed_size(nanogui::Vector2i(400, 320));
 	set_layout(new nanogui::GroupLayout());
-	
-	// Close Button
-	close_button_ = new nanogui::Button(this, "X");
-	close_button_->set_fixed_size(nanogui::Vector2i(20, 20));
-	close_button_->set_callback([this]() {
-		this->set_visible(false);
-		is_visible_ = false;
-	});
 	
 	// Position the close button at the top-right corner
 	// Using a horizontal BoxLayout with a spacer
 	auto top_panel = new nanogui::Widget(this);
 	top_panel->set_layout(new nanogui::BoxLayout(nanogui::Orientation::Horizontal,
 												 nanogui::Alignment::Minimum, 0, 0));
-	top_panel->add_child(close_button_);
 	// Spacer to push the close button to the right
 	auto spacer = new nanogui::Widget(top_panel);
 	spacer->set_fixed_size(nanogui::Vector2i(360, 0));
@@ -156,8 +147,9 @@ data_saved_(false)
 	status_label_->set_fixed_size(nanogui::Vector2i(350, 20));
 	status_label_->set_color(nanogui::Color(255, 255, 255, 255)); // White color
 	
-	// Initially hide the window
-	set_visible(false);
+//	// Initially hide the window
+//	set_visible(false);
+//	set_modal(true);
 	
 	// Attempt to load existing credentials and synchronize
 	if (load_from_file("powerkey.dat")) {
@@ -174,6 +166,7 @@ data_saved_(false)
 
 void DeepMotionSettingsWindow::toggle_visibility() {
 	set_visible(!is_visible_);
+	set_modal(!is_visible_);
 	is_visible_ = !is_visible_;
 }
 
@@ -195,7 +188,7 @@ void DeepMotionSettingsWindow::on_sync() {
 	std::string encoded_credentials = base64_encode(reinterpret_cast<const unsigned char*>(credentials.c_str()), credentials.length());
 	
 	// Initialize or update the HTTP client with the new API base URL
-	_client = std::make_unique<httplib::Client>(api_base_url.c_str());
+	_client = std::make_unique<httplib::SSLClient>(api_base_url.c_str(), 443);
 	
 	// Set Authorization header
 	_client->set_default_headers({

@@ -46,24 +46,50 @@ Widget *Window::button_panel() {
     }
     return m_button_panel;
 }
-
 void Window::perform_layout(NVGcontext *ctx) {
-    if (!m_button_panel) {
-        Widget::perform_layout(ctx);
-    } else {
-        m_button_panel->set_visible(false);
-        Widget::perform_layout(ctx);
-        for (auto w : m_button_panel->children()) {
-            w->set_fixed_size(Vector2i(22, 22));
-            w->set_font_size(15);
-        }
-        m_button_panel->set_visible(true);
-        m_button_panel->set_size(Vector2i(width(), 22));
-        m_button_panel->set_position(Vector2i(
-            width() - (m_button_panel->preferred_size(ctx).x() + 5), 3));
-        m_button_panel->perform_layout(ctx);
-    }
+	if (m_modal) {
+		center(); // Ensure the window remains centered if modal
+	}
+	
+	if (!m_button_panel) {
+		Widget::perform_layout(ctx);
+	} else {
+		m_button_panel->set_visible(false);
+		Widget::perform_layout(ctx);
+		for (auto w : m_button_panel->children()) {
+			w->set_fixed_size(Vector2i(22, 22));
+			w->set_font_size(15);
+		}
+		m_button_panel->set_visible(true);
+		m_button_panel->set_size(Vector2i(width(), 22));
+		m_button_panel->set_position(Vector2i(
+											  width() - (m_button_panel->preferred_size(ctx).x() + 5), 3));
+		m_button_panel->perform_layout(ctx);
+	}
 }
+
+void Window::set_modal(bool modal) {
+	if (m_modal == modal)
+		return;
+	m_modal = modal;
+	if (m_modal) {
+		center();
+		// Bring to front by moving to the end of the parent's children list
+		auto parent_ptr = parent();
+
+		if (parent_ptr) {
+			
+			inc_ref();
+			// Remove the window from its current position
+			parent_ptr->remove_child(this);
+			// Add it back to the end, which typically renders it on top
+			parent_ptr->add_child(this);
+			
+			dec_ref();
+		}
+	}
+}
+
 
 void Window::draw(NVGcontext *ctx) {
     int ds = m_theme->m_window_drop_shadow_size, cr = m_theme->m_window_corner_radius;

@@ -11,7 +11,7 @@
 
 // Forward declaration of httplib::Client to reduce compilation dependencies
 namespace httplib {
-class Client;
+class SSLClient;
 }
 
 class DeepMotionSettingsWindow : public nanogui::Window {
@@ -39,13 +39,12 @@ private:
 	nanogui::TextBox* client_id_box_;
 	nanogui::TextBox* client_secret_box_;
 	nanogui::Label* status_label_;
-	nanogui::Button* close_button_;
 	
 	// State Variables
 	bool is_visible_;
 	
 	// HTTP Client
-	std::unique_ptr<httplib::Client> _client;
+	std::unique_ptr<httplib::SSLClient> _client;
 	std::string _session_cookie;
 	bool data_saved_;
 	

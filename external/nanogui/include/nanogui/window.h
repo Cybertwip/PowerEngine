@@ -34,7 +34,7 @@ public:
     /// Is this a model dialog?
     bool modal() const { return m_modal; }
     /// Set whether or not this is a modal dialog
-    void set_modal(bool modal) { m_modal = modal; }
+	void set_modal(bool modal);
 
     /// Return the panel used to house window buttons
     Widget *button_panel();
