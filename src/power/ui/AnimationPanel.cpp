@@ -48,7 +48,7 @@ public:
 		
 		glm::quat rotationQuat = glm::angleAxis(glm::radians(180.0f), glm::normalize(glm::vec3(0.0f, 1.0f, 0.0f)));
 
-		mModelMatrix = glm::mat4_cast(rotationQuat);
+		mModelMatrix = glm::identity<glm::mat4>() * glm::mat4_cast(rotationQuat);
 	}
 
 	void set_active_actor(std::optional<std::reference_wrapper<Actor>> actor) {
@@ -165,11 +165,6 @@ private:
 				// Set the model matrix for the current mesh
 				shader.set_uniform("aModel", CanvasUtils::glm_to_nanogui(mModelMatrix));
 				
-//				if (mReverse) {
-//					mCurrentTime += 0.016 * -1;
-//				} else {
-//					mCurrentTime += 0.016 * 1;
-//				}
 				int duration = mesh.get_skinned_component().get_animation_duration();
 				
 				mCurrentTime += 1;
@@ -231,14 +226,15 @@ private:
 				// Calculate center and size of the bounding box
 				glm::vec3 center = (minBounds + maxBounds) * 0.5f;
 				glm::vec3 size = maxBounds - minBounds;
-				float distance = glm::length(size) * 1.5f; // Camera distance from object based on size
+				float distance = glm::length(size) * 1.25f; // Camera distance from object based on size
 				
 				// Set the camera position and view direction
 				auto& cameraTransform = mCamera.get_component<TransformComponent>();
 				
 				center.y = -center.y;
 				
-				cameraTransform.set_translation(center + glm::vec3(0.0f, 0.0f, distance));
+				cameraTransform.set_translation(center - glm::vec3(0.0f, 0.0f, distance));
+				
 				camera.look_at(mPreviewActor->get());
 			}
 			
