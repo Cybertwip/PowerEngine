@@ -42,7 +42,10 @@ m_mouse_down_pos(Vector2i(-1,-1)),
 m_mouse_drag_pos(Vector2i(-1,-1)),
 m_mouse_down_modifier(0),
 m_text_offset(0),
-m_last_click(0) {
+m_last_click(0),
+m_password_mode(false),        // Initialize password mode to false
+m_password_char('*')         // Default masking character
+{
 	if (m_theme) m_font_size = m_theme->m_text_box_font_size;
 	m_icon_extra_scale = .8f;
 	
@@ -59,7 +62,6 @@ void TextBox::set_theme(Theme *theme) {
 	if (m_theme)
 		m_font_size = m_theme->m_text_box_font_size;
 }
-
 Vector2i TextBox::preferred_size(NVGcontext *ctx) const {
 	Vector2i size(0, font_size() * 1.4f);
 	
@@ -77,7 +79,7 @@ Vector2i TextBox::preferred_size(NVGcontext *ctx) const {
 		sw = 14.f;
 	}
 	
-	float ts = nvgTextBounds(ctx, 0, 0, m_value.c_str(), nullptr, nullptr);
+	float ts = nvgTextBounds(ctx, 0, 0, m_password_mode ? std::string(m_value.length(), m_password_char).c_str() : m_value.c_str(), nullptr, nullptr);
 	size[0] = size[1] + ts + uw + sw;
 	return size;
 }
@@ -188,20 +190,28 @@ void TextBox::draw(NVGcontext* ctx) {
 	Vector2i old_draw_pos(draw_pos);
 	draw_pos.x() += m_text_offset;
 	
+	// Determine the text to display
+	std::string display_text = m_committed ? m_value : m_value_temp;
+	if (m_password_mode && m_committed) {
+		display_text = std::string(m_value.length(), m_password_char);
+	} else if (m_password_mode && !m_committed) {
+		display_text = std::string(m_value_temp.length(), m_password_char);
+	}
+	
 	if (m_committed) {
-		nvgText(ctx, draw_pos.x(), draw_pos.y(), m_value.empty() ? m_placeholder.c_str() : m_value.c_str(), nullptr);
+		nvgText(ctx, draw_pos.x(), draw_pos.y(), display_text.empty() ? m_placeholder.c_str() : display_text.c_str(), nullptr);
 	} else {
 		const int max_glyphs = 1024;
 		NVGglyphPosition glyphs[max_glyphs];
 		float text_bound[4];
-		nvgTextBounds(ctx, draw_pos.x(), draw_pos.y(), m_value_temp.c_str(),
+		nvgTextBounds(ctx, draw_pos.x(), draw_pos.y(), display_text.c_str(),
 					  nullptr, text_bound);
 		float lineh = text_bound[3] - text_bound[1];
 		
 		// find cursor positions
 		int nglyphs =
 		nvgTextGlyphPositions(ctx, draw_pos.x(), draw_pos.y(),
-							  m_value_temp.c_str(), nullptr, glyphs, max_glyphs);
+							  display_text.c_str(), nullptr, glyphs, max_glyphs);
 		update_cursor(ctx, text_bound[2], glyphs, nglyphs);
 		
 		// compute text offset
@@ -218,13 +228,13 @@ void TextBox::draw(NVGcontext* ctx) {
 		draw_pos.x() = old_draw_pos.x() + m_text_offset;
 		
 		// draw text with offset
-		nvgText(ctx, draw_pos.x(), draw_pos.y(), m_value_temp.c_str(), nullptr);
-		nvgTextBounds(ctx, draw_pos.x(), draw_pos.y(), m_value_temp.c_str(),
+		nvgText(ctx, draw_pos.x(), draw_pos.y(), display_text.c_str(), nullptr);
+		nvgTextBounds(ctx, draw_pos.x(), draw_pos.y(), display_text.c_str(),
 					  nullptr, text_bound);
 		
 		// recompute cursor positions
 		nglyphs = nvgTextGlyphPositions(ctx, draw_pos.x(), draw_pos.y(),
-										m_value_temp.c_str(), nullptr, glyphs, max_glyphs);
+										display_text.c_str(), nullptr, glyphs, max_glyphs);
 		
 		if (m_cursor_pos > -1) {
 			if (m_selection_pos > -1) {
@@ -257,6 +267,8 @@ void TextBox::draw(NVGcontext* ctx) {
 	}
 	nvgRestore(ctx);
 }
+
+
 
 bool TextBox::mouse_enter_event(const Vector2i &p, bool enter) {
 	Widget::mouse_enter_event(p, enter);
@@ -615,5 +627,21 @@ TextBox::SpinArea TextBox::spin_area(const Vector2i & pos) {
 	}
 	return SpinArea::None;
 }
+
+void TextBox::set_password_character(char c) {
+	m_password_mode = true;
+	m_password_char = c;
+	// Trigger a redraw to update the display
+	if (parent())
+		parent()->perform_layout(screen()->nvg_context());
+}
+
+void TextBox::disable_password_mode() {
+	m_password_mode = false;
+	// Trigger a redraw to update the display
+	if (parent())
+		parent()->perform_layout(screen()->nvg_context());
+}
+
 
 NAMESPACE_END(nanogui)

@@ -34,6 +34,7 @@ private:
 	
 	// New UI elements
 	nanogui::Widget *mToolbar;
+	nanogui::PopupButton *mAddButton;
 	nanogui::Button *mImportButton;
 	nanogui::Button *mExportButton; // New Export button
 

@@ -1,5 +1,6 @@
 #include "ui/ResourcesPanel.hpp"
 
+#include "ai/DeepMotionSettingsWindow.hpp"
 #include "actors/IActorSelectedRegistry.hpp"
 
 #include "MeshActorLoader.hpp"
@@ -126,10 +127,36 @@ mSelectedButtonColor(nanogui::Color(0.5f, 0.5f, 0.8f, 1.0f))
 	mToolbar = new nanogui::Widget(this);
 	mToolbar->set_layout(new nanogui::BoxLayout(
 												nanogui::Orientation::Horizontal, nanogui::Alignment::Middle, 10, 10));
+	/* Create the DeepMotion Settings Window (initially hidden) */
+	auto deepmotion_settings = new DeepMotionSettingsWindow(screen());
+	deepmotion_settings->set_visible(false);
+
+	// Add the Add Asset button with a "+" icon
+	mAddButton = new nanogui::PopupButton(mToolbar, "Add");
+	mAddButton->set_icon(FA_PLUS);
+	mAddButton->set_chevron_icon(0);
+	mAddButton->set_tooltip("Add Asset");
+
+	auto sceneButton = new nanogui::Button(mAddButton->popup(), "Scene");
+	
+	sceneButton->set_icon(FA_HAND_PAPER);
+
+	auto animationButton = new nanogui::Button(mAddButton->popup(), "Animation");
+	
+	animationButton->set_icon(FA_RUNNING);
+	
+	animationButton->set_callback([deepmotion_settings, this](){
+		if (deepmotion_settings->session_cookie().empty()) {
+			deepmotion_settings->toggle_visibility();
+			mAddButton->popup()->set_visible(false);
+		}
+	});
+
+	mAddButton->popup()->perform_layout(screen()->nvg_context());
 	
 	// Add the Import Assets button with a "+" icon
 	mImportButton = new nanogui::Button(mToolbar, "Import");
-	mImportButton->set_icon(FA_PLUS);
+	mImportButton->set_icon(FA_UPLOAD);
 	mImportButton->set_tooltip("Import Assets");
 	mImportButton->set_callback([this]() {
 		import_assets();

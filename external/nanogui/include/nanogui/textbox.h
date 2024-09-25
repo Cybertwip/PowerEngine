@@ -103,6 +103,24 @@ public:
 		m_selection_pos = -1;
 		m_focused = false;
 	}
+	
+	/**
+	 * \brief Enable password mode with a specific masking character.
+	 *
+	 * When password mode is enabled, the text box will display the
+	 * specified character instead of the actual input.
+	 *
+	 * \param c The character to use for masking the input.
+	 */
+	void set_password_character(char c);
+	
+	/**
+	 * \brief Disable password mode.
+	 *
+	 * Restores the text box to display the actual input instead of masking.
+	 */
+	void disable_password_mode();
+
 
 protected:
     bool check_format(const std::string &input, const std::string &format);
@@ -120,7 +138,12 @@ protected:
     /// The location (if any) for the spin area.
     enum class SpinArea { None, Top, Bottom };
     SpinArea spin_area(const Vector2i &pos);
+	
 protected:
+	// Existing protected members...
+	bool m_password_mode;      // Indicates if password mode is active
+	char m_password_char;      // Character used for masking
+
     bool m_editable;
     bool m_spinnable;
     bool m_committed;

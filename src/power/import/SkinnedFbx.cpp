@@ -392,5 +392,4 @@ void SkinnedFbx::TryImportAnimations() {
 			}
 		}
 	}
-	
 }
