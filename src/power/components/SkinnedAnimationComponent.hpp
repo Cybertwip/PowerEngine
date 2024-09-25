@@ -118,7 +118,6 @@ public:
 	SkinnedAnimationComponent(std::unique_ptr<SkinnedAnimationPdo> animationPdo)
 	: mAnimationPdo(std::move(animationPdo))
 	, mSkeleton(*mAnimationPdo->mSkeleton)
-	, mCurrentTime(0.0f)
 	, mAnimationOffset(0.0f) {
 		for (auto& animation : mAnimationPdo->mAnimationData) {
 			mAnimationData.push_back(*animation);
@@ -180,30 +179,30 @@ public:
 	}
 	
 	// Evaluate the playback state at a given time
-	PlaybackState evaluate(float time) {
+	std::optional<Keyframe> evaluate(float time) {
 		if (keyframes_.empty()) {
-			return PlaybackState::Pause; // Default state if no keyframes
+			return std::nullopt; // Default state if no keyframes
 		}
 		
 		// If time is before the first keyframe
-		if (time <= keyframes_.front().time) {
+		if (time < keyframes_.front().time) {
 			// Set the model pose to the first keyframe's pose
 			const Animation& animation = mAnimationData[0].get();
 
 			evaluate_animation(animation, keyframes_.front().time);
 			
-			return PlaybackState::Pause;
+			return std::nullopt;
 		}
 		
 		// If time is after the last keyframe
-		if (time >= keyframes_.back().time) {
+		if (time > keyframes_.back().time) {
 			// Set the model pose to the last keyframe's pose
 			
 			const Animation& animation = mAnimationData[0].get();
 
 			evaluate_animation(animation, keyframes_.back().time);
 			
-			return keyframes_.back().getPlaybackState();
+			return keyframes_.back();
 		}
 		
 		// Find the first keyframe with time >= given time
@@ -214,16 +213,16 @@ public:
 		
 		if (it != keyframes_.end()) {
 			if (it->time == time) {
-				return it->getPlaybackState();
+				return *it;
 			} else if (it != keyframes_.begin()) {
 				// No exact match; use the closest keyframe to the left
 				const Keyframe& current = *(it - 1);
-				return current.getPlaybackState();
+				return current;
 			}
 		}
 		
 		// Fallback (should not reach here if bounds are respected)
-		return PlaybackState::Pause;
+		return std::nullopt;
 	}
 
 	
@@ -259,7 +258,7 @@ public:
 	}
 	
 	// Update the animation based on the keyframes
-	void update(float deltaTime) {
+	void evaluate_time(float time) {
 		if (mAnimationData.empty()) {
 			return; // No animations to process
 		}
@@ -267,41 +266,80 @@ public:
 		const Animation& animation = mAnimationData[0].get();
 		
 		float duration = static_cast<float>(animation.get_duration());
-		
-		mCurrentTime = deltaTime;
-		
+						
 		// Evaluate the playback state at the current time
-		PlaybackState currentState = evaluate(deltaTime);
+		auto keyframe = evaluate(time);
 		
-		// If paused, do not advance time
-		if (currentState == PlaybackState::Pause) {
-			// Optionally, you can still update the skeleton pose if needed
-
-			apply_pose_to_skeleton();
-
-			return;
-		}
+		PlaybackState currentState = keyframe == std::nullopt ? PlaybackState::Pause : keyframe->getPlaybackState();
 		
+		PlaybackModifier currentModifier = keyframe == std::nullopt ? PlaybackModifier::Forward : keyframe->getPlaybackModifier();
+
 		// Determine playback direction
-		bool reverse = false;
-		if (auto modifierOpt = get_current_playback_modifier(deltaTime)) {
-			reverse = (*modifierOpt == PlaybackModifier::Reverse);
-		}
+		bool reverse = currentModifier == PlaybackModifier::Reverse;
+		
+		float animationTime = time;
 		
 		// Update current time based on playback direction
-		mCurrentTime += (deltaTime - mCurrentTime) * (reverse ? -1.0f : 1.0f);
-		
-		mCurrentTime = std::max(0.0f, mCurrentTime - mAnimationOffset);
+		// If paused, do not advance time
+		if (currentState == PlaybackState::Play) {
+			animationTime += (time - animationTime) * (reverse ? -1.0f : 1.0f);
+			if (keyframe.has_value()) {
+				auto previousPauseStateKeyFrame = getPreviousPauseStateKeyframe(keyframe->time);
 
-		// Wrap current time within the duration
-		if (mCurrentTime < 0.0f) mCurrentTime += duration;
-		if (mCurrentTime > duration) mCurrentTime = std::fmod(mCurrentTime, duration);
+				if (previousPauseStateKeyFrame.has_value()) {
+					animationTime = adjust_wrapped_time(animationTime, keyframe->time, keyframe->time + duration, mAnimationOffset + previousPauseStateKeyFrame->time, duration);
+				} else {
+					animationTime = adjust_wrapped_time(animationTime, mAnimationOffset, keyframe->time + duration, keyframe->time, duration);
+				}
+			}
+		} else {
+			if (keyframe.has_value()) {
+				
+				auto previousPlayStateKeyFrame = getPreviousPlayStateKeyframe(keyframe->time);
+
+				auto previousPauseStateKeyFrame = getFirstButPreviousPauseStateKeyframe(keyframe->time);
+				
+				if (previousPauseStateKeyFrame.has_value() && previousPlayStateKeyFrame.has_value()) {
+					animationTime = adjust_wrapped_time(previousPauseStateKeyFrame->time, previousPlayStateKeyFrame->time, previousPauseStateKeyFrame->time + duration, previousPauseStateKeyFrame->time, duration);
+				} else if(previousPlayStateKeyFrame.has_value()) {
+					animationTime = adjust_wrapped_time(keyframe->time, previousPlayStateKeyFrame->time, keyframe->time + duration, mAnimationOffset, duration);
+				} else if(previousPauseStateKeyFrame.has_value()) {
+					animationTime = adjust_wrapped_time(previousPauseStateKeyFrame->time, previousPauseStateKeyFrame->time, previousPauseStateKeyFrame->time + duration, mAnimationOffset, duration);
+				} else {
+					if (keyframes_.empty()) {
+						animationTime = 0.0f;
+					} else {
+						animationTime = adjust_wrapped_time(keyframe->time, keyframe->time, keyframe->time + duration, mAnimationOffset, duration);
+					}
+				}
+			} else {
+				animationTime = 0.0f;
+			}
+		}
 		
 		// Evaluate the animation at the current time
-		evaluate_animation(animation, mCurrentTime);
+		evaluate_animation(animation, animationTime);
 		
 		// Update the skeleton with the new transforms
 		apply_pose_to_skeleton();
+	}
+	
+	
+	int adjust_wrapped_time(int currentTime, int start_time, int end_time, int offset, int duration) {
+		int wrapped_time = currentTime;
+		if (wrapped_time != -1) {
+			if (offset < 0 && wrapped_time + offset < start_time + offset) {
+				wrapped_time = duration - std::fabs(std::fmod(wrapped_time - start_time, duration));
+			} else {
+				wrapped_time = std::fmod(wrapped_time - start_time, duration);
+			}
+			
+			if (wrapped_time > end_time) {
+				wrapped_time = start_time;
+			}
+			
+		}
+		return wrapped_time;
 	}
 	
 	int get_animation_duration() {
@@ -458,6 +496,7 @@ private:
 		Skeleton& skeleton = mSkeleton.get();
 		skeleton.compute_offsets(modelPose);
 	}
+	
 	void updateAnimationOffset() {
 		const Animation& animation = mAnimationData[0].get();
 		float duration = static_cast<float>(animation.get_duration());
@@ -465,21 +504,57 @@ private:
 		// Reset offset to 0.0f by default
 		mAnimationOffset = 0.0f;
 		
-		// Find the first keyframe in a playing state
+		// Find the first keyframe
 		for (const auto& kf : keyframes_) {
 			mAnimationOffset = kf.time;
 			break;
 		}
 	}
-
-
+	
+	std::optional<Keyframe> getPreviousPlayStateKeyframe(float fromTime) {
+		// Iterate through keyframes in reverse to find the first one before fromTime with PlaybackState::Play
+		for (auto it = keyframes_.rbegin(); it != keyframes_.rend(); ++it) {
+			const Keyframe& kf = *it;
+			if (kf.time < fromTime && kf.getPlaybackState() == PlaybackState::Play) {
+				return kf;
+			}
+		}
+		
+		return std::nullopt;
+	}
+	
+	std::optional<Keyframe> getFirstButPreviousPauseStateKeyframe(float fromTime) {
+		// Iterate through keyframes in reverse to find the first one before fromTime with PlaybackState::Play
+		
+		std::optional<Keyframe> keyframe;
+		for (auto it = keyframes_.rbegin(); it != keyframes_.rend(); ++it) {
+			const Keyframe& kf = *it;
+			if (kf.time < fromTime && kf.getPlaybackState() == PlaybackState::Play) {
+				return keyframe;
+			} else if (kf.time < fromTime) {
+				keyframe = kf;
+			}
+		}
+		
+		return std::nullopt;
+	}
+	
+	std::optional<Keyframe> getPreviousPauseStateKeyframe(float fromTime) {
+		for (auto it = keyframes_.rbegin(); it != keyframes_.rend(); ++it) {
+			const Keyframe& kf = *it;
+			if (kf.time < fromTime && kf.getPlaybackState() == PlaybackState::Pause) {
+				return kf;
+			}
+		}
+		
+		return std::nullopt;
+	}
 
 	std::unique_ptr<SkinnedAnimationPdo> mAnimationPdo;
 	
 	std::reference_wrapper<Skeleton> mSkeleton;
 	std::vector<std::reference_wrapper<Animation>> mAnimationData;
 	
-	float mCurrentTime; // Current animation time
 	float mAnimationOffset; // Animation offset time
 	
 	// Buffers to store poses

@@ -139,8 +139,9 @@ public:
 			
 			mRecordBtn->set_text_color(mNormalButtonColor);
 			
+			evaluate_transforms();
 			evaluate_animations();
-			
+
 			// Verify keyframes after time update
 			verify_previous_next_keyframes(mActiveActor);
 		});
@@ -176,7 +177,7 @@ public:
 			mTimelineSlider->set_value(0.0f);
 			
 			mAnimatableActors = mActorManager.get_actors_with_component<AnimationComponent>();
-			
+			evaluate_transforms();
 			evaluate_animations();
 		});
 		
@@ -195,7 +196,7 @@ public:
 				mTimelineSlider->set_value(static_cast<float>(mCurrentTime) / mTotalFrames);
 				
 				mAnimatableActors = mActorManager.get_actors_with_component<AnimationComponent>();
-				
+				evaluate_transforms();
 				evaluate_animations();
 			}
 		});
@@ -212,6 +213,7 @@ public:
 			mCurrentTime = 0;
 			update_time_display(mCurrentTime);
 			mTimelineSlider->set_value(0.0f);
+			evaluate_transforms();
 			evaluate_animations();
 			
 			mAnimatableActors.clear();
@@ -276,7 +278,7 @@ public:
 				mTimelineSlider->set_value(static_cast<float>(mCurrentTime) / mTotalFrames);
 				
 				mAnimatableActors = mActorManager.get_actors_with_component<AnimationComponent>();
-				
+				evaluate_transforms();
 				evaluate_animations();
 			}
 		});
@@ -296,7 +298,7 @@ public:
 			mTimelineSlider->set_value(1.0f);
 			
 			mAnimatableActors = mActorManager.get_actors_with_component<AnimationComponent>();
-			
+			evaluate_transforms();
 			evaluate_animations();
 		});
 		
@@ -353,7 +355,7 @@ public:
 				mTimelineSlider->set_value(static_cast<float>(mCurrentTime) / mTotalFrames);
 				
 				mAnimatableActors = mActorManager.get_actors_with_component<AnimationComponent>();
-				
+				evaluate_transforms();
 				evaluate_animations();
 				
 				// Verify keyframes after time update
@@ -412,7 +414,7 @@ public:
 					
 					
 				}
-				
+				evaluate_transforms();
 				evaluate_animations();
 				verify_previous_next_keyframes(mActiveActor);
 			}
@@ -470,7 +472,7 @@ public:
 				mTimelineSlider->set_value(static_cast<float>(mCurrentTime) / mTotalFrames);
 				
 				mAnimatableActors = mActorManager.get_actors_with_component<AnimationComponent>();
-				
+				evaluate_transforms();
 				evaluate_animations();
 				
 				// Verify keyframes after time update
@@ -619,11 +621,11 @@ public:
 				// Stop playing when end is reached
 				stop_playback();
 			}
-			
-			evaluate_animations();
-			
+			evaluate_transforms();
 		}
 		
+		evaluate_animations();
+
 		evaluate_keyframe_status();
 		
 		auto ctx = screen()->nvg_context();
@@ -682,7 +684,7 @@ private:
 	}
 	
 	// Helper method to evaluate animations
-	void evaluate_animations() {
+	void evaluate_transforms() {
 		for (auto& animatableActor : mAnimatableActors) {
 			auto& animationComponent = animatableActor.get().get_component<AnimationComponent>();
 			auto& transformComponent = animatableActor.get().get_component<TransformComponent>();
@@ -700,9 +702,18 @@ private:
 			if (animatableActor.get().find_component<SkinnedAnimationComponent>()) {
 				auto& skinnedAnimationComponent = animatableActor.get().get_component<SkinnedAnimationComponent>();
 				
-				skinnedAnimationComponent.update(mCurrentTime);
+				skinnedAnimationComponent.evaluate_time(mCurrentTime);
 			}
-
+		}
+	}
+	
+	void evaluate_animations() {
+		for (auto& animatableActor : mAnimatableActors) {
+			if (animatableActor.get().find_component<SkinnedAnimationComponent>()) {
+				auto& skinnedAnimationComponent = animatableActor.get().get_component<SkinnedAnimationComponent>();
+				
+				skinnedAnimationComponent.evaluate_time(mCurrentTime);
+			}
 		}
 	}
 	
