@@ -52,7 +52,7 @@ public:
 	void TryImportAnimations();
 	
 private:
-	std::string GetBoneNameByID(int boneId) const;
+	std::string GetBoneNameById(int boneId) const;
 	int GetBoneIdByName(const std::string& boneName) const;
 	void ProcessBones(const std::shared_ptr<sfbx::Mesh>& mesh) override;
 	
