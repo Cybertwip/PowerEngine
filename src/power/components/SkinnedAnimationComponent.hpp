@@ -224,7 +224,6 @@ public:
 		// Fallback (should not reach here if bounds are respected)
 		return std::nullopt;
 	}
-
 	
 	// Check if the current time corresponds to an exact keyframe
 	bool is_keyframe(float time) const {
@@ -459,10 +458,7 @@ public:
 		//@TODO
 		
 		//
-		
-		
 		mAnimationPdo = std::move(animationPdo);
-		
 		
 		for (auto& animation : mAnimationPdo->mAnimationData) {
 			mAnimationData.push_back(*animation);
