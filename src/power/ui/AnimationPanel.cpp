@@ -223,7 +223,7 @@ private:
 
 				center.y = -center.y;
 				
-				cameraTransform.set_translation(center + glm::vec3(0.0f, 0.0f, distance));
+				cameraTransform.set_translation(center - glm::vec3(0.0f, 0.0f, distance));
 				camera.look_at(mPreviewActor->get());
 			}
 			
