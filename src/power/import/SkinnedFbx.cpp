@@ -226,7 +226,7 @@ void SkinnedFbx::ProcessBones(const std::shared_ptr<sfbx::Mesh>& mesh) {
 			
 			// Determine parent index
 			int parentIndex = -1;
-			auto parentNode = as<sfbx::LimbNode>(boneInfo.limb)->getParent();
+			auto parentNode = as<sfbx::LimbNode>(boneInfo.limb->getParent())->getChild();
 			if (parentNode) {
 				std::string parentBoneName = std::string{ parentNode->getName() };
 				auto it = boneNameToIndex.find(parentBoneName);
