@@ -45,11 +45,20 @@ void MeshActorImporter::process(const std::string& path, const std::string& dest
 		
 		meshSerializer.write_int32(model->GetSkinnedMeshData().size());
 		
+		int meshDataIndex = 0;
 		for (auto& meshData : model->GetSkinnedMeshData()) {
+									
+			meshData->serialize(meshSerializer);
 			
 			meshSerializer.write_int32(meshData->get_material_properties().size());
+		
+			if (!meshData->get_material_properties().empty()){
+				for (auto& materialData : model->GetMaterialProperties()[meshDataIndex]) {
+					materialData->serialize(meshSerializer);
+				}
+			}
 			
-			meshData->serialize(meshSerializer);
+			meshDataIndex++;
 		}
 		
 		model->GetSkeleton()->serialize(meshSerializer);
@@ -72,8 +81,20 @@ void MeshActorImporter::process(const std::string& path, const std::string& dest
 	} else {
 		meshSerializer.write_int32(model->GetMeshData().size());
 		
+		int meshDataIndex = 0;
 		for (auto& meshData : model->GetMeshData()) {
+			
 			meshData->serialize(meshSerializer);
+			
+			meshSerializer.write_int32(meshData->get_material_properties().size());
+			
+			if (!meshData->get_material_properties().empty()){
+				for (auto& materialData : model->GetMaterialProperties()[meshDataIndex]) {
+					materialData->serialize(meshSerializer);
+				}
+			}
+			
+			meshDataIndex++;
 		}
 
 		// Save mesh to file

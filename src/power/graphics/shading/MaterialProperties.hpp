@@ -2,6 +2,8 @@
 
 #include "filesystem/CompressedSerialization.hpp"
 
+#include <nanogui/texture.h>
+
 #include <glm/glm.hpp>
 
 #include <functional> // For std::hash
@@ -69,6 +71,12 @@ struct SerializableMaterialProperties
 		serializer.write_float(mOpacity);
 		serializer.write_bool(mHasDiffuseTexture);
 		// Serialize mTextureDiffuse if needed
+		
+		if (mHasDiffuseTexture) {
+			uint64_t textureSize = static_cast<uint64_t>(mTextureDiffuse.size());
+			serializer.write_uint64(textureSize);
+			serializer.write_raw(mTextureDiffuse.data(), textureSize);
+		}
 	}
 	
 	// Deserialize method
@@ -80,6 +88,16 @@ struct SerializableMaterialProperties
 		if (!deserializer.read_float(mShininess)) return false;
 		if (!deserializer.read_float(mOpacity)) return false;
 		if (!deserializer.read_bool(mHasDiffuseTexture)) return false;
+		
+		if (mHasDiffuseTexture) {
+			uint64_t textureSize = 0;
+			if (!deserializer.read_uint64(textureSize)) return false;
+			mTextureDiffuse.resize(textureSize);
+			if (!deserializer.read_raw(mTextureDiffuse.data(), textureSize)) return false;
+		} else {
+			mTextureDiffuse.clear();
+		}
+
 		// Deserialize mTextureDiffuse if needed
 		return true;
 	}
@@ -139,8 +157,39 @@ struct MaterialProperties
 	MaterialProperties(const MaterialProperties&) = delete; // Disable copy constructor
 	MaterialProperties& operator=(const MaterialProperties&) = delete; // Disable copy assignment
 	
-	// Deserialize method
 	bool deserialize(const SerializableMaterialProperties& properties) {
+		mIdentifier = properties.mIdentifier;
+		mAmbient = properties.mAmbient;
+		mDiffuse = properties.mDiffuse;
+		mSpecular = properties.mSpecular;
+		mShininess = properties.mShininess;
+		mOpacity = properties.mOpacity;
+		mHasDiffuseTexture = properties.mHasDiffuseTexture;
+		
+		if (mHasDiffuseTexture) {
+			if (properties.mTextureDiffuse.empty()) {
+				std::cerr << "mHasDiffuseTexture is true, but mTextureDiffuse is empty.\n";
+				return false;
+			}
+			
+			// Assuming nanogui::Texture can be constructed from raw byte data.
+			// Adjust the constructor as per the actual nanogui::Texture implementation.
+			try {
+				// Example: Creating texture from PNG data
+				// nanogui::Texture may require width, height, and format, which need to be determined.
+				// For demonstration, we'll assume a constructor that takes raw data and its size.
+				// Replace this with actual texture loading logic as per nanogui's API.
+				mTextureDiffuse = std::make_unique<nanogui::Texture>(properties.mTextureDiffuse.data(), properties.mTextureDiffuse.size());
+			}
+			catch (const std::exception& e) {
+				std::cerr << "Failed to create nanogui::Texture: " << e.what() << "\n";
+				mTextureDiffuse = nullptr;
+				return false;
+			}
+		} else {
+			mTextureDiffuse.reset();
+		}
+		
 		return true;
 	}
 };

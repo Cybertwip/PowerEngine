@@ -102,6 +102,9 @@ struct SkinnedMeshData {
 	// Deserialize method
 	bool deserialize(CompressedSerialization::Deserializer& deserializer) {
 		// Deserialize the underlying MeshData
+		
+		mMeshData = std::make_unique<MeshData>();
+		
 		if (!mMeshData->deserialize(deserializer)) return false;
 		
 		// Deserialize SkinnedMeshVertex vector

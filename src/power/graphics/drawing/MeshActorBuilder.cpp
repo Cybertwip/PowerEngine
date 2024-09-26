@@ -104,7 +104,7 @@ Actor& MeshActorBuilder::build(Actor& actor, const std::string& path, ShaderWrap
 		actor.add_component<TransformComponent>();
 		actor.add_component<AnimationComponent>();
 		
-	} else if (extension == ".psk" || extension == ".pma") {
+	} else if (extension == ".psk") {
 		// Handle deserialization path for .psk and .pma files
 		
 		// Add ColorComponent
@@ -135,13 +135,6 @@ Actor& MeshActorBuilder::build(Actor& actor, const std::string& path, ShaderWrap
 			std::vector<std::unique_ptr<SkinnedMeshData>> skinnedMeshData;
 			skinnedMeshData.reserve(meshDataCount);
 			for (int32_t i = 0; i < meshDataCount; ++i) {
-				// Deserialize number of material properties (if applicable)
-				int32_t materialCount;
-				if (!deserializer.read_int32(materialCount)) {
-					std::cerr << "Failed to read material count for mesh " << i << "\n";
-					return actor;
-				}
-				
 				// Create and deserialize MeshData
 				auto meshData = std::make_unique<SkinnedMeshData>();
 				if (!meshData->deserialize(deserializer)) {
@@ -149,7 +142,30 @@ Actor& MeshActorBuilder::build(Actor& actor, const std::string& path, ShaderWrap
 					return actor;
 				}
 				
+				
+				meshData->get_material_properties().clear();
+				
+				// Deserialize number of material properties (if applicable)
+				int32_t materialCount;
+				if (!deserializer.read_int32(materialCount)) {
+					std::cerr << "Failed to read material count for mesh " << i << "\n";
+					return actor;
+				}
+				
+				for (int32_t i = 0; i < materialCount; ++i) {
+					SerializableMaterialProperties material;
+					
+					material.deserialize(deserializer);
+					
+					auto properties = std::make_shared<MaterialProperties>();
+					
+					properties->deserialize(material);
+					
+					meshData->get_material_properties().push_back(properties);
+				}
+				
 				skinnedMeshData.push_back(std::move(meshData));
+
 			}
 			
 			// Set SkinnedMeshData in the model

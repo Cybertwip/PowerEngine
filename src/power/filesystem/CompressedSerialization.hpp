@@ -26,6 +26,10 @@ public:
 			write_data(&value, sizeof(uint32_t));
 		}
 		
+		void write_uint64(uint64_t value) {
+			write_data(&value, sizeof(uint64_t));
+		}
+
 		void write_float(float value) {
 			write_data(&value, sizeof(float));
 		}
@@ -211,7 +215,11 @@ public:
 		bool read_uint32(uint32_t& value) {
 			return read_data(&value, sizeof(uint32_t));
 		}
-		
+
+		bool read_uint64(uint64_t& value) {
+			return read_data(&value, sizeof(uint64_t));
+		}
+
 		bool read_float(float& value) {
 			return read_data(&value, sizeof(float));
 		}
