@@ -212,13 +212,14 @@ mMeshActorImporter(std::make_unique<MeshActorImporter>())
 	mSelectedDirectoryPath = fs::current_path().string();
 	mFilterText = "";
 	
-	refresh_file_view();
-	
 	mOffscreenRenderer = new SelfContainedMeshCanvas(screen());
 	
 	mOffscreenRenderer->set_size(nanogui::Vector2i(128, 128));
 	
 	mOffscreenRenderer->set_visible(false);
+
+	refresh_file_view();
+	
 }
 
 void ResourcesPanel::refresh_file_view() {
