@@ -36,11 +36,7 @@ public:
 	}
 	
 
-	void take_snapshot(
-					   std::shared_ptr<Actor> actor,
-												nanogui::RenderPass* target,
-												std::vector<std::function<void()>> onSnapshotTaken
-					   );
+	void take_snapshot(std::shared_ptr<Actor> actor, nanogui::RenderPass* target, std::function<void()> onSnapshotTaken);
 private:
 	void add_mesh(std::reference_wrapper<SkinnedMesh> mesh);
 	void append(std::reference_wrapper<SkinnedMesh> meshRef);
@@ -77,6 +73,6 @@ private:
 	bool mSnapshotPending = false;
 	std::shared_ptr<Actor> mSnapshotActor;
 	nanogui::RenderPass* mSnapshotTarget = nullptr;
-	std::vector<std::function<void()>> mSnapshotCallbacks;
+	std::function<void()> mSnapshotCallback;
 
 };

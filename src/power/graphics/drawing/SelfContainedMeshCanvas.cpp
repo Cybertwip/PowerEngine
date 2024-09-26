@@ -223,15 +223,13 @@ void SelfContainedMeshCanvas::draw_contents() {
 			// Reset the snapshot pending flag
 			mSnapshotPending = false;
 			
-			// Execute all callbacks
-			for (auto& callback : mSnapshotCallbacks) {
-				if (callback) {
-					callback();
-				}
+			
+			if (mSnapshotCallback) {
+				mSnapshotCallback();
+				
+				mSnapshotCallback = nullptr;
 			}
 			
-			// Clear snapshot-related member variables
-			mSnapshotCallbacks.clear();
 			mSnapshotTarget = nullptr;
 			mSnapshotActor.reset();
 		}
@@ -356,15 +354,11 @@ void SelfContainedMeshCanvas::upload_material_data(ShaderWrapper& shader, const 
 	}
 
 
-void SelfContainedMeshCanvas::take_snapshot(
-											std::shared_ptr<Actor> actor,
-											nanogui::RenderPass* target,
-											std::function<void()> onSnapshotTaken
-											) {
+void SelfContainedMeshCanvas::take_snapshot(std::shared_ptr<Actor> actor, nanogui::RenderPass* target, std::function<void()> onSnapshotTaken) {
 	// Store the snapshot request details
 	mSnapshotActor = actor;
 	mSnapshotTarget = target;
-	mSnapshotCallbacks = std::move(onSnapshotTaken);
+	mSnapshotCallback = onSnapshotTaken;
 	mSnapshotPending = true;
 	
 	// If an actor is provided, set it as the active actor
