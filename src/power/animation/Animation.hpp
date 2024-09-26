@@ -1,5 +1,7 @@
 #pragma once
 
+#include "filesystem/CompressedSerialization.hpp"
+
 #include <vector>
 #include <glm/vec3.hpp>
 #include <glm/gtc/type_ptr.hpp> // For glm::value_ptr

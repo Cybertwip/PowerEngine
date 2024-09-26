@@ -1,5 +1,7 @@
 #pragma once
 
+#include "filesystem/CompressionSerialization.hpp"
+
 #include <string>
 #include <vector>
 #include <glm/glm.hpp>
