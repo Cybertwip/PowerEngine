@@ -108,6 +108,8 @@ public:
 	};
 	
 	struct SkinnedAnimationPdo {
+		SkinnedAnimationPdo() = default;
+		
 		SkinnedAnimationPdo(std::unique_ptr<Skeleton> skeleton) : mSkeleton(std::move(skeleton)) {}
 		
 		std::unique_ptr<Skeleton> mSkeleton;

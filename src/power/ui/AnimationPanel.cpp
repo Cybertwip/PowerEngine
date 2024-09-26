@@ -17,6 +17,8 @@
 #include "components/TransformComponent.hpp"
 #include "components/CameraComponent.hpp"
 
+#include "filesystem/CompressedSerialization.hpp"
+
 #include "graphics/drawing/Batch.hpp"
 #include "graphics/drawing/SelfContainedMeshCanvas.hpp"
 #include "graphics/drawing/SkinnedMesh.hpp"
@@ -82,30 +84,29 @@ AnimationPanel::~AnimationPanel() {
 
 void AnimationPanel::parse_file(const std::string& path) {
 	if (mActiveActor.has_value()) {
-//		auto model = std::make_unique<SkinnedFbx>(path);
-//		
-//		model->LoadModel();
-//		model->TryImportAnimations();
-//		
-//		std::unique_ptr<Drawable> drawableComponent;
-//		
-//		if (model->GetSkeleton() != nullptr) {
-//			std::vector<std::unique_ptr<SkinnedMesh>> skinnedMeshComponentData;
-//			
-//			auto pdo = std::make_unique<SkinnedAnimationComponent::SkinnedAnimationPdo> (std::move(model->GetSkeleton()));
-//			
-//			for (auto& animation : model->GetAnimationData()) {
-//				pdo->mAnimationData.push_back(std::move(animation));
-//			}
-//			
-//			auto& skinnedComponent = mActiveActor->get().get_component<SkinnedAnimationComponent>();
-//			
-//			
-//			skinnedComponent.set_pdo(std::move(pdo));
-//			
-//			mPlayPauseButton->set_pushed(false);
-//			mReversePlayButton->set_pushed(false);
-//		}
+		
+		CompressedSerialization::Deserializer deserializer;
+		
+		// Load the serialized file
+		if (!deserializer.load_from_file(path)) {
+			std::cerr << "Failed to load serialized file: " << path << "\n";
+		} else {
+			auto pdo = std::make_unique<SkinnedAnimationComponent::SkinnedAnimationPdo> ();
+			
+			auto animation = std::make_unique<Animation>();
+			
+			animation->deserialize(deserializer);
+			
+			pdo->mAnimationData.push_back(std::move(animation));
+
+			auto& skinnedComponent = mActiveActor->get().get_component<SkinnedAnimationComponent>();
+			
+			skinnedComponent.set_pdo(std::move(pdo));
+			
+			mPlayPauseButton->set_pushed(false);
+			mReversePlayButton->set_pushed(false);
+
+		}
 	}
 }
 
