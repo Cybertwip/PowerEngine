@@ -230,8 +230,10 @@ void SelfContainedMeshCanvas::draw_contents() {
 				mSnapshotCallback = nullptr;
 			}
 			
+			mPreviewActor = std::nullopt;
 			mSnapshotTarget = nullptr;
 			mSnapshotActor.reset();
+			
 		}
 
 	}
