@@ -150,11 +150,15 @@ bool Application::drop_event(nanogui::Widget* sender, const std::vector<std::str
 	if (sender == &mUiManager->status_bar_panel().resources_panel()) {
 
 		if (mUiCommon->animation_panel().contains(m_mouse_pos, true, true)) {
-			mUiCommon->animation_panel().parse_file(filenames[0]);
+			if (filenames[0].find(".pan") != std::string::npos){
+				mUiCommon->animation_panel().parse_file(filenames[0]);
+			}
 		}
 
 		if (mRenderCommon->canvas().contains(m_mouse_pos, true, true)) {
-			mUiCommon->hierarchy_panel().add_actor(mMeshActorLoader->create_actor(filenames[0], *mMeshShader, *mSkinnedShader));
+			if (filenames[0].find(".psk") != std::string::npos){
+				mUiCommon->hierarchy_panel().add_actor(mMeshActorLoader->create_actor(filenames[0], *mMeshShader, *mSkinnedShader));
+			}
 		}
 	}
 }

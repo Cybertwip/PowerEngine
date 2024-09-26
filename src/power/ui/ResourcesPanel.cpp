@@ -282,12 +282,13 @@ void ResourcesPanel::refresh_file_view() {
 				
 
 				icon->set_callback([this, icon, child]() {
-
-					if (get_icon_for_file(*child) == FA_WALKING) {
+					int file_icon = get_icon_for_file(*child);
+					
+					if (file_icon  == FA_WALKING || file_icon == FA_PERSON_BOOTH) {
 						
 						auto drag_widget = screen()->drag_widget();
 						
-						auto content = new nanogui::Button(drag_widget, "", FA_WALKING);
+						auto content = new nanogui::Button(drag_widget, "", file_icon);
 						
 						content->set_font_size(16);
 						content->set_background_color(mNormalButtonColor);
