@@ -216,7 +216,7 @@ mMeshActorImporter(std::make_unique<MeshActorImporter>())
 	
 	mOffscreenRenderer->set_size(nanogui::Vector2i(128, 128));
 	
-	mOffscreenRenderer->set_visible(false);
+	mOffscreenRenderer->set_visible(true);
 
 	refresh_file_view();
 	
@@ -274,10 +274,8 @@ void ResourcesPanel::refresh_file_view() {
 					imageView->set_fixed_size(icon->fixed_size());
 					
 					imageView->set_image(new nanogui::Texture(   nanogui::Texture::PixelFormat::RGBA, nanogui::Texture::ComponentFormat::UInt8,		 nanogui::Vector2i(128, 128), nanogui::Texture::InterpolationMode::Bilinear, nanogui::Texture::InterpolationMode::Nearest));
-					
-					entt::registry dummyRegistry;
-					
-					auto actor = std::make_shared<Actor>(dummyRegistry);
+									
+					auto actor = std::make_shared<Actor>(mDummyRegistry);
 					
 					mMeshActorBuilder->build(*actor, child->FullPath, *mMeshShader, *mSkinnedShader);
 					
@@ -285,7 +283,7 @@ void ResourcesPanel::refresh_file_view() {
 						imageView->set_visible(true);
 					});
 					
-					imageView->set_visible(false);
+					imageView->set_visible(true);
 				}
 
 				

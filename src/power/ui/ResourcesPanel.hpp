@@ -66,4 +66,6 @@ private:
 	SelfContainedMeshCanvas* mOffscreenRenderer;
 	
 	std::unique_ptr<MeshActorImporter> mMeshActorImporter;
+	
+	entt::registry mDummyRegistry;
 };
