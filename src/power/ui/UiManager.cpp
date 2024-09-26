@@ -820,7 +820,7 @@ private:
 	int mTotalFrames;
 };
 
-UiManager::UiManager(IActorSelectedRegistry& registry, IActorVisualManager& actorVisualManager, ActorManager& actorManager, MeshActorLoader& meshActorLoader, ShaderManager& shaderManager, ScenePanel& scenePanel, Canvas& canvas, nanogui::Widget& toolbox, nanogui::Widget& statusBar, AnimationPanel& animationPanel, CameraManager& cameraManager, std::function<void(std::function<void(int, int)>)> applicationClickRegistrator)
+UiManager::UiManager(IActorSelectedRegistry& registry, IActorVisualManager& actorVisualManager, ActorManager& actorManager, MeshActorLoader& meshActorLoader, ShaderManager& shaderManager, ScenePanel& scenePanel, Canvas& canvas, nanogui::Widget& toolbox, nanogui::Widget& statusBar, AnimationPanel& animationPanel, CameraManager& cameraManager, BatchUnit& batchUnit, std::function<void(std::function<void(int, int)>)> applicationClickRegistrator)
 : mRegistry(registry)
 , mActorManager(actorManager)
 , mShaderManager(shaderManager)
@@ -1006,7 +1006,7 @@ UiManager::UiManager(IActorSelectedRegistry& registry, IActorVisualManager& acto
 		}
 	});
 	
-	mStatusBarPanel = new StatusBarPanel(statusBar, actorVisualManager, meshActorLoader, shaderManager, applicationClickRegistrator);
+	mStatusBarPanel = new StatusBarPanel(statusBar, actorVisualManager, meshActorLoader, shaderManager, batchUnit, applicationClickRegistrator);
 	mStatusBarPanel->set_fixed_width(statusBar.fixed_height());
 	mStatusBarPanel->set_fixed_height(statusBar.fixed_height());
 	mStatusBarPanel->set_layout(new nanogui::BoxLayout(nanogui::Orientation::Horizontal,

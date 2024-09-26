@@ -78,6 +78,10 @@ Mesh::Mesh(std::unique_ptr<MeshData> meshData, ShaderWrapper& shader, MeshBatch&
 	mMeshBatch.append(*this);
 }
 
+Mesh::~Mesh() {
+	mMeshBatch.remove(*this);
+}
+
 void Mesh::draw_content(const nanogui::Matrix4f& model, const nanogui::Matrix4f& view,
 							   const nanogui::Matrix4f& projection) {
 	

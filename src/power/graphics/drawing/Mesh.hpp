@@ -19,7 +19,7 @@ class ShaderManager;
 class Mesh : public Drawable {
 public:
 	Mesh(std::unique_ptr<MeshData> meshData, ShaderWrapper& shader, MeshBatch& meshBatch, ColorComponent& colorComponent);
-	~Mesh() override = default;
+	~Mesh() override;
     
     void draw_content(const nanogui::Matrix4f& model, const nanogui::Matrix4f& view, const nanogui::Matrix4f& projection) override;
 	

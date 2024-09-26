@@ -50,7 +50,7 @@ void ImageView::set_image(Texture *image) {
         throw std::runtime_error(
             "ImageView::set_image(): interpolation mode must be set to 'Nearest'!");
     m_image_shader->set_texture("image", image);
-    m_image = image;
+	m_image = image;
 }
 
 float ImageView::scale() const {

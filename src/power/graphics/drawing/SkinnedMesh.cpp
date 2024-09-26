@@ -100,6 +100,9 @@ mModelMatrix(nanogui::Matrix4f::identity()) {
 	mMeshBatch.append(*this);
 }
 
+SkinnedMesh::~SkinnedMesh() {
+	mMeshBatch.remove(*this);
+}
 
 void SkinnedMesh::draw_content(const nanogui::Matrix4f& model, const nanogui::Matrix4f& view,
 							   const nanogui::Matrix4f& projection) {

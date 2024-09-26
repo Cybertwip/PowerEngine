@@ -35,6 +35,12 @@ public:
 		mUpdate = update;
 	}
 	
+
+	void take_snapshot(
+					   std::shared_ptr<Actor> actor,
+												nanogui::RenderPass* target,
+												std::vector<std::function<void()>> onSnapshotTaken
+					   );
 private:
 	void add_mesh(std::reference_wrapper<SkinnedMesh> mesh);
 	void append(std::reference_wrapper<SkinnedMesh> meshRef);
@@ -66,4 +72,11 @@ private:
 	glm::mat4 mModelMatrix;
 	
 	bool mUpdate;
+	
+	
+	bool mSnapshotPending = false;
+	std::shared_ptr<Actor> mSnapshotActor;
+	nanogui::RenderPass* mSnapshotTarget = nullptr;
+	std::vector<std::function<void()>> mSnapshotCallbacks;
+
 };

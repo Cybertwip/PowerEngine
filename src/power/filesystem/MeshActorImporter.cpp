@@ -26,7 +26,9 @@ MeshActorImporter::MeshActorImporter() {
 	
 }
 
-void MeshActorImporter::process(const std::string& path, const std::string& destination) {
+MeshActorImporter::CompressedMeshActor MeshActorImporter::process(const std::string& path, const std::string& destination) {
+	
+	CompressedMeshActor actor;
 	
 	CompressedSerialization::Serializer meshSerializer;
 
@@ -65,7 +67,12 @@ void MeshActorImporter::process(const std::string& path, const std::string& dest
 		
 		// Save skeleton to file
 		std::filesystem::path basename = std::filesystem::path(path).stem();
-		meshSerializer.save_to_file(destPath / (basename.string() + ".psk"));
+		
+		auto meshPath = destPath / (basename.string() + ".psk");
+		
+		meshSerializer.save_to_file(meshPath);
+		
+		actor.mMeshFile = meshPath.string();
 
 		int animationIndex = 0;
 
@@ -76,7 +83,12 @@ void MeshActorImporter::process(const std::string& path, const std::string& dest
 			std::stringstream ss;
 			ss << std::setw(4) << std::setfill('0') << animationIndex++; // Pad the index with 4 zeros
 			std::string paddedIndex = ss.str();
-			serializer.save_to_file(destPath / (basename.string() + "_" + paddedIndex + ".pan"));
+			
+			auto animationPath = destPath / (basename.string() + "_" + paddedIndex + ".pan");
+
+			serializer.save_to_file(animationPath);
+			
+			actor.mAnimationFiles.push_back(animationPath);
 		}
 	} else {
 		meshSerializer.write_int32(model->GetMeshData().size());
@@ -99,6 +111,13 @@ void MeshActorImporter::process(const std::string& path, const std::string& dest
 
 		// Save mesh to file
 		std::filesystem::path basename = std::filesystem::path(path).stem();
-		meshSerializer.save_to_file(destPath / (basename.string() + ".pma"));
+		
+		auto meshPath = destPath / (basename.string() + ".pma");
+				
+		actor.mMeshFile = meshPath.string();
+
+		meshSerializer.save_to_file(meshPath);
 	}
+	
+	return actor;
 }

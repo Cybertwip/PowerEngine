@@ -7,8 +7,10 @@
 #include <nanogui/nanogui.h>
 
 class IActorVisualManager;
+class BatchUnit;
 class MeshActorImporter;
 class MeshActorLoader;
+class MeshActorBuilder;
 class SelfContainedMeshCanvas;
 class ShaderManager;
 class ShaderWrapper;
@@ -16,7 +18,7 @@ class ShaderWrapper;
 class ResourcesPanel : public Panel {
 public:
 	ResourcesPanel(nanogui::Widget &parent,
-				   const DirectoryNode& root_directory_node, IActorVisualManager& actorVisualManager,  MeshActorLoader& meshActorLoader, ShaderManager& shaderManager);
+				   const DirectoryNode& root_directory_node, IActorVisualManager& actorVisualManager,  MeshActorLoader& meshActorLoader, ShaderManager& shaderManager, BatchUnit& batchUnit);
 	
 	void refresh_file_view();
 	int get_icon_for_file(const DirectoryNode& node);
@@ -51,6 +53,7 @@ private:
 
 	IActorVisualManager& mActorVisualManager;
 	MeshActorLoader& mMeshActorLoader;
+	std::unique_ptr<MeshActorBuilder> mMeshActorBuilder;
 	std::unique_ptr<ShaderWrapper> mMeshShader;
 	std::unique_ptr<ShaderWrapper> mSkinnedShader;
 

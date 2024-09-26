@@ -465,9 +465,7 @@ public:
 		apply_pose_to_skeleton(); // return default pose
 
 		return bonesCPU;
-		
 	}
-	
 	
 	void set_pdo(std::unique_ptr<SkinnedAnimationPdo> animationPdo){
 		mAnimationData.clear();

@@ -20,7 +20,7 @@ class SkinnedMesh : public Drawable {
 public:
 	SkinnedMesh(std::unique_ptr<SkinnedMeshData> skinnedMeshData, ShaderWrapper& shader, SkinnedMeshBatch& meshBatch, ColorComponent& colorComponent,
 		SkinnedAnimationComponent& skinnedComponent);
-	~SkinnedMesh() override = default;
+	~SkinnedMesh() override;
 	
 	void draw_content(const nanogui::Matrix4f& model, const nanogui::Matrix4f& view, const nanogui::Matrix4f& projection) override;
 	

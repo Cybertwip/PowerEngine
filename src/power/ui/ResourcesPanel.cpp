@@ -3,6 +3,12 @@
 #include "ai/DeepMotionSettingsWindow.hpp"
 #include "actors/IActorSelectedRegistry.hpp"
 #include "filesystem/MeshActorImporter.hpp"
+
+
+#include "graphics/drawing/BatchUnit.hpp"
+
+#include "graphics/drawing/MeshActorBuilder.hpp"
+
 #include "graphics/drawing/SelfContainedMeshCanvas.hpp"
 
 #include "MeshActorLoader.hpp"
@@ -106,11 +112,12 @@ const DirectoryNode* FindNodeByPath(const DirectoryNode& currentNode, const std:
 }
 
 
-ResourcesPanel::ResourcesPanel(nanogui::Widget& parent, const DirectoryNode& root_directory_node, IActorVisualManager& actorVisualManager,  MeshActorLoader& meshActorLoader, ShaderManager& shaderManager)
+ResourcesPanel::ResourcesPanel(nanogui::Widget& parent, const DirectoryNode& root_directory_node, IActorVisualManager& actorVisualManager,  MeshActorLoader& meshActorLoader, ShaderManager& shaderManager, BatchUnit& batchUnit)
 : Panel(parent, "Resources"),
 mRootDirectoryNode(root_directory_node),
 mActorVisualManager(actorVisualManager),
 mMeshActorLoader(meshActorLoader),
+mMeshActorBuilder(std::make_unique<MeshActorBuilder>(batchUnit)),
 mMeshShader(std::make_unique<ShaderWrapper>(*shaderManager.get_shader("mesh"))),
 mSkinnedShader(std::make_unique<ShaderWrapper>(*shaderManager.get_shader("skinned_mesh"))),
 mSelectedButton(nullptr),
@@ -260,16 +267,24 @@ void ResourcesPanel::refresh_file_view() {
 				icon->set_fixed_size(nanogui::Vector2i(128, 128));
 
 				if (file_icon == FA_WALKING) {
-					// @TODO ImportManager
-					// Import and split Skeleton + animations in custom format.
-					// @TODO SnapshotManager
-					// Import and take snapshot.
 					
-//					auto imageView = new nanogui::ImageView(icon);
-//					
-//					imageView->set_fixed_size(icon->fixed_size());
-//					
-//					imageView->set_image(new nanogui::Texture(""));
+					auto imageView = new nanogui::ImageView(icon);
+					
+					imageView->set_fixed_size(icon->fixed_size());
+					
+					imageView->set_image(new nanogui::Texture(   nanogui::Texture::PixelFormat::RGBA, nanogui::Texture::ComponentFormat::UInt8,		 nanogui::Vector2i(128, 128)));
+					
+					entt::registry dummyRegistry;
+					
+					auto actor = std::make_shared<Actor>(dummyRegistry);
+					
+					mMeshActorBuilder->build(actor, child->FullPath, *mMeshShader, *mSkinnedShader);
+					
+					mOffscreenRenderer->take_snapshot(actor, imageView->render_pass(), [imageView](){
+						imageView->set_visible(true);
+					});
+					
+					imageView->set_visible(false);
 				}
 
 				
@@ -443,7 +458,8 @@ void ResourcesPanel::import_assets() {
 		
 		try {
 			// Copy the selected file to the current directory
-			mMeshActorImporter->process(file, mSelectedDirectoryPath);
+			auto _ = mMeshActorImporter->process(file, mSelectedDirectoryPath);
+						
 		} catch (const std::exception& e) {
 			std::cerr << "Error importing asset: " << e.what() << std::endl;
 		}

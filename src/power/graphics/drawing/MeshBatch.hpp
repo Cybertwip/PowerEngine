@@ -28,6 +28,7 @@ public:
 	void add_mesh(std::reference_wrapper<Mesh> mesh);
 	void clear();
 	void append(std::reference_wrapper<Mesh> meshRef);
+	void remove(std::reference_wrapper<Mesh> meshRef);
 	void draw_content(const nanogui::Matrix4f& view,
 					  const nanogui::Matrix4f& projection) override;
 	
