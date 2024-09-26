@@ -64,6 +64,8 @@ private:
 };
 
 struct SkinnedMeshData {
+	SkinnedMeshData() = default;
+	
 	SkinnedMeshData(std::unique_ptr<MeshData> meshData) : mMeshData(std::move(meshData)) {
 		auto& vertices = mMeshData->get_vertices();
 		

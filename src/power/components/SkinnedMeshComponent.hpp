@@ -12,7 +12,7 @@ class SkinnedMesh;
 
 class SkinnedMeshComponent : public Drawable {
 public:
-	SkinnedMeshComponent(std::vector<std::unique_ptr<SkinnedMesh>>& skinnedMeshes, std::unique_ptr<SkinnedFbx> model);
+	SkinnedMeshComponent(std::vector<std::unique_ptr<SkinnedMesh>>&& skinnedMeshes, std::unique_ptr<SkinnedFbx> model);
 
 	void draw_content(const nanogui::Matrix4f& model, const nanogui::Matrix4f& view, const nanogui::Matrix4f& projection) override;
 	
