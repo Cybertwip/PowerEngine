@@ -278,7 +278,7 @@ void ResourcesPanel::refresh_file_view() {
 					
 					auto actor = std::make_shared<Actor>(dummyRegistry);
 					
-					mMeshActorBuilder->build(actor, child->FullPath, *mMeshShader, *mSkinnedShader);
+					mMeshActorBuilder->build(*actor, child->FullPath, *mMeshShader, *mSkinnedShader);
 					
 					mOffscreenRenderer->take_snapshot(actor, imageView->render_pass(), [imageView](){
 						imageView->set_visible(true);
