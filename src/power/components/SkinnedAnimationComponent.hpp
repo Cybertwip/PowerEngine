@@ -405,7 +405,27 @@ public:
 	
 	std::vector<BoneCPU> get_bones_at_time(int time) {
 		if (mAnimationData.empty()) {
-			return; // No animations to process
+			size_t numBones = mSkeleton.get().num_bones();
+			
+			std::vector<BoneCPU> bonesCPU(numBones);
+			
+			for (size_t i = 0; i < numBones; ++i) {
+				// Get the bone transform as a glm::mat4
+				glm::mat4 boneTransform = mSkeleton.get().get_bone(i).transform;
+				
+				// Reference to the BoneCPU structure
+				BoneCPU& boneCPU = bonesCPU[i];
+				
+				// Copy each element from glm::mat4 to the BoneCPU's transform array
+				for (int row = 0; row < 4; ++row) {
+					for (int col = 0; col < 4; ++col) {
+						boneCPU.transform[row][col] = boneTransform[row][col];
+					}
+				}
+			}
+		
+			return bonesCPU;
+
 		}
 		
 		// For simplicity, use the first animation in the list
