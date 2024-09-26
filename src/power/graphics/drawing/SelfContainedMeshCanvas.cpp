@@ -12,8 +12,9 @@ nanogui::Matrix4f glm_to_nanogui(glm::mat4 glmMatrix) {
 
 SelfContainedMeshCanvas::SelfContainedMeshCanvas(Widget* parent)
 : nanogui::Canvas(parent, 1, true, true), mCurrentTime(0), mCamera(mRegistry), mShaderManager(*this),
-mSkinnedMeshPreviewShader(*mShaderManager.load_shader("skinned_mesh_preview", "shaders/metal/preview_diffuse_skinned_vs.metal",
-													  "shaders/metal/preview_diffuse_fs.metal", nanogui::Shader::BlendMode::None)) {
+mSkinnedMeshPreviewShader(*mShaderManager.load_shader("skinned_mesh_preview", "internal/shaders/metal/preview_diffuse_skinned_vs.metal",
+	"internal/shaders/metal/preview_diffuse_fs.metal", nanogui::Shader::BlendMode::None)),
+mUpdate(true) {
 	set_background_color(nanogui::Color{70, 130, 180, 255});
 	
 	mCamera.add_component<TransformComponent>();
@@ -132,7 +133,9 @@ void SelfContainedMeshCanvas::draw_content(const nanogui::Matrix4f& view,
 			
 			int duration = mesh.get_skinned_component().get_animation_duration();
 			
-			mCurrentTime += 1;
+			if (mUpdate) {
+				mCurrentTime += 1;
+			}
 			
 			mCurrentTime = fmax(0, fmod(duration + mCurrentTime, duration));
 			

@@ -8,6 +8,7 @@
 
 class IActorVisualManager;
 class MeshActorLoader;
+class SelfContainedMeshCanvas;
 class ShaderManager;
 class ShaderWrapper;
 
@@ -24,7 +25,6 @@ public:
 	virtual bool keyboard_event(int key, int scancode, int action, int modifiers) override;
 
 private:
-	
 	bool mouse_button_event(const nanogui::Vector2i &p, int button, bool down, int modifiers) override;
 	
 	const DirectoryNode& mRootDirectoryNode;
@@ -43,7 +43,6 @@ private:
 	// New member variable
 	std::string mFilterText;
 	
-
 	// New methods
 	void import_assets();
 	void export_assets();
@@ -59,5 +58,6 @@ private:
 	std::shared_ptr<DirectoryNode> mSelectedNode;
 	nanogui::Color mNormalButtonColor;
 	nanogui::Color mSelectedButtonColor;
-
+	
+	SelfContainedMeshCanvas* mOffscreenRenderer;
 };

@@ -130,7 +130,7 @@ public:
     /// Load an image from the given file using stb-image
     Texture(const std::string &filename,
             InterpolationMode min_interpolation_mode = InterpolationMode::Bilinear,
-            InterpolationMode mag_interpolation_mode = InterpolationMode::Bilinear,
+            InterpolationMode mag_interpolation_mode = InterpolationMode::Nearest,
             WrapMode wrap_mode                       = WrapMode::Repeat);
 
     /// Return the pixel format

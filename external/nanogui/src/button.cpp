@@ -116,8 +116,6 @@ bool Button::mouse_button_event(const Vector2i &p, int button, bool down, int mo
 }
 
 void Button::draw(NVGcontext *ctx) {
-    Widget::draw(ctx);
-
     NVGcolor grad_top = m_theme->m_button_gradient_top_unfocused;
     NVGcolor grad_bot = m_theme->m_button_gradient_bot_unfocused;
 
@@ -229,6 +227,8 @@ void Button::draw(NVGcontext *ctx) {
     nvgText(ctx, text_pos.x(), text_pos.y(), m_caption.c_str(), nullptr);
     nvgFillColor(ctx, text_color);
     nvgText(ctx, text_pos.x(), text_pos.y() + 1, m_caption.c_str(), nullptr);
+	
+	Widget::draw(ctx);
 }
 
 NAMESPACE_END(nanogui)

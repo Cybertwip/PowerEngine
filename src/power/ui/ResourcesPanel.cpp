@@ -2,6 +2,7 @@
 
 #include "ai/DeepMotionSettingsWindow.hpp"
 #include "actors/IActorSelectedRegistry.hpp"
+#include "graphics/drawing/SelfContainedMeshCanvas.hpp"
 
 #include "MeshActorLoader.hpp"
 #include "ShaderManager.hpp"
@@ -203,6 +204,12 @@ mSelectedButtonColor(nanogui::Color(0.5f, 0.5f, 0.8f, 1.0f))
 	mFilterText = "";
 	
 	refresh_file_view();
+	
+	mOffscreenRenderer = new SelfContainedMeshCanvas(screen());
+	
+	mOffscreenRenderer->set_size(nanogui::Vector2i(128, 128));
+	
+	mOffscreenRenderer->set_visible(false);
 }
 
 void ResourcesPanel::refresh_file_view() {
@@ -243,10 +250,26 @@ void ResourcesPanel::refresh_file_view() {
 				nanogui::Widget *itemContainer = new nanogui::Widget(mFileView);
 				itemContainer->set_layout(new nanogui::BoxLayout(
 																 nanogui::Orientation::Vertical, nanogui::Alignment::Middle, 0, 5));
+				auto file_icon = get_icon_for_file(*child);
+				
 				auto icon = new nanogui::Button(itemContainer, "", get_icon_for_file(*child));
 				
 				icon->set_icon(get_icon_for_file(*child));
 				icon->set_fixed_size(nanogui::Vector2i(128, 128));
+
+				if (file_icon == FA_PERSON_BOOTH) {
+					// @TODO ImportManager
+					// Import and split Skeleton + animations in custom format.
+					// @TODO SnapshotManager
+					// Import and take snapshot.
+					
+//					auto imageView = new nanogui::ImageView(icon);
+//					
+//					imageView->set_fixed_size(icon->fixed_size());
+//					
+//					imageView->set_image(new nanogui::Texture(""));
+				}
+
 				
 				icon->set_background_color(mNormalButtonColor);
 				
@@ -437,7 +460,6 @@ void ResourcesPanel::export_assets() {
 		return; // User canceled
 	}
 	
-	
 	std::string destinationDir = file.front();
 	
 	// Logic to export assets
@@ -461,7 +483,6 @@ void ResourcesPanel::export_assets() {
 		std::cerr << "Error exporting assets: " << e.what() << std::endl;
 	}
 }
-
 
 void ResourcesPanel::navigate_up_to_cwd() {
 	fs::path cwd = fs::current_path();

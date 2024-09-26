@@ -37,7 +37,7 @@ ImageView::ImageView(Widget *parent) : Canvas(parent, 1, false, false) {
     };
 
     m_image_shader->set_buffer("position", VariableType::Float32, { 6, 2 },
-                               positions);
+                               positions, -1, true);
     m_render_pass->set_cull_mode(RenderPass::CullMode::Disabled);
 
     m_image_border_color = m_theme->m_border_dark;

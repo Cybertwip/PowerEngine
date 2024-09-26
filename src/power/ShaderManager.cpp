@@ -43,14 +43,14 @@ nanogui::ref<nanogui::Shader> ShaderManager::get_shader(const std::string &name)
 
 void ShaderManager::load_default_shaders() {
 #if defined(NANOGUI_USE_OPENGL) || defined(NANOGUI_USE_GLES)
-	load_shader("mesh", "shaders/gl/diffuse.vs", "shaders/gl/diffuse.fs");
-	load_shader("gizmo", "shaders/gl/gizmo.vs", "shaders/gl/gizmo.fs");
-	load_shader("grid", "shaders/gl/grid.vs", "shaders/gl/grid.fs");
+	load_shader("mesh", "internal/shaders/gl/diffuse.vs", "internal/shaders/gl/diffuse.fs");
+	load_shader("gizmo", "internal/shaders/gl/gizmo.vs", "internal/shaders/gl/gizmo.fs");
+	load_shader("grid", "internal/shaders/gl/grid.vs", "shaders/gl/grid.fs");
 #elif defined(NANOGUI_USE_METAL)
-	load_shader("mesh", "shaders/metal/diffuse_vs.metal", "shaders/metal/diffuse_fs.metal", nanogui::Shader::BlendMode::None);
-	load_shader("skinned_mesh", "shaders/metal/diffuse_skinned_vs.metal", "shaders/metal/diffuse_fs.metal", nanogui::Shader::BlendMode::None);
-	load_shader("gizmo", "shaders/metal/diffuse_vs.metal", "shaders/metal/gizmo_fs.metal", nanogui::Shader::BlendMode::AlphaBlend);
-	load_shader("grid", "shaders/metal/grid_vs.metal", "shaders/metal/grid_fs.metal", nanogui::Shader::BlendMode::AlphaBlend);
+	load_shader("mesh", "internal/shaders/metal/diffuse_vs.metal", "internal/shaders/metal/diffuse_fs.metal", nanogui::Shader::BlendMode::None);
+	load_shader("skinned_mesh", "internal/shaders/metal/diffuse_skinned_vs.metal", "internal/shaders/metal/diffuse_fs.metal", nanogui::Shader::BlendMode::None);
+	load_shader("gizmo", "internal/shaders/metal/diffuse_vs.metal", "internal/shaders/metal/gizmo_fs.metal", nanogui::Shader::BlendMode::AlphaBlend);
+	load_shader("grid", "internal/shaders/metal/grid_vs.metal", "internal/shaders/metal/grid_fs.metal", nanogui::Shader::BlendMode::AlphaBlend);
 #endif
 }
 

@@ -31,6 +31,10 @@ public:
 	SelfContainedMeshCanvas(Widget* parent);
 	void set_active_actor(std::optional<std::reference_wrapper<Actor>> actor);
 	
+	void set_update(bool update) {
+		mUpdate = update;
+	}
+	
 private:
 	void add_mesh(std::reference_wrapper<SkinnedMesh> mesh);
 	void append(std::reference_wrapper<SkinnedMesh> meshRef);
@@ -60,4 +64,6 @@ private:
 	std::unordered_map<int, std::vector<size_t>> mMeshStartIndices;
 	std::unordered_map<int, VertexIndexer> mVertexIndexingMap;
 	glm::mat4 mModelMatrix;
+	
+	bool mUpdate;
 };
