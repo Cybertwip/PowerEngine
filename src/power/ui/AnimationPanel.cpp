@@ -82,30 +82,30 @@ AnimationPanel::~AnimationPanel() {
 
 void AnimationPanel::parse_file(const std::string& path) {
 	if (mActiveActor.has_value()) {
-		auto model = std::make_unique<SkinnedFbx>(path);
-		
-		model->LoadModel();
-		model->TryImportAnimations();
-		
-		std::unique_ptr<Drawable> drawableComponent;
-		
-		if (model->GetSkeleton() != nullptr) {
-			std::vector<std::unique_ptr<SkinnedMesh>> skinnedMeshComponentData;
-			
-			auto pdo = std::make_unique<SkinnedAnimationComponent::SkinnedAnimationPdo> (std::move(model->GetSkeleton()));
-			
-			for (auto& animation : model->GetAnimationData()) {
-				pdo->mAnimationData.push_back(std::move(animation));
-			}
-			
-			auto& skinnedComponent = mActiveActor->get().get_component<SkinnedAnimationComponent>();
-			
-			
-			skinnedComponent.set_pdo(std::move(pdo));
-			
-			mPlayPauseButton->set_pushed(false);
-			mReversePlayButton->set_pushed(false);
-		}
+//		auto model = std::make_unique<SkinnedFbx>(path);
+//		
+//		model->LoadModel();
+//		model->TryImportAnimations();
+//		
+//		std::unique_ptr<Drawable> drawableComponent;
+//		
+//		if (model->GetSkeleton() != nullptr) {
+//			std::vector<std::unique_ptr<SkinnedMesh>> skinnedMeshComponentData;
+//			
+//			auto pdo = std::make_unique<SkinnedAnimationComponent::SkinnedAnimationPdo> (std::move(model->GetSkeleton()));
+//			
+//			for (auto& animation : model->GetAnimationData()) {
+//				pdo->mAnimationData.push_back(std::move(animation));
+//			}
+//			
+//			auto& skinnedComponent = mActiveActor->get().get_component<SkinnedAnimationComponent>();
+//			
+//			
+//			skinnedComponent.set_pdo(std::move(pdo));
+//			
+//			mPlayPauseButton->set_pushed(false);
+//			mReversePlayButton->set_pushed(false);
+//		}
 	}
 }
 

@@ -1,7 +1,5 @@
 #include "import/Fbx.hpp"
 
-#include "filesystem/CompressedSerialization.hpp"
-
 #include <algorithm>
 #include <execution>
 #include <thread>
@@ -300,6 +298,11 @@ void Fbx::ProcessMesh(const std::shared_ptr<sfbx::Mesh>& mesh) {
 		
 		serializableMaterials.push_back(matPtr);
 	}
+
+	
+	resultMesh->get_material_properties().resize(serializableMaterials.size());
+	
+	mMaterialProperties.push_back(std::move(serializableMaterials));
 	
 	// Proceed to process bones separately
 	 ProcessBones(mesh); // This call should be handled externally or after ProcessMesh

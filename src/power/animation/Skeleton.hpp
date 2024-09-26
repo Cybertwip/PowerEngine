@@ -1,6 +1,6 @@
 #pragma once
 
-#include "filesystem/CompressionSerialization.hpp"
+#include "filesystem/CompressedSerialization.hpp"
 
 #include <string>
 #include <vector>

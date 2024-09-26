@@ -28,43 +28,56 @@ MeshActorImporter::MeshActorImporter() {
 
 void MeshActorImporter::process(const std::string& path, const std::string& destination) {
 	
+	CompressedSerialization::Serializer meshSerializer;
+
 	auto model = std::make_unique<SkinnedFbx>(path);
 		
 	model->LoadModel();
 	model->TryImportAnimations();
-		
+
+	// Ensure destination path exists
+	std::filesystem::path destPath(destination);
+	if (!std::filesystem::exists(destPath)) {
+		std::filesystem::create_directories(destPath);
+	}
+
 	if (model->GetSkeleton() != nullptr) {
-		std::vector<std::unique_ptr<SkinnedMesh>> skinnedMeshComponentData;
 		
-		auto pdo = std::make_unique<SkinnedAnimationComponent::SkinnedAnimationPdo> (std::move(model->GetSkeleton()));
+		meshSerializer.write_int32(model->GetSkinnedMeshData().size());
 		
+		for (auto& meshData : model->GetSkinnedMeshData()) {
+			
+			meshSerializer.write_int32(meshData->get_material_properties().size());
+			
+			meshData->serialize(meshSerializer);
+		}
+		
+		model->GetSkeleton()->serialize(meshSerializer);
+		
+		// Save skeleton to file
+		std::filesystem::path basename = std::filesystem::path(path).stem();
+		meshSerializer.save_to_file(destPath / (basename.string() + ".psk"));
+
+		int animationIndex = 0;
+
 		for (auto& animation : model->GetAnimationData()) {
-			pdo->mAnimationData.push_back(std::move(animation));
+			CompressedSerialization::Serializer serializer;
+			animation->serialize(serializer);
+			
+			std::stringstream ss;
+			ss << std::setw(4) << std::setfill('0') << animationIndex++; // Pad the index with 4 zeros
+			std::string paddedIndex = ss.str();
+			serializer.save_to_file(destPath / (basename.string() + "_" + paddedIndex + ".pan"));
 		}
-		
-//		auto& skinnedComponent = actor.add_component<SkinnedAnimationComponent>(std::move(pdo));
-		
-//		actor.add_component<PlaybackComponent>();
-		
-		for (auto& skinnedMeshData : model->GetSkinnedMeshData()) {
-//			skinnedMeshComponentData.push_back(std::make_unique<SkinnedMesh>(std::move(skinnedMeshData), skinnedShader, mBatchUnit.mSkinnedMeshBatch, colorComponent,
-//				skinnedComponent));
-		}
-		
-//		drawableComponent = std::make_unique<SkinnedMeshComponent>(skinnedMeshComponentData, std::move(model));
 	} else {
-		std::vector<std::unique_ptr<Mesh>> meshComponentData;
+		meshSerializer.write_int32(model->GetMeshData().size());
 		
 		for (auto& meshData : model->GetMeshData()) {
-//			meshComponentData.push_back(std::make_unique<Mesh>(std::move(meshData), meshShader, mBatchUnit.mMeshBatch, colorComponent));
+			meshData->serialize(meshSerializer);
 		}
-		
-//		drawableComponent = std::make_unique<MeshComponent>(meshComponentData, std::move(model));
+
+		// Save mesh to file
+		std::filesystem::path basename = std::filesystem::path(path).stem();
+		meshSerializer.save_to_file(destPath / (basename.string() + ".pma"));
 	}
-	
-//	actor.add_component<DrawableComponent>(std::move(drawableComponent));
-//	actor.add_component<TransformComponent>();
-//	actor.add_component<AnimationComponent>();
-	
-//	return actor;
 }

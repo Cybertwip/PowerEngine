@@ -4,6 +4,7 @@
 #include <cstring> // For memcpy
 #include <zlib.h>
 #include <iostream>
+#include <fstream> // For file I/O
 #include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <string>
@@ -93,6 +94,35 @@ public:
 			return true;
 		}
 		
+		// Save the serialized and compressed data to a file
+		bool save_to_file(const std::string& filename) const {
+			std::vector<char> compressedData;
+			if (!get_compressed_data(compressedData)) {
+				std::cerr << "Failed to get compressed data.\n";
+				return false;
+			}
+			
+			std::ofstream outFile(filename, std::ios::binary);
+			if (!outFile) {
+				std::cerr << "Failed to open file for writing: " << filename << "\n";
+				return false;
+			}
+			
+			outFile.write(compressedData.data(), compressedData.size());
+			if (!outFile) {
+				std::cerr << "Failed to write data to file: " << filename << "\n";
+				return false;
+			}
+			
+			outFile.close();
+			if (!outFile) {
+				std::cerr << "Error occurred while closing the file: " << filename << "\n";
+				return false;
+			}
+			
+			return true;
+		}
+		
 	private:
 		std::vector<char> buffer;
 		
@@ -140,6 +170,37 @@ public:
 			// Initialize read offset
 			readOffset = 0;
 			return true;
+		}
+		
+		// Load compressed data from a file and initialize the deserializer
+		bool load_from_file(const std::string& filename) {
+			std::ifstream inFile(filename, std::ios::binary | std::ios::ate);
+			if (!inFile) {
+				std::cerr << "Failed to open file for reading: " << filename << "\n";
+				return false;
+			}
+			
+			std::streamsize size = inFile.tellg();
+			if (size < static_cast<std::streamsize>(sizeof(uLong))) {
+				std::cerr << "File too small to contain compressed data: " << filename << "\n";
+				return false;
+			}
+			
+			inFile.seekg(0, std::ios::beg);
+			
+			std::vector<char> compressedData(static_cast<size_t>(size));
+			if (!inFile.read(compressedData.data(), size)) {
+				std::cerr << "Failed to read data from file: " << filename << "\n";
+				return false;
+			}
+			
+			inFile.close();
+			if (!inFile) {
+				std::cerr << "Error occurred while closing the file: " << filename << "\n";
+				return false;
+			}
+			
+			return initialize(compressedData);
 		}
 		
 		// Methods to read various data types

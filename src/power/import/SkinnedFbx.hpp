@@ -40,10 +40,23 @@ public:
 	std::unique_ptr<Skeleton>& GetSkeleton() {
 		return mSkeleton;
 	}
-	
+
+	void SetSkeleton(std::unique_ptr<Skeleton> skeleton) {
+		mSkeleton = std::move(skeleton);
+	}
+
 	std::vector<std::unique_ptr<SkinnedMeshData>>& GetSkinnedMeshData() { return mSkinnedMeshes; }
 
+	void SetSkinnedMeshData( std::vector<std::unique_ptr<SkinnedMeshData>>&& meshData) {
+		
+		mSkinnedMeshes = std::move(meshData);
+	}
+
 	std::vector<std::unique_ptr<Animation>>& GetAnimationData() { return mAnimations; }
+
+	void AddAnimationData(std::unique_ptr<Animation> animation) {
+		mAnimations.push_back(std::move(animation));
+	}
 
 	void TryBuildSkeleton();
 	
