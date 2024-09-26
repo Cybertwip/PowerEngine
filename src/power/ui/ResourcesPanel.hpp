@@ -6,6 +6,8 @@
 
 #include <nanogui/nanogui.h>
 
+#include <entt/entt.hpp>
+
 class IActorVisualManager;
 class BatchUnit;
 class MeshActorImporter;
