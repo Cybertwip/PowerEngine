@@ -272,7 +272,7 @@ void ResourcesPanel::refresh_file_view() {
 					
 					imageView->set_fixed_size(icon->fixed_size());
 					
-					imageView->set_image(new nanogui::Texture(   nanogui::Texture::PixelFormat::RGBA, nanogui::Texture::ComponentFormat::UInt8,		 nanogui::Vector2i(128, 128)));
+					imageView->set_image(new nanogui::Texture(   nanogui::Texture::PixelFormat::RGBA, nanogui::Texture::ComponentFormat::UInt8,		 nanogui::Vector2i(128, 128), InterpolationMode::Bilinear, InterpolationMode::Nearest));
 					
 					entt::registry dummyRegistry;
 					
