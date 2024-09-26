@@ -359,7 +359,7 @@ void SelfContainedMeshCanvas::upload_material_data(ShaderWrapper& shader, const 
 void SelfContainedMeshCanvas::take_snapshot(
 											std::shared_ptr<Actor> actor,
 											nanogui::RenderPass* target,
-											std::vector<std::function<void()>> onSnapshotTaken
+											std::function<void()> onSnapshotTaken
 											) {
 	// Store the snapshot request details
 	mSnapshotActor = actor;
