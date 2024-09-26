@@ -19,7 +19,7 @@
 
 NAMESPACE_BEGIN(nanogui)
 
-ImageView::ImageView(Widget *parent) : Canvas(parent, 1, false, false) {
+ImageView::ImageView(Widget *parent) : Canvas(parent, 1, true, true) {
     render_pass()->set_clear_color(0, Color(0.3f, 0.3f, 0.32f, 1.f));
 
     m_image_shader = new Shader(
@@ -38,7 +38,7 @@ ImageView::ImageView(Widget *parent) : Canvas(parent, 1, false, false) {
 
     m_image_shader->set_buffer("position", VariableType::Float32, { 6, 2 },
                                positions, -1, true);
-    m_render_pass->set_cull_mode(RenderPass::CullMode::Disabled);
+    //m_render_pass->set_cull_mode(RenderPass::CullMode::Disabled);
 
     m_image_border_color = m_theme->m_border_dark;
     m_draw_image_border = true;

@@ -212,14 +212,12 @@ mMeshActorImporter(std::make_unique<MeshActorImporter>())
 	mSelectedDirectoryPath = fs::current_path().string();
 	mFilterText = "";
 	
-	mOffscreenRenderer = new SelfContainedMeshCanvas(screen());
-	
-	mOffscreenRenderer->set_size(nanogui::Vector2i(128, 128));
-	
-	mOffscreenRenderer->set_visible(true);
 
 	refresh_file_view();
 	
+}
+
+ResourcesPanel::~ResourcesPanel() {
 }
 
 void ResourcesPanel::refresh_file_view() {
@@ -268,22 +266,30 @@ void ResourcesPanel::refresh_file_view() {
 				icon->set_fixed_size(nanogui::Vector2i(128, 128));
 
 				if (file_icon == FA_WALKING) {
+							
+					mOffscreenRenderer = new SelfContainedMeshCanvas(icon);
 					
-					auto imageView = new nanogui::ImageView(icon);
-					
-					imageView->set_fixed_size(icon->fixed_size());
-					
-					imageView->set_image(new nanogui::Texture(   nanogui::Texture::PixelFormat::RGBA, nanogui::Texture::ComponentFormat::UInt8,		 nanogui::Vector2i(128, 128), nanogui::Texture::InterpolationMode::Bilinear, nanogui::Texture::InterpolationMode::Nearest));
-									
+					mOffscreenRenderer->set_fixed_size(icon->fixed_size());
+
 					auto actor = std::make_shared<Actor>(mDummyRegistry);
 					
 					mMeshActorBuilder->build(*actor, child->FullPath, *mMeshShader, *mSkinnedShader);
 					
-					mOffscreenRenderer->take_snapshot(actor, imageView->render_pass(), [imageView](){
-						imageView->set_visible(true);
+					mOffscreenRenderer->take_snapshot(actor, [this, icon](std::vector<uint8_t> pixels){
+						
+						auto imageView = new nanogui::ImageView(icon);
+						
+						imageView->set_size(icon->fixed_size());
+						
+						imageView->set_fixed_size(icon->fixed_size());
+						
+						imageView->set_image(new nanogui::Texture(pixels.data(), pixels.size(), nanogui::Texture::InterpolationMode::Bilinear, nanogui::Texture::InterpolationMode::Nearest, 128, 128));
+
+						//icon->remove_child(mOffscreenRenderer);
+//						mOffscreenRenderer->set_screen(screen()); // prevent crashing
 					});
 					
-					imageView->set_visible(true);
+					//imageView->set_visible(true);
 				}
 
 				

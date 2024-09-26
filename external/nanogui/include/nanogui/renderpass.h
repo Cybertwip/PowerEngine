@@ -164,6 +164,12 @@ public:
         Object *dst,
         const Vector2i &dst_offset
     );
+	
+	void blit_to(
+				 const Vector2i &src_offset,
+				 const Vector2i &src_size,
+				 nanogui::Texture *dst,
+				 const Vector2i &dst_offset);
 
 #if defined(NANOGUI_USE_OPENGL) || defined(NANOGUI_USE_GLES)
     uint32_t framebuffer_handle() const { return m_framebuffer_handle; }

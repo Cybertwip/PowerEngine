@@ -2,6 +2,8 @@
 #include "components/SkinnedMeshComponent.hpp"
 #include "SelfContainedMeshCanvas.hpp"
 
+#include <nanogui/screen.h>
+
 namespace CanvasUtils {
 nanogui::Matrix4f glm_to_nanogui(glm::mat4 glmMatrix) {
 	nanogui::Matrix4f matrix;
@@ -216,24 +218,37 @@ void SelfContainedMeshCanvas::draw_contents() {
 					 camera.get_projection());
 		
 		// If a snapshot is pending, perform the blit and execute callbacks
-		if (mSnapshotPending && mSnapshotTarget) {
-			// Ensure the current render pass has finished rendering
-			render_pass()->blit_to(nanogui::Vector2f(0, 0), m_size, mSnapshotTarget, nanogui::Vector2f(0, 0));
+		if (mSnapshotPending) {
+			
+			nanogui::Screen *scr = screen();
+			
+			if (scr == nullptr)
+				throw std::runtime_error("Canvas::draw(): could not find parent screen!");
+
+			float pixel_ratio = scr->pixel_ratio();
+
+			nanogui::Vector2i fbsize = m_size;
+			nanogui::Vector2i offset = position();
+			if (m_draw_border)
+				fbsize -= 2;
+			
+			if (m_draw_border)
+				offset += nanogui::Vector2i(1, 1);
+			
+			fbsize = nanogui::Vector2i(nanogui::Vector2f(fbsize) * pixel_ratio);
+			offset = nanogui::Vector2i(nanogui::Vector2f(offset) * pixel_ratio);
 			
 			// Reset the snapshot pending flag
 			mSnapshotPending = false;
 			
-			
 			if (mSnapshotCallback) {
-				mSnapshotCallback();
+				mSnapshotCallback(scr->grab_region(offset, fbsize));
 				
 				mSnapshotCallback = nullptr;
 			}
 			
 			mPreviewActor = std::nullopt;
-			mSnapshotTarget = nullptr;
 			mSnapshotActor.reset();
-			
 		}
 
 	}
@@ -356,10 +371,9 @@ void SelfContainedMeshCanvas::upload_material_data(ShaderWrapper& shader, const 
 	}
 
 
-void SelfContainedMeshCanvas::take_snapshot(std::shared_ptr<Actor> actor, nanogui::RenderPass* target, std::function<void()> onSnapshotTaken) {
+void SelfContainedMeshCanvas::take_snapshot(std::shared_ptr<Actor> actor, std::function<void(std::vector<uint8_t>)> onSnapshotTaken) {
 	// Store the snapshot request details
 	mSnapshotActor = actor;
-	mSnapshotTarget = target;
 	mSnapshotCallback = onSnapshotTaken;
 	mSnapshotPending = true;
 	

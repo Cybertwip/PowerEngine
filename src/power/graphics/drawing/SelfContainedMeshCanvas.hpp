@@ -1,6 +1,7 @@
 #pragma once
 #include <nanogui/canvas.h>
 #include <nanogui/vector.h>
+#include <nanogui/texture.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtx/quaternion.hpp>
@@ -34,9 +35,8 @@ public:
 	void set_update(bool update) {
 		mUpdate = update;
 	}
-	
 
-	void take_snapshot(std::shared_ptr<Actor> actor, nanogui::RenderPass* target, std::function<void()> onSnapshotTaken);
+	void take_snapshot(std::shared_ptr<Actor> actor, std::function<void(std::vector<uint8_t>)> onSnapshotTaken);
 private:
 	void add_mesh(std::reference_wrapper<SkinnedMesh> mesh);
 	void append(std::reference_wrapper<SkinnedMesh> meshRef);
@@ -72,7 +72,6 @@ private:
 	
 	bool mSnapshotPending = false;
 	std::shared_ptr<Actor> mSnapshotActor;
-	nanogui::RenderPass* mSnapshotTarget = nullptr;
-	std::function<void()> mSnapshotCallback;
+	std::function<void(std::vector<uint8_t>)> mSnapshotCallback;
 
 };

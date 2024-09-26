@@ -161,7 +161,7 @@ void RenderPass::begin() {
 	m_command_buffer = (__bridge_retained void *)command_buffer;
 	m_command_encoder = (__bridge_retained void *)command_encoder;
 	m_active = true;
-	
+		
 	set_viewport(m_viewport_offset, m_viewport_size);
 	
 	// Re-apply depth test and cull mode
@@ -422,6 +422,78 @@ void RenderPass::set_cull_mode(CullMode cull_mode) {
 		[command_encoder setCullMode: cull_mode_mtl];
 	}
 }
+
+// Assuming RenderPass has access to m_targets and a method metal_command_queue()
+void RenderPass::blit_to(const Vector2i &src_offset,
+						 const Vector2i &src_size,
+						 nanogui::Texture *dst,
+						 const Vector2i &dst_offset) {
+	if (!dst) {
+		throw std::runtime_error("RenderPass::blit_to(): 'dst' nanogui::Texture is null.");
+	}
+	
+	// Attempt to cast dst to MetalTexture to access the Metal texture
+	id<MTLTexture> dst_texture = (__bridge id<MTLTexture>)dst->texture_handle();
+
+	if (!dst_texture) {
+		throw std::runtime_error("RenderPass::blit_to(): 'dst' MetalTexture has no Metal texture.");
+	}
+	
+	// Obtain the Metal command queue
+	id<MTLCommandQueue> command_queue = (__bridge id<MTLCommandQueue>) metal_command_queue();
+	if (!command_queue) {
+		throw std::runtime_error("RenderPass::blit_to(): Failed to obtain Metal command queue.");
+	}
+	
+	// Create a command buffer
+	id<MTLCommandBuffer> command_buffer = [command_queue commandBuffer];
+	if (!command_buffer) {
+		throw std::runtime_error("RenderPass::blit_to(): Failed to create Metal command buffer.");
+	}
+	
+	// Create a blit command encoder
+	id<MTLBlitCommandEncoder> command_encoder = [command_buffer blitCommandEncoder];
+	if (!command_encoder) {
+		throw std::runtime_error("RenderPass::blit_to(): Failed to create Metal blit command encoder.");
+	}
+	
+	// Iterate over the source and destination textures
+	Screen *src_texture_obj = dynamic_cast<Screen *>(m_targets[2]);
+	
+	id<MTLTexture> src_texture = (__bridge id<MTLTexture>)src_texture_obj->metal_texture();
+	id<MTLTexture> current_dst_texture = (__bridge id<MTLTexture>)dst->texture_handle();
+	
+	if (src_texture == nil || current_dst_texture == nil) {
+		// Skip if either source or destination texture is null
+		return;
+	}
+	
+	// Define source and destination regions
+	MTLOrigin source_origin = MTLOriginMake((NSUInteger)src_offset.x(),
+											(NSUInteger)src_offset.y(),
+											0);
+	MTLSize source_size = MTLSizeMake((NSUInteger)src_size.x(),
+									  (NSUInteger)src_size.y(),
+									  1);
+	MTLOrigin destination_origin = MTLOriginMake((NSUInteger)dst_offset.x(),
+												 (NSUInteger)dst_offset.y(),
+												 0);
+	
+	// Perform the copy operation
+	[command_encoder copyFromTexture:src_texture
+						 sourceSlice:0
+						 sourceLevel:0
+						sourceOrigin:source_origin
+						  sourceSize:source_size
+						   toTexture:current_dst_texture
+					destinationSlice:0
+					destinationLevel:0
+				   destinationOrigin:destination_origin];
+	// Finalize encoding and commit the command buffer
+	[command_encoder endEncoding];
+	[command_buffer commit];
+}
+
 
 void RenderPass::blit_to(const Vector2i &src_offset,
 						 const Vector2i &src_size,

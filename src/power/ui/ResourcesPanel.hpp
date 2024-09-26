@@ -22,6 +22,8 @@ public:
 	ResourcesPanel(nanogui::Widget &parent,
 				   const DirectoryNode& root_directory_node, IActorVisualManager& actorVisualManager,  MeshActorLoader& meshActorLoader, ShaderManager& shaderManager, BatchUnit& batchUnit);
 	
+	~ResourcesPanel();
+	
 	void refresh_file_view();
 	int get_icon_for_file(const DirectoryNode& node);
 	void handle_file_interaction(DirectoryNode& node);

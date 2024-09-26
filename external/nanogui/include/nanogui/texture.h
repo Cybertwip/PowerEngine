@@ -120,6 +120,13 @@ public:
             uint8_t flags = (uint8_t) TextureFlags::ShaderRead,
             bool mipmap_manual = false);
     
+	Texture(const unsigned char* data, int size,
+			InterpolationMode min_interpolation_mode,
+			InterpolationMode mag_interpolation_mode,
+			WrapMode wrap_mode,
+			int raw_width,
+			int raw_height);
+	
     /// Load an image from memory using stb-image
     Texture(const unsigned char* data, int size,
             InterpolationMode min_interpolation_mode = InterpolationMode::Bilinear,
