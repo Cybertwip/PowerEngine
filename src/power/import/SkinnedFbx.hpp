@@ -31,8 +31,6 @@ struct BoneHierarchyInfo {
 	std::string parent_bone_name;
 };
 
-
-
 class SkinnedFbx : public Fbx {
 public:
 	explicit SkinnedFbx(const std::string& path);

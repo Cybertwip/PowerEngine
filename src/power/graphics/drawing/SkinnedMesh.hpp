@@ -44,7 +44,6 @@ public:
 		return mColorComponent;
 	}
 	
-	
 	SkinnedAnimationComponent& get_skinned_component() const {
 		return mSkinnedComponent;
 	}
@@ -52,7 +51,6 @@ public:
 	const nanogui::Matrix4f& get_model_matrix() {
 		return mModelMatrix;
 	}
-	
 	
 private:
 	std::unique_ptr<SkinnedMeshData> mSkinnedMeshData;

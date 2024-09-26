@@ -25,6 +25,9 @@ public:
 
     std::vector<std::unique_ptr<MeshData>>& GetMeshData() { return mMeshes; }
 	
+	bool SaveTo(const std::string& filename) const;
+	bool LoadFrom(const std::string& filename);
+	
 protected:
 	virtual void ProcessBones(const std::shared_ptr<sfbx::Mesh>& mesh) {
 		

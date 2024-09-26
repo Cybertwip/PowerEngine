@@ -2,6 +2,7 @@
 
 #include "ai/DeepMotionSettingsWindow.hpp"
 #include "actors/IActorSelectedRegistry.hpp"
+#include "filesystem/MeshActorImporter.hpp"
 #include "graphics/drawing/SelfContainedMeshCanvas.hpp"
 
 #include "MeshActorLoader.hpp"
@@ -115,7 +116,8 @@ mSkinnedShader(std::make_unique<ShaderWrapper>(*shaderManager.get_shader("skinne
 mSelectedButton(nullptr),
 mSelectedNode(nullptr),
 mNormalButtonColor(nanogui::Color(0.7f, 0.7f, 0.7f, 1.0f)),
-mSelectedButtonColor(nanogui::Color(0.5f, 0.5f, 0.8f, 1.0f))
+mSelectedButtonColor(nanogui::Color(0.5f, 0.5f, 0.8f, 1.0f)),
+mMeshActorImporter(std::make_unique<MeshActorImporter>())
 {
 	mNormalButtonColor = theme()->m_button_gradient_bot_unfocused;
 
@@ -257,7 +259,7 @@ void ResourcesPanel::refresh_file_view() {
 				icon->set_icon(get_icon_for_file(*child));
 				icon->set_fixed_size(nanogui::Vector2i(128, 128));
 
-				if (file_icon == FA_PERSON_BOOTH) {
+				if (file_icon == FA_WALKING) {
 					// @TODO ImportManager
 					// Import and split Skeleton + animations in custom format.
 					// @TODO SnapshotManager
@@ -281,11 +283,11 @@ void ResourcesPanel::refresh_file_view() {
 
 				icon->set_callback([this, icon, child]() {
 
-					if (get_icon_for_file(*child) == FA_PERSON_BOOTH) {
+					if (get_icon_for_file(*child) == FA_WALKING) {
 						
 						auto drag_widget = screen()->drag_widget();
 						
-						auto content = new nanogui::Button(drag_widget, "", FA_PERSON_BOOTH);
+						auto content = new nanogui::Button(drag_widget, "", FA_WALKING);
 						
 						content->set_font_size(16);
 						content->set_background_color(mNormalButtonColor);
@@ -351,7 +353,9 @@ void ResourcesPanel::refresh_file_view() {
 
 int ResourcesPanel::get_icon_for_file(const DirectoryNode& node) {
 	if (node.IsDirectory) return FA_FOLDER;
-	if (node.FileName.find(".fbx") != std::string::npos) return FA_PERSON_BOOTH;
+	if (node.FileName.find(".psk") != std::string::npos) return FA_WALKING;
+	if (node.FileName.find(".pan") != std::string::npos) return FA_PERSON_BOOTH;
+	
 	// More conditions for other file types...
 	return FA_FILE; // Default icon
 }
@@ -432,17 +436,14 @@ bool ResourcesPanel::keyboard_event(int key, int scancode, int action, int modif
 void ResourcesPanel::import_assets() {
 	// Open a file dialog to select files to import
 	std::vector<std::string> files = nanogui::file_dialog(
-														  { {"*", "All Files"} }, false, true);
+														  { {"fbx", "All Files"} }, false, false);
 	
 	for (const auto& file : files) {
-		fs::path source(file);
-		fs::path destination = fs::path(mSelectedDirectoryPath) / source.filename();
 		
 		try {
 			// Copy the selected file to the current directory
-			fs::copy_file(source, destination, fs::copy_options::overwrite_existing);
-			std::cout << "Imported: " << source << " to " << destination << std::endl;
-		} catch (const fs::filesystem_error& e) {
+			mMeshActorImporter->process(file, mSelectedDirectoryPath);
+		} catch (const std::exception& e) {
 			std::cerr << "Error importing asset: " << e.what() << std::endl;
 		}
 	}

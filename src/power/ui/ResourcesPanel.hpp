@@ -7,6 +7,7 @@
 #include <nanogui/nanogui.h>
 
 class IActorVisualManager;
+class MeshActorImporter;
 class MeshActorLoader;
 class SelfContainedMeshCanvas;
 class ShaderManager;
@@ -60,4 +61,6 @@ private:
 	nanogui::Color mSelectedButtonColor;
 	
 	SelfContainedMeshCanvas* mOffscreenRenderer;
+	
+	std::unique_ptr<MeshActorImporter> mMeshActorImporter;
 };

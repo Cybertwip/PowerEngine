@@ -8,7 +8,7 @@ struct DirectoryNode
 {
 	static std::unique_ptr<DirectoryNode> create(const std::string& path);
 	
-	bool refresh(const std::set<std::string>& allowedExtensions = {".fbx", ".seq", ".pwr", ".cmp"});
+	bool refresh(const std::set<std::string>& allowedExtensions = {".psk", ".pan", ".psq", ".psn"});
 	
 	std::string FullPath;
 	std::string FileName;

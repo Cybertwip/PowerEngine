@@ -1,9 +1,10 @@
 #pragma once
 
+#include "filesystem/CompressedSerialization.hpp"
+
 #include <glm/glm.hpp>
 #include <array>
 #include <algorithm> // For std::any_of
-
 
 class MeshVertex {
 public:
@@ -27,6 +28,28 @@ public:
 	glm::vec2 get_tex_coords1() const;
 	glm::vec2 get_tex_coords2() const;
 	int get_texture_id() const;  // New method to get texture ID
+	
+	// Serialize method
+	void serialize(CompressedSerialization::Serializer& serializer) const {
+		serializer.write_vec3(mPosition);
+		serializer.write_vec3(mNormal);
+		serializer.write_vec4(mColor);
+		serializer.write_vec2(mTexCoords1);
+		serializer.write_vec2(mTexCoords2);
+		serializer.write_int32(mTextureId);
+	}
+	
+	// Deserialize method
+	bool deserialize(CompressedSerialization::Deserializer& deserializer) {
+		if (!deserializer.read_vec3(mPosition)) return false;
+		if (!deserializer.read_vec3(mNormal)) return false;
+		if (!deserializer.read_vec4(mColor)) return false;
+		if (!deserializer.read_vec2(mTexCoords1)) return false;
+		if (!deserializer.read_vec2(mTexCoords2)) return false;
+		if (!deserializer.read_int32(mTextureId)) return false;
+		return true;
+	}
+
 	
 private:
 	glm::vec3 mPosition;
@@ -136,6 +159,30 @@ public:
 		// Returns true if all weights are zero
 		return !std::any_of(mWeights.begin(), mWeights.end(), [](float w) { return w > 0.0f; });
 	}
+	
+	// Serialize method
+	void serialize(CompressedSerialization::Serializer& serializer) const {
+		mMeshVertex.serialize(serializer);
+		for (const int& boneId : mBoneIds) {
+			serializer.write_int32(boneId);
+		}
+		for (const float& weight : mWeights) {
+			serializer.write_float(weight);
+		}
+	}
+	
+	// Deserialize method
+	bool deserialize(CompressedSerialization::Deserializer& deserializer) {
+		if (!mMeshVertex.deserialize(deserializer)) return false;
+		for (int& boneId : mBoneIds) {
+			if (!deserializer.read_int32(boneId)) return false;
+		}
+		for (float& weight : mWeights) {
+			if (!deserializer.read_float(weight)) return false;
+		}
+		return true;
+	}
+
 	
 private:
 	MeshVertex mMeshVertex;

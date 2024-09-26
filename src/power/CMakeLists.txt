@@ -93,8 +93,13 @@ add_executable(PowerEngine
     ${CMAKE_CURRENT_LIST_DIR}/components/SkinnedMeshComponent.cpp
     ${CMAKE_CURRENT_LIST_DIR}/components/SkinnedMeshComponent.hpp
 
+    ${CMAKE_CURRENT_LIST_DIR}/filesystem/CompressedSerialization.hpp
+
     ${CMAKE_CURRENT_LIST_DIR}/filesystem/DirectoryNode.hpp
     ${CMAKE_CURRENT_LIST_DIR}/filesystem/DirectoryNode.cpp
+
+    ${CMAKE_CURRENT_LIST_DIR}/filesystem/MeshActorImporter.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/filesystem/MeshActorImporter.cpp
 
     ${CMAKE_CURRENT_LIST_DIR}/gizmo/GizmoManager.hpp
     ${CMAKE_CURRENT_LIST_DIR}/gizmo/GizmoManager.cpp

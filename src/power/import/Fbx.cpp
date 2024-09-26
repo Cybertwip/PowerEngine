@@ -1,5 +1,7 @@
 #include "import/Fbx.hpp"
 
+#include "filesystem/CompressedSerialization.hpp"
+
 #include <algorithm>
 #include <execution>
 #include <thread>
@@ -259,11 +261,16 @@ void Fbx::ProcessMesh(const std::shared_ptr<sfbx::Mesh>& mesh) {
 	}
 	
 	// Process materials
-	resultMesh->get_material_properties().reserve(materials.size());
+//	resultMesh->get_material_properties().reserve(materials.size());
+	
+	std::vector<std::shared_ptr<SerializableMaterialProperties>> serializableMaterials;
+	
+	serializableMaterials.reserve(materials.size());
+	
 	for (size_t i = 0; i < materials.size(); ++i) {
 		const auto& material = materials[i];
-		auto matPtr = std::make_shared<MaterialProperties>();
-		MaterialProperties& matData = *matPtr;
+		auto matPtr = std::make_shared<SerializableMaterialProperties>();
+		SerializableMaterialProperties& matData = *matPtr;
 		
 		// Combine the path and index into a single string
 		std::string combined = path + std::to_string(i);
@@ -287,13 +294,11 @@ void Fbx::ProcessMesh(const std::shared_ptr<sfbx::Mesh>& mesh) {
 		
 		// Load texture if available
 		if (auto fbxTexture = material->getTexture("DiffuseColor"); fbxTexture && !fbxTexture->getData().empty()) {
-			matData.mTextureDiffuse = std::make_unique<nanogui::Texture>(
-																		 fbxTexture->getData().data(), static_cast<int>(fbxTexture->getData().size())
-																		 );
+			matData.mTextureDiffuse = fbxTexture->getData();
 			matData.mHasDiffuseTexture = true;
 		}
 		
-		resultMesh->get_material_properties().push_back(matPtr);
+		serializableMaterials.push_back(matPtr);
 	}
 	
 	// Proceed to process bones separately
