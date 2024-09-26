@@ -20,7 +20,9 @@ struct MeshData;
 
 class Fbx {
 public:
-    explicit Fbx(const std::string& path);
+	Fbx() = default;
+	
+    Fbx(const std::string& path);
 	virtual ~Fbx() = default;
 	
 	void LoadModel();

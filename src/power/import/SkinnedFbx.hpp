@@ -33,11 +33,9 @@ struct BoneHierarchyInfo {
 
 class SkinnedFbx : public Fbx {
 public:
-	SkinnedFbx() {
-		
-	}
+	SkinnedFbx() = default;
 	
-	explicit SkinnedFbx(const std::string& path);
+	SkinnedFbx(const std::string& path);
 	
 	~SkinnedFbx() = default;
 	

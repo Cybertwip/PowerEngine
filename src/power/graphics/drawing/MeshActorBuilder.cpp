@@ -32,8 +32,13 @@ Actor& MeshActorBuilder::build(Actor& actor, const std::string& path, ShaderWrap
 	// Add MetadataComponent to the actor
 	actor.add_component<MetadataComponent>(actor.identifier(), std::filesystem::path(path).stem().string());
 	
-	// Check if the file is a classic .fbx file for serialization
-	if (path.find(".fbx") != std::string::npos) {
+	// Determine file type based on extension
+	std::filesystem::path filePath(path);
+	std::string extension = filePath.extension().string();
+	
+	if (extension == ".fbx") {
+		// Handle serialization path for classic .fbx files
+		
 		// Add ColorComponent
 		auto& colorComponent = actor.add_component<ColorComponent>(actor.get_component<MetadataComponent>());
 		
@@ -42,15 +47,11 @@ Actor& MeshActorBuilder::build(Actor& actor, const std::string& path, ShaderWrap
 		model->LoadModel(); // Assuming LoadModel handles the serialization
 		model->TryImportAnimations();
 		
-		// Ensure destination path exists
-		// Note: In your original serialization code, destination was passed separately.
-		// Here, you might need to adjust according to your actual usage.
-		
 		std::unique_ptr<Drawable> drawableComponent;
 		
 		if (model->GetSkeleton() != nullptr) {
 			// Skinned Mesh Handling
-			std::vector<std::unique_ptr<SkinnedMesh>> skinnedMeshComponentData;
+			std::vector<std::unique_ptr<SkinnedMesh>> skinnedMeshComponentData; // Corrected type to SkinnedMesh
 			
 			// Serialize Skeleton and Animations
 			auto pdo = std::make_unique<SkinnedAnimationComponent::SkinnedAnimationPdo>(std::move(model->GetSkeleton()));
@@ -103,8 +104,8 @@ Actor& MeshActorBuilder::build(Actor& actor, const std::string& path, ShaderWrap
 		actor.add_component<TransformComponent>();
 		actor.add_component<AnimationComponent>();
 		
-	} else if (path.find(".psk") != std::string::npos || path.find(".pma") != std::string::npos) {
-		// Deserialization Path
+	} else if (extension == ".psk" || extension == ".pma") {
+		// Handle deserialization path for .psk and .pma files
 		
 		// Add ColorComponent
 		auto& colorComponent = actor.add_component<ColorComponent>(actor.get_component<MetadataComponent>());
@@ -118,15 +119,12 @@ Actor& MeshActorBuilder::build(Actor& actor, const std::string& path, ShaderWrap
 			return actor;
 		}
 		
-		// Determine file extension
-		std::filesystem::path filePath(path);
-		std::string extension = filePath.extension().string();
-		
 		// Create a SkinnedFbx model for deserialization
 		auto model = std::make_unique<SkinnedFbx>();
 		
 		if (extension == ".psk") {
 			// Deserialize Skinned Mesh Data
+			
 			int32_t meshDataCount;
 			if (!deserializer.read_int32(meshDataCount)) {
 				std::cerr << "Failed to read mesh data count from: " << path << "\n";
@@ -137,7 +135,7 @@ Actor& MeshActorBuilder::build(Actor& actor, const std::string& path, ShaderWrap
 			std::vector<std::unique_ptr<SkinnedMeshData>> skinnedMeshData;
 			skinnedMeshData.reserve(meshDataCount);
 			for (int32_t i = 0; i < meshDataCount; ++i) {
-				// Deserialize number of material properties
+				// Deserialize number of material properties (if applicable)
 				int32_t materialCount;
 				if (!deserializer.read_int32(materialCount)) {
 					std::cerr << "Failed to read material count for mesh " << i << "\n";
@@ -165,47 +163,14 @@ Actor& MeshActorBuilder::build(Actor& actor, const std::string& path, ShaderWrap
 			}
 			model->SetSkeleton(std::move(skeleton));
 			
-			// Load associated animation files (.pan)
-			std::filesystem::path parentPath = filePath.parent_path();
-			std::string basename = filePath.stem().string();
-			
-			int animationIndex = 0;
-			while (true) {
-				// Construct animation file name with padded index
-				std::stringstream ss;
-				ss << basename << "_" << std::setw(4) << std::setfill('0') << animationIndex << ".pan";
-				std::string animFilename = ss.str();
-				std::filesystem::path animPath = parentPath / animFilename;
-				
-				if (!std::filesystem::exists(animPath)) {
-					// No more animation files found
-					break;
-				}
-				
-				// Deserialize animation data
-				CompressedSerialization::Deserializer animDeserializer;
-				if (!animDeserializer.load_from_file(animPath.string())) {
-					std::cerr << "Failed to load animation file: " << animPath << "\n";
-					return actor;
-				}
-				
-				auto animation = std::make_unique<Animation>();
-				if (!animation->deserialize(animDeserializer)) {
-					std::cerr << "Failed to deserialize AnimationData from: " << animPath << "\n";
-					return actor;
-				}
-				
-				model->AddAnimationData(std::move(animation));
-				++animationIndex;
-			}
-			
 			// Now, set up the Actor's components based on deserialized data
 			std::unique_ptr<Drawable> drawableComponent;
 			
 			if (model->GetSkeleton() != nullptr) {
 				// Skinned Mesh Handling
-				std::vector<std::unique_ptr<SkinnedMesh>> skinnedMeshComponentData;
+				std::vector<std::unique_ptr<SkinnedMesh>> skinnedMeshComponentData; // Corrected type to SkinnedMesh
 				
+				// Create SkinnedAnimationPdo with deserialized skeleton
 				auto pdo = std::make_unique<SkinnedAnimationComponent::SkinnedAnimationPdo>(std::move(model->GetSkeleton()));
 				
 				for (auto& animation : model->GetAnimationData()) {
@@ -218,7 +183,7 @@ Actor& MeshActorBuilder::build(Actor& actor, const std::string& path, ShaderWrap
 				// Add PlaybackComponent
 				actor.add_component<PlaybackComponent>();
 				
-				// Create SkinnedMeshComponents
+				// Create SkinnedMesh instances from deserialized data
 				for (auto& skinnedMeshData : model->GetSkinnedMeshData()) {
 					skinnedMeshComponentData.push_back(std::make_unique<SkinnedMesh>(
 																					 std::move(skinnedMeshData),
@@ -232,7 +197,7 @@ Actor& MeshActorBuilder::build(Actor& actor, const std::string& path, ShaderWrap
 				// Create SkinnedMeshComponent
 				drawableComponent = std::make_unique<SkinnedMeshComponent>(std::move(skinnedMeshComponentData), std::move(model));
 			} else {
-				// Non-Skinned Mesh Handling
+				// Non-Skinned Mesh Handling (unlikely for .psk but handled for completeness)
 				std::vector<std::unique_ptr<Mesh>> meshComponentData;
 				
 				for (auto& meshData : model->GetMeshData()) {
@@ -257,6 +222,7 @@ Actor& MeshActorBuilder::build(Actor& actor, const std::string& path, ShaderWrap
 			
 		} else if (extension == ".pma") {
 			// Deserialize Non-Skinned Mesh Data
+			
 			int32_t meshDataCount;
 			if (!deserializer.read_int32(meshDataCount)) {
 				std::cerr << "Failed to read mesh data count from: " << path << "\n";
