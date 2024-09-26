@@ -313,11 +313,6 @@ void SkinnedMeshBatch::remove(std::reference_wrapper<SkinnedMesh> meshRef) {
 	indexer.mVertexOffset -= numVertices;
 	indexer.mIndexOffset -= count;
 	
-	// 4. Re-upload updated vertex and index data to the GPU
-	// Note: Depending on your rendering backend, you might need to handle this differently
-	// For simplicity, we'll re-upload all data for this shader
-	upload_vertex_data(shader, identifier);
-	
 	// If there are no more meshes using this shader, clean up
 	if (mesh_vector.empty()) {
 		mMeshes.erase(&shader);
@@ -332,6 +327,12 @@ void SkinnedMeshBatch::remove(std::reference_wrapper<SkinnedMesh> meshRef) {
 		mBatchBoneWeights.erase(identifier);
 		mMeshStartIndices.erase(identifier);
 		mVertexIndexingMap.erase(identifier);
+	} else {
+		// 4. Re-upload updated vertex and index data to the GPU
+		// Note: Depending on your rendering backend, you might need to handle this differently
+		// For simplicity, we'll re-upload all data for this shader
+		upload_vertex_data(shader, identifier);
+
 	}
 }
 

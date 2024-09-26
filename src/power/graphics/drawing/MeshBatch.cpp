@@ -312,11 +312,6 @@ void MeshBatch::remove(std::reference_wrapper<Mesh> meshRef) {
 	indexer.mVertexOffset -= numVertices;
 	indexer.mIndexOffset -= count;
 	
-	// 4. Re-upload updated vertex and index data to the GPU
-	// Note: Depending on your rendering backend, you might need to handle this differently
-	// For simplicity, we'll re-upload all data for this shader
-	upload_vertex_data(shader, identifier);
-	
 	// If there are no more meshes using this shader, clean up
 	if (mesh_vector.empty()) {
 		mMeshes.erase(&shader);
@@ -329,6 +324,13 @@ void MeshBatch::remove(std::reference_wrapper<Mesh> meshRef) {
 		mBatchColors.erase(identifier);
 		mMeshStartIndices.erase(identifier);
 		mVertexIndexingMap.erase(identifier);
+	} else {
+		
+		// 4. Re-upload updated vertex and index data to the GPU
+		// Note: Depending on your rendering backend, you might need to handle this differently
+		// For simplicity, we'll re-upload all data for this shader
+		upload_vertex_data(shader, identifier);
+		
 	}
 }
 
