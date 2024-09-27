@@ -12,7 +12,7 @@
 #include <cstdlib>
 #endif
 
-class Urlopener {
+class UrlOpener {
 public:
 	/**
 	 * Opens the given URL in the default web browser.
