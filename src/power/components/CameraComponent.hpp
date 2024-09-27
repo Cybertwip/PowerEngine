@@ -21,6 +21,9 @@ public:
     }
 	
 	void look_at(Actor& actor);
+	
+	void set_aspect_ratio(float ratio);
+	
 private:
 	TransformComponent& mTransformComponent;
 	

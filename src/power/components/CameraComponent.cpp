@@ -38,3 +38,7 @@ void CameraComponent::look_at(Actor& actor)
 	cameraTransform.set_rotation(orientation);
 }
 
+void CameraComponent::set_aspect_ratio(float ratio) {
+	mAspect = ratio;
+	mProjection = nanogui::Matrix4f::perspective(mFov, mNear, mFar, mAspect);
+}

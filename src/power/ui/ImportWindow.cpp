@@ -17,6 +17,23 @@
 #include <nanogui/layout.h>
 #include <nanogui/screen.h>
 
+#include <sstream>
+
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+
+#include "stb_image_write.h"
+
+void write_to_png(const std::vector<uint8_t>& pixels, int width, int height, int channels, const char* filename) {
+	
+	// Use stb_image_write to write the PNG file
+	if (!stbi_write_png(filename, width, height, channels, pixels.data(), width * channels)) {
+		std::cerr << "Error writing PNG file" << std::endl;
+	} else {
+		std::cout << "PNG written successfully to " << filename << std::endl;
+	}
+}
+
+
 ImportWindow::ImportWindow(nanogui::Widget* parent, ResourcesPanel& resourcesPanel, nanogui::RenderPass& renderpass, ShaderManager& shaderManager) : nanogui::Window(parent->screen()), mResourcesPanel(resourcesPanel) {
 	
 	set_fixed_size(nanogui::Vector2i(400, 320));
@@ -43,6 +60,7 @@ ImportWindow::ImportWindow(nanogui::Widget* parent, ResourcesPanel& resourcesPan
 	
 	mPreviewCanvas->set_fixed_size(nanogui::Vector2i(256, 256));
 	
+	mPreviewCanvas->set_aspect_ratio(1.0f);
 	
 	mMeshActorImporter = std::make_unique<MeshActorImporter>();
 	
@@ -88,7 +106,7 @@ void ImportWindow::Preview(const std::string& path, const std::string& directory
 	
 	auto actor = std::make_shared<Actor>(mDummyRegistry);
 	
-	std::vector<char> compressedData;
+	std::stringstream compressedData;
 	
 	mCompressedMeshData->mMesh.mSerializer->get_compressed_data(compressedData);
 	
@@ -115,41 +133,44 @@ void ImportWindow::Preview(const std::string& path, const std::string& directory
 }
 
 void ImportWindow::ImportIntoProject() {
-	set_visible(false);
-	set_modal(false);
+	mPreviewCanvas->take_snapshot( [this](std::vector<uint8_t>& pixels){
+		
+		auto& serializer = mCompressedMeshData->mMesh.mSerializer;
+		
+		serializer->write_header_uint64(pixels.size());
+		
+		serializer->write_header_raw(pixels.data(), pixels.size());
 
-	mCompressedMeshData->persist(mAnimationsCheckbox->checked());
-	
-	mResourcesPanel.refresh_file_view();
-	
-//	auto actor = std::make_shared<Actor>(mDummyRegistry);
-	
-//	mMeshActorBuilder->build(*actor, child->FullPath, *mMeshShader, *mSkinnedShader);
-	
-//	mOffscreenRenderer->take_snapshot(actor, [this, icon](std::vector<uint8_t> pixels){
-//		write_to_png(pixels, 128, 128, 4, "output_image.png");
+		mCompressedMeshData->persist(mAnimationsCheckbox->checked());
+
+		mResourcesPanel.refresh_file_view();
+		
+		mPreviewCanvas->set_active_actor(nullptr);
 		
 //		return;
-		//
-		//		auto imageView = new nanogui::ImageView(icon);
-		//
-		//		imageView->set_size(icon->fixed_size());
-		//
-		//		imageView->set_fixed_size(icon->fixed_size());
-		//
-		//		imageView->set_image(new nanogui::Texture(
-		//												  pixels.data(),
-		//												  pixels.size(),
-		//												  nanogui::Texture::InterpolationMode::Bilinear,
-		//												  nanogui::Texture::InterpolationMode::Nearest,
-		//												  nanogui::Texture::WrapMode::Repeat,
-		//												  128,
-		//												  128));
-		
-		//icon->remove_child(mOffscreenRenderer);
-		//						mOffscreenRenderer->set_screen(screen()); // prevent crashing
-//	});
+//		
+//				auto imageView = new nanogui::ImageView(icon);
+//		
+//				imageView->set_size(icon->fixed_size());
+//		
+//				imageView->set_fixed_size(icon->fixed_size());
+//		
+//				imageView->set_image(new nanogui::Texture(
+//														  pixels.data(),
+//														  pixels.size(),
+//														  nanogui::Texture::InterpolationMode::Bilinear,
+//														  nanogui::Texture::InterpolationMode::Nearest,
+//														  nanogui::Texture::WrapMode::Repeat,
+//														  128,
+//														  128));
+//		
+//		icon->remove_child(mOffscreenRenderer);
+//								mOffscreenRenderer->set_screen(screen()); // prevent crashing
+	});
 	
-	//imageView->set_visible(true);
+	set_visible(false);
+	set_modal(false);
+	
+//	imageView->set_visible(true);
 
 }

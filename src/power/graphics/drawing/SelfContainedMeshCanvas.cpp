@@ -337,3 +337,7 @@ void SelfContainedMeshCanvas::upload_material_data(ShaderWrapper& shader, const 
 	}
 #endif
 	}
+
+void SelfContainedMeshCanvas::set_aspect_ratio(float ratio) {
+	mCamera.get_component<CameraComponent>().set_aspect_ratio(ratio);
+}

@@ -52,7 +52,6 @@ private:
 	entt::registry mDummyRegistry;
 
 	std::unique_ptr<MeshActorImporter> mMeshActorImporter;
-
 	
 	std::unique_ptr<MeshActorImporter::CompressedMeshActor> mCompressedMeshData;
 };

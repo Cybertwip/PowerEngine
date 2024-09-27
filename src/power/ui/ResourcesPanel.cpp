@@ -15,21 +15,7 @@
 #include <regex>
 #include <iostream>
 
-#define STB_IMAGE_WRITE_IMPLEMENTATION
-
-#include "stb_image_write.h"
-
 namespace fs = std::filesystem;
-
-void write_to_png(const std::vector<uint8_t>& pixels, int width, int height, int channels, const char* filename) {
-
-	// Use stb_image_write to write the PNG file
-	if (!stbi_write_png(filename, width, height, channels, pixels.data(), width * channels)) {
-		std::cerr << "Error writing PNG file" << std::endl;
-	} else {
-		std::cout << "PNG written successfully to " << filename << std::endl;
-	}
-}
 
 namespace {
 bool DeleteFilePath(const std::string& path) {
@@ -132,9 +118,9 @@ mNormalButtonColor(nanogui::Color(0.7f, 0.7f, 0.7f, 1.0f)),
 mSelectedButtonColor(nanogui::Color(0.5f, 0.5f, 0.8f, 1.0f))
 {
 	mNormalButtonColor = theme()->m_button_gradient_bot_unfocused;
-
+	
 	mSelectedButtonColor = mNormalButtonColor + nanogui::Color(0.25f, 0.25f, 0.32f, 1.0f);
-
+	
 	// Set the layout
 	set_layout(new nanogui::BoxLayout(nanogui::Orientation::Vertical, nanogui::Alignment::Fill, 0, 10));
 	
@@ -147,37 +133,37 @@ mSelectedButtonColor(nanogui::Color(0.5f, 0.5f, 0.8f, 1.0f))
 	deepmotion_settings->set_visible(false);
 	deepmotion_settings->set_modal(false);
 	
-	mImportWindow = new ImportWindow(parent.window(), shaderManager.render_pass(), shaderManager);
+	mImportWindow = new ImportWindow(parent.window(), *this, shaderManager.render_pass(), shaderManager);
 	
 	mImportWindow->set_visible(false);
 	mImportWindow->set_modal(false);
-
+	
 	// Add the Add Asset button with a "+" icon
 	mAddButton = new nanogui::PopupButton(mToolbar, "Add");
 	mAddButton->set_icon(FA_PLUS);
 	mAddButton->set_chevron_icon(0);
 	mAddButton->set_tooltip("Add Asset");
-
+	
 	auto sceneButton = new nanogui::Button(mAddButton->popup(), "Scene");
 	
 	sceneButton->set_icon(FA_HAND_PAPER);
-
+	
 	auto animationButton = new nanogui::Button(mAddButton->popup(), "Animation");
 	
 	animationButton->set_icon(FA_RUNNING);
 	
 	animationButton->set_callback([deepmotion_settings, this](){
-//		if (deepmotion_settings->session_cookie().empty()) {
-			deepmotion_settings->toggle_visibility();
-			mAddButton->set_pushed(false);
-			mAddButton->popup()->set_visible(false);
-//		}
+		//		if (deepmotion_settings->session_cookie().empty()) {
+		deepmotion_settings->toggle_visibility();
+		mAddButton->set_pushed(false);
+		mAddButton->popup()->set_visible(false);
+		//		}
 	});
-
+	
 	mAddButton->popup()->perform_layout(screen()->nvg_context());
-
+	
 	deepmotion_settings->perform_layout(screen()->nvg_context());
-
+	
 	// Add the Import Assets button with a "+" icon
 	mImportButton = new nanogui::Button(mToolbar, "Import");
 	mImportButton->set_icon(FA_UPLOAD);
@@ -222,7 +208,7 @@ mSelectedButtonColor(nanogui::Color(0.5f, 0.5f, 0.8f, 1.0f))
 	mSelectedDirectoryPath = fs::current_path().string();
 	mFilterText = "";
 	
-
+	
 	refresh_file_view();
 	
 }
@@ -276,46 +262,45 @@ void ResourcesPanel::refresh_file_view() {
 				
 				icon->set_icon(get_icon_for_file(*child));
 				icon->set_fixed_size(nanogui::Vector2i(128, 128));
-
+				
 				if (file_icon == FA_WALKING) {
-					
 					// deserialize thumbnail here
-//
-//					mOffscreenRenderer = new SelfContainedMeshCanvas(icon);
-//					
-//					mOffscreenRenderer->set_fixed_size(icon->fixed_size());
-//
-//					auto actor = std::make_shared<Actor>(mDummyRegistry);
-//					
-//					mMeshActorBuilder->build(*actor, child->FullPath, *mMeshShader, *mSkinnedShader);
-//					
-//					mOffscreenRenderer->take_snapshot(actor, [this, icon](std::vector<uint8_t> pixels){
-//						write_to_png(pixels, 128, 128, 4, "output_image.png");
-//						
-//						return;
-//
-//						auto imageView = new nanogui::ImageView(icon);
-//						
-//						imageView->set_size(icon->fixed_size());
-//						
-//						imageView->set_fixed_size(icon->fixed_size());
-//						
-//						imageView->set_image(new nanogui::Texture(
-//pixels.data(),
-//pixels.size(),
-//nanogui::Texture::InterpolationMode::Bilinear,
-//nanogui::Texture::InterpolationMode::Nearest,
-//nanogui::Texture::WrapMode::Repeat,
-//128,
-//128));
-//
-//						//icon->remove_child(mOffscreenRenderer);
-////						mOffscreenRenderer->set_screen(screen()); // prevent crashing
-//					});
-//					
-//					//imageView->set_visible(true);
+					CompressedSerialization::Deserializer deserializer;
+					
+					deserializer.load_from_file(child->FullPath);
+					
+					std::vector<uint8_t> pixels;
+					pixels.resize(512 * 512 * 4);
+					
+					uint64_t thumbnail_size = 0;
+					
+					deserializer.read_header_uint64(thumbnail_size);
+					
+					if (thumbnail_size != 0) {
+						deserializer.read_header_raw(pixels.data(), thumbnail_size);
+						
+						auto imageView = new nanogui::ImageView(icon);
+						imageView->set_size(icon->fixed_size());
+						
+						imageView->set_fixed_size(icon->fixed_size());
+						
+						imageView->set_image(new nanogui::Texture(
+																  pixels.data(),
+																  pixels.size(),
+																  nanogui::Texture::InterpolationMode::Bilinear,
+																  nanogui::Texture::InterpolationMode::Nearest,
+																  nanogui::Texture::WrapMode::Repeat,
+																  512,
+																  512));
+						
+						imageView->image()->resize(nanogui::Vector2i(256, 256));
+						
+						
+						imageView->set_visible(true);
+					}
+					
 				}
-
+				
 				
 				icon->set_background_color(mNormalButtonColor);
 				
@@ -324,7 +309,7 @@ void ResourcesPanel::refresh_file_view() {
 				
 				mFileButtons.push_back(icon);
 				
-
+				
 				icon->set_callback([this, icon, child]() {
 					int file_icon = get_icon_for_file(*child);
 					
@@ -349,7 +334,7 @@ void ResourcesPanel::refresh_file_view() {
 						screen()->set_drag_widget(drag_widget, [this, content, drag_widget, child](){
 							
 							auto path = child->FullPath;
-
+							
 							// Remove drag widget
 							drag_widget->remove_child(content);
 							

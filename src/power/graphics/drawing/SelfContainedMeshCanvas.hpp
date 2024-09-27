@@ -35,6 +35,8 @@ public:
 	void set_update(bool update) {
 		mUpdate = update;
 	}
+	
+	void set_aspect_ratio(float ratio);
 
 private:
 	void add_mesh(std::reference_wrapper<SkinnedMesh> mesh);
