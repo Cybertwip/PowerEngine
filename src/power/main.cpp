@@ -7,12 +7,7 @@
 #include "Application.hpp"
 
 int main(int /* argc */, char ** /* argv */) {
-#if defined(NANOGUI_USE_METAL)
-	stbi_set_flip_vertically_on_load(0);
-#else
 	stbi_set_flip_vertically_on_load(1);
-#endif
-
 	
 	std::cout << std::filesystem::current_path().string() << std::endl;
 	nanogui::init();

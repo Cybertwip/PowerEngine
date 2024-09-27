@@ -638,6 +638,7 @@ public:
 			}
 			
 			// Combine all decompressed chunks into a single buffer
+			decompressedData.clear();
 			decompressedData.reserve(std::accumulate(uncompressedSizes.begin(), uncompressedSizes.end(), static_cast<uLong>(0)));
 			for (unsigned int i = 0; i < numThreads; ++i) {
 				decompressedData.insert(decompressedData.end(),
