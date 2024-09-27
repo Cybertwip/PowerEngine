@@ -31,14 +31,31 @@ ImageView::ImageView(Widget *parent) : Canvas(parent, 1, true, true) {
         Shader::BlendMode::AlphaBlend
     );
 
-    const float positions[] = {
-        0.f, 0.f, 1.f, 0.f, 0.f, 1.f,
-        1.f, 0.f, 1.f, 1.f, 0.f, 1.f
-    };
+	const float positions[] = {
+		// Vertex 0
+		0.f, 0.f,
+		// Vertex 1
+		1.f, 0.f,
+		// Vertex 2
+		1.f, 1.f,
+		// Vertex 3
+		0.f, 1.f
+	};
+
+	const uint32_t indices[] = {
+		// First Triangle
+		0, 1, 2,
+		// Second Triangle
+		0, 2, 3
+	};
 
     m_image_shader->set_buffer("position", VariableType::Float32, { 6, 2 },
                                positions, -1, true);
-    //m_render_pass->set_cull_mode(RenderPass::CullMode::Disabled);
+	// Set the index buffer
+	m_image_shader->set_buffer("indices", VariableType::UInt32, {6},
+							   indices,
+							   -1,
+							   true);
 
     m_image_border_color = m_theme->m_border_dark;
     m_draw_image_border = true;
@@ -216,7 +233,7 @@ void ImageView::draw_contents() {
                                  m_image->size().y() * scale / 20.f, 1.f));
 
     Matrix4f matrix_image =
-        Matrix4f::ortho(0.f, viewport_size.x(), viewport_size.y(), 0.f, -1.f, 1.f) *
+	Matrix4f::ortho(0.f, viewport_size.x(), 0.f, viewport_size.y(), -1.f, 1.f) *
         Matrix4f::translate(Vector3f(m_offset.x(), (int) m_offset.y(), 0.f)) *
         Matrix4f::scale(Vector3f(m_image->size().x() * scale,
                                  m_image->size().y() * scale, 1.f));
@@ -226,7 +243,7 @@ void ImageView::draw_contents() {
     m_image_shader->set_uniform("background_color",  m_image_background_color);
 
     m_image_shader->begin();
-    m_image_shader->draw_array(Shader::PrimitiveType::Triangle, 0, 6, false);
+    m_image_shader->draw_array(Shader::PrimitiveType::Triangle, 0, 6, true);
     m_image_shader->end();
 }
 
