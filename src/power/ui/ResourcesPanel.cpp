@@ -233,6 +233,10 @@ ResourcesPanel::~ResourcesPanel() {
 }
 
 void ResourcesPanel::refresh_file_view() {
+	// Clear the buttons vector
+	mFileButtons.clear();
+	mSelectedButton = nullptr;
+
 	mRootDirectoryNode.refresh();
 	
 	// Clear existing items
@@ -245,9 +249,6 @@ void ResourcesPanel::refresh_file_view() {
 		}
 		mFileView->remove_child(file_view_child);
 	}
-	
-	// Clear the buttons vector
-	mFileButtons.clear();
 	
 	
 	if (!mSelectedDirectoryPath.empty()) {

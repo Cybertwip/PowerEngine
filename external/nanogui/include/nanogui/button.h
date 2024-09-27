@@ -64,7 +64,12 @@ public:
     /// Returns the background color of this Button.
     const Color &background_color() const { return m_background_color; }
     /// Sets the background color of this Button.
-    void set_background_color(const Color &background_color) { m_background_color = background_color; }
+	void set_background_color(const Color &background_color) {
+		m_background_color.r() = background_color.r();
+		m_background_color.g() = background_color.g();
+		m_background_color.b() = background_color.b();
+		m_background_color.a() = background_color.a();
+	}
 
     /// Returns the text color of the caption of this Button.
     const Color &text_color() const { return m_text_color; }
