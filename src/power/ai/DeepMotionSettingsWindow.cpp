@@ -158,7 +158,7 @@ data_saved_(false)
 	status_panel->set_layout(new nanogui::GridLayout(
 													 nanogui::Orientation::Horizontal, // Layout orientation
 													 2,                               // Number of columns
-													 nanogui::Alignment::Minimum,      // Alignment within cells
+													 nanogui::Alignment::Maximum,      // Alignment within cells
 													 0,                              // Column padding
 													 0                               // Row padding
 													 ));
