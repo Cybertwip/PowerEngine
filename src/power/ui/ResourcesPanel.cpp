@@ -142,7 +142,7 @@ mSelectedButtonColor(nanogui::Color(0.5f, 0.5f, 0.8f, 1.0f))
 	mImportWindow->set_visible(false);
 	mImportWindow->set_modal(false);
 	
-	mMeshPicker = new MeshPicker(parent.window(), mRootDirectoryNode, [](){
+	mMeshPicker = new MeshPicker(parent.window(), mRootDirectoryNode, [this](const std::string& modelPath){
 		
 	});
 	
