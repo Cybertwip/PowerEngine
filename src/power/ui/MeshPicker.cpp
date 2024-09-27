@@ -97,7 +97,7 @@ void MeshPicker::refresh_file_list() {
 		});
 	}
 	
-	perform_layout(screen->nvg_context());
+	perform_layout(screen()->nvg_context());
 }
 
 void MeshPicker::handle_double_click(const std::string& model_path) {
