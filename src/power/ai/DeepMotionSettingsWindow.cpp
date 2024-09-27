@@ -2,6 +2,8 @@
 
 #include "DeepMotionSettingsWindow.hpp"
 
+#include "filesystem/UrlOpener.hpp"
+
 #include <nanogui/layout.h>
 #include <nanogui/theme.h>
 
@@ -97,22 +99,6 @@ data_saved_(false)
 	auto spacer = new nanogui::Widget(top_panel);
 	spacer->set_fixed_size(nanogui::Vector2i(360, 0));
 	
-	
-	auto imageView = new nanogui::ImageView(this);
-	imageView->set_size(nanogui::Vector2i(256, 256));
-	
-	imageView->set_fixed_size(imageView->size());
-	
-	imageView->set_image(new nanogui::Texture(
-											  "internal/ui/poweredby.png",
-											  nanogui::Texture::InterpolationMode::Bilinear,
-											  nanogui::Texture::InterpolationMode::Nearest,
-											  nanogui::Texture::WrapMode::Repeat));
-	
-	imageView->image()->resize(nanogui::Vector2i(256, 256));
-	
-	imageView->set_visible(true);
-	
 	// Spacer for visual separation
 	new nanogui::Label(this, "", "sans", 20);
 	
@@ -162,18 +148,49 @@ data_saved_(false)
 	
 	// Sync Button
 	auto sync_button = new nanogui::Button(this, "Sync");
-	sync_button->set_fixed_size(nanogui::Vector2i(100, 30));
+	sync_button->set_fixed_size(nanogui::Vector2i(96, 96));
 	sync_button->set_callback([this]() {
 		this->on_sync();
 	});
+	
+	
+	auto status_panel = new nanogui::Widget(this);
+	status_panel->set_layout(new nanogui::GridLayout(
+													 nanogui::Orientation::Horizontal, // Layout orientation
+													 2,                               // Number of columns
+													 nanogui::Alignment::Minimum,      // Alignment within cells
+													 0,                              // Column padding
+													 0                               // Row padding
+													 ));
 	
 	// Spacer
 	new nanogui::Label(this, "", "sans", 10);
 	
 	// Status Label
-	status_label_ = new nanogui::Label(this, "", "sans");
+	status_label_ = new nanogui::Label(status_panel, "", "sans");
 	status_label_->set_fixed_size(nanogui::Vector2i(350, 20));
 	status_label_->set_color(nanogui::Color(255, 255, 255, 255)); // White color
+	
+	
+	auto deep_motion_button = new nanogui::Button(status_panel, "");
+	deep_motion_button->set_fixed_size(nanogui::Vector2i(48, 48));
+	deep_motion_button->set_callback([this]() {
+		UrlOpener::openUrl("https://deepmotion.com/");
+	});
+	
+	auto imageView = new nanogui::ImageView(deep_motion_button);
+	imageView->set_size(nanogui::Vector2i(48, 48));
+	
+	imageView->set_fixed_size(imageView->size());
+	
+	imageView->set_image(new nanogui::Texture("internal/ui/poweredby.png",
+											  nanogui::Texture::InterpolationMode::Bilinear,
+											  nanogui::Texture::InterpolationMode::Nearest,
+											  nanogui::Texture::WrapMode::Repeat));
+	
+	imageView->set_visible(true);
+	
+	imageView->image()->resize(nanogui::Vector2i(96, 96));
 	
 	//	// Initially hide the window
 	//	set_visible(false);
