@@ -309,7 +309,6 @@ void ResourcesPanel::refresh_file_view() {
 				
 				mFileButtons.push_back(icon);
 				
-				
 				icon->set_callback([this, icon, child]() {
 					int file_icon = get_icon_for_file(*child);
 					

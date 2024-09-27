@@ -161,6 +161,8 @@ add_executable(PowerEngine
     ${CMAKE_CURRENT_LIST_DIR}/ui/HierarchyPanel.cpp
     ${CMAKE_CURRENT_LIST_DIR}/ui/ImportWindow.hpp
     ${CMAKE_CURRENT_LIST_DIR}/ui/ImportWindow.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/ui/MeshPicker.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/ui/MeshPicker.cpp
     ${CMAKE_CURRENT_LIST_DIR}/ui/Panel.hpp
     ${CMAKE_CURRENT_LIST_DIR}/ui/Panel.cpp
     ${CMAKE_CURRENT_LIST_DIR}/ui/ResourcesPanel.hpp
