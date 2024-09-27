@@ -29,6 +29,7 @@
 #include <stdio.h>
 #include <string.h>
 
+
 #import <simd/simd.h>
 #import <Metal/Metal.h>
 #include <TargetConditionals.h>
@@ -52,6 +53,10 @@
 #else
 #  define MNVG_INVALID_TARGET
 #endif
+
+
+// Alternatively, for 64-bit systems
+const long MAX_VERTS_ALLOWED = LONG_MAX;
 
 typedef enum MNVGvertexInputIndex {
   MNVG_VERTEX_INPUT_INDEX_VERTICES = 0,
@@ -622,26 +627,41 @@ void mnvgReadPixels(NVGcontext* ctx, int image, int x, int y, int width,
 }
 
 - (int)allocFragUniforms:(int)n {
-  int ret = 0;
-  if (_buffers->nuniforms + n > _buffers->cuniforms) {
-    int cuniforms = mtlnvg__maxi(_buffers->nuniforms + n, 128) \
-                    + _buffers->cuniforms / 2;
-    id<MTLBuffer> buffer = [_metalLayer.device
-        newBufferWithLength:(_fragSize * cuniforms)
-        options:kMetalBufferOptions];
-    unsigned char* uniforms = [buffer contents];
-    if (_buffers->uniformBuffer != nil) {
-      memcpy(uniforms, _buffers->uniforms,
-             _fragSize * _buffers->nuniforms);
-    }
-    _buffers->uniformBuffer = buffer;
-    _buffers->uniforms = uniforms;
-    _buffers->cuniforms = cuniforms;
-  }
-  ret = _buffers->nuniforms * _fragSize;
-  _buffers->nuniforms += n;
-  return ret;
+	int ret = 0;
+	if (_buffers->nuniforms + n > _buffers->cuniforms) {
+		int cuniforms = mtlnvg__maxi(_buffers->nuniforms + n, 128) + _buffers->cuniforms / 2;
+		
+		// Prevent excessive allocation
+		int max_allowed_uniforms = 100000; // Example limit
+		if (cuniforms > max_allowed_uniforms) {
+			NSLog(@"Requested uniforms exceed maximum allowed size.");
+			return -1;
+		}
+		
+		id<MTLBuffer> buffer = [_metalLayer.device newBufferWithLength:(_fragSize * cuniforms) options:kMetalBufferOptions];
+		if (buffer == nil) {
+			NSLog(@"Failed to allocate MTLBuffer for uniforms.");
+			return -1;
+		}
+		
+		unsigned char* uniforms = [buffer contents];
+		if (uniforms == NULL) {
+			NSLog(@"Failed to get contents of uniforms buffer.");
+			return -1;
+		}
+		
+		if (_buffers->uniformBuffer != nil) {
+			memcpy(uniforms, _buffers->uniforms, _fragSize * _buffers->nuniforms);
+		}
+		_buffers->uniformBuffer = buffer;
+		_buffers->uniforms = uniforms;
+		_buffers->cuniforms = cuniforms;
+	}
+	ret = _buffers->nuniforms * _fragSize;
+	_buffers->nuniforms += n;
+	return ret;
 }
+
 
 - (int)allocIndexes:(int)n {
   int ret = 0;
@@ -682,24 +702,38 @@ void mnvgReadPixels(NVGcontext* ctx, int image, int x, int y, int width,
 }
 
 - (int)allocVerts:(int)n {
-  int ret = 0;
-  if (_buffers->nverts + n > _buffers->cverts) {
-    int cverts = mtlnvg__maxi(_buffers->nverts + n, 4096)
-                 + _buffers->cverts / 2;
-    id<MTLBuffer> buffer = [_metalLayer.device
-        newBufferWithLength:(sizeof(NVGvertex) * cverts)
-        options:kMetalBufferOptions];
-    NVGvertex* verts = [buffer contents];
-    if (_buffers->vertBuffer != nil) {
-      memcpy(verts, _buffers->verts, sizeof(NVGvertex) * _buffers->nverts);
-    }
-    _buffers->vertBuffer = buffer;
-    _buffers->verts = verts;
-    _buffers->cverts = cverts;
-  }
-  ret = _buffers->nverts;
-  _buffers->nverts += n;
-  return ret;
+	int ret = 0;
+	if (_buffers->nverts + n > _buffers->cverts) {
+		int cverts = mtlnvg__maxi(_buffers->nverts + n, 4096) + _buffers->cverts / 2;
+		
+		// Prevent excessive allocation
+		if (cverts > MAX_VERTS_ALLOWED) {
+			NSLog(@"Requested verts exceed maximum allowed size: %d", cverts);
+			return -1;
+		}
+		
+		id<MTLBuffer> buffer = [_metalLayer.device newBufferWithLength:(sizeof(NVGvertex) * cverts) options:kMetalBufferOptions];
+		if (buffer == nil) {
+			NSLog(@"Failed to allocate MTLBuffer for verts.");
+			return -1;
+		}
+		
+		NVGvertex* verts = [buffer contents];
+		if (verts == NULL) {
+			NSLog(@"Failed to get contents of verts buffer.");
+			return -1;
+		}
+		
+		if (_buffers->vertBuffer != nil) {
+			memcpy(verts, _buffers->verts, sizeof(NVGvertex) * _buffers->nverts);
+		}
+		_buffers->vertBuffer = buffer;
+		_buffers->verts = verts;
+		_buffers->cverts = cverts;
+	}
+	ret = _buffers->nverts;
+	_buffers->nverts += n;
+	return ret;
 }
 
 - (MNVGblend)blendCompositeOperation:(NVGcompositeOperationState)op {
@@ -1272,95 +1306,113 @@ void mnvgReadPixels(NVGcontext* ctx, int image, int x, int y, int width,
 }
 
 - (void)renderFillWithPaint:(NVGpaint*)paint
-         compositeOperation:(NVGcompositeOperationState)compositeOperation
-                    scissor:(NVGscissor*)scissor
-                     fringe:(float)fringe
-                     bounds:(const float*)bounds
-                      paths:(const NVGpath*)paths
-                     npaths:(int)npaths {
-  MNVGcall* call = [self allocCall];
-  NVGvertex* quad;
-
-  if (call == NULL) return;
-
-  call->type = MNVG_FILL;
-  call->triangleCount = 4;
-  call->image = paint->image;
-  call->blendFunc = [self blendCompositeOperation:compositeOperation];
-
-  if (npaths == 1 && paths[0].convex) {
-    call->type = MNVG_CONVEXFILL;
-    call->triangleCount = 0;  // Bounding box fill quad not needed for convex fill
-  }
-
-  // Allocate vertices for all the paths.
-  int indexCount, strokeCount = 0;
-  int maxverts = mtlnvg__maxVertCount(paths, npaths, &indexCount, &strokeCount)
-                 + call->triangleCount;
-  int vertOffset = [self allocVerts:maxverts];
-  if (vertOffset == -1) goto error;
-
-  int indexOffset = [self allocIndexes:indexCount];
-  if (indexOffset == -1) goto error;
-  call->indexOffset = indexOffset;
-  call->indexCount = indexCount;
-  uint32_t* index = &_buffers->indexes[indexOffset];
-
-  int strokeVertOffset = vertOffset + (maxverts - strokeCount);
-  call->strokeOffset = strokeVertOffset + 1;
-  call->strokeCount = strokeCount - 2;
-  NVGvertex* strokeVert = _buffers->verts + strokeVertOffset;
-
-  NVGpath* path = (NVGpath*)&paths[0];
-  for (int i = npaths; i--; ++path) {
-    if (path->nfill > 2) {
-      memcpy(&_buffers->verts[vertOffset], path->fill,
-             sizeof(NVGvertex) * path->nfill);
-
-      int hubVertOffset = vertOffset++;
-      for (int j = 2; j < path->nfill; j++) {
-        *index++ = hubVertOffset;
-        *index++ = vertOffset++;
-        *index++ = vertOffset;
-      }
-      vertOffset++;
-    }
-    if (path->nstroke > 0) {
-      memcpy(strokeVert, path->stroke, sizeof(NVGvertex));
-      ++strokeVert;
-      memcpy(strokeVert, path->stroke, sizeof(NVGvertex) * path->nstroke);
-      strokeVert += path->nstroke;
-      memcpy(strokeVert, path->stroke + path->nstroke - 1, sizeof(NVGvertex));
-      ++strokeVert;
-    }
-  }
-
-  // Setup uniforms for draw calls
-  if (call->type == MNVG_FILL) {
-    // Quad
-    call->triangleOffset = vertOffset;
-    quad = &_buffers->verts[call->triangleOffset];
-    mtlnvg__vset(&quad[0], bounds[2], bounds[3], 0.5f, 1.0f);
-    mtlnvg__vset(&quad[1], bounds[2], bounds[1], 0.5f, 1.0f);
-    mtlnvg__vset(&quad[2], bounds[0], bounds[3], 0.5f, 1.0f);
-    mtlnvg__vset(&quad[3], bounds[0], bounds[1], 0.5f, 1.0f);
-  }
-
-  // Fill shader
-  call->uniformOffset = [self allocFragUniforms:1];
-  if (call->uniformOffset == -1) goto error;
-  [self convertPaintForFrag:[self fragUniformAtIndex:call->uniformOffset]
-                      paint:paint
-                    scissor:scissor
-                      width:fringe
-                     fringe:fringe
-                  strokeThr:-1.0f];
-  return;
-
+		 compositeOperation:(NVGcompositeOperationState)compositeOperation
+					scissor:(NVGscissor*)scissor
+					 fringe:(float)fringe
+					 bounds:(const float*)bounds
+					  paths:(const NVGpath*)paths
+					 npaths:(int)npaths {
+	MNVGcall* call = [self allocCall];
+	NVGvertex* quad;
+	
+	if (call == NULL) {
+		NSLog(@"Failed to allocate MNVGcall.");
+		return;
+	}
+	
+	call->type = MNVG_FILL;
+	call->triangleCount = 4;
+	call->image = paint->image;
+	call->blendFunc = [self blendCompositeOperation:compositeOperation];
+	
+	if (npaths == 1 && paths[0].convex) {
+		call->type = MNVG_CONVEXFILL;
+		call->triangleCount = 0;  // Bounding box fill quad not needed for convex fill
+	}
+	
+	// Allocate vertices for all the paths.
+	int indexCount, strokeCount = 0;
+	int maxverts = mtlnvg__maxVertCount(paths, npaths, &indexCount, &strokeCount)
+	+ call->triangleCount;
+	
+	// Prevent excessive allocation
+	if (maxverts < 0 || maxverts > MAX_VERTS_ALLOWED) {
+		NSLog(@"Requested number of vertices exceeds allowed limit.");
+		goto error;
+	}
+	
+	int vertOffset = [self allocVerts:maxverts];
+	if (vertOffset == -1) {
+		NSLog(@"Failed to allocate vertices.");
+		goto error;
+	}
+	
+	int indexOffset = [self allocIndexes:indexCount];
+	if (indexOffset == -1) {
+		NSLog(@"Failed to allocate indexes.");
+		goto error;
+	}
+	call->indexOffset = indexOffset;
+	call->indexCount = indexCount;
+	uint32_t* index = &_buffers->indexes[indexOffset];
+	
+	int strokeVertOffset = vertOffset + (maxverts - strokeCount);
+	call->strokeOffset = strokeVertOffset + 1;
+	call->strokeCount = strokeCount - 2;
+	NVGvertex* strokeVert = _buffers->verts + strokeVertOffset;
+	
+	NVGpath* path = (NVGpath*)&paths[0];
+	for (int i = npaths; i--; ++path) {
+		if (path->nfill > 2) {
+			memcpy(&_buffers->verts[vertOffset], path->fill,
+				   sizeof(NVGvertex) * path->nfill);
+			
+			int hubVertOffset = vertOffset++;
+			for (int j = 2; j < path->nfill; j++) {
+				*index++ = hubVertOffset;
+				*index++ = vertOffset++;
+				*index++ = vertOffset;
+			}
+			vertOffset++;
+		}
+		if (path->nstroke > 0) {
+			memcpy(strokeVert, path->stroke, sizeof(NVGvertex));
+			++strokeVert;
+			memcpy(strokeVert, path->stroke, sizeof(NVGvertex) * path->nstroke);
+			strokeVert += path->nstroke;
+			memcpy(strokeVert, path->stroke + path->nstroke - 1, sizeof(NVGvertex));
+			++strokeVert;
+		}
+	}
+	
+	// Setup uniforms for draw calls
+	if (call->type == MNVG_FILL) {
+		// Quad
+		call->triangleOffset = vertOffset;
+		quad = &_buffers->verts[call->triangleOffset];
+		mtlnvg__vset(&quad[0], bounds[2], bounds[3], 0.5f, 1.0f);
+		mtlnvg__vset(&quad[1], bounds[2], bounds[1], 0.5f, 1.0f);
+		mtlnvg__vset(&quad[2], bounds[0], bounds[3], 0.5f, 1.0f);
+		mtlnvg__vset(&quad[3], bounds[0], bounds[1], 0.5f, 1.0f);
+	}
+	
+	// Fill shader
+	call->uniformOffset = [self allocFragUniforms:1];
+	if (call->uniformOffset == -1) {
+		NSLog(@"Failed to allocate frag uniforms.");
+		goto error;
+	}
+	[self convertPaintForFrag:[self fragUniformAtIndex:call->uniformOffset]
+						paint:paint
+					  scissor:scissor
+						width:fringe
+					   fringe:fringe
+					strokeThr:-1.0f];
+	return;
+	
 error:
-  // We get here if call alloc was ok, but something else is not.
-  // Roll back the last call to prevent drawing it.
-  if (_buffers->ncalls > 0) _buffers->ncalls--;
+	// Roll back the last call to prevent drawing it.
+	if (_buffers->ncalls > 0) _buffers->ncalls--;
 }
 
 - (void)renderFlush {

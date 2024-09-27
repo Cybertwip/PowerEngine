@@ -52,7 +52,7 @@ void MeshPicker::setup_ui() {
 
 	// Set layout for the scroll panel
 	file_list_widget_ = new nanogui::Widget(scroll_panel);
-	file_list_widget_->set_layout(new nanogui::GridLayout(nanogui::Orientation::Vertical, 2,	 nanogui::Alignment::Fill, 0, 4));
+	file_list_widget_->set_layout(new nanogui::BoxLayout(nanogui::Orientation::Horizontal, nanogui::Alignment::Minimum));
 }
 
 void MeshPicker::search_model_files(const DirectoryNode& node) {

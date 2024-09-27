@@ -119,6 +119,7 @@ void mainloop() {
 				screen->redraw();
 #endif
 			screen->draw_all();
+			screen->redraw();
 			num_screens++;
 		}
 		
@@ -143,26 +144,6 @@ void mainloop() {
 	
 	mainloop_active = true;
 	
-	std::thread refresh_thread;
-	/* If there are no mouse/keyboard events, try to refresh the
-	 view roughly every 50 ms (default); this is to support animations
-	 such as progress bars while keeping the system load
-	 reasonably low */
-	refresh_thread = std::thread(
-								 []() {
-									 while (true) {
-										 if (!mainloop_active)
-											 return;
-										 for (auto kv : __nanogui_screens) {
-											 if (kv.second->tooltip_fade_in_progress())
-												 kv.second->redraw();
-										 }
-										 for (auto kv : __nanogui_screens)
-											 kv.second->redraw();
-									 }
-								 }
-								 );
-	
 	try {
 		while (mainloop_active)
 			mainloop_iteration();
@@ -173,8 +154,6 @@ void mainloop() {
 		std::cerr << "Caught exception in main loop: " << e.what() << std::endl;
 		leave();
 	}
-	
-	refresh_thread.join();
 }
 
 void async(const std::function<void()> &func) {

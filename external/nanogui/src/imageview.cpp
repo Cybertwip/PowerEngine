@@ -49,7 +49,7 @@ ImageView::ImageView(Widget *parent) : Canvas(parent, 1, true, true) {
 		0, 2, 3
 	};
 
-    m_image_shader->set_buffer("position", VariableType::Float32, { 6, 2 },
+    m_image_shader->set_buffer("position", VariableType::Float32, { 4, 2 },
                                positions, -1, true);
 	// Set the index buffer
 	m_image_shader->set_buffer("indices", VariableType::UInt32, {6},
