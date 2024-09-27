@@ -10,6 +10,7 @@
 
 class MeshActorBuilder;
 class MeshBatch;
+class ResourcesPanel;
 class ShaderWrapper;
 class ShaderManager;
 class SharedSelfContainedMeshCanvas;
@@ -24,12 +25,14 @@ class RenderPass;
 
 class ImportWindow : public nanogui::Window {
 public:
-	ImportWindow(nanogui::Widget* parent, nanogui::RenderPass& renderpass, ShaderManager& shaderManager);
+	ImportWindow(nanogui::Widget* parent, ResourcesPanel& resourcesPanel, nanogui::RenderPass& renderpass, ShaderManager& shaderManager);
 	
 	void Preview(const std::string& path, const std::string& directory);
 
 private:
 	void ImportIntoProject();
+	
+	ResourcesPanel& mResourcesPanel;
 	
 	std::unique_ptr<MeshBatch> mMeshBatch;
 	std::unique_ptr<SkinnedMeshBatch> mSkinnedMeshBatch;

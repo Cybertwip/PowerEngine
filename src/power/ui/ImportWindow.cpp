@@ -10,12 +10,14 @@
 
 #include "graphics/drawing/SkinnedMeshBatch.hpp"
 
+#include "ui/ResourcesPanel.hpp"
+
 #include <nanogui/button.h>
 #include <nanogui/checkbox.h>
 #include <nanogui/layout.h>
 #include <nanogui/screen.h>
 
-ImportWindow::ImportWindow(nanogui::Widget* parent, nanogui::RenderPass& renderpass, ShaderManager& shaderManager) : nanogui::Window(parent->screen()) {
+ImportWindow::ImportWindow(nanogui::Widget* parent, ResourcesPanel& resourcesPanel, nanogui::RenderPass& renderpass, ShaderManager& shaderManager) : nanogui::Window(parent->screen()), mResourcesPanel(resourcesPanel) {
 	
 	set_fixed_size(nanogui::Vector2i(400, 320));
 	set_layout(new nanogui::GroupLayout());
@@ -113,7 +115,13 @@ void ImportWindow::Preview(const std::string& path, const std::string& directory
 }
 
 void ImportWindow::ImportIntoProject() {
+	set_visible(false);
+	set_modal(false);
+
 	mCompressedMeshData->persist(mAnimationsCheckbox->checked());
+	
+	mResourcesPanel.refresh_file_view();
+	
 //	auto actor = std::make_shared<Actor>(mDummyRegistry);
 	
 //	mMeshActorBuilder->build(*actor, child->FullPath, *mMeshShader, *mSkinnedShader);
