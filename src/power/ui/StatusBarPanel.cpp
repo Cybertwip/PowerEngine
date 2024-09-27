@@ -57,6 +57,8 @@ StatusBarPanel::StatusBarPanel(nanogui::Widget &parent, IActorVisualManager& act
 }
 
 void StatusBarPanel::toggle_resources_panel(bool active) {
+	mResourcesPanel->refresh_file_view();
+	
 	if (mAnimationFuture.valid() && mAnimationFuture.wait_for(std::chrono::seconds(0)) != std::future_status::ready) {
 		return; // Animation is still running, do not start a new one
 	}

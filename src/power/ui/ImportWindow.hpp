@@ -1,5 +1,7 @@
 #pragma once
 
+#include "filesystem/MeshActorImporter.hpp"
+
 #include <entt/entt.hpp>
 
 #include <nanogui/window.h>
@@ -7,17 +9,16 @@
 #include <memory>
 
 class MeshActorBuilder;
-class MeshActorImporter;
 class MeshBatch;
 class ShaderWrapper;
 class ShaderManager;
 class SharedSelfContainedMeshCanvas;
 class SkinnedMeshBatch;
 
-
 struct BatchUnit;
 
 namespace nanogui {
+class CheckBox;
 class RenderPass;
 }
 
@@ -28,7 +29,7 @@ public:
 	void Preview(const std::string& path, const std::string& directory);
 
 private:
-	void ImportIntoProject(const std::string& path);
+	void ImportIntoProject();
 	
 	std::unique_ptr<MeshBatch> mMeshBatch;
 	std::unique_ptr<SkinnedMeshBatch> mSkinnedMeshBatch;
@@ -42,9 +43,13 @@ private:
 	std::unique_ptr<ShaderWrapper> mMeshShader;
 	std::unique_ptr<ShaderWrapper> mSkinnedShader;
 
+	nanogui::CheckBox* mMeshCheckbox;
+	nanogui::CheckBox* mAnimationsCheckbox;
 
 	entt::registry mDummyRegistry;
 
 	std::unique_ptr<MeshActorImporter> mMeshActorImporter;
 
+	
+	std::unique_ptr<MeshActorImporter::CompressedMeshActor> mCompressedMeshData;
 };

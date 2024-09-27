@@ -26,9 +26,9 @@ MeshActorImporter::MeshActorImporter() {
 	
 }
 
-MeshActorImporter::CompressedMeshActor MeshActorImporter::process(const std::string& path, const std::string& destination) {
+std::unique_ptr<MeshActorImporter::CompressedMeshActor> MeshActorImporter::process(const std::string& path, const std::string& destination) {
 	
-	CompressedMeshActor actor;
+	auto actor = std::make_unique<CompressedMeshActor>();
 	
 	auto meshSerializer = std::make_unique<CompressedSerialization::Serializer>();
 
@@ -71,12 +71,12 @@ MeshActorImporter::CompressedMeshActor MeshActorImporter::process(const std::str
 		auto meshPath = destPath / (basename.string() + ".psk");
 			
 				
-		actor.mMesh.mPrecomputedPath = meshPath.string();
+		actor->mMesh.mPrecomputedPath = meshPath.string();
 		
-		actor.mMesh.mSerializer = std::move(meshSerializer);
+		actor->mMesh.mSerializer = std::move(meshSerializer);
 		
 		if (!model->GetAnimationData().empty()) {
-			actor.mAnimations = std::vector<CompressedAsset>();
+			actor->mAnimations = std::vector<CompressedMeshActor::CompressedAsset>();
 		}
 
 		int animationIndex = 0;
@@ -92,7 +92,7 @@ MeshActorImporter::CompressedMeshActor MeshActorImporter::process(const std::str
 			
 			auto animationPath = destPath / (basename.string() + "_" + paddedIndex + ".pan");
 			
-			actor.mAnimations->push_back({std::move(serializer), animationPath.string()});
+			actor->mAnimations->push_back({std::move(serializer), animationPath.string()});
 		}
 	} else {
 		meshSerializer->write_int32(model->GetMeshData().size());
@@ -118,10 +118,10 @@ MeshActorImporter::CompressedMeshActor MeshActorImporter::process(const std::str
 		
 		auto meshPath = destPath / (basename.string() + ".pma");
 				
-		actor.mMesh.mPrecomputedPath = meshPath.string();
+		actor->mMesh.mPrecomputedPath = meshPath.string();
 		
-		actor.mMesh.mSerializer = std::move(meshSerializer);
+		actor->mMesh.mSerializer = std::move(meshSerializer);
 	}
 	
-	return actor;
+	return std::move(actor);
 }

@@ -119,7 +119,7 @@ const DirectoryNode* FindNodeByPath(const DirectoryNode& currentNode, const std:
 }
 
 
-ResourcesPanel::ResourcesPanel(nanogui::Widget& parent, const DirectoryNode& root_directory_node, IActorVisualManager& actorVisualManager,  MeshActorLoader& meshActorLoader, ShaderManager& shaderManager)
+ResourcesPanel::ResourcesPanel(nanogui::Widget& parent, DirectoryNode& root_directory_node, IActorVisualManager& actorVisualManager,  MeshActorLoader& meshActorLoader, ShaderManager& shaderManager)
 : Panel(parent, "Resources"),
 mRootDirectoryNode(root_directory_node),
 mActorVisualManager(actorVisualManager),
@@ -231,6 +231,8 @@ ResourcesPanel::~ResourcesPanel() {
 }
 
 void ResourcesPanel::refresh_file_view() {
+	mRootDirectoryNode.refresh();
+	
 	// Clear existing items
 	auto fileview_children = mFileView->children();
 	

@@ -20,7 +20,7 @@ class ShaderWrapper;
 class ResourcesPanel : public Panel {
 public:
 	ResourcesPanel(nanogui::Widget &parent,
-				   const DirectoryNode& root_directory_node, IActorVisualManager& actorVisualManager,  MeshActorLoader& meshActorLoader, ShaderManager& shaderManager);
+				   DirectoryNode& root_directory_node, IActorVisualManager& actorVisualManager,  MeshActorLoader& meshActorLoader, ShaderManager& shaderManager);
 	
 	~ResourcesPanel();
 	
@@ -34,7 +34,7 @@ public:
 private:
 	bool mouse_button_event(const nanogui::Vector2i &p, int button, bool down, int modifiers) override;
 	
-	const DirectoryNode& mRootDirectoryNode;
+	DirectoryNode& mRootDirectoryNode;
 	std::string mSelectedDirectoryPath;
 	
 	nanogui::Widget *mFileView;
