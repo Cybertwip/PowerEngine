@@ -33,6 +33,10 @@ m_icon_extra_scale(1.f), m_cursor(Cursor::Arrow), m_screen(nullptr) {
 }
 
 Widget::~Widget() {
+	if (m_screen) {
+		m_screen->remove_from_focus(this);
+	}
+
 	if (std::uncaught_exceptions() > 0) {
 		/* If a widget constructor throws an exception, it is immediately
 		 deallocated but may still be referenced by a parent. Be conservative
@@ -263,6 +267,9 @@ void Widget::draw(NVGcontext *ctx) {
 void Widget::set_parent(Widget *parent) {
 	m_parent = parent;
 	m_screen = parent ? parent->screen() : nullptr; // Update screen pointer
+	
+	if (m_screen)
+		m_screen->remove_from_focus(this);
 }
 
 void Widget::set_screen(Screen *screen) {

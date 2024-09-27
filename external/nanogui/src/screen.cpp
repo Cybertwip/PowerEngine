@@ -891,14 +891,21 @@ void Screen::resize_callback_event(int, int) {
 	}
 	redraw();
 }
+// src/screen.cpp
 
 void Screen::remove_from_focus(Widget *widget) {
 	if (widget == nullptr) {
-		throw std::runtime_error("Screen::remove_from_focus(): widget is nullptr!");
+		// Optionally, log a warning instead of throwing
+		std::cerr << "Warning: Attempted to remove a nullptr from focus path.\n";
+		return;
 	}
 	auto it = std::find(m_focus_path.begin(), m_focus_path.end(), widget);
 	
 	if (it != m_focus_path.end()) {
+		// If the widget being removed is focused, trigger focus_event(false)
+		if ((*it)->focused()) {
+			(*it)->focus_event(false);
+		}
 		m_focus_path.erase(it);
 	}
 	
