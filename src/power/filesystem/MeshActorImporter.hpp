@@ -1,13 +1,21 @@
 #pragma once
 
+#include "filesystem/CompressedSerialization.hpp"
+
 #include <string>
 #include <vector>
 
 class MeshActorImporter {
 public:
+	struct CompressedAsset {
+		std::unique_ptr<	CompressedSerialization::Serializer> mSerializer;
+		
+		std::string mPrecomputedPath;
+	};
+	
 	struct CompressedMeshActor {
-		std::string mMeshFile;
-		std::vector<std::string> mAnimationFiles;
+		CompressedAsset mMesh;
+		std::optional<std::vector<CompressedAsset>> mAnimations;
 	};
 	
 	MeshActorImporter();

@@ -63,13 +63,6 @@ m_mipmap_manual(false) {
 		m_size.x() = raw_width;
 		m_size.y() = raw_height;
 		
-		// Calculate expected size (assuming RGBA format)
-		size_t expected_size = static_cast<size_t>(m_size.x()) * m_size.y() * 4;
-		
-		if (static_cast<size_t>(size) != expected_size) {
-			throw std::runtime_error("Texture::Texture(): Raw data size does not match the provided dimensions.");
-		}
-		
 		// Allocate memory for raw data
 		uint8_t* raw_data = new uint8_t[size];
 		std::memcpy(raw_data, data, size);

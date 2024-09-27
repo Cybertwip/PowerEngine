@@ -131,6 +131,106 @@ void MetalHelper::readPixelsFromMetal(void *nswin, void *texture, int x, int y, 
 }
 
 
+void MetalHelper::readPixelsFromMetal(void *nswin, void *texture, int x, int y, int width, int height, std::vector<uint8_t>& pixels) {
+	// Static caches for Metal objects to avoid repeated retrievals
+	static CAMetalLayer* metalLayer = nullptr;
+	static id<MTLDevice> device = nullptr;
+	static id<MTLCommandQueue> commandQueue = nullptr;
+	static id<MTLBuffer> buffer = nullptr;
+	
+	// Initialize and cache CAMetalLayer
+	if (!metalLayer) {
+		metalLayer = static_cast<CAMetalLayer*>(nanogui::metal_window_layer(nswin));
+		if (!metalLayer) {
+			NSLog(@"Failed to get CAMetalLayer.");
+			return;
+		}
+	}
+	
+	// Initialize and cache MTLDevice
+	if (!device) {
+		device = (__bridge id<MTLDevice>)(nanogui::metal_device());
+		if (!device) {
+			NSLog(@"Failed to get MTLDevice.");
+			return;
+		}
+	}
+	
+	// Initialize and cache MTLCommandQueue
+	if (!commandQueue) {
+		commandQueue = (__bridge id<MTLCommandQueue>)(nanogui::metal_command_queue());
+		if (!commandQueue) {
+			NSLog(@"Failed to get MTLCommandQueue.");
+			return;
+		}
+	}
+	
+	// Convert the texture pointer to an MTLTexture
+	id<MTLTexture> bufferTexture = (__bridge id<MTLTexture>)texture;
+	if (!bufferTexture) {
+		NSLog(@"Failed to get backbuffer texture.");
+		return;
+	}
+	
+	// Calculate bytes per pixel and buffer size
+	constexpr size_t bytesPerPixel = 4; // Assuming RGBA 8-bit (32 bits per pixel, 4 bytes)
+	const size_t bytesPerRow = width * bytesPerPixel;
+	const size_t bufferSize = bytesPerRow * height;
+	
+	// Ensure the pixels vector has enough space
+	if (pixels.size() < bufferSize) {
+		pixels.resize(bufferSize); // Resize pixels to accommodate the buffer
+	}
+	
+	// Allocate or reuse the buffer
+	if (!buffer || buffer.length < bufferSize) {
+		buffer = [device newBufferWithLength:bufferSize options:MTLResourceStorageModeShared];
+		if (!buffer) {
+			NSLog(@"Failed to create buffer.");
+			return;
+		}
+	}
+	
+	// Sanity check: Ensure the buffer is large enough
+	if (buffer.length < bufferSize) {
+		NSLog(@"Error: The buffer is not large enough to accommodate the pixel data.");
+		return;
+	}
+	
+	// Create a command buffer
+	id<MTLCommandBuffer> commandBuffer = [commandQueue commandBuffer];
+	if (!commandBuffer) {
+		NSLog(@"Failed to create command buffer.");
+		return;
+	}
+	
+	// Create a blit command encoder
+	id<MTLBlitCommandEncoder> blitEncoder = [commandBuffer blitCommandEncoder];
+	if (!blitEncoder) {
+		NSLog(@"Failed to create blit encoder.");
+		return;
+	}
+	
+	// Perform the copy from the texture to the buffer
+	[blitEncoder copyFromTexture:bufferTexture
+					 sourceSlice:0
+					 sourceLevel:0
+					sourceOrigin:MTLOriginMake(x, y, 0) // (x, y, 0) as the origin
+					  sourceSize:MTLSizeMake(width, height, 1)
+						toBuffer:buffer
+			   destinationOffset:0
+		  destinationBytesPerRow:bytesPerRow
+		destinationBytesPerImage:bufferSize];
+	
+	// Finalize encoding and commit the command buffer
+	[blitEncoder endEncoding];
+	[commandBuffer commit];
+	[commandBuffer waitUntilCompleted]; // Consider asynchronous handling if possible
+	
+	// Copy the data from the buffer to the pixels vector
+	std::memcpy(pixels.data(), buffer.contents, bufferSize);
+}
+
 void MetalHelper::setDepthClear(void* render_pass) {
 	MTLRenderPassDescriptor* passDescriptor = static_cast<MTLRenderPassDescriptor*>(render_pass);
 	if (passDescriptor) {

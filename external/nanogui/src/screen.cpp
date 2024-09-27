@@ -155,7 +155,6 @@ m_stencil_buffer(stencil_buffer), m_float_buffer(float_buffer), m_redraw(false) 
 	if (stencil_buffer && !depth_buffer)
 		throw std::runtime_error(
 								 "Screen::Screen(): stencil_buffer = True requires depth_buffer = True");
-	depth_bits = 32;
 	depth_bits = 24;
 	stencil_bits = 8;
 	if (m_float_buffer)
@@ -171,7 +170,7 @@ m_stencil_buffer(stencil_buffer), m_float_buffer(float_buffer), m_redraw(false) 
 #if (defined(NANOGUI_USE_OPENGL) || defined(NANOGUI_USE_METAL)) && defined(GLFW_FLOATBUFFER)
 	glfwWindowHint(GLFW_FLOATBUFFER, m_float_buffer ? GL_TRUE : GL_FALSE);
 #else
-	m_float_buffer = true;
+	m_float_buffer = false;
 #endif
 	
 	for (int i = 0; i < 2; ++i) {

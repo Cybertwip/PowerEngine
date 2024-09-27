@@ -30,7 +30,7 @@ MeshActorImporter::CompressedMeshActor MeshActorImporter::process(const std::str
 	
 	CompressedMeshActor actor;
 	
-	CompressedSerialization::Serializer meshSerializer;
+	auto meshSerializer = std::make_unique<CompressedSerialization::Serializer>();
 
 	auto model = std::make_unique<SkinnedFbx>(path);
 		
@@ -45,64 +45,68 @@ MeshActorImporter::CompressedMeshActor MeshActorImporter::process(const std::str
 
 	if (model->GetSkeleton() != nullptr) {
 		
-		meshSerializer.write_int32(model->GetSkinnedMeshData().size());
+		meshSerializer->write_int32(model->GetSkinnedMeshData().size());
 		
 		int meshDataIndex = 0;
 		for (auto& meshData : model->GetSkinnedMeshData()) {
 									
-			meshData->serialize(meshSerializer);
+			meshData->serialize(*meshSerializer);
 			
-			meshSerializer.write_int32(meshData->get_material_properties().size());
+			meshSerializer->write_int32(meshData->get_material_properties().size());
 		
 			if (!meshData->get_material_properties().empty()){
 				for (auto& materialData : model->GetMaterialProperties()[meshDataIndex]) {
-					materialData->serialize(meshSerializer);
+					materialData->serialize(*meshSerializer);
 				}
 			}
 			
 			meshDataIndex++;
 		}
 		
-		model->GetSkeleton()->serialize(meshSerializer);
+		model->GetSkeleton()->serialize(*meshSerializer);
 		
 		// Save skeleton to file
 		std::filesystem::path basename = std::filesystem::path(path).stem();
 		
 		auto meshPath = destPath / (basename.string() + ".psk");
+			
+				
+		actor.mMesh.mPrecomputedPath = meshPath.string();
 		
-		meshSerializer.save_to_file(meshPath);
+		actor.mMesh.mSerializer = std::move(meshSerializer);
 		
-		actor.mMeshFile = meshPath.string();
+		if (!model->GetAnimationData().empty()) {
+			actor.mAnimations = std::vector<CompressedAsset>();
+		}
 
 		int animationIndex = 0;
 
 		for (auto& animation : model->GetAnimationData()) {
-			CompressedSerialization::Serializer serializer;
-			animation->serialize(serializer);
+			auto serializer = std::make_unique<CompressedSerialization::Serializer>();
+
+			animation->serialize(*serializer);
 			
 			std::stringstream ss;
 			ss << std::setw(4) << std::setfill('0') << animationIndex++; // Pad the index with 4 zeros
 			std::string paddedIndex = ss.str();
 			
 			auto animationPath = destPath / (basename.string() + "_" + paddedIndex + ".pan");
-
-			serializer.save_to_file(animationPath);
 			
-			actor.mAnimationFiles.push_back(animationPath);
+			actor.mAnimations->push_back({std::move(serializer), animationPath.string()});
 		}
 	} else {
-		meshSerializer.write_int32(model->GetMeshData().size());
+		meshSerializer->write_int32(model->GetMeshData().size());
 		
 		int meshDataIndex = 0;
 		for (auto& meshData : model->GetMeshData()) {
 			
-			meshData->serialize(meshSerializer);
+			meshData->serialize(*meshSerializer);
 			
-			meshSerializer.write_int32(meshData->get_material_properties().size());
+			meshSerializer->write_int32(meshData->get_material_properties().size());
 			
 			if (!meshData->get_material_properties().empty()){
 				for (auto& materialData : model->GetMaterialProperties()[meshDataIndex]) {
-					materialData->serialize(meshSerializer);
+					materialData->serialize(*meshSerializer);
 				}
 			}
 			
@@ -114,9 +118,9 @@ MeshActorImporter::CompressedMeshActor MeshActorImporter::process(const std::str
 		
 		auto meshPath = destPath / (basename.string() + ".pma");
 				
-		actor.mMeshFile = meshPath.string();
-
-		meshSerializer.save_to_file(meshPath);
+		actor.mMesh.mPrecomputedPath = meshPath.string();
+		
+		actor.mMesh.mSerializer = std::move(meshSerializer);
 	}
 	
 	return actor;

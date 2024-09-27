@@ -78,7 +78,6 @@ RenderPass::~RenderPass() {
 	
 	(void) (__bridge_transfer MTLRenderPassDescriptor *) m_pass_descriptor;
 }
-
 void RenderPass::begin() {
 	if (m_active)
 		throw std::runtime_error("RenderPass::begin(): render pass is already active!");
@@ -143,10 +142,38 @@ void RenderPass::begin() {
 			MTLStoreAction storeAction = att.storeAction;
 			
 			auto& color = m_clear_color[i - 2];
-			MTLClearColor clearColor = 			MTLClearColorMake(color.r(), color.g(), color.b(), color.w());
+			MTLClearColor clearColor = MTLClearColorMake(color.r(), color.g(), color.b(), color.w());
 			
 			// Set the texture
 			att.texture = texture_handle;
+			
+			// **Begin Integration of Blit Target Handling**
+			// Check if blit_target is present and corresponds to the current color attachment
+			RenderPass *blit_rp = dynamic_cast<RenderPass *>(m_blit_target.get());
+
+			if (blit_rp && i < blit_rp->targets().size()) {
+				if (blit_rp) {
+					const Texture *resolve_texture = dynamic_cast<Texture *>(blit_rp->targets()[i]);
+					if (resolve_texture) {
+						id<MTLTexture> resolve_texture_handle = (__bridge id<MTLTexture>) resolve_texture->texture_handle();
+						
+						// Verify pixel format match
+						if (resolve_texture_handle.pixelFormat != texture_handle.pixelFormat) {
+							throw std::runtime_error("RenderPass::begin(): 'blit_target' pixel format mismatch!");
+						}
+						// Verify size match
+						else if (resolve_texture_handle.width != texture_handle.width ||
+								 resolve_texture_handle.height != texture_handle.height) {
+							throw std::runtime_error("RenderPass::begin(): 'blit_target' size mismatch!");
+						}
+						
+						// Set store action and resolve texture for multisample resolve
+						att.storeAction = MTLStoreActionMultisampleResolve;
+						att.resolveTexture = resolve_texture_handle;
+					}
+				}
+			}
+			// **End Integration of Blit Target Handling**
 			
 			// Re-apply the settings
 			att.loadAction = loadAction;
@@ -161,13 +188,14 @@ void RenderPass::begin() {
 	m_command_buffer = (__bridge_retained void *)command_buffer;
 	m_command_encoder = (__bridge_retained void *)command_encoder;
 	m_active = true;
-		
+	
 	set_viewport(m_viewport_offset, m_viewport_size);
 	
 	// Re-apply depth test and cull mode
-//	set_depth_test(m_depth_test, m_depth_write);
-//	set_cull_mode(m_cull_mode);
+	// set_depth_test(m_depth_test, m_depth_write);
+	// set_cull_mode(m_cull_mode);
 }
+
 
 void RenderPass::end() {
 #if !defined(NDEBUG)

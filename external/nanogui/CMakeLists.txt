@@ -126,7 +126,7 @@ elseif (NANOGUI_BACKEND STREQUAL "Metal")
   set(NANOGUI_BACKEND_DEFS -DNANOGUI_USE_METAL)
   list(APPEND NANOGUI_EXTRA
     ext/nanovg_metal/src/nanovg_mtl.m ext/nanovg_metal/src/nanovg_mtl.h
-    src/texture_metal.mm src/shader_metal.mm src/screen_metal.mm src/renderpass_metal.mm
+    src/texture_metal.mm src/shader_metal.mm src/renderpass_metal.mm
   )
 
   set_source_files_properties(${NANOGUI_EXTRA} PROPERTIES

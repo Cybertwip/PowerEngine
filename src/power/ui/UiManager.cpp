@@ -820,7 +820,7 @@ private:
 	int mTotalFrames;
 };
 
-UiManager::UiManager(IActorSelectedRegistry& registry, IActorVisualManager& actorVisualManager, ActorManager& actorManager, MeshActorLoader& meshActorLoader, ShaderManager& shaderManager, ScenePanel& scenePanel, Canvas& canvas, nanogui::Widget& toolbox, nanogui::Widget& statusBar, AnimationPanel& animationPanel, CameraManager& cameraManager, BatchUnit& batchUnit, std::function<void(std::function<void(int, int)>)> applicationClickRegistrator)
+UiManager::UiManager(IActorSelectedRegistry& registry, IActorVisualManager& actorVisualManager, ActorManager& actorManager, MeshActorLoader& meshActorLoader, ShaderManager& shaderManager, ScenePanel& scenePanel, Canvas& canvas, nanogui::Widget& toolbox, nanogui::Widget& statusBar, AnimationPanel& animationPanel, CameraManager& cameraManager, std::function<void(std::function<void(int, int)>)> applicationClickRegistrator)
 : mRegistry(registry)
 , mActorManager(actorManager)
 , mShaderManager(shaderManager)
@@ -892,7 +892,6 @@ UiManager::UiManager(IActorSelectedRegistry& registry, IActorVisualManager& acto
 		glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
 		
 #elif defined(NANOGUI_USE_METAL)
-		
 		nanogui::Texture *attachment_texture =
 		dynamic_cast<nanogui::Texture *>(canvas.render_pass()->targets()[3]);
 		
@@ -1006,7 +1005,7 @@ UiManager::UiManager(IActorSelectedRegistry& registry, IActorVisualManager& acto
 		}
 	});
 	
-	mStatusBarPanel = new StatusBarPanel(statusBar, actorVisualManager, meshActorLoader, shaderManager, batchUnit, applicationClickRegistrator);
+	mStatusBarPanel = new StatusBarPanel(statusBar, actorVisualManager, meshActorLoader, shaderManager, applicationClickRegistrator);
 	mStatusBarPanel->set_fixed_width(statusBar.fixed_height());
 	mStatusBarPanel->set_fixed_height(statusBar.fixed_height());
 	mStatusBarPanel->set_layout(new nanogui::BoxLayout(nanogui::Orientation::Horizontal,

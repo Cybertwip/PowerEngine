@@ -2,14 +2,7 @@
 
 #include "ai/DeepMotionSettingsWindow.hpp"
 #include "actors/IActorSelectedRegistry.hpp"
-#include "filesystem/MeshActorImporter.hpp"
-
-
-#include "graphics/drawing/BatchUnit.hpp"
-
-#include "graphics/drawing/MeshActorBuilder.hpp"
-
-#include "graphics/drawing/SelfContainedMeshCanvas.hpp"
+#include "ui/ImportWindow.hpp"
 
 #include "MeshActorLoader.hpp"
 #include "ShaderManager.hpp"
@@ -22,7 +15,21 @@
 #include <regex>
 #include <iostream>
 
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+
+#include "stb_image_write.h"
+
 namespace fs = std::filesystem;
+
+void write_to_png(const std::vector<uint8_t>& pixels, int width, int height, int channels, const char* filename) {
+
+	// Use stb_image_write to write the PNG file
+	if (!stbi_write_png(filename, width, height, channels, pixels.data(), width * channels)) {
+		std::cerr << "Error writing PNG file" << std::endl;
+	} else {
+		std::cout << "PNG written successfully to " << filename << std::endl;
+	}
+}
 
 namespace {
 bool DeleteFilePath(const std::string& path) {
@@ -112,19 +119,17 @@ const DirectoryNode* FindNodeByPath(const DirectoryNode& currentNode, const std:
 }
 
 
-ResourcesPanel::ResourcesPanel(nanogui::Widget& parent, const DirectoryNode& root_directory_node, IActorVisualManager& actorVisualManager,  MeshActorLoader& meshActorLoader, ShaderManager& shaderManager, BatchUnit& batchUnit)
+ResourcesPanel::ResourcesPanel(nanogui::Widget& parent, const DirectoryNode& root_directory_node, IActorVisualManager& actorVisualManager,  MeshActorLoader& meshActorLoader, ShaderManager& shaderManager)
 : Panel(parent, "Resources"),
 mRootDirectoryNode(root_directory_node),
 mActorVisualManager(actorVisualManager),
 mMeshActorLoader(meshActorLoader),
-mMeshActorBuilder(std::make_unique<MeshActorBuilder>(batchUnit)),
 mMeshShader(std::make_unique<ShaderWrapper>(*shaderManager.get_shader("mesh"))),
 mSkinnedShader(std::make_unique<ShaderWrapper>(*shaderManager.get_shader("skinned_mesh"))),
 mSelectedButton(nullptr),
 mSelectedNode(nullptr),
 mNormalButtonColor(nanogui::Color(0.7f, 0.7f, 0.7f, 1.0f)),
-mSelectedButtonColor(nanogui::Color(0.5f, 0.5f, 0.8f, 1.0f)),
-mMeshActorImporter(std::make_unique<MeshActorImporter>())
+mSelectedButtonColor(nanogui::Color(0.5f, 0.5f, 0.8f, 1.0f))
 {
 	mNormalButtonColor = theme()->m_button_gradient_bot_unfocused;
 
@@ -141,6 +146,11 @@ mMeshActorImporter(std::make_unique<MeshActorImporter>())
 	auto deepmotion_settings = new DeepMotionSettingsWindow(parent.window());
 	deepmotion_settings->set_visible(false);
 	deepmotion_settings->set_modal(false);
+	
+	mImportWindow = new ImportWindow(parent.window(), shaderManager.render_pass(), shaderManager);
+	
+	mImportWindow->set_visible(false);
+	mImportWindow->set_modal(false);
 
 	// Add the Add Asset button with a "+" icon
 	mAddButton = new nanogui::PopupButton(mToolbar, "Add");
@@ -266,30 +276,42 @@ void ResourcesPanel::refresh_file_view() {
 				icon->set_fixed_size(nanogui::Vector2i(128, 128));
 
 				if (file_icon == FA_WALKING) {
-							
-					mOffscreenRenderer = new SelfContainedMeshCanvas(icon);
 					
-					mOffscreenRenderer->set_fixed_size(icon->fixed_size());
-
-					auto actor = std::make_shared<Actor>(mDummyRegistry);
-					
-					mMeshActorBuilder->build(*actor, child->FullPath, *mMeshShader, *mSkinnedShader);
-					
-					mOffscreenRenderer->take_snapshot(actor, [this, icon](std::vector<uint8_t> pixels){
-						
-						auto imageView = new nanogui::ImageView(icon);
-						
-						imageView->set_size(icon->fixed_size());
-						
-						imageView->set_fixed_size(icon->fixed_size());
-						
-						imageView->set_image(new nanogui::Texture(pixels.data(), pixels.size(), nanogui::Texture::InterpolationMode::Bilinear, nanogui::Texture::InterpolationMode::Nearest, 128, 128));
-
-						//icon->remove_child(mOffscreenRenderer);
-//						mOffscreenRenderer->set_screen(screen()); // prevent crashing
-					});
-					
-					//imageView->set_visible(true);
+					// deserialize thumbnail here
+//
+//					mOffscreenRenderer = new SelfContainedMeshCanvas(icon);
+//					
+//					mOffscreenRenderer->set_fixed_size(icon->fixed_size());
+//
+//					auto actor = std::make_shared<Actor>(mDummyRegistry);
+//					
+//					mMeshActorBuilder->build(*actor, child->FullPath, *mMeshShader, *mSkinnedShader);
+//					
+//					mOffscreenRenderer->take_snapshot(actor, [this, icon](std::vector<uint8_t> pixels){
+//						write_to_png(pixels, 128, 128, 4, "output_image.png");
+//						
+//						return;
+//
+//						auto imageView = new nanogui::ImageView(icon);
+//						
+//						imageView->set_size(icon->fixed_size());
+//						
+//						imageView->set_fixed_size(icon->fixed_size());
+//						
+//						imageView->set_image(new nanogui::Texture(
+//pixels.data(),
+//pixels.size(),
+//nanogui::Texture::InterpolationMode::Bilinear,
+//nanogui::Texture::InterpolationMode::Nearest,
+//nanogui::Texture::WrapMode::Repeat,
+//128,
+//128));
+//
+//						//icon->remove_child(mOffscreenRenderer);
+////						mOffscreenRenderer->set_screen(screen()); // prevent crashing
+//					});
+//					
+//					//imageView->set_visible(true);
 				}
 
 				
@@ -463,8 +485,9 @@ void ResourcesPanel::import_assets() {
 		
 		try {
 			// Copy the selected file to the current directory
-			auto _ = mMeshActorImporter->process(file, mSelectedDirectoryPath);
-						
+			
+			mImportWindow->Preview(file, mSelectedDirectoryPath);
+			
 		} catch (const std::exception& e) {
 			std::cerr << "Error importing asset: " << e.what() << std::endl;
 		}

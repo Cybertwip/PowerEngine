@@ -14,14 +14,13 @@
 #include <chrono>
 
 class IActorVisualManager;
-class BatchUnit;
 class MeshActorLoader;
 class ResourcesPanel;
 class ShaderManager;
 
 class StatusBarPanel : public Panel {
 public:
-	StatusBarPanel(nanogui::Widget &parent, IActorVisualManager& actorVisualManager, MeshActorLoader& meshActorLoader, ShaderManager& shaderManager, BatchUnit& batchUnit, std::function<void(std::function<void(int, int)>)> applicationClickRegistrator);
+	StatusBarPanel(nanogui::Widget &parent, IActorVisualManager& actorVisualManager, MeshActorLoader& meshActorLoader, ShaderManager& shaderManager, std::function<void(std::function<void(int, int)>)> applicationClickRegistrator);
 	
 	ResourcesPanel& resources_panel() {
 		return *mResourcesPanel;

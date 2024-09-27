@@ -133,6 +133,8 @@ add_executable(PowerEngine
     ${CMAKE_CURRENT_LIST_DIR}/graphics/drawing/MeshBatch.cpp
     ${CMAKE_CURRENT_LIST_DIR}/graphics/drawing/SelfContainedMeshCanvas.hpp
     ${CMAKE_CURRENT_LIST_DIR}/graphics/drawing/SelfContainedMeshCanvas.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/graphics/drawing/SharedSelfContainedMeshCanvas.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/graphics/drawing/SharedSelfContainedMeshCanvas.cpp    
     ${CMAKE_CURRENT_LIST_DIR}/graphics/drawing/SkinnedMesh.hpp
     ${CMAKE_CURRENT_LIST_DIR}/graphics/drawing/SkinnedMesh.cpp
     ${CMAKE_CURRENT_LIST_DIR}/graphics/drawing/SkinnedMeshBatch.hpp
@@ -155,6 +157,8 @@ add_executable(PowerEngine
     ${CMAKE_CURRENT_LIST_DIR}/ui/AnimationPanel.cpp
     ${CMAKE_CURRENT_LIST_DIR}/ui/HierarchyPanel.hpp
     ${CMAKE_CURRENT_LIST_DIR}/ui/HierarchyPanel.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/ui/ImportWindow.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/ui/ImportWindow.cpp
     ${CMAKE_CURRENT_LIST_DIR}/ui/Panel.hpp
     ${CMAKE_CURRENT_LIST_DIR}/ui/Panel.cpp
     ${CMAKE_CURRENT_LIST_DIR}/ui/ResourcesPanel.hpp

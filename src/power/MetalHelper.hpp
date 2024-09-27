@@ -30,6 +30,8 @@ class MetalHelper {
 public:
 	static void readPixelsFromMetal(void* nswin, void *texture, int x, int y, int width, int height, std::vector<int>& pixels);
 	
+	static void readPixelsFromMetal(void* nswin, void *texture, int x, int y, int width, int height, std::vector<uint8_t>& pixels);
+
 	// Setter functions for depth and stencil
 	static void setDepthClear(void* render_pass);
 	static void setStencilClear(void* render_pass);

@@ -3,7 +3,7 @@
 #include "components/ColorComponent.hpp"
 #include "components/SkinnedAnimationComponent.hpp"
 
-#include "graphics/drawing/Mesh.hpp"
+#include "graphics/drawing/SkinnedMesh.hpp"
 #include "graphics/shading/ShaderWrapper.hpp"
 
 #include <nanogui/renderpass.h>

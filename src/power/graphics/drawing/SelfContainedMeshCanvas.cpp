@@ -1,6 +1,9 @@
 #include "SelfContainedMeshCanvas.hpp"
 #include "components/SkinnedMeshComponent.hpp"
-#include "SelfContainedMeshCanvas.hpp"
+
+#if defined(NANOGUI_USE_METAL)
+#include "MetalHelper.hpp"
+#endif
 
 #include <nanogui/screen.h>
 
@@ -216,41 +219,6 @@ void SelfContainedMeshCanvas::draw_contents() {
 		
 		draw_content(camera.get_view(),
 					 camera.get_projection());
-		
-		// If a snapshot is pending, perform the blit and execute callbacks
-		if (mSnapshotPending) {
-			
-			nanogui::Screen *scr = screen();
-			
-			if (scr == nullptr)
-				throw std::runtime_error("Canvas::draw(): could not find parent screen!");
-
-			float pixel_ratio = scr->pixel_ratio();
-
-			nanogui::Vector2i fbsize = m_size;
-			nanogui::Vector2i offset = position();
-			if (m_draw_border)
-				fbsize -= 2;
-			
-			if (m_draw_border)
-				offset += nanogui::Vector2i(1, 1);
-			
-			fbsize = nanogui::Vector2i(nanogui::Vector2f(fbsize) * pixel_ratio);
-			offset = nanogui::Vector2i(nanogui::Vector2f(offset) * pixel_ratio);
-			
-			// Reset the snapshot pending flag
-			mSnapshotPending = false;
-			
-			if (mSnapshotCallback) {
-				mSnapshotCallback(scr->grab_region(offset, fbsize));
-				
-				mSnapshotCallback = nullptr;
-			}
-			
-			mPreviewActor = std::nullopt;
-			mSnapshotActor.reset();
-		}
-
 	}
 }
 
@@ -369,16 +337,3 @@ void SelfContainedMeshCanvas::upload_material_data(ShaderWrapper& shader, const 
 	}
 #endif
 	}
-
-
-void SelfContainedMeshCanvas::take_snapshot(std::shared_ptr<Actor> actor, std::function<void(std::vector<uint8_t>)> onSnapshotTaken) {
-	// Store the snapshot request details
-	mSnapshotActor = actor;
-	mSnapshotCallback = onSnapshotTaken;
-	mSnapshotPending = true;
-	
-	// If an actor is provided, set it as the active actor
-	if (mSnapshotActor != nullptr) {
-		set_active_actor(*mSnapshotActor);
-	}
-}

@@ -9,7 +9,7 @@
 #include <entt/entt.hpp>
 
 class IActorVisualManager;
-class BatchUnit;
+class ImportWindow;
 class MeshActorImporter;
 class MeshActorLoader;
 class MeshActorBuilder;
@@ -20,7 +20,7 @@ class ShaderWrapper;
 class ResourcesPanel : public Panel {
 public:
 	ResourcesPanel(nanogui::Widget &parent,
-				   const DirectoryNode& root_directory_node, IActorVisualManager& actorVisualManager,  MeshActorLoader& meshActorLoader, ShaderManager& shaderManager, BatchUnit& batchUnit);
+				   const DirectoryNode& root_directory_node, IActorVisualManager& actorVisualManager,  MeshActorLoader& meshActorLoader, ShaderManager& shaderManager);
 	
 	~ResourcesPanel();
 	
@@ -57,7 +57,6 @@ private:
 
 	IActorVisualManager& mActorVisualManager;
 	MeshActorLoader& mMeshActorLoader;
-	std::unique_ptr<MeshActorBuilder> mMeshActorBuilder;
 	std::unique_ptr<ShaderWrapper> mMeshShader;
 	std::unique_ptr<ShaderWrapper> mSkinnedShader;
 
@@ -66,10 +65,6 @@ private:
 	std::shared_ptr<DirectoryNode> mSelectedNode;
 	nanogui::Color mNormalButtonColor;
 	nanogui::Color mSelectedButtonColor;
-	
-	SelfContainedMeshCanvas* mOffscreenRenderer;
-	
-	std::unique_ptr<MeshActorImporter> mMeshActorImporter;
-	
-	entt::registry mDummyRegistry;
+			
+	ImportWindow* mImportWindow;
 };

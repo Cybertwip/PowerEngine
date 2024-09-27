@@ -276,18 +276,6 @@ public:
 		return m_drag_active;
 	}
 	
-	/**
-	 * \brief Grab a region of the screen in RGBA format.
-	 *
-	 * \param pos The top-left position of the region to capture.
-	 * \param size The size (width and height) of the region to capture.
-	 * \return A std::vector<uint8_t> containing the pixel data in RGBA order.
-	 */
-	
-#if defined(NANOGUI_USE_METAL)
-	std::vector<uint8_t> grab_region(const Vector2i &pos, const Vector2i &size);
-#endif
-	
 protected:
     GLFWwindow *m_glfw_window = nullptr;
     NVGcontext *m_nvg_context = nullptr;
