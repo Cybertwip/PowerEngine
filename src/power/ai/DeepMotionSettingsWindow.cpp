@@ -86,22 +86,39 @@ data_saved_(false)
 		this->set_modal(false);
 		is_visible_ = false;
 	});
-
+	
 	// Position the close button at the top-right corner
 	// Using a horizontal BoxLayout with a spacer
 	auto top_panel = new nanogui::Widget(this);
 	top_panel->set_layout(new nanogui::BoxLayout(nanogui::Orientation::Horizontal,
-												 nanogui::Alignment::Minimum, 0, 0));
+												 nanogui::Alignment::Middle, 0, 0));
+	
 	// Spacer to push the close button to the right
 	auto spacer = new nanogui::Widget(top_panel);
 	spacer->set_fixed_size(nanogui::Vector2i(360, 0));
+	
+	
+	auto imageView = new nanogui::ImageView(this);
+	imageView->set_size(nanogui::Vector2i(256, 256));
+	
+	imageView->set_fixed_size(imageView->size());
+	
+	imageView->set_image(new nanogui::Texture(
+											  "internal/ui/poweredby.png",
+											  nanogui::Texture::InterpolationMode::Bilinear,
+											  nanogui::Texture::InterpolationMode::Nearest,
+											  nanogui::Texture::WrapMode::Repeat));
+	
+	imageView->image()->resize(nanogui::Vector2i(256, 256));
+	
+	imageView->set_visible(true);
 	
 	// Spacer for visual separation
 	new nanogui::Label(this, "", "sans", 20);
 	
 	// API Base URL Input
 	new nanogui::Label(this, "API Base URL:", "sans-bold");
-	api_base_url_box_ = new nanogui::TextBox(this);
+	api_base_url_box_ = new nanogui::TextBox(this, "");
 	api_base_url_box_->set_placeholder("Enter API Base URL");
 	api_base_url_box_->set_editable(true);
 	api_base_url_box_->set_fixed_width(350);
@@ -109,13 +126,13 @@ data_saved_(false)
 		// Basic validation can be added here if necessary
 		return true;
 	});
-
+	
 	// Spacer for visual separation
 	new nanogui::Label(this, "", "sans", 20);
 	
 	// Client ID Input
 	new nanogui::Label(this, "Client ID:", "sans-bold");
-	client_id_box_ = new nanogui::TextBox(this);
+	client_id_box_ = new nanogui::TextBox(this, "");
 	client_id_box_->set_placeholder("Enter Client ID");
 	client_id_box_->set_editable(true);
 	client_id_box_->set_password_character('*');
@@ -130,7 +147,7 @@ data_saved_(false)
 	
 	// Client Secret Input
 	new nanogui::Label(this, "Client Secret:", "sans-bold");
-	client_secret_box_ = new nanogui::TextBox(this);
+	client_secret_box_ = new nanogui::TextBox(this, "");
 	client_secret_box_->set_placeholder("Enter Client Secret");
 	client_secret_box_->set_editable(true);
 	client_secret_box_->set_password_character('*');
@@ -158,9 +175,9 @@ data_saved_(false)
 	status_label_->set_fixed_size(nanogui::Vector2i(350, 20));
 	status_label_->set_color(nanogui::Color(255, 255, 255, 255)); // White color
 	
-//	// Initially hide the window
-//	set_visible(false);
-//	set_modal(true);
+	//	// Initially hide the window
+	//	set_visible(false);
+	//	set_modal(true);
 	
 	// Attempt to load existing credentials and synchronize
 	if (load_from_file("powerkey.dat")) {
@@ -168,11 +185,11 @@ data_saved_(false)
 		api_base_url_box_->set_value(api_base_url_);
 		client_id_box_->set_value(client_id_);
 		client_secret_box_->set_value(client_secret_);
-
+		
 		// Perform synchronization
 		on_sync();
 	}
-
+	
 }
 
 void DeepMotionSettingsWindow::toggle_visibility() {
@@ -185,7 +202,7 @@ void DeepMotionSettingsWindow::on_sync() {
 	// Retrieve input values
 	std::string api_base_url = api_base_url_box_->value();
 	int api_base_port = 443;
-
+	
 	// Inside the callback
 	std::regex url_regex(R"(^(?:https?://)?([^:/\s]+)(?::(\d+))?)");
 	std::smatch matches;
@@ -207,7 +224,7 @@ void DeepMotionSettingsWindow::on_sync() {
 		api_base_url = "";
 		api_base_port = 443;
 	}
-
+	
 	std::string client_id = client_id_box_->value();
 	std::string client_secret = client_secret_box_->value();
 	
