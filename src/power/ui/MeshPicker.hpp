@@ -7,7 +7,7 @@
 #include <string>
 
 // Forward declaration
-class DirectoryNode;
+struct DirectoryNode;
 
 class MeshPicker : public nanogui::Window {
 public:
