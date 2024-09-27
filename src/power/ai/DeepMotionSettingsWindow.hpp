@@ -14,6 +14,8 @@ namespace httplib {
 class SSLClient;
 }
 
+class DeepMotionApiClient;
+
 class DeepMotionSettingsWindow : public nanogui::Window {
 public:
 	/**
@@ -22,11 +24,7 @@ public:
 	 * @param parent Pointer to the parent widget.
 	 * @param api_base_url The base URL for the API endpoints.
 	 */
-	DeepMotionSettingsWindow(nanogui::Widget* parent, std::function<void()> successCallback);
-	
-	std::string session_cookie() const {
-		return _session_cookie;
-	}
+	DeepMotionSettingsWindow(nanogui::Widget* parent, DeepMotionApiClient& deepMotionApiClient, std::function<void()> successCallback);
 	
 private:
 	// UI Components
@@ -34,11 +32,7 @@ private:
 	nanogui::TextBox* client_id_box_;
 	nanogui::TextBox* client_secret_box_;
 	nanogui::Label* status_label_;
-		
-	// HTTP Client
-	std::unique_ptr<httplib::SSLClient> _client;
-	std::string _session_cookie;
-	bool data_saved_;
+			bool data_saved_;
 	
 	/**
 	 * @brief Handles the synchronization process when the "Sync" button is clicked.
@@ -85,4 +79,6 @@ private:
 	std::string client_secret_;
 	
 	std::function<void()> mSuccessCallback;
+	
+	DeepMotionApiClient& mDeepMotionApiClient;
 };

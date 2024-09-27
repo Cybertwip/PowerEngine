@@ -9,6 +9,7 @@
 #include <entt/entt.hpp>
 
 class IActorVisualManager;
+class DeepMotionApiClient;
 class ImportWindow;
 class MeshActorImporter;
 class MeshActorLoader;
@@ -21,7 +22,7 @@ class ShaderWrapper;
 class ResourcesPanel : public Panel {
 public:
 	ResourcesPanel(nanogui::Widget &parent,
-				   DirectoryNode& root_directory_node, IActorVisualManager& actorVisualManager,  MeshActorLoader& meshActorLoader, ShaderManager& shaderManager);
+				   DirectoryNode& root_directory_node, IActorVisualManager& actorVisualManager,  MeshActorLoader& meshActorLoader, ShaderManager& shaderManager, DeepMotionApiClient& deepMotionApiClient);
 	
 	~ResourcesPanel();
 	

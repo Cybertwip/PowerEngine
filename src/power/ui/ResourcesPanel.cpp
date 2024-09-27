@@ -106,7 +106,7 @@ const DirectoryNode* FindNodeByPath(const DirectoryNode& currentNode, const std:
 }
 
 
-ResourcesPanel::ResourcesPanel(nanogui::Widget& parent, DirectoryNode& root_directory_node, IActorVisualManager& actorVisualManager,  MeshActorLoader& meshActorLoader, ShaderManager& shaderManager)
+ResourcesPanel::ResourcesPanel(nanogui::Widget& parent, DirectoryNode& root_directory_node, IActorVisualManager& actorVisualManager,  MeshActorLoader& meshActorLoader, ShaderManager& shaderManager, DeepMotionApiClient& deepMotionApiClient)
 : Panel(parent, "Resources"),
 mRootDirectoryNode(root_directory_node),
 mActorVisualManager(actorVisualManager),
@@ -138,7 +138,7 @@ mSelectedButtonColor(nanogui::Color(0.5f, 0.5f, 0.8f, 1.0f))
 	mMeshPicker->set_modal(false);
 
 	/* Create the DeepMotion Settings Window (initially hidden) */
-	auto deepmotion_settings = new DeepMotionSettingsWindow(parent.window(), [this](){
+	auto deepmotion_settings = new DeepMotionSettingsWindow(parent.window(), deepMotionApiClient, [this](){
 		mMeshPicker->set_visible(true);
 		mMeshPicker->set_modal(true);
 	});

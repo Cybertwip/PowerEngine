@@ -1,6 +1,7 @@
 // DeepMotionSettingsWindow.cpp
 
 #include "DeepMotionSettingsWindow.hpp"
+#include "DeepMotionApiClient.hpp"
 
 #include "filesystem/UrlOpener.hpp"
 
@@ -16,64 +17,11 @@
 #include <cctype>
 #include <regex>
 
-// Base64 encoding implementation
-static const std::string base64_chars =
-"ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-"abcdefghijklmnopqrstuvwxyz"
-"0123456789+/";
-
-static inline bool is_base64(uint8_t c) {
-	return (isalnum(c) || (c == '+') || (c == '/'));
-}
-
-std::string base64_encode(const unsigned char* bytes_to_encode, size_t in_len) {
-	std::string ret;
-	int i = 0;
-	int j = 0;
-	unsigned char char_array_3[3];
-	unsigned char char_array_4[4];
-	
-	size_t pos = 0;
-	while (in_len--) {
-		char_array_3[i++] = bytes_to_encode[pos++];
-		if (i ==3) {
-			char_array_4[0] = (char_array_3[0] & 0xfc) >> 2;
-			char_array_4[1] = ((char_array_3[0] & 0x03) << 4) +
-			((char_array_3[1] & 0xf0) >> 4);
-			char_array_4[2] = ((char_array_3[1] & 0x0f) << 2) +
-			((char_array_3[2] & 0xc0) >> 6);
-			char_array_4[3] = char_array_3[2] & 0x3f;
-			
-			for(i = 0; (i <4) ; i++)
-				ret += base64_chars[char_array_4[i]];
-			i = 0;
-		}
-	}
-	
-	if (i)
-	{
-		for(j = i; j < 3; j++)
-			char_array_3[j] = '\0';
-		
-		char_array_4[0] = ( char_array_3[0] & 0xfc ) >> 2;
-		char_array_4[1] = ( ( char_array_3[0] & 0x03 ) << 4 ) + ( ( char_array_3[1] & 0xf0 ) >> 4 );
-		char_array_4[2] = ( ( char_array_3[1] & 0x0f ) << 2 ) + ( ( char_array_3[2] & 0xc0 ) >> 6 );
-		char_array_4[3] = char_array_3[2] & 0x3f;
-		
-		for (j = 0; (j < i + 1); j++)
-			ret += base64_chars[char_array_4[j]];
-		
-		while((i++ < 3))
-			ret += '=';
-	}
-	
-	return ret;
-}
-
-DeepMotionSettingsWindow::DeepMotionSettingsWindow(nanogui::Widget* parent, std::function<void()> successCallback)
+DeepMotionSettingsWindow::DeepMotionSettingsWindow(nanogui::Widget* parent, DeepMotionApiClient& deepMotionApiClient, std::function<void()> successCallback)
 : nanogui::Window(parent->screen()),
 data_saved_(false),
-mSuccessCallback(successCallback)
+mSuccessCallback(successCallback),
+mDeepMotionApiClient(deepMotionApiClient)
 {
 	set_visible(false);
 	set_modal(false);
@@ -247,67 +195,29 @@ void DeepMotionSettingsWindow::on_sync() {
 		return;
 	}
 	
-	// Encode clientId and clientSecret in Base64
-	std::string credentials = client_id + ":" + client_secret;
-	std::string encoded_credentials = base64_encode(reinterpret_cast<const unsigned char*>(credentials.c_str()), credentials.length());
+	mDeepMotionApiClient.authenticate(api_base_url, api_base_port, client_id, client_secret);
 	
-	// Initialize or update the HTTP client with the new API base URL
-	_client = std::make_unique<httplib::SSLClient>(api_base_url.c_str(), api_base_port);
-	
-	// Set Authorization header
-	_client->set_default_headers({
-		{ "Authorization", "Basic " + encoded_credentials }
-	});
-	
-	// Perform authentication request
-	auto res = _client->Get("/account/v1/auth"); // Replace with your auth endpoint
-	
-	if (res && res->status == 200) {
-		auto it = res->headers.find("Set-Cookie");
-		if (it != res->headers.end()) {
-			_session_cookie = it->second;
-			
-			// Extract the 'dmsess' cookie value
-			std::size_t start_pos = _session_cookie.find("dmsess=");
-			if (start_pos != std::string::npos) {
-				std::size_t end_pos = _session_cookie.find(";", start_pos);
-				if (end_pos != std::string::npos) {
-					_session_cookie = _session_cookie.substr(start_pos, end_pos - start_pos);
-				} else {
-					_session_cookie = _session_cookie.substr(start_pos);
-				}
-			}
-			
-			// Set cookie header for future requests if needed
-			_client->set_default_headers({
-				{ "cookie", _session_cookie }
-			});
-			
-			// Update status label to success
-			status_label_->set_caption("Synchronization successful.");
-			status_label_->set_color(nanogui::Color(0, 255, 0, 255)); // Green color
-			
-			// Save credentials and API Base URL if not already saved
-			if (!data_saved_) {
-				save_to_file("powerkey.dat", api_base_url, std::to_string(api_base_port), client_id, client_secret);
-				data_saved_ = true;
-			}
-			
-			if (visible()) {
-				set_visible(false);
-				set_modal(false);
-
-				if(mSuccessCallback) {
-					mSuccessCallback();
-				}
-			}
-			
-			
-		} else {
-			// Set-Cookie header missing
-			status_label_->set_caption("Set-Cookie header missing.");
-			status_label_->set_color(nanogui::Color(255, 0, 0, 255)); // Red color
+	if (mDeepMotionApiClient.is_authenticated()) {
+		
+		// Update status label to success
+		status_label_->set_caption("Synchronization successful.");
+		status_label_->set_color(nanogui::Color(0, 255, 0, 255)); // Green color
+		
+		// Save credentials and API Base URL if not already saved
+		if (!data_saved_) {
+			save_to_file("powerkey.dat", api_base_url, std::to_string(api_base_port), client_id, client_secret);
+			data_saved_ = true;
 		}
+		
+		if (visible()) {
+			set_visible(false);
+			set_modal(false);
+			
+			if(mSuccessCallback) {
+				mSuccessCallback();
+			}
+		}
+		
 	} else {
 		// Authentication failed
 		status_label_->set_caption("Invalid credentials or server error.");

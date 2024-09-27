@@ -9,6 +9,7 @@
 #include "UiCommon.hpp"
 #include "actors/Actor.hpp"
 #include "actors/ActorManager.hpp"
+#include "ai/DeepMotionApiClient.hpp"
 #include "components/CameraComponent.hpp"
 #include "components/TransformComponent.hpp"
 #include "gizmo/GizmoManager.hpp"
@@ -53,6 +54,8 @@ Application::Application() : nanogui::DraggableScreen("Power Engine") {
 
 	mActorManager = std::make_unique<ActorManager>(*mEntityRegistry, *mCameraManager);
 
+	mDeepMotionApiClient = std::make_unique<DeepMotionApiClient>();
+	
 	mUiCommon = std::make_unique<UiCommon>(*this, *mActorManager);
 
 	mRenderCommon =
@@ -77,7 +80,7 @@ Application::Application() : nanogui::DraggableScreen("Power Engine") {
 		register_click_callback(callbackWrapee);
 	};
 
-	mUiManager = std::make_unique<UiManager>(mUiCommon->hierarchy_panel(), mUiCommon->hierarchy_panel(), *mActorManager, *mMeshActorLoader, mRenderCommon->shader_manager(), mUiCommon->scene_panel(), mRenderCommon->canvas(), mUiCommon->toolbox(), mUiCommon->status_bar(), mUiCommon->animation_panel(), *mCameraManager, applicationClickCallbackRegistrator);
+	mUiManager = std::make_unique<UiManager>(mUiCommon->hierarchy_panel(), mUiCommon->hierarchy_panel(), *mActorManager, *mMeshActorLoader, mRenderCommon->shader_manager(), mUiCommon->scene_panel(), mRenderCommon->canvas(), mUiCommon->toolbox(), mUiCommon->status_bar(), mUiCommon->animation_panel(), *mCameraManager, *mDeepMotionApiClient, applicationClickCallbackRegistrator);
 	
     std::vector<std::reference_wrapper<Actor>> actors;
 

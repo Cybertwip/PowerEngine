@@ -178,6 +178,7 @@ class ActorManager;
 class Batch;
 class Canvas;
 class CameraManager;
+class DeepMotionApiClient;
 class GizmoManager;
 class MeshActor;
 class MeshActorLoader;
@@ -213,6 +214,7 @@ class Application : public nanogui::DraggableScreen
 	std::unique_ptr<ActorManager> mActorManager;
 	std::unique_ptr<RenderCommon> mRenderCommon;
 	std::unique_ptr<MeshActorLoader> mMeshActorLoader;
+	std::unique_ptr<DeepMotionApiClient> mDeepMotionApiClient;
     std::unique_ptr<UiCommon> mUiCommon;
 	std::unique_ptr<UiManager> mUiManager;
 	
