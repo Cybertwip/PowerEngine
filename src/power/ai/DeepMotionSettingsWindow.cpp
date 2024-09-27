@@ -148,7 +148,7 @@ data_saved_(false)
 	
 	// Sync Button
 	auto sync_button = new nanogui::Button(this, "Sync");
-	sync_button->set_fixed_size(nanogui::Vector2i(96, 96));
+	sync_button->set_fixed_size(nanogui::Vector2i(96, 48));
 	sync_button->set_callback([this]() {
 		this->on_sync();
 	});
@@ -168,7 +168,7 @@ data_saved_(false)
 	
 	// Status Label
 	status_label_ = new nanogui::Label(status_panel, "", "sans");
-	status_label_->set_fixed_size(nanogui::Vector2i(350, 20));
+	status_label_->set_fixed_size(nanogui::Vector2i(175, 20));
 	status_label_->set_color(nanogui::Color(255, 255, 255, 255)); // White color
 	
 	
@@ -190,7 +190,7 @@ data_saved_(false)
 	
 	imageView->set_visible(true);
 	
-	imageView->image()->resize(nanogui::Vector2i(48, 48));
+	imageView->image()->resize(nanogui::Vector2i(96, 96));
 	
 	//	// Initially hide the window
 	//	set_visible(false);
