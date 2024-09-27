@@ -126,24 +126,6 @@ bool ImageView::mouse_drag_event(const Vector2i & /* p */, const Vector2i &rel,
     return true;
 }
 
-bool ImageView::scroll_event(const Vector2i &p, const Vector2f &rel) {
-    if (!m_enabled || !m_image)
-        return false;
-
-    Vector2f p1 = pos_to_pixel(p - m_pos);
-    m_scale += rel.y();
-
-    // Restrict scaling to a reasonable range
-    m_scale = std::max(
-        m_scale, std::min(0.f, std::log2(40.f / std::max(m_image->size().x(),
-                                                         m_image->size().y())) * 5.f));
-    m_scale = std::min(m_scale, 45.f);
-
-    Vector2f p2 = pos_to_pixel(p - m_pos);
-    m_offset += (p2 - p1) * scale();
-    return true;
-}
-
 void ImageView::draw(NVGcontext *ctx) {
     if (!m_enabled || !m_image)
         return;

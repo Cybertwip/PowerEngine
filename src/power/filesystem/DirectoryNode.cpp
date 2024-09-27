@@ -12,6 +12,8 @@ std::unique_ptr<DirectoryNode> DirectoryNode::create(const std::string& path) {
 	rootNode->FullPath = path;
 	rootNode->FileName = std::filesystem::path(path).filename().string();
 	
+	rootNode->IsDirectory = true;
+	
 	rootNode->refresh(); // Refresh the node to build its tree structure
 	
 	return std::move(rootNode);

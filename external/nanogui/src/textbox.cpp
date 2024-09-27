@@ -434,8 +434,15 @@ bool TextBox::keyboard_event(int key, int  scancode, int action, int modifiers) 
 			} else if (key == GLFW_KEY_BACKSPACE) {
 				if (!delete_selection()) {
 					if (m_cursor_pos > 0) {
-						m_value_temp.erase(m_value_temp.begin() + m_cursor_pos - 1);
-						m_cursor_pos--;
+						m_value_temp.erase(m_value_temp.begin() + m_cursor_pos - 1);{
+							m_cursor_pos--;
+
+							if (m_valid_format && m_callback){
+								m_callback(m_value_temp);
+							}
+
+							
+						}
 					}
 				}
 			} else if (key == GLFW_KEY_DELETE) {

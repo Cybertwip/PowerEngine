@@ -72,10 +72,11 @@ std::string base64_encode(const unsigned char* bytes_to_encode, size_t in_len) {
 
 DeepMotionSettingsWindow::DeepMotionSettingsWindow(nanogui::Widget* parent, std::function<void()> successCallback)
 : nanogui::Window(parent->screen()),
-is_visible_(false),
 data_saved_(false),
 mSuccessCallback(successCallback)
 {
+	set_visible(false);
+	set_modal(false);
 	// Window configuration to mimic ImGui flags
 	set_fixed_size(nanogui::Vector2i(400, 320));
 	set_layout(new nanogui::GroupLayout());
@@ -87,7 +88,6 @@ mSuccessCallback(successCallback)
 	close_button->set_callback([this]() {
 		this->set_visible(false);
 		this->set_modal(false);
-		is_visible_ = false;
 	});
 	
 	// Position the close button at the top-right corner
@@ -210,12 +210,6 @@ mSuccessCallback(successCallback)
 	
 }
 
-void DeepMotionSettingsWindow::toggle_visibility() {
-	set_visible(!is_visible_);
-	set_modal(!is_visible_);
-	is_visible_ = !is_visible_;
-}
-
 void DeepMotionSettingsWindow::on_sync() {
 	// Retrieve input values
 	std::string api_base_url = api_base_url_box_->value();
@@ -299,12 +293,15 @@ void DeepMotionSettingsWindow::on_sync() {
 				data_saved_ = true;
 			}
 			
-			set_visible(false);
-			set_modal(false);
-			
-			if(mSuccessCallback) {
-				mSuccessCallback();
+			if (visible()) {
+				set_visible(false);
+				set_modal(false);
+
+				if(mSuccessCallback) {
+					mSuccessCallback();
+				}
 			}
+			
 			
 		} else {
 			// Set-Cookie header missing

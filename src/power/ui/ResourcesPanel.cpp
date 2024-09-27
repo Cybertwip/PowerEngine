@@ -129,6 +129,14 @@ mSelectedButtonColor(nanogui::Color(0.5f, 0.5f, 0.8f, 1.0f))
 	mToolbar = new nanogui::Widget(this);
 	mToolbar->set_layout(new nanogui::BoxLayout(
 												nanogui::Orientation::Horizontal, nanogui::Alignment::Middle, 10, 10));
+	
+	mMeshPicker = new MeshPicker(parent.window(), mRootDirectoryNode, [this](const std::string& modelPath){
+		
+	});
+	
+	mMeshPicker->set_visible(false);
+	mMeshPicker->set_modal(false);
+
 	/* Create the DeepMotion Settings Window (initially hidden) */
 	auto deepmotion_settings = new DeepMotionSettingsWindow(parent.window(), [this](){
 		mMeshPicker->set_visible(true);
@@ -142,12 +150,6 @@ mSelectedButtonColor(nanogui::Color(0.5f, 0.5f, 0.8f, 1.0f))
 	mImportWindow->set_visible(false);
 	mImportWindow->set_modal(false);
 	
-	mMeshPicker = new MeshPicker(parent.window(), mRootDirectoryNode, [this](const std::string& modelPath){
-		
-	});
-	
-	mMeshPicker->set_visible(false);
-	mMeshPicker->set_modal(false);
 
 	
 	// Add the Add Asset button with a "+" icon
@@ -166,7 +168,9 @@ mSelectedButtonColor(nanogui::Color(0.5f, 0.5f, 0.8f, 1.0f))
 	
 	animationButton->set_callback([deepmotion_settings, this](){
 		//		if (deepmotion_settings->session_cookie().empty()) {
-		deepmotion_settings->toggle_visibility();
+		deepmotion_settings->set_visible(true);
+		deepmotion_settings->set_modal(true);
+
 		mAddButton->set_pushed(false);
 		mAddButton->popup()->set_visible(false);
 		//		}

@@ -53,4 +53,6 @@ private:
 	 * @param model_path Path of the selected model.
 	 */
 	void handle_double_click(const std::string& model_path);
+	
+	std::string mFilterValue;
 };

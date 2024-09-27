@@ -24,11 +24,6 @@ public:
 	 */
 	DeepMotionSettingsWindow(nanogui::Widget* parent, std::function<void()> successCallback);
 	
-	/**
-	 * @brief Toggles the visibility of the settings window.
-	 */
-	void toggle_visibility();
-	
 	std::string session_cookie() const {
 		return _session_cookie;
 	}
@@ -39,10 +34,7 @@ private:
 	nanogui::TextBox* client_id_box_;
 	nanogui::TextBox* client_secret_box_;
 	nanogui::Label* status_label_;
-	
-	// State Variables
-	bool is_visible_;
-	
+		
 	// HTTP Client
 	std::unique_ptr<httplib::SSLClient> _client;
 	std::string _session_cookie;

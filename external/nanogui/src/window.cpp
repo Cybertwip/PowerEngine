@@ -69,8 +69,6 @@ void Window::perform_layout(NVGcontext *ctx) {
 }
 
 void Window::set_modal(bool modal) {
-	if (m_modal == modal)
-		return;
 	m_modal = modal;
 	if (m_modal) {
 		center();
