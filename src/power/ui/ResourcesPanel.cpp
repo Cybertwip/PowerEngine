@@ -3,6 +3,7 @@
 #include "ai/DeepMotionSettingsWindow.hpp"
 #include "actors/IActorSelectedRegistry.hpp"
 #include "ui/ImportWindow.hpp"
+#include "ui/MeshPicker.hpp"
 
 #include "MeshActorLoader.hpp"
 #include "ShaderManager.hpp"
@@ -129,7 +130,10 @@ mSelectedButtonColor(nanogui::Color(0.5f, 0.5f, 0.8f, 1.0f))
 	mToolbar->set_layout(new nanogui::BoxLayout(
 												nanogui::Orientation::Horizontal, nanogui::Alignment::Middle, 10, 10));
 	/* Create the DeepMotion Settings Window (initially hidden) */
-	auto deepmotion_settings = new DeepMotionSettingsWindow(parent.window());
+	auto deepmotion_settings = new DeepMotionSettingsWindow(parent.window(), [this](){
+		mMeshPicker->set_visible(true);
+		mMeshPicker->set_modal(true);
+	});
 	deepmotion_settings->set_visible(false);
 	deepmotion_settings->set_modal(false);
 	
@@ -137,6 +141,14 @@ mSelectedButtonColor(nanogui::Color(0.5f, 0.5f, 0.8f, 1.0f))
 	
 	mImportWindow->set_visible(false);
 	mImportWindow->set_modal(false);
+	
+	mMeshPicker = new MeshPicker(parent.window(), mRootDirectoryNode, [](){
+		
+	});
+	
+	mMeshPicker->set_visible(false);
+	mMeshPicker->set_modal(false);
+
 	
 	// Add the Add Asset button with a "+" icon
 	mAddButton = new nanogui::PopupButton(mToolbar, "Add");

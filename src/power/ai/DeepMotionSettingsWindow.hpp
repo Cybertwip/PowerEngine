@@ -22,7 +22,7 @@ public:
 	 * @param parent Pointer to the parent widget.
 	 * @param api_base_url The base URL for the API endpoints.
 	 */
-	DeepMotionSettingsWindow(nanogui::Widget* parent);
+	DeepMotionSettingsWindow(nanogui::Widget* parent, std::function<void()> successCallback);
 	
 	/**
 	 * @brief Toggles the visibility of the settings window.
@@ -91,4 +91,6 @@ private:
 	int api_base_port_;
 	std::string client_id_;
 	std::string client_secret_;
+	
+	std::function<void()> mSuccessCallback;
 };

@@ -70,10 +70,11 @@ std::string base64_encode(const unsigned char* bytes_to_encode, size_t in_len) {
 	return ret;
 }
 
-DeepMotionSettingsWindow::DeepMotionSettingsWindow(nanogui::Widget* parent)
+DeepMotionSettingsWindow::DeepMotionSettingsWindow(nanogui::Widget* parent, std::function<void()> successCallback)
 : nanogui::Window(parent->screen()),
 is_visible_(false),
-data_saved_(false)
+data_saved_(false),
+mSuccessCallback(successCallback)
 {
 	// Window configuration to mimic ImGui flags
 	set_fixed_size(nanogui::Vector2i(400, 320));
@@ -296,6 +297,13 @@ void DeepMotionSettingsWindow::on_sync() {
 			if (!data_saved_) {
 				save_to_file("powerkey.dat", api_base_url, std::to_string(api_base_port), client_id, client_secret);
 				data_saved_ = true;
+			}
+			
+			set_visible(false);
+			set_modal(false);
+			
+			if(mSuccessCallback) {
+				mSuccessCallback();
 			}
 			
 		} else {

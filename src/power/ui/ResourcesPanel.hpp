@@ -13,6 +13,7 @@ class ImportWindow;
 class MeshActorImporter;
 class MeshActorLoader;
 class MeshActorBuilder;
+class MeshPicker;
 class SelfContainedMeshCanvas;
 class ShaderManager;
 class ShaderWrapper;
@@ -67,4 +68,5 @@ private:
 	nanogui::Color mSelectedButtonColor;
 			
 	ImportWindow* mImportWindow;
+	MeshPicker* mMeshPicker;
 };
