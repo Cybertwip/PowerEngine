@@ -502,32 +502,21 @@ void ResourcesPanel::import_assets() {
 
 void ResourcesPanel::export_assets() {
 	// Open a file dialog to select the destination directory
-	std::vector<std::string> file = nanogui::file_dialog(
-														 { {"", ""} }, true, false);
-	
-	if (file.empty()) {
+	std::vector<std::string> files = nanogui::file_dialog(
+														  { {"fbx", "All Files"} }, true, false);
+
+	if (files.empty()) {
 		return; // User canceled
 	}
 	
-	std::string destinationDir = file.front();
-	
-	// Logic to export assets
-	// For example, copy selected files to the destination directory
-	// Since we don't have selection logic, we'll export all files in the current directory
+	std::string destinationFile = files.front();
 	
 	try {
-		for (const auto& entry : fs::directory_iterator(mSelectedDirectoryPath)) {
-			fs::path source = entry.path();
-			fs::path destination = fs::path(destinationDir) / source.filename();
-			
-			// Copy files or directories
-			if (fs::is_regular_file(source)) {
-				fs::copy_file(source, destination, fs::copy_options::overwrite_existing);
-			} else if (fs::is_directory(source)) {
-				fs::copy(source, destination, fs::copy_options::overwrite_existing | fs::copy_options::recursive);
-			}
+		// Copy files or directories
+		if (fs::is_regular_file(destinationFile)) {
+			fs::copy_file(mSelectedNode->FullPath, destinationFile, fs::copy_options::overwrite_existing);
 		}
-		std::cout << "Assets exported to: " << destinationDir << std::endl;
+		std::cout << "Assets exported to: " << destinationFile << std::endl;
 	} catch (const fs::filesystem_error& e) {
 		std::cerr << "Error exporting assets: " << e.what() << std::endl;
 	}
