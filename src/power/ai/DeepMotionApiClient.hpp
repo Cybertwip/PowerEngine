@@ -90,7 +90,7 @@ public:
 	 * @return true If the upload was successful.
 	 * @return false If the upload failed.
 	 */
-	bool DeepMotionApiClient::upload_model(const std::vector<char>& model_data, const std::string& model_name, const std::string& model_ext);
+	bool upload_model(const std::vector<char>& model_data, const std::string& model_name, const std::string& model_ext);
 
 	/**
 	 * @brief Retrieves the session cookie after successful authentication.
