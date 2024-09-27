@@ -190,7 +190,7 @@ data_saved_(false)
 	
 	imageView->set_visible(true);
 	
-	imageView->image()->resize(nanogui::Vector2i(96, 96));
+	imageView->image()->resize(nanogui::Vector2i(48, 48));
 	
 	//	// Initially hide the window
 	//	set_visible(false);
