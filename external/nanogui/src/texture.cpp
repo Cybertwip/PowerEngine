@@ -67,11 +67,26 @@ m_mipmap_manual(false) {
 		uint8_t* raw_data = new uint8_t[size];
 		std::memcpy(raw_data, data, size);
 		
+		// Assume 4 channels (RGBA) as per original code
+		channels = 4;
+		
+		// Calculate the number of bytes per row
+		int bytes_per_pixel = 4; // Since channels = 4 (RGBA)
+		size_t row_size = raw_width * bytes_per_pixel;
+		
+		// Flip the raw data vertically
+		for(int y = 0; y < raw_height / 2; ++y) {
+			uint8_t* row_top = raw_data + y * row_size;
+			uint8_t* row_bottom = raw_data + (raw_height - y - 1) * row_size;
+			
+			// Swap the top and bottom rows
+			for(int x = 0; x < row_size; ++x) {
+				std::swap(row_top[x], row_bottom[x]);
+			}
+		}
+		
 		// Assign to shared_ptr with delete[] as the deleter
 		texture_data_holder = std::shared_ptr<uint8_t>(raw_data, [](uint8_t* p) { delete[] p; });
-		
-		// Since raw data is assumed to be RGBA, set channels accordingly
-		channels = 4;
 	}
 	
 	// Set pixel format based on the number of channels
