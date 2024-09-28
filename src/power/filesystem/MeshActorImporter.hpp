@@ -2,6 +2,7 @@
 
 #include "filesystem/CompressedSerialization.hpp"
 
+#include <filesystem>
 #include <memory>
 #include <string>
 #include <vector>
@@ -13,6 +14,13 @@ public:
 			std::unique_ptr<	CompressedSerialization::Serializer> mSerializer;
 			
 			void persist() {
+				
+				// Ensure destination path exists
+				std::filesystem::path destPath(mPrecomputedPath);
+				if (!std::filesystem::exists(mPrecomputedPath)) {
+					std::filesystem::create_directories(mPrecomputedPath);
+				}
+
 				mSerializer->save_to_file(mPrecomputedPath);
 			}
 			

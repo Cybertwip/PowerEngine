@@ -32,12 +32,12 @@ Actor& MeshActorBuilder::build_mesh(Actor& actor, const std::string& actorName, 
 	
 	// Add MetadataComponent to the actor
 	actor.add_component<MetadataComponent>(actor.identifier(), actorName);
-
+	
 	// Add ColorComponent
 	auto& colorComponent = actor.add_component<ColorComponent>(actor.get_component<MetadataComponent>());
-
+	
 	auto model = std::make_unique<SkinnedFbx>();
-
+	
 	
 	int32_t meshDataCount;
 	
@@ -93,13 +93,13 @@ Actor& MeshActorBuilder::build_skinned(Actor& actor, const std::string& actorNam
 	
 	// Add MetadataComponent to the actor
 	actor.add_component<MetadataComponent>(actor.identifier(), actorName);
-
+	
 	// Add ColorComponent
 	auto& colorComponent = actor.add_component<ColorComponent>(actor.get_component<MetadataComponent>());
-
+	
 	// Create a SkinnedFbx model for deserialization
-auto model = std::make_unique<SkinnedFbx>();
-
+	auto model = std::make_unique<SkinnedFbx>();
+	
 	int32_t meshDataCount;
 	if (!deserializer.read_int32(meshDataCount)) {
 		std::cerr << "Failed to read mesh data count" << "\n";
@@ -215,7 +215,7 @@ auto model = std::make_unique<SkinnedFbx>();
 }
 
 Actor& MeshActorBuilder::build(Actor& actor, const std::string& path, ShaderWrapper& meshShader, ShaderWrapper& skinnedShader) {
-		
+	
 	// Determine file type based on extension
 	std::filesystem::path filePath(path);
 	std::string extension = filePath.extension().string();
@@ -226,7 +226,7 @@ Actor& MeshActorBuilder::build(Actor& actor, const std::string& path, ShaderWrap
 		// Handle serialization path for classic .fbx files
 		// Add MetadataComponent to the actor
 		actor.add_component<MetadataComponent>(actor.identifier(), actorName);
-
+		
 		// Add ColorComponent
 		auto& colorComponent = actor.add_component<ColorComponent>(actor.get_component<MetadataComponent>());
 		
@@ -301,7 +301,7 @@ Actor& MeshActorBuilder::build(Actor& actor, const std::string& path, ShaderWrap
 			std::cerr << "Failed to load serialized file: " << path << "\n";
 			return actor;
 		}
-
+		
 		if (extension == ".psk") {
 			return build_skinned(actor, actorName, deserializer, meshShader, skinnedShader);
 		} else if (extension == ".pma") {

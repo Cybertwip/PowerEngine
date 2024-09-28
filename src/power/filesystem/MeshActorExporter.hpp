@@ -12,12 +12,14 @@
 #include <map>
 #include <cassert>
 
+class MeshDeserializer;
+
 class MeshActorExporter {
 public:
 	MeshActorExporter();
 	~MeshActorExporter();
 	
-	bool exportActor(const MeshActorImporter::CompressedMeshActor& actor, const std::string& exportPath);
+	bool exportActor(CompressedSerialization::Deserializer& actor, const std::string& sourcePath, const std::string& exportPath);
 	
 private:
 	// FBX Document
@@ -26,7 +28,8 @@ private:
 	// Internal Data
 	std::vector<std::unique_ptr<MeshData>> mMeshes;
 	std::unique_ptr<Skeleton> mSkeleton;
-		
+	std::unique_ptr<MeshDeserializer> mMeshDeserializer;
+	
 	// Helper Functions
 	void createMaterials(const std::vector<std::shared_ptr<SerializableMaterialProperties>>& materials, std::map<int, std::shared_ptr<sfbx::Material>>& materialMap);
 	void createMesh(MeshData& meshData, const std::map<int, std::shared_ptr<sfbx::Material>>& materialMap, std::shared_ptr<sfbx::Mesh> parentModel);

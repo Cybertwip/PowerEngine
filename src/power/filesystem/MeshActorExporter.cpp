@@ -1,10 +1,15 @@
 // MeshActorExporter.cpp
 
 #include "MeshActorExporter.hpp"
+#include "MeshDeserializer.hpp"
 #include "VectorConversion.hpp"
 #include <iostream>
 
-MeshActorExporter::MeshActorExporter() {
+MeshActorExporter::MeshActorExporter()
+{
+	
+	mMeshDeserializer = std::make_unique<MeshDeserializer>();
+
 	// Initialize the document (already done via constructor)
 }
 
@@ -12,31 +17,12 @@ MeshActorExporter::~MeshActorExporter() {
 	// Document will clean up automatically
 }
 
-bool MeshActorExporter::exportActor(const MeshActorImporter::CompressedMeshActor& actor, const std::string& exportPath) {
+bool MeshActorExporter::exportActor(CompressedSerialization::Deserializer& deserializer, const std::string& sourcePath, const std::string& exportPath) {
 	// Step 1: Deserialize or transfer data from CompressedMeshActor to internal structures
-	// Implement actual deserialization based on your serialization logic
-	
-	// Example Deserialization (Placeholder)
-	// You need to implement the deserialization functions based on your CompressedSerialization::Serializer
-	/*
-	 CompressedSerialization::Deserializer deserializer(*actor.mMesh.mSerializer);
-	 if (!deserializeMeshes(deserializer)) {
-	 std::cerr << "Error: Failed to deserialize meshes." << std::endl;
-	 return false;
-	 }
-	 
-	 if (!deserializeSkeleton(deserializer)) {
-	 std::cerr << "Error: Failed to deserialize skeleton." << std::endl;
-	 return false;
-	 }
-	 */
-	
-	// For demonstration purposes, let's assume you have functions to deserialize
-	// These functions need to be implemented based on your CompressedSerialization::Serializer
-	
-	// TODO: Implement deserialization from actor to mMeshes and mSkeleton
-	// Example:
-	// mMeshes = actor.getMeshes();
+	mMeshDeserializer->load_mesh(deserializer, sourcePath);
+	// Retrieve the deserialized meshes
+	mMeshes = std::move(mMeshDeserializer->get_meshes());
+
 	// mSkeleton = actor.getSkeleton();
 	
 	// Step 2: Create Materials

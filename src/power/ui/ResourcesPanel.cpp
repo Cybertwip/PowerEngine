@@ -522,11 +522,15 @@ void ResourcesPanel::export_assets() {
 		
 		try {
 			// Copy files or directories
+			CompressedSerialization::Deserializer deserializer;
 			
-			
-			auto compressedMeshData = std::move(mMeshActorImporter->process(mSelectedNode->FullPath, "."));
+			// Load the serialized file
+			if (!deserializer.load_from_file(mSelectedNode->FullPath)) {
+				std::cerr << "Failed to load serialized file: " << mSelectedNode->FullPath << "\n";
+				return;
+			}
 
-			mMeshActorExporter->exportActor(*compressedMeshData, destinationFile);
+			mMeshActorExporter->exportActor(deserializer, mSelectedNode->FullPath, destinationFile);
 
 			std::cout << "Assets exported to: " << destinationFile << std::endl;
 		} catch (const fs::filesystem_error& e) {

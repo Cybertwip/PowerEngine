@@ -39,9 +39,6 @@ std::unique_ptr<MeshActorImporter::CompressedMeshActor> MeshActorImporter::proce
 
 	// Ensure destination path exists
 	std::filesystem::path destPath(destination);
-	if (!std::filesystem::exists(destPath)) {
-		std::filesystem::create_directories(destPath);
-	}
 
 	if (model->GetSkeleton() != nullptr) {
 		
