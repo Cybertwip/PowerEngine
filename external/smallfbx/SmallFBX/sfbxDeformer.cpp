@@ -428,7 +428,7 @@ void BindPose::importFBXObjects()
     for (auto n : getNode()->getChildren()) {
         if (n->getName() == sfbxS_PoseNode) {
             auto nid = GetChildPropertyValue<int64>(n, sfbxS_Node);
-            auto model = as<Model>(m_document->findObject(nid));
+            auto model = as<Model>(document()->findObject(nid));
             if (model) {
                 float4x4 mat;
                 GetChildPropertyValue<double4x4>(mat, n, sfbxS_Matrix);

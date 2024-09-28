@@ -370,23 +370,6 @@ void GeomMesh::exportFBXObjects()
 	exportLayers();
 }
 
-
-void GeomMesh::exportGeometryData()
-{
-	// Export vertices (control points)
-	if (!m_points.empty()) {
-		m_node->createChild(sfbxS_Vertices)->addProperties(m_points);
-	}
-	
-	// Export polygon vertex indices
-	if (!m_indices.empty()) {
-		m_node->createChild(sfbxS_PolygonVertexIndex)->addProperties(m_indices);
-	}
-	
-	// Export layers (normals, UVs, colors, materials)
-	exportLayers();
-}
-
 void GeomMesh::exportLayers()
 {
 	// Export normal layers

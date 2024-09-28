@@ -86,7 +86,6 @@ bool SplitFullName(string_view full_name, string_view& display_name, string_view
 class Object : public std::enable_shared_from_this<Object>
 {
 	friend class Document;
-	friend class Texture;
 public:
     virtual ~Object();
     virtual ObjectClass getClass() const;
@@ -113,11 +112,15 @@ public:
     void setName(string_view v);
     void setNode(Node* v);
 
-	
-	const Document& document() const {
-		return *m_document;
+	Document* document() const {
+		return m_document;
 	}
 	
+	void setDocument(Document* document) {
+		m_document = document;
+	}
+	
+	virtual void importFBXObjects();
 	virtual void exportFBXObjects();
 	virtual void exportFBXConnections();
 
@@ -126,11 +129,9 @@ protected:
     Object(const Object&) = delete;
     Object& operator=(const Object) = delete;
 
-    virtual void importFBXObjects();
     virtual void addParent(ObjectPtr v);
     virtual void eraseParent(ObjectPtr v);
 
-    Document* m_document{};
     Node* m_node{};
     int64 m_id{};
     std::string m_name;
@@ -138,6 +139,9 @@ protected:
     std::vector<ObjectPtr> m_parents;
     std::vector<ObjectPtr> m_children;
     std::vector<std::string> m_child_property_names;
+	
+private:
+	Document* m_document{};
 };
 
 

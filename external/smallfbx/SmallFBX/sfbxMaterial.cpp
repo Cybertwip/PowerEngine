@@ -129,7 +129,7 @@ void Video::importFBXObjects()
 	
 	if (!m_embedded) {
 		// Open the file in binary mode
-		std::filesystem::path base = std::filesystem::path(m_document->global_settings.path).parent_path().make_preferred();
+		std::filesystem::path base = std::filesystem::path(document()->global_settings.path).parent_path().make_preferred();
 		std::filesystem::path relative = std::filesystem::path(m_filename).make_preferred();
 		// Resolve the relative path based on the base path
 		std::filesystem::path absolutePath = std::filesystem::absolute(base / relative);
@@ -217,7 +217,7 @@ void Texture::importFBXObjects()
 	super::importFBXObjects();
 	// Process the connections to find the associated Video
 	Video* video = nullptr;
-	for (const auto& con : m_document->getConnections()) {
+	for (const auto& con : document()->getConnections()) {
 		if (con.dest == shared_from_this()) {
 			if (con.type == Connection::Type::OO) {
 				if (auto vid = sfbx::as<Video>(con.src)) {
@@ -288,14 +288,14 @@ void Texture::exportFBXConnections()
 	// Ignore super::constructLinks()
 	
 	// Create OO connection to Video if exists
-	for (const auto& con : m_document->getConnections()) {
+	for (const auto& con : document()->getConnections()) {
 		if (con.src == shared_from_this() && sfbx::as<Video>(con.dest)) {
-			m_document->createLinkOO(shared_from_this(), con.dest);
+			document()->createLinkOO(shared_from_this(), con.dest);
 		}
 	}
 	
 	for (auto& parent : getParents()) {
-		m_document->createLinkOO(shared_from_this(), parent);
+		document()->createLinkOO(shared_from_this(), parent);
 	}
 }
 
@@ -407,7 +407,7 @@ void Material::importFBXObjects()
 	}
 	
 	// Process connections to get textures
-	for (const auto& con : m_document->getConnections()) {
+	for (const auto& con : document()->getConnections()) {
 		if (con.dest == shared_from_this()) {
 			if (con.type == Connection::Type::OP) {
 				if (auto texture = sfbx::as<Texture>(con.src)) {
@@ -433,11 +433,11 @@ void Material::exportFBXObjects()
 void Material::exportFBXConnections()
 {
 	for (auto& parent : getParents()) {
-		m_document->createLinkOO(shared_from_this(), parent);
+		document()->createLinkOO(shared_from_this(), parent);
 	}
 	
 	for (const auto& texPair : m_textures) {
-		m_document->createLinkOP(texPair.second, shared_from_this(), texPair.first);
+		document()->createLinkOP(texPair.second, shared_from_this(), texPair.first);
 	}
 }
 

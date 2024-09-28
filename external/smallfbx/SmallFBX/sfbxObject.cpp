@@ -202,6 +202,7 @@ void Object::addChild(ObjectPtr v)
         m_children.push_back(v);
         m_child_property_names.emplace_back();
         v->addParent(shared_from_this());
+		v->m_document = m_document;
     }
 }
 void Object::addChild(ObjectPtr v, string_view p)

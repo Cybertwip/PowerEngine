@@ -73,17 +73,17 @@ void Fbx::ProcessMesh(const std::shared_ptr<sfbx::Mesh>& mesh) {
 	}
 	
 	// Retrieve the absolute path of the mesh document
-	auto path = std::filesystem::absolute(mesh->document().global_settings.path).string();
+	auto path = std::filesystem::absolute(mesh->document()->global_settings.path).string();
 	
 	// Create a new MeshData instance and add it to mMeshes
 	auto& resultMesh = mMeshes.emplace_back(std::make_unique<MeshData>());
 	
 	// Precompute transformation matrices
 	const glm::mat4 rotationMatrix = FbxUtil::GetUpAxisRotation(
-																mesh->document().global_settings.up_axis,
-																mesh->document().global_settings.up_axis_sign
+																mesh->document()->global_settings.up_axis,
+																mesh->document()->global_settings.up_axis_sign
 																);
-	const float scaleFactor = static_cast<float>(mesh->document().global_settings.unit_scale);
+	const float scaleFactor = static_cast<float>(mesh->document()->global_settings.unit_scale);
 	const glm::mat4 scaleMatrix = glm::scale(glm::mat4(1.0f), glm::vec3(scaleFactor));
 	const glm::mat4 transformMatrix = rotationMatrix * scaleMatrix;
 	

@@ -183,7 +183,6 @@ public:
 protected:
 	void importFBXObjects() override;
 	
-	void exportGeometryData();
 	void exportLayers();
 	
 	template<typename LayerType>

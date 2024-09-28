@@ -82,13 +82,14 @@ void Mesh::exportFBXObjects()
 	
 	// Export geometry
 	if (m_geom) {
-		m_document->createLinkOO(m_geom, shared_from_this(), sfbxS_Geometry);
+		m_geom->exportFBXObjects();
+		document()->createLinkOO(m_geom, shared_from_this(), sfbxS_Geometry);
 	}
 	
 	// Export materials and create connections
 	for (auto& material : m_materials) {
 		material->exportFBXObjects();
-		m_document->createLinkOO(material, shared_from_this(), sfbxS_Material);
+		document()->createLinkOO(material, shared_from_this(), sfbxS_Material);
 	}
 }
 
@@ -97,7 +98,7 @@ void Model::exportFBXObjects()
 	if (m_node)
 		return; // Already exported
 	
-	Node* objects = m_document->findNode(sfbxS_Objects);
+	Node* objects = document()->findNode(sfbxS_Objects);
 	if (!objects)
 		return;
 	
@@ -118,7 +119,7 @@ void Model::exportFBXObjects()
 	// Export attached node attribute
 	if (m_attr) {
 		m_attr->exportFBXObjects();
-		m_document->createLinkOO(m_attr, shared_from_this(), sfbxS_NodeAttribute);
+		document()->createLinkOO(m_attr, shared_from_this(), sfbxS_NodeAttribute);
 	}
 	
 	// Export child models
@@ -292,8 +293,8 @@ void Root::exportFBXObjects()
 	
 	// Create a RootAttribute if it doesn't exist
 	if (!m_attr) {
-		m_attr = m_document->createObject<RootAttribute>();
-		m_document->createLinkOO(m_attr, shared_from_this());
+		m_attr = document()->createObject<RootAttribute>();
+		document()->createLinkOO(m_attr, shared_from_this());
 	}
 }
 
@@ -394,9 +395,12 @@ void Mesh::setGeometry(std::shared_ptr<GeomMesh> geom)
 {
 	if (m_geom != geom) {
 		m_geom = geom;
+		
+		m_geom->setDocument(document());
+		
 		// Establish the connection
-		if (m_document) {
-			m_document->createLinkOP(m_geom, shared_from_this(), sfbxS_Geometry);
+		if (document()) {
+			document()->createLinkOP(m_geom, shared_from_this(), sfbxS_Geometry);
 		}
 	}
 }

@@ -373,14 +373,14 @@ void AnimationCurveNode::exportFBXConnections()
 	// ignore super::constructLinks()
 	for(auto& parent : getParents()){
 		if(auto layer = sfbx::as<sfbx::AnimationLayer>(parent)){
-			m_document->createLinkOO(shared_from_this(), layer);
+			document()->createLinkOO(shared_from_this(), layer);
 		}
 	}
 	if (auto* info = FindAnimationKindInfo(m_kind)) {
 		if (auto target = getAnimationTarget())
-			m_document->createLinkOP(shared_from_this(), target, info->link_name);
+			document()->createLinkOP(shared_from_this(), target, info->link_name);
 		for (auto curve : m_curves)
-			m_document->createLinkOP(curve, shared_from_this(), curve->m_link_name);
+			document()->createLinkOP(curve, shared_from_this(), curve->m_link_name);
 	}
 }
 
@@ -561,7 +561,7 @@ void AnimationCurveNode::setup(AnimationKind kind, ObjectPtr target, bool create
 
     if (create_curves) {
         for (auto& link_name : acd->curve_names) {
-            auto curve = m_document->createObject<AnimationCurve>();
+            auto curve = document()->createObject<AnimationCurve>();
             addChild(curve, link_name);
         }
     }
@@ -612,9 +612,9 @@ void AnimationCurveNode::unlink()
     while (!m_curves.empty()) {
         auto c = m_curves.back();
         eraseChild(c);
-        m_document->eraseObject(c);
+        document()->eraseObject(c);
     }
-    m_document->eraseObject(shared_from_this());
+	document()->eraseObject(shared_from_this());
 }
 
 ObjectClass AnimationCurve::getClass() const { return ObjectClass::AnimationCurve; }

@@ -50,7 +50,7 @@ void Document::initialize()
 	m_root_model->setID(0);
 	
 	// Set the FBX version to 7500
-	//m_version = FileVersion::Fbx7500; // Assuming FileVersion::Fbx7500 == 7500
+	m_version = FileVersion::Fbx2016; // Assuming FileVersion::Fbx7500 == 7500
 
 }
 bool Document::readAscii(std::istream& is)
@@ -539,6 +539,9 @@ ObjectPtr Document::createObject(ObjectClass c, ObjectSubClass s)
     else {
         sfbxPrint("sfbx::Document::createObject(): unrecongnized type \"%s\"\n", GetObjectClassName(c).data());
     }
+	
+	pointer->m_document = this;
+	
     return pointer;
 }
 
@@ -643,7 +646,6 @@ bool Document::mergeAnimations(const std::string& path)
     return mergeAnimations(MakeDocument(path));
 }
 
-
 void Document::exportFBXNodes()
 {
 	m_nodes.clear();
@@ -653,6 +655,7 @@ void Document::exportFBXNodes()
 	std::tm* now = std::localtime(&t);
 	std::string take_name{ m_current_take ? m_current_take->getName() : "" };
 	
+	// Create the FBXHeaderExtension node
 	auto header_extension = createNode(sfbxS_FBXHeaderExtension);
 	{
 		header_extension->createChild(sfbxS_FBXHeaderVersion, (int32_t)1003);
@@ -661,7 +664,6 @@ void Document::exportFBXNodes()
 		{
 			auto timestamp = header_extension->createChild(sfbxS_CreationTimeStamp);
 			timestamp->createChild(sfbxS_Version, 1000);
-			// Correct the year and month
 			timestamp->createChild(sfbxS_Year, now->tm_year + 1900);
 			timestamp->createChild(sfbxS_Month, now->tm_mon + 1);
 			timestamp->createChild(sfbxS_Day, now->tm_mday);
@@ -670,7 +672,6 @@ void Document::exportFBXNodes()
 			timestamp->createChild(sfbxS_Second, now->tm_sec);
 			timestamp->createChild(sfbxS_Millisecond, 0);
 		}
-		// Change the Creator string
 		header_extension->createChild(sfbxS_Creator, "Power Engine Alpha 1.0");
 		{
 			auto other_flags = header_extension->createChild(sfbxS_OtherFlags);
@@ -711,15 +712,15 @@ void Document::exportFBXNodes()
 	
 	createNode(sfbxS_FileId)->addProperties(make_span(g_fbx_file_id));
 	createNode(sfbxS_CreationTime)->addProperties(g_fbx_time_id);
-	// Change the Creator string
-	createNode(sfbxS_Creator)->addProperties("Open Asset Import Library (Assimp) 5.4.0");
+	createNode(sfbxS_Creator)->addProperties("Power Engine Alpha 1.0");
 	
+	// Create the GlobalSettings node
 	auto global_settings = createNode(sfbxS_GlobalSettings);
 	{
 		global_settings->createChild(sfbxS_Version, sfbxI_GlobalSettingsVersion);
 		auto prop = global_settings->createChild(sfbxS_Properties70);
 		
-		// Set UpAxis to 2
+		// Set up global properties
 		prop->createChild(sfbxS_P, sfbxS_UpAxis, sfbxS_int, sfbxS_Integer, "", 2);
 		prop->createChild(sfbxS_P, sfbxS_UpAxisSign, sfbxS_int, sfbxS_Integer, "", 1);
 		prop->createChild(sfbxS_P, sfbxS_FrontAxis, sfbxS_int, sfbxS_Integer, "", 0);
@@ -730,7 +731,7 @@ void Document::exportFBXNodes()
 		prop->createChild(sfbxS_P, sfbxS_OriginalUpAxisSign, sfbxS_int, sfbxS_Integer, "", 1);
 		prop->createChild(sfbxS_P, sfbxS_UnitScaleFactor, sfbxS_double, sfbxS_Number, "", this->global_settings.unit_scale);
 		prop->createChild(sfbxS_P, sfbxS_OriginalUnitScaleFactor, sfbxS_double, sfbxS_Number, "", this->global_settings.original_unit_scale);
-		prop->createChild(sfbxS_P, sfbxS_AmbientColor, sfbxS_ColorRGB sfbxS_ColorRGB, sfbxS_Color, "", 0.0, 0.0, 0.0);
+		prop->createChild(sfbxS_P, sfbxS_AmbientColor, sfbxS_ColorRGB, sfbxS_Color, "", 0.0, 0.0, 0.0);
 		prop->createChild(sfbxS_P, sfbxS_DefaultCamera, sfbxS_KString, "", "", this->global_settings.camera);
 		prop->createChild(sfbxS_P, sfbxS_TimeMode, sfbxS_enum, "", "", 0);
 		prop->createChild(sfbxS_P, sfbxS_TimeProtocol, sfbxS_enum, "", "", 2);
@@ -741,81 +742,144 @@ void Document::exportFBXNodes()
 		prop->createChild(sfbxS_P, sfbxS_TimeMarker, sfbxS_Compound, "", "");
 		prop->createChild(sfbxS_P, sfbxS_CurrentTimeMarker, sfbxS_int, sfbxS_Integer, "", -1);
 	}
-
 	
-    auto documents = createNode(sfbxS_Documents);
-    {
-        documents->createChild(sfbxS_Count, (int32)1);
-        auto doc = documents->createChild(sfbxS_Document);
-        {
-            doc->addProperties((int64)this, "My Scene", "Scene");
-
-            auto prop = doc->createChild(sfbxS_Properties70);
-            prop->createChild(sfbxS_P, sfbxS_SourceObject, sfbxS_object, "", "");
-            prop->createChild(sfbxS_P, sfbxS_ActiveAnimStackName, sfbxS_KString, "", "", take_name);
-
-            doc->createChild(sfbxS_RootNode, 0);
-        }
-    }
-
-    auto references = createNode(sfbxS_References);
-
-    auto definitions = createNode(sfbxS_Definitions);
-
-    createNode(sfbxS_Objects);
-    createNode(sfbxS_Connections);
-
-    // index based loop because m_objects maybe push_backed in the loop
-    for (size_t i = 0; i < m_objects.size(); ++i)
-        m_objects[i]->exportFBXObjects();
-    for (size_t i = 0; i < m_objects.size(); ++i)
-        m_objects[i]->exportFBXConnections();
-
-    {
-        auto add_object_type = [definitions](size_t n, const char* type) -> Node* {
-            if (n == 0)
-                return nullptr;
-            auto ot = definitions->createChild(sfbxS_ObjectType);
-            ot->addProperty(type);
-            ot->createChild(sfbxS_Count, (int32)n);
-            return ot;
-        };
-
-        add_object_type(1, sfbxS_GlobalSettings);
-
-        add_object_type(countObjects<NodeAttribute>(), sfbxS_NodeAttribute);
-        add_object_type(countObjects<Model>(), sfbxS_Model);
-        add_object_type(countObjects<Geometry>(), sfbxS_Geometry);
-        add_object_type(countObjects<Deformer>(), sfbxS_Deformer);
-        add_object_type(countObjects<Pose>(), sfbxS_Pose);
-
-        add_object_type(countObjects<AnimationStack>(), sfbxS_AnimationStack);
-        add_object_type(countObjects<AnimationLayer>(), sfbxS_AnimationLayer);
-        add_object_type(countObjects<AnimationCurveNode>(), sfbxS_AnimationCurveNode);
-        add_object_type(countObjects<AnimationCurve>(), sfbxS_AnimationCurve);
-
-        add_object_type(countObjects<Material>(), sfbxS_Material);
-		add_object_type(countObjects<Video>(), sfbxS_Video);
-		add_object_type(countObjects<Texture>(), sfbxS_Texture);
-    }
-
-    auto takes = createNode(sfbxS_Takes);
-    takes->createChild(sfbxS_Current, take_name);
-    for (auto t : m_anim_stacks) {
-        auto take = takes->createChild(sfbxS_Take, t->getName());
-        take->createChild(sfbxS_FileName, std::string(t->getName()) + ".tak");
-
-        float lstart = t->getLocalStart();
-        float lstop = t->getLocalStop();
-        float rstart = t->getReferenceStart();
-        float rstop = t->getReferenceStop();
-        if (lstart != 0.0f || lstop != 0.0f)
-            take->createChild(sfbxS_LocalTime, ToTicks(lstart), ToTicks(lstop));
-        if (rstart != 0.0f || rstop != 0.0f)
-            take->createChild(sfbxS_ReferenceTime, ToTicks(rstart), ToTicks(rstop));
-    }
+	// Create the Documents node
+	auto documents = createNode(sfbxS_Documents);
+	{
+		documents->createChild(sfbxS_Count, (int32)1);
+		auto doc = documents->createChild(sfbxS_Document, (int64)this, "My Scene", "Scene");
+		{
+			auto prop = doc->createChild(sfbxS_Properties70);
+			prop->createChild(sfbxS_P, sfbxS_SourceObject, sfbxS_object, "", "");
+			prop->createChild(sfbxS_P, sfbxS_ActiveAnimStackName, sfbxS_KString, "", "", take_name);
+			
+			doc->createChild(sfbxS_RootNode, 0);
+		}
+	}
+	
+	auto references = createNode(sfbxS_References);
+	
+	// Create the Definitions node
+	auto definitions = createNode(sfbxS_Definitions);
+	
+	// Include PropertyTemplate blocks
+	{
+		auto add_object_type = [definitions](size_t n, const char* type, const char* templateName = nullptr, std::function<void(Node*)> addProperties = nullptr) -> Node* {
+			if (n == 0)
+				return nullptr;
+			auto ot = definitions->createChild(sfbxS_ObjectType, type);
+			ot->createChild(sfbxS_Count, (int32)n);
+			
+			// Add PropertyTemplate if templateName is provided
+			if (templateName) {
+				auto prop_template = ot->createChild("PropertyTemplate", templateName);
+				auto props = prop_template->createChild(sfbxS_Properties70);
+				if (addProperties)
+					addProperties(props);
+			}
+			
+			return ot;
+		};
+		
+		// GlobalSettings do not need PropertyTemplate
+		add_object_type(1, sfbxS_GlobalSettings);
+		
+		// NodeAttribute with FbxSkeleton PropertyTemplate
+		add_object_type(countObjects<NodeAttribute>(), sfbxS_NodeAttribute, "FbxSkeleton", [](Node* props) {
+			props->createChild(sfbxS_P, sfbxS_Color, sfbxS_ColorRGB, sfbxS_Color, "", 0.8, 0.8, 0.8);
+			props->createChild(sfbxS_P, "Size", sfbxS_double, sfbxS_Number, "", 33.3333);
+			props->createChild(sfbxS_P, "LimbLength", sfbxS_double, sfbxS_Number, "H", 1.0);
+		});
+		
+		// Model with FbxNode PropertyTemplate
+		add_object_type(countObjects<Model>(), sfbxS_Model, "FbxNode", [](Node* props) {
+			props->createChild(sfbxS_P, "QuaternionInterpolate", sfbxS_enum, "", "", 0);
+			props->createChild(sfbxS_P, "RotationOffset", sfbxS_Vector3D, sfbxS_Vector, "", 0.0, 0.0, 0.0);
+			props->createChild(sfbxS_P, "RotationPivot", sfbxS_Vector3D, sfbxS_Vector, "", 0.0, 0.0, 0.0);
+			props->createChild(sfbxS_P, "ScalingOffset", sfbxS_Vector3D, sfbxS_Vector, "", 0.0, 0.0, 0.0);
+			props->createChild(sfbxS_P, "ScalingPivot", sfbxS_Vector3D, sfbxS_Vector, "", 0.0, 0.0, 0.0);
+			props->createChild(sfbxS_P, "TranslationActive", sfbxS_bool, "", "", 0);
+			props->createChild(sfbxS_P, "TranslationMin", sfbxS_Vector3D, sfbxS_Vector, "", 0.0, 0.0, 0.0);
+			props->createChild(sfbxS_P, "TranslationMax", sfbxS_Vector3D, sfbxS_Vector, "", 0.0, 0.0, 0.0);
+			props->createChild(sfbxS_P, "TranslationMinX", sfbxS_bool, "", "", 0);
+			props->createChild(sfbxS_P, "TranslationMinY", sfbxS_bool, "", "", 0);
+			props->createChild(sfbxS_P, "TranslationMinZ", sfbxS_bool, "", "", 0);
+			props->createChild(sfbxS_P, "TranslationMaxX", sfbxS_bool, "", "", 0);
+			props->createChild(sfbxS_P, "TranslationMaxY", sfbxS_bool, "", "", 0);
+			props->createChild(sfbxS_P, "TranslationMaxZ", sfbxS_bool, "", "", 0);
+			// Continue adding properties as per the correct FBX file
+			props->createChild(sfbxS_P, sfbxS_LclTranslation, sfbxS_LclTranslation, "", "A", 0.0, 0.0, 0.0);
+			props->createChild(sfbxS_P, sfbxS_LclRotation, sfbxS_LclRotation, "", "A", 0.0, 0.0, 0.0);
+			props->createChild(sfbxS_P, sfbxS_LclScale, sfbxS_LclScale, "", "A", 1.0, 1.0, 1.0);
+			props->createChild(sfbxS_P, sfbxS_Visibility, sfbxS_Visibility, "", "A", 1.0);
+			props->createChild(sfbxS_P, "Visibility Inheritance", "Visibility Inheritance", "", "", 1);
+		});
+		
+		// Geometry with FbxMesh PropertyTemplate
+		add_object_type(countObjects<Geometry>(), sfbxS_Geometry, "FbxMesh", [](Node* props) {
+			props->createChild(sfbxS_P, sfbxS_Color, sfbxS_ColorRGB, sfbxS_Color, "", 0.0, 0.0, 0.0);
+			props->createChild(sfbxS_P, "BBoxMin", sfbxS_Vector3D, sfbxS_Vector, "", 0.0, 0.0, 0.0);
+			props->createChild(sfbxS_P, "BBoxMax", sfbxS_Vector3D, sfbxS_Vector, "", 0.0, 0.0, 0.0);
+			props->createChild(sfbxS_P, "Primary Visibility", sfbxS_bool, "", "", 1);
+			props->createChild(sfbxS_P, "Casts Shadows", sfbxS_bool, "", "", 1);
+			props->createChild(sfbxS_P, "Receive Shadows", sfbxS_bool, "", "", 1);
+		});
+		
+		// Material with FbxSurfacePhong PropertyTemplate
+		add_object_type(countObjects<Material>(), sfbxS_Material, "FbxSurfacePhong", [](Node* props) {
+			props->createChild(sfbxS_P, "ShadingModel", sfbxS_KString, "", "", "Phong");
+			props->createChild(sfbxS_P, "MultiLayer", sfbxS_bool, "", "", 0);
+			props->createChild(sfbxS_P, "EmissiveColor", sfbxS_Color, "", "A", 0.0, 0.0, 0.0);
+			props->createChild(sfbxS_P, "EmissiveFactor", sfbxS_Number, "", "A", 1.0);
+			props->createChild(sfbxS_P, "AmbientColor", sfbxS_Color, "", "A", 0.2, 0.2, 0.2);
+			props->createChild(sfbxS_P, "AmbientFactor", sfbxS_Number, "", "A", 1.0);
+			props->createChild(sfbxS_P, "DiffuseColor", sfbxS_Color, "", "A", 0.8, 0.8, 0.8);
+			props->createChild(sfbxS_P, "DiffuseFactor", sfbxS_Number, "", "A", 1.0);
+			// Continue adding properties as per the correct FBX file
+			props->createChild(sfbxS_P, "SpecularColor", sfbxS_Color, "", "A", 0.2, 0.2, 0.2);
+			props->createChild(sfbxS_P, "SpecularFactor", sfbxS_Number, "", "A", 1.0);
+			props->createChild(sfbxS_P, "ShininessExponent", sfbxS_Number, "", "A", 20.0);
+			props->createChild(sfbxS_P, "ReflectionColor", sfbxS_Color, "", "A", 0.0, 0.0, 0.0);
+			props->createChild(sfbxS_P, "ReflectionFactor", sfbxS_Number, "", "A", 1.0);
+		});
+		
+		// If you have Lights
+		add_object_type(countObjects<Light>(), sfbxS_Light, "FbxLight", [](Node* props) {
+			props->createChild(sfbxS_P, sfbxS_Color, sfbxS_ColorRGB, sfbxS_Color, "", 1.0, 1.0, 1.0);
+			props->createChild(sfbxS_P, sfbxS_Intensity, sfbxS_Number, "", "A", 100.0);
+			// Add other properties as needed
+		});
+		
+		// Add other object types and their PropertyTemplates as needed
+		// For example, for Textures, Cameras, etc.
+	}
+	
+	createNode(sfbxS_Objects);
+	createNode(sfbxS_Connections);
+	
+	// Export objects and connections
+	for (size_t i = 0; i < m_objects.size(); ++i)
+		m_objects[i]->exportFBXObjects();
+	for (size_t i = 0; i < m_objects.size(); ++i)
+		m_objects[i]->exportFBXConnections();
+	
+	// Create the Takes node
+	auto takes = createNode(sfbxS_Takes);
+	takes->createChild(sfbxS_Current, take_name);
+	for (auto t : m_anim_stacks) {
+		auto take = takes->createChild(sfbxS_Take, t->getName());
+		take->createChild(sfbxS_FileName, std::string(t->getName()) + ".tak");
+		
+		float lstart = t->getLocalStart();
+		float lstop = t->getLocalStop();
+		float rstart = t->getReferenceStart();
+		float rstop = t->getReferenceStop();
+		if (lstart != 0.0f || lstop != 0.0f)
+			take->createChild(sfbxS_LocalTime, ToTicks(lstart), ToTicks(lstop));
+		if (rstart != 0.0f || rstop != 0.0f)
+			take->createChild(sfbxS_ReferenceTime, ToTicks(rstart), ToTicks(rstop));
+	}
 }
-
 
 template<class T>  std::shared_ptr<T>  Object::createChild(string_view name)
 {

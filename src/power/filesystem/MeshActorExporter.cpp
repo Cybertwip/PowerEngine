@@ -40,11 +40,19 @@ bool MeshActorExporter::exportActor(CompressedSerialization::Deserializer& deser
 		createMaterials(serializableMaterials, materialMap); // Assuming all meshes share the same materials
 	}
 	
+	
+	auto rootModel = mDocument.getRootModel();
+
 	// Step 3: Create Meshes and Models
 	// After creating the mesh
 	for (size_t i = 0; i < mMeshes.size(); ++i) {
 		auto& meshData = *mMeshes[i];
-		std::shared_ptr<sfbx::Mesh> meshModel = mDocument.createObject<sfbx::Mesh>("Mesh_" + std::to_string(i));
+		
+		std::shared_ptr<sfbx::Mesh> meshModel = std::make_shared<sfbx::Mesh>();
+		
+		meshModel->setName("Mesh_" + std::to_string(i));
+		
+		
 		assert(meshModel != nullptr);
 		createMesh(meshData, materialMap, meshModel);
 		
@@ -55,6 +63,8 @@ bool MeshActorExporter::exportActor(CompressedSerialization::Deserializer& deser
 		meshModel->setPosition({0.0f, 0.0f, 0.0f});
 		meshModel->setRotation({0.0f, 0.0f, 0.0f});
 		meshModel->setScale({1.0f, 1.0f, 1.0f});
+		
+		rootModel->addChild(meshModel);
 	}
 
 	// Step 5: Skip Animations as per user request
@@ -64,7 +74,7 @@ bool MeshActorExporter::exportActor(CompressedSerialization::Deserializer& deser
 	
 	mDocument.getConnections();
 
-	if (!mDocument.writeBinary(exportPath)) {
+	if (!mDocument.writeAscii(exportPath)) {
 		std::cerr << "Error: Failed to write FBX file to " << exportPath << std::endl;
 		return false;
 	}
@@ -109,7 +119,11 @@ void MeshActorExporter::createMesh(
 								   std::shared_ptr<sfbx::Mesh> parentModel
 								   ) {
 	auto geometryName = "Geometry_" + std::string{ parentModel->getName() };
-	std::shared_ptr<sfbx::GeomMesh> geometry = mDocument.createObject<sfbx::GeomMesh>(geometryName);
+	std::shared_ptr<sfbx::GeomMesh> geometry = std::make_shared<sfbx::GeomMesh>();
+	
+	geometry->setName(geometryName);
+	
+	parentModel->addChild(geometry);
 	assert(geometry != nullptr);
 	
 	// Set control points (vertices)
