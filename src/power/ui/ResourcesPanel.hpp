@@ -12,6 +12,7 @@ class IActorVisualManager;
 class DeepMotionApiClient;
 class ImportWindow;
 class MeshActorImporter;
+class MeshActorExporter;
 class MeshActorLoader;
 class MeshActorBuilder;
 class MeshPicker;
@@ -32,7 +33,7 @@ public:
 	void refresh();
 	
 	virtual bool keyboard_event(int key, int scancode, int action, int modifiers) override;
-
+	
 private:
 	bool mouse_button_event(const nanogui::Vector2i &p, int button, bool down, int modifiers) override;
 	
@@ -46,7 +47,7 @@ private:
 	nanogui::PopupButton *mAddButton;
 	nanogui::Button *mImportButton;
 	nanogui::Button *mExportButton; // New Export button
-
+	
 	nanogui::TextBox *mFilterBox; // New filter input box
 	
 	// New member variable
@@ -56,18 +57,21 @@ private:
 	void import_assets();
 	void export_assets();
 	void navigate_up_to_cwd();
-
+	
 	IActorVisualManager& mActorVisualManager;
 	MeshActorLoader& mMeshActorLoader;
 	std::unique_ptr<ShaderWrapper> mMeshShader;
 	std::unique_ptr<ShaderWrapper> mSkinnedShader;
-
+	
 	std::vector<nanogui::Button*> mFileButtons;
 	nanogui::Button* mSelectedButton;
 	std::shared_ptr<DirectoryNode> mSelectedNode;
 	nanogui::Color mNormalButtonColor;
 	nanogui::Color mSelectedButtonColor;
-			
+	
 	ImportWindow* mImportWindow;
 	MeshPicker* mMeshPicker;
+	
+	std::unique_ptr<MeshActorImporter> mMeshActorImporter;
+	std::unique_ptr<MeshActorExporter> mMeshActorExporter;
 };

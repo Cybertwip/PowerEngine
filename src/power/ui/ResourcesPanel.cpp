@@ -2,6 +2,8 @@
 
 #include "ai/DeepMotionSettingsWindow.hpp"
 #include "actors/IActorSelectedRegistry.hpp"
+#include "filesystem/MeshActorImporter.hpp"
+#include "filesystem/MeshActorExporter.hpp"
 #include "ui/ImportWindow.hpp"
 #include "ui/MeshPicker.hpp"
 
@@ -224,9 +226,12 @@ mSelectedButtonColor(nanogui::Color(0.5f, 0.5f, 0.8f, 1.0f))
 	mSelectedDirectoryPath = fs::current_path().string();
 	mFilterText = "";
 	
-	
 	refresh_file_view();
+
 	
+	mMeshActorImporter = std::make_unique<MeshActorImporter>();
+
+	mMeshActorExporter = std::make_unique<MeshActorExporter>();
 }
 
 ResourcesPanel::~ResourcesPanel() {
@@ -517,7 +522,12 @@ void ResourcesPanel::export_assets() {
 		
 		try {
 			// Copy files or directories
-			fs::copy_file(mSelectedNode->FullPath, destinationFile, fs::copy_options::overwrite_existing);
+			
+			
+			auto compressedMeshData = std::move(mMeshActorImporter->process(mSelectedNode->FullPath, "."));
+
+			mMeshActorExporter->exportActor(compressedMeshData->mMesh, destinationFile);
+
 			std::cout << "Assets exported to: " << destinationFile << std::endl;
 		} catch (const fs::filesystem_error& e) {
 			std::cerr << "Error exporting assets: " << e.what() << std::endl;

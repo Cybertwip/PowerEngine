@@ -1,3 +1,5 @@
+#pragma once
+
 // Include your internal structures
 #include "filesystem/MeshActorImporter.hpp" // Adjust the path as needed
 #include "graphics/shading/MeshData.hpp"
@@ -9,8 +11,6 @@
 #include <memory>
 #include <map>
 #include <cassert>
-
-namespace sfbx {
 
 class MeshActorExporter {
 public:
@@ -36,6 +36,3 @@ private:
 	bool deserializeMeshes(const CompressedSerialization::Deserializer& deserializer);
 	bool deserializeSkeleton(const CompressedSerialization::Deserializer& deserializer);
 };
-
-} // namespace sfbx
-

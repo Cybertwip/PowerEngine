@@ -4,8 +4,6 @@
 #include "VectorConversion.hpp"
 #include <iostream>
 
-namespace sfbx {
-
 MeshActorExporter::MeshActorExporter() {
 	// Initialize the document (already done via constructor)
 }
@@ -85,9 +83,9 @@ void MeshActorExporter::createMaterials(
 		assert(material != nullptr);
 		
 		// Set material properties using helper functions
-		material->setAmbientColor(glmToDouble3(glm::vec3(matProps->mAmbient)));
-		material->setDiffuseColor(glmToDouble3(glm::vec3(matProps->mDiffuse)));
-		material->setSpecularColor(glmToDouble3(glm::vec3(matProps->mSpecular)));
+		material->setAmbientColor(sfbx::glmToDouble3(glm::vec3(matProps->mAmbient)));
+		material->setDiffuseColor(sfbx::glmToDouble3(glm::vec3(matProps->mDiffuse)));
+		material->setSpecularColor(sfbx::glmToDouble3(glm::vec3(matProps->mSpecular)));
 		material->setShininess(matProps->mShininess);
 		material->setOpacity(matProps->mOpacity);
 		
@@ -129,10 +127,10 @@ void MeshActorExporter::createMesh(
 	
 	// 1. Normals Layer
 	{
-		LayerElementF3 normalLayer;
+		sfbx::LayerElementF3 normalLayer;
 		normalLayer.name = "Normals";
-		normalLayer.mapping_mode = LayerMappingMode::ByPolygonVertex;
-		normalLayer.reference_mode = LayerReferenceMode::Direct;
+		normalLayer.mapping_mode = sfbx::LayerMappingMode::ByPolygonVertex;
+		normalLayer.reference_mode = sfbx::LayerReferenceMode::Direct;
 		
 		for (auto& vertex : meshData.get_vertices()) {
 			normalLayer.data.emplace_back(vertex.get_normal().x, vertex.get_normal().y, vertex.get_normal().z);
@@ -143,10 +141,10 @@ void MeshActorExporter::createMesh(
 	
 	// 2. UV Layers (assuming two UV sets)
 	for (int uvSet = 0; uvSet < 2; ++uvSet) {
-		LayerElementF2 uvLayer;
+		sfbx::LayerElementF2 uvLayer;
 		uvLayer.name = "UVSet" + std::to_string(uvSet + 1);
-		uvLayer.mapping_mode = LayerMappingMode::ByPolygonVertex;
-		uvLayer.reference_mode = LayerReferenceMode::Direct;
+		uvLayer.mapping_mode = sfbx::LayerMappingMode::ByPolygonVertex;
+		uvLayer.reference_mode = sfbx::LayerReferenceMode::Direct;
 		
 		for (auto& vertex : meshData.get_vertices()) {
 			if (uvSet == 0) {
@@ -161,10 +159,10 @@ void MeshActorExporter::createMesh(
 	
 	// 3. Vertex Colors Layer
 	{
-		LayerElementF4 colorLayer;
+		sfbx::LayerElementF4 colorLayer;
 		colorLayer.name = "VertexColors";
-		colorLayer.mapping_mode = LayerMappingMode::ByPolygonVertex;
-		colorLayer.reference_mode = LayerReferenceMode::Direct;
+		colorLayer.mapping_mode = sfbx::LayerMappingMode::ByPolygonVertex;
+		colorLayer.reference_mode = sfbx::LayerReferenceMode::Direct;
 		
 		for (auto& vertex : meshData.get_vertices()) {
 			colorLayer.data.emplace_back(
@@ -182,10 +180,10 @@ void MeshActorExporter::createMesh(
 	
 	// **Material Layer**
 	{
-		LayerElementI1 materialLayer;
+		sfbx::LayerElementI1 materialLayer;
 		materialLayer.name = "Materials";
-		materialLayer.mapping_mode = LayerMappingMode::ByPolygon;
-		materialLayer.reference_mode = LayerReferenceMode::Direct;
+		materialLayer.mapping_mode = sfbx::LayerMappingMode::ByPolygon;
+		materialLayer.reference_mode = sfbx::LayerReferenceMode::Direct;
 		
 		size_t numPolygons = geometry->getIndices().size() / 3; // Assuming triangles
 		materialLayer.data.reserve(numPolygons);
@@ -232,5 +230,3 @@ bool MeshActorExporter::deserializeSkeleton(const CompressedSerialization::Deser
 	// Implement skeleton deserialization here
 	return true; // Placeholder
 }
-
-} // namespace sfbx
