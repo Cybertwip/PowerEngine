@@ -128,29 +128,6 @@ void Model::exportFBXObjects()
 	}
 }
 
-
-void Model::exportFBXConnections()
-{
-	// Create connections to the parent model
-	if (m_parent_model) {
-		m_document->createLinkOO(shared_from_this(), m_parent_model);
-	} else {
-		// If no parent, connect to the root node
-		m_document->createLinkOO(shared_from_this(), m_document->getRootModel());
-	}
-	
-	// Export connections for attached node attribute
-	if (m_attr) {
-		m_attr->exportFBXConnections();
-		m_document->createLinkOO(m_attr, shared_from_this(), sfbxS_NodeAttribute);
-	}
-	
-	// Export connections for child models
-	for (auto& child : m_child_models) {
-		child->exportFBXConnections();
-	}
-}
-
 void Model::addChild(ObjectPtr v)
 {
     super::addChild(v);
@@ -387,24 +364,6 @@ void Mesh::importFBXObjects()
     }
 #endif
 }
-
-void Mesh::exportFBXConnections()
-{
-	super::exportFBXConnections(); // Calls Model::exportFBXConnections()
-	
-	// Export connections for geometry
-	if (m_geom) {
-		m_geom->exportFBXConnections();
-		m_document->createLinkOO(m_geom, shared_from_this(), sfbxS_Geometry);
-	}
-	
-	// Export connections for materials
-	for (auto& material : m_materials) {
-		material->exportFBXConnections();
-		m_document->createLinkOO(material, shared_from_this(), sfbxS_Material);
-	}
-}
-
 
 void Mesh::addChild(ObjectPtr v)
 {

@@ -265,7 +265,7 @@ public:
 		
 		// Save the serialized and compressed data to a file with magic number and header
 		bool save_to_file(const std::string& filename) const {
-			std::ofstream outFile(filename, std::ios::binary);
+			std::ofstream outFile(filename, std::ios::out | std::ios::binary);
 			if (!outFile) {
 				std::cerr << "Failed to open file for writing: " << filename << "\n";
 				return false;

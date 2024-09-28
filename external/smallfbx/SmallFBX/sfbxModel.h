@@ -95,7 +95,6 @@ public:
 protected:
     void importFBXObjects() override;
     void exportFBXObjects() override;
-	void exportFBXConnections() override;
     void addParent(ObjectPtr v) override;
     void eraseParent(ObjectPtr v) override;
     void propagateDirty();
@@ -186,7 +185,6 @@ public:
 protected:
     void importFBXObjects() override;
 	void exportFBXObjects() override;
-	void exportFBXConnections() override;
 	
 	std::shared_ptr<GeomMesh> m_geom{};
     std::vector<std::shared_ptr<Material>> m_materials;

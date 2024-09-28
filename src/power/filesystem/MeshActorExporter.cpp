@@ -55,15 +55,14 @@ bool MeshActorExporter::exportActor(CompressedSerialization::Deserializer& deser
 		meshModel->setPosition({0.0f, 0.0f, 0.0f});
 		meshModel->setRotation({0.0f, 0.0f, 0.0f});
 		meshModel->setScale({1.0f, 1.0f, 1.0f});
-		
-		// Optionally, add meshModel to the root model
-		mDocument.getRootModel()->addChild(meshModel);
 	}
 
 	// Step 5: Skip Animations as per user request
 	
 	// Step 6: Export the Document to a file
 	mDocument.exportFBXNodes();
+	
+	mDocument.getConnections();
 
 	if (!mDocument.writeBinary(exportPath)) {
 		std::cerr << "Error: Failed to write FBX file to " << exportPath << std::endl;
@@ -117,105 +116,105 @@ void MeshActorExporter::createMesh(
 	for (auto& vertex : meshData.get_vertices()) {
 		geometry->addControlPoint(vertex.get_position().x, vertex.get_position().y, vertex.get_position().z);
 	}
-	
+//	
 	// Set indices (polygons)
 	auto& indices = meshData.get_indices();
 	for (size_t i = 0; i + 2 < indices.size(); i += 3) { // Assuming triangles
 		geometry->addPolygon(indices[i], indices[i + 1], indices[i + 2]);
 	}
-	
-	// **Add Layers Here**
-	
-	// 1. Normals Layer
-	{
-		sfbx::LayerElementF3 normalLayer;
-		normalLayer.name = "Normals";
-		normalLayer.mapping_mode = sfbx::LayerMappingMode::ByPolygonVertex;
-		normalLayer.reference_mode = sfbx::LayerReferenceMode::Direct;
-		
-		for (auto& vertex : meshData.get_vertices()) {
-			normalLayer.data.emplace_back(vertex.get_normal().x, vertex.get_normal().y, vertex.get_normal().z);
-		}
-		
-		geometry->addNormalLayer(std::move(normalLayer));
-	}
-	
-	// 2. UV Layers (assuming two UV sets)
-	for (int uvSet = 0; uvSet < 2; ++uvSet) {
-		sfbx::LayerElementF2 uvLayer;
-		uvLayer.name = "UVSet" + std::to_string(uvSet + 1);
-		uvLayer.mapping_mode = sfbx::LayerMappingMode::ByPolygonVertex;
-		uvLayer.reference_mode = sfbx::LayerReferenceMode::Direct;
-		
-		for (auto& vertex : meshData.get_vertices()) {
-			if (uvSet == 0) {
-				uvLayer.data.emplace_back(vertex.get_tex_coords1().x, vertex.get_tex_coords1().y);
-			} else {
-				uvLayer.data.emplace_back(vertex.get_tex_coords2().x, vertex.get_tex_coords2().y);
-			}
-		}
-		
-		geometry->addUVLayer(std::move(uvLayer));
-	}
-	
-	// 3. Vertex Colors Layer
-	{
-		sfbx::LayerElementF4 colorLayer;
-		colorLayer.name = "VertexColors";
-		colorLayer.mapping_mode = sfbx::LayerMappingMode::ByPolygonVertex;
-		colorLayer.reference_mode = sfbx::LayerReferenceMode::Direct;
-		
-		for (auto& vertex : meshData.get_vertices()) {
-			colorLayer.data.emplace_back(
-										 vertex.get_color().r,
-										 vertex.get_color().g,
-										 vertex.get_color().b,
-										 vertex.get_color().a
-										 );
-		}
-		
-		geometry->addColorLayer(std::move(colorLayer));
-	}
+//	
+//	// **Add Layers Here**
+//	
+//	// 1. Normals Layer
+//	{
+//		sfbx::LayerElementF3 normalLayer;
+//		normalLayer.name = "Normals";
+//		normalLayer.mapping_mode = sfbx::LayerMappingMode::ByPolygonVertex;
+//		normalLayer.reference_mode = sfbx::LayerReferenceMode::Direct;
+//		
+//		for (auto& vertex : meshData.get_vertices()) {
+//			normalLayer.data.emplace_back(vertex.get_normal().x, vertex.get_normal().y, vertex.get_normal().z);
+//		}
+//		
+//		geometry->addNormalLayer(std::move(normalLayer));
+//	}
+//	
+//	// 2. UV Layers (assuming two UV sets)
+//	for (int uvSet = 0; uvSet < 2; ++uvSet) {
+//		sfbx::LayerElementF2 uvLayer;
+//		uvLayer.name = "UVSet" + std::to_string(uvSet + 1);
+//		uvLayer.mapping_mode = sfbx::LayerMappingMode::ByPolygonVertex;
+//		uvLayer.reference_mode = sfbx::LayerReferenceMode::Direct;
+//		
+//		for (auto& vertex : meshData.get_vertices()) {
+//			if (uvSet == 0) {
+//				uvLayer.data.emplace_back(vertex.get_tex_coords1().x, vertex.get_tex_coords1().y);
+//			} else {
+//				uvLayer.data.emplace_back(vertex.get_tex_coords2().x, vertex.get_tex_coords2().y);
+//			}
+//		}
+//		
+//		geometry->addUVLayer(std::move(uvLayer));
+//	}
+//	
+//	// 3. Vertex Colors Layer
+//	{
+//		sfbx::LayerElementF4 colorLayer;
+//		colorLayer.name = "VertexColors";
+//		colorLayer.mapping_mode = sfbx::LayerMappingMode::ByPolygonVertex;
+//		colorLayer.reference_mode = sfbx::LayerReferenceMode::Direct;
+//		
+//		for (auto& vertex : meshData.get_vertices()) {
+//			colorLayer.data.emplace_back(
+//										 vertex.get_color().r,
+//										 vertex.get_color().g,
+//										 vertex.get_color().b,
+//										 vertex.get_color().a
+//										 );
+//		}
+//		
+//		geometry->addColorLayer(std::move(colorLayer));
+//	}
 	
 	// **End of Layers Addition**
 	
 	// **Material Layer**
-	{
-		sfbx::LayerElementI1 materialLayer;
-		materialLayer.name = "Materials";
-		materialLayer.mapping_mode = sfbx::LayerMappingMode::ByPolygon;
-		materialLayer.reference_mode = sfbx::LayerReferenceMode::Direct;
-		
-		size_t numPolygons = geometry->getIndices().size() / 3; // Assuming triangles
-		materialLayer.data.reserve(numPolygons);
-		
-		for (size_t polyIdx = 0; polyIdx < numPolygons; ++polyIdx) {
-			// Determine the material index for this polygon
-			// This requires that meshData has a way to get the material index per polygon
-			// For example, meshData.get_material_index(polyIdx)
-			// If meshData does not support this, you need to implement it accordingly
-			
-			// Placeholder: Assign material based on some logic
-			// Here, we assume that all polygons use the first material
-			// Replace this with actual material assignment logic
-			int materialIndex = 0; // Default material index
-			
-			// Example logic: If meshData contains material indices per polygon
-			if (polyIdx < meshData.get_indices().size()) {
-				materialIndex = meshData.get_indices()[polyIdx];
-			}
-			
-			// Ensure the materialIndex exists in materialMap
-			if (materialMap.find(materialIndex) != materialMap.end()) {
-				materialLayer.data.push_back(materialIndex);
-			} else {
-				std::cerr << "Warning: Material index " << materialIndex << " not found in materialMap. Assigning default material 0." << std::endl;
-				materialLayer.data.push_back(0); // Assign default material
-			}
-		}
-		
-		geometry->addMaterialLayer(std::move(materialLayer));
-	}
+//	{
+//		sfbx::LayerElementI1 materialLayer;
+//		materialLayer.name = "Materials";
+//		materialLayer.mapping_mode = sfbx::LayerMappingMode::ByPolygon;
+//		materialLayer.reference_mode = sfbx::LayerReferenceMode::Direct;
+//		
+//		size_t numPolygons = geometry->getIndices().size() / 3; // Assuming triangles
+//		materialLayer.data.reserve(numPolygons);
+//		
+//		for (size_t polyIdx = 0; polyIdx < numPolygons; ++polyIdx) {
+//			// Determine the material index for this polygon
+//			// This requires that meshData has a way to get the material index per polygon
+//			// For example, meshData.get_material_index(polyIdx)
+//			// If meshData does not support this, you need to implement it accordingly
+//			
+//			// Placeholder: Assign material based on some logic
+//			// Here, we assume that all polygons use the first material
+//			// Replace this with actual material assignment logic
+//			int materialIndex = 0; // Default material index
+//			
+//			// Example logic: If meshData contains material indices per polygon
+//			if (polyIdx < meshData.get_indices().size()) {
+//				materialIndex = meshData.get_indices()[polyIdx];
+//			}
+//
+//			// Ensure the materialIndex exists in materialMap
+//			if (materialMap.find(materialIndex) != materialMap.end()) {
+//				materialLayer.data.push_back(materialIndex);
+//			} else {
+//				std::cerr << "Warning: Material index " << materialIndex << " not found in materialMap. Assigning default material 0." << std::endl;
+//				materialLayer.data.push_back(0); // Assign default material
+//			}
+//		}
+//		
+//		geometry->addMaterialLayer(std::move(materialLayer));
+//	}
 	
 	// **Link geometry to model**
 	parentModel->setGeometry(geometry);

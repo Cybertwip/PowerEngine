@@ -285,7 +285,7 @@ void ResourcesPanel::refresh_file_view() {
 				icon->set_icon(get_icon_for_file(*child));
 				icon->set_fixed_size(nanogui::Vector2i(128, 128));
 				
-				if (file_icon == FA_WALKING) {
+				if (file_icon == FA_WALKING || file_icon == FA_OBJECT_GROUP) {
 					// deserialize thumbnail here
 					CompressedSerialization::Deserializer deserializer;
 					
@@ -334,7 +334,7 @@ void ResourcesPanel::refresh_file_view() {
 				icon->set_callback([this, icon, child]() {
 					int file_icon = get_icon_for_file(*child);
 					
-					if (file_icon  == FA_WALKING || file_icon == FA_PERSON_BOOTH) {
+					if (file_icon  == FA_WALKING || file_icon == FA_PERSON_BOOTH || file_icon == FA_OBJECT_GROUP) {
 						
 						auto drag_widget = screen()->drag_widget();
 						
@@ -405,6 +405,8 @@ void ResourcesPanel::refresh_file_view() {
 int ResourcesPanel::get_icon_for_file(const DirectoryNode& node) {
 	if (node.IsDirectory) return FA_FOLDER;
 	if (node.FileName.find(".psk") != std::string::npos) return FA_WALKING;
+	if (node.FileName.find(".pma") != std::string::npos)
+		return FA_OBJECT_GROUP;
 	if (node.FileName.find(".pan") != std::string::npos) return FA_PERSON_BOOTH;
 	
 	// More conditions for other file types...

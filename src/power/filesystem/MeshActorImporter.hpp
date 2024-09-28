@@ -15,10 +15,13 @@ public:
 			
 			void persist() {
 				
-				// Ensure destination path exists
 				std::filesystem::path destPath(mPrecomputedPath);
-				if (!std::filesystem::exists(mPrecomputedPath)) {
-					std::filesystem::create_directories(mPrecomputedPath);
+
+				// Get the parent path (directories up to the file, but not including the file itself)
+				std::filesystem::path parentPath = destPath.parent_path();
+				
+				if (!std::filesystem::exists(parentPath)) {
+					std::filesystem::create_directories(parentPath);
 				}
 
 				mSerializer->save_to_file(mPrecomputedPath);
