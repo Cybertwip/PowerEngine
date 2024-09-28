@@ -195,6 +195,16 @@ float4x4 Model::getLocalMatrix() const
     return m_matrix_local;
 }
 
+void Model::setLocalMatrix(const float4x4& matrix)
+{
+	if (m_matrix_local != matrix) {
+		m_matrix_local = matrix;
+		m_matrix_dirty = false;
+		updateMatrices();
+	}
+}
+
+
 float4x4 Model::getGlobalMatrix() const
 {
     updateMatrices();
@@ -372,6 +382,17 @@ std::shared_ptr<GeomMesh> Mesh::getGeometry()
         m_geom = createChild<GeomMesh>(getName());
     return m_geom;
 }
+
+// Adding setGeometry to Mesh
+void Mesh::setGeometry(std::shared_ptr<GeomMesh> geom)
+{
+	if (m_geom != geom) {
+		m_geom = geom;
+		propagateDirty();
+		updateMatrices();
+	}
+}
+
 
 span<std::shared_ptr<Material>> Mesh::getMaterials() const
 {

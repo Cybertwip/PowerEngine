@@ -417,12 +417,15 @@ bool ResourcesPanel::mouse_button_event(const nanogui::Vector2i &p, int button, 
 			}
 		}
 		if (!clickOnButton) {
-			// Clicked outside of buttons
-			if (mSelectedButton) {
-				mSelectedButton->set_background_color(mNormalButtonColor);
-				mSelectedButton = nullptr;
-				mSelectedNode = nullptr;
+			if (!this->contains(p, true)){
+				// Clicked outside of buttons
+				if (mSelectedButton) {
+					mSelectedButton->set_background_color(mNormalButtonColor);
+					mSelectedButton = nullptr;
+					mSelectedNode = nullptr;
+				}
 			}
+
 		}
 	}
 	
@@ -501,24 +504,24 @@ void ResourcesPanel::import_assets() {
 }
 
 void ResourcesPanel::export_assets() {
-	// Open a file dialog to select the destination directory
-	std::vector<std::string> files = nanogui::file_dialog(
-														  { {"fbx", "All Files"} }, true, false);
-
-	if (files.empty()) {
-		return; // User canceled
-	}
-	
-	std::string destinationFile = files.front();
-	
-	try {
-		// Copy files or directories
-		if (fs::is_regular_file(destinationFile)) {
-			fs::copy_file(mSelectedNode->FullPath, destinationFile, fs::copy_options::overwrite_existing);
+	if (mSelectedNode != nullptr) {
+		// Open a file dialog to select the destination directory
+		std::vector<std::string> files = nanogui::file_dialog(
+															  { {"fbx", "All Files"} }, true, false);
+		
+		if (files.empty()) {
+			return; // User canceled
 		}
-		std::cout << "Assets exported to: " << destinationFile << std::endl;
-	} catch (const fs::filesystem_error& e) {
-		std::cerr << "Error exporting assets: " << e.what() << std::endl;
+		
+		std::string destinationFile = files.front();
+		
+		try {
+			// Copy files or directories
+			fs::copy_file(mSelectedNode->FullPath, destinationFile, fs::copy_options::overwrite_existing);
+			std::cout << "Assets exported to: " << destinationFile << std::endl;
+		} catch (const fs::filesystem_error& e) {
+			std::cerr << "Error exporting assets: " << e.what() << std::endl;
+		}
 	}
 }
 

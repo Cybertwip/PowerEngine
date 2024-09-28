@@ -62,6 +62,68 @@ template<> std::shared_ptr<BlendShape> Geometry::createDeformer()
 	return ret;
 }
 
+void GeomMesh::addControlPoint(float x, float y, float z) {
+	m_points.push_back(float3{x, y, z});
+}
+
+void GeomMesh::addPolygon(int idx1, int idx2, int idx3) {
+	// Add indices for the polygon
+	m_indices.push_back(idx1);
+	m_indices.push_back(idx2);
+	m_indices.push_back(idx3);
+	// Since it's a triangle, add count as 3
+	m_counts.push_back(3);
+}
+
+void GeomMesh::addNormal(float x, float y, float z, size_t layer_index) {
+	// Ensure the specified normal layer exists
+	if (layer_index >= m_normal_layers.size()) {
+		// Create new layers up to the required index
+		while (m_normal_layers.size() <= layer_index) {
+			LayerElementF3 new_layer;
+			new_layer.name = "Normals";
+			new_layer.mapping_mode = LayerMappingMode::ByControlPoint;
+			new_layer.reference_mode = LayerReferenceMode::Direct;
+			m_normal_layers.emplace_back(std::move(new_layer));
+		}
+	}
+	// Add the normal to the specified layer
+	m_normal_layers[layer_index].data.push_back(float3{x, y, z});
+}
+
+void GeomMesh::addUV(int set_index, float u, float v) {
+	// Ensure the specified UV layer exists
+	if (set_index >= m_uv_layers.size()) {
+		// Create new layers up to the required index
+		while (m_uv_layers.size() <= set_index) {
+			LayerElementF2 new_layer;
+			new_layer.name = "UVSet" + std::to_string(m_uv_layers.size() + 1);
+			new_layer.mapping_mode = LayerMappingMode::ByControlPoint;
+			new_layer.reference_mode = LayerReferenceMode::Direct;
+			m_uv_layers.emplace_back(std::move(new_layer));
+		}
+	}
+	// Add the UV to the specified layer
+	m_uv_layers[set_index].data.push_back(float2{u, v});
+}
+
+void GeomMesh::addVertexColor(float r, float g, float b, float a, size_t layer_index) {
+	// Ensure the specified color layer exists
+	if (layer_index >= m_color_layers.size()) {
+		// Create new layers up to the required index
+		while (m_color_layers.size() <= layer_index) {
+			LayerElementF4 new_layer;
+			new_layer.name = "VertexColor";
+			new_layer.mapping_mode = LayerMappingMode::ByControlPoint;
+			new_layer.reference_mode = LayerReferenceMode::Direct;
+			m_color_layers.emplace_back(std::move(new_layer));
+		}
+	}
+	// Add the vertex color to the specified layer
+	m_color_layers[layer_index].data.push_back(float4{r, g, b, a});
+}
+
+
 ObjectSubClass GeomMesh::getSubClass() const { return ObjectSubClass::Mesh; }
 
 template<typename T>

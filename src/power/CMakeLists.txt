@@ -103,6 +103,10 @@ add_executable(PowerEngine
     ${CMAKE_CURRENT_LIST_DIR}/filesystem/MeshActorImporter.hpp
     ${CMAKE_CURRENT_LIST_DIR}/filesystem/MeshActorImporter.cpp
 
+    ${CMAKE_CURRENT_LIST_DIR}/filesystem/MeshActorExporter.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/filesystem/MeshActorExporter.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/filesystem/VectorConversion.hpp
+
     ${CMAKE_CURRENT_LIST_DIR}/filesystem/UrlOpener.hpp
 
     ${CMAKE_CURRENT_LIST_DIR}/gizmo/GizmoManager.hpp
@@ -117,6 +121,7 @@ add_executable(PowerEngine
     ${CMAKE_CURRENT_LIST_DIR}/grok/PromptBox.cpp
 
     ${CMAKE_CURRENT_LIST_DIR}/graphics/shading/MaterialProperties.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/graphics/shading/MaterialProperties.cpp    
     ${CMAKE_CURRENT_LIST_DIR}/graphics/shading/MeshData.hpp
     ${CMAKE_CURRENT_LIST_DIR}/graphics/shading/MeshVertex.hpp
     ${CMAKE_CURRENT_LIST_DIR}/graphics/shading/MeshVertex.cpp

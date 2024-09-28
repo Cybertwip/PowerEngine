@@ -202,6 +202,13 @@ public:
         resize(m_size + 1);
         back() = std::move(v);
     }
+	
+	template<typename... Args>
+	void emplace_back(Args&&... args)
+	{
+		resize(m_size + 1);
+		new (&m_data[m_size - 1]) T(std::forward<Args>(args)...);
+	}
 
     void pop_back()
     {

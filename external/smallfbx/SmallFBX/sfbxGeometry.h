@@ -116,58 +116,67 @@ struct LayerElementDesc
 // GeomMesh represents polygon mesh data. parent of GeomMesh seems to be always Mesh.
 class GeomMesh : public Geometry
 {
-using super = Geometry;
+	using super = Geometry;
 public:
-    ObjectSubClass getSubClass() const override;
-
-    span<int> getCounts() const;
-    span<int> getIndices() const;
+	ObjectSubClass getSubClass() const override;
+	
+	// Existing getter and setter methods
+	span<int> getCounts() const;
+	span<int> getIndices() const;
 	span<float3> getPoints() const;
 	span<float3> getNormals() const;
-    span<LayerElementF3> getNormalLayers() const; // can be zero or multiple layers
-    span<LayerElementF2> getUVLayers() const;     // can be zero or multiple layers
-    span<LayerElementF4> getColorLayers() const;  // can be zero or multiple layers
-    span<LayerElementI1> getMaterialLayers() const;// can be zero or multiple layers
-    span<std::vector<LayerElementDesc>> getLayers() const;     //
-
-    void setCounts(span<int> v);
-    void setIndices(span<int> v);
-    void setPoints(span<float3> v);
-    void addNormalLayer(LayerElementF3&& v);
-    void addUVLayer(LayerElementF2&& v);
-    void addColorLayer(LayerElementF4&& v);
-    void addMaterialLayer(LayerElementI1&& v);
-
-    template<typename T>
-    void checkModes(LayerElement<T>& layer); //check & update to default/known-correct modes to data/indices
-
-    span<float3> getPointsDeformed(bool apply_transform = false);
-    span<float3> getNormalsDeformed(size_t layer_index = 0, bool apply_transform = false);
+	span<LayerElementF3> getNormalLayers() const; // can be zero or multiple layers
+	span<LayerElementF2> getUVLayers() const;     // can be zero or multiple layers
+	span<LayerElementF4> getColorLayers() const;  // can be zero or multiple layers
+	span<LayerElementI1> getMaterialLayers() const;// can be zero or multiple layers
+	span<std::vector<LayerElementDesc>> getLayers() const;     //
+	
+	void setCounts(span<int> v);
+	void setIndices(span<int> v);
+	void setPoints(span<float3> v);
+	void addNormalLayer(LayerElementF3&& v);
+	void addUVLayer(LayerElementF2&& v);
+	void addColorLayer(LayerElementF4&& v);
+	void addMaterialLayer(LayerElementI1&& v);
+	
+	// **New Methods**
+	void addControlPoint(float x, float y, float z);
+	void addPolygon(int idx1, int idx2, int idx3);
+	void addNormal(float x, float y, float z, size_t layer_index = 0);
+	void addUV(int set_index, float u, float v);
+	void addVertexColor(float r, float g, float b, float a, size_t layer_index = 0);
+	
+	template<typename T>
+	void checkModes(LayerElement<T>& layer); // Check & update to default/known-correct modes to data/indices
+	
+	span<float3> getPointsDeformed(bool apply_transform = false);
+	span<float3> getNormalsDeformed(size_t layer_index = 0, bool apply_transform = false);
 	
 	int getMaterialForVertexIndex(size_t vertex_index) const;
 	std::vector<int> getVertexIndicesForPointIndex(int point_index) const;
 	
 protected:
-    void importFBXObjects() override;
-    void exportFBXObjects() override;
-
+	void importFBXObjects() override;
+	void exportFBXObjects() override;
+	
+	// Existing member variables
 	RawVector<int> m_counts;
 	RawVector<int> m_uv_counts;
-    RawVector<int> m_indices;
+	RawVector<int> m_indices;
 	RawVector<float3> m_points;
 	RawVector<float3> m_normals;
-    RawVector<float3> m_points_deformed;
-    std::vector<LayerElementF3> m_normal_layers;
-    std::vector<LayerElementF2> m_uv_layers;
-    std::vector<LayerElementF4> m_color_layers;
-    std::vector<LayerElementI1> m_material_layers;
-    std::vector<std::vector<LayerElementDesc>> m_layers;
+	RawVector<float3> m_points_deformed;
+	std::vector<LayerElementF3> m_normal_layers;
+	std::vector<LayerElementF2> m_uv_layers;
+	std::vector<LayerElementF4> m_color_layers;
+	std::vector<LayerElementI1> m_material_layers;
+	std::vector<std::vector<LayerElementDesc>> m_layers;
 	
 private:
 	std::unordered_map<size_t, int> m_vertex_to_material_map;
 	std::unordered_map<int, std::vector<int>> m_point_to_vertex_map;
-
 };
+
 
 
 // a Shape is a target of blend shape. see BlendShape and BlendShapeChannel in sfbxDeformer.h.

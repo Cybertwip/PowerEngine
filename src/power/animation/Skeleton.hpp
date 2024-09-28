@@ -105,6 +105,8 @@ public:
 		return m_bones[index];
 	}
 	
+	
+	
 	// Get mutable bone by index
 	Bone& get_bone(int index) {
 		assert(index >= 0 && index < num_bones());
@@ -186,6 +188,9 @@ public:
 		return true;
 	}
 
+	const std::vector<Bone>& get_bones() {
+		return m_bones;
+	}
 	
 private:
 	std::vector<Bone> m_bones;

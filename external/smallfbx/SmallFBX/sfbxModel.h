@@ -90,6 +90,7 @@ public:
     void setRotation(float3 v);
     void setPostRotation(float3 v);
     void setScale(float3 v);
+	void setLocalMatrix(const float4x4& matrix); // **New Method**
 
 protected:
     void importFBXObjects() override;
@@ -174,6 +175,8 @@ public:
     void eraseChild(ObjectPtr v) override;
 
 	std::shared_ptr<GeomMesh> getGeometry();
+	void setGeometry(std::shared_ptr<GeomMesh> geom); // **New Method**
+
     span<std::shared_ptr<Material>> getMaterials() const;
 
 protected:

@@ -1,3 +1,6 @@
+// sfbxMaterial.cpp
+
+#include "sfbxMaterial.h"
 #include "sfbxInternal.h"
 #include "sfbxMaterial.h"
 #include "sfbxDocument.h"
@@ -25,13 +28,17 @@ std::string getFileExtension(const std::string& filename) {
 		return "";
 	}
 }
-}
+
+} // namespace
 
 namespace sfbx {
+
+// Video Class Implementations
 
 ObjectClass Video::getClass() const { return ObjectClass::Video; }
 ObjectSubClass Video::getSubClass() const { return ObjectSubClass::Clip; }
 
+// Getters
 bool Video::getEmbedded() const {
 	return m_embedded;
 }
@@ -42,6 +49,35 @@ std::string_view Video::getFilename() const {
 
 const std::vector<uint8_t>& Video::getData() const {
 	return m_data;
+}
+
+// Setters
+void Video::setEmbedded(bool embedded) {
+	m_embedded = embedded;
+	// Update the FBX node property if necessary
+	// Example:
+	// getNode()->setProperty("Embedded", embedded);
+}
+
+void Video::setFilename(const std::string& filename) {
+	m_filename = filename;
+	// Update the FBX node property if necessary
+	// Example:
+	// getNode()->setProperty("Filename", filename);
+}
+
+void Video::setData(const std::vector<uint8_t>& data) {
+	m_data = data;
+	// Update the FBX node property if necessary
+	// Example:
+	// getNode()->setProperty("Data", data);
+}
+
+void Video::setData(std::vector<uint8_t>&& data) {
+	m_data = std::move(data);
+	// Update the FBX node property if necessary
+	// Example:
+	// getNode()->setProperty("Data", m_data);
 }
 
 void Video::importFBXObjects()
@@ -134,13 +170,15 @@ void Video::exportFBXObjects()
 	
 	for (auto& stream : mChildStreams) {
 		auto child = getNode()->createChild();
-		stream.seekg(std::ios::beg);
 		child->readBinary(stream, 0);
 	}
 }
 
+// Texture Class Implementations
+
 ObjectClass Texture::getClass() const { return ObjectClass::Texture; }
 
+// Getters
 bool Texture::getEmbedded() const {
 	return m_embedded;
 }
@@ -151,6 +189,27 @@ std::string_view Texture::getFilename() const {
 
 const std::vector<uint8_t>& Texture::getData() const {
 	return m_data;
+}
+
+// Setters
+void Texture::setEmbedded(bool embedded) {
+	m_embedded = embedded;
+	// Update the FBX node property if necessary
+}
+
+void Texture::setFilename(const std::string& filename) {
+	m_filename = filename;
+	// Update the FBX node property if necessary
+}
+
+void Texture::setData(const std::vector<uint8_t>& data) {
+	m_data = data;
+	// Update the FBX node property if necessary
+}
+
+void Texture::setData(std::vector<uint8_t>&& data) {
+	m_data = std::move(data);
+	// Update the FBX node property if necessary
 }
 
 void Texture::importFBXObjects()
@@ -240,8 +299,11 @@ void Texture::exportFBXConnections()
 	}
 }
 
+// Material Class Implementations
+
 ObjectClass Material::getClass() const { return ObjectClass::Material; }
 
+// Getters
 double3 Material::getAmbientColor() const
 {
 	return m_ambient_color;
@@ -273,6 +335,43 @@ std::shared_ptr<sfbx::Texture> Material::getTexture(const std::string& textureTy
 		return it->second;
 	}
 	return nullptr;
+}
+
+// Setters
+void Material::setAmbientColor(const double3& ambient)
+{
+	m_ambient_color = ambient;
+	// Update the FBX node property if necessary
+}
+
+void Material::setDiffuseColor(const double3& diffuse)
+{
+	m_diffuse_color = diffuse;
+	// Update the FBX node property if necessary
+}
+
+void Material::setSpecularColor(const double3& specular)
+{
+	m_specular_color = specular;
+	// Update the FBX node property if necessary
+}
+
+void Material::setShininess(float64 shininess)
+{
+	m_shininess = shininess;
+	// Update the FBX node property if necessary
+}
+
+void Material::setOpacity(float64 opacity)
+{
+	m_opacity = opacity;
+	// Update the FBX node property if necessary
+}
+
+void Material::setTexture(const std::string& textureType, const std::shared_ptr<sfbx::Texture>& texture)
+{
+	m_textures[textureType] = texture;
+	// Update the FBX node property if necessary
 }
 
 void Material::importFBXObjects()
@@ -342,7 +441,11 @@ void Material::exportFBXConnections()
 	}
 }
 
+// Implementation Class Implementations
+
 ObjectClass Implementation::getClass() const { return ObjectClass::Implementation; }
+
+// BindingTable Class Implementations
 
 ObjectClass BindingTable::getClass() const { return ObjectClass::BindingTable; }
 
