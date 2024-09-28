@@ -18,6 +18,9 @@ MeshActorExporter::~MeshActorExporter() {
 }
 
 bool MeshActorExporter::exportActor(CompressedSerialization::Deserializer& deserializer, const std::string& sourcePath, const std::string& exportPath) {
+	
+	auto document = sfbx::MakeDocument();
+
 	// Step 1: Deserialize or transfer data from CompressedMeshActor to internal structures
 	mMeshDeserializer->load_mesh(deserializer, sourcePath);
 	// Retrieve the deserialized meshes
@@ -37,11 +40,11 @@ bool MeshActorExporter::exportActor(CompressedSerialization::Deserializer& deser
 			serializableMaterials.emplace_back(std::make_shared<SerializableMaterialProperties>(*mat));
 		}
 		
-		createMaterials(serializableMaterials, materialMap); // Assuming all meshes share the same materials
+		createMaterials(document, serializableMaterials, materialMap); // Assuming all meshes share the same materials
 	}
 	
 	
-	auto rootModel = mDocument.getRootModel();
+	auto rootModel = document->getRootModel();
 
 	// Step 3: Create Meshes and Models
 	// After creating the mesh
@@ -50,6 +53,8 @@ bool MeshActorExporter::exportActor(CompressedSerialization::Deserializer& deser
 		
 		std::shared_ptr<sfbx::Mesh> meshModel = std::make_shared<sfbx::Mesh>();
 		
+		rootModel->addChild(meshModel); // to set m_document
+
 		meshModel->setName("Mesh_" + std::to_string(i));
 		
 		
@@ -63,18 +68,16 @@ bool MeshActorExporter::exportActor(CompressedSerialization::Deserializer& deser
 		meshModel->setPosition({0.0f, 0.0f, 0.0f});
 		meshModel->setRotation({0.0f, 0.0f, 0.0f});
 		meshModel->setScale({1.0f, 1.0f, 1.0f});
-		
-		rootModel->addChild(meshModel);
 	}
 
 	// Step 5: Skip Animations as per user request
 	
 	// Step 6: Export the Document to a file
-	mDocument.exportFBXNodes();
+	document->exportFBXNodes();
 	
-	mDocument.getConnections();
+	document->getConnections();
 
-	if (!mDocument.writeAscii(exportPath)) {
+	if (!document->writeAscii(exportPath)) {
 		std::cerr << "Error: Failed to write FBX file to " << exportPath << std::endl;
 		return false;
 	}
@@ -83,13 +86,13 @@ bool MeshActorExporter::exportActor(CompressedSerialization::Deserializer& deser
 	return true;
 }
 
-void MeshActorExporter::createMaterials(
+void MeshActorExporter::createMaterials(std::shared_ptr<sfbx::Document> document, 
 										const std::vector<std::shared_ptr<SerializableMaterialProperties>>& materials,
 										std::map<int, std::shared_ptr<sfbx::Material>>& materialMap
 										) {
 	for (size_t i = 0; i < materials.size(); ++i) {
 		const auto& matProps = materials[i];
-		std::shared_ptr<sfbx::Material> material = mDocument.createObject<sfbx::Material>("Material_" + std::to_string(i));
+		std::shared_ptr<sfbx::Material> material = document->createObject<sfbx::Material>("Material_" + std::to_string(i));
 		assert(material != nullptr);
 		
 		// Set material properties using helper functions
@@ -101,7 +104,7 @@ void MeshActorExporter::createMaterials(
 		
 		// Handle textures
 		if (matProps->mHasDiffuseTexture) {
-			std::shared_ptr<sfbx::Texture> texture = mDocument.createObject<sfbx::Texture>("Texture_" + std::to_string(i));
+			std::shared_ptr<sfbx::Texture> texture = document->createObject<sfbx::Texture>("Texture_" + std::to_string(i));
 			assert(texture != nullptr);
 			texture->setData(matProps->mTextureDiffuse); // Ensure setFilename accepts std::vector<uint8_t>
 			texture->setEmbedded(true); // Set based on your requirements

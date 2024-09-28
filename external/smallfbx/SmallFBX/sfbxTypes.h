@@ -365,6 +365,14 @@ struct array_adaptor
 template<class D, class S, class... T>
 inline auto make_adaptor(const S& src, T&&... a) { return array_adaptor<D, get_value_type<S>>(src, a...); }
 
+template<class Cont, sfbxRestrict(is_contiguous_container<Cont> && is_vector<get_value_type<Cont>>)>
+inline constexpr span<get_scalar_t<get_value_type<Cont>>> flatten_span(const Cont& v)
+{
+	using VT = get_value_type<Cont>;
+	using S = get_scalar_t<VT>;
+	return { reinterpret_cast<S*>(const_cast<VT*>(v.data())), v.size() * get_vector_size<VT> };
+}
+
 
 class Node; using NodePtr = std::shared_ptr<Node>;
 class Object; using ObjectPtr = std::shared_ptr<Object>;

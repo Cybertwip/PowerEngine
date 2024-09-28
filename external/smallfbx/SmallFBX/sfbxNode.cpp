@@ -7,6 +7,7 @@ namespace sfbx {
 
 Node::Node()
 {
+	m_document = nullptr;
 }
 
 Node::Node(Node&& v) noexcept
@@ -174,7 +175,7 @@ uint64_t Node::writeBinary(std::ostream& os, uint64_t start_offset)
     }
 
     Node null_node;
-    null_node.m_document = m_document;
+    null_node.setDocument(document());
 
     uint64_t property_size = 0;
     uint64_t children_size = 0;
@@ -253,7 +254,7 @@ Property* Node::createProperty()
 
 Node* Node::createChild(string_view name)
 {
-    auto p = m_document->createChildNode(name);
+    auto p = document()->createChildNode(name);
     m_children.push_back(p);
     p->m_parent = this;
     return p;
@@ -261,7 +262,7 @@ Node* Node::createChild(string_view name)
 
 void Node::eraseChild(Node* n)
 {
-    m_document->eraseNode(n);
+	document()->eraseNode(n);
     erase(m_children, n);
 }
 
@@ -363,12 +364,12 @@ Node* Node::findChild(string_view name) const
     return it != m_children.end() ? *it : nullptr;
 }
 
-uint32_t Node::getDocumentVersion() const
+uint32_t Node::getDocumentVersion()
 {
-    return (uint32_t)m_document->getFileVersion();
+    return (uint32_t)document()->getFileVersion();
 }
 
-uint32_t Node::getHeaderSize() const
+uint32_t Node::getHeaderSize()
 {
     if (getDocumentVersion() >= sfbxI_FBX2016_FileVersion) {
         // sizeof(uint64_t) * 3 + 1

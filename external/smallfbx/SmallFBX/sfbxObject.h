@@ -141,7 +141,7 @@ protected:
     std::vector<std::string> m_child_property_names;
 	
 private:
-	Document* m_document{};
+	Document* m_document;
 };
 
 

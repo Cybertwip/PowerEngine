@@ -143,6 +143,7 @@ bool SplitFullName(string_view full_name, string_view& display_name, string_view
 Object::Object()
 {
     m_id = (int64)this;
+	m_document = nullptr;
 }
 
 Object::~Object()
@@ -181,7 +182,7 @@ void Object::exportFBXObjects()
     if (m_id == 0)
         return;
 
-    auto objects = m_document->findNode(sfbxS_Objects);
+    auto objects = document()->findNode(sfbxS_Objects);
     m_node = objects->createChild(
         GetObjectClassName(getClass()), m_id, getFullName(), GetObjectSubClassName(getSubClass()));
 
@@ -193,7 +194,7 @@ void Object::exportFBXObjects()
 void Object::exportFBXConnections()
 {
     for (auto parent : getParents())
-        m_document->createLinkOO(shared_from_this(), parent);
+        document()->createLinkOO(shared_from_this(), parent);
 }
 
 void Object::addChild(ObjectPtr v)
@@ -202,7 +203,7 @@ void Object::addChild(ObjectPtr v)
         m_children.push_back(v);
         m_child_property_names.emplace_back();
         v->addParent(shared_from_this());
-		v->m_document = m_document;
+		v->setDocument(m_document);
     }
 }
 void Object::addChild(ObjectPtr v, string_view p)

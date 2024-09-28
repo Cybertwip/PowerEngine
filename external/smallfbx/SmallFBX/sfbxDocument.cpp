@@ -238,7 +238,7 @@ bool Document::read(const std::string& path)
 }
 
 
-bool Document::writeBinary(std::ostream& os) const
+bool Document::writeBinary(std::ostream& os) 
 {
     writev(os, g_fbx_header_magic);
     writev(os, m_version);
@@ -248,7 +248,7 @@ bool Document::writeBinary(std::ostream& os) const
         pos += node->writeBinary(os, pos);
     {
         Node null_node;
-        null_node.m_document = const_cast<Document*>(this);
+		null_node.setDocument(this);
         pos += null_node.writeBinary(os, pos);
     }
 
@@ -274,7 +274,7 @@ bool Document::writeBinary(std::ostream& os) const
     return true;
 }
 
-bool Document::writeBinary(const std::string& path) const
+bool Document::writeBinary(const std::string& path)
 {
     std::ofstream file;
     file.open(path, std::ios::out | std::ios::binary);
@@ -351,8 +351,8 @@ Node* Document::createNode(string_view name)
 Node* Document::createChildNode(string_view name)
 {
     auto n = new Node();
-    n->m_document = this;
-    n->setName(name);
+	n->setDocument(this);
+	n->setName(name);
     m_nodes.push_back(NodePtr(n));
     return n;
 }
@@ -540,7 +540,7 @@ ObjectPtr Document::createObject(ObjectClass c, ObjectSubClass s)
         sfbxPrint("sfbx::Document::createObject(): unrecongnized type \"%s\"\n", GetObjectClassName(c).data());
     }
 	
-	pointer->m_document = this;
+	pointer->setDocument(this);
 	
     return pointer;
 }
@@ -567,7 +567,7 @@ void Document::addObject(ObjectPtr obj, bool check)
             return;
         if (auto take = as<AnimationStack>(obj))
             m_anim_stacks.push_back(take);
-        obj->m_document = this;
+		obj->setDocument(this);
 		m_objects.push_back(obj);
 	}
 }
@@ -883,7 +883,7 @@ void Document::exportFBXNodes()
 
 template<class T>  std::shared_ptr<T>  Object::createChild(string_view name)
 {
-    auto ret = m_document->createObject<T>(name);
+    auto ret = document()->createObject<T>(name);
     addChild(ret);
     return ret;
 }

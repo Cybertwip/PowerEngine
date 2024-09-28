@@ -60,8 +60,8 @@ public:
 	
 	bool read(std::istream& is);
 	bool read(const std::string& path);
-	bool writeBinary(std::ostream& os) const;
-	bool writeBinary(const std::string& path) const;
+	bool writeBinary(std::ostream& os);
+	bool writeBinary(const std::string& path);
 	bool writeAscii(std::ostream& os) const;
 	bool writeAscii(const std::string& path) const;
 	

@@ -49,15 +49,22 @@ public:
     Node* getChild(size_t i) const;
     Node* findChild(string_view name) const;
 
+	void setDocument(Document* document) {
+		m_document = document;
+	}
+	
+	Document* document() {
+		return m_document;
+	}
 private:
     void addProperties_() {}
     template<class T, class... U> void addProperties_(T&& v, U&&... a) { addProperty(v); addProperties_(a...); }
 
-    uint32_t getDocumentVersion() const;
-    uint32_t getHeaderSize() const;
+    uint32_t getDocumentVersion();
+    uint32_t getHeaderSize();
     bool isNullTerminated() const;
 
-    Document* m_document{};
+    Document* m_document;
     std::string m_name;
     std::vector<Property> m_properties;
 
