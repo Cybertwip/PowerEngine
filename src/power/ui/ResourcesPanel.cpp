@@ -526,7 +526,7 @@ void ResourcesPanel::export_assets() {
 			
 			auto compressedMeshData = std::move(mMeshActorImporter->process(mSelectedNode->FullPath, "."));
 
-			mMeshActorExporter->exportActor(compressedMeshData, destinationFile);
+			mMeshActorExporter->exportActor(*compressedMeshData, destinationFile);
 
 			std::cout << "Assets exported to: " << destinationFile << std::endl;
 		} catch (const fs::filesystem_error& e) {
