@@ -48,45 +48,48 @@ void Document::initialize()
 {
 	m_root_model = createObject<Root>("Scene");
 	m_root_model->setID(0);
-}
+	
+	// Set the FBX version to 7500
+	//m_version = FileVersion::Fbx7500; // Assuming FileVersion::Fbx7500 == 7500
 
+}
 bool Document::readAscii(std::istream& is)
 {
-    {
-        std::string line;
-        std::getline(is, line);
-
-        int major, minor, patch;
-        const char* s = std::strstr(line.c_str(), "FBX");
-        if (!s || sscanf(s, "FBX %d.%d.%d project file", &major, &minor, &patch) != 3) {
-            sfbxPrint("sfbx::Document::read(): not a fbx file\n");
-            return false;
-        }
-        m_version = (FileVersion)(major * 1000 + minor * 100);
-    }
-
-    try {
-        while (!is.eof()) {
-            std::string block = read_brace_block(is);
-            if (block.empty())
-                break;
-
-            string_view block_view = block;
-            auto node = createNode();
-            node->readAscii(block_view);
-            if (node->isNull()) {
-                eraseNode(node);
-                break;
-            }
-        }
-        importFBXObjects();
-    }
-    catch (const std::runtime_error& e) {
-        sfbxPrint("sfbx::Document::read(): exception %s\n", e.what());
-        return false;
-    }
-
-    return true;
+	{
+		std::string line;
+		std::getline(is, line);
+		
+		int major, minor, patch;
+		const char* s = std::strstr(line.c_str(), "FBX");
+		if (!s || sscanf(s, "FBX %d.%d.%d project file", &major, &minor, &patch) != 3) {
+			sfbxPrint("sfbx::Document::read(): not a fbx file\n");
+			return false;
+		}
+		m_version = (FileVersion)(major * 1000 + minor * 100);
+	}
+	
+	try {
+		while (!is.eof()) {
+			std::string block = read_brace_block(is);
+			if (block.empty())
+				break;
+			
+			string_view block_view = block;
+			auto node = createNode();
+			node->readAscii(block_view);
+			if (node->isNull()) {
+				eraseNode(node);
+				break;
+			}
+		}
+		importFBXObjects();
+	}
+	catch (const std::runtime_error& e) {
+		sfbxPrint("sfbx::Document::read(): exception %s\n", e.what());
+		return false;
+	}
+	
+	return true;
 }
 
 bool Document::readBinary(std::istream& is)
@@ -282,22 +285,25 @@ bool Document::writeBinary(const std::string& path) const
 
 bool Document::writeAscii(std::ostream& os) const
 {
-    char version[128];
-    sprintf(version, "; FBX %d.%d.0 project file\n", (int)m_version / 1000 % 10, (int)m_version / 100 % 10);
-
-    os << version;
-    os << "; ----------------------------------------------------\n\n";
-
-    for (auto node : getRootNodes()) {
-        // these nodes seem required only in binary format.
-        if (node->getName() == sfbxS_FileId ||
-            node->getName() == sfbxS_CreationTime ||
-            node->getName() == sfbxS_Creator)
-            continue;
-        node->writeAscii(os);
-    }
-
-    return true;
+	char version[128];
+	sprintf(version, "; FBX %d.%d.0 project file\n", (int)m_version / 1000 % 10, (int)m_version / 100 % 10);
+	
+	os << version;
+	// Add the missing header lines
+	os << "; Created by Power Engine \n";
+	os << "; https://x.com/cybertwip \n";
+	os << "; -------------------------------------------------\n\n";
+	
+	for (auto node : getRootNodes()) {
+		// these nodes seem required only in binary format.
+		if (node->getName() == sfbxS_FileId ||
+			node->getName() == sfbxS_CreationTime ||
+			node->getName() == sfbxS_Creator)
+			continue;
+		node->writeAscii(os);
+	}
+	
+	return true;
 }
 
 bool Document::writeAscii(const std::string& path) const
@@ -640,97 +646,101 @@ bool Document::mergeAnimations(const std::string& path)
 
 void Document::exportFBXNodes()
 {
-    m_nodes.clear();
-    m_root_nodes.clear();
-
-    std::time_t t = std::time(nullptr);
-    std::tm* now = std::localtime(&t);
-    std::string take_name{ m_current_take ? m_current_take->getName() : "" };
-
-    auto header_extension = createNode(sfbxS_FBXHeaderExtension);
-    {
-        header_extension->createChild(sfbxS_FBXHeaderVersion, (int32_t)1003);
-        header_extension->createChild(sfbxS_FBXVersion, (int32_t)getFileVersion());
-        header_extension->createChild(sfbxS_EncryptionType, (int32_t)0);
-        {
-            auto timestamp = header_extension->createChild(sfbxS_CreationTimeStamp);
-            timestamp->createChild(sfbxS_Version, 1000);
-            timestamp->createChild(sfbxS_Year, now->tm_year);
-            timestamp->createChild(sfbxS_Month, now->tm_mon);
-            timestamp->createChild(sfbxS_Day, now->tm_mday);
-            timestamp->createChild(sfbxS_Hour, now->tm_hour);
-            timestamp->createChild(sfbxS_Minute, now->tm_min);
-            timestamp->createChild(sfbxS_Second, now->tm_sec);
-            timestamp->createChild(sfbxS_Millisecond, 0);
-        }
-        header_extension->createChild(sfbxS_Creator, sfbxS_SmallFBXWithVersion);
-        {
-            auto other_flags = header_extension->createChild(sfbxS_OtherFlags);
-            other_flags->createChild(sfbxS_TCDefinition, sfbxI_TCDefinition);
-        }
-        {
-            auto scene_info = header_extension->createChild(sfbxS_SceneInfo, MakeFullName(sfbxS_GlobalInfo, sfbxS_SceneInfo), sfbxS_UserData);
-            scene_info->createChild(sfbxS_Type, sfbxS_UserData);
-            scene_info->createChild(sfbxS_Version, 100);
-            {
-                auto meta = scene_info->createChild(sfbxS_MetaData);
-                meta->createChild(sfbxS_Version, 100);
-                meta->createChild(sfbxS_Title, "");
-                meta->createChild(sfbxS_Subject, "");
-                meta->createChild(sfbxS_Author, "");
-                meta->createChild(sfbxS_Keywords, "");
-                meta->createChild(sfbxS_Revision, "");
-                meta->createChild(sfbxS_Comment, "");
-            }
-            {
-                auto prop = scene_info->createChild(sfbxS_Properties70);
-                prop->createChild(sfbxS_P, sfbxS_DocumentUrl, sfbxS_KString, sfbxS_Url, "", "a.fbx");
-                prop->createChild(sfbxS_P, sfbxS_SrcDocumentUrl, sfbxS_KString, sfbxS_Url, "", "a.fbx");
-                prop->createChild(sfbxS_P, sfbxS_Original, sfbxS_Compound, "", "");
-                prop->createChild(sfbxS_P, sfbxS_OriginalApplicationVendor, sfbxS_KString, "", "", "");
-                prop->createChild(sfbxS_P, sfbxS_OriginalApplicationName, sfbxS_KString, "", "", "");
-                prop->createChild(sfbxS_P, sfbxS_OriginalApplicationVersion, sfbxS_KString, "", "", "");
-                prop->createChild(sfbxS_P, sfbxS_OriginalDateTime_GMT, sfbxS_DateTime, "", "", "");
-                prop->createChild(sfbxS_P, sfbxS_OriginalFileName, sfbxS_KString, "", "", "");
-                prop->createChild(sfbxS_P, sfbxS_LastSaved, sfbxS_Compound, "", "");
-                prop->createChild(sfbxS_P, sfbxS_LastSavedApplicationVendor, sfbxS_KString, "", "", "");
-                prop->createChild(sfbxS_P, sfbxS_LastSavedApplicationName, sfbxS_KString, "", "", "");
-                prop->createChild(sfbxS_P, sfbxS_LastSavedApplicationVersion, sfbxS_KString, "", "", "");
-                prop->createChild(sfbxS_P, sfbxS_LastSavedDateTime_GMT, sfbxS_DateTime, "", "", "");
-            }
-        }
-    }
-
-    createNode(sfbxS_FileId)->addProperties(make_span(g_fbx_file_id));
-    createNode(sfbxS_CreationTime)->addProperties(g_fbx_time_id);
-    createNode(sfbxS_Creator)->addProperties(sfbxS_SmallFBXWithVersion);
-
-    auto global_settings = createNode(sfbxS_GlobalSettings);
-    {
-        global_settings->createChild(sfbxS_Version, sfbxI_GlobalSettingsVersion);
-        auto prop = global_settings->createChild(sfbxS_Properties70);
-
-        prop->createChild(sfbxS_P, sfbxS_UpAxis, sfbxS_int, sfbxS_Integer, "", 1);
-        prop->createChild(sfbxS_P, sfbxS_UpAxisSign, sfbxS_int, sfbxS_Integer, "", 1);
-        prop->createChild(sfbxS_P, sfbxS_FrontAxis, sfbxS_int, sfbxS_Integer, "", 2);
-        prop->createChild(sfbxS_P, sfbxS_FrontAxisSign, sfbxS_int, sfbxS_Integer, "", 1);
-        prop->createChild(sfbxS_P, sfbxS_CoordAxis, sfbxS_int, sfbxS_Integer, "", 0);
-        prop->createChild(sfbxS_P, sfbxS_CoordAxisSign, sfbxS_int, sfbxS_Integer, "", 1);
-        prop->createChild(sfbxS_P, sfbxS_OriginalUpAxis, sfbxS_int, sfbxS_Integer, "", -1);
-        prop->createChild(sfbxS_P, sfbxS_OriginalUpAxisSign, sfbxS_int, sfbxS_Integer, "", 1);
-        prop->createChild(sfbxS_P, sfbxS_UnitScaleFactor, sfbxS_double, sfbxS_Number, "", this->global_settings.unit_scale);
-        prop->createChild(sfbxS_P, sfbxS_OriginalUnitScaleFactor, sfbxS_double, sfbxS_Number, "", this->global_settings.original_unit_scale);
-        prop->createChild(sfbxS_P, sfbxS_AmbientColor, sfbxS_ColorRGB sfbxS_ColorRGB, sfbxS_Color, "", 0.0, 0.0, 0.0);
-        prop->createChild(sfbxS_P, sfbxS_DefaultCamera, sfbxS_KString, "", "", this->global_settings.camera);
-        prop->createChild(sfbxS_P, sfbxS_TimeMode, sfbxS_enum, "", "", 0);
-        prop->createChild(sfbxS_P, sfbxS_TimeProtocol, sfbxS_enum, "", "", 2);
-        prop->createChild(sfbxS_P, sfbxS_SnapOnFrameMode, sfbxS_enum, "", "", 0);
-        prop->createChild(sfbxS_P, sfbxS_TimeSpanStart, sfbxS_KTime, sfbxS_Time, "", (int64)0);
-        prop->createChild(sfbxS_P, sfbxS_TimeSpanStop, sfbxS_KTime, sfbxS_Time, "", (int64)sfbxI_TicksPerSecond);
-        prop->createChild(sfbxS_P, sfbxS_CustomFrameRate, sfbxS_double, sfbxS_Number, "", -1.0);
-        prop->createChild(sfbxS_P, sfbxS_TimeMarker, sfbxS_Compound, "", "");
-        prop->createChild(sfbxS_P, sfbxS_CurrentTimeMarker, sfbxS_int, sfbxS_Integer, "", -1);
-    }
+	m_nodes.clear();
+	m_root_nodes.clear();
+	
+	std::time_t t = std::time(nullptr);
+	std::tm* now = std::localtime(&t);
+	std::string take_name{ m_current_take ? m_current_take->getName() : "" };
+	
+	auto header_extension = createNode(sfbxS_FBXHeaderExtension);
+	{
+		header_extension->createChild(sfbxS_FBXHeaderVersion, (int32_t)1003);
+		header_extension->createChild(sfbxS_FBXVersion, (int32_t)getFileVersion());
+		header_extension->createChild(sfbxS_EncryptionType, (int32_t)0);
+		{
+			auto timestamp = header_extension->createChild(sfbxS_CreationTimeStamp);
+			timestamp->createChild(sfbxS_Version, 1000);
+			// Correct the year and month
+			timestamp->createChild(sfbxS_Year, now->tm_year + 1900);
+			timestamp->createChild(sfbxS_Month, now->tm_mon + 1);
+			timestamp->createChild(sfbxS_Day, now->tm_mday);
+			timestamp->createChild(sfbxS_Hour, now->tm_hour);
+			timestamp->createChild(sfbxS_Minute, now->tm_min);
+			timestamp->createChild(sfbxS_Second, now->tm_sec);
+			timestamp->createChild(sfbxS_Millisecond, 0);
+		}
+		// Change the Creator string
+		header_extension->createChild(sfbxS_Creator, "Power Engine Alpha 1.0");
+		{
+			auto other_flags = header_extension->createChild(sfbxS_OtherFlags);
+			other_flags->createChild(sfbxS_TCDefinition, sfbxI_TCDefinition);
+		}
+		{
+			auto scene_info = header_extension->createChild(sfbxS_SceneInfo, MakeFullName(sfbxS_GlobalInfo, sfbxS_SceneInfo), sfbxS_UserData);
+			scene_info->createChild(sfbxS_Type, sfbxS_UserData);
+			scene_info->createChild(sfbxS_Version, 100);
+			{
+				auto meta = scene_info->createChild(sfbxS_MetaData);
+				meta->createChild(sfbxS_Version, 100);
+				meta->createChild(sfbxS_Title, "");
+				meta->createChild(sfbxS_Subject, "");
+				meta->createChild(sfbxS_Author, "");
+				meta->createChild(sfbxS_Keywords, "");
+				meta->createChild(sfbxS_Revision, "");
+				meta->createChild(sfbxS_Comment, "");
+			}
+			{
+				auto prop = scene_info->createChild(sfbxS_Properties70);
+				prop->createChild(sfbxS_P, sfbxS_DocumentUrl, sfbxS_KString, sfbxS_Url, "", "a.fbx");
+				prop->createChild(sfbxS_P, sfbxS_SrcDocumentUrl, sfbxS_KString, sfbxS_Url, "", "a.fbx");
+				prop->createChild(sfbxS_P, sfbxS_Original, sfbxS_Compound, "", "");
+				prop->createChild(sfbxS_P, sfbxS_OriginalApplicationVendor, sfbxS_KString, "", "", "");
+				prop->createChild(sfbxS_P, sfbxS_OriginalApplicationName, sfbxS_KString, "", "", "");
+				prop->createChild(sfbxS_P, sfbxS_OriginalApplicationVersion, sfbxS_KString, "", "", "");
+				prop->createChild(sfbxS_P, sfbxS_OriginalDateTime_GMT, sfbxS_DateTime, "", "", "");
+				prop->createChild(sfbxS_P, sfbxS_OriginalFileName, sfbxS_KString, "", "", "");
+				prop->createChild(sfbxS_P, sfbxS_LastSaved, sfbxS_Compound, "", "");
+				prop->createChild(sfbxS_P, sfbxS_LastSavedApplicationVendor, sfbxS_KString, "", "", "");
+				prop->createChild(sfbxS_P, sfbxS_LastSavedApplicationName, sfbxS_KString, "", "", "");
+				prop->createChild(sfbxS_P, sfbxS_LastSavedApplicationVersion, sfbxS_KString, "", "", "");
+				prop->createChild(sfbxS_P, sfbxS_LastSavedDateTime_GMT, sfbxS_DateTime, "", "", "");
+			}
+		}
+	}
+	
+	createNode(sfbxS_FileId)->addProperties(make_span(g_fbx_file_id));
+	createNode(sfbxS_CreationTime)->addProperties(g_fbx_time_id);
+	// Change the Creator string
+	createNode(sfbxS_Creator)->addProperties("Open Asset Import Library (Assimp) 5.4.0");
+	
+	auto global_settings = createNode(sfbxS_GlobalSettings);
+	{
+		global_settings->createChild(sfbxS_Version, sfbxI_GlobalSettingsVersion);
+		auto prop = global_settings->createChild(sfbxS_Properties70);
+		
+		// Set UpAxis to 2
+		prop->createChild(sfbxS_P, sfbxS_UpAxis, sfbxS_int, sfbxS_Integer, "", 2);
+		prop->createChild(sfbxS_P, sfbxS_UpAxisSign, sfbxS_int, sfbxS_Integer, "", 1);
+		prop->createChild(sfbxS_P, sfbxS_FrontAxis, sfbxS_int, sfbxS_Integer, "", 0);
+		prop->createChild(sfbxS_P, sfbxS_FrontAxisSign, sfbxS_int, sfbxS_Integer, "", 1);
+		prop->createChild(sfbxS_P, sfbxS_CoordAxis, sfbxS_int, sfbxS_Integer, "", 1);
+		prop->createChild(sfbxS_P, sfbxS_CoordAxisSign, sfbxS_int, sfbxS_Integer, "", 1);
+		prop->createChild(sfbxS_P, sfbxS_OriginalUpAxis, sfbxS_int, sfbxS_Integer, "", -1);
+		prop->createChild(sfbxS_P, sfbxS_OriginalUpAxisSign, sfbxS_int, sfbxS_Integer, "", 1);
+		prop->createChild(sfbxS_P, sfbxS_UnitScaleFactor, sfbxS_double, sfbxS_Number, "", this->global_settings.unit_scale);
+		prop->createChild(sfbxS_P, sfbxS_OriginalUnitScaleFactor, sfbxS_double, sfbxS_Number, "", this->global_settings.original_unit_scale);
+		prop->createChild(sfbxS_P, sfbxS_AmbientColor, sfbxS_ColorRGB sfbxS_ColorRGB, sfbxS_Color, "", 0.0, 0.0, 0.0);
+		prop->createChild(sfbxS_P, sfbxS_DefaultCamera, sfbxS_KString, "", "", this->global_settings.camera);
+		prop->createChild(sfbxS_P, sfbxS_TimeMode, sfbxS_enum, "", "", 0);
+		prop->createChild(sfbxS_P, sfbxS_TimeProtocol, sfbxS_enum, "", "", 2);
+		prop->createChild(sfbxS_P, sfbxS_SnapOnFrameMode, sfbxS_enum, "", "", 0);
+		prop->createChild(sfbxS_P, sfbxS_TimeSpanStart, sfbxS_KTime, sfbxS_Time, "", (int64)0);
+		prop->createChild(sfbxS_P, sfbxS_TimeSpanStop, sfbxS_KTime, sfbxS_Time, "", (int64)sfbxI_TicksPerSecond);
+		prop->createChild(sfbxS_P, sfbxS_CustomFrameRate, sfbxS_double, sfbxS_Number, "", -1.0);
+		prop->createChild(sfbxS_P, sfbxS_TimeMarker, sfbxS_Compound, "", "");
+		prop->createChild(sfbxS_P, sfbxS_CurrentTimeMarker, sfbxS_int, sfbxS_Integer, "", -1);
+	}
 
 	
     auto documents = createNode(sfbxS_Documents);

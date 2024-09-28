@@ -82,7 +82,6 @@ void Mesh::exportFBXObjects()
 	
 	// Export geometry
 	if (m_geom) {
-		m_geom->exportFBXObjects();
 		m_document->createLinkOO(m_geom, shared_from_this(), sfbxS_Geometry);
 	}
 	

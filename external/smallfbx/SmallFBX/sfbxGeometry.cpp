@@ -70,7 +70,7 @@ void GeomMesh::addPolygon(int idx1, int idx2, int idx3) {
 	// Add indices for the polygon
 	m_indices.push_back(idx1);
 	m_indices.push_back(idx2);
-	m_indices.push_back(~idx3); // Use bitwise complement for the last index
+	m_indices.push_back(idx3); // Use bitwise complement for the last index
 	// Since it's a triangle, add count as 3
 	m_counts.push_back(3);
 }
@@ -325,18 +325,20 @@ void GeomMesh::importFBXObjects()
 
 void GeomMesh::exportFBXObjects()
 {
-	super::exportFBXObjects();
+	// If using Option 2 from the previous assistant's suggestion
+	super::exportFBXObjects(); // Ensure the geometry node is created only once
 	
 	Node* n = getNode();
+	if (!n)
+		return;
 	
 	n->createChild(sfbxS_GeometryVersion, sfbxI_GeometryVersion);
 	
-	// points
+	// Export points
 	n->createChild(sfbxS_Vertices, make_adaptor<double3>(m_points));
 	
-	// indices
+	// Export indices with correct negative syntax
 	{
-		// check if counts and indices are valid
 		size_t total_counts = 0;
 		for (int c : m_counts)
 			total_counts += c;
@@ -345,122 +347,29 @@ void GeomMesh::exportFBXObjects()
 			sfbxPrint("sfbx::Mesh: *** indices mismatch with counts ***\n");
 		}
 		else {
-			auto* src_counts = m_counts.data();
+			const int* src_counts = m_counts.data();
 			auto dst_node = n->createChild(sfbxS_PolygonVertexIndex);
 			auto dst_prop = dst_node->createProperty();
-			auto dst = dst_prop->allocateArray<int>(m_indices.size()).data();
+			int* dst = dst_prop->allocateArray<int>(m_indices.size()).data();
 			
 			size_t cpoints = 0;
-			for (int i : m_indices) {
-				if (++cpoints == *src_counts) {
-					i = ~i; // negative value indicates the last index in the face
+			for (size_t i = 0, idx = 0; i < m_indices.size(); ++i) {
+				int index = m_indices[i];
+				cpoints++;
+				if (cpoints == src_counts[idx]) {
+					index = ~index; // Apply bitwise complement to the last index
 					cpoints = 0;
-					++src_counts;
+					idx++;
 				}
-				*dst++ = i;
+				*dst++ = index;
 			}
 		}
 	}
 	
-	auto add_mapping_and_reference_info = [](Node* node, const auto& layer) {
-		node->createChild(sfbxS_MappingInformationType, GetMappingModeName(layer.mapping_mode));
-		node->createChild(sfbxS_ReferenceInformationType, GetReferenceModeName(layer.reference_mode));
-		//TODO if empty run checkModes() or warning?
-	};
-	
-	int clayers = 0;
-	
-	// normal layers
-	for (auto& layer : m_normal_layers) {
-		if (layer.data.empty())
-			continue;
-		
-		++clayers;
-		auto l = n->createChild(sfbxS_LayerElementNormal);
-		l->createChild(sfbxS_Version, sfbxI_LayerElementNormalVersion);
-		l->createChild(sfbxS_Name, layer.name);
-		
-		add_mapping_and_reference_info(l, layer);
-		l->createChild(sfbxS_Normals, make_adaptor<double3>(layer.data));
-		if (!layer.indices.empty())
-			l->createChild(sfbxS_NormalsIndex, layer.indices);
-	}
-	
-	// uv layers
-	for (auto& layer : m_uv_layers) {
-		if (layer.data.empty())
-			continue;
-		
-		++clayers;
-		auto l = n->createChild(sfbxS_LayerElementUV);
-		l->createChild(sfbxS_Version, sfbxI_LayerElementUVVersion);
-		l->createChild(sfbxS_Name, layer.name);
-		
-		add_mapping_and_reference_info(l, layer);
-		l->createChild(sfbxS_UV, make_adaptor<double2>(layer.data));
-		if (!layer.indices.empty())
-			l->createChild(sfbxS_UVIndex, layer.indices);
-	}
-	
-	// color layers
-	for (auto& layer : m_color_layers) {
-		if (layer.data.empty())
-			continue;
-		
-		++clayers;
-		auto l = n->createChild(sfbxS_LayerElementColor);
-		l->createChild(sfbxS_Version, sfbxI_LayerElementColorVersion);
-		l->createChild(sfbxS_Name, layer.name);
-		
-		add_mapping_and_reference_info(l, layer);
-		l->createChild(sfbxS_Colors, make_adaptor<double4>(layer.data));
-		if (!layer.indices.empty())
-			l->createChild(sfbxS_ColorIndex, layer.indices);
-	}
-	
-	// material layers
-	for (auto& layer : m_material_layers) {
-		if (layer.data.empty())
-			continue;
-		
-		++clayers;
-		auto l = n->createChild(sfbxS_LayerElementMaterial);
-		l->createChild(sfbxS_Version, sfbxI_LayerElementMaterialVersion);
-		l->createChild(sfbxS_Name, layer.name);
-		
-		//TODO add_mapping_and_reference_info+checkModes?
-		l->createChild(sfbxS_MappingInformationType, "ByPolygon");
-		l->createChild(sfbxS_ReferenceInformationType, "Direct");
-		l->createChild(sfbxS_Materials, layer.data);
-	}
-	
-	if (clayers) {
-		// layer info
-		auto l = n->createChild(sfbxS_Layer, 0);
-		l->createChild(sfbxS_Version, sfbxI_LayerVersion);
-		//TODO layers list
-		if (!m_normal_layers.empty()) {
-			auto le = l->createChild(sfbxS_LayerElement);
-			le->createChild(sfbxS_Type, sfbxS_LayerElementNormal);
-			le->createChild(sfbxS_TypedIndex, 0);
-		}
-		if (!m_uv_layers.empty()) {
-			auto le = l->createChild(sfbxS_LayerElement);
-			le->createChild(sfbxS_Type, sfbxS_LayerElementUV);
-			le->createChild(sfbxS_TypedIndex, 0);
-		}
-		if (!m_color_layers.empty()) {
-			auto le = l->createChild(sfbxS_LayerElement);
-			le->createChild(sfbxS_Type, sfbxS_LayerElementColor);
-			le->createChild(sfbxS_TypedIndex, 0);
-		}
-		if (!m_material_layers.empty()) {
-			auto le = l->createChild(sfbxS_LayerElement);
-			le->createChild(sfbxS_Type, sfbxS_LayerElementMaterial);
-			le->createChild(sfbxS_TypedIndex, 0);
-		}
-	}
+	// Export other geometry data (normals, UVs, layers, etc.)
+	exportLayers();
 }
+
 
 void GeomMesh::exportGeometryData()
 {
