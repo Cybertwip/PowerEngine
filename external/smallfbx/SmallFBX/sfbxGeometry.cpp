@@ -326,86 +326,103 @@ void GeomMesh::importFBXObjects()
 
 void GeomMesh::exportFBXObjects()
 {
-	super::exportFBXObjects();
+	if (m_node)
+		return; // Already exported
 	
-	Node* n = getNode();
+	Node* objects = m_document->findNode(sfbxS_Objects);
+	if (!objects)
+		return;
 	
-	n->createChild(sfbxS_GeometryVersion, sfbxI_GeometryVersion);
+	// Create the node for this geometry
+	m_node = objects->createChild(
+								  sfbxS_Geometry,
+								  getID(),
+								  getFullName(),
+								  GetObjectSubClassName(getSubClass())
+								  );
 	
-	// Points
-	n->createChild(sfbxS_Vertices, make_adaptor<double3>(m_points));
-	
-	// Indices
-	{
-		auto dst_node = n->createChild(sfbxS_PolygonVertexIndex);
-		auto dst_prop = dst_node->createProperty();
-		auto dst = dst_prop->allocateArray<int>(m_indices.size()).data();
-		
-		size_t index = 0;
-		for (size_t i = 0; i < m_counts.size(); ++i) {
-			int count = m_counts[i];
-			for (int j = 0; j < count; ++j) {
-				int idx = m_indices[index++];
-				if (j == count - 1)
-					idx = ~idx; // Negate the last index in the polygon
-				*dst++ = idx;
-			}
-		}
-	}
-	
-	auto add_layer_element = [&](const std::string& element_name, auto& layers) {
-		for (size_t i = 0; i < layers.size(); ++i) {
-			auto& layer = layers[i];
-			if (layer.data.empty())
-				continue;
-			
-			Node* layer_node = n->createChild(element_name, (int)i);
-			layer_node->createChild(sfbxS_Version, sfbxI_LayerVersion);
-			layer_node->createChild(sfbxS_Name, layer.name);
-			layer_node->createChild(sfbxS_MappingInformationType, toString(layer.mapping_mode));
-			layer_node->createChild(sfbxS_ReferenceInformationType, toString(layer.reference_mode));
+	// Export geometry data (control points, polygons, layers)
+	exportGeometryData();
+}
 
-			if constexpr (std::is_same_v<decltype(layer), LayerElementF3&>) {
-				// Normals
-				layer_node->createChild(sfbxS_Normals, make_adaptor<double3>(layer.data));
-				if (!layer.indices.empty())
-					layer_node->createChild(sfbxS_NormalsIndex, layer.indices);
-			}
-			else if constexpr (std::is_same_v<decltype(layer), LayerElementF2&>) {
-				// UVs
-				layer_node->createChild(sfbxS_UV, make_adaptor<double2>(layer.data));
-				if (!layer.indices.empty())
-					layer_node->createChild(sfbxS_UVIndex, layer.indices);
-			}
-			else if constexpr (std::is_same_v<decltype(layer), LayerElementF4&>) {
-				// Colors
-				layer_node->createChild(sfbxS_Colors, make_adaptor<double4>(layer.data));
-				if (!layer.indices.empty())
-					layer_node->createChild(sfbxS_ColorIndex, layer.indices);
-			}
-			else if constexpr (std::is_same_v<decltype(layer), LayerElementI1&>) {
-				// Correct: Writing materials from layer.indices
-				layer_node->createChild(sfbxS_Materials, layer.indices);
-			}
-		}
-	};
-	
-	// Export layer elements
-	add_layer_element(sfbxS_LayerElementNormal, m_normal_layers);
-	add_layer_element(sfbxS_LayerElementUV, m_uv_layers);
-	add_layer_element(sfbxS_LayerElementColor, m_color_layers);
-	add_layer_element(sfbxS_LayerElementMaterial, m_material_layers);
-	
-	// Export layer descriptions
-	for (size_t i = 0; i < m_layers.size(); ++i) {
-		Node* layer_node = n->createChild(sfbxS_Layer, (int)i);
-		layer_node->createChild(sfbxS_Version, sfbxI_LayerVersion);
-		for (auto& desc : m_layers[i]) {
-			Node* le_node = layer_node->createChild(sfbxS_LayerElement);
-			le_node->createChild(sfbxS_Type, desc.type);
-			le_node->createChild(sfbxS_TypedIndex, desc.index);
-		}
+void GeomMesh::exportGeometryData()
+{
+	// Export vertices (control points)
+	if (!m_points.empty()) {
+		m_node->createChild(sfbxS_Vertices)->addProperties(m_points);
 	}
+	
+	// Export polygon vertex indices
+	if (!m_indices.empty()) {
+		m_node->createChild(sfbxS_PolygonVertexIndex)->addProperties(m_indices);
+	}
+	
+	// Export layers (normals, UVs, colors, materials)
+	exportLayers();
+}
+
+void GeomMesh::exportLayers()
+{
+	// Export normal layers
+	for (const auto& layer : m_normal_layers)
+		exportLayer(layer, sfbxS_LayerElementNormal);
+	
+	// Export UV layers
+	for (const auto& layer : m_uv_layers)
+		exportLayer(layer, sfbxS_LayerElementUV);
+	
+	// Export color layers
+	for (const auto& layer : m_color_layers)
+		exportLayer(layer, sfbxS_LayerElementColor);
+	
+	// Export material layers
+	for (const auto& layer : m_material_layers)
+		exportLayer(layer, sfbxS_LayerElementMaterial);
+}
+
+
+template<typename LayerType>
+void GeomMesh::exportLayer(const LayerType& layer, const char* layerName)
+{
+	Node* layerNode = m_node->createChild(layerName);
+	layerNode->createChild(sfbxS_Name, layer.name);
+	layerNode->createChild(sfbxS_MappingInformationType, GetMappingModeName(layer.mapping_mode));
+	layerNode->createChild(sfbxS_ReferenceInformationType, GetReferenceModeName(layer.reference_mode));
+	
+	// Determine the correct data and index property names
+	const char* dataPropertyName = nullptr;
+	const char* indexPropertyName = nullptr;
+	
+	if (layerName == sfbxS_LayerElementNormal) {
+		dataPropertyName = sfbxS_Normals;
+		indexPropertyName = sfbxS_NormalsIndex;
+	}
+	else if (layerName == sfbxS_LayerElementUV) {
+		dataPropertyName = sfbxS_UV;
+		indexPropertyName = sfbxS_UVIndex;
+	}
+	else if (layerName == sfbxS_LayerElementColor) {
+		dataPropertyName = sfbxS_Colors;
+		indexPropertyName = sfbxS_ColorIndex;
+	}
+	else if (layerName == sfbxS_LayerElementMaterial) {
+		dataPropertyName = sfbxS_Materials;
+		// Materials do not have an index property in the same way
+		indexPropertyName = nullptr;
+	}
+	else {
+		// For custom layers or unsupported types
+		dataPropertyName = "Data";
+		indexPropertyName = "Indices";
+	}
+	
+	// Export data
+	if (!layer.data.empty() && dataPropertyName)
+		layerNode->createChild(dataPropertyName)->addProperties(layer.data);
+	
+	// Export indices
+	if (!layer.indices.empty() && indexPropertyName)
+		layerNode->createChild(indexPropertyName)->addProperties(layer.indices);
 }
 
 span<int> GeomMesh::getCounts() const { return make_span(m_counts); }

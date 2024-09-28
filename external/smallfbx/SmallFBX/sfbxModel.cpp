@@ -1,4 +1,5 @@
 #include "sfbxInternal.h"
+#include "sfbxDocument.h"
 #include "sfbxModel.h"
 #include "sfbxGeometry.h"
 #include "sfbxMaterial.h"
@@ -75,53 +76,79 @@ void Model::importFBXObjects()
 
 #define sfbxVector3d(V) (float64)V.x, (float64)V.y, (float64)V.z
 
+void Mesh::exportFBXObjects()
+{
+	super::exportFBXObjects(); // Calls Model::exportFBXObjects()
+	
+	// Export geometry
+	if (m_geom) {
+		m_geom->exportFBXObjects();
+		m_document->createLinkOO(m_geom, shared_from_this(), sfbxS_Geometry);
+	}
+	
+	// Export materials and create connections
+	for (auto& material : m_materials) {
+		material->exportFBXObjects();
+		m_document->createLinkOO(material, shared_from_this(), sfbxS_Material);
+	}
+}
+
 void Model::exportFBXObjects()
 {
-    super::exportFBXObjects();
-    auto n = getNode();
-    if (!n)
-        return;
+	if (m_node)
+		return; // Already exported
+	
+	Node* objects = m_document->findNode(sfbxS_Objects);
+	if (!objects)
+		return;
+	
+	// Create the node for this model
+	m_node = objects->createChild(
+								  sfbxS_Model,
+								  getID(),
+								  getFullName(),
+								  GetObjectSubClassName(getSubClass())
+								  );
+	
+	// Set up properties
+	Node* prop = m_node->createChild(sfbxS_Properties70);
+	prop->createChild(sfbxS_P, sfbxS_LclTranslation, sfbxS_LclTranslation, sfbxS_Vector, "", m_position.x, m_position.y, m_position.z);
+	prop->createChild(sfbxS_P, sfbxS_LclRotation, sfbxS_LclRotation, sfbxS_Vector, "", m_rotation.x, m_rotation.y, m_rotation.z);
+	prop->createChild(sfbxS_P, sfbxS_LclScale, sfbxS_LclScale, sfbxS_Vector, "", m_scale.x, m_scale.y, m_scale.z);
+	
+	// Export attached node attribute
+	if (m_attr) {
+		m_attr->exportFBXObjects();
+		m_document->createLinkOO(m_attr, shared_from_this(), sfbxS_NodeAttribute);
+	}
+	
+	// Export child models
+	for (auto& child : m_child_models) {
+		child->exportFBXObjects();
+	}
+}
 
-    // version
-    n->createChild(sfbxS_Version, sfbxI_ModelVersion);
 
-    auto properties = n->createChild(sfbxS_Properties70);
-
-    // attribute
-    properties->createChild(sfbxS_P, "DefaultAttributeIndex", "int", "Integer", "", 0);
-
-    // position
-    if (m_position != float3::zero())
-        properties->createChild(sfbxS_P,
-            sfbxS_LclTranslation, sfbxS_LclTranslation, sfbxS_Empty, sfbxS_A, sfbxVector3d(m_position));
-
-    // rotation
-    if (m_pre_rotation != float3::zero() || m_post_rotation != float3::zero() || m_rotation != float3::zero()) {
-        // rotation active
-        properties->createChild(sfbxS_P,
-            sfbxS_RotationActive, sfbxS_bool, sfbxS_Empty, sfbxS_Empty, (int32)1);
-        // rotation order
-        if (m_rotation_order != RotationOrder::XYZ)
-            properties->createChild(sfbxS_P,
-                sfbxS_RotationOrder, sfbxS_RotationOrder, sfbxS_Empty, sfbxS_A, (int32)m_rotation_order);
-        // pre-rotation
-        if (m_pre_rotation != float3::zero())
-            properties->createChild(sfbxS_P,
-                sfbxS_PreRotation, sfbxS_Vector3D, sfbxS_Vector, sfbxS_Empty, sfbxVector3d(m_pre_rotation));
-        // post-rotation
-        if (m_post_rotation != float3::zero())
-            properties->createChild(sfbxS_P,
-                sfbxS_PostRotation, sfbxS_Vector3D, sfbxS_Vector, sfbxS_Empty, sfbxVector3d(m_post_rotation));
-        // rotation
-        if (m_rotation != float3::zero())
-            properties->createChild(sfbxS_P,
-                sfbxS_LclRotation, sfbxS_LclRotation, sfbxS_Empty, sfbxS_A, sfbxVector3d(m_rotation));
-    }
-
-    // scale
-    if (m_scale!= float3::one())
-        properties->createChild(sfbxS_P,
-            sfbxS_LclScale, sfbxS_LclScale, sfbxS_Empty, sfbxS_A, sfbxVector3d(m_scale));
+void Model::exportFBXConnections()
+{
+	// Create connections to the parent model
+	if (m_parent_model) {
+		m_document->createLinkOO(shared_from_this(), m_parent_model);
+	} else {
+		// If no parent, connect to the root node
+		m_document->createLinkOO(shared_from_this(), m_document->getRootModel());
+	}
+	
+	// Export connections for attached node attribute
+	if (m_attr) {
+		m_attr->exportFBXConnections();
+		m_document->createLinkOO(m_attr, shared_from_this(), sfbxS_NodeAttribute);
+	}
+	
+	// Export connections for child models
+	for (auto& child : m_child_models) {
+		child->exportFBXConnections();
+	}
 }
 
 void Model::addChild(ObjectPtr v)
@@ -281,9 +308,17 @@ ObjectSubClass Root::getSubClass() const { return ObjectSubClass::Root; }
 
 void Root::exportFBXObjects()
 {
-    if (!m_attr)
-        m_attr = createChild<RootAttribute>();
-    super::exportFBXObjects();
+	if (m_node)
+		return; // Already exported
+	
+	// Call the base class implementation
+	super::exportFBXObjects();
+	
+	// Create a RootAttribute if it doesn't exist
+	if (!m_attr) {
+		m_attr = m_document->createObject<RootAttribute>();
+		m_document->createLinkOO(m_attr, shared_from_this());
+	}
 }
 
 void RootAttribute::exportFBXObjects()
@@ -353,10 +388,23 @@ void Mesh::importFBXObjects()
 #endif
 }
 
-void Mesh::exportFBXObjects()
+void Mesh::exportFBXConnections()
 {
-	super::exportFBXObjects();
+	super::exportFBXConnections(); // Calls Model::exportFBXConnections()
+	
+	// Export connections for geometry
+	if (m_geom) {
+		m_geom->exportFBXConnections();
+		m_document->createLinkOO(m_geom, shared_from_this(), sfbxS_Geometry);
+	}
+	
+	// Export connections for materials
+	for (auto& material : m_materials) {
+		material->exportFBXConnections();
+		m_document->createLinkOO(material, shared_from_this(), sfbxS_Material);
+	}
 }
+
 
 void Mesh::addChild(ObjectPtr v)
 {
@@ -388,8 +436,10 @@ void Mesh::setGeometry(std::shared_ptr<GeomMesh> geom)
 {
 	if (m_geom != geom) {
 		m_geom = geom;
-		propagateDirty();
-		updateMatrices();
+		// Establish the connection
+		if (m_document) {
+			m_document->createLinkOP(m_geom, shared_from_this(), sfbxS_Geometry);
+		}
 	}
 }
 

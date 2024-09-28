@@ -316,17 +316,19 @@ using int2 = tvec2<int>;
 using int3 = tvec3<int>;
 using int4 = tvec4<int>;
 
-using float2 = tvec2<float>;
-using float3 = tvec3<float>;
-using float4 = tvec4<float>;
-using quatf = tquat<float>;
-using float4x4 = tmat4x4<float>;
-
 using double2 = tvec2<double>;
 using double3 = tvec3<double>;
 using double4 = tvec4<double>;
 using quatd = tquat<double>;
 using double4x4 = tmat4x4<double>;
+
+// Blender and newer sdk's do not support float.
+using float2 = double2;
+using float3 = double3;
+using float4 = double4;
+using quatf = quatd;
+using float4x4 = double4x4;
+
 
 
 enum class RotationOrder : int

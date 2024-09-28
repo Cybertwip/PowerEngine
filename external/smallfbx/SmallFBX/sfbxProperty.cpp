@@ -222,9 +222,6 @@ template<> void Property::assign(span<float64> v) { m_type = PropertyType::Float
 template<> void Property::assign(span<float2> v)  { assign(span<float32>{ (float32*)v.data(), v.size() * 2 }); }
 template<> void Property::assign(span<float3> v)  { assign(span<float32>{ (float32*)v.data(), v.size() * 3 }); }
 template<> void Property::assign(span<float4> v)  { assign(span<float32>{ (float32*)v.data(), v.size() * 4 }); }
-template<> void Property::assign(span<double2> v) { assign(span<float64>{ (float64*)v.data(), v.size() * 2 }); }
-template<> void Property::assign(span<double3> v) { assign(span<float64>{ (float64*)v.data(), v.size() * 3 }); }
-template<> void Property::assign(span<double4> v) { assign(span<float64>{ (float64*)v.data(), v.size() * 4 }); }
 
 void Property::assign(string_view v)
 {
@@ -256,11 +253,6 @@ template<> int32   Property::getValue() const { convert(PropertyType::Int32); re
 template<> int64   Property::getValue() const { convert(PropertyType::Int64); return m_scalar.i64; }
 template<> float32 Property::getValue() const { convert(PropertyType::Float32); return m_scalar.f32; }
 template<> float64 Property::getValue() const { return m_scalar.f64; }
-
-template<> double2 Property::getValue() const { return *(double2*)m_data.data(); }
-template<> double3 Property::getValue() const { return *(double3*)m_data.data(); }
-template<> double4 Property::getValue() const { return *(double4*)m_data.data(); }
-template<> double4x4 Property::getValue() const { return *(double4x4*)m_data.data(); }
 
 template<> float2 Property::getValue() const { return *(float2*)m_data.data(); }
 template<> float3 Property::getValue() const { return *(float3*)m_data.data(); }

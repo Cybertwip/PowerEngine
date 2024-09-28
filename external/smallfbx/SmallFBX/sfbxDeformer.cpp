@@ -390,7 +390,7 @@ void BlendShapeChannel::deformPoints(span<float3> dst) const
         auto indices = shape->getIndices();
         auto delta = shape->getDeltaPoints();
         size_t n = indices.size();
-        float w = m_weight / sd.weight;
+		double w = m_weight / sd.weight;
         for (size_t i = 0; i < n; ++i)
             dst[indices[i]] += delta[i] * w;
     }
@@ -409,7 +409,7 @@ void BlendShapeChannel::deformNormals(span<float3> dst) const
         auto indices = shape->getIndices();
         auto delta = shape->getDeltaNormals();
         size_t n = indices.size();
-        float w = m_weight / sd.weight;
+		double w = m_weight / sd.weight;
         for (size_t i = 0; i < n; ++i)
             dst[indices[i]] += delta[i] * w;
     }

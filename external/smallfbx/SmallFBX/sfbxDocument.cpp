@@ -46,8 +46,8 @@ bool Document::valid() const
 
 void Document::initialize()
 {
-    m_root_model = createObject<Model>("Scene");
-    m_root_model->setID(0);
+	m_root_model = createObject<Root>("Scene");
+	m_root_model->setID(0);
 }
 
 bool Document::readAscii(std::istream& is)
@@ -367,16 +367,21 @@ Node* Document::findNode(string_view name) const
 span<sfbx::NodePtr> Document::getAllNodes() const { return make_span(m_nodes); }
 span<Node*> Document::getRootNodes() const { return make_span(m_root_nodes); }
 
-
-void Document::createLinkOO(ObjectPtr child, ObjectPtr parent)
+void Document::createLinkOO(ObjectPtr child, ObjectPtr parent, string_view type)
 {
 	if (!child || !parent)
 		return;
-	if (auto c = findNode(sfbxS_Connections))
-		c->createChild(sfbxS_C, sfbxS_OO, child->getID(), parent->getID());
-	// **Store the connection**
-	m_connections.emplace_back(child, parent, Connection::Type::OO);
+	if (auto c = findNode(sfbxS_Connections)) {
+		if (!type.empty()) {
+			c->createChild(sfbxS_C, sfbxS_OO, child->getID(), parent->getID(), type);
+		} else {
+			c->createChild(sfbxS_C, sfbxS_OO, child->getID(), parent->getID());
+		}
+	}
+	// Store the connection
+	m_connections.emplace_back(child, parent, Connection::Type::OO, std::string(type));
 }
+
 
 void Document::createLinkOP(ObjectPtr child, ObjectPtr parent, string_view target)
 {
@@ -705,7 +710,7 @@ void Document::exportFBXNodes()
         global_settings->createChild(sfbxS_Version, sfbxI_GlobalSettingsVersion);
         auto prop = global_settings->createChild(sfbxS_Properties70);
 
-        prop->createChild(sfbxS_P, sfbxS_UpAxis, sfbxS_int sfbxS_int, sfbxS_Integer, "", 1);
+        prop->createChild(sfbxS_P, sfbxS_UpAxis, sfbxS_int, sfbxS_Integer, "", 1);
         prop->createChild(sfbxS_P, sfbxS_UpAxisSign, sfbxS_int, sfbxS_Integer, "", 1);
         prop->createChild(sfbxS_P, sfbxS_FrontAxis, sfbxS_int, sfbxS_Integer, "", 2);
         prop->createChild(sfbxS_P, sfbxS_FrontAxisSign, sfbxS_int, sfbxS_Integer, "", 1);
@@ -727,6 +732,7 @@ void Document::exportFBXNodes()
         prop->createChild(sfbxS_P, sfbxS_CurrentTimeMarker, sfbxS_int, sfbxS_Integer, "", -1);
     }
 
+	
     auto documents = createNode(sfbxS_Documents);
     {
         documents->createChild(sfbxS_Count, (int32)1);

@@ -90,6 +90,29 @@ inline std::string toString(LayerReferenceMode mode)
 	}
 }
 
+// **Implement GetMappingModeName and GetReferenceModeName**
+inline const char* GetMappingModeName(LayerMappingMode mode)
+{
+	switch (mode) {
+		case LayerMappingMode::ByControlPoint: return "ByControlPoint";
+		case LayerMappingMode::ByPolygonVertex: return "ByPolygonVertex";
+		case LayerMappingMode::ByPolygon: return "ByPolygon";
+		case LayerMappingMode::ByEdge: return "ByEdge";
+		case LayerMappingMode::AllSame: return "AllSame";
+		default: return "None";
+	}
+}
+
+inline const char* GetReferenceModeName(LayerReferenceMode mode)
+{
+	switch (mode) {
+		case LayerReferenceMode::Direct: return "Direct";
+		case LayerReferenceMode::Index: return "Index";
+		case LayerReferenceMode::IndexToDirect: return "IndexToDirect";
+		default: return "Direct";
+	}
+}
+
 // FBX can store multiple normal / UV / vertex color channels ("layer" in FBX term).
 // LayerElement store these data.
 template<class T>
@@ -155,9 +178,16 @@ public:
 	int getMaterialForVertexIndex(size_t vertex_index) const;
 	std::vector<int> getVertexIndicesForPointIndex(int point_index) const;
 	
+	void exportFBXObjects() override;
+
 protected:
 	void importFBXObjects() override;
-	void exportFBXObjects() override;
+	
+	void exportGeometryData();
+	void exportLayers();
+	
+	template<typename LayerType>
+	void exportLayer(const LayerType& layer, const char* layerName);
 	
 	// Existing member variables
 	RawVector<int> m_counts;

@@ -98,11 +98,12 @@ public:
 	void setOpacity(float64 opacity);
 	
 	void setTexture(const std::string& textureType, const std::shared_ptr<sfbx::Texture>& texture);
-	
-protected:
-	void importFBXObjects() override;
+
 	void exportFBXObjects() override;
 	void exportFBXConnections() override;
+
+protected:
+	void importFBXObjects() override;
 	
 private:
 	double3 m_ambient_color = { 0.0, 0.0, 0.0 };

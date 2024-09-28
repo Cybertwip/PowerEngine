@@ -338,8 +338,6 @@ template<> void Node::getPropertiesValues<float3>(float3& dst) const { ToVector<
 
 template<> void Node::getPropertiesValues<float3>(size_t offset, float3& dst) const { ToVectorWithOffset<float32, float3>(offset, getProperties(), dst); }
 
-template<> void Node::getPropertiesValues<double3>(size_t offset, double3& dst) const { ToVectorWithOffset<float64, double3>(offset, getProperties(), dst); }
-
 #endif
 
 

@@ -31,7 +31,7 @@ protected:
 struct JointWeight
 {
     int index; // index of joint/cluster
-    float weight;
+    double weight;
 };
 
 struct JointWeights // copyable

@@ -118,14 +118,15 @@ public:
 		return *m_document;
 	}
 	
+	virtual void exportFBXObjects();
+	virtual void exportFBXConnections();
+
 protected:
     Object();
     Object(const Object&) = delete;
     Object& operator=(const Object) = delete;
 
     virtual void importFBXObjects();
-    virtual void exportFBXObjects();
-    virtual void exportFBXConnections();
     virtual void addParent(ObjectPtr v);
     virtual void eraseParent(ObjectPtr v);
 

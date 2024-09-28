@@ -121,7 +121,7 @@ public:
 	
 	void eraseObject(ObjectPtr obj);
 	
-	void createLinkOO(ObjectPtr child, ObjectPtr parent);
+	void createLinkOO(ObjectPtr child, ObjectPtr parent, string_view type = {});
 	void createLinkOP(ObjectPtr child, ObjectPtr parent, string_view target);
 	
 private:
