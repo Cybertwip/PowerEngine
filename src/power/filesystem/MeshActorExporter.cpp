@@ -55,13 +55,17 @@ bool MeshActorExporter::exportActor(const MeshActorImporter::CompressedMeshActor
 	}
 	
 	// Step 3: Create Meshes and Models
+	// After creating the mesh
 	for (size_t i = 0; i < mMeshes.size(); ++i) {
 		auto& meshData = *mMeshes[i];
 		std::shared_ptr<sfbx::Mesh> meshModel = mDocument.createObject<sfbx::Mesh>("Mesh_" + std::to_string(i));
 		assert(meshModel != nullptr);
 		createMesh(meshData, materialMap, meshModel);
+		
+		// Create a node for each mesh
+		createNodeForMesh(meshModel, "Node_" + std::to_string(i));
 	}
-	
+
 	// Step 5: Skip Animations as per user request
 	
 	// Step 6: Export the Document to a file
@@ -73,6 +77,23 @@ bool MeshActorExporter::exportActor(const MeshActorImporter::CompressedMeshActor
 	std::cout << "Successfully exported actor to " << exportPath << std::endl;
 	return true;
 }
+void MeshActorExporter::createNodeForMesh(const std::shared_ptr<sfbx::Mesh>& meshModel, const std::string& nodeName) {
+	// Create a Node for this mesh
+	std::shared_ptr<sfbx::Node> meshNode = mDocument.createObject<sfbx::Node>(nodeName);
+	assert(meshNode != nullptr);
+	
+	// Set transformation properties (this is an example, you may modify based on your data)
+	meshNode->setTranslation({0.0, 0.0, 0.0});  // Set the position of the node
+	meshNode->setRotation({0.0, 0.0, 0.0});      // Set the rotation of the node (in degrees)
+	meshNode->setScaling({1.0, 1.0, 1.0});       // Set the scale of the node
+	
+	// Link the mesh model to this node
+	meshNode->addMesh(meshModel);
+	
+	// Optionally, you can add this node to a parent node or the root node
+	mDocument.getRootNode()->addChild(meshNode);
+}
+
 void MeshActorExporter::createMaterials(
 										const std::vector<std::shared_ptr<SerializableMaterialProperties>>& materials,
 										std::map<int, std::shared_ptr<sfbx::Material>>& materialMap

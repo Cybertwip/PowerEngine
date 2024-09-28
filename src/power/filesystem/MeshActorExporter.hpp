@@ -28,6 +28,8 @@ private:
 	std::unique_ptr<Skeleton> mSkeleton;
 	// Animations are skipped as per user request
 	
+	void createNodeForMesh(const std::shared_ptr<sfbx::Mesh>& meshModel, const std::string& nodeName);
+	
 	// Helper Functions
 	void createMaterials(const std::vector<std::shared_ptr<SerializableMaterialProperties>>& materials, std::map<int, std::shared_ptr<sfbx::Material>>& materialMap);
 	void createMesh(MeshData& meshData, const std::map<int, std::shared_ptr<sfbx::Material>>& materialMap, std::shared_ptr<sfbx::Mesh> parentModel);
