@@ -64,6 +64,4 @@ private:
 	ColorComponent& mColorComponent;
 	
 	nanogui::Matrix4f mModelMatrix;
-	
-	static std::unique_ptr<nanogui::Texture> mDummyTexture;
 };

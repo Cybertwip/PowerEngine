@@ -85,7 +85,7 @@ void MeshBatch::upload_material_data(ShaderWrapper& shader, const std::vector<st
 		if (material.mHasDiffuseTexture) {
 			mShader.set_texture(textureBaseName, material.mTextureDiffuse.get());
 		} else {
-			mShader.set_texture(textureBaseName, mDummyTexture.get());
+			mShader.set_texture(textureBaseName, Batch::mDummyTexture.get());
 		}
 	}
 #endif

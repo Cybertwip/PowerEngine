@@ -1,11 +1,13 @@
 #include "SelfContainedMeshCanvas.hpp"
 #include "components/SkinnedMeshComponent.hpp"
+#include "graphics/Drawing/Batch.hpp"
 
 #if defined(NANOGUI_USE_METAL)
 #include "MetalHelper.hpp"
 #endif
 
 #include <nanogui/screen.h>
+#include <nanogui/renderpass.h>
 
 namespace CanvasUtils {
 nanogui::Matrix4f glm_to_nanogui(glm::mat4 glmMatrix) {
@@ -332,7 +334,7 @@ void SelfContainedMeshCanvas::upload_material_data(ShaderWrapper& shader, const 
 		if (material.mHasDiffuseTexture) {
 			mShader.set_texture(textureBaseName, material.mTextureDiffuse.get());
 		} else {
-			mShader.set_texture(textureBaseName, mDummyTexture.get());
+			mShader.set_texture(textureBaseName, Batch::mDummyTexture.get());
 		}
 	}
 #endif

@@ -72,6 +72,4 @@ private:
 	SkinnedAnimationComponent& mSkinnedComponent;
 	
 	nanogui::Matrix4f mModelMatrix;
-	
-	static std::unique_ptr<nanogui::Texture> mDummyTexture;
 };

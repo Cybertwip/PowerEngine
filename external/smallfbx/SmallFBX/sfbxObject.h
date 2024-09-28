@@ -57,6 +57,7 @@ enum class ObjectSubClass : int
     Body(Deformer) Body(Skin) Body(Cluster) Body(BlendShape) Body(BlendShapeChannel)\
     Body(Pose) Body(BindPose)\
     Body(Video) Body(Material)\
+	Body(Texture) \
     Body(AnimationStack) Body(AnimationLayer) Body(AnimationCurveNode) Body(AnimationCurve)
 
 #define Decl(T) class T;
