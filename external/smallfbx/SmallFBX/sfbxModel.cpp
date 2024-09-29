@@ -330,15 +330,32 @@ ObjectSubClass LimbNode::getSubClass() const { return ObjectSubClass::LimbNode; 
 
 void LimbNode::exportFBXObjects()
 {
-    if (!m_attr)
-        m_attr = createChild<LimbNodeAttribute>();
-    super::exportFBXObjects();
+	super::exportFBXObjects();
+
+	if (!m_attr){
+		m_attr = createChild<LimbNodeAttribute>();
+		m_attr->exportFBXObjects();
+	}
+}
+
+
+void LimbNode::exportFBXConnections()
+{
+	super::exportFBXConnections();
+	
+	if (m_attr){
+		m_attr->exportFBXConnections();
+	}
 }
 
 void LimbNodeAttribute::exportFBXObjects()
 {
     super::exportFBXObjects();
     getNode()->createChild(sfbxS_TypeFlags, sfbxS_Skeleton);
+	
+	for (auto& child : m_children) {
+		child->exportFBXObjects();
+	}
 }
 
 void LimbNode::addChild(ObjectPtr v)

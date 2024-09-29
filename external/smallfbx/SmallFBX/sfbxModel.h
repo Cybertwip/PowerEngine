@@ -160,7 +160,8 @@ public:
     void eraseChild(ObjectPtr v) override;
 
 protected:
-    void exportFBXObjects() override;
+	void exportFBXObjects() override;
+	void exportFBXConnections() override;
 
 	//std::shared_ptr<LimbNodeAttribute> m_attr{};
 };

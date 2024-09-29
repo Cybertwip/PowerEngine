@@ -863,7 +863,7 @@ void Document::exportFBXNodes()
 		});
 		
 		add_object_type(countObjects<Skin>(), "Pose");
-		add_object_type(countObjects<Deformer>(), "Deformer");
+		add_object_type(countObjects<Skin>() + countObjects<Cluster>(), "Deformer");
 
 		// Add other object types and their PropertyTemplates as needed
 		// For example, for Textures, Cameras, etc.
