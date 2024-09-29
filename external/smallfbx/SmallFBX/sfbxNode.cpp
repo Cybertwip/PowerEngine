@@ -301,9 +301,9 @@ Def(int32, int32);
 Def(int64, int64);
 Def(float32, float32);
 Def(float64, float32);
-Def(double2, float2);
-Def(double3, float3);
-Def(double4, float4);
+Def(double2, double2);
+Def(double3, double3);
+Def(double4, double4);
 #undef Def
 
 
@@ -333,11 +333,11 @@ void ToVectorWithOffset(size_t offset, span<Property> props, D& dst)
 		}
 	}
 }
-template<> void Node::getPropertiesValues<double4x4, float4x4>(float4x4& dst) const { ToVector<double4x4, float4x4>(getProperties(), dst); }
+template<> void Node::getPropertiesValues<double4x4, double4x4>(double4x4& dst) const { ToVector<double4x4, double4x4>(getProperties(), dst); }
 
-template<> void Node::getPropertiesValues<float3>(float3& dst) const { ToVector<float32, float3>(getProperties(), dst); }
+template<> void Node::getPropertiesValues<double3>(double3& dst) const { ToVector<float32, double3>(getProperties(), dst); }
 
-template<> void Node::getPropertiesValues<float3>(size_t offset, float3& dst) const { ToVectorWithOffset<float32, float3>(offset, getProperties(), dst); }
+template<> void Node::getPropertiesValues<double3>(size_t offset, double3& dst) const { ToVectorWithOffset<float32, double3>(offset, getProperties(), dst); }
 
 #endif
 

@@ -11,12 +11,12 @@ enum class AnimationKind
     Unknown,
 
     // transform
-    Position,    // float3
-    Rotation,    // float3
-    Scale,       // float3
+    Position,    // double3
+    Rotation,    // double3
+    Scale,       // double3
 
     // light
-    Color,       // float3
+    Color,       // double3
     Intensity,   // float
 
     // camera
@@ -112,14 +112,14 @@ public:
 
     // evaluate curve(s)
     float evaluateF1(float time) const;
-    float3 evaluateF3(float time) const;
+    double3 evaluateF3(float time) const;
     int evaluateI(float time) const;
 
     // apply evaluated value to target
     void applyAnimation(float time) const;
 
     void addValue(float time, float value);
-    void addValue(float time, float3 value);
+    void addValue(float time, double3 value);
 
     bool remap(Document* doc);
     void unlink();
@@ -143,7 +143,7 @@ protected:
     } m_target{};
 
     union {
-        float3 f3;
+        double3 f3;
         int i;
     } m_default_value{};
 };

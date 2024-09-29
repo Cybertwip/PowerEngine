@@ -160,7 +160,7 @@ bool Application::drop_event(nanogui::Widget* sender, const std::vector<std::str
 		}
 
 		if (mRenderCommon->canvas().contains(m_mouse_pos, true, true)) {
-			if (filenames[0].find(".psk") != std::string::npos){
+			if (filenames[0].find(".psk") != std::string::npos || filenames[0].find(".pma") != std::string::npos){
 				mUiCommon->hierarchy_panel().add_actor(mMeshActorLoader->create_actor(filenames[0], *mMeshShader, *mSkinnedShader));
 			}
 		}

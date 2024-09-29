@@ -461,9 +461,9 @@ float AnimationCurveNode::evaluateF1(float time) const
     return m_curves[0]->evaluate(time);
 }
 
-float3 AnimationCurveNode::evaluateF3(float time) const
+double3 AnimationCurveNode::evaluateF3(float time) const
 {
-    float3 r = m_default_value.f3;
+    double3 r = m_default_value.f3;
     for (auto curve : m_curves)
         r[curve->m_element_index] = curve->evaluate(time);
     return r;
@@ -576,7 +576,7 @@ void AnimationCurveNode::addValue(float time, float value)
     m_curves[0]->addValue(time, value);
 }
 
-void AnimationCurveNode::addValue(float time, float3 value)
+void AnimationCurveNode::addValue(float time, double3 value)
 {
     if (m_curves.size() != 3) {
         sfbxPrint("afbx::AnimationCurveNode::addValue() curve count mismatch\n");

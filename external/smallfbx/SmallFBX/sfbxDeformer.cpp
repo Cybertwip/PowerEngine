@@ -18,8 +18,8 @@ std::shared_ptr<GeomMesh> Deformer::getBaseMesh() const
     return nullptr;
 }
 
-void Deformer::deformPoints(span<float3> dst) const {}
-void Deformer::deformNormals(span<float3> dst) const {}
+void Deformer::deformPoints(span<double3> dst) const {}
+void Deformer::deformNormals(span<double3> dst) const {}
 
 
 ObjectClass SubDeformer::getClass() const { return ObjectClass::Deformer; }
@@ -191,7 +191,7 @@ const JointMatrices& Skin::getJointMatrices() const
         else {
             // should not be here
             sfbxPrint("sfbx::Deformer::skinMakeJointMatrices(): Cluster has non-Model child\n");
-            ret.global_transform[ci] = ret.joint_transform[ci] = float4x4::identity();
+            ret.global_transform[ci] = ret.joint_transform[ci] = double4x4::identity();
         }
     }
     return ret;
@@ -208,14 +208,14 @@ std::shared_ptr<Cluster> Skin::createCluster(std::shared_ptr<Model> joint)
     return r;
 }
 
-void Skin::deformPoints(span<float3> dst) const
+void Skin::deformPoints(span<double3> dst) const
 {
     auto& weights = getJointWeights();
     auto& matrices = getJointMatrices();
     DeformPoints(dst, weights, matrices, dst);
 }
 
-void Skin::deformNormals(span<float3> dst) const
+void Skin::deformNormals(span<double3> dst) const
 {
     auto& weights = getJointWeights();
     auto& matrices = getJointMatrices();
@@ -246,20 +246,20 @@ void Cluster::exportFBXObjects()
         n->createChild(sfbxS_Indexes, m_indices);
     if (!m_weights.empty())
         n->createChild(sfbxS_Weights, make_adaptor<float64>(m_weights));
-    if (m_transform != float4x4::identity())
+    if (m_transform != double4x4::identity())
         n->createChild(sfbxS_Transform, (double4x4)m_transform);
-    if (m_transform_link != float4x4::identity())
+    if (m_transform_link != double4x4::identity())
         n->createChild(sfbxS_TransformLink, (double4x4)m_transform_link);
 }
 
 span<int> Cluster::getIndices() const { return make_span(m_indices); }
 span<float> Cluster::getWeights() const { return make_span(m_weights); }
-float4x4 Cluster::getTransform() const { return m_transform; }
-float4x4 Cluster::getTransformLink() const { return m_transform_link; }
+double4x4 Cluster::getTransform() const { return m_transform; }
+double4x4 Cluster::getTransformLink() const { return m_transform_link; }
 
 void Cluster::setIndices(span<int> v) { m_indices = v; }
 void Cluster::setWeights(span<float> v) { m_weights = v; }
-void Cluster::setBindMatrix(float4x4 v)
+void Cluster::setBindMatrix(double4x4 v)
 {
     m_transform_link = v;
     m_transform = invert(v);
@@ -309,13 +309,13 @@ std::shared_ptr<BlendShapeChannel> BlendShape::createChannel(std::shared_ptr<Sha
     return ret;
 }
 
-void BlendShape::deformPoints(span<float3> dst) const
+void BlendShape::deformPoints(span<double3> dst) const
 {
     for (auto ch : m_channels)
         ch->deformPoints(dst);
 }
 
-void BlendShape::deformNormals(span<float3> dst) const
+void BlendShape::deformNormals(span<double3> dst) const
 {
     for (auto ch : m_channels)
         ch->deformNormals(dst);
@@ -379,7 +379,7 @@ void BlendShapeChannel::setWeight(float v)
     m_weight = v;
 }
 
-void BlendShapeChannel::deformPoints(span<float3> dst) const
+void BlendShapeChannel::deformPoints(span<double3> dst) const
 {
     if (m_weight <= 0.0f || m_shape_data.empty())
         return;
@@ -399,7 +399,7 @@ void BlendShapeChannel::deformPoints(span<float3> dst) const
     }
 }
 
-void BlendShapeChannel::deformNormals(span<float3> dst) const
+void BlendShapeChannel::deformNormals(span<double3> dst) const
 {
     if (m_weight == 0.0f)
         return;
@@ -430,9 +430,9 @@ void BindPose::importFBXObjects()
             auto nid = GetChildPropertyValue<int64>(n, sfbxS_Node);
             auto model = as<Model>(document()->findObject(nid));
             if (model) {
-                float4x4 mat;
+                double4x4 mat;
                 GetChildPropertyValue<double4x4>(mat, n, sfbxS_Matrix);
-                m_pose_data.push_back({ model, float4x4(mat) });
+                m_pose_data.push_back({ model, double4x4(mat) });
             }
             else {
                 sfbxPrint("sfbx::Pose::constructObject(): non-Model joint object\n");
@@ -457,7 +457,7 @@ void BindPose::exportFBXObjects()
 }
 
 span<BindPose::PoseData> BindPose::getPoseData() const { return make_span(m_pose_data); }
-void BindPose::addPoseData(std::shared_ptr<Model> joint, float4x4 bind_matrix) {
+void BindPose::addPoseData(std::shared_ptr<Model> joint, double4x4 bind_matrix) {
 	m_pose_data.push_back({ joint, bind_matrix }); }
 
 } // namespace sfbx

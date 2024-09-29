@@ -63,7 +63,7 @@ template<> std::shared_ptr<BlendShape> Geometry::createDeformer()
 }
 
 void GeomMesh::addControlPoint(float x, float y, float z) {
-	m_points.push_back(float3{x, y, z});
+	m_points.push_back(double3{x, y, z});
 }
 
 void GeomMesh::addPolygon(int idx1, int idx2, int idx3) {
@@ -88,7 +88,7 @@ void GeomMesh::addNormal(float x, float y, float z, size_t layer_index) {
 		}
 	}
 	// Add the normal to the specified layer
-	m_normal_layers[layer_index].data.push_back(float3{x, y, z});
+	m_normal_layers[layer_index].data.push_back(double3{x, y, z});
 }
 
 void GeomMesh::addUV(int set_index, float u, float v) {
@@ -104,7 +104,7 @@ void GeomMesh::addUV(int set_index, float u, float v) {
 		}
 	}
 	// Add the UV to the specified layer
-	m_uv_layers[set_index].data.push_back(float2{u, v});
+	m_uv_layers[set_index].data.push_back(double2{u, v});
 }
 
 void GeomMesh::addVertexColor(float r, float g, float b, float a, size_t layer_index) {
@@ -120,7 +120,7 @@ void GeomMesh::addVertexColor(float r, float g, float b, float a, size_t layer_i
 		}
 	}
 	// Add the vertex color to the specified layer
-	m_color_layers[layer_index].data.push_back(float4{r, g, b, a});
+	m_color_layers[layer_index].data.push_back(double4{r, g, b, a});
 }
 
 
@@ -436,8 +436,8 @@ void GeomMesh::exportLayer(const LayerType& layer, const char* layerName)
 
 span<int> GeomMesh::getCounts() const { return make_span(m_counts); }
 span<int> GeomMesh::getIndices() const { return make_span(m_indices); }
-span<float3> GeomMesh::getPoints() const { return make_span(m_points); }
-span<float3> GeomMesh::getNormals() const { return make_span(m_normals); }
+span<double3> GeomMesh::getPoints() const { return make_span(m_points); }
+span<double3> GeomMesh::getNormals() const { return make_span(m_normals); }
 span<LayerElementF3> GeomMesh::getNormalLayers() const  { return make_span(m_normal_layers); }
 span<LayerElementF2> GeomMesh::getUVLayers() const      { return make_span(m_uv_layers); }
 span<LayerElementF4> GeomMesh::getColorLayers() const   { return make_span(m_color_layers); }
@@ -446,14 +446,14 @@ span<std::vector<LayerElementDesc>> GeomMesh::getLayers() const { return make_sp
 
 void GeomMesh::setCounts(span<int> v) { m_counts = v; }
 void GeomMesh::setIndices(span<int> v) { m_indices = v; }
-void GeomMesh::setPoints(span<float3> v) { m_points = v; }
+void GeomMesh::setPoints(span<double3> v) { m_points = v; }
 //TODO update layers list
 void GeomMesh::addNormalLayer(LayerElementF3&& v)   { m_normal_layers.push_back(std::move(v)); }
 void GeomMesh::addUVLayer(LayerElementF2&& v)       { m_uv_layers.push_back(std::move(v)); }
 void GeomMesh::addColorLayer(LayerElementF4&& v)    { m_color_layers.push_back(std::move(v)); }
 void GeomMesh::addMaterialLayer(LayerElementI1&& v) { m_material_layers.push_back(std::move(v)); }
 
-span<float3> GeomMesh::getPointsDeformed(bool apply_transform)
+span<double3> GeomMesh::getPointsDeformed(bool apply_transform)
 {
 	if (m_deformers.empty() && !apply_transform)
 		return make_span(m_points);
@@ -476,7 +476,7 @@ span<float3> GeomMesh::getPointsDeformed(bool apply_transform)
 	return dst;
 }
 
-span<float3> GeomMesh::getNormalsDeformed(size_t layer_index, bool apply_transform)
+span<double3> GeomMesh::getNormalsDeformed(size_t layer_index, bool apply_transform)
 {
 	if (layer_index >= m_normal_layers.size())
 		return {};
@@ -510,6 +510,35 @@ int GeomMesh::getMaterialForVertexIndex(size_t vertex_index) const
 	}
 	return -1; // Material not found for this vertex
 }
+int GeomMesh::getMaterialForPolygon(size_t polygon_index) const {
+	if (m_material_layers.empty()) {
+		return -1; // No material layers available
+	}
+	
+	// Assuming we're using the first material layer
+	const auto& material_layer = m_material_layers[0];
+	
+	// Handle different mapping modes
+	if (material_layer.mapping_mode == LayerMappingMode::AllSame) {
+		// All polygons share the same material
+		if (!material_layer.indices.empty()) {
+			return material_layer.indices[0];
+		} else {
+			return 0; // Default to material index 0
+		}
+	} else if (material_layer.mapping_mode == LayerMappingMode::ByPolygon) {
+		// Each polygon has its own material
+		if (polygon_index < material_layer.indices.size()) {
+			return material_layer.indices[polygon_index];
+		} else {
+			return -1; // Invalid index
+		}
+	} else {
+		// Unsupported mapping mode for materials
+		return -1;
+	}
+}
+
 std::vector<int> GeomMesh::getVertexIndicesForPointIndex(int point_index) const {
 	auto it = m_point_to_vertex_map.find(point_index);
 	if (it != m_point_to_vertex_map.end()) {
@@ -548,11 +577,11 @@ void Shape::exportFBXObjects()
 }
 
 span<int> Shape::getIndices() const { return make_span(m_indices); }
-span<float3> Shape::getDeltaPoints() const { return make_span(m_delta_points); }
-span<float3> Shape::getDeltaNormals() const { return make_span(m_delta_normals); }
+span<double3> Shape::getDeltaPoints() const { return make_span(m_delta_points); }
+span<double3> Shape::getDeltaNormals() const { return make_span(m_delta_normals); }
 
 void Shape::setIndices(span<int> v) { m_indices = v; }
-void Shape::setDeltaPoints(span<float3> v) { m_delta_points = v; }
-void Shape::setDeltaNormals(span<float3> v) { m_delta_normals = v; }
+void Shape::setDeltaPoints(span<double3> v) { m_delta_points = v; }
+void Shape::setDeltaNormals(span<double3> v) { m_delta_normals = v; }
 
 } // namespace sfbx

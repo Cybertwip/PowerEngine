@@ -97,9 +97,25 @@ public:
 	template<class T>
 	size_t countObjects() const
 	{
-		return count(m_objects, [](auto& p) { return as<T>(p) && p->getID() != 0; });
+		// Recursive helper function
+		auto recursiveCount = [](const auto& object, auto&& recursiveCount) -> size_t {
+			size_t count = 0;
+			if (as<T>(object) && object->getID() != 0) {
+				count++;
+			}
+			// Assuming object has a getChildren() method that returns a container of children
+			for (const auto& child : object->getChildren()) {
+				count += recursiveCount(child, recursiveCount);
+			}
+			return count;
+		};
+		
+		size_t totalCount = 0;
+		for (const auto& p : m_objects) {
+			totalCount += recursiveCount(p, recursiveCount);
+		}
+		return totalCount;
 	}
-	
 	GlobalSettings global_settings;
 	
 public:

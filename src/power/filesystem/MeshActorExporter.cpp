@@ -75,8 +75,6 @@ bool MeshActorExporter::exportActor(CompressedSerialization::Deserializer& deser
 	// Step 6: Export the Document to a file
 	document->exportFBXNodes();
 	
-	document->getConnections();
-
 	if (!document->writeAscii(exportPath)) {
 		std::cerr << "Error: Failed to write FBX file to " << exportPath << std::endl;
 		return false;

@@ -45,7 +45,6 @@ public:
 		return mModelMatrix;
 	}
 	
-	
 private:
 	std::unique_ptr<MeshData> mMeshData;
 

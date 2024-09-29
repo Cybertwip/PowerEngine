@@ -125,9 +125,9 @@ struct LayerElement
 	LayerMappingMode mapping_mode = LayerMappingMode::None;
 	LayerReferenceMode reference_mode = LayerReferenceMode::Direct;
 };
-using LayerElementF2 = LayerElement<float2>;
-using LayerElementF3 = LayerElement<float3>;
-using LayerElementF4 = LayerElement<float4>;
+using LayerElementF2 = LayerElement<double2>;
+using LayerElementF3 = LayerElement<double3>;
+using LayerElementF4 = LayerElement<double4>;
 using LayerElementI1 = LayerElement<int>;
 
 struct LayerElementDesc
@@ -146,8 +146,8 @@ public:
 	// Existing getter and setter methods
 	span<int> getCounts() const;
 	span<int> getIndices() const;
-	span<float3> getPoints() const;
-	span<float3> getNormals() const;
+	span<double3> getPoints() const;
+	span<double3> getNormals() const;
 	span<LayerElementF3> getNormalLayers() const; // can be zero or multiple layers
 	span<LayerElementF2> getUVLayers() const;     // can be zero or multiple layers
 	span<LayerElementF4> getColorLayers() const;  // can be zero or multiple layers
@@ -156,7 +156,7 @@ public:
 	
 	void setCounts(span<int> v);
 	void setIndices(span<int> v);
-	void setPoints(span<float3> v);
+	void setPoints(span<double3> v);
 	void addNormalLayer(LayerElementF3&& v);
 	void addUVLayer(LayerElementF2&& v);
 	void addColorLayer(LayerElementF4&& v);
@@ -172,10 +172,12 @@ public:
 	template<typename T>
 	void checkModes(LayerElement<T>& layer); // Check & update to default/known-correct modes to data/indices
 	
-	span<float3> getPointsDeformed(bool apply_transform = false);
-	span<float3> getNormalsDeformed(size_t layer_index = 0, bool apply_transform = false);
+	span<double3> getPointsDeformed(bool apply_transform = false);
+	span<double3> getNormalsDeformed(size_t layer_index = 0, bool apply_transform = false);
 	
 	int getMaterialForVertexIndex(size_t vertex_index) const;
+	int getMaterialForPolygon(size_t polygon_index) const;
+	
 	std::vector<int> getVertexIndicesForPointIndex(int point_index) const;
 	
 	void exportFBXObjects() override;
@@ -192,9 +194,9 @@ protected:
 	RawVector<int> m_counts;
 	RawVector<int> m_uv_counts;
 	RawVector<int> m_indices;
-	RawVector<float3> m_points;
-	RawVector<float3> m_normals;
-	RawVector<float3> m_points_deformed;
+	RawVector<double3> m_points;
+	RawVector<double3> m_normals;
+	RawVector<double3> m_points_deformed;
 	std::vector<LayerElementF3> m_normal_layers;
 	std::vector<LayerElementF2> m_uv_layers;
 	std::vector<LayerElementF4> m_color_layers;
@@ -216,20 +218,20 @@ public:
     ObjectSubClass getSubClass() const override;
 
     span<int> getIndices() const;
-    span<float3> getDeltaPoints() const;
-    span<float3> getDeltaNormals() const;
+    span<double3> getDeltaPoints() const;
+    span<double3> getDeltaNormals() const;
 
     void setIndices(span<int> v);
-    void setDeltaPoints(span<float3> v);
-    void setDeltaNormals(span<float3> v);
+    void setDeltaPoints(span<double3> v);
+    void setDeltaNormals(span<double3> v);
 
 public:
     void importFBXObjects() override;
     void exportFBXObjects() override;
 
     RawVector<int> m_indices;
-    RawVector<float3> m_delta_points;
-    RawVector<float3> m_delta_normals;
+    RawVector<double3> m_delta_points;
+    RawVector<double3> m_delta_normals;
 };
 
 

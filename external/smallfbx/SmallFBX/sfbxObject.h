@@ -133,7 +133,7 @@ protected:
     virtual void eraseParent(ObjectPtr v);
 
     Node* m_node{};
-    int64 m_id{};
+    int32_t m_id{};
     std::string m_name;
 
     std::vector<ObjectPtr> m_parents;
@@ -141,6 +141,8 @@ protected:
     std::vector<std::string> m_child_property_names;
 	
 private:
+	static std::atomic<int32_t> s_next_id;  // Static atomic counter for unique IDs
+
 	Document* m_document;
 };
 

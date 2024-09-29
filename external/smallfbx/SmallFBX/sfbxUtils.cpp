@@ -103,7 +103,7 @@ RawVector<int> Triangulate(span<int> counts, span<int> indices)
     return ret;
 }
 
-// Mul: e.g. [](float4x4, float3) -> float3
+// Mul: e.g. [](double4x4, double3) -> double3
 template<class Vec, class Mul>
 static bool DeformImpl(span<Vec> dst, const JointWeights& jw, const JointMatrices& jm, span<Vec> src, const Mul& mul)
 {
@@ -113,7 +113,7 @@ static bool DeformImpl(span<Vec> dst, const JointWeights& jw, const JointMatrice
     }
 
     const JointWeight* weights = jw.weights.data();
-    const float4x4* matrices = jm.joint_transform.data();
+    const double4x4* matrices = jm.joint_transform.data();
     size_t nvertices = src.size();
     for (size_t vi = 0; vi < nvertices; ++vi) {
         Vec p = src[vi];
@@ -129,16 +129,16 @@ static bool DeformImpl(span<Vec> dst, const JointWeights& jw, const JointMatrice
     return true;
 }
 
-bool DeformPoints(span<float3> dst, const JointWeights& jw, const JointMatrices& jm, span<float3> src)
+bool DeformPoints(span<double3> dst, const JointWeights& jw, const JointMatrices& jm, span<double3> src)
 {
     return DeformImpl(dst, jw, jm, src,
-        [](float4x4 m, float3 p) { return mul_p(m, p); });
+        [](double4x4 m, double3 p) { return mul_p(m, p); });
 }
 
-bool DeformVectors(span<float3> dst, const JointWeights& jw, const JointMatrices& jm, span<float3> src)
+bool DeformVectors(span<double3> dst, const JointWeights& jw, const JointMatrices& jm, span<double3> src)
 {
     return DeformImpl(dst, jw, jm, src,
-        [](float4x4 m, float3 p) { return mul_v(m, p); });
+        [](double4x4 m, double3 p) { return mul_v(m, p); });
 }
 
 

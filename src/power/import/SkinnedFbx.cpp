@@ -36,7 +36,7 @@ glm::vec3 ExtractScale(const glm::mat4& matrix) {
 }
 
 
-inline glm::mat4 SfbxMatToGlmMat(const sfbx::float4x4 &from)
+inline glm::mat4 SfbxMatToGlmMat(const sfbx::double4x4 &from)
 {
 	glm::mat4 to;
 	// the a,b,c,d in sfbx is the row ; the 1,2,3,4 is the column

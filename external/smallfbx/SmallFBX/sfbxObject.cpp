@@ -2,7 +2,13 @@
 #include "sfbxObject.h"
 #include "sfbxDocument.h"
 
+#include <atomic>
+
 namespace sfbx {
+
+// Initialize the static ID counter
+std::atomic<int32_t> Object::s_next_id(1);  // Start from 1 (or any preferred starting ID)
+
 
 ObjectClass GetObjectClass(string_view n)
 {
@@ -142,7 +148,8 @@ bool SplitFullName(string_view full_name, string_view& display_name, string_view
 
 Object::Object()
 {
-    m_id = (int64)this;
+	// Use atomic fetch and increment to ensure unique IDs
+	m_id = s_next_id.fetch_add(1);
 	m_document = nullptr;
 }
 

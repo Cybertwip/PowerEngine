@@ -16,8 +16,9 @@ void SkinnedMeshBatch::upload_material_data(ShaderWrapper& shader, const std::ve
 	size_t numMaterials = materialData.size();
 	
 	// Create a CPU-side array of Material structs
-	std::vector<nanogui::Texture*> texturesCPU(numMaterials);
 	std::vector<MaterialCPU> materialsCPU(numMaterials);
+	
+	int textureSetCount = 0;
 	
 	for (size_t i = 0; i < numMaterials; ++i) {
 		auto& material = *materialData[i];
@@ -39,11 +40,17 @@ void SkinnedMeshBatch::upload_material_data(ShaderWrapper& shader, const std::ve
 		std::string textureBaseName = "textures";
 		if (material.mHasDiffuseTexture) {
 			shader.set_texture(textureBaseName, *material.mTextureDiffuse, i);
-		} else {
-			shader.set_texture(textureBaseName, Batch::get_dummy_texture(), i);
+			
+			textureSetCount++;
 		}
 		
 	}
+	
+	if (numMaterials == 0) { // upload dummy material
+		numMaterials = 1;
+		materialsCPU.push_back({});
+	}
+	
 	
 	shader.set_buffer(
 					  "materials",
@@ -54,7 +61,7 @@ void SkinnedMeshBatch::upload_material_data(ShaderWrapper& shader, const std::ve
 	
 	size_t dummy_texture_count = shader.get_buffer_size("textures");
 	
-	for (size_t i = numMaterials; i<dummy_texture_count; ++i) {
+	for (size_t i = textureSetCount; i<dummy_texture_count; ++i) {
 		std::string textureBaseName = "textures";
 		
 		shader.set_texture(textureBaseName, Batch::get_dummy_texture(), i);

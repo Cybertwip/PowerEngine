@@ -35,9 +35,9 @@ void Model::importFBXObjects()
             return 0;
         };
 
-        auto get_float3 = [p]() -> float3 {
+        auto get_float3 = [p]() -> double3 {
             if (GetPropertyCount(p) == 7) {
-                return float3{
+                return double3{
                     (float)GetPropertyValue<float64>(p, 4),
                     (float)GetPropertyValue<float64>(p, 5),
                     (float)GetPropertyValue<float64>(p, 6),
@@ -45,7 +45,7 @@ void Model::importFBXObjects()
             }
 #ifdef sfbxEnableLegacyFormatSupport
             else if (GetPropertyCount(p) == 6) {
-                return float3{
+                return double3{
                     (float)GetPropertyValue<float64>(p, 3),
                     (float)GetPropertyValue<float64>(p, 4),
                     (float)GetPropertyValue<float64>(p, 5),
@@ -79,7 +79,15 @@ void Model::importFBXObjects()
 void Mesh::exportFBXObjects()
 {
 	super::exportFBXObjects(); // Calls Model::exportFBXObjects()
+
 	
+	Node* prop = m_node->findChild(sfbxS_Properties70);
+
+	if (!prop)
+		return;
+
+	prop->createChild(sfbxS_P, "DefaultAttributeIndex", sfbxS_int, sfbxS_Integer, "", 0);
+
 	// Export geometry
 	if (m_geom) {
 		m_geom->exportFBXObjects();
@@ -116,12 +124,12 @@ void Model::exportFBXObjects()
 	prop->createChild(sfbxS_P, sfbxS_LclRotation, sfbxS_LclRotation, sfbxS_Vector, "", m_rotation.x, m_rotation.y, m_rotation.z);
 	prop->createChild(sfbxS_P, sfbxS_LclScale, sfbxS_LclScale, sfbxS_Vector, "", m_scale.x, m_scale.y, m_scale.z);
 	
-	// Export attached node attribute
-	if (m_attr) {
-		m_attr->exportFBXObjects();
-		document()->createLinkOO(m_attr, shared_from_this(), sfbxS_NodeAttribute);
-	}
 	
+	// Export attached node attribute
+	if (document()) {
+		document()->createLinkOO(shared_from_this(), getParent());
+	}
+
 	// Export child models
 	for (auto& child : m_child_models) {
 		child->exportFBXObjects();
@@ -160,29 +168,29 @@ std::shared_ptr<Model> Model::getParentModel() const { return m_parent_model; }
 
 bool Model::getVisibility() const { return m_visibility; }
 RotationOrder Model::getRotationOrder() const { return m_rotation_order; }
-float3 Model::getPosition() const { return m_position; }
+double3 Model::getPosition() const { return m_position; }
 
-float3 Model::getPreRotation() const { return m_pre_rotation; }
-float3 Model::getRotation() const { return m_rotation; }
-float3 Model::getPostRotation() const { return m_post_rotation; }
-float3 Model::getScale() const { return m_scale; }
+double3 Model::getPreRotation() const { return m_pre_rotation; }
+double3 Model::getRotation() const { return m_rotation; }
+double3 Model::getPostRotation() const { return m_post_rotation; }
+double3 Model::getScale() const { return m_scale; }
 
 void Model::updateMatrices() const
 {
     if (m_matrix_dirty) {
         // scale
-        float4x4 r = scale44(m_scale);
+        double4x4 r = scale44(m_scale);
 
         // rotation
-        if (m_post_rotation != float3::zero())
+        if (m_post_rotation != double3::zero())
             r *= transpose(to_mat4x4(rotate_euler(m_rotation_order, m_post_rotation * DegToRad)));
-        if (m_rotation != float3::zero())
+        if (m_rotation != double3::zero())
             r *= transpose(to_mat4x4(rotate_euler(m_rotation_order, m_rotation * DegToRad)));
-        if (m_pre_rotation != float3::zero())
+        if (m_pre_rotation != double3::zero())
             r *= transpose(to_mat4x4(rotate_euler(m_rotation_order, m_pre_rotation * DegToRad)));
 
         // translation
-        (float3&)r[3] = m_position;
+        (double3&)r[3] = m_position;
 
         m_matrix_local = r;
         m_matrix_global = m_matrix_local;
@@ -193,13 +201,13 @@ void Model::updateMatrices() const
     }
 }
 
-float4x4 Model::getLocalMatrix() const
+double4x4 Model::getLocalMatrix() const
 {
     updateMatrices();
     return m_matrix_local;
 }
 
-void Model::setLocalMatrix(const float4x4& matrix)
+void Model::setLocalMatrix(const double4x4& matrix)
 {
 	if (m_matrix_local != matrix) {
 		m_matrix_local = matrix;
@@ -209,7 +217,7 @@ void Model::setLocalMatrix(const float4x4& matrix)
 }
 
 
-float4x4 Model::getGlobalMatrix() const
+double4x4 Model::getGlobalMatrix() const
 {
     updateMatrices();
     return m_matrix_global;
@@ -241,11 +249,11 @@ void Model::propagateDirty()
 }
 
 #define MarkDirty(V, A) if (A != V) { V = A; propagateDirty(); }
-void Model::setPosition(float3 v)     { MarkDirty(m_position, v); }
-void Model::setPreRotation(float3 v)  { MarkDirty(m_pre_rotation, v); }
-void Model::setRotation(float3 v)     { MarkDirty(m_rotation, v); }
-void Model::setPostRotation(float3 v) { MarkDirty(m_post_rotation, v); }
-void Model::setScale(float3 v)        { MarkDirty(m_scale, v); }
+void Model::setPosition(double3 v)     { MarkDirty(m_position, v); }
+void Model::setPreRotation(double3 v)  { MarkDirty(m_pre_rotation, v); }
+void Model::setRotation(double3 v)     { MarkDirty(m_rotation, v); }
+void Model::setPostRotation(double3 v) { MarkDirty(m_post_rotation, v); }
+void Model::setScale(double3 v)        { MarkDirty(m_scale, v); }
 #undef MarkDirty
 
 
@@ -400,7 +408,7 @@ void Mesh::setGeometry(std::shared_ptr<GeomMesh> geom)
 		
 		// Establish the connection
 		if (document()) {
-			document()->createLinkOP(m_geom, shared_from_this(), sfbxS_Geometry);
+			document()->createLinkOO(m_geom, shared_from_this());
 		}
 	}
 }
@@ -426,7 +434,7 @@ void LightAttribute::importFBXObjects()
         if (name == sfbxS_LightType)
             light->m_light_type = (LightType)GetPropertyValue<int32>(p, 4);
         else if (name == sfbxS_Color)
-            light->m_color = float3{
+            light->m_color = double3{
                     (float32)GetPropertyValue<float64>(p, 4),
                     (float32)GetPropertyValue<float64>(p, 5),
                     (float32)GetPropertyValue<float64>(p, 6)};
@@ -480,13 +488,13 @@ void Light::eraseChild(ObjectPtr v)
 }
 
 LightType Light::getLightType() const { return m_light_type; }
-float3 Light::getColor() const { return m_color; }
+double3 Light::getColor() const { return m_color; }
 float Light::getIntensity() const { return m_intensity; }
 float Light::getInnerAngle() const { return m_inner_angle; }
 float Light::getOuterAngle() const { return m_outer_angle; }
 
 void Light::setLightType(LightType v) { m_light_type = v; }
-void Light::setColor(float3 v) { m_color = v; }
+void Light::setColor(double3 v) { m_color = v; }
 void Light::setIntensity(float v) { m_intensity = v; }
 void Light::setInnerAngle(float v) { m_inner_angle = v; }
 void Light::setOuterAngle(float v) { m_outer_angle = v; }
@@ -498,7 +506,7 @@ ObjectSubClass Camera::getSubClass() const { return ObjectSubClass::Camera; }
 void Camera::importFBXObjects()
 {
     
-    if (m_target_position != float3::zero())
+    if (m_target_position != double3::zero())
         m_target_position = m_target_position - getPosition();
 }
 
@@ -512,9 +520,9 @@ void CameraAttribute::importFBXObjects()
 
     EnumerateProperties(getNode(), [cam](Node* p) {
 
-        auto get_float3 = [p]() -> float3 {
+        auto get_float3 = [p]() -> double3 {
             if (GetPropertyCount(p) == 7) {
-                return float3{
+                return double3{
                     (float)GetPropertyValue<float64>(p, 4),
                     (float)GetPropertyValue<float64>(p, 5),
                     (float)GetPropertyValue<float64>(p, 6),
@@ -522,7 +530,7 @@ void CameraAttribute::importFBXObjects()
             }
 #ifdef sfbxEnableLegacyFormatSupport
             else if (GetPropertyCount(p) == 6) {
-                return float3{
+                return double3{
                     (float)GetPropertyValue<float64>(p, 3),
                     (float)GetPropertyValue<float64>(p, 4),
                     (float)GetPropertyValue<float64>(p, 5),
@@ -602,17 +610,17 @@ void Camera::eraseChild(ObjectPtr v)
 
 CameraType Camera::getCameraType() const { return m_camera_type; }
 float Camera::getFocalLength() const { return m_focal_length; }
-float2 Camera::getFilmSize() const { return m_film_size; }
-float2 Camera::getFilmOffset() const { return m_film_offset; }
-float2 Camera::getFildOfView() const
+double2 Camera::getFilmSize() const { return m_film_size; }
+double2 Camera::getFilmOffset() const { return m_film_offset; }
+double2 Camera::getFildOfView() const
 {
-    return float2{
+    return double2{
         compute_fov(m_film_size.x, m_focal_length),
         compute_fov(m_film_size.y, m_focal_length),
     };
 }
 
-float2 Camera::getAspectSize() const { return m_aspect; }
+double2 Camera::getAspectSize() const { return m_aspect; }
 float Camera::getAspectRatio() const
 {
     return m_film_size.x / m_film_size.y;
@@ -621,8 +629,8 @@ float Camera::getAspectRatio() const
 float Camera::getNearPlane() const { return m_near_plane; }
 float Camera::getFarPlane() const { return m_far_plane; }
 
-float3 Camera::getUpVector() const { return m_up_vector; }
-float3 Camera::getTargetPosition() const { return m_target_position; }
+double3 Camera::getUpVector() const { return m_up_vector; }
+double3 Camera::getTargetPosition() const { return m_target_position; }
 
 bool Camera::getAutoClipPlanes() const
 {
@@ -632,9 +640,9 @@ bool Camera::getAutoClipPlanes() const
 
 void Camera::setCameraType(CameraType v) { m_camera_type = v; }
 void Camera::setFocalLength(float v) { m_focal_length = v; }
-void Camera::setFilmSize(float2 v) { m_film_size = v; }
-void Camera::setFilmShift(float2 v) { m_film_offset = v; }
-void Camera::setAspectSize(float2 v) { m_aspect = v; }
+void Camera::setFilmSize(double2 v) { m_film_size = v; }
+void Camera::setFilmShift(double2 v) { m_film_offset = v; }
+void Camera::setAspectSize(double2 v) { m_aspect = v; }
 void Camera::setNearPlane(float v) { m_near_plane = v; }
 void Camera::setFarPlane(float v) { m_far_plane = v; }
 

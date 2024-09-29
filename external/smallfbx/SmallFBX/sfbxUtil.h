@@ -12,7 +12,7 @@ RawVector<int> Triangulate(span<int> counts, span<int> indices);
 
 struct JointWeights;
 struct JointMatrices;
-bool DeformPoints(span<float3> dst, const JointWeights& jw, const JointMatrices& jm, span<float3> src);
-bool DeformVectors(span<float3> dst, const JointWeights& jw, const JointMatrices& jm, span<float3> src);
+bool DeformPoints(span<double3> dst, const JointWeights& jw, const JointMatrices& jm, span<double3> src);
+bool DeformVectors(span<double3> dst, const JointWeights& jw, const JointMatrices& jm, span<double3> src);
 
 } // namespace sfbx

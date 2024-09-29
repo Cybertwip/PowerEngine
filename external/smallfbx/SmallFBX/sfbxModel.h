@@ -74,23 +74,23 @@ public:
 
     bool getVisibility() const;
     RotationOrder getRotationOrder() const;
-    float3 getPosition() const;
-    float3 getPreRotation() const;
-    float3 getRotation() const;
-    float3 getPostRotation() const;
-    float3 getScale() const;
-    float4x4 getLocalMatrix() const;
-    float4x4 getGlobalMatrix() const;
+    double3 getPosition() const;
+    double3 getPreRotation() const;
+    double3 getRotation() const;
+    double3 getPostRotation() const;
+    double3 getScale() const;
+    double4x4 getLocalMatrix() const;
+    double4x4 getGlobalMatrix() const;
     std::string getPath() const;
 
     void setVisibility(bool v);
     void setRotationOrder(RotationOrder v);
-    void setPosition(float3 v);
-    void setPreRotation(float3 v);
-    void setRotation(float3 v);
-    void setPostRotation(float3 v);
-    void setScale(float3 v);
-	void setLocalMatrix(const float4x4& matrix); // **New Method**
+    void setPosition(double3 v);
+    void setPreRotation(double3 v);
+    void setRotation(double3 v);
+    void setPostRotation(double3 v);
+    void setScale(double3 v);
+	void setLocalMatrix(const double4x4& matrix); // **New Method**
 
 protected:
     void importFBXObjects() override;
@@ -105,15 +105,15 @@ protected:
 
     bool m_visibility = true;
     RotationOrder m_rotation_order = RotationOrder::XYZ;
-    float3 m_position{};
-    float3 m_pre_rotation{};
-    float3 m_rotation{};
-    float3 m_post_rotation{};
-    float3 m_scale = float3::one();
+    double3 m_position{};
+    double3 m_pre_rotation{};
+    double3 m_rotation{};
+    double3 m_post_rotation{};
+    double3 m_scale = double3::one();
 
     mutable bool m_matrix_dirty = true;
-    mutable float4x4 m_matrix_local = float4x4::identity();
-    mutable float4x4 m_matrix_global = float4x4::identity();
+    mutable double4x4 m_matrix_local = double4x4::identity();
+    mutable double4x4 m_matrix_global = double4x4::identity();
 	
 	std::shared_ptr<NodeAttribute> m_attr{};
 
@@ -207,13 +207,13 @@ public:
     void eraseChild(ObjectPtr v) override;
 
     LightType getLightType() const;
-    float3 getColor() const;
+    double3 getColor() const;
     float getIntensity() const;
     float getInnerAngle() const; // in degree, for spot light
     float getOuterAngle() const; // in degree, for spot light
 
     void setLightType(LightType v);
-    void setColor(float3 v);
+    void setColor(double3 v);
     void setIntensity(float v);
     void setInnerAngle(float v);
     void setOuterAngle(float v);
@@ -224,7 +224,7 @@ protected:
 
 	//std::shared_ptr<LightAttribute> m_attr{};
     LightType m_light_type = LightType::Point;
-    float3 m_color = float3::one();
+    double3 m_color = double3::one();
     float m_intensity = 1.0f;
     float m_inner_angle = 45.0f;
     float m_outer_angle = 45.0f;
@@ -247,15 +247,15 @@ public:
 
     CameraType getCameraType() const;
     float getFocalLength() const;   // in mm
-    float2 getFilmSize() const;     // in mm, aka "aperture" or "sensor"
-    float2 getFilmOffset() const;   // in mm, aka "lens shift" or "sensor shift"
-    float2 getFildOfView() const;   // in degree
-    float2 getAspectSize() const;   // in pixel (screen size)
+    double2 getFilmSize() const;     // in mm, aka "aperture" or "sensor"
+    double2 getFilmOffset() const;   // in mm, aka "lens shift" or "sensor shift"
+    double2 getFildOfView() const;   // in degree
+    double2 getAspectSize() const;   // in pixel (screen size)
     float getAspectRatio() const;
     float getNearPlane() const;
     float getFarPlane() const;
-    float3 getUpVector() const;
-    float3 getTargetPosition() const;
+    double3 getUpVector() const;
+    double3 getTargetPosition() const;
     bool getAutoClipPlanes() const;
 
     // there is no setFildOfView() because fov is computed by aperture and focal length.
@@ -263,9 +263,9 @@ public:
 
     void setCameraType(CameraType v);
     void setFocalLength(float v);   // in mm
-    void setFilmSize(float2 v);     // in mm
-    void setFilmShift(float2 v);    // in mm
-    void setAspectSize(float2 v);   // in pixel (screen size)
+    void setFilmSize(double2 v);     // in mm
+    void setFilmShift(double2 v);    // in mm
+    void setAspectSize(double2 v);   // in pixel (screen size)
     void setNearPlane(float v);
     void setFarPlane(float v);
 
@@ -278,13 +278,13 @@ protected:
 	//std::shared_ptr<CameraAttribute> m_attr{};
     CameraType m_camera_type = CameraType::Perspective;
 	double m_focal_length = 50.0f; // in mm
-    float2 m_film_size{ 36.0f, 24.0f }; // in mm
-    float2 m_film_offset{}; // in mm
-    float2 m_aspect{ 1920.0f, 1080.0f };
+    double2 m_film_size{ 36.0f, 24.0f }; // in mm
+    double2 m_film_offset{}; // in mm
+    double2 m_aspect{ 1920.0f, 1080.0f };
 	double m_near_plane = 0.1f;
 	double m_far_plane = 1000.0f;
-    float3 m_up_vector = {0, 1, 0};
-    float3 m_target_position = {0, 0, 0};
+    double3 m_up_vector = {0, 1, 0};
+    double3 m_target_position = {0, 0, 0};
     bool m_auto_clip_planes = false;
 };
 

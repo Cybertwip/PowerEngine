@@ -322,15 +322,6 @@ using double4 = tvec4<double>;
 using quatd = tquat<double>;
 using double4x4 = tmat4x4<double>;
 
-
-using float2 = double2;
-using float3 = double3;
-using float4 = double4;
-using quatf = quatd;
-using float4x4 = double4x4;
-
-
-
 enum class RotationOrder : int
 {
     XYZ,

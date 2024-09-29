@@ -15,8 +15,8 @@ public:
 	std::shared_ptr<GeomMesh> getBaseMesh() const;
 
     // apply deform to dst. size of dst must be equal with base mesh.
-    virtual void deformPoints(span<float3> dst) const;
-    virtual void deformNormals(span<float3> dst) const;
+    virtual void deformPoints(span<double3> dst) const;
+    virtual void deformNormals(span<double3> dst) const;
 };
 
 class SubDeformer : public Object
@@ -44,9 +44,9 @@ struct JointWeights // copyable
 
 struct JointMatrices
 {
-    RawVector<float4x4> bindpose;
-    RawVector<float4x4> global_transform;
-    RawVector<float4x4> joint_transform;
+    RawVector<double4x4> bindpose;
+    RawVector<double4x4> global_transform;
+    RawVector<double4x4> joint_transform;
 };
 
 // Skin deformer allows a GeomMesh to skeletal animation. 
@@ -69,8 +69,8 @@ public:
 	std::shared_ptr<Cluster> createCluster(std::shared_ptr<Model> joint);
 
     // apply deform to dst. size of dst must be equal with base mesh.
-    void deformPoints(span<float3> dst) const override;
-    void deformNormals(span<float3> dst) const override;
+    void deformPoints(span<double3> dst) const override;
+    void deformNormals(span<double3> dst) const override;
 
 protected:
     void exportFBXObjects() override;
@@ -90,12 +90,12 @@ public:
 
     span<int> getIndices() const;
     span<float> getWeights() const;
-    float4x4 getTransform() const;
-    float4x4 getTransformLink() const;
+    double4x4 getTransform() const;
+    double4x4 getTransformLink() const;
 
     void setIndices(span<int> v);   // v: indices of vertices
     void setWeights(span<float> v); // v: weights of vertices. size of weights must be equal with indices
-    void setBindMatrix(float4x4 v); // v: global matrix of the joint (not inverted)
+    void setBindMatrix(double4x4 v); // v: global matrix of the joint (not inverted)
 
 protected:
     void importFBXObjects() override;
@@ -103,8 +103,8 @@ protected:
 
     RawVector<int> m_indices;
     RawVector<float> m_weights;
-    float4x4 m_transform = float4x4::identity();
-    float4x4 m_transform_link = float4x4::identity();
+    double4x4 m_transform = double4x4::identity();
+    double4x4 m_transform_link = double4x4::identity();
 };
 
 
@@ -120,8 +120,8 @@ public:
 	std::shared_ptr<BlendShapeChannel> createChannel(string_view name);
 	std::shared_ptr<BlendShapeChannel> createChannel(std::shared_ptr<Shape> shape);
 
-    void deformPoints(span<float3> dst) const override;
-    void deformNormals(span<float3> dst) const override;
+    void deformPoints(span<double3> dst) const override;
+    void deformNormals(span<double3> dst) const override;
 
 protected:
     void exportFBXObjects() override;
@@ -148,8 +148,8 @@ public:
     void addShape(std::shared_ptr<Shape> shape, float weight = 1.0f);
 
     void setWeight(float v);
-    void deformPoints(span<float3> dst) const;
-    void deformNormals(span<float3> dst) const;
+    void deformPoints(span<double3> dst) const;
+    void deformNormals(span<double3> dst) const;
 
 protected:
     void importFBXObjects() override;
@@ -178,13 +178,13 @@ public:
     struct PoseData
     {
 		std::shared_ptr<Model> object;
-        float4x4 matrix;
+        double4x4 matrix;
     };
 
     ObjectSubClass getSubClass() const override;
 
     span<PoseData> getPoseData() const;
-    void addPoseData(std::shared_ptr<Model> joint, float4x4 bind_matrix);
+    void addPoseData(std::shared_ptr<Model> joint, double4x4 bind_matrix);
 
 protected:
     void importFBXObjects() override;
