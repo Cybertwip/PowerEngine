@@ -181,12 +181,8 @@ void SkinnedFbx::ProcessBones(const std::shared_ptr<sfbx::Mesh>& mesh) {
 				// Ensure valid vertex ID
 				if (vertexID >= 0 && static_cast<size_t>(vertexID) < skinnedVertices.size()) {
 					
-					auto vertexIndices = geometry->getVertexIndicesForPointIndex(vertexID);
-					
-					for (auto vertexIndex : vertexIndices){
-						skinnedVertices[vertexIndex].set_bone(boneID, weight);
-					}
-					
+					skinnedVertices[vertexID].set_bone(boneID, weight);
+
 				} else {
 					std::cerr << "Error: Invalid vertex ID (" << vertexID << ") for bone: " << boneName << ". Skinned Vertices Size: " << skinnedVertices.size() << std::endl;
 				}

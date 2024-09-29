@@ -73,17 +73,17 @@ void Fbx::ProcessMesh(const std::shared_ptr<sfbx::Mesh>& mesh) {
 	}
 	
 	// Retrieve the absolute path of the mesh document
-	auto path = std::filesystem::absolute(mesh->document().global_settings.path).string();
+	auto path = std::filesystem::absolute(mesh->document()->global_settings.path).string();
 	
 	// Create a new MeshData instance and add it to mMeshes
 	auto& resultMesh = mMeshes.emplace_back(std::make_unique<MeshData>());
 	
 	// Precompute transformation matrices
 	const glm::mat4 rotationMatrix = FbxUtil::GetUpAxisRotation(
-																mesh->document().global_settings.up_axis,
-																mesh->document().global_settings.up_axis_sign
+																mesh->document()->global_settings.up_axis,
+																mesh->document()->global_settings.up_axis_sign
 																);
-	const float scaleFactor = static_cast<float>(mesh->document().global_settings.unit_scale);
+	const float scaleFactor = static_cast<float>(mesh->document()->global_settings.unit_scale);
 	const glm::mat4 scaleMatrix = glm::scale(glm::mat4(1.0f), glm::vec3(scaleFactor));
 	const glm::mat4 transformMatrix = rotationMatrix * scaleMatrix;
 	
@@ -96,11 +96,13 @@ void Fbx::ProcessMesh(const std::shared_ptr<sfbx::Mesh>& mesh) {
 	
 	const auto& points = geometry->getPointsDeformed();
 	const auto& vertexIndices = geometry->getIndices();
-	
+	const auto& indexCounts = geometry->getCounts();
+
 	// Reserve space for vertices and indices
-	const size_t vertexCount = vertexIndices.size();
+	const size_t vertexCount = points.size();
+	const size_t indexCount = vertexIndices.size();
 	resultMesh->get_vertices().resize(vertexCount);
-	resultMesh->get_indices().resize(vertexCount);
+	resultMesh->get_indices().resize(indexCount);
 	
 	// Retrieve materials and map them to indices
 	const auto& materials = mesh->getMaterials();
@@ -111,8 +113,8 @@ void Fbx::ProcessMesh(const std::shared_ptr<sfbx::Mesh>& mesh) {
 	
 	// Precompute normal indices
 	const auto& normalLayers = geometry->getNormalLayers();
-	std::vector<int> normalIndices(vertexCount, -1);
-	sfbx::RawVector<sfbx::float3> normalData;
+	std::vector<int> normalIndices(indexCount, -1);
+	sfbx::RawVector<sfbx::double3> normalData;
 	if (!normalLayers.empty()) {
 		const auto& normalLayer = normalLayers[0];
 		normalData = normalLayer.data;
@@ -120,7 +122,7 @@ void Fbx::ProcessMesh(const std::shared_ptr<sfbx::Mesh>& mesh) {
 		const auto referenceMode = normalLayer.reference_mode;
 		const auto& normalLayerIndices = normalLayer.indices;
 		
-		for (size_t i = 0; i < vertexCount; ++i) {
+		for (size_t i = 0; i < indexCount; ++i) {
 			int controlPointIndex = vertexIndices[i];
 			if (mappingMode == sfbx::LayerMappingMode::ByPolygonVertex) {
 				normalIndices[i] = (referenceMode == sfbx::LayerReferenceMode::Direct) ? static_cast<int>(i) : normalLayerIndices[i];
@@ -132,14 +134,14 @@ void Fbx::ProcessMesh(const std::shared_ptr<sfbx::Mesh>& mesh) {
 	
 	// Precompute UV indices for each layer
 	const auto& uvLayers = geometry->getUVLayers();
-	std::vector<std::vector<int>> uvIndicesPerLayer(uvLayers.size(), std::vector<int>(vertexCount, -1));
+	std::vector<std::vector<int>> uvIndicesPerLayer(uvLayers.size(), std::vector<int>(indexCount, -1));
 	for (size_t layerIndex = 0; layerIndex < uvLayers.size(); ++layerIndex) {
 		const auto& uvLayer = uvLayers[layerIndex];
 		const auto mappingMode = uvLayer.mapping_mode;
 		const auto referenceMode = uvLayer.reference_mode;
 		const auto& uvLayerIndices = uvLayer.indices;
 		
-		for (size_t i = 0; i < vertexCount; ++i) {
+		for (size_t i = 0; i < indexCount; ++i) {
 			int controlPointIndex = vertexIndices[i];
 			if (mappingMode == sfbx::LayerMappingMode::ByPolygonVertex) {
 				uvIndicesPerLayer[layerIndex][i] = (referenceMode == sfbx::LayerReferenceMode::Direct) ? static_cast<int>(i) : uvLayerIndices[i];
@@ -151,8 +153,8 @@ void Fbx::ProcessMesh(const std::shared_ptr<sfbx::Mesh>& mesh) {
 	
 	// Precompute Color Indices
 	const auto& colorLayers = geometry->getColorLayers();
-	std::vector<int> colorIndices(vertexCount, -1);
-	sfbx::RawVector<sfbx::float4> colorData; // Assuming colors are RGBA
+	std::vector<int> colorIndices(indexCount, -1);
+	sfbx::RawVector<sfbx::double4> colorData; // Assuming colors are RGBA
 	if (!colorLayers.empty()) {
 		const auto& colorLayer = colorLayers[0]; // Use the first color layer
 		colorData = colorLayer.data;
@@ -160,7 +162,7 @@ void Fbx::ProcessMesh(const std::shared_ptr<sfbx::Mesh>& mesh) {
 		const auto referenceMode = colorLayer.reference_mode;
 		const auto& colorLayerIndices = colorLayer.indices;
 		
-		for (size_t i = 0; i < vertexCount; ++i) {
+		for (size_t i = 0; i < indexCount; ++i) {
 			int controlPointIndex = vertexIndices[i];
 			if (mappingMode == sfbx::LayerMappingMode::ByPolygonVertex) {
 				colorIndices[i] = (referenceMode == sfbx::LayerReferenceMode::Direct) ? static_cast<int>(i) : colorLayerIndices[i];
@@ -182,8 +184,8 @@ void Fbx::ProcessMesh(const std::shared_ptr<sfbx::Mesh>& mesh) {
 	
 	// Divide the work among threads
 	std::vector<std::thread> threads(numThreads);
-	size_t chunkSize = vertexCount / numThreads;
-	size_t remainder = vertexCount % numThreads;
+	size_t chunkSize = indexCount / numThreads;
+	size_t remainder = indexCount % numThreads;
 	
 	auto processVertices = [&](size_t startIndex, size_t endIndex) {
 		for (size_t i = startIndex; i < endIndex; ++i) {
@@ -195,7 +197,7 @@ void Fbx::ProcessMesh(const std::shared_ptr<sfbx::Mesh>& mesh) {
 			glm::vec4 position(point.x, point.y, point.z, 1.0f);
 			position = transformMatrix * position;
 			vertex.set_position({ position.x, position.y, position.z });
-			
+
 			// Transform normal
 			if (!normalData.empty() && normalIndices[i] >= 0) {
 				const auto& normal = normalData[normalIndices[i]];
@@ -206,7 +208,7 @@ void Fbx::ProcessMesh(const std::shared_ptr<sfbx::Mesh>& mesh) {
 			} else {
 				vertex.set_normal({ 0.0f, 1.0f, 0.0f }); // Default normal
 			}
-			
+
 			// Set UVs
 			for (size_t layerIndex = 0; layerIndex < uvLayers.size(); ++layerIndex) {
 				int uvIndex = uvIndicesPerLayer[layerIndex][i];
@@ -235,14 +237,14 @@ void Fbx::ProcessMesh(const std::shared_ptr<sfbx::Mesh>& mesh) {
 			} else {
 				vertex.set_color({ 1.0f, 1.0f, 1.0f, 1.0f }); // Default color (white)
 			}
-			
 			// Set material ID
-			int matIndex = materialIndices[i];
+			int matIndex = materialIndices[controlPointIndex];
 			vertex.set_texture_id((matIndex >= 0 && matIndex < static_cast<int>(materials.size())) ? matIndex : -1);
-			
+
 			// Assign vertex and index
-			resultMesh->get_vertices()[i] = std::move(vertex);
-			resultMesh->get_indices()[i] = static_cast<uint32_t>(i);
+			resultMesh->get_vertices()[controlPointIndex] = std::move(vertex);
+			resultMesh->get_indices()[i] =
+			controlPointIndex;
 		}
 	};
 	

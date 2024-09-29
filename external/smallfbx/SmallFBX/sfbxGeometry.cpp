@@ -70,7 +70,7 @@ void GeomMesh::addPolygon(int idx1, int idx2, int idx3) {
 	// Add indices for the polygon
 	m_indices.push_back(idx1);
 	m_indices.push_back(idx2);
-	m_indices.push_back(idx3); // Use bitwise complement for the last index
+	m_indices.push_back(idx3);
 	// Since it's a triangle, add count as 3
 	m_counts.push_back(3);
 }
@@ -335,7 +335,7 @@ void GeomMesh::exportFBXObjects()
 	n->createChild(sfbxS_GeometryVersion, sfbxI_GeometryVersion);
 	
 	// Export points
-	n->createChild(sfbxS_Vertices, m_points);
+	n->createChild(sfbxS_Vertices, make_adaptor<double3>(m_points));
 	
 	// Export indices with correct negative syntax
 	{
@@ -571,9 +571,9 @@ void Shape::exportFBXObjects()
 	if (!m_indices.empty())
 		n->createChild(sfbxS_Indexes, m_indices);
 	if (!m_delta_points.empty())
-		n->createChild(sfbxS_Vertices, m_delta_points);
+		n->createChild(sfbxS_Vertices, make_adaptor<double3>(m_delta_points));
 	if (!m_delta_normals.empty())
-		n->createChild(sfbxS_Normals, m_delta_normals);
+		n->createChild(sfbxS_Normals, make_adaptor<double3>(m_delta_normals));
 }
 
 span<int> Shape::getIndices() const { return make_span(m_indices); }

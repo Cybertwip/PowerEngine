@@ -126,10 +126,6 @@ public:
 	void compute_offsets(const std::vector<glm::mat4>& withAnimation) {
 		if (m_bones.empty()) return;
 		
-		if (!withAnimation.empty()) {
-			assert(withAnimation.size() == m_bones.size() && "Unmatched animations and bones size");
-		}
-		
 		for (Bone& bone : m_bones) {
 			if (bone.parent_index == -1) {
 				glm::mat4 identity = glm::mat4(1.0f);
@@ -207,7 +203,10 @@ private:
 		glm::mat4 transformation = glm::mat4(1.0f);
 
 		if (!withAnimation.empty()) {
-			transformation = withAnimation[bone.index];
+			
+			if (bone.index < withAnimation.size()) {
+				transformation = withAnimation[bone.index];
+			}
 		}
 				
 		global *= bone.local * transformation;
