@@ -199,8 +199,28 @@ void Object::exportFBXObjects()
 
 void Object::exportFBXConnections()
 {
-    for (auto parent : getParents())
-        document()->createLinkOO(shared_from_this(), parent);
+	VisitedSet visited;
+	exportFBXConnections(visited);
+}
+
+void Object::exportFBXConnections(VisitedSet& visited) {
+	// Check if this object has already been processed
+	if (visited.find(shared_from_this()) != visited.end()) {
+		return; // Already processed, skip
+	}
+	
+	// Mark this object as processed
+	visited.insert(shared_from_this());
+	
+	// Export connections for this object
+	for (auto parent : getParents()) {
+		document()->createLinkOO(shared_from_this(), parent);
+	}
+	
+	// Recursively export connections for children
+	for (auto& child : getChildren()) {
+		child->exportFBXConnections(visited);
+	}
 }
 
 void Object::addChild(ObjectPtr v)

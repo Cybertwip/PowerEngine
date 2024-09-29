@@ -100,14 +100,6 @@ void Mesh::exportFBXObjects()
 	}
 }
 
-void Mesh::exportFBXConnections() {
-	super::exportFBXConnections();
-	
-	for (auto& child : m_children) {
-		child->exportFBXConnections();
-	}
-}
-
 void Model::exportFBXObjects()
 {
 	if (m_node)
@@ -318,14 +310,6 @@ void RootAttribute::exportFBXObjects()
     super::exportFBXObjects();
 }
 
-void Root::exportFBXConnections() {
-	super::exportFBXConnections();
-	
-	for (auto& child : m_children) {
-		child->exportFBXConnections();
-	}
-}
-
 void Root::addChild(ObjectPtr v)
 {
     super::addChild(v);
@@ -358,15 +342,6 @@ void LimbNode::exportFBXObjects()
 	if (!m_attr){
 		m_attr = createChild<LimbNodeAttribute>();
 		m_attr->exportFBXObjects();
-	}
-}
-
-void LimbNode::exportFBXConnections()
-{
-	super::exportFBXConnections();
-	
-	for (auto& child : m_children) {
-		child->exportFBXConnections();
 	}
 }
 

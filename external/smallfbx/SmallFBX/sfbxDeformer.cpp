@@ -272,15 +272,6 @@ void Cluster::exportFBXObjects()
 	}
 }
 
-void Cluster::exportFBXConnections() {
-	super::exportFBXConnections();
-
-	// Export child connections
-	for (auto& child : m_children) {
-		child->exportFBXConnections();
-	}
-}
-
 span<int> Cluster::getIndices() const { return make_span(m_indices); }
 span<float> Cluster::getWeights() const { return make_span(m_weights); }
 double4x4 Cluster::getTransform() const { return m_transform; }

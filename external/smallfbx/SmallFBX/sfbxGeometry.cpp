@@ -375,15 +375,6 @@ void GeomMesh::exportFBXObjects()
 	}
 }
 
-void GeomMesh::exportFBXConnections() {
-	super::exportFBXConnections();
-	
-	for (auto& child : m_children) {
-		child->exportFBXConnections();
-	}
-}
-
-
 void GeomMesh::exportLayers()
 {
 	// Export normal layers

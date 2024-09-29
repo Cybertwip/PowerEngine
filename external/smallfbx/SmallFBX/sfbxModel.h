@@ -147,7 +147,6 @@ public:
 
 protected:
     void exportFBXObjects() override;
-	void exportFBXConnections() override;
 
     //std::shared_ptr<RootAttribute> m_attr{};
 };
@@ -162,7 +161,6 @@ public:
 
 protected:
 	void exportFBXObjects() override;
-	void exportFBXConnections() override;
 
 	//std::shared_ptr<LimbNodeAttribute> m_attr{};
 };
@@ -187,7 +185,6 @@ public:
 protected:
     void importFBXObjects() override;
 	void exportFBXObjects() override;
-	void exportFBXConnections() override;
 	
 	std::shared_ptr<GeomMesh> m_geom{};
     std::vector<std::shared_ptr<Material>> m_materials;

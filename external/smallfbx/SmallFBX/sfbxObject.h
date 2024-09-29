@@ -1,6 +1,9 @@
 #pragma once
 #include "sfbxTypes.h"
 
+#include <unordered_set>
+#include <memory>
+
 namespace sfbx {
 
 enum class ObjectClass : int
@@ -87,6 +90,8 @@ class Object : public std::enable_shared_from_this<Object>
 {
 	friend class Document;
 public:
+	using VisitedSet = std::unordered_set<std::shared_ptr<Object>>;
+
     virtual ~Object();
     virtual ObjectClass getClass() const;
     virtual ObjectSubClass getSubClass() const;
@@ -122,7 +127,10 @@ public:
 	
 	virtual void importFBXObjects();
 	virtual void exportFBXObjects();
+	// Original exportFBXConnections method initiates the traversal
 	virtual void exportFBXConnections();
+
+	void exportFBXConnections(VisitedSet& visited);
 
 protected:
     Object();

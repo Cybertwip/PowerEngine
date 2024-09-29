@@ -152,6 +152,24 @@ bool MeshActorExporter::exportActor(CompressedSerialization::Deserializer& deser
 			
 			// Set the local transformations for the boneModel
 			boneModel->setLocalMatrix(ExporterUtil::GlmMatToSfbxMat(poseMatrix));
+			
+			glm::vec3 translation, scale;
+			glm::quat rotation;
+			std::tie(translation, rotation, scale) = ExporterUtil::DecomposeTransform(poseMatrix);
+			
+			if (parentIndex == -1) {
+				boneModel->setPosition(sfbx::glmToDouble3(glm::vec3(0.0f, 0.0f, 0.f)));
+				boneModel->setRotation(sfbx::glmToDouble3(glm::vec3(0.0f, 0.0f, 0.f)));
+				boneModel->setScale(sfbx::glmToDouble3(glm::vec3(1.0f, 1.0f, 1.0f)));
+
+			} else {
+				// Set the local transformations for the boneModel
+				boneModel->setPosition(sfbx::glmToDouble3(translation));
+				boneModel->setRotation(sfbx::glmToDouble3(glm::degrees(glm::eulerAngles(rotation))));
+				boneModel->setScale(sfbx::glmToDouble3(scale));
+
+			}
+
 
 			// Store the bone model in the map
 			boneModels[boneIndex] = boneModel;
