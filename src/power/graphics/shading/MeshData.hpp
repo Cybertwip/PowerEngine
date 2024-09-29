@@ -83,21 +83,24 @@ struct SkinnedMeshData : public MeshData {
 	
 	SkinnedMeshData(MeshData& meshData) : MeshData(meshData) {
 		
-		for (auto& meshVertex : mVertices) {
-			mSkinnedVertices.push_back(SkinnedMeshVertex(meshVertex));
+		auto vertexBackup = mVertices;
+		
+		mVertices.clear();
+		
+		for (auto& meshVertex : vertexBackup) {
+			mVertices.push_back(SkinnedMeshVertex(meshVertex));
 		}
-	}
-	
-	std::vector<SkinnedMeshVertex>& get_skinned_vertices() {
-		return mSkinnedVertices;
 	}
 	
 	// Serialize method
 	void serialize(CompressedSerialization::Serializer& serializer) const override {
 		// Serialize SkinnedMeshVertex vector
-		uint32_t skinnedVertexCount = static_cast<uint32_t>(mSkinnedVertices.size());
+		uint32_t skinnedVertexCount = static_cast<uint32_t>(mVertices.size());
 		serializer.write_uint32(skinnedVertexCount);
-		for (const auto& skinnedVertex : mSkinnedVertices) {
+		for (const auto& vertex : mVertices) {
+			
+			const auto& skinnedVertex = static_cast<const SkinnedMeshVertex&>(vertex);
+
 			skinnedVertex.serialize(serializer);
 		}
 		
@@ -113,14 +116,17 @@ struct SkinnedMeshData : public MeshData {
 	bool deserialize(CompressedSerialization::Deserializer& deserializer) override {
 		// Deserialize SkinnedMeshVertex vector
 		
-		mSkinnedVertices.clear();
+		mVertices.clear();
 		
 		uint32_t skinnedVertexCount = 0;
 		if (!deserializer.read_uint32(skinnedVertexCount)) return false;
-		mSkinnedVertices.resize(skinnedVertexCount); // Initialize with a default MeshVertex
+		mVertices.resize(skinnedVertexCount); // Initialize with a default MeshVertex
 		
-		for (auto& skinnedVertex : mSkinnedVertices) {
-			if (!skinnedVertex.deserialize(deserializer)) return false;
+		for (int i = 0; i < mVertices.size(); ++i) {
+			SkinnedMeshVertex deserializable;
+			if (!deserializable.deserialize(deserializer)) return false;
+			
+			mVertices[i] = deserializable;
 		}
 		
 		mIndices.clear();
@@ -135,8 +141,5 @@ struct SkinnedMeshData : public MeshData {
 
 		return true;
 	}
-
-private:
-	std::vector<SkinnedMeshVertex> mSkinnedVertices;
 };
 

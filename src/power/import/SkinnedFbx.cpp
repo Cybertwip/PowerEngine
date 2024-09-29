@@ -91,7 +91,7 @@ void SkinnedFbx::ProcessBones(const std::shared_ptr<sfbx::Mesh>& mesh) {
 		mSkinnedMeshes.push_back(std::make_unique<SkinnedMeshData>(*lastProcessedMesh));
 		
 		// Initialize skinned vertices
-		auto& skinnedVertices = mSkinnedMeshes.back()->get_skinned_vertices();
+		auto& skinnedVertices = mSkinnedMeshes.back()->get_vertices();
 		size_t totalVertices = skinnedVertices.size();
 		
 		// Ensure that skinnedVertices are initialized properly
@@ -181,7 +181,9 @@ void SkinnedFbx::ProcessBones(const std::shared_ptr<sfbx::Mesh>& mesh) {
 				// Ensure valid vertex ID
 				if (vertexID >= 0 && static_cast<size_t>(vertexID) < skinnedVertices.size()) {
 					
-					skinnedVertices[vertexID].set_bone(boneID, weight);
+					auto& vertex = static_cast<SkinnedMeshVertex&>(skinnedVertices[vertexID]);
+					
+					vertex.set_bone(boneID, weight);
 
 				} else {
 					std::cerr << "Error: Invalid vertex ID (" << vertexID << ") for bone: " << boneName << ". Skinned Vertices Size: " << skinnedVertices.size() << std::endl;
@@ -191,15 +193,21 @@ void SkinnedFbx::ProcessBones(const std::shared_ptr<sfbx::Mesh>& mesh) {
 		
 		// Post-Processing: Assign default bone to vertices with no influences
 		for (size_t i = 0; i < skinnedVertices.size(); ++i) {
-			if (skinnedVertices[i].has_no_bones()) {
-				skinnedVertices[i].set_bone(DEFAULT_BONE_ID, 1.0f);
+			
+			auto& vertex = static_cast<SkinnedMeshVertex&>(skinnedVertices[i]);
+
+			if (vertex.has_no_bones()) {
+				vertex.set_bone(DEFAULT_BONE_ID, 1.0f);
 				std::cerr << "Info: Vertex ID " << i << " had no bone influences. Assigned to Default Bone ID " << DEFAULT_BONE_ID << "." << std::endl;
 			}
 		}
 		
 		// Validate that all vertices have at least one bone influence
 		for (size_t i = 0; i < skinnedVertices.size(); ++i) {
-			if (skinnedVertices[i].has_no_bones()) {
+			
+			auto& vertex = static_cast<SkinnedMeshVertex&>(skinnedVertices[i]);
+
+			if (vertex.has_no_bones()) {
 				std::cerr << "Error: Vertex ID " << i << " still has no bone influences after default assignment." << std::endl;
 			}
 		}

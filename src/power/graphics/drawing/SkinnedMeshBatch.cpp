@@ -174,7 +174,7 @@ mesh.get_flattened_bone_ids().end());
 	mMeshStartIndices[shader.identifier()].push_back(indexer.mIndexOffset);
 	
 	indexer.mIndexOffset += mesh.get_mesh_data().get_indices().size();
-	indexer.mVertexOffset += mesh.get_mesh_data().get_skinned_vertices().size();
+	indexer.mVertexOffset += mesh.get_mesh_data().get_vertices().size();
 	
 	upload_vertex_data(shader, identifier);
 }
@@ -248,7 +248,7 @@ void SkinnedMeshBatch::remove(std::reference_wrapper<SkinnedMesh> meshRef) {
 	// 3.b. Remove vertex data
 	// Assuming that each mesh's vertices are contiguous and added sequentially
 	// Calculate the number of vertices to remove
-	size_t numVertices = mesh.get_mesh_data().get_skinned_vertices().size();
+	size_t numVertices = mesh.get_mesh_data().get_vertices().size();
 	size_t vertexCount = numVertices * 3; // Assuming 3 floats per vertex position
 	
 	// Remove from positions

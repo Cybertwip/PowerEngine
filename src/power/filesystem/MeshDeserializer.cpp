@@ -89,7 +89,7 @@ bool MeshDeserializer::deserialize_psk(CompressedSerialization::Deserializer& de
 	
 	// Deserialize each MeshData
 	for (int32_t i = 0; i < meshDataCount; ++i) {
-		auto meshData = std::make_unique<MeshData>();
+		auto meshData = std::make_unique<SkinnedMeshData>();
 		if (!meshData->deserialize(deserializer)) {
 			std::cerr << "MeshDeserializer: Failed to deserialize MeshData for mesh " << i << " in .psk file\n";
 			return false;

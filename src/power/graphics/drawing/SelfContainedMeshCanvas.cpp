@@ -100,7 +100,7 @@ void SelfContainedMeshCanvas::append(std::reference_wrapper<SkinnedMesh> meshRef
 	mMeshStartIndices[shader.identifier()].push_back(indexer.mIndexOffset);
 	
 	indexer.mIndexOffset += mesh.get_mesh_data().get_indices().size();
-	indexer.mVertexOffset += mesh.get_mesh_data().get_skinned_vertices().size();
+	indexer.mVertexOffset += mesh.get_mesh_data().get_vertices().size();
 	
 	upload_vertex_data(shader, identifier);
 }
