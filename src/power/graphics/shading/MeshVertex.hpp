@@ -21,8 +21,10 @@ public:
 	{
 		// No additional logic required since all members are copied
 	}
-
-	virtual ~MeshVertex() = default;
+	
+	virtual ~MeshVertex() {
+		
+	}
 	
 	// Bone and weight setters
 	void set_position(const glm::vec3 &vec);
@@ -88,7 +90,7 @@ public:
 		mWeights.fill(0.0f);
 	}
 	
-	~SkinnedMeshVertex() = default;
+	~SkinnedMeshVertex() override = default;
 	
 	// Assigns a bone and its weight to the first available slot
 	void set_bone(int boneId, float weight) {

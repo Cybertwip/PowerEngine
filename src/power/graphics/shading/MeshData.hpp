@@ -22,7 +22,9 @@ public:
 		// If you need a deep copy of mMaterials, you could iterate over the vector and copy each element explicitly.
 	}
 	
-	virtual ~MeshData() = default;
+	virtual ~MeshData() {
+		
+	}
 
 	std::vector<std::unique_ptr<MeshVertex>>& get_vertices() {
 		return mVertices;
@@ -99,7 +101,7 @@ public:
 		}
 	}
 	
-	~SkinnedMeshData() = default;
+	~SkinnedMeshData() override = default;
 	
 	// Serialize method
 	void serialize(CompressedSerialization::Serializer& serializer) const override {
