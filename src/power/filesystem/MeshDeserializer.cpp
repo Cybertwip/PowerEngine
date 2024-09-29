@@ -101,6 +101,19 @@ bool MeshDeserializer::deserialize_psk(CompressedSerialization::Deserializer& de
 		m_meshes.push_back(std::move(meshData));
 	}
 	
+	m_skeleton = Skeleton();
+	
+	// Deserialize the skeleton
+	if (!m_skeleton->deserialize(deserializer)) {
+		
+		m_skeleton = std::nullopt;
+		
+		std::cerr << "MeshDeserializer: Failed to deserialize skeleton in .psk file\n";
+		return false;
+	}
+	
+
+	
 	std::cout << "MeshDeserializer: Successfully deserialized " << meshDataCount << " mesh(es) from .psk file.\n";
 	return true;
 }
@@ -108,6 +121,11 @@ bool MeshDeserializer::deserialize_psk(CompressedSerialization::Deserializer& de
 std::vector<std::unique_ptr<MeshData>> MeshDeserializer::get_meshes() {
 	return std::move(m_meshes);
 }
+
+std::optional<Skeleton> MeshDeserializer::get_skeleton() {
+	return m_skeleton;
+}
+
 
 void MeshDeserializer::clear() {
 	m_meshes.clear();

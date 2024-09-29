@@ -90,7 +90,8 @@ public:
 
     span<int> getIndices() const;
     span<float> getWeights() const;
-    double4x4 getTransform() const;
+	void setTransform(double4x4 transform);
+	double4x4 getTransform() const;
     double4x4 getTransformLink() const;
 
     void setIndices(span<int> v);   // v: indices of vertices

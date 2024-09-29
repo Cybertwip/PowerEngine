@@ -190,7 +190,9 @@ void Fbx::ProcessMesh(const std::shared_ptr<sfbx::Mesh>& mesh) {
 	auto processVertices = [&](size_t startIndex, size_t endIndex) {
 		for (size_t i = startIndex; i < endIndex; ++i) {
 			int controlPointIndex = vertexIndices[i];
-			MeshVertex vertex;
+			
+			auto vertexPtr = std::make_unique<MeshVertex>();
+			auto& vertex = *vertexPtr;
 			
 			// Transform position
 			const auto& point = points[controlPointIndex];
@@ -242,7 +244,7 @@ void Fbx::ProcessMesh(const std::shared_ptr<sfbx::Mesh>& mesh) {
 			vertex.set_texture_id((matIndex >= 0 && matIndex < static_cast<int>(materials.size())) ? matIndex : -1);
 
 			// Assign vertex and index
-			resultMesh->get_vertices()[controlPointIndex] = std::move(vertex);
+			resultMesh->get_vertices()[controlPointIndex] = std::move(vertexPtr);
 			resultMesh->get_indices()[i] =
 			controlPointIndex;
 		}

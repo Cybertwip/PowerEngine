@@ -32,8 +32,4 @@ private:
 	// Helper Functions
 	void createMaterials(std::shared_ptr<sfbx::Document> document, const std::vector<std::shared_ptr<SerializableMaterialProperties>>& materials, std::map<int, std::shared_ptr<sfbx::Material>>& materialMap);
 	void createMesh(MeshData& meshData, const std::map<int, std::shared_ptr<sfbx::Material>>& materialMap, std::shared_ptr<sfbx::Mesh> parentModel);
-	
-	// Deserialization Functions (to be implemented)
-	bool deserializeMeshes(const CompressedSerialization::Deserializer& deserializer);
-	bool deserializeSkeleton(const CompressedSerialization::Deserializer& deserializer);
 };

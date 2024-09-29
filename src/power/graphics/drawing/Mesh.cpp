@@ -40,7 +40,7 @@ Mesh::Mesh(std::unique_ptr<MeshData> meshData, ShaderWrapper& shader, MeshBatch&
 	
 	// Flatten the vertex data
 	for (size_t i = 0; i < numVertices; ++i) {
-		const auto& vertex = mMeshData->get_vertices()[i];
+		const auto& vertex = *mMeshData->get_vertices()[i];
 		
 		// Positions
 		mFlattenedPositions[i * 3 + 0] = vertex.get_position().x;

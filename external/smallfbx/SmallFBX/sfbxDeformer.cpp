@@ -261,8 +261,13 @@ void Cluster::setIndices(span<int> v) { m_indices = v; }
 void Cluster::setWeights(span<float> v) { m_weights = v; }
 void Cluster::setBindMatrix(double4x4 v)
 {
-    m_transform_link = v;
-    m_transform = invert(v);
+	m_transform_link = v;
+	m_transform = invert(v);
+}
+void Cluster::setTransform(double4x4 v)
+{
+	m_transform = v;
+	m_transform_link = invert(v);
 }
 
 

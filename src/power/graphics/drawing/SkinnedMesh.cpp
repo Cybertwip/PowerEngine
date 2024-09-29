@@ -52,7 +52,7 @@ mModelMatrix(nanogui::Matrix4f::identity()) {
 	
 	// Flatten the vertex data
 	for (size_t i = 0; i < numVertices; ++i) {
-		auto& vertex = static_cast<SkinnedMeshVertex&>(mSkinnedMeshData->get_vertices()[i]);
+		auto& vertex = static_cast<SkinnedMeshVertex&>(*mSkinnedMeshData->get_vertices()[i]);
 		
 		// Positions
 		mFlattenedPositions[i * 3 + 0] = vertex.get_position().x;

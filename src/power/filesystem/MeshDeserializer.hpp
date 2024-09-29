@@ -1,15 +1,17 @@
 #pragma once
 
+#include "graphics/shading/MeshData.hpp"
+#include "filesystem/MeshActorImporter.hpp"
+#include "filesystem/CompressedSerialization.hpp"
+
 #include <string>
 #include <vector>
 #include <memory>
 #include <iostream>
 #include <filesystem>
 #include <algorithm>
+#include <optional>
 
-#include "graphics/shading/MeshData.hpp"
-#include "filesystem/MeshActorImporter.hpp"
-#include "filesystem/CompressedSerialization.hpp"
 
 /**
  * @class MeshDeserializer
@@ -41,6 +43,8 @@ public:
 	 */
 	std::vector<std::unique_ptr<MeshData>> get_meshes();
 	
+	std::optional<Skeleton> get_skeleton();
+
 	/**
 	 * @brief Clears all loaded mesh data.
 	 */
@@ -67,5 +71,9 @@ private:
 	 * @return True if successful, false otherwise.
 	 */
 	bool deserialize_psk(CompressedSerialization::Deserializer& deserializer);
+	
+	
+	std::optional<Skeleton> m_skeleton;
+
 };
 

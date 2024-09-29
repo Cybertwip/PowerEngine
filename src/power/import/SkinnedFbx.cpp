@@ -181,7 +181,7 @@ void SkinnedFbx::ProcessBones(const std::shared_ptr<sfbx::Mesh>& mesh) {
 				// Ensure valid vertex ID
 				if (vertexID >= 0 && static_cast<size_t>(vertexID) < skinnedVertices.size()) {
 					
-					auto& vertex = static_cast<SkinnedMeshVertex&>(skinnedVertices[vertexID]);
+					auto& vertex = static_cast<SkinnedMeshVertex&>(*skinnedVertices[vertexID]);
 					
 					vertex.set_bone(boneID, weight);
 
@@ -194,7 +194,7 @@ void SkinnedFbx::ProcessBones(const std::shared_ptr<sfbx::Mesh>& mesh) {
 		// Post-Processing: Assign default bone to vertices with no influences
 		for (size_t i = 0; i < skinnedVertices.size(); ++i) {
 			
-			auto& vertex = static_cast<SkinnedMeshVertex&>(skinnedVertices[i]);
+			auto& vertex = static_cast<SkinnedMeshVertex&>(*skinnedVertices[i]);
 
 			if (vertex.has_no_bones()) {
 				vertex.set_bone(DEFAULT_BONE_ID, 1.0f);
@@ -205,7 +205,7 @@ void SkinnedFbx::ProcessBones(const std::shared_ptr<sfbx::Mesh>& mesh) {
 		// Validate that all vertices have at least one bone influence
 		for (size_t i = 0; i < skinnedVertices.size(); ++i) {
 			
-			auto& vertex = static_cast<SkinnedMeshVertex&>(skinnedVertices[i]);
+			auto& vertex = static_cast<SkinnedMeshVertex&>(*skinnedVertices[i]);
 
 			if (vertex.has_no_bones()) {
 				std::cerr << "Error: Vertex ID " << i << " still has no bone influences after default assignment." << std::endl;

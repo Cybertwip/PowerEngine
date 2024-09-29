@@ -3,7 +3,63 @@
 #include "MeshActorExporter.hpp"
 #include "MeshDeserializer.hpp"
 #include "VectorConversion.hpp"
+
+#include <glm/glm.hpp>
+#include <glm/gtx/quaternion.hpp>
+#include <glm/gtx/matrix_decompose.hpp>
+
 #include <iostream>
+
+namespace SkinnedFbxUtil {
+
+
+// return translate, rotate, scale
+inline std::tuple<glm::vec3, glm::quat, glm::vec3> DecomposeTransform(const glm::mat4 &transform)
+{
+	glm::vec3 scale;
+	glm::quat rotation;
+	glm::vec3 translation;
+	glm::vec3 skew;
+	glm::vec4 perspective;
+	glm::decompose(transform, scale, rotation, translation, skew, perspective);
+	return {translation, rotation, scale};
+}
+glm::vec3 ExtractScale(const glm::mat4& matrix) {
+	glm::vec3 scale;
+	scale.x = glm::length(glm::vec3(matrix[0]));
+	scale.y = glm::length(glm::vec3(matrix[1]));
+	scale.z = glm::length(glm::vec3(matrix[2]));
+	return scale;
+}
+
+
+inline glm::mat4 SfbxMatToGlmMat(const sfbx::double4x4 &from)
+{
+	glm::mat4 to;
+	// the a,b,c,d in sfbx is the row ; the 1,2,3,4 is the column
+	for (int i = 0; i < 4; ++i) {
+		for (int j = 0; j < 4; ++j) {
+			to[j][i] = from[j][i];
+		}
+	}
+	
+	return to;
+}
+
+inline sfbx::double4x4 GlmMatToSfbxMat(const glm::mat4 &from)
+{
+	sfbx::double4x4 to;
+	// the a,b,c,d in sfbx is the row ; the 1,2,3,4 is the column
+	for (int i = 0; i < 4; ++i) {
+		for (int j = 0; j < 4; ++j) {
+			to[j][i] = from[j][i];
+		}
+	}
+	
+	return to;
+}
+
+}  // namespace
 
 MeshActorExporter::MeshActorExporter()
 {
@@ -25,8 +81,6 @@ bool MeshActorExporter::exportActor(CompressedSerialization::Deserializer& deser
 	mMeshDeserializer->load_mesh(deserializer, sourcePath);
 	// Retrieve the deserialized meshes
 	mMeshes = std::move(mMeshDeserializer->get_meshes());
-
-	// mSkeleton = actor.getSkeleton();
 	
 	// Step 2: Create Materials
 	std::map<int, std::shared_ptr<sfbx::Material>> materialMap; // Map textureID to Material
@@ -70,8 +124,116 @@ bool MeshActorExporter::exportActor(CompressedSerialization::Deserializer& deser
 		meshModel->setScale({1.0f, 1.0f, 1.0f});
 	}
 
-	// Step 5: Skip Animations as per user request
+	// Step 5: Build skeleton
 	
+	auto skeleton = mMeshDeserializer->get_skeleton();
+	
+	if (skeleton != std::nullopt) {
+		// Get the actual Skeleton object
+		auto& skeletonData = *skeleton;
+		
+		// Map to store bone index to sfbx::Model
+		std::map<int, std::shared_ptr<sfbx::Model>> boneModels;
+		
+		// Step 1: Create sfbx::Model nodes for each bone
+		for (int boneIndex = 0; boneIndex < skeletonData.num_bones(); ++boneIndex) {
+			std::string boneName = skeletonData.get_bone(boneIndex).name;
+			int parentIndex = skeletonData.get_bone(boneIndex).parent_index;
+			
+			// Create a new Model node for the bone
+			auto boneModel = document->createObject<sfbx::Model>(boneName);
+			
+			// Step 2: Set bone's local transformations
+			glm::mat4 poseMatrix = skeletonData.get_bone(boneIndex).bindpose;
+			
+			// Decompose localTransform into translation, rotation, scale
+			glm::vec3 translation, scale;
+			glm::quat rotation;
+			std::tie(translation, rotation, scale) = ;
+			
+			// Set the local transformations for the boneModel
+			boneModel->setLocalMatrix(SkinnedFbxUtil::GlmMatToSfbxMat(poseMatrix));
+
+			// Store the bone model in the map
+			boneModels[boneIndex] = boneModel;
+		}
+		
+		// Step 3: Establish parent-child relationships
+		for (int boneIndex = 0; boneIndex < skeletonData.num_bones(); ++boneIndex) {
+			int parentIndex = skeletonData.get_bone(boneIndex).parent_index;
+			auto boneModel = boneModels[boneIndex];
+			
+			if (parentIndex == -1) {
+				// Root bone: attach to the root model
+				rootModel->addChild(boneModel);
+			} else {
+				// Child bone: attach to its parent bone
+				auto parentModel = boneModels[parentIndex];
+				parentModel->addChild(boneModel);
+			}
+		}
+		
+		// Step 4: Associate the skeleton with the mesh via skinning
+		// Assuming mMeshModels is a vector of sfbx::Mesh models corresponding to mMeshes
+		for (size_t i = 0; i < mMeshes.size(); ++i) {
+			auto& meshData = *mMeshes[i];
+			auto meshModel = mMeshModels[i];
+			
+			auto geometry = meshModel->getGeometry();
+			if (!geometry) {
+				std::cerr << "Error: Mesh model does not have a geometry." << std::endl;
+				continue;
+			}
+			
+			// Create a Skin deformer and add it to the geometry
+			auto skin = document->createObject<sfbx::Skin>("Skin_" + meshModel->getName());
+			geometry->addDeformer(skin);
+			
+			// Map to store bone influences per bone
+			std::map<int, std::vector<std::pair<int, float>>> boneWeights; // boneIndex -> [(vertexIndex, weight)]
+			
+			auto& vertices = meshData.get_vertices();
+			
+			// Collect bone weights from vertices
+			for (size_t vi = 0; vi < vertices.size(); ++vi) {
+				auto& vertex = static_cast<SkinnedMeshVertex&>(*vertices[vi]);
+				
+				// Assuming vertex provides bone IDs and weights
+				auto boneIDs = vertex.get_bone_ids();    // std::vector<int>
+				auto weights = vertex.get_weights();     // std::vector<float>
+				
+				for (size_t j = 0; j < boneIDs.size(); ++j) {
+					int boneID = boneIDs[j];
+					float weight = weights[j];
+					
+					boneWeights[boneID].emplace_back(static_cast<int>(vi), weight);
+				}
+			}
+			
+			// Create clusters for each bone and associate them with the skin deformer
+			for (const auto& [boneID, weightData] : boneWeights) {
+				auto cluster = document->createObject<sfbx::Cluster>("Cluster_" + std::to_string(boneID));
+				skin->addCluster(cluster);
+				
+				// Extract indices and weights
+				std::vector<int> indices;
+				std::vector<float> weights;
+				for (const auto& [vertexIndex, weight] : weightData) {
+					indices.push_back(vertexIndex);
+					weights.push_back(weight);
+				}
+				
+				// Set indices and weights in the cluster
+				cluster->setIndices(indices);
+				cluster->setWeights(weights);
+								
+				// Set the link node to the corresponding bone model
+				auto offsetMatrix = skeletonData.get_bone(boneID).offset;
+				cluster->setTransform(GlmMatToSfbxMat(offsetMatrix));
+			}
+		}
+	}
+
 	// Step 6: Export the Document to a file
 	document->exportFBXNodes();
 	
@@ -128,7 +290,9 @@ void MeshActorExporter::createMesh(
 	assert(geometry != nullptr);
 	
 	// Set control points (vertices)
-	for (auto& vertex : meshData.get_vertices()) {
+	for (auto& vertexPtr : meshData.get_vertices()) {
+		auto& vertex = *vertexPtr;
+		
 		geometry->addControlPoint(vertex.get_position().x, vertex.get_position().y, vertex.get_position().z);
 	}
 
@@ -139,7 +303,7 @@ void MeshActorExporter::createMesh(
 	}
 	
 	// **Add Layers Here**
-	
+	/*
 	// 1. Normals Layer
 	{
 		sfbx::LayerElementF3 normalLayer;
@@ -147,7 +311,8 @@ void MeshActorExporter::createMesh(
 		normalLayer.mapping_mode = sfbx::LayerMappingMode::ByPolygonVertex;
 		normalLayer.reference_mode = sfbx::LayerReferenceMode::Direct;
 		
-		for (auto& vertex : meshData.get_vertices()) {
+		for (auto& vertexPtr : meshData.get_vertices()) {
+			auto& vertex = *vertexPtr;
 			normalLayer.data.emplace_back(vertex.get_normal().x, vertex.get_normal().y, vertex.get_normal().z);
 		}
 		
@@ -161,7 +326,8 @@ void MeshActorExporter::createMesh(
 		uvLayer.mapping_mode = sfbx::LayerMappingMode::ByPolygonVertex;
 		uvLayer.reference_mode = sfbx::LayerReferenceMode::Direct;
 		
-		for (auto& vertex : meshData.get_vertices()) {
+		for (auto& vertexPtr : meshData.get_vertices()) {
+			auto& vertex = *vertexPtr;
 			if (uvSet == 0) {
 				uvLayer.data.emplace_back(vertex.get_tex_coords1().x, vertex.get_tex_coords1().y);
 			} else {
@@ -179,7 +345,9 @@ void MeshActorExporter::createMesh(
 		colorLayer.mapping_mode = sfbx::LayerMappingMode::ByPolygonVertex;
 		colorLayer.reference_mode = sfbx::LayerReferenceMode::Direct;
 		
-		for (auto& vertex : meshData.get_vertices()) {
+		for (auto& vertexPtr : meshData.get_vertices()) {
+			auto& vertex = *vertexPtr;
+			
 			colorLayer.data.emplace_back(
 										 vertex.get_color().r,
 										 vertex.get_color().g,
@@ -203,17 +371,7 @@ void MeshActorExporter::createMesh(
 		geometry->addMaterialLayer(std::move(materialLayer));
 	}
 	
+	*/
 	// **Link geometry to model**
 	parentModel->setGeometry(geometry);
-}
-
-// Deserialization functions (to be implemented based on your serialization logic)
-bool MeshActorExporter::deserializeMeshes(const CompressedSerialization::Deserializer& deserializer) {
-	// Implement mesh deserialization here
-	return true; // Placeholder
-}
-
-bool MeshActorExporter::deserializeSkeleton(const CompressedSerialization::Deserializer& deserializer) {
-	// Implement skeleton deserialization here
-	return true; // Placeholder
 }
