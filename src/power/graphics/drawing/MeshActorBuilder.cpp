@@ -255,7 +255,22 @@ Actor& MeshActorBuilder::build(Actor& actor, const std::string& path, ShaderWrap
 			actor.add_component<PlaybackComponent>();
 			
 			// Serialize each SkinnedMesh
-			for (auto& skinnedMeshData : model->GetSkinnedMeshData()) {
+			for (int i = 0; i<model->GetSkinnedMeshData().size(); ++i) {
+				auto& skinnedMeshData = model->GetSkinnedMeshData()[i];
+				auto& materialData = model->GetMaterialProperties()[i];
+				
+				skinnedMeshData->get_material_properties().clear();
+
+				for (int j = 0; j < materialData.size(); ++j) {
+					
+					auto material = std::make_shared<MaterialProperties>();
+					
+					material->deserialize(*materialData[i]);
+					
+					
+					skinnedMeshData->get_material_properties().push_back(material);
+				}
+				
 				skinnedMeshComponentData.push_back(std::make_unique<SkinnedMesh>(
 																				 std::move(skinnedMeshData),
 																				 skinnedShader,
@@ -272,7 +287,20 @@ Actor& MeshActorBuilder::build(Actor& actor, const std::string& path, ShaderWrap
 			std::vector<std::unique_ptr<Mesh>> meshComponentData;
 			
 			// Serialize each Mesh
-			for (auto& meshData : model->GetMeshData()) {
+			for (int i = 0; i<model->GetMeshData().size(); ++i) {
+				auto& meshData = model->GetMeshData()[i];
+				auto& materialData = model->GetMaterialProperties()[i];
+				
+				meshData->get_material_properties().clear();
+				
+				for (int j = 0; j < materialData.size(); ++j) {
+					
+					auto material = std::make_shared<MaterialProperties>();
+					
+					material->deserialize(*materialData[i]);
+					
+					meshData->get_material_properties().push_back(material);
+				}
 				meshComponentData.push_back(std::make_unique<Mesh>(
 																   std::move(meshData),
 																   meshShader,

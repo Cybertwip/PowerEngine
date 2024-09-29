@@ -145,19 +145,27 @@ public:
 			});
 			
 			auto it0 = (it1 != keyframes.begin()) ? std::prev(it1) : it1;
+//			
+//			// Interpolate between keyframes
+//			float t = (time - it0->time) / (it1->time - it0->time);
+//			
+//			glm::vec3 interpolated_translation = glm::mix(it0->translation, it1->translation, t);
+//			glm::quat interpolated_rotation = glm::slerp(it0->rotation, it1->rotation, t);
+//			glm::vec3 interpolated_scale = glm::mix(it0->scale, it1->scale, t);
+//			
+//			// Construct the transformation matrix
+//			glm::mat4 translation_matrix = glm::translate(glm::mat4(1.0f), interpolated_translation);
+//			glm::mat4 rotation_matrix = glm::mat4_cast(interpolated_rotation);
+//			glm::mat4 scale_matrix = glm::scale(glm::mat4(1.0f), interpolated_scale);
 			
-			// Interpolate between keyframes
-			float t = (time - it0->time) / (it1->time - it0->time);
-			
-			glm::vec3 interpolated_translation = glm::mix(it0->translation, it1->translation, t);
-			glm::quat interpolated_rotation = glm::slerp(it0->rotation, it1->rotation, t);
-			glm::vec3 interpolated_scale = glm::mix(it0->scale, it1->scale, t);
+			glm::vec3 interpolated_translation = it0->translation;
+			glm::quat interpolated_rotation = it0->rotation;
+			glm::vec3 interpolated_scale = it0->scale;
 			
 			// Construct the transformation matrix
 			glm::mat4 translation_matrix = glm::translate(glm::mat4(1.0f), interpolated_translation);
 			glm::mat4 rotation_matrix = glm::mat4_cast(interpolated_rotation);
 			glm::mat4 scale_matrix = glm::scale(glm::mat4(1.0f), interpolated_scale);
-			
 			glm::mat4 bone_transform = translation_matrix * rotation_matrix * scale_matrix;
 			bone_transforms.push_back(bone_transform);
 		}
