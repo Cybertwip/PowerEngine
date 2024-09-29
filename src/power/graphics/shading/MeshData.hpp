@@ -61,8 +61,11 @@ public:
 		uint32_t vertexCount = 0;
 		if (!deserializer.read_uint32(vertexCount)) return false;
 		mVertices.resize(vertexCount);
-		for (auto& vertex : mVertices) {
-			if (!vertex->deserialize(deserializer)) return false;
+		for (int i = 0; i < mVertices.size(); ++i) {
+			auto deserializable =  std::make_unique<MeshVertex>();
+			if (!deserializable->deserialize(deserializer)) return false;
+			
+			mVertices[i] = std::move(deserializable);
 		}
 		
 		// Deserialize indices

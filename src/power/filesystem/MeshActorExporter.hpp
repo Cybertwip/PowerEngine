@@ -26,6 +26,7 @@ public:
 private:	
 	// Internal Data
 	std::vector<std::unique_ptr<MeshData>> mMeshes;
+	std::vector<std::shared_ptr<sfbx::Mesh>> mMeshModels;
 	std::unique_ptr<Skeleton> mSkeleton;
 	std::unique_ptr<MeshDeserializer> mMeshDeserializer;
 	

@@ -49,6 +49,8 @@ void Document::initialize()
 	m_root_model = createObject<Root>("Scene");
 	m_root_model->setID(0);
 	
+	addObject(m_root_model);
+
 	// Set the FBX version to 7500
 	m_version = FileVersion::Fbx2016; // Assuming FileVersion::Fbx7500 == 7500
 
@@ -406,6 +408,7 @@ void Document::importFBXObjects()
 		for (Node* n : objects->getChildren()) {
 			if (ObjectPtr obj = createObject(GetObjectClass(n), GetObjectSubClass(n))) {
 				obj->setNode(n);
+				addObject(obj);
 			}
 		}
 	}
@@ -552,7 +555,6 @@ std::shared_ptr<T> Document::createObject(string_view name)
 	
 	std::shared_ptr<T> pointer(r);
 	pointer->setName(name);
-    addObject(pointer);
     return pointer;
 }
 

@@ -15,6 +15,8 @@ void SharedSelfContainedMeshCanvas::set_active_actor(std::shared_ptr<Actor> acto
 	
 	if (mSharedPreviewActor != nullptr) {
 		SelfContainedMeshCanvas::set_active_actor(*mSharedPreviewActor);
+	} else {
+		set_update(false);
 	}
 }
 

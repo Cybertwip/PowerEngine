@@ -302,6 +302,8 @@ void Root::exportFBXObjects()
 	// Create a RootAttribute if it doesn't exist
 	if (!m_attr) {
 		m_attr = document()->createObject<RootAttribute>();
+		document()->addObject(m_attr);
+		
 		document()->createLinkOO(m_attr, shared_from_this());
 	}
 }

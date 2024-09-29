@@ -130,7 +130,7 @@ void mainloop() {
 		}
 		
 #if !defined(EMSCRIPTEN)
-		glfwPollEvents();
+		glfwWaitEvents();
 #endif
 	};
 	
@@ -149,7 +149,7 @@ void mainloop() {
 			mainloop_iteration();
 		
 		/* Process events once more */
-		glfwPollEvents();
+		glfwWaitEvents();
 	} catch (const std::exception &e) {
 		std::cerr << "Caught exception in main loop: " << e.what() << std::endl;
 		leave();

@@ -10,7 +10,7 @@
 
 #include <iostream>
 
-namespace SkinnedFbxUtil {
+namespace ExporterUtil {
 
 
 // return translate, rotate, scale
@@ -146,13 +146,8 @@ bool MeshActorExporter::exportActor(CompressedSerialization::Deserializer& deser
 			// Step 2: Set bone's local transformations
 			glm::mat4 poseMatrix = skeletonData.get_bone(boneIndex).bindpose;
 			
-			// Decompose localTransform into translation, rotation, scale
-			glm::vec3 translation, scale;
-			glm::quat rotation;
-			std::tie(translation, rotation, scale) = ;
-			
 			// Set the local transformations for the boneModel
-			boneModel->setLocalMatrix(SkinnedFbxUtil::GlmMatToSfbxMat(poseMatrix));
+			boneModel->setLocalMatrix(ExporterUtil::GlmMatToSfbxMat(poseMatrix));
 
 			// Store the bone model in the map
 			boneModels[boneIndex] = boneModel;
@@ -186,8 +181,8 @@ bool MeshActorExporter::exportActor(CompressedSerialization::Deserializer& deser
 			}
 			
 			// Create a Skin deformer and add it to the geometry
-			auto skin = document->createObject<sfbx::Skin>("Skin_" + meshModel->getName());
-			geometry->addDeformer(skin);
+			auto skin = document->createObject<sfbx::Skin>("Skin_" + std::string { meshModel->getName()});
+			geometry->addChild(skin);
 			
 			// Map to store bone influences per bone
 			std::map<int, std::vector<std::pair<int, float>>> boneWeights; // boneIndex -> [(vertexIndex, weight)]
@@ -213,7 +208,7 @@ bool MeshActorExporter::exportActor(CompressedSerialization::Deserializer& deser
 			// Create clusters for each bone and associate them with the skin deformer
 			for (const auto& [boneID, weightData] : boneWeights) {
 				auto cluster = document->createObject<sfbx::Cluster>("Cluster_" + std::to_string(boneID));
-				skin->addCluster(cluster);
+				skin->addChild(cluster);
 				
 				// Extract indices and weights
 				std::vector<int> indices;
@@ -229,7 +224,7 @@ bool MeshActorExporter::exportActor(CompressedSerialization::Deserializer& deser
 								
 				// Set the link node to the corresponding bone model
 				auto offsetMatrix = skeletonData.get_bone(boneID).offset;
-				cluster->setTransform(GlmMatToSfbxMat(offsetMatrix));
+				cluster->setTransform(ExporterUtil::GlmMatToSfbxMat(offsetMatrix));
 			}
 		}
 	}
