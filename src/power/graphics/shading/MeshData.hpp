@@ -9,6 +9,18 @@
 #include <vector>
 
 struct MeshData {
+	MeshData() {
+		
+	}
+	
+	MeshData(const MeshData& other)
+	: mVertices(other.mVertices), // Copy vertices
+	mIndices(other.mIndices),   // Copy indices
+	mMaterials(other.mMaterials) // Shallow copy of shared pointers
+	{
+		// If you need a deep copy of mMaterials, you could iterate over the vector and copy each element explicitly.
+	}
+
 	std::vector<MeshVertex>& get_vertices() {
 		return mVertices;
 	}
@@ -21,7 +33,7 @@ struct MeshData {
 		return mMaterials;
 	}
 	// Serialize method
-	void serialize(CompressedSerialization::Serializer& serializer) const {
+	virtual void serialize(CompressedSerialization::Serializer& serializer) const {
 		// Serialize vertices
 		uint32_t vertexCount = static_cast<uint32_t>(mVertices.size());
 		serializer.write_uint32(vertexCount);
@@ -38,7 +50,10 @@ struct MeshData {
 	}
 	
 	// Deserialize method
-	bool deserialize(CompressedSerialization::Deserializer& deserializer) {
+	virtual bool deserialize(CompressedSerialization::Deserializer& deserializer) {
+		
+		mVertices.clear();
+		
 		// Deserialize vertices
 		uint32_t vertexCount = 0;
 		if (!deserializer.read_uint32(vertexCount)) return false;
@@ -57,19 +72,18 @@ struct MeshData {
 		return true;
 	}
 	
-private:
+protected:
 	std::vector<MeshVertex> mVertices;
 	std::vector<unsigned int> mIndices;
 	std::vector<std::shared_ptr<MaterialProperties>> mMaterials;
 };
 
-struct SkinnedMeshData {
+struct SkinnedMeshData : public MeshData {
 	SkinnedMeshData() = default;
 	
-	SkinnedMeshData(std::unique_ptr<MeshData> meshData) : mMeshData(std::move(meshData)) {
-		auto& vertices = mMeshData->get_vertices();
+	SkinnedMeshData(MeshData& meshData) : MeshData(meshData) {
 		
-		for (auto& meshVertex : vertices) {
+		for (auto& meshVertex : mVertices) {
 			mSkinnedVertices.push_back(SkinnedMeshVertex(meshVertex));
 		}
 	}
@@ -78,49 +92,51 @@ struct SkinnedMeshData {
 		return mSkinnedVertices;
 	}
 	
-	std::vector<unsigned int>& get_indices() {
-		return mMeshData->get_indices();
-	}
-	
-	std::vector<std::shared_ptr<MaterialProperties>>& get_material_properties() const {
-		return mMeshData->get_material_properties();
-	}
-	
 	// Serialize method
-	void serialize(CompressedSerialization::Serializer& serializer) const {
-		// Serialize the underlying MeshData
-		mMeshData->serialize(serializer);
-		
+	void serialize(CompressedSerialization::Serializer& serializer) const override {
 		// Serialize SkinnedMeshVertex vector
 		uint32_t skinnedVertexCount = static_cast<uint32_t>(mSkinnedVertices.size());
 		serializer.write_uint32(skinnedVertexCount);
 		for (const auto& skinnedVertex : mSkinnedVertices) {
 			skinnedVertex.serialize(serializer);
 		}
+		
+		// Serialize indices
+		uint32_t indexCount = static_cast<uint32_t>(mIndices.size());
+		serializer.write_uint32(indexCount);
+		for (const auto& index : mIndices) {
+			serializer.write_uint32(index);
+		}
 	}
 	
 	// Deserialize method
-	bool deserialize(CompressedSerialization::Deserializer& deserializer) {
-		// Deserialize the underlying MeshData
-		
-		mMeshData = std::make_unique<MeshData>();
-		
-		if (!mMeshData->deserialize(deserializer)) return false;
-		
+	bool deserialize(CompressedSerialization::Deserializer& deserializer) override {
 		// Deserialize SkinnedMeshVertex vector
+		
+		mSkinnedVertices.clear();
+		
 		uint32_t skinnedVertexCount = 0;
 		if (!deserializer.read_uint32(skinnedVertexCount)) return false;
-		mSkinnedVertices.resize(skinnedVertexCount, SkinnedMeshVertex(mMeshData->get_vertices()[0])); // Initialize with a default MeshVertex
+		mSkinnedVertices.resize(skinnedVertexCount); // Initialize with a default MeshVertex
 		
 		for (auto& skinnedVertex : mSkinnedVertices) {
 			if (!skinnedVertex.deserialize(deserializer)) return false;
 		}
 		
+		mIndices.clear();
+		
+		// Deserialize indices
+		uint32_t indexCount = 0;
+		if (!deserializer.read_uint32(indexCount)) return false;
+		mIndices.resize(indexCount);
+		for (auto& index : mIndices) {
+			if (!deserializer.read_uint32(index)) return false;
+		}
+
 		return true;
 	}
 
 private:
-	std::unique_ptr<MeshData> mMeshData;
 	std::vector<SkinnedMeshVertex> mSkinnedVertices;
 };
 

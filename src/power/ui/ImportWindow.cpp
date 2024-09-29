@@ -167,26 +167,6 @@ void ImportWindow::ImportIntoProject() {
 		mResourcesPanel.refresh_file_view();
 		
 		mPreviewCanvas->set_active_actor(nullptr);
-		
-//		return;
-//		
-//				auto imageView = new nanogui::ImageView(icon);
-//		
-//				imageView->set_size(icon->fixed_size());
-//		
-//				imageView->set_fixed_size(icon->fixed_size());
-//		
-//				imageView->set_image(new nanogui::Texture(
-//														  pixels.data(),
-//														  pixels.size(),
-//														  nanogui::Texture::InterpolationMode::Bilinear,
-//														  nanogui::Texture::InterpolationMode::Nearest,
-//														  nanogui::Texture::WrapMode::Repeat,
-//														  128,
-//														  128));
-//		
-//		icon->remove_child(mOffscreenRenderer);
-//								mOffscreenRenderer->set_screen(screen()); // prevent crashing
 	});
 	
 	set_visible(false);

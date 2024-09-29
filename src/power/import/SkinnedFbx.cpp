@@ -88,7 +88,7 @@ void SkinnedFbx::ProcessBones(const std::shared_ptr<sfbx::Mesh>& mesh) {
 		auto& lastProcessedMesh = GetMeshData().back();
 		
 		// Create a new SkinnedMeshData instance and add it to mSkinnedMeshes
-		mSkinnedMeshes.push_back(std::make_unique<SkinnedMeshData>(std::move(lastProcessedMesh)));
+		mSkinnedMeshes.push_back(std::make_unique<SkinnedMeshData>(*lastProcessedMesh));
 		
 		// Initialize skinned vertices
 		auto& skinnedVertices = mSkinnedMeshes.back()->get_skinned_vertices();

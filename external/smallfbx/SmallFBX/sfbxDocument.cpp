@@ -721,8 +721,8 @@ void Document::exportFBXNodes()
 		auto prop = global_settings->createChild(sfbxS_Properties70);
 		
 		// Set up global properties
-		prop->createChild(sfbxS_P, sfbxS_UpAxis, sfbxS_int, sfbxS_Integer, "", 2);
-		prop->createChild(sfbxS_P, sfbxS_UpAxisSign, sfbxS_int, sfbxS_Integer, "", 1);
+		prop->createChild(sfbxS_P, sfbxS_UpAxis, sfbxS_int, sfbxS_Integer, "", this->global_settings.up_axis);
+		prop->createChild(sfbxS_P, sfbxS_UpAxisSign, sfbxS_int, sfbxS_Integer, "", this->global_settings.up_axis_sign);
 		prop->createChild(sfbxS_P, sfbxS_FrontAxis, sfbxS_int, sfbxS_Integer, "", 0);
 		prop->createChild(sfbxS_P, sfbxS_FrontAxisSign, sfbxS_int, sfbxS_Integer, "", 1);
 		prop->createChild(sfbxS_P, sfbxS_CoordAxis, sfbxS_int, sfbxS_Integer, "", 1);

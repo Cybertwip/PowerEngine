@@ -11,6 +11,18 @@ public:
 	MeshVertex();
 	MeshVertex(const glm::vec3 &pos, const glm::vec2 &tex);
 	
+	MeshVertex(const MeshVertex& other)
+	: mPosition(other.mPosition),   // Copy position
+	mNormal(other.mNormal),       // Copy normal
+	mColor(other.mColor),         // Copy color
+	mTexCoords1(other.mTexCoords1), // Copy texture coordinates 1
+	mTexCoords2(other.mTexCoords2), // Copy texture coordinates 2
+	mTextureId(other.mTextureId)   // Copy texture ID
+	{
+		// No additional logic required since all members are copied
+	}
+
+	
 	// Bone and weight setters
 	void set_position(const glm::vec3 &vec);
 	void set_normal(const glm::vec3 &vec);
@@ -61,11 +73,16 @@ private:
 	int mTextureId;
 };
 
-class SkinnedMeshVertex {
+class SkinnedMeshVertex : public MeshVertex {
 public:
 	static constexpr int MAX_BONE_INFLUENCE = 4;
 	
-	explicit SkinnedMeshVertex(MeshVertex& meshVertex) : mMeshVertex(meshVertex) {
+	SkinnedMeshVertex() {
+		mBoneIds.fill(-1);
+		mWeights.fill(0.0f);
+	}
+	
+	 SkinnedMeshVertex(MeshVertex& meshVertex) : MeshVertex(meshVertex) {
 		mBoneIds.fill(-1);
 		mWeights.fill(0.0f);
 	}
@@ -93,57 +110,6 @@ public:
 
 	}
 	
-	// Setters forwarding to MeshVertex
-	void set_position(const glm::vec3 &vec) {
-		mMeshVertex.set_position(vec);
-	}
-	
-	void set_normal(const glm::vec3 &vec) {
-		mMeshVertex.set_normal(vec);
-	}
-	
-	void set_color(const glm::vec4 &vec) {
-		mMeshVertex.set_color(vec);
-	}
-	
-	void set_texture_coords1(const glm::vec2 &vec) {
-		mMeshVertex.set_texture_coords1(vec);
-	}
-	
-	void set_texture_coords2(const glm::vec2 &vec) {
-		mMeshVertex.set_texture_coords2(vec);
-	}
-	
-	// Forward texture ID setter
-	void set_texture_id(int textureId) {
-		mMeshVertex.set_texture_id(textureId);
-	}
-	
-	// Accessors forwarding
-	glm::vec3 get_position() const {
-		return mMeshVertex.get_position();
-	}
-	
-	glm::vec3 get_normal() const {
-		return mMeshVertex.get_normal();
-	}
-	
-	glm::vec4 get_color() const {
-		return mMeshVertex.get_color();
-	}
-	
-	glm::vec2 get_tex_coords1() const {
-		return mMeshVertex.get_tex_coords1();
-	}
-	
-	glm::vec2 get_tex_coords2() const {
-		return mMeshVertex.get_tex_coords2();
-	}
-	
-	int get_texture_id() const {
-		return mMeshVertex.get_texture_id();
-	}
-	
 	// Returns a const reference to the bone IDs
 	const std::array<int, MAX_BONE_INFLUENCE>& get_bone_ids() const {
 		return mBoneIds;
@@ -162,7 +128,7 @@ public:
 	
 	// Serialize method
 	void serialize(CompressedSerialization::Serializer& serializer) const {
-		mMeshVertex.serialize(serializer);
+		MeshVertex::serialize(serializer);
 		for (const int& boneId : mBoneIds) {
 			serializer.write_int32(boneId);
 		}
@@ -173,7 +139,7 @@ public:
 	
 	// Deserialize method
 	bool deserialize(CompressedSerialization::Deserializer& deserializer) {
-		if (!mMeshVertex.deserialize(deserializer)) return false;
+		if (!MeshVertex::deserialize(deserializer)) return false;
 		for (int& boneId : mBoneIds) {
 			if (!deserializer.read_int32(boneId)) return false;
 		}
@@ -185,8 +151,6 @@ public:
 
 	
 private:
-	MeshVertex mMeshVertex;
-	
 	std::array<int, MAX_BONE_INFLUENCE> mBoneIds;
 	std::array<float, MAX_BONE_INFLUENCE> mWeights;
 };
