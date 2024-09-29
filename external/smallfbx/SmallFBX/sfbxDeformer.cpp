@@ -43,15 +43,6 @@ void Skin::exportFBXObjects()
 
 }
 
-void Skin::exportFBXConnections() {
-	super::exportFBXConnections();
-	
-	// Export child connections
-	for (auto& child : m_children) {
-		child->exportFBXConnections();
-	}
-}
-
 void Skin::addParent(ObjectPtr v)
 {
     super::addParent(v);
