@@ -143,14 +143,6 @@ void Model::exportFBXObjects()
 	}
 }
 
-void Model::exportFBXConnections() {
-	super::exportFBXConnections();
-	
-	for (auto& child : m_children) {
-		child->exportFBXConnections();
-	}
-}
-
 void Model::addChild(ObjectPtr v)
 {
     super::addChild(v);
@@ -326,6 +318,14 @@ void RootAttribute::exportFBXObjects()
     super::exportFBXObjects();
 }
 
+void Root::exportFBXConnections() {
+	super::exportFBXConnections();
+	
+	for (auto& child : m_children) {
+		child->exportFBXConnections();
+	}
+}
+
 void Root::addChild(ObjectPtr v)
 {
     super::addChild(v);
@@ -347,7 +347,14 @@ ObjectSubClass LimbNode::getSubClass() const { return ObjectSubClass::LimbNode; 
 void LimbNode::exportFBXObjects()
 {
 	super::exportFBXObjects();
-
+	
+	Node* prop = m_node->findChild(sfbxS_Properties70);
+	
+	if (!prop)
+		return;
+	
+	prop->createChild(sfbxS_P, "DefaultAttributeIndex", sfbxS_int, sfbxS_Integer, "", 0);
+	
 	if (!m_attr){
 		m_attr = createChild<LimbNodeAttribute>();
 		m_attr->exportFBXObjects();

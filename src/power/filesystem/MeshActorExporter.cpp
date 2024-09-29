@@ -157,7 +157,22 @@ bool MeshActorExporter::exportActor(CompressedSerialization::Deserializer& deser
 			boneModels[boneIndex] = boneModel;
 		}
 		
-		// Step 3: Associate the skeleton with the mesh via skinning
+		// Step 3: Establish parent-child relationships
+		for (int boneIndex = 0; boneIndex < skeletonData.num_bones(); ++boneIndex) {
+			int parentIndex = skeletonData.get_bone(boneIndex).parent_index;
+			auto boneModel = boneModels[boneIndex];
+			
+			if (parentIndex == -1) {
+				// Root bone: attach to the root model
+				rootModel->addChild(boneModel);
+			} else {
+				// Child bone: attach to its parent bone
+				auto parentModel = boneModels[parentIndex];
+				parentModel->addChild(boneModel);
+			}
+		}
+		
+		// Step 4: Associate the skeleton with the mesh via skinning
 		// Assuming mMeshModels is a vector of sfbx::Mesh models corresponding to mMeshes
 		for (size_t i = 0; i < mMeshes.size(); ++i) {
 			auto& meshData = *mMeshes[i];
