@@ -27,7 +27,7 @@ public:
     template<class T, sfbxRestrict(is_deformer<T>)>
 	std::shared_ptr<T> createDeformer();
 
-protected:
+private:
     std::vector<std::shared_ptr<Deformer>> m_deformers;
 };
 

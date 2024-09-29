@@ -7,8 +7,7 @@
 namespace sfbx {
 
 // Initialize the static ID counter
-std::atomic<int32_t> Object::s_next_id(1);  // Start from 1 (or any preferred starting ID)
-
+std::atomic<int64> Object::s_next_id(1);  // Start from 1 (or any preferred starting ID)
 
 ObjectClass GetObjectClass(string_view n)
 {

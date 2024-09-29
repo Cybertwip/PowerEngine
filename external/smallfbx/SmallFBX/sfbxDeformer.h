@@ -98,9 +98,10 @@ public:
     void setWeights(span<float> v); // v: weights of vertices. size of weights must be equal with indices
     void setBindMatrix(double4x4 v); // v: global matrix of the joint (not inverted)
 
+	void exportFBXObjects() override;
+
 protected:
     void importFBXObjects() override;
-    void exportFBXObjects() override;
 
     RawVector<int> m_indices;
     RawVector<float> m_weights;

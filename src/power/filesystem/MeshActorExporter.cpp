@@ -75,6 +75,8 @@ MeshActorExporter::~MeshActorExporter() {
 
 bool MeshActorExporter::exportActor(CompressedSerialization::Deserializer& deserializer, const std::string& sourcePath, const std::string& exportPath) {
 	
+	mMeshModels.clear();
+	
 	auto document = sfbx::MakeDocument();
 
 	// Step 1: Deserialize or transfer data from CompressedMeshActor to internal structures
@@ -122,6 +124,8 @@ bool MeshActorExporter::exportActor(CompressedSerialization::Deserializer& deser
 		meshModel->setPosition({0.0f, 0.0f, 0.0f});
 		meshModel->setRotation({0.0f, 0.0f, 0.0f});
 		meshModel->setScale({1.0f, 1.0f, 1.0f});
+		
+		mMeshModels.push_back(meshModel);
 	}
 
 	// Step 5: Build skeleton
@@ -133,7 +137,7 @@ bool MeshActorExporter::exportActor(CompressedSerialization::Deserializer& deser
 		auto& skeletonData = *skeleton;
 		
 		// Map to store bone index to sfbx::Model
-		std::map<int, std::shared_ptr<sfbx::Model>> boneModels;
+		std::map<int, std::shared_ptr<sfbx::LimbNode>> boneModels;
 		
 		// Step 1: Create sfbx::Model nodes for each bone
 		for (int boneIndex = 0; boneIndex < skeletonData.num_bones(); ++boneIndex) {
@@ -141,7 +145,7 @@ bool MeshActorExporter::exportActor(CompressedSerialization::Deserializer& deser
 			int parentIndex = skeletonData.get_bone(boneIndex).parent_index;
 			
 			// Create a new Model node for the bone
-			auto boneModel = document->createObject<sfbx::Model>(boneName);
+			auto boneModel = document->createObject<sfbx::LimbNode>(boneName);
 			
 			// Step 2: Set bone's local transformations
 			glm::mat4 poseMatrix = skeletonData.get_bone(boneIndex).bindpose;
@@ -153,22 +157,7 @@ bool MeshActorExporter::exportActor(CompressedSerialization::Deserializer& deser
 			boneModels[boneIndex] = boneModel;
 		}
 		
-		// Step 3: Establish parent-child relationships
-		for (int boneIndex = 0; boneIndex < skeletonData.num_bones(); ++boneIndex) {
-			int parentIndex = skeletonData.get_bone(boneIndex).parent_index;
-			auto boneModel = boneModels[boneIndex];
-			
-			if (parentIndex == -1) {
-				// Root bone: attach to the root model
-				rootModel->addChild(boneModel);
-			} else {
-				// Child bone: attach to its parent bone
-				auto parentModel = boneModels[parentIndex];
-				parentModel->addChild(boneModel);
-			}
-		}
-		
-		// Step 4: Associate the skeleton with the mesh via skinning
+		// Step 3: Associate the skeleton with the mesh via skinning
 		// Assuming mMeshModels is a vector of sfbx::Mesh models corresponding to mMeshes
 		for (size_t i = 0; i < mMeshes.size(); ++i) {
 			auto& meshData = *mMeshes[i];
@@ -201,6 +190,10 @@ bool MeshActorExporter::exportActor(CompressedSerialization::Deserializer& deser
 					int boneID = boneIDs[j];
 					float weight = weights[j];
 					
+					if (boneID == -1){
+						continue;
+					}
+					
 					boneWeights[boneID].emplace_back(static_cast<int>(vi), weight);
 				}
 			}
@@ -225,6 +218,8 @@ bool MeshActorExporter::exportActor(CompressedSerialization::Deserializer& deser
 				// Set the link node to the corresponding bone model
 				auto offsetMatrix = skeletonData.get_bone(boneID).offset;
 				cluster->setTransform(ExporterUtil::GlmMatToSfbxMat(offsetMatrix));
+				
+				cluster->addChild(boneModels[boneID]);
 			}
 		}
 	}

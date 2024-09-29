@@ -98,6 +98,27 @@ bool MeshDeserializer::deserialize_psk(CompressedSerialization::Deserializer& de
 		// Skip skeleton data if any (implementation depends on .psk format)
 		// Assuming MeshData::deserialize handles only mesh data and ignores skeletons
 		
+		meshData->get_material_properties().clear();
+
+		// Deserialize number of material properties (if applicable)
+		int32_t materialCount;
+		if (!deserializer.read_int32(materialCount)) {
+			std::cerr << "Failed to read material count for mesh " << i << "\n";
+			return false;
+		}
+		
+		for (int32_t i = 0; i < materialCount; ++i) {
+			SerializableMaterialProperties material;
+			
+			material.deserialize(deserializer);
+			
+			auto properties = std::make_shared<MaterialProperties>();
+			
+			properties->deserialize(material);
+			
+			meshData->get_material_properties().push_back(properties);
+		}
+
 		m_meshes.push_back(std::move(meshData));
 	}
 	

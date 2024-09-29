@@ -79,7 +79,6 @@ void Model::importFBXObjects()
 void Mesh::exportFBXObjects()
 {
 	super::exportFBXObjects(); // Calls Model::exportFBXObjects()
-
 	
 	Node* prop = m_node->findChild(sfbxS_Properties70);
 
@@ -301,17 +300,14 @@ void Root::exportFBXObjects()
 	
 	// Create a RootAttribute if it doesn't exist
 	if (!m_attr) {
-		m_attr = document()->createObject<RootAttribute>();
-		document()->addObject(m_attr);
-		
-		document()->createLinkOO(m_attr, shared_from_this());
+		m_attr = document()->createObject<NodeAttribute>();
+		addChild(m_attr);
 	}
 }
 
 void RootAttribute::exportFBXObjects()
 {
     super::exportFBXObjects();
-    getNode()->createChild(sfbxS_TypeFlags, sfbxS_Null, sfbxS_Skeleton, sfbxS_Root);
 }
 
 void Root::addChild(ObjectPtr v)

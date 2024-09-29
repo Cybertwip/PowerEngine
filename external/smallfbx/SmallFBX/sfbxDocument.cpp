@@ -759,6 +759,16 @@ void Document::exportFBXNodes()
 		}
 	}
 	
+	createNode(sfbxS_Objects);
+	createNode(sfbxS_Connections);
+	
+	// Export objects and connections
+	for (size_t i = 0; i < m_objects.size(); ++i)
+		m_objects[i]->exportFBXObjects();
+	for (size_t i = 0; i < m_objects.size(); ++i)
+		m_objects[i]->exportFBXConnections();
+
+	
 	auto references = createNode(sfbxS_References);
 	
 	// Create the Definitions node
@@ -855,15 +865,6 @@ void Document::exportFBXNodes()
 		// Add other object types and their PropertyTemplates as needed
 		// For example, for Textures, Cameras, etc.
 	}
-	
-	createNode(sfbxS_Objects);
-	createNode(sfbxS_Connections);
-	
-	// Export objects and connections
-	for (size_t i = 0; i < m_objects.size(); ++i)
-		m_objects[i]->exportFBXObjects();
-	for (size_t i = 0; i < m_objects.size(); ++i)
-		m_objects[i]->exportFBXConnections();
 	
 	// Create the Takes node
 	auto takes = createNode(sfbxS_Takes);

@@ -35,6 +35,12 @@ void Skin::exportFBXObjects()
     n->createChild(sfbxS_Version, sfbxI_SkinVersion);
     n->createChild(sfbxS_Link_DeformAcuracy, (float64)50.0);
     n->createChild(sfbxS_SkinningType, sfbxS_Linear);
+	
+	// Export child models
+	for (auto& cluster : m_clusters) {
+		cluster->exportFBXObjects();
+	}
+
 }
 
 void Skin::addParent(ObjectPtr v)
@@ -250,6 +256,12 @@ void Cluster::exportFBXObjects()
         n->createChild(sfbxS_Transform, (double4x4)m_transform);
     if (m_transform_link != double4x4::identity())
         n->createChild(sfbxS_TransformLink, (double4x4)m_transform_link);
+	
+	// Export child models
+	for (auto& child : m_children) {
+		child->exportFBXObjects();
+	}
+
 }
 
 span<int> Cluster::getIndices() const { return make_span(m_indices); }

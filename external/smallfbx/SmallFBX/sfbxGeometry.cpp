@@ -368,6 +368,12 @@ void GeomMesh::exportFBXObjects()
 	
 	// Export other geometry data (normals, UVs, layers, etc.)
 	exportLayers();
+	
+	// Export child models
+	for (auto& deformer : getDeformers()) {
+		deformer->exportFBXObjects();
+	}
+
 }
 
 void GeomMesh::exportLayers()
@@ -455,13 +461,13 @@ void GeomMesh::addMaterialLayer(LayerElementI1&& v) { m_material_layers.push_bac
 
 span<double3> GeomMesh::getPointsDeformed(bool apply_transform)
 {
-	if (m_deformers.empty() && !apply_transform)
+	if (getDeformers().empty() && !apply_transform)
 		return make_span(m_points);
 	
 	m_points_deformed = m_points;
 	auto dst = make_span(m_points_deformed);
 	bool is_skinned = false;
-	for (auto deformer : m_deformers) {
+	for (auto deformer : getDeformers()) {
 		deformer->deformPoints(dst);
 		if (as<Skin>(deformer))
 			is_skinned = true;
@@ -482,13 +488,13 @@ span<double3> GeomMesh::getNormalsDeformed(size_t layer_index, bool apply_transf
 		return {};
 	
 	auto& l = m_normal_layers[layer_index];
-	if (m_deformers.empty() && !apply_transform)
+	if (getDeformers().empty() && !apply_transform)
 		return make_span(l.data);
 	
 	l.data_deformed = l.data;
 	auto dst = make_span(l.data_deformed);
 	bool is_skinned = false;
-	for (auto deformer : m_deformers) {
+	for (auto deformer : getDeformers()) {
 		deformer->deformNormals(dst);
 		if (as<Skin>(deformer))
 			is_skinned = true;
