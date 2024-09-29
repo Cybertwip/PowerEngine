@@ -260,7 +260,7 @@ bool MeshActorExporter::exportActor(CompressedSerialization::Deserializer& deser
 	// Step 6: Export the Document to a file
 	document->exportFBXNodes();
 	
-	if (!document->writeAscii(exportPath)) {
+	if (!document->writeBinary(exportPath)) {
 		std::cerr << "Error: Failed to write FBX file to " << exportPath << std::endl;
 		return false;
 	}
