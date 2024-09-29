@@ -100,6 +100,14 @@ void Mesh::exportFBXObjects()
 	}
 }
 
+void Mesh::exportFBXConnections() {
+	super::exportFBXConnections();
+	
+	for (auto& child : m_children) {
+		child->exportFBXConnections();
+	}
+}
+
 void Model::exportFBXObjects()
 {
 	if (m_node)
@@ -132,6 +140,14 @@ void Model::exportFBXObjects()
 	// Export child models
 	for (auto& child : m_child_models) {
 		child->exportFBXObjects();
+	}
+}
+
+void Model::exportFBXConnections() {
+	super::exportFBXConnections();
+	
+	for (auto& child : m_children) {
+		child->exportFBXConnections();
 	}
 }
 
@@ -338,13 +354,12 @@ void LimbNode::exportFBXObjects()
 	}
 }
 
-
 void LimbNode::exportFBXConnections()
 {
 	super::exportFBXConnections();
 	
-	if (m_attr){
-		m_attr->exportFBXConnections();
+	for (auto& child : m_children) {
+		child->exportFBXConnections();
 	}
 }
 

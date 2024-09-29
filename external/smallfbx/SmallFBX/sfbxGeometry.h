@@ -181,6 +181,7 @@ public:
 	std::vector<int> getVertexIndicesForPointIndex(int point_index) const;
 	
 	void exportFBXObjects() override;
+	void exportFBXConnections() override;
 
 protected:
 	void importFBXObjects() override;

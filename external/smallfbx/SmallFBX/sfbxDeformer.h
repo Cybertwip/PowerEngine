@@ -73,7 +73,8 @@ public:
     void deformNormals(span<double3> dst) const override;
 
 protected:
-    void exportFBXObjects() override;
+	void exportFBXObjects() override;
+	void exportFBXConnections() override;
     void addParent(ObjectPtr v) override;
 
 	std::shared_ptr<GeomMesh> m_mesh{};
@@ -99,6 +100,7 @@ public:
     void setBindMatrix(double4x4 v); // v: global matrix of the joint (not inverted)
 
 	void exportFBXObjects() override;
+	void exportFBXConnections() override;
 
 protected:
     void importFBXObjects() override;

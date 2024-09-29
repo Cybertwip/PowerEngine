@@ -373,8 +373,16 @@ void GeomMesh::exportFBXObjects()
 	for (auto& deformer : getDeformers()) {
 		deformer->exportFBXObjects();
 	}
-
 }
+
+void GeomMesh::exportFBXConnections() {
+	super::exportFBXConnections();
+	
+	for (auto& child : m_children) {
+		child->exportFBXConnections();
+	}
+}
+
 
 void GeomMesh::exportLayers()
 {
