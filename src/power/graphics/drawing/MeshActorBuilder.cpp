@@ -25,7 +25,6 @@
 
 MeshActorBuilder::MeshActorBuilder(BatchUnit& batchUnit)
 : mBatchUnit(batchUnit), mMeshActorImporter(std::make_unique<MeshActorImporter>()) {
-
 }
 
 Actor& MeshActorBuilder::build_mesh(Actor& actor, const std::string& actorName, CompressedSerialization::Deserializer& deserializer, ShaderWrapper& meshShader, ShaderWrapper& skinnedShader) {
@@ -37,8 +36,8 @@ Actor& MeshActorBuilder::build_mesh(Actor& actor, const std::string& actorName, 
 	// Add ColorComponent
 	auto& colorComponent = actor.add_component<ColorComponent>(actor.get_component<MetadataComponent>());
 	
-	auto model = std::make_unique<SkinnedFbx>();
-	
+	// Corrected: Use a non-skinned model type
+	auto model = std::make_unique<Fbx>(); 
 	
 	int32_t meshDataCount;
 	
@@ -56,6 +55,28 @@ Actor& MeshActorBuilder::build_mesh(Actor& actor, const std::string& actorName, 
 			std::cerr << "Failed to deserialize MeshData for mesh " << i << "\n";
 			return actor;
 		}
+		
+		singleMeshData->get_material_properties().clear();
+		
+		// Deserialize number of material properties (if applicable)
+		int32_t materialCount;
+		if (!deserializer.read_int32(materialCount)) {
+			std::cerr << "Failed to read material count for mesh " << i << "\n";
+			return actor;
+		}
+		
+		for (int32_t i = 0; i < materialCount; ++i) {
+			SerializableMaterialProperties material;
+			
+			material.deserialize(deserializer);
+			
+			auto properties = std::make_shared<MaterialProperties>();
+			
+			properties->deserialize(material);
+			
+			singleMeshData->get_material_properties().push_back(properties);
+		}
+		
 		meshData.push_back(std::move(singleMeshData));
 	}
 	
@@ -228,8 +249,6 @@ Actor& MeshActorBuilder::build(Actor& actor, const std::string& path, ShaderWrap
 	CompressedSerialization::Deserializer deserializer;
 
 	if (extension == ".fbx") {
-		
-		
 		auto compressedMeshActor = mMeshActorImporter->process(path, "./dummyDestination/");
 		
 		std::stringstream compressedData;

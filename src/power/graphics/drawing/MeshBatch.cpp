@@ -163,7 +163,7 @@ void MeshBatch::append(std::reference_wrapper<Mesh> meshRef) {
 	mMeshStartIndices[shader.identifier()].push_back(indexer.mIndexOffset);
 	
 	indexer.mIndexOffset += mesh.get_mesh_data().get_indices().size();
-	indexer.mVertexOffset += mesh.get_mesh_data().get_indices().size();
+	indexer.mVertexOffset += mesh.get_mesh_data().get_vertices().size();
 	
 	upload_vertex_data(shader, identifier);
 }

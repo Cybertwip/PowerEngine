@@ -18,8 +18,8 @@ class ShaderWrapper;
 class MeshBatch : public Batch {
 private:
 	struct VertexIndexer {
-		size_t mVertexOffset = 0;
-		size_t mIndexOffset = 0;
+		unsigned int mVertexOffset = 0;
+		unsigned int mIndexOffset = 0;
 	};
 	
 public:
