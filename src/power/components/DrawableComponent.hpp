@@ -12,7 +12,7 @@ public:
     
     void draw_content(const nanogui::Matrix4f& model, const nanogui::Matrix4f& view, const nanogui::Matrix4f& projection) override;
 	
-	const Drawable& drawable() const {
+	Drawable& drawable() const {
 		return *mDrawable;
 	}
     
