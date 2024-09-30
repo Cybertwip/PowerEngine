@@ -17,6 +17,12 @@
 #include "components/DrawableComponent.hpp"
 #include "components/SkinnedAnimationComponent.hpp"
 
+
+struct BatchUnit;
+class Batch;
+class SkinnedMeshBatch;
+class MeshBatch;
+
 namespace CanvasUtils {
 nanogui::Matrix4f glm_to_nanogui(glm::mat4 glmMatrix);
 }
@@ -39,13 +45,9 @@ public:
 	void set_aspect_ratio(float ratio);
 
 private:
-	void add_mesh(std::reference_wrapper<SkinnedMesh> mesh);
-	void append(std::reference_wrapper<SkinnedMesh> meshRef);
 	void draw_content(const nanogui::Matrix4f& view, const nanogui::Matrix4f& projection);
 	void draw_contents() override;
 	void clear();
-	void upload_vertex_data(ShaderWrapper& shader, int identifier);
-	void upload_material_data(ShaderWrapper& shader, const std::vector<std::shared_ptr<MaterialProperties>>& materialData);
 	
 	std::optional<std::reference_wrapper<Actor>> mPreviewActor;
 	entt::registry mRegistry;
@@ -54,19 +56,15 @@ private:
 	ShaderManager mShaderManager;
 	ShaderWrapper mSkinnedMeshPreviewShader;
 	
-	std::unordered_map<ShaderWrapper*, std::vector<std::reference_wrapper<SkinnedMesh>>> mMeshes;
 	std::unordered_map<int, std::vector<float>> mBatchPositions;
-	std::unordered_map<int, std::vector<float>> mBatchTexCoords1;
-	std::unordered_map<int, std::vector<float>> mBatchTexCoords2;
-	std::unordered_map<int, std::vector<int>> mBatchMaterialIds;
-	std::unordered_map<int, std::vector<int>> mBatchBoneIds;
-	std::unordered_map<int, std::vector<float>> mBatchBoneWeights;
-	std::unordered_map<int, std::vector<unsigned int>> mBatchIndices;
-	std::vector<std::shared_ptr<MaterialProperties>> mBatchMaterials;
-	
-	std::unordered_map<int, std::vector<size_t>> mMeshStartIndices;
-	std::unordered_map<int, VertexIndexer> mVertexIndexingMap;
+
 	glm::mat4 mModelMatrix;
 	
 	bool mUpdate;
+	
+	std::unique_ptr<MeshBatch> mMeshBatch;
+	std::unique_ptr<SkinnedMeshBatch> mSkinnedMeshBatch;
+	
+	std::unique_ptr<BatchUnit> mBatchUnit;
+
 };

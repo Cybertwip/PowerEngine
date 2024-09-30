@@ -19,7 +19,6 @@ public:
 	const std::vector<std::unique_ptr<Mesh>>& get_mesh_data() const {
 		return mMeshes;
 	}
-
     
 private:
     std::vector<std::unique_ptr<Mesh>> mMeshes;

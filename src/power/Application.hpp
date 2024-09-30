@@ -175,7 +175,6 @@ private:
 
 class Actor;
 class ActorManager;
-class Batch;
 class Canvas;
 class CameraManager;
 class DeepMotionApiClient;
