@@ -21,7 +21,7 @@ public:
     }
 	
 	void look_at(Actor& actor);
-	
+	void look_at(const glm::vec3& position);
 	void set_aspect_ratio(float ratio);
 	
 private:
