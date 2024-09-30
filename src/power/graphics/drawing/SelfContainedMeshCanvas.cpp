@@ -51,11 +51,12 @@ mUpdate(true) {
 	mSkinnedMeshBatch = std::make_unique<SelfContainedSkinnedMeshBatch>(*render_pass(), mSkinnedMeshPreviewShader);
 }
 void SelfContainedMeshCanvas::set_active_actor(std::optional<std::reference_wrapper<Actor>> actor) {
+	set_update(false);
+
 	clear();
 	mCurrentTime = 0;
+
 	mPreviewActor = actor;
-	
-	set_update(true);
 	
 	if (mPreviewActor.has_value()) {
 		DrawableComponent& drawableComponent = mPreviewActor->get().get_component<DrawableComponent>();
@@ -71,6 +72,9 @@ void SelfContainedMeshCanvas::set_active_actor(std::optional<std::reference_wrap
 				mSkinnedMeshBatch->append(*skinnedData);
 				mBatchPositions = mSkinnedMeshBatch->get_batch_positions();
 			}
+			
+			set_update(true);
+
 		}
 		else {
 			// Attempt to cast to MeshComponent
@@ -82,6 +86,9 @@ void SelfContainedMeshCanvas::set_active_actor(std::optional<std::reference_wrap
 					mMeshBatch->append(*meshData);
 					mBatchPositions = mMeshBatch->get_batch_positions();
 				}
+				
+				set_update(true);
+
 			}
 			else {
 				// Handle the case where drawable is neither SkinnedMeshComponent nor MeshComponent
