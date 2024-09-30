@@ -276,51 +276,13 @@ void GeomMesh::importFBXObjects()
 	// Prefill the vertex-to-material map
 	if (!m_material_layers.empty()) {
 		const auto& material_layer = m_material_layers[0]; // Assuming the first material layer
-		LayerMappingMode mapping_mode = material_layer.mapping_mode;
 		
-		size_t vertex_count = 0;
-		for (size_t i = 0; i < m_counts.size(); ++i) {
-			size_t polygon_size = m_counts[i];
+		for (int i = 0; i < material_layer.indices.size(); ++i) {
+			unsigned int material_index = material_layer.indices[i];
 			
-			// Get the material index for this polygon
-			int material_index = -1;
-			if (mapping_mode == LayerMappingMode::AllSame) {
-				material_index = 0; // All faces have the same material
-			}
-			else if (mapping_mode == LayerMappingMode::ByPolygon) {
-				if (i < material_layer.indices.size()) {
-					material_index = material_layer.indices[i];
-				} else {
-					material_index = -1; // Out of bounds
-				}
-			}
-			
-			// Prefill the map for each vertex in this polygon
-			for (size_t j = 0; j < polygon_size; ++j) {
-				m_vertex_to_material_map[vertex_count + j] = material_index;
-			}
-			
-			// Increment the vertex count by the number of vertices in this polygon
-			vertex_count += polygon_size;
+			m_vertex_to_material_map[i] = material_index;
 		}
 	}
-	m_point_to_vertex_map.clear(); // Clear the map to ensure no stale data
-	size_t vertex_counter = 0;
-	
-	// Loop through polygons to populate the point-to-vertex map
-	for (size_t polygon_index = 0; polygon_index < m_counts.size(); ++polygon_index) {
-		int polygon_size = m_counts[polygon_index];
-		
-		for (int i = 0; i < polygon_size; ++i) {
-			int point_index = m_indices[vertex_counter];
-			
-			// Append the vertex_counter to the vector for this point_index
-			m_point_to_vertex_map[point_index].push_back(static_cast<int>(vertex_counter));
-			
-			vertex_counter++;
-		}
-	}
-
 }
 
 void GeomMesh::exportFBXObjects()
@@ -507,6 +469,7 @@ span<double3> GeomMesh::getNormalsDeformed(size_t layer_index, bool apply_transf
 	}
 	return dst;
 }
+
 int GeomMesh::getMaterialForVertexIndex(size_t vertex_index) const
 {
 	auto it = m_vertex_to_material_map.find(vertex_index);
@@ -514,42 +477,6 @@ int GeomMesh::getMaterialForVertexIndex(size_t vertex_index) const
 		return it->second; // Return the material index for this vertex
 	}
 	return -1; // Material not found for this vertex
-}
-int GeomMesh::getMaterialForPolygon(size_t polygon_index) const {
-	if (m_material_layers.empty()) {
-		return -1; // No material layers available
-	}
-	
-	// Assuming we're using the first material layer
-	const auto& material_layer = m_material_layers[0];
-	
-	// Handle different mapping modes
-	if (material_layer.mapping_mode == LayerMappingMode::AllSame) {
-		// All polygons share the same material
-		if (!material_layer.indices.empty()) {
-			return material_layer.indices[0];
-		} else {
-			return 0; // Default to material index 0
-		}
-	} else if (material_layer.mapping_mode == LayerMappingMode::ByPolygon) {
-		// Each polygon has its own material
-		if (polygon_index < material_layer.indices.size()) {
-			return material_layer.indices[polygon_index];
-		} else {
-			return -1; // Invalid index
-		}
-	} else {
-		// Unsupported mapping mode for materials
-		return -1;
-	}
-}
-
-std::vector<int> GeomMesh::getVertexIndicesForPointIndex(int point_index) const {
-	auto it = m_point_to_vertex_map.find(point_index);
-	if (it != m_point_to_vertex_map.end()) {
-		return it->second; // Return all corresponding vertex indices
-	}
-	return {}; // Return empty vector if the point index is not found
 }
 
 ObjectSubClass Shape::getSubClass() const { return ObjectSubClass::Shape; }

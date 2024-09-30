@@ -144,7 +144,7 @@ void Fbx::ProcessMesh(const std::shared_ptr<sfbx::Mesh>& mesh) {
 		for (size_t i = 0; i < indexCount; ++i) {
 			int controlPointIndex = vertexIndices[i];
 			if (mappingMode == sfbx::LayerMappingMode::ByPolygonVertex) {
-				uvIndicesPerLayer[layerIndex][i] = (referenceMode == sfbx::LayerReferenceMode::Direct) ? static_cast<int>(i) : uvLayerIndices[controlPointIndex];
+				uvIndicesPerLayer[layerIndex][i] = (referenceMode == sfbx::LayerReferenceMode::Direct) ? static_cast<int>(i) : uvLayerIndices[i];
 			} else if (mappingMode == sfbx::LayerMappingMode::ByControlPoint) {
 				uvIndicesPerLayer[layerIndex][i] = (referenceMode == sfbx::LayerReferenceMode::Direct) ? controlPointIndex : uvLayerIndices[controlPointIndex];
 			}
@@ -187,6 +187,8 @@ void Fbx::ProcessMesh(const std::shared_ptr<sfbx::Mesh>& mesh) {
 	size_t chunkSize = indexCount / numThreads;
 	size_t remainder = indexCount % numThreads;
 	
+	std::mutex vertexMutex;
+
 	auto processVertices = [&](size_t startIndex, size_t endIndex) {
 		for (size_t i = startIndex; i < endIndex; ++i) {
 			int controlPointIndex = vertexIndices[i];
@@ -214,23 +216,24 @@ void Fbx::ProcessMesh(const std::shared_ptr<sfbx::Mesh>& mesh) {
 			// Set UVs
 			for (size_t layerIndex = 0; layerIndex < uvLayers.size(); ++layerIndex) {
 				int uvIndex = uvIndicesPerLayer[layerIndex][i];
-				if (uvIndex >= 0) {
+				if (uvIndex >= 0 && uvIndex < static_cast<int>(uvLayers[layerIndex].data.size())) { // Added bounds check
 					const auto& uv = uvLayers[layerIndex].data[uvIndex];
 					if (layerIndex == 0) {
 						vertex.set_texture_coords1({ uv.x, uv.y });
-						vertex.set_texture_coords2({ uv.x, uv.y });
-					} else {
+					} else if (layerIndex == 1) { // Assuming a second UV layer
 						vertex.set_texture_coords2({ uv.x, uv.y });
 					}
+					// Add more else-if blocks if there are more UV layers
 				} else {
 					if (layerIndex == 0) {
 						vertex.set_texture_coords1({ 0.0f, 0.0f });
-						vertex.set_texture_coords2({ 0.0f, 0.0f });
-					} else {
+					} else if (layerIndex == 1) {
 						vertex.set_texture_coords2({ 0.0f, 0.0f });
 					}
+					// Handle additional UV layers similarly
 				}
 			}
+
 			
 			// Assign Vertex Color
 			if (!colorData.empty() && colorIndices[i] >= 0) {
@@ -244,11 +247,11 @@ void Fbx::ProcessMesh(const std::shared_ptr<sfbx::Mesh>& mesh) {
 			vertex.set_texture_id((matIndex >= 0 && matIndex < static_cast<int>(materials.size())) ? matIndex : -1);
 
 			// Assign vertex and index
-			resultMesh->get_vertices()[controlPointIndex] = std::move(vertexPtr);
-			
-			vertexPtr = nullptr;
-			resultMesh->get_indices()[i] =
-			controlPointIndex;
+			{
+				std::lock_guard<std::mutex> lock(vertexMutex);
+				resultMesh->get_vertices()[controlPointIndex] = std::move(vertexPtr);
+				resultMesh->get_indices()[i] = controlPointIndex;
+			}
 		}
 	};
 	
