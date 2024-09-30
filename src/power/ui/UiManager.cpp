@@ -1046,7 +1046,11 @@ void UiManager::draw() {
 	}
 	
 	mCanvas.render_pass()->push_depth_test_state(nanogui::RenderPass::DepthTest::Always, true, mShaderManager.identifier("gizmo"));
-	
+
+	mCanvas.render_pass()->push_depth_test_state(nanogui::RenderPass::DepthTest::Always, true, mShaderManager.identifier("gizmo"));
+
+	mCanvas.render_pass()->push_depth_test_state(nanogui::RenderPass::DepthTest::Always, true, mShaderManager.identifier("gizmo"));
+
 	// Draw gizmos
 	mGizmoManager->draw();
 	

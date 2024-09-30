@@ -19,6 +19,6 @@ void ColorComponent::set_visible(bool visible) {
 }
 
 void ColorComponent::apply_to(ShaderWrapper& shader) {
-	shader.set_uniform("identifier", static_cast<int>(mMetadataComponent.identifier()));
+	shader.set_uniform("identifier", static_cast<int>(mMetadataComponent.identifier())); // should move to metadata
 	shader.set_uniform("color", glm_to_nanogui(mColor));
 }

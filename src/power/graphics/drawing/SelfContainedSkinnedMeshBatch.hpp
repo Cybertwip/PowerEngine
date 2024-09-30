@@ -47,6 +47,7 @@ private:
 	
 	// Consolidated buffers
 	std::unordered_map<int, std::vector<float>> mBatchPositions;
+	std::unordered_map<int, std::vector<float>> mBatchNormals;
 	std::unordered_map<int, std::vector<float>> mBatchTexCoords1;
 	std::unordered_map<int, std::vector<float>> mBatchTexCoords2;
 	std::unordered_map<int, std::vector<int>> mBatchMaterialIds;

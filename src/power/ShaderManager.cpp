@@ -21,7 +21,7 @@ ShaderManager::ShaderManager(nanogui::Canvas &canvas) : mRenderPass(*canvas.rend
 
 nanogui::ref<nanogui::Shader> ShaderManager::load_shader(const std::string &name,
 														 const std::string &vertex_path,
-														 const std::string &fragment_path, nanogui::Shader::BlendMode blendMode) {
+														const std::string &fragment_path, nanogui::Shader::BlendMode blendMode) {
 	if (mShaderCache.find(name) != mShaderCache.end()) {
 		return mShaderCache[name];
 	}
@@ -29,7 +29,7 @@ nanogui::ref<nanogui::Shader> ShaderManager::load_shader(const std::string &name
 	std::string vertex_code = read_file(vertex_path);
 	std::string fragment_code = read_file(fragment_path);
 	nanogui::ref<nanogui::Shader> shader =
-	new nanogui::Shader(&mRenderPass, name, vertex_code, fragment_code, nanogui::Shader::BlendMode::AlphaBlend);
+	new nanogui::Shader(&mRenderPass, name, vertex_code, fragment_code, blendMode);
 	mShaderCache[name] = shader;
 	return shader;
 }
@@ -47,8 +47,8 @@ void ShaderManager::load_default_shaders() {
 	load_shader("gizmo", "internal/shaders/gl/gizmo.vs", "internal/shaders/gl/gizmo.fs");
 	load_shader("grid", "internal/shaders/gl/grid.vs", "shaders/gl/grid.fs");
 #elif defined(NANOGUI_USE_METAL)
-	load_shader("mesh", "internal/shaders/metal/diffuse_vs.metal", "internal/shaders/metal/diffuse_fs.metal", nanogui::Shader::BlendMode::AlphaBlend);
-	load_shader("skinned_mesh", "internal/shaders/metal/diffuse_skinned_vs.metal", "internal/shaders/metal/diffuse_fs.metal", nanogui::Shader::BlendMode::AlphaBlend);
+	load_shader("mesh", "internal/shaders/metal/diffuse_vs.metal", "internal/shaders/metal/diffuse_fs.metal", nanogui::Shader::BlendMode::None);
+	load_shader("skinned_mesh", "internal/shaders/metal/diffuse_skinned_vs.metal", "internal/shaders/metal/diffuse_fs.metal", nanogui::Shader::BlendMode::None);
 	load_shader("gizmo", "internal/shaders/metal/gizmo_vs.metal", "internal/shaders/metal/gizmo_fs.metal", nanogui::Shader::BlendMode::AlphaBlend);
 	load_shader("grid", "internal/shaders/metal/grid_vs.metal", "internal/shaders/metal/grid_fs.metal", nanogui::Shader::BlendMode::AlphaBlend);
 #endif

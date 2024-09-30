@@ -85,6 +85,7 @@ void SelfContainedMeshBatch::add_mesh(std::reference_wrapper<Mesh> mesh) {
 void SelfContainedMeshBatch::clear() {
 	mMeshes.clear();
 	mBatchPositions.clear();
+	mBatchNormals.clear();
 	mBatchTexCoords1.clear();
 	mBatchTexCoords2.clear();
 	mBatchMaterialIds.clear();
@@ -105,6 +106,9 @@ void SelfContainedMeshBatch::append(std::reference_wrapper<Mesh> meshRef) {
 	mBatchPositions[identifier].insert(mBatchPositions[identifier].end(),
 									   mesh.get_flattened_positions().begin(),
 									   mesh.get_flattened_positions().end());
+	mBatchNormals[identifier].insert(mBatchNormals[identifier].end(),
+									 mesh.get_flattened_normals().begin(),
+									 mesh.get_flattened_normals().end());
 	mBatchTexCoords1[shader.identifier()].insert(mBatchTexCoords1[shader.identifier()].end(),
 												 mesh.get_flattened_tex_coords1().begin(),
 												 mesh.get_flattened_tex_coords1().end());
@@ -140,6 +144,8 @@ void SelfContainedMeshBatch::upload_vertex_data(ShaderWrapper& shader, int ident
 	// Upload consolidated data to GPU
 	shader.persist_buffer("aPosition", nanogui::VariableType::Float32, {mBatchPositions[identifier].size() / 3, 3},
 					  mBatchPositions[identifier].data());
+	shader.persist_buffer("aNormal", nanogui::VariableType::Float32, {mBatchNormals[identifier].size() / 3, 3},
+					  mBatchNormals[identifier].data());
 	shader.persist_buffer("aTexcoords1", nanogui::VariableType::Float32, {mBatchTexCoords1[identifier].size() / 2, 2},
 					  mBatchTexCoords1[identifier].data());
 	shader.persist_buffer("aTexcoords2", nanogui::VariableType::Float32, {mBatchTexCoords2[identifier].size() / 2, 2},
@@ -233,7 +239,14 @@ void SelfContainedMeshBatch::remove(std::reference_wrapper<Mesh> meshRef) {
 					positions.begin() + startIdx * 3, // 3 floats per position
 					positions.begin() + (startIdx + numVertices) * 3
 					);
-		
+	
+	// Remove from normals
+	auto& normals = mBatchNormals[identifier];
+	normals.erase(
+				  normals.begin() + startIdx * 3,
+				  normals.begin() + (startIdx + numVertices) * 3
+				  );
+	
 	// Remove from texcoords1
 	auto& texcoords1 = mBatchTexCoords1[identifier];
 	texcoords1.erase(
@@ -279,6 +292,7 @@ void SelfContainedMeshBatch::remove(std::reference_wrapper<Mesh> meshRef) {
 	if (mesh_vector.empty()) {
 		mMeshes.erase(&shader);
 		mBatchPositions.erase(identifier);
+		mBatchNormals.erase(identifier);
 		mBatchTexCoords1.erase(identifier);
 		mBatchTexCoords2.erase(identifier);
 		mBatchMaterialIds.erase(identifier);
@@ -321,6 +335,9 @@ void SelfContainedMeshBatch::draw_content(const nanogui::Matrix4f& view,
 			// Set the model matrix for the current mesh
 			shader.set_uniform("aModel", mesh.get_model_matrix());
 			
+			// Apply color component
+			mesh.get_color_component().apply_to(shader);
+
 			// Upload materials for the current mesh
 			upload_material_data(shader, mesh.get_mesh_data().get_material_properties());
 			

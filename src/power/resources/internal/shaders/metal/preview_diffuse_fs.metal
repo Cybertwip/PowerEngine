@@ -14,6 +14,9 @@ struct VertexOut {
     float4 Position [[position]];
     float2 TexCoords1;
     float2 TexCoords2;
+    float3 Normal;
+    float4 Color;
+    float3 FragPos;
     int MaterialId;
 };
 
@@ -23,6 +26,7 @@ struct FragmentOut {
 
 fragment FragmentOut fragment_main(VertexOut vert [[stage_in]],
                               constant Material *materials [[buffer(0)]],  
+                              constant float4 &color [[buffer(1)]],
                               constant int &identifier [[buffer(2)]],
                               array<texture2d<float, access::sample>, 16> textures,
                               array<sampler, 16> textures_sampler) {
@@ -41,8 +45,18 @@ fragment FragmentOut fragment_main(VertexOut vert [[stage_in]],
         mat_diffuse.a = mat.opacity;
     }
 
+    mat_diffuse = mix(mat_diffuse, vert.Color, 0.25);
+
     float3 final_color = mat_diffuse.rgb;
     float selectionOpacity = mat_diffuse.a;  // Use the alpha from the texture
+
+    if (length(color.rgba) != 2.0) { 
+        float brightness = dot(final_color, float3(0.299, 0.587, 0.114));
+        float darkness_factor = clamp(1.0 - brightness / 0.05, 0.0, 1.0);
+        final_color = mix(final_color, color.rgb, darkness_factor);
+        selectionOpacity *= mix(0.3, 1.0, 1.0 - darkness_factor);
+        final_color = mix(final_color, color.rgb, 0.25);
+    }
 
     FragmentOut out;
 

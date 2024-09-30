@@ -26,11 +26,11 @@ SelfContainedMeshCanvas::SelfContainedMeshCanvas(Widget* parent)
 : nanogui::Canvas(parent, 1, true, true), mCurrentTime(0), mCamera(mRegistry), mShaderManager(*this),
 mSkinnedMeshPreviewShader(*mShaderManager.load_shader("skinned_mesh_preview",
 													  "internal/shaders/metal/preview_diffuse_skinned_vs.metal",
-													  "internal/shaders/metal/preview_diffuse_fs.metal",
+													  "internal/shaders/metal/diffuse_fs.metal",
 													  nanogui::Shader::BlendMode::None)),
 mMeshPreviewShader(*mShaderManager.load_shader("mesh_preview",
 											  "internal/shaders/metal/preview_diffuse_vs.metal",
-											  "internal/shaders/metal/preview_diffuse_fs.metal",
+											  "internal/shaders/metal/diffuse_fs.metal",
 											  nanogui::Shader::BlendMode::None)),
 mUpdate(true) {
 	
