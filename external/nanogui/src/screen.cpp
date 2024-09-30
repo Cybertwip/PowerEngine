@@ -476,11 +476,7 @@ void Screen::initialize(GLFWwindow *window, bool shutdown_glfw) {
 	
 	for (size_t i = 0; i < (size_t) Cursor::CursorCount; ++i)
 		m_cursors[i] = glfwCreateStandardCursor(GLFW_ARROW_CURSOR + (int) i);
-	
-	/// Fixes retina display-related font rendering issue (#185)
-	nvgBeginFrame(m_nvg_context, m_size[0], m_size[1], m_pixel_ratio);
-	nvgEndFrame(m_nvg_context);
-	
+		
 	set_screen(this);
 }
 

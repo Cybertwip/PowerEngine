@@ -25,6 +25,11 @@
 
 Mesh::Mesh(std::unique_ptr<MeshData> meshData, ShaderWrapper& shader, MeshBatch& meshBatch, ColorComponent& colorComponent)
 : mMeshData(std::move(meshData)), mShader(shader), mMeshBatch(meshBatch), mColorComponent(colorComponent), mModelMatrix(nanogui::Matrix4f::identity()) {
+	
+	if (!mMeshData) {
+		throw std::invalid_argument("MeshData cannot be null.");
+	}
+	
 	size_t numVertices = mMeshData->get_vertices().size();
 	
 	// Pre-allocate flattened data vectors
@@ -33,14 +38,17 @@ Mesh::Mesh(std::unique_ptr<MeshData> meshData, ShaderWrapper& shader, MeshBatch&
 	mFlattenedTexCoords1.resize(numVertices * 2);
 	mFlattenedTexCoords2.resize(numVertices * 2);
 	mFlattenedColors.resize(numVertices * 4); // vec4 per vertex
-
-	//		mFlattenedBoneIds.resize(numVertices * Vertex::MAX_BONE_INFLUENCE);
-	//		mFlattenedWeights.resize(numVertices * Vertex::MAX_BONE_INFLUENCE);
-	mFlattenedTextureIds.resize(numVertices * 2); // Assuming two texture IDs per vertex
+	
+	// Decide on the number of texture IDs per vertex (assuming 1 for simplicity)
+	mFlattenedTextureIds.resize(numVertices); // Single texture ID per vertex
 	
 	// Flatten the vertex data
 	for (size_t i = 0; i < numVertices; ++i) {
-		const auto& vertex = *mMeshData->get_vertices()[i];
+		const auto& vertexPtr = mMeshData->get_vertices()[i];
+		if (!vertexPtr) {
+			throw std::runtime_error("Vertex pointer is null.");
+		}
+		const auto& vertex = *vertexPtr;
 		
 		// Positions
 		mFlattenedPositions[i * 3 + 0] = vertex.get_position().x;
@@ -60,11 +68,10 @@ Mesh::Mesh(std::unique_ptr<MeshData> meshData, ShaderWrapper& shader, MeshBatch&
 		mFlattenedTexCoords2[i * 2 + 0] = vertex.get_tex_coords2().x;
 		mFlattenedTexCoords2[i * 2 + 1] = vertex.get_tex_coords2().y;
 		
-		// Texture IDs
-		mFlattenedTextureIds[i * 2 + 0] = vertex.get_texture_id();
-		mFlattenedTextureIds[i * 2 + 1] = vertex.get_texture_id();
+		// Texture IDs (single ID per vertex)
+		mFlattenedTextureIds[i] = vertex.get_texture_id();
 		
-		// **Flattened Colors**
+		// Flattened Colors
 		const glm::vec4& color = vertex.get_color();
 		mFlattenedColors[i * 4 + 0] = color.r;
 		mFlattenedColors[i * 4 + 1] = color.g;
@@ -74,7 +81,10 @@ Mesh::Mesh(std::unique_ptr<MeshData> meshData, ShaderWrapper& shader, MeshBatch&
 	
 	mModelMatrix = nanogui::Matrix4f::identity(); // Or any other transformation
 	
-	mMeshBatch.add_mesh(*this);
+	// Properly pass a reference_wrapper<Mesh> to add_mesh
+	mMeshBatch.add_mesh(std::ref(*this));
+	
+	// Append the mesh (assuming append takes Mesh&)
 	mMeshBatch.append(*this);
 }
 

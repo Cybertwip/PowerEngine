@@ -10,7 +10,6 @@
 #include <glm/gtc/type_ptr.hpp>
 
 void MeshBatch::upload_material_data(ShaderWrapper& shader, const std::vector<std::shared_ptr<MaterialProperties>>& materialData) {
-#if defined(NANOGUI_USE_METAL)
 	// Ensure we have a valid number of materials
 	size_t numMaterials = materialData.size();
 	
@@ -64,37 +63,6 @@ void MeshBatch::upload_material_data(ShaderWrapper& shader, const std::vector<st
 
 		shader.set_texture(textureBaseName, Batch::get_dummy_texture(), i);
 	}
-
-#else
-	for (int i = 0; i < materialData.size(); ++i) {
-		// Create the uniform name dynamically for each material (e.g., "materials[0].ambient")
-		auto& material = *materialData[i];
-		std::string baseName = "materials[" + std::to_string(i) + "].";
-		
-		// Uploading vec3 uniforms for each material (ambient, diffuse, specular)
-		mShader.set_uniform(baseName + "ambient",
-							nanogui::Vector3f(material.mAmbient.x, material.mAmbient.y, material.mAmbient.z));
-		mShader.set_uniform(baseName + "diffuse",
-							nanogui::Vector3f(material.mDiffuse.x, material.mDiffuse.y, material.mDiffuse.z));
-		mShader.set_uniform(baseName + "specular",
-							nanogui::Vector3f(material.mSpecular.x, material.mSpecular.y, material.mSpecular.z));
-		
-		// Upload float uniforms for shininess and opacity
-		mShader.set_uniform(baseName + "shininess", material.mShininess);
-		mShader.set_uniform(baseName + "opacity", material.mOpacity);
-		
-		// Convert boolean to integer for setting in the shader (0 or 1)
-		mShader.set_uniform(baseName + "diffuse_texture", material.mHasDiffuseTexture ? 1.0f : 0.0f);
-		
-		// Set the diffuse texture (if it exists) or a dummy texture
-		std::string textureBaseName = "textures[" + std::to_string(i) + "]";
-		if (material.mHasDiffuseTexture) {
-			mShader.set_texture(textureBaseName, material.mTextureDiffuse.get());
-		} else {
-			mShader.set_texture(textureBaseName, Batch::mDummyTexture.get());
-		}
-	}
-#endif
 }
 
 
@@ -154,8 +122,8 @@ void MeshBatch::append(std::reference_wrapper<Mesh> meshRef) {
 											 mesh.get_flattened_colors().end());
 	
 	// Adjust and append indices
-	auto& indices = mesh.get_mesh_data().get_indices();
-	
+	auto& indices = mesh.get_mesh_data().get_indices()
+	;
 	for (auto index : indices) {
 		mBatchIndices[shader.identifier()].push_back(index + indexer.mVertexOffset);
 	}
@@ -180,9 +148,9 @@ void MeshBatch::upload_vertex_data(ShaderWrapper& shader, int identifier) {
 					  mBatchTexCoords1[identifier].data());
 	shader.persist_buffer("aTexcoords2", nanogui::VariableType::Float32, {mBatchTexCoords2[identifier].size() / 2, 2},
 					  mBatchTexCoords2[identifier].data());
-	shader.persist_buffer("aTextureId", nanogui::VariableType::Int32, {mBatchTextureIds[identifier].size() / 2, 2},
-					  mBatchTextureIds[identifier].data());
-	
+	shader.persist_buffer("aTextureId", nanogui::VariableType::Int32, {mBatchTextureIds[identifier].size(), 1},
+						  mBatchTextureIds[identifier].data());
+
 	// Set Buffer for Vertex Colors
 	shader.persist_buffer("aColor", nanogui::VariableType::Float32, {mBatchColors[identifier].size() / 4, 4},
 					  mBatchColors[identifier].data());
@@ -344,41 +312,6 @@ void MeshBatch::remove(std::reference_wrapper<Mesh> meshRef) {
 
 void MeshBatch::draw_content(const nanogui::Matrix4f& view,
 										  const nanogui::Matrix4f& projection) {
-	
-#if defined(NANOGUI_USE_OPENGL) || defined(NANOGUI_USE_GLES)
-	// Enable stencil test
-	glEnable(GL_STENCIL_TEST);
-	glEnable(GL_DEPTH_TEST);
-	
-	// Clear stencil buffer and depth buffer
-	glClear(GL_STENCIL_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	
-	// First pass: Mark the stencil buffer
-	glStencilFunc(GL_ALWAYS, 1, 0xFF);  // Always pass stencil test
-	glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);  // Replace stencil buffer with 1 where actors are drawn
-	glStencilMask(0xFF);  // Enable writing to the stencil buffer
-#elif defined(NANOGUI_USE_METAL)
-//	
-//	auto descriptor = mShader.render_pass().pass_descriptor();
-//	auto encoder = mShader.render_pass().command_encoder();
-//
-//	// Get the Metal device and command encoder (ensure you have valid pointers to these)
-//	void* mtlDevice = nanogui::metal_device();
-//	void* mtlCommandEncoder = encoder;
-//	
-//	// Create a depth-stencil state for this draw call
-//	void* depthStencilState = MetalHelper::createDepthStencilState(mtlDevice, CompareFunction::Always,
-//																   StencilOperation::Keep, StencilOperation::Keep,
-//																   StencilOperation::Replace, 0xFF, 0xFF);
-//	
-//	// Set the depth-stencil state on the command encoder
-//	MetalHelper::setDepthStencilState(mtlCommandEncoder, depthStencilState);
-//	
-//	// Clear stencil and depth buffers
-//	MetalHelper::setStencilClear(descriptor);
-//	MetalHelper::setDepthClear(descriptor);
-#endif
-	
 	for (auto& [shader_pointer, mesh_vector] : mMeshes) {
 		auto& shader = *shader_pointer;
 		int identifier = shader.identifier();

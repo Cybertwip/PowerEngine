@@ -377,20 +377,28 @@ void ResourcesPanel::refresh_file_view() {
 					mSelectedNode = child;
 					
 					// Handle double-click for action
+					// Handle double-click for action
 					static std::chrono::time_point<std::chrono::high_resolution_clock> lastClickTime = std::chrono::time_point<std::chrono::high_resolution_clock>::min();
 					auto currentClickTime = std::chrono::high_resolution_clock::now();
-					auto clickDuration = std::chrono::duration_cast<std::chrono::milliseconds>(currentClickTime - lastClickTime).count();
 					
-					if (clickDuration < 400 && lastClickTime != std::chrono::time_point<std::chrono::high_resolution_clock>::min()) {
-						// Double-click detected
-						nanogui::async([this]() {
-							handle_file_interaction(*mSelectedNode);
-						});
+					// Check if lastClickTime is valid before computing duration
+					if (lastClickTime != std::chrono::time_point<std::chrono::high_resolution_clock>::min()) {
+						auto clickDuration = std::chrono::duration_cast<std::chrono::milliseconds>(currentClickTime - lastClickTime).count();
 						
-						// Reset the double-click state
-						lastClickTime = std::chrono::time_point<std::chrono::high_resolution_clock>::min();
+						if (clickDuration < 400) { // 400 ms threshold for double-click
+							// Double-click detected
+							nanogui::async([this]() {
+								handle_file_interaction(*mSelectedNode);
+							});
+							
+							// Reset the double-click state
+							lastClickTime = std::chrono::time_point<std::chrono::high_resolution_clock>::min();
+						} else {
+							// Update lastClickTime for the next click
+							lastClickTime = currentClickTime;
+						}
 					} else {
-						// Update lastClickTime for the next click
+						// First click: update lastClickTime
 						lastClickTime = currentClickTime;
 					}
 				});
