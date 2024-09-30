@@ -106,7 +106,7 @@ void SelfContainedMeshCanvas::draw_content(const nanogui::Matrix4f& view,
 	DrawableComponent& drawableComponent = mPreviewActor->get().get_component<DrawableComponent>();
 	Drawable& drawableRef = drawableComponent.drawable();
 	
-	drawableRef.draw_content(mModelMatrix, view, projection);
+	drawableRef.draw_content(CanvasUtils::glm_to_nanogui(mModelMatrix), view, projection);
 	
 	mMeshBatch->draw_content(view, projection);
 	
