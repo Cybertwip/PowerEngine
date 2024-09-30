@@ -139,6 +139,7 @@ void ImportWindow::Preview(const std::string& path, const std::string& directory
 	}
 	
 	mPreviewCanvas->set_active_actor(actor);
+	mPreviewCanvas->set_update(true);
 	
 	if (!mCompressedMeshData->mAnimations.has_value()) {
 		mAnimationsCheckbox->set_enabled(false);
@@ -167,11 +168,11 @@ void ImportWindow::ImportIntoProject() {
 		mResourcesPanel.refresh_file_view();
 		
 		mPreviewCanvas->set_active_actor(nullptr);
+		
+		mPreviewCanvas->set_update(false);
 	});
 	
 	set_visible(false);
 	set_modal(false);
 	
-//	imageView->set_visible(true);
-
 }

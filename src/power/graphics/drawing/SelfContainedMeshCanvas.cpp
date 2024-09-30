@@ -1,6 +1,7 @@
 #include "SelfContainedMeshCanvas.hpp"
 #include "components/SkinnedMeshComponent.hpp"
-#include "graphics/Drawing/Batch.hpp"
+#include "components/MeshComponent.hpp"
+#include "graphics/drawing/Batch.hpp"
 
 #if defined(NANOGUI_USE_METAL)
 #include "MetalHelper.hpp"
@@ -36,6 +37,8 @@ void SelfContainedMeshCanvas::set_active_actor(std::optional<std::reference_wrap
 	mCurrentTime = 0;
 	mPreviewActor = actor;
 	
+	set_update(true);
+	
 	if (mPreviewActor.has_value()) {
 		if (mPreviewActor->get().find_component<SkinnedAnimationComponent>()) {
 			DrawableComponent& drawableComponent = mPreviewActor->get().get_component<DrawableComponent>();
@@ -44,7 +47,17 @@ void SelfContainedMeshCanvas::set_active_actor(std::optional<std::reference_wrap
 				add_mesh(*skinnedData);
 				append(*skinnedData);
 			}
+		} else {
+			DrawableComponent& drawableComponent = mPreviewActor->get().get_component<DrawableComponent>();
+			const MeshComponent& meshComponent = static_cast<const MeshComponent&>(drawableComponent.drawable());
+			for (auto& meshData : meshComponent.get_mesh_data()) {
+				add_mesh(*meshData);
+				append(*meshData);
+			}
+
 		}
+	} else {
+		set_update(false);
 	}
 }
 
