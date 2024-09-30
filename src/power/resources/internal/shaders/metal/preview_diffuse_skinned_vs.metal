@@ -56,7 +56,7 @@ vertex VertexOut vertex_main(
     vert.TexCoords1 = aTexcoords1[id];
     vert.TexCoords2 = aTexcoords2[id];
 
-    vert.MaterialId = MaterialId[id];
+    vert.MaterialId = aMaterialId[id];
 
     return vert;
 }
