@@ -144,7 +144,7 @@ void Fbx::ProcessMesh(const std::shared_ptr<sfbx::Mesh>& mesh) {
 		for (size_t i = 0; i < indexCount; ++i) {
 			int controlPointIndex = vertexIndices[i];
 			if (mappingMode == sfbx::LayerMappingMode::ByPolygonVertex) {
-				uvIndicesPerLayer[layerIndex][i] = (referenceMode == sfbx::LayerReferenceMode::Direct) ? static_cast<int>(i) : uvLayerIndices[i];
+				uvIndicesPerLayer[layerIndex][i] = (referenceMode == sfbx::LayerReferenceMode::Direct) ? static_cast<int>(i) : uvLayerIndices[controlPointIndex];
 			} else if (mappingMode == sfbx::LayerMappingMode::ByControlPoint) {
 				uvIndicesPerLayer[layerIndex][i] = (referenceMode == sfbx::LayerReferenceMode::Direct) ? controlPointIndex : uvLayerIndices[controlPointIndex];
 			}
