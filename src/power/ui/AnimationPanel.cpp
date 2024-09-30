@@ -61,8 +61,7 @@ AnimationPanel::AnimationPanel(nanogui::Widget &parent)
 			playback.update_state(active ? SkinnedAnimationComponent::PlaybackState::Play : SkinnedAnimationComponent::PlaybackState::Pause, SkinnedAnimationComponent::PlaybackModifier::Reverse, SkinnedAnimationComponent::PlaybackTrigger::None);
 		}
 	});
-	
-	
+
 	mPlayPauseButton = new nanogui::ToolButton(playbackPanel, FA_FORWARD);
 	mPlayPauseButton->set_tooltip("Play");
 	
@@ -120,6 +119,10 @@ void AnimationPanel::set_active_actor(std::optional<std::reference_wrapper<Actor
 		if (actorRef.find_component<SkinnedAnimationComponent>()) {
 			set_title("Animation");
 			set_visible(true);
+			
+			mReversePlayButton->set_visible(true);
+			mPlayPauseButton->set_visible(true);
+
 			parent()->perform_layout(screen()->nvg_context());
 			
 			auto& playback = actorRef.get_component<PlaybackComponent>();
@@ -148,6 +151,9 @@ void AnimationPanel::set_active_actor(std::optional<std::reference_wrapper<Actor
 			if (meshComponent) {
 				set_title("Mesh");
 				set_visible(true);
+				mReversePlayButton->set_visible(false);
+				mPlayPauseButton->set_visible(false);
+
 				parent()->perform_layout(screen()->nvg_context());
 			}
 			else {
