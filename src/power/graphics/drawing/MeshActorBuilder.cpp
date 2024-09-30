@@ -254,7 +254,6 @@ Actor& MeshActorBuilder::build(Actor& actor, const std::string& path, ShaderWrap
 		
 	}
 	
-	
 	if (extension == ".psk") {
 		return build_skinned(actor, actorName, deserializer, meshShader, skinnedShader);
 	} else if (extension == ".pma") {
