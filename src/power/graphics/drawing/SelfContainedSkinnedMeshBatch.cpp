@@ -375,9 +375,6 @@ void SelfContainedSkinnedMeshBatch::draw_content(const nanogui::Matrix4f& view,
 							  nanogui::VariableType::Float32,
 							  {bones.size(), sizeof(SkinnedAnimationComponent::BoneCPU) / sizeof(float)},
 							  bones.data());
-			// Apply color component (assuming it sets relevant uniforms)
-			mesh.get_color_component().apply_to(shader);
-			
 			// Upload materials for the current mesh
 			upload_material_data(shader, mesh.get_mesh_data().get_material_properties());
 			

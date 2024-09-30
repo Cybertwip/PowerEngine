@@ -332,9 +332,6 @@ void SelfContainedMeshBatch::draw_content(const nanogui::Matrix4f& view,
 
 			// Set the model matrix for the current mesh
 			shader.set_uniform("aModel", mesh.get_model_matrix());
-
-			// Apply color component (assuming it sets relevant uniforms)
-			mesh.get_color_component().apply_to(shader);
 			
 			// Upload materials for the current mesh
 			upload_material_data(shader, mesh.get_mesh_data().get_material_properties());
