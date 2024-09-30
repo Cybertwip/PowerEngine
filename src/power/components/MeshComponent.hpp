@@ -15,6 +15,11 @@ public:
     MeshComponent(std::vector<std::unique_ptr<Mesh>>&& meshes, std::unique_ptr<Fbx> model);
 
 	void draw_content(const nanogui::Matrix4f& model, const nanogui::Matrix4f& view, const nanogui::Matrix4f& projection) override;
+	
+	const std::vector<std::unique_ptr<Mesh>>& get_mesh_data() const {
+		return mMeshes;
+	}
+
     
 private:
     std::vector<std::unique_ptr<Mesh>> mMeshes;
