@@ -25,7 +25,7 @@ GizmoManager::GizmoManager(nanogui::Widget& parent, ShaderManager& shaderManager
 mMeshActorLoader(meshActorLoader),
 mMeshShader(std::make_unique<ShaderWrapper>(*shaderManager.get_shader("gizmo"))),
 mSkinnedShader(std::make_unique<ShaderWrapper>(*shaderManager.get_shader("skinned_mesh"))),
-mTranslationGizmo(mMeshActorLoader.create_actor("internal/models/Gizmo/Translation.fbx", *mMeshShader, *mSkinnedShader))
+mTranslationGizmo(mMeshActorLoader.create_actor("internal/models/Gizmo/Translation.fbx", *mMeshShader, *mSkinnedShader)),
 mRotationGizmo(mMeshActorLoader.create_actor("internal/models/Gizmo/Rotation.fbx", *mMeshShader, *mSkinnedShader)),
 mScaleGizmo(mMeshActorLoader.create_actor("internal/models/Gizmo/Scale.fbx", *mMeshShader, *mSkinnedShader))
 {
