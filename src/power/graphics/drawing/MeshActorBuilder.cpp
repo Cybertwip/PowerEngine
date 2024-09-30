@@ -242,7 +242,7 @@ Actor& MeshActorBuilder::build(Actor& actor, const std::string& path, ShaderWrap
 		}
 		
 		
-		filePath = std::filesystem::path(path);
+		filePath = std::filesystem::path(compressedMeshActor->mMesh.mPrecomputedPath);
 		extension = filePath.extension().string();
 
 	} else {
