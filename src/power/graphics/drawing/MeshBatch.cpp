@@ -308,8 +308,6 @@ void MeshBatch::remove(std::reference_wrapper<Mesh> meshRef) {
 	}
 }
 
-
-
 void MeshBatch::draw_content(const nanogui::Matrix4f& view,
 										  const nanogui::Matrix4f& projection) {
 	for (auto& [shader_pointer, mesh_vector] : mMeshes) {

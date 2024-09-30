@@ -1,4 +1,4 @@
-#include "SkinnedMeshBatch.hpp"
+#include "SelfContainedSkinnedMeshBatch.hpp"
 
 #include "components/ColorComponent.hpp"
 #include "components/SkinnedAnimationComponent.hpp"
@@ -10,8 +10,7 @@
 
 #include <glm/gtc/type_ptr.hpp>
 
-void SkinnedMeshBatch::upload_material_data(ShaderWrapper& shader, const std::vector<std::shared_ptr<MaterialProperties>>& materialData) {
-#if defined(NANOGUI_USE_METAL)
+void SelfContainedSkinnedMeshBatch::upload_material_data(ShaderWrapper& shader, const std::vector<std::shared_ptr<MaterialProperties>>& materialData) {
 	// Ensure we have a valid number of materials
 	size_t numMaterials = materialData.size();
 	
@@ -67,43 +66,13 @@ void SkinnedMeshBatch::upload_material_data(ShaderWrapper& shader, const std::ve
 		shader.set_texture(textureBaseName, Batch::get_dummy_texture(), i);
 	}
 	
-#else
-	for (int i = 0; i < materialData.size(); ++i) {
-		// Create the uniform name dynamically for each material (e.g., "materials[0].ambient")
-		auto& material = *materialData[i];
-		std::string baseName = "materials[" + std::to_string(i) + "].";
-		
-		// Uploading vec3 uniforms for each material (ambient, diffuse, specular)
-		mShader.set_uniform(baseName + "ambient",
-							nanogui::Vector3f(material.mAmbient.x, material.mAmbient.y, material.mAmbient.z));
-		mShader.set_uniform(baseName + "diffuse",
-							nanogui::Vector3f(material.mDiffuse.x, material.mDiffuse.y, material.mDiffuse.z));
-		mShader.set_uniform(baseName + "specular",
-							nanogui::Vector3f(material.mSpecular.x, material.mSpecular.y, material.mSpecular.z));
-		
-		// Upload float uniforms for shininess and opacity
-		mShader.set_uniform(baseName + "shininess", material.mShininess);
-		mShader.set_uniform(baseName + "opacity", material.mOpacity);
-		
-		// Convert boolean to integer for setting in the shader (0 or 1)
-		mShader.set_uniform(baseName + "diffuse_texture", material.mHasDiffuseTexture ? 1.0f : 0.0f);
-		
-		// Set the diffuse texture (if it exists) or a dummy texture
-		std::string textureBaseName = "textures[" + std::to_string(i) + "]";
-		if (material.mHasDiffuseTexture) {
-			mShader.set_texture(textureBaseName, material.mTextureDiffuse.get());
-		} else {
-			mShader.set_texture(textureBaseName, mDummyTexture.get());
-		}
-	}
-#endif
 }
 
 
-SkinnedMeshBatch::SkinnedMeshBatch(nanogui::RenderPass& renderPass) : mRenderPass(renderPass) {
+SelfContainedSkinnedMeshBatch::SelfContainedSkinnedMeshBatch(nanogui::RenderPass& renderPass, ShaderWrapper& shader) : mRenderPass(renderPass), mShader(shader) {
 }
 
-void SkinnedMeshBatch::add_mesh(std::reference_wrapper<SkinnedMesh> mesh) {
+void SelfContainedSkinnedMeshBatch::add_mesh(std::reference_wrapper<SkinnedMesh> mesh) {
 	
 	auto it = std::find_if(mMeshes.begin(), mMeshes.end(), [mesh](auto kp) {
 		return kp.first->identifier() == mesh.get().get_shader().identifier();
@@ -116,7 +85,7 @@ void SkinnedMeshBatch::add_mesh(std::reference_wrapper<SkinnedMesh> mesh) {
 	}
 }
 
-void SkinnedMeshBatch::clear() {
+void SelfContainedSkinnedMeshBatch::clear() {
 	mBatchPositions.clear();
 	mBatchNormals.clear();
 	mBatchTexCoords1.clear();
@@ -127,10 +96,10 @@ void SkinnedMeshBatch::clear() {
 	mMeshStartIndices.clear();
 }
 
-void SkinnedMeshBatch::append(std::reference_wrapper<SkinnedMesh> meshRef) {
+void SelfContainedSkinnedMeshBatch::append(std::reference_wrapper<SkinnedMesh> meshRef) {
 	auto& mesh = meshRef.get();
 	
-	auto& shader = mesh.get_shader();
+	auto& shader = mShader;
 	int identifier = shader.identifier();
 	auto& indexer = mVertexIndexingMap[identifier];
 	
@@ -179,7 +148,7 @@ mesh.get_flattened_bone_ids().end());
 	upload_vertex_data(shader, identifier);
 }
 
-void SkinnedMeshBatch::remove(std::reference_wrapper<SkinnedMesh> meshRef) {
+void SelfContainedSkinnedMeshBatch::remove(std::reference_wrapper<SkinnedMesh> meshRef) {
 	auto& mesh = meshRef.get();
 	auto& shader = mesh.get_shader();
 	int identifier = shader.identifier();
@@ -343,7 +312,7 @@ void SkinnedMeshBatch::remove(std::reference_wrapper<SkinnedMesh> meshRef) {
 	}
 }
 
-void SkinnedMeshBatch::upload_vertex_data(ShaderWrapper& shader, int identifier) {
+void SelfContainedSkinnedMeshBatch::upload_vertex_data(ShaderWrapper& shader, int identifier) {
 	// Upload consolidated data to GPU
 	shader.persist_buffer("aPosition", nanogui::VariableType::Float32, {mBatchPositions[identifier].size() / 3, 3},
 					  mBatchPositions[identifier].data());
@@ -373,7 +342,7 @@ void SkinnedMeshBatch::upload_vertex_data(ShaderWrapper& shader, int identifier)
 					  mBatchIndices[identifier].data());
 }
 
-void SkinnedMeshBatch::draw_content(const nanogui::Matrix4f& view,
+void SelfContainedSkinnedMeshBatch::draw_content(const nanogui::Matrix4f& view,
 							 const nanogui::Matrix4f& projection) {
 	
 	for (auto& [shader_pointer, mesh_vector] : mMeshes) {

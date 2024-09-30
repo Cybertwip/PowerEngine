@@ -17,11 +17,8 @@
 #include "components/DrawableComponent.hpp"
 #include "components/SkinnedAnimationComponent.hpp"
 
-
-struct BatchUnit;
-class Batch;
-class SkinnedMeshBatch;
-class MeshBatch;
+class SelfContainedSkinnedMeshBatch;
+class SelfContainedMeshBatch;
 
 namespace CanvasUtils {
 nanogui::Matrix4f glm_to_nanogui(glm::mat4 glmMatrix);
@@ -54,17 +51,16 @@ private:
 	int mCurrentTime;
 	Actor mCamera;
 	ShaderManager mShaderManager;
+	ShaderWrapper mMeshPreviewShader;
 	ShaderWrapper mSkinnedMeshPreviewShader;
-	
+
 	std::unordered_map<int, std::vector<float>> mBatchPositions;
 
 	glm::mat4 mModelMatrix;
 	
 	bool mUpdate;
 	
-	std::unique_ptr<MeshBatch> mMeshBatch;
-	std::unique_ptr<SkinnedMeshBatch> mSkinnedMeshBatch;
+	std::unique_ptr<SelfContainedMeshBatch> mMeshBatch;
+	std::unique_ptr<SelfContainedSkinnedMeshBatch> mSkinnedMeshBatch;
 	
-	std::unique_ptr<BatchUnit> mBatchUnit;
-
 };

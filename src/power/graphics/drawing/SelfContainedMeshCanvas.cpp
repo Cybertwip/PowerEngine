@@ -4,8 +4,8 @@
 #include "graphics/drawing/Batch.hpp"
 
 #include "graphics/drawing/BatchUnit.hpp"
-#include "graphics/drawing/MeshBatch.hpp"
-#include "graphics/drawing/SkinnedMeshBatch.hpp"
+#include "graphics/drawing/SelfContainedMeshBatch.hpp"
+#include "graphics/drawing/SelfContainedSkinnedMeshBatch.hpp"
 
 #if defined(NANOGUI_USE_METAL)
 #include "MetalHelper.hpp"
@@ -21,29 +21,35 @@ nanogui::Matrix4f glm_to_nanogui(glm::mat4 glmMatrix) {
 	return matrix;
 }
 }
-
+// In SelfContainedMeshCanvas.cpp, modify the constructor to load and assign the mesh shader
 SelfContainedMeshCanvas::SelfContainedMeshCanvas(Widget* parent)
 : nanogui::Canvas(parent, 1, true, true), mCurrentTime(0), mCamera(mRegistry), mShaderManager(*this),
-mSkinnedMeshPreviewShader(*mShaderManager.load_shader("skinned_mesh_preview", "internal/shaders/metal/preview_diffuse_skinned_vs.metal",
-	"internal/shaders/metal/preview_diffuse_fs.metal", nanogui::Shader::BlendMode::None)),
+mSkinnedMeshPreviewShader(*mShaderManager.load_shader("skinned_mesh_preview",
+													  "internal/shaders/metal/preview_diffuse_skinned_vs.metal",
+													  "internal/shaders/metal/preview_diffuse_fs.metal",
+													  nanogui::Shader::BlendMode::None)),
+mMeshPreviewShader(*mShaderManager.load_shader("mesh_preview",
+											  "internal/shaders/metal/preview_diffuse_vs.metal",
+											  "internal/shaders/metal/preview_diffuse_fs.metal",
+											  nanogui::Shader::BlendMode::None)),
 mUpdate(true) {
+	
 	set_background_color(nanogui::Color{70, 130, 180, 255});
 	
 	mCamera.add_component<TransformComponent>();
-	mCamera.add_component<CameraComponent>(mCamera.get_component<TransformComponent>(), 45.0f, 0.01f, 5e3f, 192.0f / 128.0f);
+	mCamera.add_component<CameraComponent>(mCamera.get_component<TransformComponent>(),
+										   45.0f, 0.01f, 5e3f, 192.0f / 128.0f);
 	
-	glm::quat rotationQuat = glm::angleAxis(glm::radians(180.0f), glm::normalize(glm::vec3(0.0f, 1.0f, 0.0f)));
+	glm::quat rotationQuat = glm::angleAxis(glm::radians(180.0f),
+											glm::normalize(glm::vec3(0.0f, 1.0f, 0.0f)));
 	mModelMatrix = glm::identity<glm::mat4>() * glm::mat4_cast(rotationQuat);
 	
+	// Initialize MeshBatch with its shader
+	mMeshBatch = std::make_unique<SelfContainedMeshBatch>(*render_pass(), mMeshPreviewShader);
 	
-	mMeshBatch = std::make_unique<MeshBatch>(*render_pass());
-	
-	mSkinnedMeshBatch = std::make_unique<SkinnedMeshBatch>(*render_pass());
-	
-	mBatchUnit = std::make_unique<BatchUnit>(*mMeshBatch, *mSkinnedMeshBatch);
-
+	// Initialize SkinnedMeshBatch with its shader
+	mSkinnedMeshBatch = std::make_unique<SelfContainedSkinnedMeshBatch>(*render_pass(), mSkinnedMeshPreviewShader);
 }
-
 void SelfContainedMeshCanvas::set_active_actor(std::optional<std::reference_wrapper<Actor>> actor) {
 	clear();
 	mCurrentTime = 0;
@@ -61,9 +67,9 @@ void SelfContainedMeshCanvas::set_active_actor(std::optional<std::reference_wrap
 		if (skinnedMeshComponent) {
 			// Successfully cast to SkinnedMeshComponent
 			for (auto& skinnedData : skinnedMeshComponent->get_skinned_mesh_data()) {
-				mBatchUnit->mSkinnedMeshBatch.add_mesh(*skinnedData);
-				mBatchUnit->mSkinnedMeshBatch.append(*skinnedData);
-				mBatchPositions = mBatchUnit->mSkinnedMeshBatch.get_batch_positions();
+				mSkinnedMeshBatch->add_mesh(*skinnedData);
+				mSkinnedMeshBatch->append(*skinnedData);
+				mBatchPositions = mSkinnedMeshBatch->get_batch_positions();
 			}
 		}
 		else {
@@ -72,9 +78,9 @@ void SelfContainedMeshCanvas::set_active_actor(std::optional<std::reference_wrap
 			if (meshComponent) {
 				// Successfully cast to MeshComponent
 				for (auto& meshData : meshComponent->get_mesh_data()) {
-					mBatchUnit->mMeshBatch.add_mesh(*meshData);
-					mBatchUnit->mMeshBatch.append(*meshData);
-					mBatchPositions = mBatchUnit->mMeshBatch.get_batch_positions();
+					mMeshBatch->add_mesh(*meshData);
+					mMeshBatch->append(*meshData);
+					mBatchPositions = mMeshBatch->get_batch_positions();
 				}
 			}
 			else {
@@ -92,9 +98,9 @@ void SelfContainedMeshCanvas::set_active_actor(std::optional<std::reference_wrap
 
 void SelfContainedMeshCanvas::draw_content(const nanogui::Matrix4f& view,
 										   const nanogui::Matrix4f& projection) {
-	mBatchUnit->mMeshBatch.draw_content(view, projection);
+	mMeshBatch->draw_content(view, projection);
 	
-	mBatchUnit->mSkinnedMeshBatch.draw_content(view, projection);
+	mSkinnedMeshBatch->draw_content(view, projection);
 }
 
 void SelfContainedMeshCanvas::draw_contents() {
@@ -145,8 +151,8 @@ void SelfContainedMeshCanvas::draw_contents() {
 
 void SelfContainedMeshCanvas::clear() {
 
-	mBatchUnit->mMeshBatch.clear();
-	mBatchUnit->mSkinnedMeshBatch.clear();
+	mMeshBatch->clear();
+	mSkinnedMeshBatch->clear();
 
 }
 
