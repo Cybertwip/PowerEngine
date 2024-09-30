@@ -148,28 +148,31 @@ void ImportWindow::Preview(const std::string& path, const std::string& directory
 }
 
 void ImportWindow::ImportIntoProject() {
-	mPreviewCanvas->take_snapshot( [this](std::vector<uint8_t>& pixels){
-		
+	mPreviewCanvas->take_snapshot([this](std::vector<uint8_t>& pixels) {
 		auto& serializer = mCompressedMeshData->mMesh.mSerializer;
+		
+		// Convert RGBA to BGRA in place by swapping the Blue and Red channels
+		for (size_t i = 0; i < pixels.size(); i += 4) {
+			std::swap(pixels[i], pixels[i + 2]); // Swap B and R
+		}
 		
 		std::vector<uint8_t> png_data;
 		
+		// Now write the converted RGBA data to PNG
 		write_to_png(pixels, 512, 512, 4, png_data);
 		
+		// Proceed with serialization
 		serializer->write_header_uint64(png_data.size());
-		
 		serializer->write_header_raw(png_data.data(), png_data.size());
-
+		
 		mCompressedMeshData->persist(mAnimationsCheckbox->checked());
-
+		
 		mResourcesPanel.refresh_file_view();
 		
 		mPreviewCanvas->set_active_actor(nullptr);
-		
 		mPreviewCanvas->set_update(false);
 	});
 	
 	set_visible(false);
 	set_modal(false);
-	
 }
