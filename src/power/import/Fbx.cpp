@@ -106,10 +106,6 @@ void Fbx::ProcessMesh(const std::shared_ptr<sfbx::Mesh>& mesh) {
 	
 	// Retrieve materials and map them to indices
 	const auto& materials = mesh->getMaterials();
-	std::unordered_map<std::shared_ptr<sfbx::Material>, int> materialIndexMap;
-	for (int i = 0; i < materials.size(); ++i) {
-		materialIndexMap[materials[i]] = i;
-	}
 	
 	// Precompute normal indices
 	const auto& normalLayers = geometry->getNormalLayers();
@@ -237,9 +233,9 @@ void Fbx::ProcessMesh(const std::shared_ptr<sfbx::Mesh>& mesh) {
 			// Assign material ID with bounds checking
 			int matIndex = geometry->getMaterialForVertexIndex(controlPointIndex);
 			if (matIndex >= 0 && matIndex < static_cast<int>(materials.size())) {
-				vertex.set_texture_id(materialIndexMap[matIndex]);
+				vertex.set_material_id(matIndex);
 			} else {
-				vertex.set_texture_id(-1); // or a default material ID
+				vertex.set_material_id(0); // or a default material ID
 			}
 
 			// Assign vertex and index

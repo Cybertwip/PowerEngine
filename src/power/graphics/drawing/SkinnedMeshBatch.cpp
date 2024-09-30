@@ -121,7 +121,7 @@ void SkinnedMeshBatch::clear() {
 	mBatchNormals.clear();
 	mBatchTexCoords1.clear();
 	mBatchTexCoords2.clear();
-	mBatchTextureIds.clear();
+	mBatchMaterialIds.clear();
 	mBatchIndices.clear();
 	mBatchMaterials.clear();
 	mMeshStartIndices.clear();
@@ -147,9 +147,9 @@ void SkinnedMeshBatch::append(std::reference_wrapper<SkinnedMesh> meshRef) {
 	mBatchTexCoords2[shader.identifier()].insert(mBatchTexCoords2[shader.identifier()].end(),
 												 mesh.get_flattened_tex_coords2().begin(),
 												 mesh.get_flattened_tex_coords2().end());
-	mBatchTextureIds[shader.identifier()].insert(mBatchTextureIds[shader.identifier()].end(),
-												 mesh.get_flattened_texture_ids().begin(),
-												 mesh.get_flattened_texture_ids().end());
+	mBatchMaterialIds[shader.identifier()].insert(mBatchMaterialIds[shader.identifier()].end(),
+												 mesh.get_flattened_material_ids().begin(),
+												 mesh.get_flattened_material_ids().end());
 	
 	mBatchColors[shader.identifier()].insert(mBatchColors[shader.identifier()].end(),
 											 mesh.get_flattened_colors().begin(),
@@ -280,10 +280,10 @@ void SkinnedMeshBatch::remove(std::reference_wrapper<SkinnedMesh> meshRef) {
 					 );
 	
 	// Remove from texture IDs
-	auto& textureIds = mBatchTextureIds[identifier];
-	textureIds.erase(
-					 textureIds.begin() + startIdx,
-					 textureIds.begin() + (startIdx + numVertices)
+	auto& materialIds = mBatchMaterialIds[identifier];
+	materialIds.erase(
+					  materialIds.begin() + startIdx,
+					  materialIds.begin() + (startIdx + numVertices)
 					 );
 	
 	// Remove from colors
@@ -327,7 +327,7 @@ void SkinnedMeshBatch::remove(std::reference_wrapper<SkinnedMesh> meshRef) {
 		mBatchNormals.erase(identifier);
 		mBatchTexCoords1.erase(identifier);
 		mBatchTexCoords2.erase(identifier);
-		mBatchTextureIds.erase(identifier);
+		mBatchMaterialIds.erase(identifier);
 		mBatchIndices.erase(identifier);
 		mBatchColors.erase(identifier);
 		mBatchBoneIds.erase(identifier);
@@ -353,8 +353,8 @@ void SkinnedMeshBatch::upload_vertex_data(ShaderWrapper& shader, int identifier)
 					  mBatchTexCoords1[identifier].data());
 	shader.persist_buffer("aTexcoords2", nanogui::VariableType::Float32, {mBatchTexCoords2[identifier].size() / 2, 2},
 					  mBatchTexCoords2[identifier].data());
-	shader.persist_buffer("aTextureId", nanogui::VariableType::Int32, {mBatchTextureIds[identifier].size(), 1},
-					  mBatchTextureIds[identifier].data());
+	shader.persist_buffer("aMaterialId", nanogui::VariableType::Int32, {mBatchMaterialIds[identifier].size(), 1},
+						  mBatchMaterialIds[identifier].data());
 	
 	// Set Buffer for Vertex Colors
 	shader.persist_buffer("aColor", nanogui::VariableType::Float32, {mBatchColors[identifier].size() / 4, 4},

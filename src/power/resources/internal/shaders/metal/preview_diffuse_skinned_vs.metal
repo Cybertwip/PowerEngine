@@ -5,7 +5,7 @@ struct VertexOut {
     float4 Position [[position]];
     float2 TexCoords1;
     float2 TexCoords2;
-    int TextureId;
+    int MaterialId;
 };
 
 struct Bone {
@@ -18,7 +18,7 @@ vertex VertexOut vertex_main(
     const device packed_float2 *const aTexcoords2 [[buffer(4)]],
     const device packed_int4 *const aBoneIds [[buffer(5)]],
     const device packed_float4 *const aWeights [[buffer(6)]],
-    const device int *const aTextureId [[buffer(7)]],
+    const device int *const aMaterialId [[buffer(7)]],
     constant float4x4 &aProjection [[buffer(8)]],
     constant float4x4 &aView [[buffer(9)]],
     constant float4x4 &aModel [[buffer(10)]],
@@ -56,7 +56,7 @@ vertex VertexOut vertex_main(
     vert.TexCoords1 = aTexcoords1[id];
     vert.TexCoords2 = aTexcoords2[id];
 
-    vert.TextureId = aTextureId[id];
+    vert.MaterialId = MaterialId[id];
 
     return vert;
 }

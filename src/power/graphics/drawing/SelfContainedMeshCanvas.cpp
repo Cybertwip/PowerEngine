@@ -77,9 +77,9 @@ void SelfContainedMeshCanvas::append(std::reference_wrapper<SkinnedMesh> meshRef
 	mBatchTexCoords2[shader.identifier()].insert(mBatchTexCoords2[shader.identifier()].end(),
 												 mesh.get_flattened_tex_coords2().begin(),
 												 mesh.get_flattened_tex_coords2().end());
-	mBatchTextureIds[shader.identifier()].insert(mBatchTextureIds[shader.identifier()].end(),
-												 mesh.get_flattened_texture_ids().begin(),
-												 mesh.get_flattened_texture_ids().end());
+	mBatchMaterialIds[shader.identifier()].insert(mBatchMaterialIds[shader.identifier()].end(),
+												 mesh.get_flattened_material_ids().begin(),
+												 mesh.get_flattened_material_ids().end());
 	
 	mBatchBoneIds[shader.identifier()].insert(mBatchBoneIds[shader.identifier()].end(),
 											  mesh.get_flattened_bone_ids().begin(),
@@ -229,7 +229,7 @@ void SelfContainedMeshCanvas::clear() {
 	mBatchPositions.clear();
 	mBatchTexCoords1.clear();
 	mBatchTexCoords2.clear();
-	mBatchTextureIds.clear();
+	mBatchMaterialIds.clear();
 	mBatchIndices.clear();
 	mBatchMaterials.clear();
 	mMeshStartIndices.clear();
@@ -244,8 +244,8 @@ void SelfContainedMeshCanvas::upload_vertex_data(ShaderWrapper& shader, int iden
 						  mBatchTexCoords1[identifier].data());
 	shader.persist_buffer("aTexcoords2", nanogui::VariableType::Float32, {mBatchTexCoords2[identifier].size() / 2, 2},
 						  mBatchTexCoords2[identifier].data());
-	shader.persist_buffer("aTextureId", nanogui::VariableType::Int32, {mBatchTextureIds[identifier].size(), 1},
-						  mBatchTextureIds[identifier].data());
+	shader.persist_buffer("aMaterialId", nanogui::VariableType::Int32, {mBatchMaterialIds[identifier].size(), 1},
+						  mBatchMaterialIds[identifier].data());
 	// Set Buffer for Bone IDs
 	shader.persist_buffer("aBoneIds", nanogui::VariableType::Int32, {mBatchBoneIds[identifier].size() / 4, 4},
 						  mBatchBoneIds[identifier].data());

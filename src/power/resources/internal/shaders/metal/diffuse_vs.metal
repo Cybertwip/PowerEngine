@@ -8,7 +8,7 @@ struct VertexOut {
     float3 Normal;
     float4 Color;
     float3 FragPos;
-    int TextureId;
+    int MaterialId;
 };
 
 vertex VertexOut vertex_main(const device packed_float3 *const aPosition [[buffer(0)]],
@@ -16,7 +16,7 @@ vertex VertexOut vertex_main(const device packed_float3 *const aPosition [[buffe
                              const device packed_float4 *const aColor [[buffer(2)]],
                              const device packed_float2 *const aTexcoords1 [[buffer(3)]],
                              const device packed_float2 *const aTexcoords2 [[buffer(4)]],
-                             const device packed_int2 *const aTextureId [[buffer(5)]],
+                             const device int *const aMaterialId aMaterialId [[buffer(5)]],
                              constant float4x4 &aProjection [[buffer(6)]],
                              constant float4x4 &aView [[buffer(7)]],
                              constant float4x4 &aModel [[buffer(8)]],
@@ -36,7 +36,7 @@ vertex VertexOut vertex_main(const device packed_float3 *const aPosition [[buffe
     vert.TexCoords1 = aTexcoords1[id];
     vert.TexCoords2 = aTexcoords2[id];
     
-    vert.TextureId = aTextureId[id].x; // Access the x component of packed_int2 at index id
+    vert.MaterialId = aMaterialId[id]; // Access the x component of packed_int2 at index id
 
     vert.Color = aColor[id];
     

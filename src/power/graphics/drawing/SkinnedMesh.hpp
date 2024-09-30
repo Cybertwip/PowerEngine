@@ -33,7 +33,7 @@ public:
 	const std::vector<float>& get_flattened_tex_coords2() const { return mFlattenedTexCoords2; }
 	const std::vector<int>& get_flattened_bone_ids() const { return mFlattenedBoneIds; }
 	const std::vector<float>& get_flattened_weights() const { return mFlattenedWeights; }
-	const std::vector<int>& get_flattened_texture_ids() const { return mFlattenedTextureIds; }
+	const std::vector<int>& get_flattened_material_ids() const { return mFlattenedMaterialIds; }
 	const std::vector<float>& get_flattened_colors() const { return mFlattenedColors; }
 	
 	SkinnedMeshData& get_mesh_data() {
@@ -64,7 +64,7 @@ private:
 	std::vector<float> mFlattenedTexCoords2;
 	std::vector<int> mFlattenedBoneIds;
 	std::vector<float> mFlattenedWeights;
-	std::vector<int> mFlattenedTextureIds;
+	std::vector<int> mFlattenedMaterialIds;
 	std::vector<float> mFlattenedColors; // Added to store flattened color data
 	
 	SkinnedMeshBatch& mMeshBatch;

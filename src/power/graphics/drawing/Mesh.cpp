@@ -40,7 +40,7 @@ Mesh::Mesh(std::unique_ptr<MeshData> meshData, ShaderWrapper& shader, MeshBatch&
 	mFlattenedColors.resize(numVertices * 4); // vec4 per vertex
 	
 	// Decide on the number of texture IDs per vertex (assuming 1 for simplicity)
-	mFlattenedTextureIds.resize(numVertices); // Single texture ID per vertex
+	mFlattenedMaterialIds.resize(numVertices); // Single texture ID per vertex
 	
 	// Flatten the vertex data
 	for (size_t i = 0; i < numVertices; ++i) {
@@ -69,7 +69,7 @@ Mesh::Mesh(std::unique_ptr<MeshData> meshData, ShaderWrapper& shader, MeshBatch&
 		mFlattenedTexCoords2[i * 2 + 1] = vertex.get_tex_coords2().y;
 		
 		// Texture IDs (single ID per vertex)
-		mFlattenedTextureIds[i] = vertex.get_texture_id();
+		mFlattenedMaterialIds[i] = vertex.get_material_id();
 		
 		// Flattened Colors
 		const glm::vec4& color = vertex.get_color();

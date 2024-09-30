@@ -48,7 +48,7 @@ mModelMatrix(nanogui::Matrix4f::identity()) {
 	mFlattenedBoneIds.resize(numVertices * SkinnedMeshVertex::MAX_BONE_INFLUENCE);
 	mFlattenedWeights.resize(numVertices * SkinnedMeshVertex::MAX_BONE_INFLUENCE);
 	
-	mFlattenedTextureIds.resize(numVertices); // One texture ID per vertex
+	mFlattenedMaterialIds.resize(numVertices); // One texture ID per vertex
 	
 	// Flatten the vertex data
 	for (size_t i = 0; i < numVertices; ++i) {
@@ -73,7 +73,7 @@ mModelMatrix(nanogui::Matrix4f::identity()) {
 		mFlattenedTexCoords2[i * 2 + 1] = vertex.get_tex_coords2().y;
 		
 		// Texture IDs
-		mFlattenedTextureIds[i] = vertex.get_texture_id();
+		mFlattenedMaterialIds[i] = vertex.get_material_id();
 		
 		// Flattened Colors
 		const glm::vec4 color = vertex.get_color();

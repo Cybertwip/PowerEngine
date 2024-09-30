@@ -15,7 +15,7 @@ void MeshVertex::set_texture_coords1(const glm::vec2& vec) { mTexCoords1 = vec; 
 
 void MeshVertex::set_texture_coords2(const glm::vec2& vec) { mTexCoords2 = vec; }
 
-void MeshVertex::set_texture_id(int textureId) { mTextureId = textureId; }
+void MeshVertex::set_material_id(int materiaId) { mMaterialId = materiaId; }
 
 glm::vec3 MeshVertex::get_position() const { return mPosition; }
 
@@ -27,6 +27,6 @@ glm::vec2 MeshVertex::get_tex_coords1() const { return mTexCoords1; }
 
 glm::vec2 MeshVertex::get_tex_coords2() const { return mTexCoords2; }
 
-int MeshVertex::get_texture_id() const {
-	return mTextureId;
+int MeshVertex::get_material_id() const {
+	return mMaterialId;
 }

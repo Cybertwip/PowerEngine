@@ -272,48 +272,55 @@ void GeomMesh::importFBXObjects()
 			m_layers.push_back(std::move(layer_descs));
 		}
 	}
+	
 	// Prefill the vertex-to-material map with all material layers
 	if (!m_material_layers.empty()) {
+		// Clear the map before populating
+		m_vertex_to_material_map.clear();
+		
 		for (const auto& material_layer : m_material_layers) { // Iterate through all material layers
 			switch (material_layer.mapping_mode) {
 				case LayerMappingMode::ByControlPoint: {
 					// One material per vertex
-					for (size_t i = 0; i < material_layer.indices.size(); ++i) {
-						if (i < m_vertex_to_material_map.size()) {
-							unsigned int material_index = material_layer.indices[i];
-							m_vertex_to_material_map[i].push_back(material_index);
-						} else {
-							sfbxPrint("Warning: Vertex index %zu out of range in ByControlPoint mapping.\n", i);
-						}
+					if (material_layer.indices.size() != m_points.size()) {
+						sfbxPrint("Warning: Material layer indices size (%zu) does not match number of vertices (%zu) in ByControlPoint mapping.\n",
+								  material_layer.indices.size(), m_points.size());
+					}
+					size_t limit = std::min(material_layer.indices.size(), m_points.size());
+					for (size_t i = 0; i < limit; ++i) {
+						unsigned int material_index = material_layer.indices[i];
+						// Insert or update the map entry for vertex i
+						m_vertex_to_material_map[i].push_back(material_index);
 					}
 					break;
 				}
 					
 				case LayerMappingMode::ByPolygon: {
-					int current_start = 0; // Initialize the starting index
+					size_t current_start = 0; // Initialize the starting index
 					for (size_t poly_idx = 0; poly_idx < m_counts.size(); ++poly_idx) {
 						if (poly_idx < material_layer.indices.size()) {
 							unsigned int material_index = material_layer.indices[poly_idx];
-							int start_idx = current_start;
-							int count = m_counts[poly_idx]; // Number of vertices in this polygon
+							size_t count = m_counts[poly_idx]; // Number of vertices in this polygon
 							
 							// Assign the material to all vertices of the polygon
-							for (int i = 0; i < count; ++i) {
-								if ((start_idx + i) < static_cast<int>(m_indices.size())) {
-									unsigned int vertex_idx = m_indices[start_idx + i];
-									if (vertex_idx < m_vertex_to_material_map.size()) {
+							for (size_t i = 0; i < count; ++i) {
+								size_t vertex_index_in_m_indices = current_start + i;
+								if (vertex_index_in_m_indices < m_indices.size()) {
+									unsigned int vertex_idx = m_indices[vertex_index_in_m_indices];
+									if (vertex_idx >= 0 && vertex_idx < static_cast<int>(m_points.size())) {
 										m_vertex_to_material_map[vertex_idx].push_back(material_index);
 									} else {
-										sfbxPrint("Warning: Vertex index out of map range in ByPolygon mapping.\n");
+										sfbxPrint("Warning: Vertex index %u out of range in ByPolygon mapping.\n", vertex_idx);
 									}
 								} else {
-									sfbxPrint("Warning: Vertex index %d out of range in ByPolygon mapping.\n", start_idx + i);
+									sfbxPrint("Warning: Vertex index %zu out of range in ByPolygon mapping.\n", vertex_index_in_m_indices);
 								}
 							}
 							
 							current_start += count; // Update the starting index for the next polygon
 						} else {
-							sfbxPrint("Warning: Not enough material indices for all polygons.\n");
+							sfbxPrint("Warning: Not enough material indices (%zu) for all polygons (%zu).\n",
+									  material_layer.indices.size(), m_counts.size());
 							break;
 						}
 					}
@@ -322,19 +329,19 @@ void GeomMesh::importFBXObjects()
 					
 				case LayerMappingMode::ByPolygonVertex: {
 					// One material per polygon vertex
-					for (size_t i = 0; i < material_layer.indices.size(); ++i) {
-						if (i < m_indices.size()) {
-							unsigned int material_index = material_layer.indices[i];
-							unsigned int vertex_idx = m_indices[i];
-							if (vertex_idx < m_vertex_to_material_map.size()) {
-								m_vertex_to_material_map[vertex_idx].push_back(material_index);
-							} else {
-								sfbxPrint("Warning: Vertex index out of map range in ByPolygonVertex mapping.\n");
-							}
+					size_t limit = std::min(material_layer.indices.size(), m_indices.size());
+					for (size_t i = 0; i < limit; ++i) {
+						unsigned int material_index = material_layer.indices[i];
+						unsigned int vertex_idx = m_indices[i];
+						if (vertex_idx >= 0 && vertex_idx < static_cast<int>(m_points.size())) {
+							m_vertex_to_material_map[vertex_idx].push_back(material_index);
 						} else {
-							sfbxPrint("Warning: More material indices than polygon vertices.\n");
-							break;
+							sfbxPrint("Warning: Vertex index %u out of range in ByPolygonVertex mapping.\n", vertex_idx);
 						}
+					}
+					if (material_layer.indices.size() > m_indices.size()) {
+						sfbxPrint("Warning: More material indices (%zu) than polygon vertices (%zu) in ByPolygonVertex mapping.\n",
+								  material_layer.indices.size(), m_indices.size());
 					}
 					break;
 				}
@@ -345,14 +352,16 @@ void GeomMesh::importFBXObjects()
 						unsigned int universal_material_index = material_layer.indices[0];
 						
 						if (material_layer.indices.size() > 1) {
-							sfbxPrint("Warning: More than one material index provided for AllSame mapping mode. Only the first will be used.\n");
+							sfbxPrint("Warning: More than one material index provided for AllSame mapping mode. Only the first (%u) will be used.\n",
+									  universal_material_index);
 						}
 						
 						for (size_t index = 0; index < m_indices.size(); ++index) {
-							if (m_indices[index] < m_vertex_to_material_map.size()) {
-								m_vertex_to_material_map[m_indices[index]].push_back(universal_material_index);
+							unsigned int vertex_idx = m_indices[index];
+							if (vertex_idx >= 0 && vertex_idx < static_cast<int>(m_points.size())) {
+								m_vertex_to_material_map[vertex_idx].push_back(universal_material_index);
 							} else {
-								sfbxPrint("Warning: Attempt to map beyond vertex map size.\n");
+								sfbxPrint("Warning: Vertex index %u out of range in AllSame mapping.\n", vertex_idx);
 							}
 						}
 					} else {
@@ -367,9 +376,6 @@ void GeomMesh::importFBXObjects()
 			}
 		}
 	}
-
-
-
 }
 
 void GeomMesh::exportFBXObjects()

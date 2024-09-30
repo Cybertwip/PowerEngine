@@ -58,7 +58,7 @@ private:
 	std::unordered_map<int, std::vector<float>> mBatchPositions;
 	std::unordered_map<int, std::vector<float>> mBatchTexCoords1;
 	std::unordered_map<int, std::vector<float>> mBatchTexCoords2;
-	std::unordered_map<int, std::vector<int>> mBatchTextureIds;
+	std::unordered_map<int, std::vector<int>> mBatchMaterialIds;
 	std::unordered_map<int, std::vector<int>> mBatchBoneIds;
 	std::unordered_map<int, std::vector<float>> mBatchBoneWeights;
 	std::unordered_map<int, std::vector<unsigned int>> mBatchIndices;

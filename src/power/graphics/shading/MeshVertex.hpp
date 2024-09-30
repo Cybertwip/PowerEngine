@@ -17,7 +17,7 @@ public:
 	mColor(other.mColor),         // Copy color
 	mTexCoords1(other.mTexCoords1), // Copy texture coordinates 1
 	mTexCoords2(other.mTexCoords2), // Copy texture coordinates 2
-	mTextureId(other.mTextureId)   // Copy texture ID
+	mMaterialId(other.mMaterialId)   // Copy texture ID
 	{
 		// No additional logic required since all members are copied
 	}
@@ -33,8 +33,7 @@ public:
 	void set_texture_coords1(const glm::vec2 &vec);
 	void set_texture_coords2(const glm::vec2 &vec);
 	
-	// New method for setting texture ID
-	void set_texture_id(int textureId);
+	void set_material_id(int materiaId);
 	
 	// Accessors
 	glm::vec3 get_position() const;
@@ -42,7 +41,7 @@ public:
 	glm::vec4 get_color() const;
 	glm::vec2 get_tex_coords1() const;
 	glm::vec2 get_tex_coords2() const;
-	int get_texture_id() const;  // New method to get texture ID
+	int get_material_id() const;
 	
 	// Serialize method
 	void serialize(CompressedSerialization::Serializer& serializer) const {
@@ -51,7 +50,7 @@ public:
 		serializer.write_vec4(mColor);
 		serializer.write_vec2(mTexCoords1);
 		serializer.write_vec2(mTexCoords2);
-		serializer.write_int32(mTextureId);
+		serializer.write_int32(mMaterialId);
 	}
 	
 	// Deserialize method
@@ -61,7 +60,7 @@ public:
 		if (!deserializer.read_vec4(mColor)) return false;
 		if (!deserializer.read_vec2(mTexCoords1)) return false;
 		if (!deserializer.read_vec2(mTexCoords2)) return false;
-		if (!deserializer.read_int32(mTextureId)) return false;
+		if (!deserializer.read_int32(mMaterialId)) return false;
 		return true;
 	}
 
@@ -73,7 +72,7 @@ private:
 	glm::vec2 mTexCoords1;
 	glm::vec2 mTexCoords2;
 	// New member to store texture ID
-	int mTextureId;
+	int mMaterialId;
 };
 
 class SkinnedMeshVertex : public MeshVertex {

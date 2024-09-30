@@ -17,7 +17,7 @@ struct VertexOut {
     float3 Normal;
     float4 Color;
     float3 FragPos;
-    int TextureId;
+    int MaterialId;
 };
 
 struct FragmentOut {
@@ -31,9 +31,9 @@ fragment FragmentOut fragment_main(VertexOut vert [[stage_in]],
                               constant int &identifier [[buffer(2)]],
                               array<texture2d<float, access::sample>, 16> textures,
                               array<sampler, 16> textures_sampler) {
-    Material mat = materials[vert.TextureId];
-    texture2d<float> diffuse_texture = textures[vert.TextureId];
-    sampler diffuse_sampler = textures_sampler[vert.TextureId];
+    Material mat = materials[vert.MaterialId];
+    texture2d<float> diffuse_texture = textures[vert.MaterialId];
+    sampler diffuse_sampler = textures_sampler[vert.MaterialId];
 
     float4 mat_diffuse;
     if (mat.diffuse_texture != 0.0) {

@@ -30,7 +30,7 @@ public:
 	const std::vector<float>& get_flattened_normals() const { return mFlattenedNormals; }
 	const std::vector<float>& get_flattened_tex_coords1() const { return mFlattenedTexCoords1; }
 	const std::vector<float>& get_flattened_tex_coords2() const { return mFlattenedTexCoords2; }
-	const std::vector<int>& get_flattened_texture_ids() const { return mFlattenedTextureIds; }
+	const std::vector<int>& get_flattened_material_ids() const { return mFlattenedMaterialIds; }
 	const std::vector<float>& get_flattened_colors() const { return mFlattenedColors; }
 
 	MeshData& get_mesh_data() {
@@ -56,7 +56,7 @@ private:
 	std::vector<float> mFlattenedNormals;
 	std::vector<float> mFlattenedTexCoords1;
 	std::vector<float> mFlattenedTexCoords2;
-	std::vector<int> mFlattenedTextureIds;
+	std::vector<int> mFlattenedMaterialIds;
 	std::vector<float> mFlattenedColors; // Added to store flattened color data
 
 	MeshBatch& mMeshBatch;
