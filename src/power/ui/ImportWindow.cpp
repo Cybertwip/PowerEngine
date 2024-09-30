@@ -5,10 +5,10 @@
 #include "filesystem/MeshActorImporter.hpp"
 #include "graphics/drawing/BatchUnit.hpp"
 #include "graphics/drawing/MeshActorBuilder.hpp"
-#include "graphics/drawing/MeshBatch.hpp"
+#include "graphics/drawing/SelfContainedMeshBatch.hpp"
 #include "graphics/drawing/SharedSelfContainedMeshCanvas.hpp"
 
-#include "graphics/drawing/SkinnedMeshBatch.hpp"
+#include "graphics/drawing/SelfContainedSkinnedMeshBatch.hpp"
 
 #include "ui/ResourcesPanel.hpp"
 
@@ -130,9 +130,9 @@ void ImportWindow::Preview(const std::string& path, const std::string& directory
 	
 	if (mCompressedMeshData->mMesh.mPrecomputedPath.find(".psk") != std::string::npos) {
 		
-		mMeshActorBuilder->build_skinned(*actor, "DummyActor", deserializer, *mMeshShader, *mSkinnedShader);
+		mMeshActorBuilder->build_skinned(*actor, "DummyActor", deserializer, mPreviewCanvas->get_mesh_shader(), mPreviewCanvas->get_skinned_mesh_shader());
 	} else {
-		mMeshActorBuilder->build_mesh(*actor, "DummyActor", deserializer, *mMeshShader, *mSkinnedShader);
+		mMeshActorBuilder->build_mesh(*actor, "DummyActor", deserializer, mPreviewCanvas->get_mesh_shader(), mPreviewCanvas->get_skinned_mesh_shader());
 	}
 	
 	mPreviewCanvas->set_active_actor(actor);
