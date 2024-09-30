@@ -13,12 +13,12 @@
 #include <array>
 
 class ColorComponent;
-class MeshBatch;
+class IMeshBatch;
 class ShaderManager;
 
 class Mesh : public Drawable {
 public:
-	Mesh(std::unique_ptr<MeshData> meshData, ShaderWrapper& shader, MeshBatch& meshBatch, ColorComponent& colorComponent);
+	Mesh(std::unique_ptr<MeshData> meshData, ShaderWrapper& shader, IMeshBatch& meshBatch, ColorComponent& colorComponent);
 	~Mesh() override;
     
     void draw_content(const nanogui::Matrix4f& model, const nanogui::Matrix4f& view, const nanogui::Matrix4f& projection) override;
@@ -59,7 +59,7 @@ private:
 	std::vector<int> mFlattenedMaterialIds;
 	std::vector<float> mFlattenedColors; // Added to store flattened color data
 
-	MeshBatch& mMeshBatch;
+	IMeshBatch& mMeshBatch;
 	ColorComponent& mColorComponent;
 	
 	nanogui::Matrix4f mModelMatrix;

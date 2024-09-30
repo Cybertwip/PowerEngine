@@ -26,7 +26,7 @@
 SkinnedMesh::SkinnedMesh(
 						 std::unique_ptr<SkinnedMeshData> skinnedMeshData,
 						 ShaderWrapper& shader,
-						 SkinnedMeshBatch& meshBatch,
+						 ISkinnedMeshBatch& meshBatch,
 						 ColorComponent& colorComponent,
 						 SkinnedAnimationComponent& skinnedComponent)
 : mSkinnedMeshData(std::move(skinnedMeshData)),

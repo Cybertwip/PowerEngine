@@ -142,6 +142,7 @@ add_executable(PowerEngine
     ${CMAKE_CURRENT_LIST_DIR}/graphics/drawing/NullDrawable.hpp
     ${CMAKE_CURRENT_LIST_DIR}/graphics/drawing/Mesh.hpp
     ${CMAKE_CURRENT_LIST_DIR}/graphics/drawing/Mesh.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/graphics/drawing/IMeshBatch.hpp
     ${CMAKE_CURRENT_LIST_DIR}/graphics/drawing/MeshBatch.hpp
     ${CMAKE_CURRENT_LIST_DIR}/graphics/drawing/MeshBatch.cpp
     ${CMAKE_CURRENT_LIST_DIR}/graphics/drawing/SelfContainedMeshBatch.hpp
@@ -152,6 +153,7 @@ add_executable(PowerEngine
     ${CMAKE_CURRENT_LIST_DIR}/graphics/drawing/SharedSelfContainedMeshCanvas.cpp    
     ${CMAKE_CURRENT_LIST_DIR}/graphics/drawing/SkinnedMesh.hpp
     ${CMAKE_CURRENT_LIST_DIR}/graphics/drawing/SkinnedMesh.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/graphics/drawing/ISkinnedMeshBatch.hpp
     ${CMAKE_CURRENT_LIST_DIR}/graphics/drawing/SkinnedMeshBatch.hpp
     ${CMAKE_CURRENT_LIST_DIR}/graphics/drawing/SkinnedMeshBatch.cpp
     ${CMAKE_CURRENT_LIST_DIR}/graphics/drawing/SelfContainedSkinnedMeshBatch.hpp

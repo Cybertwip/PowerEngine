@@ -9,12 +9,12 @@
 #include <memory>
 
 class MeshActorBuilder;
-class MeshBatch;
+class IMeshBatch;
 class ResourcesPanel;
 class ShaderWrapper;
 class ShaderManager;
 class SharedSelfContainedMeshCanvas;
-class SkinnedMeshBatch;
+class ISkinnedMeshBatch;
 
 struct BatchUnit;
 
@@ -34,17 +34,14 @@ private:
 	
 	ResourcesPanel& mResourcesPanel;
 	
-	std::unique_ptr<MeshBatch> mMeshBatch;
-	std::unique_ptr<SkinnedMeshBatch> mSkinnedMeshBatch;
+	std::unique_ptr<IMeshBatch> mMeshBatch;
+	std::unique_ptr<ISkinnedMeshBatch> mSkinnedMeshBatch;
 	
 	std::unique_ptr<BatchUnit> mBatchUnit;
 
 	std::unique_ptr<MeshActorBuilder> mMeshActorBuilder;
 
 	SharedSelfContainedMeshCanvas* mPreviewCanvas;
-	
-	std::unique_ptr<ShaderWrapper> mMeshShader;
-	std::unique_ptr<ShaderWrapper> mSkinnedShader;
 
 	nanogui::CheckBox* mMeshCheckbox;
 	nanogui::CheckBox* mAnimationsCheckbox;

@@ -40,6 +40,13 @@ public:
 	}
 	
 	void set_aspect_ratio(float ratio);
+	
+	ShaderWrapper& get_mesh_shader() {
+		return mMeshPreviewShader;
+	}
+	ShaderWrapper& get_skinned_mesh_shader() {
+		return mSkinnedMeshPreviewShader;
+	}
 
 private:
 	void draw_content(const nanogui::Matrix4f& view, const nanogui::Matrix4f& projection);

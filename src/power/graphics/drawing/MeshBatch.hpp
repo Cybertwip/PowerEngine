@@ -1,6 +1,6 @@
 #pragma once
 
-#include "graphics/drawing/Batch.hpp"
+#include "graphics/drawing/IMeshBatch.hpp"
 
 #include "graphics/shading/MaterialProperties.hpp"
 
@@ -15,7 +15,7 @@ class RenderPass;
 class Mesh;
 class ShaderWrapper;
 
-class MeshBatch : public Batch {
+class MeshBatch : public IMeshBatch {
 private:
 	struct VertexIndexer {
 		unsigned int mVertexOffset = 0;
@@ -25,10 +25,10 @@ private:
 public:
 	MeshBatch(nanogui::RenderPass& renderPass);
 	
-	void add_mesh(std::reference_wrapper<Mesh> mesh);
-	void clear();
-	void append(std::reference_wrapper<Mesh> meshRef);
-	void remove(std::reference_wrapper<Mesh> meshRef);
+	void add_mesh(std::reference_wrapper<Mesh> mesh) override;
+	void clear() override;
+	void append(std::reference_wrapper<Mesh> meshRef) override;
+	void remove(std::reference_wrapper<Mesh> meshRef) override;
 	void draw_content(const nanogui::Matrix4f& view,
 					  const nanogui::Matrix4f& projection) override;
 	

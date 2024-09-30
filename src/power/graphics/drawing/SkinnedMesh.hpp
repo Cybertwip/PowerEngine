@@ -13,12 +13,12 @@
 
 class ColorComponent;
 class SkinnedAnimationComponent;
-class SkinnedMeshBatch;
+class ISkinnedMeshBatch;
 class ShaderManager;
 
 class SkinnedMesh : public Drawable {
 public:
-	SkinnedMesh(std::unique_ptr<SkinnedMeshData> skinnedMeshData, ShaderWrapper& shader, SkinnedMeshBatch& meshBatch, ColorComponent& colorComponent,
+	SkinnedMesh(std::unique_ptr<SkinnedMeshData> skinnedMeshData, ShaderWrapper& shader, ISkinnedMeshBatch& meshBatch, ColorComponent& colorComponent,
 		SkinnedAnimationComponent& skinnedComponent);
 	~SkinnedMesh() override;
 	
@@ -67,7 +67,7 @@ private:
 	std::vector<int> mFlattenedMaterialIds;
 	std::vector<float> mFlattenedColors; // Added to store flattened color data
 	
-	SkinnedMeshBatch& mMeshBatch;
+	ISkinnedMeshBatch& mMeshBatch;
 	ColorComponent& mColorComponent;
 	SkinnedAnimationComponent& mSkinnedComponent;
 	

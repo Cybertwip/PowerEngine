@@ -65,15 +65,16 @@ ImportWindow::ImportWindow(nanogui::Widget* parent, ResourcesPanel& resourcesPan
 		this->set_modal(false);
 	});
 	
-	mMeshBatch = std::make_unique<MeshBatch>(renderpass);
+	mPreviewCanvas = new SharedSelfContainedMeshCanvas(this);
+
+	mMeshBatch = std::make_unique<SelfContainedMeshBatch>(renderpass, mPreviewCanvas->get_mesh_shader());
 	
-	mSkinnedMeshBatch = std::make_unique<SkinnedMeshBatch>(renderpass);
+	mSkinnedMeshBatch = std::make_unique<SelfContainedSkinnedMeshBatch>(renderpass, mPreviewCanvas->get_skinned_mesh_shader());
 	
 	mBatchUnit = std::make_unique<BatchUnit>(*mMeshBatch, *mSkinnedMeshBatch);
 
 	mMeshActorBuilder = std::make_unique<MeshActorBuilder>(*mBatchUnit);
 	
-	mPreviewCanvas = new SharedSelfContainedMeshCanvas(this);
 	
 	mPreviewCanvas->set_fixed_size(nanogui::Vector2i(256, 256));
 	
@@ -81,10 +82,6 @@ ImportWindow::ImportWindow(nanogui::Widget* parent, ResourcesPanel& resourcesPan
 	
 	mMeshActorImporter = std::make_unique<MeshActorImporter>();
 	
-	mMeshShader = std::make_unique<ShaderWrapper>(*shaderManager.get_shader("mesh"));
-	
-	mSkinnedShader = std::make_unique<ShaderWrapper>(*shaderManager.get_shader("skinned_mesh"));
-
 	// Create a panel or container for checkboxes using GridLayout
 	auto checkbox_panel = new nanogui::Widget(this);
 	checkbox_panel->set_layout(new nanogui::GridLayout(

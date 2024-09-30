@@ -13,6 +13,8 @@
 #include "components/TransformComponent.hpp"
 
 #include "graphics/drawing/BatchUnit.hpp"
+#include "graphics/drawing/IMeshBatch.hpp"
+#include "graphics/drawing/ISkinnedMeshBatch.hpp"
 #include "graphics/drawing/Mesh.hpp"
 #include "graphics/drawing/SkinnedMesh.hpp"
 

@@ -23,7 +23,7 @@
 #include <cmath>
 #include <algorithm>
 
-Mesh::Mesh(std::unique_ptr<MeshData> meshData, ShaderWrapper& shader, MeshBatch& meshBatch, ColorComponent& colorComponent)
+Mesh::Mesh(std::unique_ptr<MeshData> meshData, ShaderWrapper& shader, IMeshBatch& meshBatch, ColorComponent& colorComponent)
 : mMeshData(std::move(meshData)), mShader(shader), mMeshBatch(meshBatch), mColorComponent(colorComponent), mModelMatrix(nanogui::Matrix4f::identity()) {
 	
 	if (!mMeshData) {

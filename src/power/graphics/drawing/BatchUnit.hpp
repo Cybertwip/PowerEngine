@@ -1,15 +1,15 @@
 #pragma once
 
-class MeshBatch;
-class SkinnedMeshBatch;
+class IMeshBatch;
+class ISkinnedMeshBatch;
 
 struct BatchUnit {
-	BatchUnit(MeshBatch& meshBatch, SkinnedMeshBatch& skinnedMeshBatch)
+	BatchUnit(IMeshBatch& meshBatch, ISkinnedMeshBatch& skinnedMeshBatch)
 	: mMeshBatch(meshBatch)
 	, mSkinnedMeshBatch(skinnedMeshBatch) {
 		
 	}
 	
-	MeshBatch& mMeshBatch;
-	SkinnedMeshBatch& mSkinnedMeshBatch;
+	IMeshBatch& mMeshBatch;
+	ISkinnedMeshBatch& mSkinnedMeshBatch;
 };

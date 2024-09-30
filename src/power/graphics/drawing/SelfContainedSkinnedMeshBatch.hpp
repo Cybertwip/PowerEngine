@@ -1,6 +1,6 @@
 #pragma once
 
-#include "graphics/drawing/Batch.hpp"
+#include "graphics/drawing/ISkinnedMeshBatch.hpp"
 
 #include "graphics/shading/MaterialProperties.hpp"
 
@@ -15,7 +15,7 @@ class RenderPass;
 class ShaderWrapper;
 class SkinnedMesh;
 
-class SelfContainedSkinnedMeshBatch : public Batch {
+class SelfContainedSkinnedMeshBatch : public ISkinnedMeshBatch {
 private:
 	struct VertexIndexer {
 		unsigned int mVertexOffset = 0;
@@ -25,11 +25,11 @@ private:
 public:
 	SelfContainedSkinnedMeshBatch(nanogui::RenderPass& renderPass, ShaderWrapper& shader);
 	
-	void add_mesh(std::reference_wrapper<SkinnedMesh> mesh);
-	void clear();
-	void append(std::reference_wrapper<SkinnedMesh> meshRef);
+	void add_mesh(std::reference_wrapper<SkinnedMesh> mesh) override;
+	void clear() override;
+	void append(std::reference_wrapper<SkinnedMesh> meshRef) override;
 	
-	void remove(std::reference_wrapper<SkinnedMesh> mesh);
+	void remove(std::reference_wrapper<SkinnedMesh> mesh) override;
 
 	void draw_content(const nanogui::Matrix4f& view,
 					  const nanogui::Matrix4f& projection) override;
