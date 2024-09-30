@@ -49,6 +49,8 @@ public:
 	}
 
 private:
+	void update_camera_view();
+	
 	void draw_content(const nanogui::Matrix4f& view, const nanogui::Matrix4f& projection);
 	void draw_contents() override;
 	void clear();

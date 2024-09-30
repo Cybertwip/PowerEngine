@@ -71,6 +71,8 @@ void SelfContainedMeshCanvas::set_active_actor(std::optional<std::reference_wrap
 				mBatchPositions = mSkinnedMeshBatch->get_batch_positions();
 			}
 			
+			update_camera_view();
+			
 			set_update(true);
 		}
 		else {
@@ -84,6 +86,7 @@ void SelfContainedMeshCanvas::set_active_actor(std::optional<std::reference_wrap
 					mBatchPositions = mMeshBatch->get_batch_positions();
 				}
 				
+				update_camera_view();
 				set_update(true);
 
 			}
@@ -100,10 +103,43 @@ void SelfContainedMeshCanvas::set_active_actor(std::optional<std::reference_wrap
 	}
 }
 
+void SelfContainedMeshCanvas::update_camera_view() {
+	
+	auto& batchPositions = mBatchPositions;
+	if (!batchPositions.empty()) {
+		// Initialize min and max bounds with extreme values
+		glm::vec3 minBounds(std::numeric_limits<float>::max());
+		glm::vec3 maxBounds(std::numeric_limits<float>::lowest());
+		
+		for (const auto& [identifier, positions] : batchPositions) {
+			for (size_t i = 0; i < positions.size(); i += 3) {
+				glm::vec3 pos(positions[i], positions[i + 1], positions[i + 2]);
+				minBounds = glm::min(minBounds, pos);
+				maxBounds = glm::max(maxBounds, pos);
+			}
+		}
+		
+		// Calculate center and size of the bounding box
+		glm::vec3 center = (minBounds + maxBounds) * 0.5f;
+		glm::vec3 size = maxBounds - minBounds;
+		float distance = glm::length(size); // Camera distance from object based on size
+		
+		// Set the camera position and view direction
+		auto& cameraTransform = mCamera.get_component<TransformComponent>();
+		
+		center.y = -center.y;
+		
+		cameraTransform.set_translation(center - glm::vec3(0.0f, 0.0f, distance));
+		
+		camera.look_at(mPreviewActor->get());
+	}
+}
+
 void SelfContainedMeshCanvas::draw_content(const nanogui::Matrix4f& view,
 										   const nanogui::Matrix4f& projection) {
 
 	DrawableComponent& drawableComponent = mPreviewActor->get().get_component<DrawableComponent>();
+	
 	Drawable& drawableRef = drawableComponent.drawable();
 	
 	drawableRef.draw_content(CanvasUtils::glm_to_nanogui(mModelMatrix), view, projection);
@@ -118,35 +154,6 @@ void SelfContainedMeshCanvas::draw_contents() {
 		auto& camera = mCamera.get_component<CameraComponent>();
 		
 		camera.update_view();
-		
-		auto& batchPositions = mBatchPositions;
-		if (!batchPositions.empty()) {
-			// Initialize min and max bounds with extreme values
-			glm::vec3 minBounds(std::numeric_limits<float>::max());
-			glm::vec3 maxBounds(std::numeric_limits<float>::lowest());
-			
-			for (const auto& [identifier, positions] : batchPositions) {
-				for (size_t i = 0; i < positions.size(); i += 3) {
-					glm::vec3 pos(positions[i], positions[i + 1], positions[i + 2]);
-					minBounds = glm::min(minBounds, pos);
-					maxBounds = glm::max(maxBounds, pos);
-				}
-			}
-			
-			// Calculate center and size of the bounding box
-			glm::vec3 center = (minBounds + maxBounds) * 0.5f;
-			glm::vec3 size = maxBounds - minBounds;
-			float distance = glm::length(size); // Camera distance from object based on size
-			
-			// Set the camera position and view direction
-			auto& cameraTransform = mCamera.get_component<TransformComponent>();
-			
-			center.y = -center.y;
-			
-			cameraTransform.set_translation(center - glm::vec3(0.0f, 0.0f, distance));
-			
-			camera.look_at(mPreviewActor->get());
-		}
 		
 		render_pass()->clear_color(0, nanogui::Color(0.0f, 0.0f, 0.0f, 1.0f));
 		
