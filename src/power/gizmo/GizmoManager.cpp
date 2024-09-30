@@ -26,8 +26,8 @@ mMeshActorLoader(meshActorLoader),
 mMeshShader(std::make_unique<ShaderWrapper>(*shaderManager.get_shader("gizmo"))),
 mSkinnedShader(std::make_unique<ShaderWrapper>(*shaderManager.get_shader("skinned_mesh"))),
 mTranslationGizmo(mMeshActorLoader.create_actor("internal/models/Gizmo/Translation.fbx", *mMeshShader, *mSkinnedShader))
-//mRotationGizmo(mMeshActorLoader.create_actor("internal/models/Gizmo/Rotation.fbx", *mMeshShader, *mSkinnedShader)),
-//mScaleGizmo(mMeshActorLoader.create_actor("internal/models/Gizmo/Scale.fbx", *mMeshShader, *mSkinnedShader))
+mRotationGizmo(mMeshActorLoader.create_actor("internal/models/Gizmo/Rotation.fbx", *mMeshShader, *mSkinnedShader)),
+mScaleGizmo(mMeshActorLoader.create_actor("internal/models/Gizmo/Scale.fbx", *mMeshShader, *mSkinnedShader))
 {
 	
 	// Translation Button
@@ -55,9 +55,6 @@ mTranslationGizmo(mMeshActorLoader.create_actor("internal/models/Gizmo/Translati
 
 void GizmoManager::select(GizmoAxis gizmoId) {
 	mGizmoAxis = gizmoId;
-	//	mTranslationGizmo->select(gizmoId);
-	//	mRotationGizmo->select(gizmoId);
-	//	mScaleGizmo->select(gizmoId);
 }
 
 void GizmoManager::hover(GizmoAxis gizmoId) {
@@ -74,9 +71,9 @@ void GizmoManager::select(std::optional<std::reference_wrapper<Actor>> actor) {
 	} else {
 		mTranslationGizmo.get_component<ColorComponent>().set_visible(false);
 		
-//		mRotationGizmo.get_component<ColorComponent>().set_visible(false);
-//
-//		mScaleGizmo.get_component<ColorComponent>().set_visible(false);
+		mRotationGizmo.get_component<ColorComponent>().set_visible(false);
+
+		mScaleGizmo.get_component<ColorComponent>().set_visible(false);
 	}
 }
 
@@ -225,9 +222,9 @@ void GizmoManager::set_mode(GizmoMode mode) {
 	
 	mTranslationGizmo.get_component<ColorComponent>().set_visible(false);
 	
-//	mRotationGizmo.get_component<ColorComponent>().set_visible(false);
-//
-//	mScaleGizmo.get_component<ColorComponent>().set_visible(false);
+	mRotationGizmo.get_component<ColorComponent>().set_visible(false);
+
+	mScaleGizmo.get_component<ColorComponent>().set_visible(false);
 
 	switch (mCurrentMode) {
 		case GizmoMode::Translation:{
@@ -235,10 +232,10 @@ void GizmoManager::set_mode(GizmoMode mode) {
 		}
 			break;
 		case GizmoMode::Rotation:
-//			mActiveGizmo = mRotationGizmo;
+			mActiveGizmo = mRotationGizmo;
 			break;
 		case GizmoMode::Scale:
-//			mActiveGizmo = mScaleGizmo;
+			mActiveGizmo = mScaleGizmo;
 			break;
 		default:
 			mActiveGizmo = std::nullopt;
@@ -279,9 +276,9 @@ void GizmoManager::draw_content(const nanogui::Matrix4f& model, const nanogui::M
 
 			glm::mat4 rotationMatrix = glm::mat4(1.0f); // Identity matrix
 			
-			if (&mActiveGizmo->get() == &mTranslationGizmo /*|| &mActiveGizmo->get() == &mScaleGizmo*/) {
+			if (&mActiveGizmo->get() == &mTranslationGizmo || &mActiveGizmo->get() == &mScaleGizmo) {
 				rotationMatrix = glm::rotate(rotationMatrix, glm::radians(-90.0f), glm::vec3(0, 1, 0));
-			} else if (false/*&mActiveGizmo->get() == &mRotationGizmo*/) {
+			} else if (&mActiveGizmo->get() == &mRotationGizmo) {
 				// First rotate around Z-axis by 90 degrees (as in your original code)
 				
 				// Then rotate around the Y-axis by another 90 degrees
