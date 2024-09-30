@@ -175,7 +175,7 @@ public:
 	span<double3> getPointsDeformed(bool apply_transform = false);
 	span<double3> getNormalsDeformed(size_t layer_index = 0, bool apply_transform = false);
 	
-	int getMaterialForVertexIndex(size_t vertex_index) const;
+	int getMaterialForVertexIndex(unsigned int vertex_index) const;
 		
 	void exportFBXObjects() override;
 
@@ -201,7 +201,7 @@ protected:
 	std::vector<std::vector<LayerElementDesc>> m_layers;
 	
 private:
-	std::unordered_map<size_t, int> m_vertex_to_material_map;
+	std::unordered_map<int, std::vector<unsigned int>> m_vertex_to_material_map;
 };
 
 

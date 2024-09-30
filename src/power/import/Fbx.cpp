@@ -150,6 +150,7 @@ void Fbx::ProcessMesh(const std::shared_ptr<sfbx::Mesh>& mesh) {
 			}
 		}
 	}
+
 	
 	// Precompute Color Indices
 	const auto& colorLayers = geometry->getColorLayers();
@@ -171,13 +172,6 @@ void Fbx::ProcessMesh(const std::shared_ptr<sfbx::Mesh>& mesh) {
 			}
 		}
 	}
-	
-	// Precompute material indices per vertex
-	std::vector<int> materialIndices(vertexCount, -1);
-	for (size_t i = 0; i < vertexCount; ++i) {
-		materialIndices[i] = geometry->getMaterialForVertexIndex(static_cast<int>(i));
-	}
-	
 	// Determine the number of threads to use
 	unsigned int numThreads = std::thread::hardware_concurrency();
 	if (numThreads == 0) numThreads = 1;
@@ -187,13 +181,20 @@ void Fbx::ProcessMesh(const std::shared_ptr<sfbx::Mesh>& mesh) {
 	size_t chunkSize = indexCount / numThreads;
 	size_t remainder = indexCount % numThreads;
 	
-	std::mutex vertexMutex;
-
 	auto processVertices = [&](size_t startIndex, size_t endIndex) {
 		for (size_t i = startIndex; i < endIndex; ++i) {
 			int controlPointIndex = vertexIndices[i];
 			
-			auto vertexPtr = std::make_unique<MeshVertex>();
+			// Ensure controlPointIndex is within bounds
+			if (controlPointIndex >= vertexCount) {
+				sfbxPrint("Error: controlPointIndex %d out of bounds.\n", controlPointIndex);
+				continue;
+			}
+			
+			auto& vertexPtr = resultMesh->get_vertices()[controlPointIndex];
+			if (vertexPtr.get() == nullptr) {
+				vertexPtr = std::make_unique<MeshVertex>();
+			}
 			auto& vertex = *vertexPtr;
 			
 			// Transform position
@@ -216,25 +217,15 @@ void Fbx::ProcessMesh(const std::shared_ptr<sfbx::Mesh>& mesh) {
 			// Set UVs
 			for (size_t layerIndex = 0; layerIndex < uvLayers.size(); ++layerIndex) {
 				int uvIndex = uvIndicesPerLayer[layerIndex][i];
-				if (uvIndex >= 0 && uvIndex < static_cast<int>(uvLayers[layerIndex].data.size())) { // Added bounds check
+				if (uvIndex >= 0 && static_cast<size_t>(uvIndex) < uvLayers[layerIndex].data.size()) {
 					const auto& uv = uvLayers[layerIndex].data[uvIndex];
-					if (layerIndex == 0) {
-						vertex.set_texture_coords1({ uv.x, uv.y });
-					} else if (layerIndex == 1) { // Assuming a second UV layer
-						vertex.set_texture_coords2({ uv.x, uv.y });
-					}
-					// Add more else-if blocks if there are more UV layers
+					vertex.set_texture_coords1(glm::vec2(static_cast<float>(uv.x), static_cast<float>(uv.y)));
 				} else {
-					if (layerIndex == 0) {
-						vertex.set_texture_coords1({ 0.0f, 0.0f });
-					} else if (layerIndex == 1) {
-						vertex.set_texture_coords2({ 0.0f, 0.0f });
-					}
-					// Handle additional UV layers similarly
+					vertex.set_texture_coords1(glm::vec2(0.0f, 0.0f)); // Default UV
 				}
 			}
 
-			
+
 			// Assign Vertex Color
 			if (!colorData.empty() && colorIndices[i] >= 0) {
 				const auto& color = colorData[colorIndices[i]];
@@ -243,15 +234,16 @@ void Fbx::ProcessMesh(const std::shared_ptr<sfbx::Mesh>& mesh) {
 				vertex.set_color({ 1.0f, 1.0f, 1.0f, 1.0f }); // Default color (white)
 			}
 			// Set material ID
-			int matIndex = materialIndices[controlPointIndex];
-			vertex.set_texture_id((matIndex >= 0 && matIndex < static_cast<int>(materials.size())) ? matIndex : -1);
+			// Assign material ID with bounds checking
+			int matIndex = geometry->getMaterialForVertexIndex(controlPointIndex);
+			if (matIndex >= 0 && matIndex < static_cast<int>(materials.size())) {
+				vertex.set_texture_id(matIndex);
+			} else {
+				vertex.set_texture_id(-1); // or a default material ID
+			}
 
 			// Assign vertex and index
-			{
-				std::lock_guard<std::mutex> lock(vertexMutex);
-				resultMesh->get_vertices()[controlPointIndex] = std::move(vertexPtr);
-				resultMesh->get_indices()[i] = controlPointIndex;
-			}
+			resultMesh->get_indices()[i] = controlPointIndex;
 		}
 	};
 	

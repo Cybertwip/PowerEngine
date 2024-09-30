@@ -272,17 +272,104 @@ void GeomMesh::importFBXObjects()
 			m_layers.push_back(std::move(layer_descs));
 		}
 	}
-	
-	// Prefill the vertex-to-material map
+	// Prefill the vertex-to-material map with all material layers
 	if (!m_material_layers.empty()) {
-		const auto& material_layer = m_material_layers[0]; // Assuming the first material layer
-		
-		for (int i = 0; i < material_layer.indices.size(); ++i) {
-			unsigned int material_index = material_layer.indices[i];
-			
-			m_vertex_to_material_map[i] = material_index;
+		for (const auto& material_layer : m_material_layers) { // Iterate through all material layers
+			switch (material_layer.mapping_mode) {
+				case LayerMappingMode::ByControlPoint: {
+					// One material per vertex
+					for (size_t i = 0; i < material_layer.indices.size(); ++i) {
+						if (i < m_vertex_to_material_map.size()) {
+							unsigned int material_index = material_layer.indices[i];
+							m_vertex_to_material_map[i].push_back(material_index);
+						} else {
+							sfbxPrint("Warning: Vertex index %zu out of range in ByControlPoint mapping.\n", i);
+						}
+					}
+					break;
+				}
+					
+				case LayerMappingMode::ByPolygon: {
+					int current_start = 0; // Initialize the starting index
+					for (size_t poly_idx = 0; poly_idx < m_counts.size(); ++poly_idx) {
+						if (poly_idx < material_layer.indices.size()) {
+							unsigned int material_index = material_layer.indices[poly_idx];
+							int start_idx = current_start;
+							int count = m_counts[poly_idx]; // Number of vertices in this polygon
+							
+							// Assign the material to all vertices of the polygon
+							for (int i = 0; i < count; ++i) {
+								if ((start_idx + i) < static_cast<int>(m_indices.size())) {
+									unsigned int vertex_idx = m_indices[start_idx + i];
+									if (vertex_idx < m_vertex_to_material_map.size()) {
+										m_vertex_to_material_map[vertex_idx].push_back(material_index);
+									} else {
+										sfbxPrint("Warning: Vertex index out of map range in ByPolygon mapping.\n");
+									}
+								} else {
+									sfbxPrint("Warning: Vertex index %d out of range in ByPolygon mapping.\n", start_idx + i);
+								}
+							}
+							
+							current_start += count; // Update the starting index for the next polygon
+						} else {
+							sfbxPrint("Warning: Not enough material indices for all polygons.\n");
+							break;
+						}
+					}
+					break;
+				}
+					
+				case LayerMappingMode::ByPolygonVertex: {
+					// One material per polygon vertex
+					for (size_t i = 0; i < material_layer.indices.size(); ++i) {
+						if (i < m_indices.size()) {
+							unsigned int material_index = material_layer.indices[i];
+							unsigned int vertex_idx = m_indices[i];
+							if (vertex_idx < m_vertex_to_material_map.size()) {
+								m_vertex_to_material_map[vertex_idx].push_back(material_index);
+							} else {
+								sfbxPrint("Warning: Vertex index out of map range in ByPolygonVertex mapping.\n");
+							}
+						} else {
+							sfbxPrint("Warning: More material indices than polygon vertices.\n");
+							break;
+						}
+					}
+					break;
+				}
+					
+				case LayerMappingMode::AllSame: {
+					// Apply the same material to all vertices
+					if (!material_layer.indices.empty()) {
+						unsigned int universal_material_index = material_layer.indices[0];
+						
+						if (material_layer.indices.size() > 1) {
+							sfbxPrint("Warning: More than one material index provided for AllSame mapping mode. Only the first will be used.\n");
+						}
+						
+						for (size_t index = 0; index < m_indices.size(); ++index) {
+							if (m_indices[index] < m_vertex_to_material_map.size()) {
+								m_vertex_to_material_map[m_indices[index]].push_back(universal_material_index);
+							} else {
+								sfbxPrint("Warning: Attempt to map beyond vertex map size.\n");
+							}
+						}
+					} else {
+						sfbxPrint("Warning: No material index provided for AllSame mapping mode.\n");
+					}
+					break;
+				}
+					
+				default:
+					sfbxPrint("Unsupported material mapping mode: %s\n", toString(material_layer.mapping_mode).c_str());
+					break;
+			}
 		}
 	}
+
+
+
 }
 
 void GeomMesh::exportFBXObjects()
@@ -469,12 +556,11 @@ span<double3> GeomMesh::getNormalsDeformed(size_t layer_index, bool apply_transf
 	}
 	return dst;
 }
-
-int GeomMesh::getMaterialForVertexIndex(size_t vertex_index) const
+int GeomMesh::getMaterialForVertexIndex(unsigned int vertex_index) const
 {
 	auto it = m_vertex_to_material_map.find(vertex_index);
-	if (it != m_vertex_to_material_map.end()) {
-		return it->second; // Return the material index for this vertex
+	if (it != m_vertex_to_material_map.end() && !it->second.empty()) {
+		return static_cast<int>(it->second[0]); // Assign the first material
 	}
 	return -1; // Material not found for this vertex
 }
