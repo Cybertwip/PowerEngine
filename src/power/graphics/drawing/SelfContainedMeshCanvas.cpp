@@ -107,6 +107,8 @@ void SelfContainedMeshCanvas::update_camera_view() {
 	
 	auto& batchPositions = mBatchPositions;
 	if (!batchPositions.empty()) {
+		auto& camera = mCamera.get_component<CameraComponent>();
+
 		// Initialize min and max bounds with extreme values
 		glm::vec3 minBounds(std::numeric_limits<float>::max());
 		glm::vec3 maxBounds(std::numeric_limits<float>::lowest());
