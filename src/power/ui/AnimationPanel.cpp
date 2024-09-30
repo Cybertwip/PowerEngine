@@ -112,34 +112,51 @@ void AnimationPanel::parse_file(const std::string& path) {
 }
 
 void AnimationPanel::set_active_actor(std::optional<std::reference_wrapper<Actor>> actor) {
-	
 	mActiveActor = actor;
 	
 	if (mActiveActor.has_value()) {
-		if (mActiveActor->get().find_component<SkinnedAnimationComponent>()) {
+		Actor& actorRef = mActiveActor->get();
+		
+		if (actorRef.find_component<SkinnedAnimationComponent>()) {
 			set_title("Animation");
 			set_visible(true);
 			parent()->perform_layout(screen()->nvg_context());
-
-			auto& playback = mActiveActor->get().get_component<PlaybackComponent>();
+			
+			auto& playback = actorRef.get_component<PlaybackComponent>();
 			
 			auto state = playback.get_state();
 			
 			if (state.getPlaybackState() == SkinnedAnimationComponent::PlaybackState::Pause) {
 				mPlayPauseButton->set_pushed(false);
 				mReversePlayButton->set_pushed(false);
-			} else if (state.getPlaybackState() == SkinnedAnimationComponent::PlaybackState::Play && state.getPlaybackModifier() == SkinnedAnimationComponent::PlaybackModifier::Forward) {
+			} else if (state.getPlaybackState() == SkinnedAnimationComponent::PlaybackState::Play &&
+					   state.getPlaybackModifier() == SkinnedAnimationComponent::PlaybackModifier::Forward) {
 				mPlayPauseButton->set_pushed(true);
 				mReversePlayButton->set_pushed(false);
-			} else if (state.getPlaybackState() == SkinnedAnimationComponent::PlaybackState::Play && state.getPlaybackModifier() == SkinnedAnimationComponent::PlaybackModifier::Reverse) {
+			} else if (state.getPlaybackState() == SkinnedAnimationComponent::PlaybackState::Play &&
+					   state.getPlaybackModifier() == SkinnedAnimationComponent::PlaybackModifier::Reverse) {
 				mPlayPauseButton->set_pushed(false);
 				mReversePlayButton->set_pushed(true);
 			}
 			
-		} else if (mActiveActor->get().find_component<DrawableComponent>()){
-			set_title("Mesh");
-			set_visible(true);
-			parent()->perform_layout(screen()->nvg_context());
+		} else if (actorRef.find_component<DrawableComponent>()) {
+			DrawableComponent& drawableComponent = actorRef.get_component<DrawableComponent>();
+			const Drawable& drawableRef = drawableComponent.drawable();
+			
+			// Attempt to cast to MeshComponent using dynamic_cast
+			const MeshComponent* meshComponent = dynamic_cast<const MeshComponent*>(&drawableRef);
+			if (meshComponent) {
+				set_title("Mesh");
+				set_visible(true);
+				parent()->perform_layout(screen()->nvg_context());
+			}
+			else {
+				// Handle the case where drawable is not a MeshComponent
+				std::cerr << "Error: DrawableComponent does not contain a MeshComponent." << std::endl;
+				set_visible(false);
+				parent()->perform_layout(screen()->nvg_context());
+				return;
+			}
 		} else {
 			set_visible(false);
 			parent()->perform_layout(screen()->nvg_context());
