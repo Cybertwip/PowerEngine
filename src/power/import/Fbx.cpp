@@ -245,6 +245,8 @@ void Fbx::ProcessMesh(const std::shared_ptr<sfbx::Mesh>& mesh) {
 
 			// Assign vertex and index
 			resultMesh->get_vertices()[controlPointIndex] = std::move(vertexPtr);
+			
+			vertexPtr = nullptr;
 			resultMesh->get_indices()[i] =
 			controlPointIndex;
 		}

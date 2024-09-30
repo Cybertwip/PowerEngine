@@ -1,7 +1,5 @@
 #include "graphics/drawing/MeshActorBuilder.hpp"
 
-#include <filesystem>
-
 #include "actors/Actor.hpp"
 
 #include "components/AnimationComponent.hpp"
@@ -22,9 +20,12 @@
 
 #include "import/SkinnedFbx.hpp"
 
+#include <filesystem>
+
+
 MeshActorBuilder::MeshActorBuilder(BatchUnit& batchUnit)
-: mBatchUnit(batchUnit) {
-	
+: mBatchUnit(batchUnit), mMeshActorImporter(std::make_unique<MeshActorImporter>()) {
+
 }
 
 Actor& MeshActorBuilder::build_mesh(Actor& actor, const std::string& actorName, CompressedSerialization::Deserializer& deserializer, ShaderWrapper& meshShader, ShaderWrapper& skinnedShader) {
@@ -222,124 +223,46 @@ Actor& MeshActorBuilder::build(Actor& actor, const std::string& path, ShaderWrap
 	
 	std::string actorName = std::filesystem::path(path).stem().string();
 	
-	if (extension == ".fbx") {
-		// Handle serialization path for classic .fbx files
-		// Add MetadataComponent to the actor
-		actor.add_component<MetadataComponent>(actor.identifier(), actorName);
-		
-		// Add ColorComponent
-		auto& colorComponent = actor.add_component<ColorComponent>(actor.get_component<MetadataComponent>());
-		
-		// Create and load the model
-		auto model = std::make_unique<SkinnedFbx>(path);
-		model->LoadModel(); // Assuming LoadModel handles the serialization
-		model->TryImportAnimations();
-		
-		std::unique_ptr<Drawable> drawableComponent;
-		
-		if (model->GetSkeleton() != nullptr) {
-			// Skinned Mesh Handling
-			std::vector<std::unique_ptr<SkinnedMesh>> skinnedMeshComponentData; // Corrected type to SkinnedMesh
-			
-			// Serialize Skeleton and Animations
-			auto pdo = std::make_unique<SkinnedAnimationComponent::SkinnedAnimationPdo>(std::move(model->GetSkeleton()));
-			
-			for (auto& animation : model->GetAnimationData()) {
-				pdo->mAnimationData.push_back(std::move(animation));
-			}
-			
-			// Add SkinnedAnimationComponent
-			auto& skinnedComponent = actor.add_component<SkinnedAnimationComponent>(std::move(pdo));
-			
-			// Add PlaybackComponent
-			actor.add_component<PlaybackComponent>();
-			
-			// Serialize each SkinnedMesh
-			for (int i = 0; i<model->GetSkinnedMeshData().size(); ++i) {
-				auto& skinnedMeshData = model->GetSkinnedMeshData()[i];
-				auto& materialData = model->GetMaterialProperties()[i];
-				
-				skinnedMeshData->get_material_properties().clear();
+	
+	// Create Deserializer
+	CompressedSerialization::Deserializer deserializer;
 
-				for (int j = 0; j < materialData.size(); ++j) {
-					
-					auto material = std::make_shared<MaterialProperties>();
-					
-					material->deserialize(*materialData[i]);
-					
-					
-					skinnedMeshData->get_material_properties().push_back(material);
-				}
+	if (extension == ".fbx") {
+		
+		
+		auto compressedMeshActor = mMeshActorImporter->process(path, "./dummyDestination/");
+		
+		std::stringstream compressedData;
+		
+		compressedMeshActor->mMesh.mSerializer->get_compressed_data(compressedData);
 				
-				skinnedMeshComponentData.push_back(std::make_unique<SkinnedMesh>(
-																				 std::move(skinnedMeshData),
-																				 skinnedShader,
-																				 mBatchUnit.mSkinnedMeshBatch,
-																				 colorComponent,
-																				 skinnedComponent
-																				 ));
-			}
-			
-			// Create SkinnedMeshComponent
-			drawableComponent = std::make_unique<SkinnedMeshComponent>(std::move(skinnedMeshComponentData), std::move(model));
-		} else {
-			// Non-Skinned Mesh Handling
-			std::vector<std::unique_ptr<Mesh>> meshComponentData;
-			
-			// Serialize each Mesh
-			for (int i = 0; i<model->GetMeshData().size(); ++i) {
-				auto& meshData = model->GetMeshData()[i];
-				auto& materialData = model->GetMaterialProperties()[i];
-				
-				meshData->get_material_properties().clear();
-				
-				for (int j = 0; j < materialData.size(); ++j) {
-					
-					auto material = std::make_shared<MaterialProperties>();
-					
-					material->deserialize(*materialData[i]);
-					
-					meshData->get_material_properties().push_back(material);
-				}
-				meshComponentData.push_back(std::make_unique<Mesh>(
-																   std::move(meshData),
-																   meshShader,
-																   mBatchUnit.mMeshBatch,
-																   colorComponent
-																   ));
-			}
-			
-			// Create MeshComponent
-			drawableComponent = std::make_unique<MeshComponent>(std::move(meshComponentData), std::move(model));
+		if (!deserializer.initialize(compressedData)) {
+			std::cerr << "Failed to load serialized file: " << path << "\n";
+			return actor;
 		}
 		
-		// Add DrawableComponent
-		actor.add_component<DrawableComponent>(std::move(drawableComponent));
 		
-		// Add TransformComponent and AnimationComponent
-		actor.add_component<TransformComponent>();
-		actor.add_component<AnimationComponent>();
-		
+		filePath = std::filesystem::path(path);
+		extension = filePath.extension().string();
+
 	} else {
-		// Create Deserializer
-		CompressedSerialization::Deserializer deserializer;
-		
 		// Load the serialized file
 		if (!deserializer.load_from_file(path)) {
 			std::cerr << "Failed to load serialized file: " << path << "\n";
 			return actor;
 		}
 		
-		if (extension == ".psk") {
-			return build_skinned(actor, actorName, deserializer, meshShader, skinnedShader);
-		} else if (extension == ".pma") {
-			return build_mesh(actor, actorName, deserializer, meshShader, skinnedShader);
-		} else {
-			std::cerr << "Unsupported file extension: " << extension << "\n";
-			return actor;
-		}
 	}
 	
+	
+	if (extension == ".psk") {
+		return build_skinned(actor, actorName, deserializer, meshShader, skinnedShader);
+	} else if (extension == ".pma") {
+		return build_mesh(actor, actorName, deserializer, meshShader, skinnedShader);
+	} else {
+		std::cerr << "Unsupported file extension: " << extension << "\n";
+		return actor;
+	}
 	
 	return actor;
 }

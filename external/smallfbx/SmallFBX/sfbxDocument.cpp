@@ -186,7 +186,7 @@ void GlobalSettings::importFBXObjects(Document *doc)
 			frame_rate = c->getProperty(4)->getValue<float64>();
 			
 			if(frame_rate <= 0){
-				frame_rate = 60;
+				frame_rate = 30;
 			}
 		}
 

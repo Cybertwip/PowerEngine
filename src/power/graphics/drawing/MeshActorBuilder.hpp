@@ -1,12 +1,17 @@
 #pragma once
 
 #include "filesystem/CompressedSerialization.hpp"
+#include "filesystem/MeshActorImporter.hpp"
+
 #include "graphics/drawing/Mesh.hpp"
 
+#include <memory>
 #include <string>
 #include <unordered_map>
 
+
 class Actor;
+class MeshActorImporter;
 class MeshComponent;
 class ShaderWrapper;
 class SkinnedFbx;
@@ -25,4 +30,6 @@ public:
 
 private:
 	BatchUnit& mBatchUnit;
+	
+	std::unique_ptr<MeshActorImporter> mMeshActorImporter;
 };
