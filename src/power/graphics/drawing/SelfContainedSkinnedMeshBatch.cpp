@@ -81,7 +81,7 @@ void SelfContainedSkinnedMeshBatch::add_mesh(std::reference_wrapper<SkinnedMesh>
 	if (it != mMeshes.end()) {
 		it->second.push_back(mesh);
 	} else {
-		mMeshes[&(mesh.get().get_shader())].push_back(mesh);
+		mMeshes[&(mShader)].push_back(mesh);
 	}
 }
 
@@ -150,7 +150,7 @@ mesh.get_flattened_bone_ids().end());
 
 void SelfContainedSkinnedMeshBatch::remove(std::reference_wrapper<SkinnedMesh> meshRef) {
 	auto& mesh = meshRef.get();
-	auto& shader = mesh.get_shader();
+	auto& shader = mShader;
 	int identifier = shader.identifier();
 	
 	// 1. Locate the mesh in mMeshes
@@ -358,7 +358,7 @@ void SelfContainedSkinnedMeshBatch::draw_content(const nanogui::Matrix4f& view,
 				continue;
 			}
 			
-			auto& shader = mesh.get_shader();
+			auto& shader = mShader;
 			
 			// Set uniforms and draw the mesh content
 			shader.set_uniform("aView", view);

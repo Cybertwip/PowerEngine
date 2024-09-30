@@ -78,7 +78,7 @@ void SelfContainedMeshBatch::add_mesh(std::reference_wrapper<Mesh> mesh) {
 	if (it != mMeshes.end()) {
 		it->second.push_back(mesh);
 	} else {
-		mMeshes[&(mesh.get().get_shader())].push_back(mesh);
+		mMeshes[&(mShader)].push_back(mesh);
 	}
 }
 
@@ -161,7 +161,7 @@ void SelfContainedMeshBatch::upload_vertex_data(ShaderWrapper& shader, int ident
 
 void SelfContainedMeshBatch::remove(std::reference_wrapper<Mesh> meshRef) {
 	auto& mesh = meshRef.get();
-	auto& shader = mesh.get_shader();
+	auto& shader = mShader;
 	int identifier = shader.identifier();
 	
 	// 1. Locate the mesh in mMeshes
