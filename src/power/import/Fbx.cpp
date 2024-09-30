@@ -237,7 +237,7 @@ void Fbx::ProcessMesh(const std::shared_ptr<sfbx::Mesh>& mesh) {
 			// Assign material ID with bounds checking
 			int matIndex = geometry->getMaterialForVertexIndex(controlPointIndex);
 			if (matIndex >= 0 && matIndex < static_cast<int>(materials.size())) {
-				vertex.set_texture_id(matIndex);
+				vertex.set_texture_id(materialIndexMap[matIndex]);
 			} else {
 				vertex.set_texture_id(-1); // or a default material ID
 			}
