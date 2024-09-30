@@ -72,7 +72,6 @@ void SelfContainedMeshCanvas::set_active_actor(std::optional<std::reference_wrap
 			}
 			
 			set_update(true);
-
 		}
 		else {
 			// Attempt to cast to MeshComponent
@@ -103,6 +102,12 @@ void SelfContainedMeshCanvas::set_active_actor(std::optional<std::reference_wrap
 
 void SelfContainedMeshCanvas::draw_content(const nanogui::Matrix4f& view,
 										   const nanogui::Matrix4f& projection) {
+
+	DrawableComponent& drawableComponent = mPreviewActor->get().get_component<DrawableComponent>();
+	Drawable& drawableRef = drawableComponent.drawable();
+	
+	drawableRef.draw_content(mModelMatrix, view, projection);
+	
 	mMeshBatch->draw_content(view, projection);
 	
 	mSkinnedMeshBatch->draw_content(view, projection);
