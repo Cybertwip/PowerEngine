@@ -52,32 +52,40 @@ void SelfContainedMeshCanvas::set_active_actor(std::optional<std::reference_wrap
 	set_update(true);
 	
 	if (mPreviewActor.has_value()) {
-		if (mPreviewActor->get().find_component<SkinnedAnimationComponent>()) {
-			DrawableComponent& drawableComponent = mPreviewActor->get().get_component<DrawableComponent>();
-			const SkinnedMeshComponent& meshComponent = static_cast<const SkinnedMeshComponent&>(drawableComponent.drawable());
-			for (auto& skinnedData : meshComponent.get_skinned_mesh_data()) {
-				
+		DrawableComponent& drawableComponent = mPreviewActor->get().get_component<DrawableComponent>();
+		const Drawable& drawableRef = drawableComponent.drawable();
+		
+		// Attempt to cast to SkinnedMeshComponent
+		const SkinnedMeshComponent* skinnedMeshComponent = dynamic_cast<const SkinnedMeshComponent*>(&drawableRef);
+		
+		if (skinnedMeshComponent) {
+			// Successfully cast to SkinnedMeshComponent
+			for (auto& skinnedData : skinnedMeshComponent->get_skinned_mesh_data()) {
 				mBatchUnit->mSkinnedMeshBatch.add_mesh(*skinnedData);
-				
 				mBatchUnit->mSkinnedMeshBatch.append(*skinnedData);
-				
 				mBatchPositions = mBatchUnit->mSkinnedMeshBatch.get_batch_positions();
-
 			}
-		} else {
-			DrawableComponent& drawableComponent = mPreviewActor->get().get_component<DrawableComponent>();
-			const MeshComponent& meshComponent = static_cast<const MeshComponent&>(drawableComponent.drawable());
-			for (auto& meshData : meshComponent.get_mesh_data()) {
-				
-				mBatchUnit->mMeshBatch.add_mesh(*meshData);
-
-				mBatchUnit->mMeshBatch.append(*meshData);
-				
-				mBatchPositions = mBatchUnit->mMeshBatch.get_batch_positions();
-			}
-
 		}
-	} else {
+		else {
+			// Attempt to cast to MeshComponent
+			const MeshComponent* meshComponent = dynamic_cast<const MeshComponent*>(&drawableRef);
+			if (meshComponent) {
+				// Successfully cast to MeshComponent
+				for (auto& meshData : meshComponent->get_mesh_data()) {
+					mBatchUnit->mMeshBatch.add_mesh(*meshData);
+					mBatchUnit->mMeshBatch.append(*meshData);
+					mBatchPositions = mBatchUnit->mMeshBatch.get_batch_positions();
+				}
+			}
+			else {
+				// Handle the case where drawable is neither SkinnedMeshComponent nor MeshComponent
+				std::cerr << "Error: DrawableComponent does not contain a SkinnedMeshComponent or MeshComponent." << std::endl;
+				set_update(false);
+				return;
+			}
+		}
+	}
+	else {
 		set_update(false);
 	}
 }

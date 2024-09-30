@@ -14,6 +14,7 @@
 #include "components/PlaybackComponent.hpp"
 #include "components/SkinnedAnimationComponent.hpp"
 #include "components/SkinnedMeshComponent.hpp"
+#include "components/MeshComponent.hpp"
 #include "components/TransformComponent.hpp"
 #include "components/CameraComponent.hpp"
 
@@ -114,9 +115,9 @@ void AnimationPanel::set_active_actor(std::optional<std::reference_wrapper<Actor
 	
 	mActiveActor = actor;
 	
-	
 	if (mActiveActor.has_value()) {
 		if (mActiveActor->get().find_component<SkinnedAnimationComponent>()) {
+			set_title("Animation");
 			set_visible(true);
 			parent()->perform_layout(screen()->nvg_context());
 
@@ -135,6 +136,10 @@ void AnimationPanel::set_active_actor(std::optional<std::reference_wrapper<Actor
 				mReversePlayButton->set_pushed(true);
 			}
 			
+		} else if (mActiveActor->get().find_component<DrawableComponent>()){
+			set_title("Mesh");
+			set_visible(true);
+			parent()->perform_layout(screen()->nvg_context());
 		} else {
 			set_visible(false);
 			parent()->perform_layout(screen()->nvg_context());
