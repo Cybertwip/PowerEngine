@@ -106,9 +106,9 @@ void Fbx::ProcessMesh(const std::shared_ptr<sfbx::Mesh>& mesh) {
 	
 	// Retrieve materials and map them to indices
 	const auto& materials = mesh->getMaterials();
-	std::unordered_map<std::shared_ptr<sfbx::Material>, int64_t> materialIndexMap;
-	for (size_t i = 0; i < materials.size(); ++i) {
-		materialIndexMap[materials[i]] = static_cast<int64_t>(i);
+	std::unordered_map<std::shared_ptr<sfbx::Material>, int> materialIndexMap;
+	for (int i = 0; i < materials.size(); ++i) {
+		materialIndexMap[materials[i]] = i;
 	}
 	
 	// Precompute normal indices
