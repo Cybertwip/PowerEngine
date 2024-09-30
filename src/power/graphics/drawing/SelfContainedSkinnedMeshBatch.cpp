@@ -86,14 +86,16 @@ void SelfContainedSkinnedMeshBatch::add_mesh(std::reference_wrapper<SkinnedMesh>
 }
 
 void SelfContainedSkinnedMeshBatch::clear() {
+	mMeshes.clear();
+
 	mBatchPositions.clear();
-	mBatchNormals.clear();
 	mBatchTexCoords1.clear();
 	mBatchTexCoords2.clear();
 	mBatchMaterialIds.clear();
 	mBatchIndices.clear();
 	mBatchMaterials.clear();
 	mMeshStartIndices.clear();
+	mVertexIndexingMap.clear();
 }
 
 void SelfContainedSkinnedMeshBatch::append(std::reference_wrapper<SkinnedMesh> meshRef) {
@@ -107,9 +109,6 @@ void SelfContainedSkinnedMeshBatch::append(std::reference_wrapper<SkinnedMesh> m
 	mBatchPositions[identifier].insert(mBatchPositions[identifier].end(),
 									   mesh.get_flattened_positions().begin(),
 									   mesh.get_flattened_positions().end());
-	mBatchNormals[identifier].insert(mBatchNormals[identifier].end(),
-									 mesh.get_flattened_normals().begin(),
-									 mesh.get_flattened_normals().end());
 	mBatchTexCoords1[shader.identifier()].insert(mBatchTexCoords1[shader.identifier()].end(),
 												 mesh.get_flattened_tex_coords1().begin(),
 												 mesh.get_flattened_tex_coords1().end());
@@ -227,13 +226,6 @@ void SelfContainedSkinnedMeshBatch::remove(std::reference_wrapper<SkinnedMesh> m
 					positions.begin() + (startIdx + numVertices) * 3
 					);
 	
-	// Remove from normals
-	auto& normals = mBatchNormals[identifier];
-	normals.erase(
-				  normals.begin() + startIdx * 3,
-				  normals.begin() + (startIdx + numVertices) * 3
-				  );
-	
 	// Remove from texcoords1
 	auto& texcoords1 = mBatchTexCoords1[identifier];
 	texcoords1.erase(
@@ -293,7 +285,6 @@ void SelfContainedSkinnedMeshBatch::remove(std::reference_wrapper<SkinnedMesh> m
 	if (mesh_vector.empty()) {
 		mMeshes.erase(&shader);
 		mBatchPositions.erase(identifier);
-		mBatchNormals.erase(identifier);
 		mBatchTexCoords1.erase(identifier);
 		mBatchTexCoords2.erase(identifier);
 		mBatchMaterialIds.erase(identifier);
@@ -316,8 +307,6 @@ void SelfContainedSkinnedMeshBatch::upload_vertex_data(ShaderWrapper& shader, in
 	// Upload consolidated data to GPU
 	shader.persist_buffer("aPosition", nanogui::VariableType::Float32, {mBatchPositions[identifier].size() / 3, 3},
 					  mBatchPositions[identifier].data());
-	shader.persist_buffer("aNormal", nanogui::VariableType::Float32, {mBatchNormals[identifier].size() / 3, 3},
-					  mBatchNormals[identifier].data());
 	shader.persist_buffer("aTexcoords1", nanogui::VariableType::Float32, {mBatchTexCoords1[identifier].size() / 2, 2},
 					  mBatchTexCoords1[identifier].data());
 	shader.persist_buffer("aTexcoords2", nanogui::VariableType::Float32, {mBatchTexCoords2[identifier].size() / 2, 2},

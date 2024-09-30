@@ -51,8 +51,6 @@ mUpdate(true) {
 	mSkinnedMeshBatch = std::make_unique<SelfContainedSkinnedMeshBatch>(*render_pass(), mSkinnedMeshPreviewShader);
 }
 void SelfContainedMeshCanvas::set_active_actor(std::optional<std::reference_wrapper<Actor>> actor) {
-	set_update(false);
-
 	clear();
 	mCurrentTime = 0;
 
@@ -111,7 +109,7 @@ void SelfContainedMeshCanvas::draw_content(const nanogui::Matrix4f& view,
 }
 
 void SelfContainedMeshCanvas::draw_contents() {
-	if (mPreviewActor.has_value()) {
+	if (mPreviewActor.has_value() && mUpdate) {
 		auto& camera = mCamera.get_component<CameraComponent>();
 		
 		camera.update_view();
@@ -157,6 +155,7 @@ void SelfContainedMeshCanvas::draw_contents() {
 }
 
 void SelfContainedMeshCanvas::clear() {
+	set_update(false);
 
 	mMeshBatch->clear();
 	mSkinnedMeshBatch->clear();
