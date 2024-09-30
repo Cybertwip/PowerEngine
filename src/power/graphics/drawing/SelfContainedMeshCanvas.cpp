@@ -88,7 +88,6 @@ void SelfContainedMeshCanvas::draw_content(const nanogui::Matrix4f& view,
 	
 	mBatchUnit->mSkinnedMeshBatch.draw_content(view, projection);
 }
-}
 
 void SelfContainedMeshCanvas::draw_contents() {
 	if (mPreviewActor.has_value()) {
