@@ -201,7 +201,7 @@ protected:
 	std::vector<std::vector<LayerElementDesc>> m_layers;
 	
 private:
-	std::unordered_map<int, std::vector<unsigned int>> m_vertex_to_material_map;
+	std::unordered_map<int, unsigned int> m_vertex_to_material_map;
 };
 
 

@@ -306,7 +306,6 @@ Def(double3, double3);
 Def(double4, double4);
 #undef Def
 
-
 template<class S, class D>
 void ToVector(span<Property> props, D& dst)
 {
@@ -316,8 +315,6 @@ void ToVector(span<Property> props, D& dst)
             *d++ = prop.getValue<get_scalar_t<S>>();
     }
 }
-
-
 template<class S, class D>
 void ToVectorWithOffset(size_t offset, span<Property> props, D& dst)
 {
@@ -334,11 +331,10 @@ void ToVectorWithOffset(size_t offset, span<Property> props, D& dst)
 	}
 }
 template<> void Node::getPropertiesValues<double4x4, double4x4>(double4x4& dst) const { ToVector<double4x4, double4x4>(getProperties(), dst); }
-
+template<> void Node::getPropertiesValues<double2>(double2& dst) const { ToVector<float32, double2>(getProperties(), dst); }
+template<> void Node::getPropertiesValues<double2>(size_t offset, double2& dst) const { ToVectorWithOffset<float32, double2>(offset, getProperties(), dst); }
 template<> void Node::getPropertiesValues<double3>(double3& dst) const { ToVector<float32, double3>(getProperties(), dst); }
-
 template<> void Node::getPropertiesValues<double3>(size_t offset, double3& dst) const { ToVectorWithOffset<float32, double3>(offset, getProperties(), dst); }
-
 #endif
 
 

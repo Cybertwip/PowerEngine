@@ -173,9 +173,9 @@ template<> span<float64> Property::allocateArray(size_t size)
 }
 template<> span<double2> Property::allocateArray(size_t size)
 {
-    m_type = PropertyType::Float64Array;
-    m_data.resize(size * sizeof(double2));
-    return make_span((double2*)m_data.data(), size);
+	m_type = PropertyType::Float64Array;
+	m_data.resize(size * sizeof(double2));
+	return make_span((double2*)m_data.data(), size);
 }
 template<> span<double3> Property::allocateArray(size_t size)
 {
@@ -218,7 +218,6 @@ template<> void Property::assign(span<int32> v)   { m_type = PropertyType::Int32
 template<> void Property::assign(span<int64> v)   { m_type = PropertyType::Int64Array; Assign(m_data, v); }
 template<> void Property::assign(span<float32> v) { m_type = PropertyType::Float32Array; Assign(m_data, v); }
 template<> void Property::assign(span<float64> v) { m_type = PropertyType::Float64Array; Assign(m_data, v); }
-
 template<> void Property::assign(span<double2> v)  {
 	assign(span<float64>{ (float64*)v.data(), v.size() });
 }
@@ -269,7 +268,7 @@ template<> span<int32>   Property::getArray() const { convert(PropertyType::Int3
 template<> span<int64>   Property::getArray() const { convert(PropertyType::Int64Array); return make_span((int64*)m_data.data(), getArraySize()); }
 template<> span<float32> Property::getArray() const { convert(PropertyType::Float32Array); return make_span((float32*)m_data.data(), getArraySize()); }
 template<> span<float64> Property::getArray() const { return make_span((float64*)m_data.data(), getArraySize()); }
-
+template<> span<float2> Property::getArray() const { return make_span((float2*)m_data.data(), getArraySize() / 2); }
 template<> span<double2> Property::getArray() const { return make_span((double2*)m_data.data(), getArraySize() / 2); }
 template<> span<double3> Property::getArray() const { return make_span((double3*)m_data.data(), getArraySize() / 3); }
 template<> span<double4> Property::getArray() const { return make_span((double4*)m_data.data(), getArraySize() / 4); }

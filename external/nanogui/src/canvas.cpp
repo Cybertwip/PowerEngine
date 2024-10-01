@@ -60,7 +60,7 @@ Canvas::Canvas(Widget *parent, uint8_t samples,
 										 m_size,
 										 Texture::InterpolationMode::Bilinear,
 										 Texture::InterpolationMode::Bilinear,
-										 Texture::WrapMode::ClampToEdge,
+										 Texture::WrapMode::Repeat,
 										 samples, 					 Texture::TextureFlags::RenderTarget
 										 );
 	} else {
@@ -70,7 +70,7 @@ Canvas::Canvas(Widget *parent, uint8_t samples,
 									m_size,
 									Texture::InterpolationMode::Bilinear,
 									Texture::InterpolationMode::Bilinear,
-									Texture::WrapMode::ClampToEdge,
+									Texture::WrapMode::Repeat,
 									samples,
 									Texture::TextureFlags::RenderTarget
 									);
@@ -85,7 +85,7 @@ Canvas::Canvas(Widget *parent, uint8_t samples,
 												 m_size,
 												 Texture::InterpolationMode::Bilinear,
 												 Texture::InterpolationMode::Bilinear,
-												 Texture::WrapMode::ClampToEdge,
+												 Texture::WrapMode::Repeat,
 												 1,
 												 Texture::TextureFlags::RenderTarget
 												 );
@@ -104,7 +104,7 @@ Canvas::Canvas(Widget *parent, uint8_t samples,
 									m_size,
 									Texture::InterpolationMode::Bilinear,
 									Texture::InterpolationMode::Bilinear,
-									Texture::WrapMode::ClampToEdge,
+									Texture::WrapMode::Repeat,
 									samples,
 									Texture::TextureFlags::RenderTarget
 									);

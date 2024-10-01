@@ -110,7 +110,7 @@ void metal_window_init(void *nswin_, bool float_buffer) {
         layer.colorspace = CGColorSpaceCreateWithName(kCGColorSpaceExtendedSRGB);
     } else {
         layer.wantsExtendedDynamicRangeContent = NO;
-        layer.pixelFormat = MTLPixelFormatBGRA8Unorm;
+        layer.pixelFormat = MTLPixelFormatRGBA8Unorm;
         layer.colorspace = CGColorSpaceCreateWithName(kCGColorSpaceSRGB);
     }
     layer.displaySyncEnabled = YES;

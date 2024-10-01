@@ -98,13 +98,13 @@ void GeomMesh::addUV(int set_index, float u, float v) {
 		while (m_uv_layers.size() <= set_index) {
 			LayerElementF2 new_layer;
 			new_layer.name = "UVSet" + std::to_string(m_uv_layers.size() + 1);
-			new_layer.mapping_mode = LayerMappingMode::ByControlPoint;
-			new_layer.reference_mode = LayerReferenceMode::Direct;
+			new_layer.mapping_mode = LayerMappingMode::ByPolygonVertex;
+			new_layer.reference_mode = LayerReferenceMode::IndexToDirect;
 			m_uv_layers.emplace_back(std::move(new_layer));
 		}
 	}
 	// Add the UV to the specified layer
-	m_uv_layers[set_index].data.push_back(double2{u, v});
+	m_uv_layers[set_index].data.push_back(float2{u, v});
 }
 
 void GeomMesh::addVertexColor(float r, float g, float b, float a, size_t layer_index) {
@@ -290,13 +290,13 @@ void GeomMesh::importFBXObjects()
 					for (size_t i = 0; i < limit; ++i) {
 						unsigned int material_index = material_layer.indices[i];
 						// Insert or update the map entry for vertex i
-						m_vertex_to_material_map[i].push_back(material_index);
+						m_vertex_to_material_map[i] = material_index;
 					}
 					break;
 				}
-					
 				case LayerMappingMode::ByPolygon: {
 					size_t current_start = 0; // Initialize the starting index
+					
 					for (size_t poly_idx = 0; poly_idx < m_counts.size(); ++poly_idx) {
 						if (poly_idx < material_layer.indices.size()) {
 							unsigned int material_index = material_layer.indices[poly_idx];
@@ -305,12 +305,24 @@ void GeomMesh::importFBXObjects()
 							// Assign the material to all vertices of the polygon
 							for (size_t i = 0; i < count; ++i) {
 								size_t vertex_index_in_m_indices = current_start + i;
+								
 								if (vertex_index_in_m_indices < m_indices.size()) {
-									unsigned int vertex_idx = m_indices[vertex_index_in_m_indices];
-									if (vertex_idx >= 0 && vertex_idx < static_cast<int>(m_points.size())) {
-										m_vertex_to_material_map[vertex_idx].push_back(material_index);
+									unsigned int vertex_idx_unsigned = m_indices[vertex_index_in_m_indices];
+									
+									// Convert to signed int
+									if (vertex_idx_unsigned > static_cast<unsigned int>(INT32_MAX)) {
+										sfbxPrint("Warning: Vertex index %u exceeds INT32_MAX and cannot be converted to int.\n", vertex_idx_unsigned);
+										continue;
+									}
+									
+									int vertex_idx = static_cast<int>(vertex_idx_unsigned);
+									
+									// Ensure vertex_idx is non-negative and within the range of m_points
+									if (vertex_idx >= 0 && static_cast<size_t>(vertex_idx) < m_points.size()) {
+										// Assign the material index to the vertex
+										m_vertex_to_material_map[vertex_idx] = material_index;
 									} else {
-										sfbxPrint("Warning: Vertex index %u out of range in ByPolygon mapping.\n", vertex_idx);
+										sfbxPrint("Warning: Vertex index %d out of range in ByPolygon mapping.\n", vertex_idx);
 									}
 								} else {
 									sfbxPrint("Warning: Vertex index %zu out of range in ByPolygon mapping.\n", vertex_index_in_m_indices);
@@ -326,6 +338,7 @@ void GeomMesh::importFBXObjects()
 					}
 					break;
 				}
+
 					
 				case LayerMappingMode::ByPolygonVertex: {
 					// One material per polygon vertex
@@ -334,7 +347,7 @@ void GeomMesh::importFBXObjects()
 						unsigned int material_index = material_layer.indices[i];
 						unsigned int vertex_idx = m_indices[i];
 						if (vertex_idx >= 0 && vertex_idx < static_cast<int>(m_points.size())) {
-							m_vertex_to_material_map[vertex_idx].push_back(material_index);
+							m_vertex_to_material_map[vertex_idx] = material_index;
 						} else {
 							sfbxPrint("Warning: Vertex index %u out of range in ByPolygonVertex mapping.\n", vertex_idx);
 						}
@@ -359,7 +372,7 @@ void GeomMesh::importFBXObjects()
 						for (size_t index = 0; index < m_indices.size(); ++index) {
 							unsigned int vertex_idx = m_indices[index];
 							if (vertex_idx >= 0 && vertex_idx < static_cast<int>(m_points.size())) {
-								m_vertex_to_material_map[vertex_idx].push_back(universal_material_index);
+								m_vertex_to_material_map[vertex_idx]= universal_material_index;
 							} else {
 								sfbxPrint("Warning: Vertex index %u out of range in AllSame mapping.\n", vertex_idx);
 							}
@@ -565,8 +578,8 @@ span<double3> GeomMesh::getNormalsDeformed(size_t layer_index, bool apply_transf
 int GeomMesh::getMaterialForVertexIndex(unsigned int vertex_index) const
 {
 	auto it = m_vertex_to_material_map.find(vertex_index);
-	if (it != m_vertex_to_material_map.end() && !it->second.empty()) {
-		return static_cast<int>(it->second[0]); // Assign the first material
+	if (it != m_vertex_to_material_map.end()) {
+		return static_cast<int>(it->second); // Assign the first material
 	}
 	return -1; // Material not found for this vertex
 }

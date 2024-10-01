@@ -150,12 +150,7 @@ void ImportWindow::Preview(const std::string& path, const std::string& directory
 void ImportWindow::ImportIntoProject() {
 	mPreviewCanvas->take_snapshot([this](std::vector<uint8_t>& pixels) {
 		auto& serializer = mCompressedMeshData->mMesh.mSerializer;
-		
-		// Convert RGBA to BGRA in place by swapping the Blue and Red channels
-		for (size_t i = 0; i < pixels.size(); i += 4) {
-			std::swap(pixels[i], pixels[i + 2]); // Swap B and R
-		}
-		
+				
 		std::vector<uint8_t> png_data;
 		
 		// Now write the converted RGBA data to PNG
