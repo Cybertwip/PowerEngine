@@ -268,7 +268,6 @@ template<> span<int32>   Property::getArray() const { convert(PropertyType::Int3
 template<> span<int64>   Property::getArray() const { convert(PropertyType::Int64Array); return make_span((int64*)m_data.data(), getArraySize()); }
 template<> span<float32> Property::getArray() const { convert(PropertyType::Float32Array); return make_span((float32*)m_data.data(), getArraySize()); }
 template<> span<float64> Property::getArray() const { return make_span((float64*)m_data.data(), getArraySize()); }
-template<> span<float2> Property::getArray() const { return make_span((float2*)m_data.data(), getArraySize() / 2); }
 template<> span<double2> Property::getArray() const { return make_span((double2*)m_data.data(), getArraySize() / 2); }
 template<> span<double3> Property::getArray() const { return make_span((double3*)m_data.data(), getArraySize() / 3); }
 template<> span<double4> Property::getArray() const { return make_span((double4*)m_data.data(), getArraySize() / 4); }
