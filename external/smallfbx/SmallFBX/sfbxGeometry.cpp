@@ -104,7 +104,7 @@ void GeomMesh::addUV(int set_index, float u, float v) {
 		}
 	}
 	// Add the UV to the specified layer
-	m_uv_layers[set_index].data.push_back(float2{u, v});
+	m_uv_layers[set_index].data.push_back(double2{u, v});
 }
 
 void GeomMesh::addVertexColor(float r, float g, float b, float a, size_t layer_index) {
