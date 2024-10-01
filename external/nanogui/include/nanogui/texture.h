@@ -113,9 +113,9 @@ public:
     Texture(PixelFormat pixel_format,
             ComponentFormat component_format,
             const Vector2i &size,
-            InterpolationMode min_interpolation_mode = InterpolationMode::Nearest,
-            InterpolationMode mag_interpolation_mode = InterpolationMode::Nearest,
-			WrapMode wrap_mode = WrapMode::ClampToEdge,
+            InterpolationMode min_interpolation_mode = InterpolationMode::Bilinear,
+            InterpolationMode mag_interpolation_mode = InterpolationMode::Bilinear,
+			WrapMode wrap_mode = WrapMode::Repeat,
             uint8_t samples = 1,
             uint8_t flags = (uint8_t) TextureFlags::ShaderRead,
             bool mipmap_manual = false);
@@ -123,22 +123,22 @@ public:
 	Texture(const unsigned char* data, int size,
 			int raw_width,
 			int raw_height,
-			InterpolationMode min_interpolation_mode = InterpolationMode::Nearest,
+			InterpolationMode min_interpolation_mode = InterpolationMode::Bilinear,
 			InterpolationMode mag_interpolation_mode = InterpolationMode::Nearest,
-			WrapMode wrap_mode = WrapMode::ClampToEdge);
+			WrapMode wrap_mode = WrapMode::Repeat);
 	
     /// Load an image from memory using stb-image
     Texture(const unsigned char* data, int size,
-            InterpolationMode min_interpolation_mode = InterpolationMode::Nearest,
-            InterpolationMode mag_interpolation_mode = InterpolationMode::Nearest,
-            WrapMode wrap_mode = WrapMode::ClampToEdge);
+            InterpolationMode min_interpolation_mode = InterpolationMode::Bilinear,
+            InterpolationMode mag_interpolation_mode = InterpolationMode::Bilinear,
+            WrapMode wrap_mode = WrapMode::Repeat);
 
 
     /// Load an image from the given file using stb-image
     Texture(const std::string &filename,
-            InterpolationMode min_interpolation_mode = InterpolationMode::Nearest,
-            InterpolationMode mag_interpolation_mode = InterpolationMode::Nearest,
-            WrapMode wrap_mode                       = WrapMode::ClampToEdge);
+            InterpolationMode min_interpolation_mode = InterpolationMode::Bilinear,
+            InterpolationMode mag_interpolation_mode = InterpolationMode::Bilinear,
+            WrapMode wrap_mode                       = WrapMode::Repeat);
 
     /// Return the pixel format
     PixelFormat pixel_format() const { return m_pixel_format; }

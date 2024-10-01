@@ -97,19 +97,13 @@ void Fbx::ProcessMesh(const std::shared_ptr<sfbx::Mesh>& mesh) {
 	const auto& points = geometry->getPointsDeformed();
 	const auto& vertexIndices = geometry->getIndices();
 	const auto& indexCounts = geometry->getCounts();
-
-	// Reserve space for vertices and indices
-	const size_t vertexCount = points.size();
-	const size_t indexCount = vertexIndices.size();
-	resultMesh->get_vertices().resize(vertexCount);
-	resultMesh->get_indices().resize(indexCount);
 	
 	// Retrieve materials and map them to indices
 	const auto& materials = mesh->getMaterials();
 	
 	// Precompute normal indices
 	const auto& normalLayers = geometry->getNormalLayers();
-	std::vector<int> normalIndices(indexCount, -1);
+	std::vector<int> normalIndices(vertexIndices.size(), -1);
 	sfbx::RawVector<sfbx::double3> normalData;
 	if (!normalLayers.empty()) {
 		const auto& normalLayer = normalLayers[0];
@@ -118,7 +112,7 @@ void Fbx::ProcessMesh(const std::shared_ptr<sfbx::Mesh>& mesh) {
 		const auto referenceMode = normalLayer.reference_mode;
 		const auto& normalLayerIndices = normalLayer.indices;
 		
-		for (size_t i = 0; i < indexCount; ++i) {
+		for (size_t i = 0; i < vertexIndices.size(); ++i) {
 			int controlPointIndex = vertexIndices[i];
 			if (mappingMode == sfbx::LayerMappingMode::ByPolygonVertex) {
 				normalIndices[i] = (referenceMode == sfbx::LayerReferenceMode::Direct) ? static_cast<int>(i) : normalLayerIndices[i];
@@ -130,14 +124,14 @@ void Fbx::ProcessMesh(const std::shared_ptr<sfbx::Mesh>& mesh) {
 	
 	// Precompute UV indices for each layer
 	const auto& uvLayers = geometry->getUVLayers();
-	std::vector<std::vector<int>> uvIndicesPerLayer(uvLayers.size(), std::vector<int>(indexCount, -1));
+	std::vector<std::vector<int>> uvIndicesPerLayer(uvLayers.size(), std::vector<int>(vertexIndices.size(), -1));
 	for (size_t layerIndex = 0; layerIndex < uvLayers.size(); ++layerIndex) {
 		const auto& uvLayer = uvLayers[layerIndex];
 		const auto mappingMode = uvLayer.mapping_mode;
 		const auto referenceMode = uvLayer.reference_mode;
 		const auto& uvLayerIndices = uvLayer.indices;
 		
-		for (size_t i = 0; i < indexCount; ++i) {
+		for (size_t i = 0; i < vertexIndices.size(); ++i) {
 			int controlPointIndex = vertexIndices[i];
 			if (mappingMode == sfbx::LayerMappingMode::ByPolygonVertex) {
 				uvIndicesPerLayer[layerIndex][i] = (referenceMode == sfbx::LayerReferenceMode::Direct) ? static_cast<int>(i) : uvLayerIndices[i];
@@ -146,11 +140,11 @@ void Fbx::ProcessMesh(const std::shared_ptr<sfbx::Mesh>& mesh) {
 			}
 		}
 	}
-
+	
 	
 	// Precompute Color Indices
 	const auto& colorLayers = geometry->getColorLayers();
-	std::vector<int> colorIndices(indexCount, -1);
+	std::vector<int> colorIndices(vertexIndices.size(), -1);
 	sfbx::RawVector<sfbx::double4> colorData; // Assuming colors are RGBA
 	if (!colorLayers.empty()) {
 		const auto& colorLayer = colorLayers[0]; // Use the first color layer
@@ -159,7 +153,7 @@ void Fbx::ProcessMesh(const std::shared_ptr<sfbx::Mesh>& mesh) {
 		const auto referenceMode = colorLayer.reference_mode;
 		const auto& colorLayerIndices = colorLayer.indices;
 		
-		for (size_t i = 0; i < indexCount; ++i) {
+		for (size_t i = 0; i < vertexIndices.size(); ++i) {
 			int controlPointIndex = vertexIndices[i];
 			if (mappingMode == sfbx::LayerMappingMode::ByPolygonVertex) {
 				colorIndices[i] = (referenceMode == sfbx::LayerReferenceMode::Direct) ? static_cast<int>(i) : colorLayerIndices[i];
@@ -168,113 +162,142 @@ void Fbx::ProcessMesh(const std::shared_ptr<sfbx::Mesh>& mesh) {
 			}
 		}
 	}
-	// Determine the number of threads to use
-	unsigned int numThreads = std::thread::hardware_concurrency();
-	if (numThreads == 0) numThreads = 1;
 	
-	// Divide the work among threads
-	std::vector<std::thread> threads(numThreads);
-	size_t chunkSize = indexCount / numThreads;
-	size_t remainder = indexCount % numThreads;
-	
-	auto processVertices = [&](size_t startIndex, size_t endIndex) {
-		for (size_t i = startIndex; i < endIndex; ++i) {
-			int controlPointIndex = vertexIndices[i];
+	// Use a hash map to deduplicate vertices based on position, normal, and UVs
+	struct VertexKey {
+		glm::vec3 position;
+		glm::vec3 normal;
+		glm::vec2 uv1;
+		glm::vec2 uv2;
+		bool operator<(const VertexKey& other) const {
+			// Compare positions
+			if (position.x != other.position.x) return position.x < other.position.x;
+			if (position.y != other.position.y) return position.y < other.position.y;
+			if (position.z != other.position.z) return position.z < other.position.z;
 			
-			// Ensure controlPointIndex is within bounds
-			if (controlPointIndex >= vertexCount) {
-				sfbxPrint("Error: controlPointIndex %d out of bounds.\n", controlPointIndex);
-				continue;
-			}
+			// Compare normals
+			if (normal.x != other.normal.x) return normal.x < other.normal.x;
+			if (normal.y != other.normal.y) return normal.y < other.normal.y;
+			if (normal.z != other.normal.z) return normal.z < other.normal.z;
 			
-			auto& vertexPtr = resultMesh->get_vertices()[controlPointIndex];
-			if (vertexPtr.get() == nullptr) {
-				vertexPtr = std::make_unique<MeshVertex>();
-			}
-			auto& vertex = *vertexPtr;
+			// Compare UV1
+			if (uv1.x != other.uv1.x) return uv1.x < other.uv1.x;
+			if (uv1.y != other.uv1.y) return uv1.y < other.uv1.y;
 			
-			// Transform position
-			const auto& point = points[controlPointIndex];
-			glm::vec4 position(point.x, point.y, point.z, 1.0f);
-			position = transformMatrix * position;
-			vertex.set_position({ position.x, position.y, position.z });
-
-			// Transform normal
-			if (!normalData.empty() && normalIndices[i] >= 0) {
-				const auto& normal = normalData[normalIndices[i]];
-				glm::vec4 normalVec(normal.x, normal.y, normal.z, 0.0f);
-				normalVec = rotationMatrix * normalVec;
-				normalVec = glm::normalize(normalVec);
-				vertex.set_normal({ normalVec.x, normalVec.y, normalVec.z });
-			} else {
-				vertex.set_normal({ 0.0f, 1.0f, 0.0f }); // Default normal
-			}
-
-			// Set UVs
-			for (size_t layerIndex = 0; layerIndex < uvLayers.size(); ++layerIndex) {
-				int uvIndex = uvIndicesPerLayer[layerIndex][i];
-				if (uvIndex >= 0 && static_cast<size_t>(uvIndex) < uvLayers[layerIndex].data.size()) {
-					const auto& uv = uvLayers[layerIndex].data[uvIndex];
-					
-					// Apply transformation if needed
-					glm::vec2 finalUV(uv.x, uv.y);
-					
-					// Optionally clamp the UVs between 0 and 1
-					finalUV = glm::fract(finalUV);
-					
-					// Flip Y-axis if needed
-					finalUV.y = finalUV.y;
-					
-					if (layerIndex == 0) {
-						vertex.set_texture_coords1(finalUV);
-					} else if (layerIndex == 1) {
-						vertex.set_texture_coords2(finalUV);
-					}
-				} else {
-					vertex.set_texture_coords1(glm::vec2(0.0f, 0.0f)); // Default UV
-					vertex.set_texture_coords2(glm::vec2(0.0f, 0.0f)); // Default UV
-				}
-			}
-
-
-			// Assign Vertex Color
-			if (!colorData.empty() && colorIndices[i] >= 0) {
-				const auto& color = colorData[colorIndices[i]];
-				vertex.set_color({ color.x, color.y, color.z, color.w }); // Ignoring alpha channel
-			} else {
-				vertex.set_color({ 1.0f, 1.0f, 1.0f, 1.0f }); // Default color (white)
-			}
-			// Set material ID
-			// Assign material ID with bounds checking
-			int matIndex = geometry->getMaterialForVertexIndex(controlPointIndex);
-			if (matIndex >= 0 && matIndex < static_cast<int>(materials.size())) {
-				vertex.set_material_id(matIndex);
-			} else {
-				vertex.set_material_id(0); // or a default material ID
-			}
-
-			// Assign vertex and index
-			resultMesh->get_indices()[i] = controlPointIndex;
+			// Compare UV2
+			if (uv2.x != other.uv2.x) return uv2.x < other.uv2.x;
+			if (uv2.y != other.uv2.y) return uv2.y < other.uv2.y;
+			
+			// All components are equal
+			return false;
 		}
 	};
 	
-	size_t startIndex = 0;
-	for (unsigned int t = 0; t < numThreads; ++t) {
-		size_t endIndex = startIndex + chunkSize + (t < remainder ? 1 : 0);
-		threads[t] = std::thread(processVertices, startIndex, endIndex);
-		startIndex = endIndex;
-	}
+	std::map<VertexKey, uint32_t> vertexMap;
+	uint32_t newIndex = 0;
 	
-	// Wait for all threads to finish
-	for (auto& thread : threads) {
-		thread.join();
+	// Reserve space
+	resultMesh->get_vertices().reserve(vertexIndices.size());
+	resultMesh->get_indices().reserve(vertexIndices.size());
+	
+	// Iterate over each index to construct unique vertices
+	for (size_t i = 0; i < vertexIndices.size(); ++i) {
+		int controlPointIndex = vertexIndices[i];
+		
+		// Ensure controlPointIndex is within bounds
+		if (controlPointIndex >= points.size()) {
+			sfbxPrint("Error: controlPointIndex %d out of bounds.\n", controlPointIndex);
+			continue;
+		}
+		
+		// Get position
+		const auto& point = points[controlPointIndex];
+		glm::vec4 position(point.x, point.y, point.z, 1.0f);
+		position = transformMatrix * position;
+		glm::vec3 transformedPos = glm::vec3(position);
+		
+		// Get normal
+		glm::vec3 transformedNormal(0.0f, 1.0f, 0.0f); // Default normal
+		if (!normalData.empty() && normalIndices[i] >= 0 && static_cast<size_t>(normalIndices[i]) < normalData.size()) {
+			const auto& normal = normalData[normalIndices[i]];
+			glm::vec4 normalVec(normal.x, normal.y, normal.z, 0.0f);
+			normalVec = rotationMatrix * normalVec;
+			transformedNormal = glm::normalize(glm::vec3(normalVec));
+		}
+		
+		// Get UVs
+		glm::vec2 uv1(0.0f, 0.0f);
+		glm::vec2 uv2(0.0f, 0.0f);
+		if (!uvLayers.empty()) {
+			// First UV layer
+			int uvIndex1 = uvIndicesPerLayer[0][i];
+			if (uvIndex1 >= 0 && static_cast<size_t>(uvIndex1) < uvLayers[0].data.size()) {
+				const auto& uv = uvLayers[0].data[uvIndex1];
+				uv1 = glm::vec2(uv.x, uv.y);
+			}
+			// Second UV layer, if available
+			if (uvLayers.size() > 1) {
+				int uvIndex2 = uvIndicesPerLayer[1][i];
+				if (uvIndex2 >= 0 && static_cast<size_t>(uvIndex2) < uvLayers[1].data.size()) {
+					const auto& uv = uvLayers[1].data[uvIndex2];
+					uv2 = glm::vec2(uv.x, uv.y);
+				}
+			}
+		}
+		
+		// Get color
+		glm::vec4 color(1.0f);
+		if (!colorData.empty() && colorIndices[i] >= 0 && static_cast<size_t>(colorIndices[i]) < colorData.size()) {
+			const auto& col = colorData[colorIndices[i]];
+			color = glm::vec4(col.x, col.y, col.z, col.w);
+		}
+		
+		// Create a key for deduplication
+		VertexKey key{
+			transformedPos,
+			transformedNormal,
+			uv1,
+			uv2
+		};
+		
+		// Check if the vertex already exists
+		auto it = vertexMap.find(key);
+		if (it != vertexMap.end()) {
+			// Vertex exists, reuse the index
+			resultMesh->get_indices().push_back(it->second);
+		} else {
+			// New unique vertex
+			auto vertexPtr = std::make_unique<MeshVertex>();
+			vertexPtr->set_position(transformedPos);
+			vertexPtr->set_normal(transformedNormal);
+			vertexPtr->set_texture_coords1(uv1);
+			vertexPtr->set_texture_coords2(uv2);
+			vertexPtr->set_color(color);
+			
+			// Assign material ID
+			int matIndex = geometry->getMaterialForVertexIndex(controlPointIndex);
+			if (matIndex >= 0 && matIndex < static_cast<int>(materials.size())) {
+				vertexPtr->set_material_id(matIndex);
+			} else {
+				vertexPtr->set_material_id(0); // or a default material ID
+			}
+			
+			// Add the new vertex to the vertex buffer
+			resultMesh->get_vertices().push_back(std::move(vertexPtr));
+			
+			// Map the key to the new index
+			vertexMap[key] = newIndex;
+			
+			// Add the index
+			resultMesh->get_indices().push_back(newIndex);
+			
+			// Increment the index
+			newIndex++;
+		}
 	}
 	
 	// Process materials
-//	resultMesh->get_material_properties().reserve(materials.size());
-	
 	std::vector<std::shared_ptr<SerializableMaterialProperties>> serializableMaterials;
-	
 	serializableMaterials.reserve(materials.size());
 	
 	for (size_t i = 0; i < materials.size(); ++i) {
@@ -312,9 +335,8 @@ void Fbx::ProcessMesh(const std::shared_ptr<sfbx::Mesh>& mesh) {
 	}
 	
 	resultMesh->get_material_properties().resize(serializableMaterials.size());
-	
 	mMaterialProperties.push_back(std::move(serializableMaterials));
 	
 	// Proceed to process bones separately
-	 ProcessBones(mesh); // This call should be handled externally or after ProcessMesh
+	ProcessBones(mesh); // This call should be handled externally or after ProcessMesh
 }
