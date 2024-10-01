@@ -99,11 +99,11 @@ void Fbx::ProcessMesh(const std::shared_ptr<sfbx::Mesh>& mesh) {
 	const auto& indexCounts = geometry->getCounts();
 
 	// Reserve space for vertices and indices
-	const size_t vertexCount = vertexIndices.size();
+	const size_t vertexCount = points.size();
 	const size_t indexCount = vertexIndices.size();
 	resultMesh->get_vertices().resize(vertexCount);
 	resultMesh->get_indices().resize(indexCount);
-
+	
 	// Retrieve materials and map them to indices
 	const auto& materials = mesh->getMaterials();
 	
@@ -187,7 +187,7 @@ void Fbx::ProcessMesh(const std::shared_ptr<sfbx::Mesh>& mesh) {
 				continue;
 			}
 			
-			auto& vertexPtr = resultMesh->get_vertices()[i];
+			auto& vertexPtr = resultMesh->get_vertices()[controlPointIndex];
 			if (vertexPtr.get() == nullptr) {
 				vertexPtr = std::make_unique<MeshVertex>();
 			}
@@ -215,11 +215,20 @@ void Fbx::ProcessMesh(const std::shared_ptr<sfbx::Mesh>& mesh) {
 				int uvIndex = uvIndicesPerLayer[layerIndex][i];
 				if (uvIndex >= 0 && static_cast<size_t>(uvIndex) < uvLayers[layerIndex].data.size()) {
 					const auto& uv = uvLayers[layerIndex].data[uvIndex];
-
+					
+					// Apply transformation if needed
+					glm::vec2 finalUV(uv.x, uv.y);
+					
+					// Optionally clamp the UVs between 0 and 1
+					finalUV = glm::fract(finalUV);
+					
+					// Flip Y-axis if needed
+					finalUV.y = finalUV.y;
+					
 					if (layerIndex == 0) {
-						vertex.set_texture_coords1(glm::vec2(static_cast<float>(uv.x), static_cast<float>(uv.y)));
+						vertex.set_texture_coords1(finalUV);
 					} else if (layerIndex == 1) {
-						vertex.set_texture_coords2(glm::vec2(static_cast<float>(uv.x), static_cast<float>(uv.y)));
+						vertex.set_texture_coords2(finalUV);
 					}
 				} else {
 					vertex.set_texture_coords1(glm::vec2(0.0f, 0.0f)); // Default UV
@@ -245,7 +254,7 @@ void Fbx::ProcessMesh(const std::shared_ptr<sfbx::Mesh>& mesh) {
 			}
 
 			// Assign vertex and index
-			resultMesh->get_indices()[i] = static_cast<int>(i);
+			resultMesh->get_indices()[i] = controlPointIndex;
 		}
 	};
 	
@@ -301,7 +310,6 @@ void Fbx::ProcessMesh(const std::shared_ptr<sfbx::Mesh>& mesh) {
 		
 		serializableMaterials.push_back(matPtr);
 	}
-
 	
 	resultMesh->get_material_properties().resize(serializableMaterials.size());
 	

@@ -36,7 +36,7 @@ fragment FragmentOut fragment_main(VertexOut vert [[stage_in]],
     sampler diffuse_sampler = textures_sampler[vert.MaterialId];
 
     float4 mat_diffuse;
-    if (mat.diffuse_texture != 0.0) {
+    if (mat.diffuse_texture > 0.5) {
         // Accessing textures and sampling RGBA (float4)
         float4 tex1 = diffuse_texture.sample(diffuse_sampler, vert.TexCoords1);  // sample rgba
         float4 tex2 = diffuse_texture.sample(diffuse_sampler, vert.TexCoords2);  // sample rgba

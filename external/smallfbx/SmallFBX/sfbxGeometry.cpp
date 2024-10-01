@@ -98,8 +98,8 @@ void GeomMesh::addUV(int set_index, float u, float v) {
 		while (m_uv_layers.size() <= set_index) {
 			LayerElementF2 new_layer;
 			new_layer.name = "UVSet" + std::to_string(m_uv_layers.size() + 1);
-			new_layer.mapping_mode = LayerMappingMode::ByPolygonVertex;
-			new_layer.reference_mode = LayerReferenceMode::IndexToDirect;
+			new_layer.mapping_mode = LayerMappingMode::ByControlPoint;
+			new_layer.reference_mode = LayerReferenceMode::Direct;
 			m_uv_layers.emplace_back(std::move(new_layer));
 		}
 	}

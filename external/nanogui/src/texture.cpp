@@ -27,12 +27,12 @@ m_mipmap_manual(mipmap_manual) {
 }
 
 
-Texture::Texture(const unsigned char* data, int size,
+Texture::Texture(const unsigned char* data, 			 int size,
+				 int raw_width,
+				 int raw_height,
 				 InterpolationMode min_interpolation_mode,
 				 InterpolationMode mag_interpolation_mode,
-				 WrapMode wrap_mode,
-				 int raw_width,
-				 int raw_height)
+				 WrapMode wrap_mode)
 : m_component_format(ComponentFormat::UInt8),
 m_min_interpolation_mode(min_interpolation_mode),
 m_mag_interpolation_mode(mag_interpolation_mode),

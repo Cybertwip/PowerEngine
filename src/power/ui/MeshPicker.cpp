@@ -129,11 +129,9 @@ void MeshPicker::refresh_file_list() {
 			imageView->set_image(new nanogui::Texture(
 													  pixels.data(),
 													  pixels.size(),
-													  nanogui::Texture::InterpolationMode::Bilinear,
+								 512, 512,			  nanogui::Texture::InterpolationMode::Nearest,
 													  nanogui::Texture::InterpolationMode::Nearest,
-													  nanogui::Texture::WrapMode::Repeat,
-													  512,
-													  512));
+													  nanogui::Texture::WrapMode::ClampToEdge));
 			
 			imageView->image()->resize(nanogui::Vector2i(256, 256));
 			
