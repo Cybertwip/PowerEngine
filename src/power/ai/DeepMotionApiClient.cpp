@@ -336,9 +336,6 @@ std::string DeepMotionApiClient::store_model(const std::string& model_url, const
 			return "";
 		}
 	} else {
-		std::cerr << "Failed to get model upload URL. HTTP Status: " << res->status << std::endl;
-	}
-	} else {
 		std::cerr << "Failed to store model. HTTP Status: " << res->status << std::endl;
 	}
 	
