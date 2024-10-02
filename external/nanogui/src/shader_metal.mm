@@ -290,7 +290,6 @@ void Shader::set_buffer(const std::string &name,
 		
 		[blit_encoder endEncoding];
 		[command_buffer commit];
-		[command_buffer waitUntilCompleted];
 		
 		buf.buffer = (__bridge_retained void *) mtl_buffer;
 	}

@@ -168,7 +168,7 @@ public:
 			// Determine the number of available hardware threads
 			unsigned int numThreads = std::thread::hardware_concurrency();
 			if (numThreads == 0) numThreads = 4; // Fallback to 4 threads if unable to detect
-			
+			numThreads = 1;
 			// Calculate chunk sizes
 			size_t totalSize = buffer.size();
 			size_t chunkSize = totalSize / numThreads;

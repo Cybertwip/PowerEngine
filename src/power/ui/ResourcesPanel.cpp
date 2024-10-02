@@ -226,8 +226,9 @@ mSelectedButtonColor(nanogui::Color(0.5f, 0.5f, 0.8f, 1.0f))
 	mSelectedDirectoryPath = fs::current_path().string();
 	mFilterText = "";
 	
-	refresh_file_view();
-	
+	nanogui::async([this](){
+		refresh_file_view();
+	});
 	
 	mMeshActorImporter = std::make_unique<MeshActorImporter>();
 	
@@ -467,12 +468,17 @@ void ResourcesPanel::handle_file_interaction(DirectoryNode& node) {
 		mSelectedNode = nullptr;
 	}
 	
-	refresh_file_view();
+	nanogui::async([this](){
+		refresh_file_view();
+	});
 }
 
 void ResourcesPanel::refresh() {
 	// Here you might want to refresh or rebuild the file view if the directory content changes
-	refresh_file_view();
+	nanogui::async([this](){
+		refresh_file_view();
+	});
+	
 }
 
 bool ResourcesPanel::keyboard_event(int key, int scancode, int action, int modifiers) {
@@ -513,7 +519,10 @@ void ResourcesPanel::import_assets() {
 								   }
 								   
 								   // Refresh the file view to display the newly imported assets
-								   refresh_file_view();
+								   nanogui::async([this](){
+									   refresh_file_view();
+								   });
+								   
 							   });
 	
 }
@@ -561,7 +570,9 @@ void ResourcesPanel::navigate_up_to_cwd() {
 		// Prevent navigating above the current working directory
 		if (parentPath.string().size() >= cwd.string().size()) {
 			mSelectedDirectoryPath = parentPath.string();
-			refresh_file_view();
+			nanogui::async([this](){
+				refresh_file_view();
+			});
 		}
 	}
 }

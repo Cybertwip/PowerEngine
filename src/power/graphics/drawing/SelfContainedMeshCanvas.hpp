@@ -47,13 +47,16 @@ public:
 	ShaderWrapper& get_skinned_mesh_shader() {
 		return mSkinnedMeshPreviewShader;
 	}
+	
+protected:
+	void clear();
+
+	void draw_contents() override;
 
 private:
 	void update_camera_view();
 	
 	void draw_content(const nanogui::Matrix4f& view, const nanogui::Matrix4f& projection);
-	void draw_contents() override;
-	void clear();
 	
 	std::optional<std::reference_wrapper<Actor>> mPreviewActor;
 	entt::registry mRegistry;

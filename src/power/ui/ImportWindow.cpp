@@ -63,6 +63,7 @@ ImportWindow::ImportWindow(nanogui::Widget* parent, ResourcesPanel& resourcesPan
 	close_button->set_callback([this]() {
 		this->set_visible(false);
 		this->set_modal(false);
+		mPreviewCanvas->set_update(false);
 	});
 	
 	mPreviewCanvas = new SharedSelfContainedMeshCanvas(this);
@@ -105,7 +106,7 @@ ImportWindow::ImportWindow(nanogui::Widget* parent, ResourcesPanel& resourcesPan
 	// Create "Import" button
 	auto importButton = new nanogui::Button(this, "Import");
 	importButton->set_callback([this]() {
-		this->ImportIntoProject();
+		nanogui::async([this](){this->ImportIntoProject();});
 	});
 	importButton->set_tooltip("Import the selected asset with the chosen options");
 	
@@ -135,7 +136,7 @@ void ImportWindow::Preview(const std::string& path, const std::string& directory
 		mMeshActorBuilder->build_mesh(*actor, "DummyActor", deserializer, mPreviewCanvas->get_mesh_shader(), mPreviewCanvas->get_skinned_mesh_shader());
 	}
 	
-	mPreviewCanvas->set_active_actor(actor);
+	//mPreviewCanvas->set_active_actor(actor);
 	mPreviewCanvas->set_update(true);
 	
 	if (!mCompressedMeshData->mAnimations.has_value()) {
@@ -156,18 +157,21 @@ void ImportWindow::ImportIntoProject() {
 		// Now write the converted RGBA data to PNG
 		write_to_png(pixels, 512, 512, 4, png_data);
 		
-		// Proceed with serialization
+		 Proceed with serialization
 		serializer->write_header_uint64(png_data.size());
 		serializer->write_header_raw(png_data.data(), png_data.size());
 		
 		mCompressedMeshData->persist(mAnimationsCheckbox->checked());
-		
-		mResourcesPanel.refresh_file_view();
-		
+
+		nanogui::async([this](){
+			mResourcesPanel.refresh_file_view();
+		})
 		mPreviewCanvas->set_active_actor(nullptr);
 		mPreviewCanvas->set_update(false);
+		
+		set_visible(false);
+		set_modal(false);
+
 	});
 	
-	set_visible(false);
-	set_modal(false);
 }

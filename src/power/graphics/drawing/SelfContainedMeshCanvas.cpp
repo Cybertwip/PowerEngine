@@ -173,7 +173,6 @@ void SelfContainedMeshCanvas::clear() {
 
 	mMeshBatch->clear();
 	mSkinnedMeshBatch->clear();
-
 }
 
 void SelfContainedMeshCanvas::set_aspect_ratio(float ratio) {

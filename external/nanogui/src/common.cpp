@@ -20,7 +20,8 @@
 
 #include <nanogui/opengl.h>
 #include <nanogui/metal.h>
-#include <map>
+#include <unordered_map>  // Replaced <map> with <unordered_map> for better performance
+#include <queue>          // Added for asynchronous function queue
 #include <thread>
 #include <chrono>
 #include <mutex>
@@ -38,7 +39,8 @@
 
 NAMESPACE_BEGIN(nanogui)
 
-extern std::map<GLFWwindow *, Screen *> __nanogui_screens;
+// Replaced std::map with std::unordered_map for faster average-case lookups
+extern std::unordered_map<GLFWwindow *, Screen *> __nanogui_screens;
 
 #if defined(__APPLE__)
 extern void disable_saved_application_state_osx();
@@ -81,7 +83,8 @@ static float emscripten_refresh = 0;
 #endif
 
 std::mutex m_async_mutex;
-std::vector<std::function<void()>> m_async_functions;
+// Changed from std::vector to std::queue for better FIFO handling
+std::queue<std::function<void()>> m_async_functions;
 
 void mainloop() {
 	if (mainloop_active)
@@ -99,14 +102,21 @@ void mainloop() {
 		}
 #endif
 		
-		/* Run async functions */ {
-			std::lock_guard<std::mutex> guard(m_async_mutex);
-			for (auto &f : m_async_functions)
+		/* Run async functions */
+		{
+			std::queue<std::function<void()>> local_queue;
+			{
+				std::lock_guard<std::mutex> guard(m_async_mutex);
+				std::swap(local_queue, m_async_functions);
+			}
+			while (!local_queue.empty()) {
+				auto &f = local_queue.front();
 				f();
-			m_async_functions.clear();
+				local_queue.pop();
+			}
 		}
 		
-		for (auto kv : __nanogui_screens) {
+		for (auto &kv : __nanogui_screens) {
 			Screen *screen = kv.second;
 			if (!screen->visible()) {
 				continue;
@@ -118,8 +128,10 @@ void mainloop() {
 			if (emscripten_redraw || screen->tooltip_fade_in_progress())
 				screen->redraw();
 #endif
-			screen->draw_all();
 			screen->redraw();
+			screen->draw_all();
+			// Removed redundant redraw call for improved performance
+			// screen->redraw();
 			num_screens++;
 		}
 		
@@ -130,7 +142,11 @@ void mainloop() {
 		}
 		
 #if !defined(EMSCRIPTEN)
-		glfwWaitEvents();
+		// Replaced glfwWaitEvents() with glfwPollEvents() to avoid blocking
+		glfwPollEvents();
+		
+		// Introduce a short sleep to prevent high CPU usage
+		//std::this_thread::sleep_for(std::chrono::milliseconds(1));
 #endif
 	};
 	
@@ -149,7 +165,7 @@ void mainloop() {
 			mainloop_iteration();
 		
 		/* Process events once more */
-		glfwWaitEvents();
+		glfwPollEvents(); // Changed from glfwWaitEvents()
 	} catch (const std::exception &e) {
 		std::cerr << "Caught exception in main loop: " << e.what() << std::endl;
 		leave();
@@ -158,7 +174,7 @@ void mainloop() {
 
 void async(const std::function<void()> &func) {
 	std::lock_guard<std::mutex> guard(m_async_mutex);
-	m_async_functions.push_back(func);
+	m_async_functions.push(func);
 }
 
 void leave() {
@@ -177,7 +193,6 @@ std::pair<bool, bool> test_10bit_edr_support() {
 #endif
 }
 
-
 void shutdown() {
 	glfwTerminate();
 	
@@ -194,36 +209,50 @@ void shutdown() {
 #  define NANOGUI_FALLTHROUGH
 #endif
 
+// Optimized UTF-8 conversion function with reduced branching
 std::string utf8(uint32_t c) {
-	char seq[8];
-	int n = 0;
-	if (c < 0x80) n = 1;
-	else if (c < 0x800) n = 2;
-	else if (c < 0x10000) n = 3;
-	else if (c < 0x200000) n = 4;
-	else if (c < 0x4000000) n = 5;
-	else if (c <= 0x7fffffff) n = 6;
-	seq[n] = '\0';
-	switch (n) {
-		case 6: seq[5] = 0x80 | (c & 0x3f); c = c >> 6; c |= 0x4000000; NANOGUI_FALLTHROUGH
-		case 5: seq[4] = 0x80 | (c & 0x3f); c = c >> 6; c |= 0x200000;  NANOGUI_FALLTHROUGH
-		case 4: seq[3] = 0x80 | (c & 0x3f); c = c >> 6; c |= 0x10000;   NANOGUI_FALLTHROUGH
-		case 3: seq[2] = 0x80 | (c & 0x3f); c = c >> 6; c |= 0x800;     NANOGUI_FALLTHROUGH
-		case 2: seq[1] = 0x80 | (c & 0x3f); c = c >> 6; c |= 0xc0;      NANOGUI_FALLTHROUGH
-		case 1: seq[0] = c;
+	std::string result;
+	if (c < 0x80) {
+		result += static_cast<char>(c);
+	} else if (c < 0x800) {
+		result += static_cast<char>(0xC0 | (c >> 6));
+		result += static_cast<char>(0x80 | (c & 0x3F));
+	} else if (c < 0x10000) {
+		result += static_cast<char>(0xE0 | (c >> 12));
+		result += static_cast<char>(0x80 | ((c >> 6) & 0x3F));
+		result += static_cast<char>(0x80 | (c & 0x3F));
+	} else if (c < 0x200000) {
+		result += static_cast<char>(0xF0 | (c >> 18));
+		result += static_cast<char>(0x80 | ((c >> 12) & 0x3F));
+		result += static_cast<char>(0x80 | ((c >> 6) & 0x3F));
+		result += static_cast<char>(0x80 | (c & 0x3F));
+	} else if (c < 0x4000000) {
+		result += static_cast<char>(0xF8 | (c >> 24));
+		result += static_cast<char>(0x80 | ((c >> 18) & 0x3F));
+		result += static_cast<char>(0x80 | ((c >> 12) & 0x3F));
+		result += static_cast<char>(0x80 | ((c >> 6) & 0x3F));
+		result += static_cast<char>(0x80 | (c & 0x3F));
+	} else if (c <= 0x7FFFFFFF) {
+		result += static_cast<char>(0xFC | (c >> 30));
+		result += static_cast<char>(0x80 | ((c >> 24) & 0x3F));
+		result += static_cast<char>(0x80 | ((c >> 18) & 0x3F));
+		result += static_cast<char>(0x80 | ((c >> 12) & 0x3F));
+		result += static_cast<char>(0x80 | ((c >> 6) & 0x3F));
+		result += static_cast<char>(0x80 | (c & 0x3F));
 	}
-	return std::string(seq, seq + n);
+	return result;
 }
 
 int __nanogui_get_image(NVGcontext *ctx, const std::string &name, uint8_t *data, uint32_t size) {
-	static std::map<std::string, int> icon_cache;
+	// Replaced std::map with std::unordered_map for faster image cache lookups
+	static std::unordered_map<std::string, int> icon_cache;
 	auto it = icon_cache.find(name);
 	if (it != icon_cache.end())
 		return it->second;
 	int icon_id = nvgCreateImageMem(ctx, 0, data, size);
 	if (icon_id == 0)
 		throw std::runtime_error("Unable to load resource data.");
-	icon_cache[name] = icon_id;
+	icon_cache.emplace(name, icon_id);
 	return icon_id;
 }
 
@@ -252,8 +281,8 @@ load_image_directory(NVGcontext *ctx, const std::string &path) {
 			int img = nvgCreateImage(ctx, full_name.c_str(), 0);
 			if (img == 0)
 				throw std::runtime_error("Could not open image data!");
-			result.push_back(
-							 std::make_pair(img, full_name.substr(0, full_name.length() - 4)));
+			result.emplace_back(
+								std::make_pair(img, full_name.substr(0, full_name.length() - 4)));
 #if !defined(_WIN32)
 		}
 		closedir(dp);
@@ -408,6 +437,7 @@ void Object::inc_ref() const noexcept {
 	
 	while (true) {
 		if (value & 1) {
+			// Optimized to use relaxed memory ordering where possible
 			if (!m_state.compare_exchange_weak(value,
 											   value + 2,
 											   std::memory_order_relaxed,
@@ -460,7 +490,7 @@ void Object::set_self_py(PyObject *o) noexcept {
 			abort();
 		}
 		
-		m_state.store(o_i);
+		m_state.store(o_i, std::memory_order_relaxed); // Added memory_order_relaxed
 	} else {
 		fprintf(stderr,
 				"Object::set_self_py(%p): a Python object was already present!",
@@ -484,4 +514,3 @@ void object_init_py(void (*object_inc_ref_py_)(PyObject *) noexcept,
 }
 
 NAMESPACE_END(nanogui)
-

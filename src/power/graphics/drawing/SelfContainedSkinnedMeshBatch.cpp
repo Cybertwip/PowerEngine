@@ -90,6 +90,7 @@ void SelfContainedSkinnedMeshBatch::clear() {
 
 	mBatchPositions.clear();
 	mBatchNormals.clear();
+	mBatchColors.clear();
 	mBatchTexCoords1.clear();
 	mBatchTexCoords2.clear();
 	mBatchMaterialIds.clear();

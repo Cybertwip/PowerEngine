@@ -139,16 +139,18 @@ void metal_shutdown() {
 void* metal_device() { return s_metal_device; }
 void* metal_command_queue() { return s_metal_command_queue; }
 
-void metal_window_init(void *nswin_, bool float_buffer) {
+void metal_window_init(void *nswin_, bool float_buffer, bool presents_with_transaction) {
 	CAMetalLayer *layer = [CAMetalLayer layer];
 	if (!layer)
-		throw std::runtime_error("init_metal(): unable to create layer.");
+		throw std::runtime_error("metal_window_init(): unable to create layer.");
+	
 	NSWindow *nswin = (__bridge NSWindow *)nswin_;
 	nswin.contentView.layer = layer;
 	nswin.contentView.wantsLayer = YES;
 	nswin.contentView.layerContentsPlacement = NSViewLayerContentsPlacementTopLeft;
 	layer.device = (__bridge id<MTLDevice>)s_metal_device;
 	layer.contentsScale = nswin.backingScaleFactor;
+	
 	if (float_buffer) {
 		layer.wantsExtendedDynamicRangeContent = YES;
 		layer.pixelFormat = MTLPixelFormatRGBA16Float;
@@ -162,9 +164,13 @@ void metal_window_init(void *nswin_, bool float_buffer) {
 		layer.colorspace = colorSpace;
 		CGColorSpaceRelease(colorSpace);
 	}
+	
 	layer.displaySyncEnabled = YES;
 	layer.allowsNextDrawableTimeout = NO;
 	layer.framebufferOnly = NO;
+	
+	// Set presentsWithTransaction during initialization
+	layer.presentsWithTransaction = presents_with_transaction;
 }
 
 std::pair<bool, bool> metal_10bit_edr_support() {
