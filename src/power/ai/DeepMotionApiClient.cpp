@@ -298,10 +298,10 @@ std::string DeepMotionApiClient::get_model_upload_url(bool resumable, const std:
 	return "";
 }
 
-bool DeepMotionApiClient::store_model(const std::string& model_url, const std::string& model_name) {
+std::string DeepMotionApiClient::store_model(const std::string& model_url, const std::string& model_name) {
 	if (!authenticated_) {
 		std::cerr << "Client not authenticated." << std::endl;
-		return false;
+		return "";
 	}
 	
 	// Construct JSON payload
@@ -318,13 +318,31 @@ bool DeepMotionApiClient::store_model(const std::string& model_url, const std::s
 	auto res = client_->Post(path.c_str(), json_payload, content_type.c_str());
 	
 	if (res && res->status == 200) {
-		// Optionally, parse and verify response
-		return true;
+		// Parse JSON response to extract modelUrl
+		Json::CharReaderBuilder reader_builder;
+		auto reader = std::unique_ptr<Json::CharReader>(reader_builder.newCharReader());
+		Json::Value json_data;
+		std::string errors;
+		
+		bool parsing_successful = reader->parse(res->body.c_str(),
+												res->body.c_str() + res->body.size(),
+												&json_data,
+												&errors);
+		if (parsing_successful && json_data.isMember("modelId")) {
+			return json_data["modelId"].asString();
+		} else {
+			std::cerr << "Failed to parse JSON response or 'modelUrl' not found." << std::endl;
+			
+			return "";
+		}
+	} else {
+		std::cerr << "Failed to get model upload URL. HTTP Status: " << res->status << std::endl;
+	}
 	} else {
 		std::cerr << "Failed to store model. HTTP Status: " << res->status << std::endl;
 	}
 	
-	return false;
+	return "";
 }
 
 Json::Value DeepMotionApiClient::list_models() {
@@ -364,26 +382,26 @@ Json::Value DeepMotionApiClient::list_models() {
 bool DeepMotionApiClient::upload_model(std::stringstream& model_data_stream, const std::string& model_name, const std::string& model_ext) {
 	if (!authenticated_) {
 		std::cerr << "Client not authenticated. Please authenticate before uploading models." << std::endl;
-		return false;
+		return "";
 	}
 	
 	// Validate model data
 	if (model_data_stream.str().empty()) {
 		std::cerr << "Model data is empty." << std::endl;
-		return false;
+		return "";
 	}
 	
 	// Validate model extension
 	if (model_ext.empty()) {
 		std::cerr << "Model extension is empty." << std::endl;
-		return false;
+		return "";
 	}
 	
 	// Step 1: Get the model upload URL
 	std::string upload_url = get_model_upload_url(false, model_ext);
 	if (upload_url.empty()) {
 		std::cerr << "Failed to obtain model upload URL." << std::endl;
-		return false;
+		return "";
 	}
 	
 	// Step 2: Parse the upload URL to get host and path
@@ -394,7 +412,7 @@ bool DeepMotionApiClient::upload_model(std::stringstream& model_data_stream, con
 		protocol_pos += 3; // Move past "://"
 	} else {
 		std::cerr << "Invalid upload URL format: " << upload_url << std::endl;
-		return false;
+		return "";
 	}
 	
 	std::string::size_type host_pos = upload_url.find("/", protocol_pos);
@@ -426,29 +444,22 @@ bool DeepMotionApiClient::upload_model(std::stringstream& model_data_stream, con
 	
 	if (!res) {
 		std::cerr << "Failed to upload model. Network error." << std::endl;
-		return false;
+		return "";
 	}
 	
 	if (res->status != 200 && res->status != 201) {
 		std::cerr << "Failed to upload model. HTTP Status: " << res->status << std::endl;
-		return false;
+		return "";
 	}
 	
 	// Step 4: Store the model using the API
-	bool store_success = store_model(upload_url, model_name);
-	if (!store_success) {
+	std::string modelId = store_model(upload_url, model_name);
+	if (modelId.empty()) {
 		std::cerr << "Failed to store the uploaded model." << std::endl;
-		return false;
-	}
-	
-	// Optional: Refresh the model list
-	Json::Value models_json = list_models();
-	if (models_json.isMember("count") && models_json["count"].asInt() > 0) {
-		// Handle the updated model list as needed
-		// For example, you can parse and store the models locally
+		return "";
 	}
 	
 	std::cout << "Model uploaded and stored successfully: " << model_name << std::endl;
-	return true;
+	return modelId;
 }
 

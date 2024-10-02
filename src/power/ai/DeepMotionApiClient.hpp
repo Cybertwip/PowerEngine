@@ -69,7 +69,7 @@ public:
 	 * @param model_name The name of the model.
 	 * @return bool True if the model was stored successfully.
 	 */
-	bool store_model(const std::string& model_url, const std::string& model_name);
+	std::string store_model(const std::string& model_url, const std::string& model_name);
 	
 	/**
 	 * @brief Lists all available models.
@@ -90,7 +90,7 @@ public:
 	 * @return true If the upload was successful.
 	 * @return false If the upload failed.
 	 */
-	bool upload_model(std::stringstream& model_stream, const std::string& model_name, const std::string& model_ext);
+	std::string upload_model(std::stringstream& model_stream, const std::string& model_name, const std::string& model_ext);
 	
 	/**
 	 * @brief Retrieves the session cookie after successful authentication.

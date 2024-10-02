@@ -203,8 +203,8 @@ void PromptWindow::SubmitPrompt() {
 	mMeshActorExporter->exportToStream(deserializer, mActorPath, modelData);
 		
 	// Upload and Store Model
-	bool upload_success = mDeepMotionApiClient.upload_model(modelData, unique_model_name, "fbx");
-	if (!upload_success) {
+	std::string modelId = mDeepMotionApiClient.upload_model(modelData, unique_model_name, "fbx");
+	if (modelId.empty()) {
 		std::cerr << "Failed to upload and store model." << std::endl;
 		{
 			std::lock_guard<std::mutex> lock(mStatusMutex);
