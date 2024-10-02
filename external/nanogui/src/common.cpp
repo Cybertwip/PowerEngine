@@ -26,6 +26,7 @@
 #include <chrono>
 #include <mutex>
 #include <iostream>
+#include <atomic>         // Added for atomic flag
 
 #if !defined(_WIN32)
 #  include <locale.h>
@@ -86,6 +87,45 @@ std::mutex m_async_mutex;
 // Changed from std::vector to std::queue for better FIFO handling
 std::queue<std::function<void()>> m_async_functions;
 
+// ---------------------- Added Code Starts Here ----------------------
+
+// Atomic flag to control the redraw thread's lifecycle
+std::atomic<bool> redraw_thread_running(false);
+
+// Redraw thread function
+void redraw_thread_func() {
+	using namespace std::chrono;
+	const double target_fps = 30.0;
+	const milliseconds frame_duration(static_cast<int>(1000.0 / target_fps));
+	
+	while (redraw_thread_running.load()) {
+		auto frame_start = steady_clock::now();
+		
+		// Enqueue redraw operations for all visible screens
+		{
+			std::lock_guard<std::mutex> guard(m_async_mutex);
+			for (auto &kv : __nanogui_screens) {
+				Screen *screen = kv.second;
+				if (screen->visible()) {
+					m_async_functions.push([screen]() {
+						screen->redraw();
+					});
+				}
+			}
+		}
+		
+		auto frame_end = steady_clock::now();
+		auto elapsed = duration_cast<milliseconds>(frame_end - frame_start);
+		
+		// Sleep for the remaining time to maintain 60 FPS
+		if (elapsed < frame_duration) {
+			std::this_thread::sleep_for(frame_duration - elapsed);
+		}
+	}
+}
+
+// ----------------------- Added Code Ends Here -----------------------
+
 void mainloop() {
 	if (mainloop_active)
 		throw std::runtime_error("Main loop is already running!");
@@ -128,7 +168,6 @@ void mainloop() {
 			if (emscripten_redraw || screen->tooltip_fade_in_progress())
 				screen->redraw();
 #endif
-			screen->redraw();
 			screen->draw_all();
 			// Removed redundant redraw call for improved performance
 			// screen->redraw();
@@ -160,6 +199,14 @@ void mainloop() {
 	
 	mainloop_active = true;
 	
+	// ---------------------- Added Code Starts Here ----------------------
+	
+	// Start the redraw thread
+	redraw_thread_running = true;
+	std::thread redraw_thread(redraw_thread_func);
+	
+	// ----------------------- Added Code Ends Here -----------------------
+	
 	try {
 		while (mainloop_active)
 			mainloop_iteration();
@@ -170,6 +217,18 @@ void mainloop() {
 		std::cerr << "Caught exception in main loop: " << e.what() << std::endl;
 		leave();
 	}
+	
+	// ---------------------- Added Code Starts Here ----------------------
+	
+	// Signal the redraw thread to stop
+	redraw_thread_running = false;
+	
+	// Join the redraw thread to ensure it has terminated
+	if (redraw_thread.joinable()) {
+		redraw_thread.join();
+	}
+	
+	// ----------------------- Added Code Ends Here -----------------------
 }
 
 void async(const std::function<void()> &func) {
