@@ -29,6 +29,8 @@ public:
 	
 	void Preview(const std::string& path, const std::string& directory);
 
+	void ProcessEvents();
+	
 private:
 	void ImportIntoProject();
 	

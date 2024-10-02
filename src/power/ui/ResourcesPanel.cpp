@@ -576,3 +576,7 @@ void ResourcesPanel::navigate_up_to_cwd() {
 		}
 	}
 }
+
+void ResourcesPanel::process_events() {
+	mImportWindow->ProcessEvents();
+}

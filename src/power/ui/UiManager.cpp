@@ -855,7 +855,6 @@ UiManager::UiManager(IActorSelectedRegistry& registry, IActorVisualManager& acto
 		float scaleX = viewport.second[0] / float(width);
 		float scaleY = viewport.second[1] / float(height);
 		
-		
 #if defined(NANOGUI_USE_METAL)
 		int adjusted_y = y;
 		int adjusted_x = x;
@@ -867,7 +866,6 @@ UiManager::UiManager(IActorSelectedRegistry& registry, IActorVisualManager& acto
 		// Scale x and y accordingly
 		adjusted_x *= scaleX;
 		adjusted_y *= scaleY;
-		
 		
 		int image_width = 2;
 		int image_height = 2;

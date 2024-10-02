@@ -34,6 +34,8 @@ public:
 	
 	virtual bool keyboard_event(int key, int scancode, int action, int modifiers) override;
 	
+	void process_events();
+	
 private:
 	bool mouse_button_event(const nanogui::Vector2i &p, int button, bool down, int modifiers) override;
 	

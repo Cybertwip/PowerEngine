@@ -431,7 +431,6 @@ void RenderPass::pop_depth_test_state(int identifier) {
 			mDepthTestStates[identifier].pop_front();
 			state();
 		}
-
 	}
 }
 

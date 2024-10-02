@@ -130,6 +130,7 @@ void Application::process_events() {
 	}
 
 	mUiCommon->scene_panel().process_events();
+	mUiManager->status_bar_panel().resources_panel().process_events();
 }
 
 bool Application::mouse_button_event(const nanogui::Vector2i &p, int button, bool down, int modifiers) {

@@ -7,7 +7,6 @@
 
 SharedSelfContainedMeshCanvas::SharedSelfContainedMeshCanvas(Widget* parent)
 : SelfContainedMeshCanvas(parent) {
-
 }
 
 void SharedSelfContainedMeshCanvas::set_active_actor(std::shared_ptr<Actor> actor) {
@@ -24,15 +23,23 @@ void SharedSelfContainedMeshCanvas::set_active_actor(std::shared_ptr<Actor> acto
 
 void SharedSelfContainedMeshCanvas::draw_contents() {
 	SelfContainedMeshCanvas::draw_contents();
+}
+
+void SharedSelfContainedMeshCanvas::take_snapshot(std::function<void(std::vector<uint8_t>&)> onSnapshotTaken) {
+	mSnapshotCallback = std::move(onSnapshotTaken);
+}
+
+void SharedSelfContainedMeshCanvas::process_events() {
 	
 	// schedule here
-	
 	if (mSnapshotCallback) {
 		nanogui::Screen *scr = screen();
 		if (scr == nullptr)
 			throw std::runtime_error("Canvas::draw(): could not find parent screen!");
 		
-		auto texture = scr->metal_texture();;
+		void *texture =
+		scr->metal_texture();
+		
 		
 		float pixel_ratio = scr->pixel_ratio();
 		
@@ -48,8 +55,5 @@ void SharedSelfContainedMeshCanvas::draw_contents() {
 		mSnapshotCallback(pixels);
 		mSnapshotCallback = nullptr;
 	}
-}
-
-void SharedSelfContainedMeshCanvas::take_snapshot(std::function<void(std::vector<uint8_t>&)> onSnapshotTaken) {
-	mSnapshotCallback = onSnapshotTaken;
+	
 }

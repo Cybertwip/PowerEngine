@@ -718,7 +718,7 @@ void Screen::redraw() {
 	if (!m_redraw) {
 		m_redraw = true;
 #if !defined(EMSCRIPTEN)
-//		glfwPostEmptyEvent();
+		glfwPostEmptyEvent();
 #endif
 	}
 }

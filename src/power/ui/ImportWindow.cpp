@@ -175,3 +175,7 @@ void ImportWindow::ImportIntoProject() {
 	});
 	
 }
+
+void ImportWindow::ProcessEvents() {
+	mPreviewCanvas->process_events();
+}
