@@ -498,7 +498,7 @@ bool ResourcesPanel::keyboard_event(int key, int scancode, int action, int modif
 void ResourcesPanel::import_assets() {
 	// Open a file dialog to select files to import
 	nanogui::file_dialog_async(
-							   { {"fbx", "All Files"} }, false, false, [this](std::vector<std::string>& files){
+							   { {"fbx", "All Files"} }, false, false, [this](const std::vector<std::string>& files){
 								   
 								   for (const auto& file : files) {
 									   
@@ -522,7 +522,7 @@ void ResourcesPanel::export_assets() {
 	if (mSelectedNode != nullptr) {
 		// Open a file dialog to select the destination directory
 		nanogui::file_dialog_async(
-								   { {"fbx", "All Files"} }, true, false, [this](std::vector<std::string>& files){
+								   { {"fbx", "All Files"} }, true, false, [this](const std::vector<std::string>& files){
 									   if (files.empty()) {
 										   return; // User canceled
 									   }
