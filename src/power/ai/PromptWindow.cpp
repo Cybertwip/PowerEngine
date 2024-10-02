@@ -220,7 +220,7 @@ void PromptWindow::SubmitPrompt() {
 	}
 	
 	// Send Prompt to DeepMotion API
-	std::string request_id = mDeepMotionApiClient.process_text_to_motion(prompt, unique_model_name);
+	std::string request_id = mDeepMotionApiClient.process_text_to_motion(prompt, modelId);
 	if (request_id.empty()) {
 		std::cerr << "Failed to process text to motion." << std::endl;
 		{
