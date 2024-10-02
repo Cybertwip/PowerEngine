@@ -22,7 +22,7 @@ void SharedSelfContainedMeshCanvas::set_active_actor(std::shared_ptr<Actor> acto
 	}
 }
 
-void SharedSharedSelfContainedMeshCanvas::draw_contents() {
+void SharedSelfContainedMeshCanvas::draw_contents() {
 	SelfContainedMeshCanvas::draw_contents();
 	
 	// schedule here
