@@ -242,7 +242,8 @@ void PromptWindow::SubmitPrompt() {
 	std::thread([this, request_id]() {
 		while (true) {
 			Json::Value status = mDeepMotionApiClient.check_job_status(request_id);
-			std::string job_status = status.get("status", "UNKNOWN").asString();
+			std::string job_status = status["status"].asString();
+			
 			std::cout << "Job Status: " << job_status << std::endl;
 			
 			if (job_status == "SUCCESS") {
