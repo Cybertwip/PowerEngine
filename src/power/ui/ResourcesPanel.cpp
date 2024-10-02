@@ -138,7 +138,7 @@ mSelectedButtonColor(nanogui::Color(0.5f, 0.5f, 0.8f, 1.0f))
 	
 	mMeshPicker->set_visible(false);
 	mMeshPicker->set_modal(false);
-
+	
 	/* Create the DeepMotion Settings Window (initially hidden) */
 	auto deepmotion_settings = new DeepMotionSettingsWindow(parent.window(), deepMotionApiClient, [this](){
 		mMeshPicker->set_visible(true);
@@ -152,7 +152,7 @@ mSelectedButtonColor(nanogui::Color(0.5f, 0.5f, 0.8f, 1.0f))
 	mImportWindow->set_visible(false);
 	mImportWindow->set_modal(false);
 	
-
+	
 	
 	// Add the Add Asset button with a "+" icon
 	mAddButton = new nanogui::PopupButton(mToolbar, "Add");
@@ -172,7 +172,7 @@ mSelectedButtonColor(nanogui::Color(0.5f, 0.5f, 0.8f, 1.0f))
 		//		if (deepmotion_settings->session_cookie().empty()) {
 		deepmotion_settings->set_visible(true);
 		deepmotion_settings->set_modal(true);
-
+		
 		mAddButton->set_pushed(false);
 		mAddButton->popup()->set_visible(false);
 		//		}
@@ -227,10 +227,10 @@ mSelectedButtonColor(nanogui::Color(0.5f, 0.5f, 0.8f, 1.0f))
 	mFilterText = "";
 	
 	refresh_file_view();
-
+	
 	
 	mMeshActorImporter = std::make_unique<MeshActorImporter>();
-
+	
 	mMeshActorExporter = std::make_unique<MeshActorExporter>();
 }
 
@@ -241,7 +241,7 @@ void ResourcesPanel::refresh_file_view() {
 	// Clear the buttons vector
 	mFileButtons.clear();
 	mSelectedButton = nullptr;
-
+	
 	mRootDirectoryNode.refresh();
 	
 	// Clear existing items
@@ -309,7 +309,7 @@ void ResourcesPanel::refresh_file_view() {
 						imageView->set_image(new nanogui::Texture(
 																  pixels.data(),
 																  pixels.size(),
-								 512, 512,		  nanogui::Texture::InterpolationMode::Nearest,
+																  512, 512,		  nanogui::Texture::InterpolationMode::Nearest,
 																  nanogui::Texture::InterpolationMode::Nearest,
 																  nanogui::Texture::WrapMode::ClampToEdge));
 						
@@ -438,7 +438,7 @@ bool ResourcesPanel::mouse_button_event(const nanogui::Vector2i &p, int button, 
 					mSelectedNode = nullptr;
 				}
 			}
-
+			
 		}
 	}
 	
@@ -497,53 +497,57 @@ bool ResourcesPanel::keyboard_event(int key, int scancode, int action, int modif
 
 void ResourcesPanel::import_assets() {
 	// Open a file dialog to select files to import
-	std::vector<std::string> files = nanogui::file_dialog(
-														  { {"fbx", "All Files"} }, false, false);
+	nanogui::file_dialog_async(
+							   { {"fbx", "All Files"} }, false, false, [this](std::vector<std::string>& files){
+								   
+								   for (const auto& file : files) {
+									   
+									   try {
+										   // Copy the selected file to the current directory
+										   
+										   mImportWindow->Preview(file, mSelectedDirectoryPath);
+										   
+									   } catch (const std::exception& e) {
+										   std::cerr << "Error importing asset: " << e.what() << std::endl;
+									   }
+								   }
+								   
+								   // Refresh the file view to display the newly imported assets
+								   refresh_file_view();
+							   });
 	
-	for (const auto& file : files) {
-		
-		try {
-			// Copy the selected file to the current directory
-			
-			mImportWindow->Preview(file, mSelectedDirectoryPath);
-			
-		} catch (const std::exception& e) {
-			std::cerr << "Error importing asset: " << e.what() << std::endl;
-		}
-	}
-	
-	// Refresh the file view to display the newly imported assets
-	refresh_file_view();
 }
 
 void ResourcesPanel::export_assets() {
 	if (mSelectedNode != nullptr) {
 		// Open a file dialog to select the destination directory
-		std::vector<std::string> files = nanogui::file_dialog(
-															  { {"fbx", "All Files"} }, true, false);
+		nanogui::file_dialog_async(
+								   { {"fbx", "All Files"} }, true, false, [this](std::vector<std::string>& files){
+									   if (files.empty()) {
+										   return; // User canceled
+									   }
+									   
+									   std::string destinationFile = files.front();
+									   
+									   try {
+										   // Copy files or directories
+										   CompressedSerialization::Deserializer deserializer;
+										   
+										   // Load the serialized file
+										   if (!deserializer.load_from_file(mSelectedNode->FullPath)) {
+											   std::cerr << "Failed to load serialized file: " << mSelectedNode->FullPath << "\n";
+											   return;
+										   }
+										   
+										   mMeshActorExporter->exportActor(deserializer, mSelectedNode->FullPath, destinationFile);
+										   
+										   std::cout << "Assets exported to: " << destinationFile << std::endl;
+									   } catch (const fs::filesystem_error& e) {
+										   std::cerr << "Error exporting assets: " << e.what() << std::endl;
+									   }
+								   });
 		
-		if (files.empty()) {
-			return; // User canceled
-		}
 		
-		std::string destinationFile = files.front();
-		
-		try {
-			// Copy files or directories
-			CompressedSerialization::Deserializer deserializer;
-			
-			// Load the serialized file
-			if (!deserializer.load_from_file(mSelectedNode->FullPath)) {
-				std::cerr << "Failed to load serialized file: " << mSelectedNode->FullPath << "\n";
-				return;
-			}
-
-			mMeshActorExporter->exportActor(deserializer, mSelectedNode->FullPath, destinationFile);
-
-			std::cout << "Assets exported to: " << destinationFile << std::endl;
-		} catch (const fs::filesystem_error& e) {
-			std::cerr << "Error exporting assets: " << e.what() << std::endl;
-		}
 	}
 }
 

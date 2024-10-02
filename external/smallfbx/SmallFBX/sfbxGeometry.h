@@ -1,6 +1,8 @@
 #pragma once
 #include "sfbxObject.h"
 
+#include <vector>
+
 namespace sfbx {
 
 template<class T>
@@ -183,6 +185,9 @@ protected:
 	void importFBXObjects() override;
 	
 	void exportLayers();
+	
+	void triangulatePolygons();
+	void recalculateMaterialMap(const std::vector<int>& original_counts, const std::vector<std::vector<int>>& original_material_indices);
 	
 	template<typename LayerType>
 	void exportLayer(const LayerType& layer, const char* layerName);

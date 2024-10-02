@@ -122,8 +122,8 @@ void MeshBatch::append(std::reference_wrapper<Mesh> meshRef) {
 											 mesh.get_flattened_colors().end());
 	
 	// Adjust and append indices
-	auto& indices = mesh.get_mesh_data().get_indices()
-	;
+	auto& indices = mesh.get_mesh_data().get_indices();
+	
 	for (auto index : indices) {
 		mBatchIndices[shader.identifier()].push_back(index + indexer.mVertexOffset);
 	}

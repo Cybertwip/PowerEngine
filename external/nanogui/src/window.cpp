@@ -22,21 +22,28 @@ Window::Window(Widget *parent, const std::string &title)
       m_drag(false) { }
 
 Vector2i Window::preferred_size(NVGcontext *ctx) const {
-    if (m_button_panel)
-        m_button_panel->set_visible(false);
-    Vector2i result = Widget::preferred_size(ctx);
-    if (m_button_panel)
-        m_button_panel->set_visible(true);
-
-    nvgFontSize(ctx, 18.0f);
-    nvgFontFace(ctx, "sans-bold");
-    float bounds[4];
-    nvgTextBounds(ctx, 0, 0, m_title.c_str(), nullptr, bounds);
-
-    return Vector2i(
-        std::max(result.x(), (int) (bounds[2]-bounds[0] + 20)),
-        std::max(result.y(), (int) (bounds[3]-bounds[1]))
-    );
+	// Start with the preferred size from the base Widget
+	Vector2i result = Widget::preferred_size(ctx);
+	
+	// Calculate the size required for the window title
+	nvgFontSize(ctx, 18.0f);
+	nvgFontFace(ctx, "sans-bold");
+	float bounds[4];
+	nvgTextBounds(ctx, 0, 0, m_title.c_str(), nullptr, bounds);
+	int title_width = static_cast<int>(bounds[2] - bounds[0] + 20);
+	int title_height = static_cast<int>(bounds[3] - bounds[1]);
+	
+	// Calculate the size required for the button panel, if it exists
+	Vector2i button_size(0, 0);
+	if (m_button_panel) {
+		button_size = m_button_panel->preferred_size(ctx);
+	}
+	
+	// Determine the final preferred size by considering the title and button panel
+	return Vector2i(
+					std::max(result.x(), title_width + button_size.x()),
+					std::max(result.y(), title_height + 20) // Add some padding if necessary
+					);
 }
 
 Widget *Window::button_panel() {
@@ -51,22 +58,20 @@ void Window::perform_layout(NVGcontext *ctx) {
 		center(); // Ensure the window remains centered if modal
 	}
 	
-	if (!m_button_panel) {
-		Widget::perform_layout(ctx);
-	} else {
-		m_button_panel->set_visible(false);
-		Widget::perform_layout(ctx);
-		for (auto w : m_button_panel->children()) {
+	Widget::perform_layout(ctx);
+	
+	if (m_button_panel) {
+		for (auto &w : m_button_panel->children()) {
 			w->set_fixed_size(Vector2i(22, 22));
 			w->set_font_size(15);
 		}
-		m_button_panel->set_visible(true);
 		m_button_panel->set_size(Vector2i(width(), 22));
 		m_button_panel->set_position(Vector2i(
 											  width() - (m_button_panel->preferred_size(ctx).x() + 5), 3));
 		m_button_panel->perform_layout(ctx);
 	}
 }
+
 
 void Window::set_modal(bool modal) {
 	m_modal = modal;

@@ -7,6 +7,84 @@
 #include <map>
 #include <numeric>  // For std::iota
 #include <glm/gtc/quaternion.hpp>
+#include <functional> // For std::hash
+#include <iostream> // For debugging
+
+namespace {
+
+// Improved hash_combine function inspired by Boost
+inline std::size_t hash_combine(std::size_t seed, std::size_t value) {
+	return seed ^ (value + 0x9e3779b9 + (seed << 6) + (seed >> 2));
+}
+
+inline std::size_t combineHashes(std::size_t h1, std::size_t h2, std::size_t h3, std::size_t h4, std::size_t h5,
+								 std::size_t h6, std::size_t h7, std::size_t h8, std::size_t h9, std::size_t h10,
+								 std::size_t h11, std::size_t h12, std::size_t h13, std::size_t h14, std::size_t h15) {
+	std::size_t seed = h1;
+	seed = hash_combine(seed, h2);
+	seed = hash_combine(seed, h3);
+	seed = hash_combine(seed, h4);
+	seed = hash_combine(seed, h5);
+	seed = hash_combine(seed, h6);
+	seed = hash_combine(seed, h7);
+	seed = hash_combine(seed, h8);
+	seed = hash_combine(seed, h9);
+	seed = hash_combine(seed, h10);
+	seed = hash_combine(seed, h11);
+	seed = hash_combine(seed, h12);
+	seed = hash_combine(seed, h13);
+	seed = hash_combine(seed, h14);
+	seed = hash_combine(seed, h15);
+	return seed;
+}
+
+constexpr float Quantize(float value, float epsilon = 1e-5f) {
+	return std::round(value / epsilon) * epsilon;
+}
+
+struct VertexKey {
+	glm::vec3 position;
+	glm::vec3 normal;
+	glm::vec2 uv1;
+	glm::vec2 uv2;
+	glm::vec4 color;
+	uint32_t material_id;
+	
+	bool operator==(const VertexKey& other) const {
+		return position == other.position &&
+		normal == other.normal &&
+		uv1 == other.uv1 &&
+		uv2 == other.uv2 &&
+		color == other.color &&
+		material_id == other.material_id;
+	}
+};
+
+// Custom hash function using size_t and improved hash combination
+struct VertexKeyHash {
+	std::size_t operator()(const VertexKey& key) const {
+		std::size_t h1 = std::hash<float>()(key.position.x);
+		std::size_t h2 = std::hash<float>()(key.position.y);
+		std::size_t h3 = std::hash<float>()(key.position.z);
+		std::size_t h4 = std::hash<float>()(key.normal.x);
+		std::size_t h5 = std::hash<float>()(key.normal.y);
+		std::size_t h6 = std::hash<float>()(key.normal.z);
+		std::size_t h7 = std::hash<float>()(key.uv1.x);
+		std::size_t h8 = std::hash<float>()(key.uv1.y);
+		std::size_t h9 = std::hash<float>()(key.uv2.x);
+		std::size_t h10 = std::hash<float>()(key.uv2.y);
+		std::size_t h11 = std::hash<float>()(key.color.x);
+		std::size_t h12 = std::hash<float>()(key.color.y);
+		std::size_t h13 = std::hash<float>()(key.color.z);
+		std::size_t h14 = std::hash<float>()(key.color.w);
+		std::size_t h15 = std::hash<uint32_t>()(key.material_id);
+		
+		// Combine all hashes using the improved hash_combine
+		return combineHashes(h1, h2, h3, h4, h5, h6, h7, h8, h9, h10, h11, h12, h13, h14, h15);
+	}
+};
+
+} // namespace
 
 namespace FbxUtil {
 
@@ -40,32 +118,33 @@ glm::mat4 GetUpAxisRotation(int up_axis, int up_axis_sign) {
 	return rotation;
 }
 
-}  // namespace
+}  // namespace FbxUtil
 
 Fbx::Fbx(const std::string& path) : mPath(path) {
 }
 
 void Fbx::LoadModel() {
 	mDoc = sfbx::MakeDocument(std::string(mPath));
-
-    if (mDoc && mDoc->valid()) {
-        ProcessNode(mDoc->getRootModel());
-    }
+	
+	if (mDoc && mDoc->valid()) {
+		ProcessNode(mDoc->getRootModel());
+	}
 }
 
 void Fbx::ProcessNode(const std::shared_ptr<sfbx::Model>& node) {
-    if (!node) return;
-
-    if (auto mesh = std::dynamic_pointer_cast<sfbx::Mesh>(node); mesh) {
-        ProcessMesh(mesh);
-    }
-
-    for (const auto& child : node->getChildren()) {
-        if (auto childModel = sfbx::as<sfbx::Model>(child); childModel) {
-            ProcessNode(childModel);
-        }
-    }
+	if (!node) return;
+	
+	if (auto mesh = std::dynamic_pointer_cast<sfbx::Mesh>(node); mesh) {
+		ProcessMesh(mesh);
+	}
+	
+	for (const auto& child : node->getChildren()) {
+		if (auto childModel = sfbx::as<sfbx::Model>(child); childModel) {
+			ProcessNode(childModel);
+		}
+	}
 }
+
 void Fbx::ProcessMesh(const std::shared_ptr<sfbx::Mesh>& mesh) {
 	if (!mesh) {
 		std::cerr << "Error: Invalid mesh pointer." << std::endl;
@@ -77,6 +156,10 @@ void Fbx::ProcessMesh(const std::shared_ptr<sfbx::Mesh>& mesh) {
 	
 	// Create a new MeshData instance and add it to mMeshes
 	auto& resultMesh = mMeshes.emplace_back(std::make_unique<MeshData>());
+	
+	// Clear previous data
+	resultMesh->get_vertices().clear();
+	resultMesh->get_indices().clear();
 	
 	// Precompute transformation matrices
 	const glm::mat4 rotationMatrix = FbxUtil::GetUpAxisRotation(
@@ -116,7 +199,8 @@ void Fbx::ProcessMesh(const std::shared_ptr<sfbx::Mesh>& mesh) {
 			int controlPointIndex = vertexIndices[i];
 			if (mappingMode == sfbx::LayerMappingMode::ByPolygonVertex) {
 				normalIndices[i] = (referenceMode == sfbx::LayerReferenceMode::Direct) ? static_cast<int>(i) : normalLayerIndices[i];
-			} else if (mappingMode == sfbx::LayerMappingMode::ByControlPoint) {
+			}
+			else if (mappingMode == sfbx::LayerMappingMode::ByControlPoint) {
 				normalIndices[i] = (referenceMode == sfbx::LayerReferenceMode::Direct) ? controlPointIndex : normalLayerIndices[controlPointIndex];
 			}
 		}
@@ -135,12 +219,12 @@ void Fbx::ProcessMesh(const std::shared_ptr<sfbx::Mesh>& mesh) {
 			int controlPointIndex = vertexIndices[i];
 			if (mappingMode == sfbx::LayerMappingMode::ByPolygonVertex) {
 				uvIndicesPerLayer[layerIndex][i] = (referenceMode == sfbx::LayerReferenceMode::Direct) ? static_cast<int>(i) : uvLayerIndices[i];
-			} else if (mappingMode == sfbx::LayerMappingMode::ByControlPoint) {
+			}
+			else if (mappingMode == sfbx::LayerMappingMode::ByControlPoint) {
 				uvIndicesPerLayer[layerIndex][i] = (referenceMode == sfbx::LayerReferenceMode::Direct) ? controlPointIndex : uvLayerIndices[controlPointIndex];
 			}
 		}
 	}
-	
 	
 	// Precompute Color Indices
 	const auto& colorLayers = geometry->getColorLayers();
@@ -157,43 +241,15 @@ void Fbx::ProcessMesh(const std::shared_ptr<sfbx::Mesh>& mesh) {
 			int controlPointIndex = vertexIndices[i];
 			if (mappingMode == sfbx::LayerMappingMode::ByPolygonVertex) {
 				colorIndices[i] = (referenceMode == sfbx::LayerReferenceMode::Direct) ? static_cast<int>(i) : colorLayerIndices[i];
-			} else if (mappingMode == sfbx::LayerMappingMode::ByControlPoint) {
+			}
+			else if (mappingMode == sfbx::LayerMappingMode::ByControlPoint) {
 				colorIndices[i] = (referenceMode == sfbx::LayerReferenceMode::Direct) ? controlPointIndex : colorLayerIndices[controlPointIndex];
 			}
 		}
 	}
 	
-	// Use a hash map to deduplicate vertices based on position, normal, and UVs
-	struct VertexKey {
-		glm::vec3 position;
-		glm::vec3 normal;
-		glm::vec2 uv1;
-		glm::vec2 uv2;
-		bool operator<(const VertexKey& other) const {
-			// Compare positions
-			if (position.x != other.position.x) return position.x < other.position.x;
-			if (position.y != other.position.y) return position.y < other.position.y;
-			if (position.z != other.position.z) return position.z < other.position.z;
-			
-			// Compare normals
-			if (normal.x != other.normal.x) return normal.x < other.normal.x;
-			if (normal.y != other.normal.y) return normal.y < other.normal.y;
-			if (normal.z != other.normal.z) return normal.z < other.normal.z;
-			
-			// Compare UV1
-			if (uv1.x != other.uv1.x) return uv1.x < other.uv1.x;
-			if (uv1.y != other.uv1.y) return uv1.y < other.uv1.y;
-			
-			// Compare UV2
-			if (uv2.x != other.uv2.x) return uv2.x < other.uv2.x;
-			if (uv2.y != other.uv2.y) return uv2.y < other.uv2.y;
-			
-			// All components are equal
-			return false;
-		}
-	};
-	
-	std::map<VertexKey, uint32_t> vertexMap;
+	// Initialize unordered_map for deduplication
+	std::unordered_map<VertexKey, uint32_t, VertexKeyHash> vertexMap;
 	uint32_t newIndex = 0;
 	
 	// Reserve space
@@ -204,9 +260,10 @@ void Fbx::ProcessMesh(const std::shared_ptr<sfbx::Mesh>& mesh) {
 	for (size_t i = 0; i < vertexIndices.size(); ++i) {
 		int controlPointIndex = vertexIndices[i];
 		
-		// Ensure controlPointIndex is within bounds
-		if (controlPointIndex >= points.size()) {
-			sfbxPrint("Error: controlPointIndex %d out of bounds.\n", controlPointIndex);
+		// Enhanced index validation
+		if (controlPointIndex >= static_cast<int>(points.size()) || controlPointIndex < 0) {
+			sfbxPrint("Error: controlPointIndex %d out of bounds. Points size: %zu\n", controlPointIndex, points.size());
+			// Handle the error as needed
 			continue;
 		}
 		
@@ -252,12 +309,21 @@ void Fbx::ProcessMesh(const std::shared_ptr<sfbx::Mesh>& mesh) {
 			color = glm::vec4(col.x, col.y, col.z, col.w);
 		}
 		
-		// Create a key for deduplication
+		// Get material ID
+		int matIndex = geometry->getMaterialForVertexIndex(controlPointIndex);
+		uint32_t materialID = 0; // Default material ID
+		if (matIndex >= 0 && matIndex < static_cast<int>(materials.size())) {
+			materialID = static_cast<uint32_t>(matIndex);
+		}
+		
+		// Create a key for deduplication with quantization
 		VertexKey key{
-			transformedPos,
-			transformedNormal,
-			uv1,
-			uv2
+			glm::vec3(Quantize(transformedPos.x), Quantize(transformedPos.y), Quantize(transformedPos.z)),
+			glm::vec3(Quantize(transformedNormal.x), Quantize(transformedNormal.y), Quantize(transformedNormal.z)),
+			glm::vec2(uv1.x, uv1.y),
+			glm::vec2(uv2.x, uv2.y),
+			color,
+			materialID
 		};
 		
 		// Check if the vertex already exists
@@ -265,7 +331,8 @@ void Fbx::ProcessMesh(const std::shared_ptr<sfbx::Mesh>& mesh) {
 		if (it != vertexMap.end()) {
 			// Vertex exists, reuse the index
 			resultMesh->get_indices().push_back(it->second);
-		} else {
+		}
+		else {
 			// New unique vertex
 			auto vertexPtr = std::make_unique<MeshVertex>();
 			vertexPtr->set_position(transformedPos);
@@ -273,14 +340,7 @@ void Fbx::ProcessMesh(const std::shared_ptr<sfbx::Mesh>& mesh) {
 			vertexPtr->set_texture_coords1(uv1);
 			vertexPtr->set_texture_coords2(uv2);
 			vertexPtr->set_color(color);
-			
-			// Assign material ID
-			int matIndex = geometry->getMaterialForVertexIndex(controlPointIndex);
-			if (matIndex >= 0 && matIndex < static_cast<int>(materials.size())) {
-				vertexPtr->set_material_id(matIndex);
-			} else {
-				vertexPtr->set_material_id(0); // or a default material ID
-			}
+			vertexPtr->set_material_id(materialID);
 			
 			// Add the new vertex to the vertex buffer
 			resultMesh->get_vertices().push_back(std::move(vertexPtr));
@@ -338,5 +398,5 @@ void Fbx::ProcessMesh(const std::shared_ptr<sfbx::Mesh>& mesh) {
 	mMaterialProperties.push_back(std::move(serializableMaterials));
 	
 	// Proceed to process bones separately
-	ProcessBones(mesh); // This call should be handled externally or after ProcessMesh
+	ProcessBones(mesh); // Ensure this is handled appropriately
 }

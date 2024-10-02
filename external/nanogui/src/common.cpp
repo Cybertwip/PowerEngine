@@ -264,10 +264,6 @@ load_image_directory(NVGcontext *ctx, const std::string &path) {
 	return result;
 }
 
-std::vector<std::string> file_dialog(const std::vector<std::pair<std::string, std::string>> &filetypes, bool save, bool multiple) {
-	return file_dialog_multiple(filetypes, save, multiple);
-}
-
 #if !defined(__APPLE__)
 std::vector<std::string> file_dialog(const std::vector<std::pair<std::string, std::string>> &filetypes, bool save, bool multiple) {
 	static const int FILE_DIALOG_MAX_BUFFER = 16384;

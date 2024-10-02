@@ -192,8 +192,8 @@ void RenderPass::begin() {
 	set_viewport(m_viewport_offset, m_viewport_size);
 	
 	// Re-apply depth test and cull mode
-	// set_depth_test(m_depth_test, m_depth_write);
-	// set_cull_mode(m_cull_mode);
+	 set_depth_test(m_depth_test, m_depth_write);
+	 set_cull_mode(m_cull_mode);
 }
 
 

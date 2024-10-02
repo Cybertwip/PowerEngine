@@ -21,6 +21,5 @@ int main(int /* argc */, char ** /* argv */) {
 	
 	nanogui::shutdown();
 	
-	
 	return 0;
 }
