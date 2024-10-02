@@ -157,7 +157,7 @@ void ImportWindow::ImportIntoProject() {
 		// Now write the converted RGBA data to PNG
 		write_to_png(pixels, 512, 512, 4, png_data);
 		
-		 Proceed with serialization
+		// Proceed with serialization
 		serializer->write_header_uint64(png_data.size());
 		serializer->write_header_raw(png_data.data(), png_data.size());
 		
