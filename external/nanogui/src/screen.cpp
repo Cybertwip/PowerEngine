@@ -120,7 +120,9 @@ m_stencil_buffer(stencil_buffer), m_float_buffer(float_buffer), m_redraw(false) 
 	memset(m_cursors, 0, sizeof(GLFWcursor *) * (int) Cursor::CursorCount);
 	
 	// Framebuffer configuration for performance
-	glfwWindowHint(GLFW_DOUBLEBUFFER, GLFW_TRUE);
+	glfwWindowHint(GLFW_DOUBLEBUFFER, GLFW_FALSE);
+	
+	glfwWindowHint(GLFW_REFRESH_RATE, 60);
 
 #if defined(__APPLE__)
 	glfwWindowHint(GLFW_COCOA_GRAPHICS_SWITCHING, GLFW_FALSE); // Disable graphics switching
