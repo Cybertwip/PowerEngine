@@ -21,7 +21,11 @@ public:
 	MeshActorExporter();
 	~MeshActorExporter();
 	
-	bool exportActor(CompressedSerialization::Deserializer& actor, const std::string& sourcePath, const std::string& exportPath);
+	bool exportToFile(CompressedSerialization::Deserializer& actor, const std::string& sourcePath, const std::string& exportPath);
+	
+	bool exportToStream(CompressedSerialization::Deserializer& deserializer,
+				   const std::string& sourcePath,
+						std::ostream& outStream);
 	
 private:	
 	// Internal Data

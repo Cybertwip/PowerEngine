@@ -10,6 +10,7 @@
 
 #include <glm/glm.hpp>
 
+#include <sstream>
 #include <string>
 #include <vector>
 #include <memory>
@@ -22,10 +23,10 @@ class Fbx {
 public:
 	Fbx() = default;
 	
-    Fbx(const std::string& path);
 	virtual ~Fbx() = default;
 	
-	void LoadModel();
+	void LoadModel(std::stringstream& data);
+	void LoadModel(const std::string& path);
 
 	std::vector<std::unique_ptr<MeshData>>& GetMeshData() { return mMeshes; }
 	

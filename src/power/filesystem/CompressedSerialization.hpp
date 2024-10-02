@@ -6,12 +6,107 @@
 #include <zlib.h>
 #include <iostream>
 #include <fstream> // For file I/O
+#include <sstream>
 #include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <string>
 #include <thread>
 #include <future>
 #include <mutex>
+
+
+#include <openssl/md5.h>
+class Md5 {
+public:
+	static
+	void generate_md5_from_compressed_data(std::stringstream& compressedData, uint64_t hash_id[2]) {
+		// Convert the stringstream to a string
+		std::string data = compressedData.str();
+		
+		// Create an MD5 digest array (16 bytes for 128 bits)
+		unsigned char digest[MD5_DIGEST_LENGTH];
+		
+		// Perform the MD5 hashing
+		MD5(reinterpret_cast<const unsigned char*>(data.c_str()), data.size(), digest);
+		
+		// First 8 bytes of the digest go into hash_id[0]
+		hash_id[0] = 0;
+		for (int i = 0; i < 8; ++i) {
+			hash_id[0] = (hash_id[0] << 8) | digest[i];
+		}
+		
+		// Next 8 bytes of the digest go into hash_id[1]
+		hash_id[1] = 0;
+		for (int i = 8; i < 16; ++i) {
+			hash_id[1] = (hash_id[1] << 8) | digest[i];
+		}
+	}
+};
+
+
+class Zip {
+public:
+	static std::vector<std::stringstream> decompress(const std::vector<unsigned char>& zip_data) {
+		// Prepare vector to store the decompressed files
+		std::vector<std::stringstream> decompressed_files;
+		
+		// Check if zlib's uncompress function is available
+		if (zip_data.empty()) {
+			throw std::runtime_error("Zip data is empty");
+		}
+		
+		// Inflate the compressed data
+		z_stream stream;
+		memset(&stream, 0, sizeof(stream));
+		
+		// Initialize the zlib decompression
+		if (inflateInit2(&stream, 15 + 32) != Z_OK) {
+			throw std::runtime_error("inflateInit2 failed");
+		}
+		
+		stream.avail_in = zip_data.size();
+		stream.next_in = const_cast<Bytef*>(zip_data.data());
+		
+		// Temporary buffers
+		const size_t CHUNK_SIZE = 1024;
+		std::vector<unsigned char> out_buffer(CHUNK_SIZE);
+		
+		// Decompression loop
+		int ret = Z_OK;
+		do {
+			stream.avail_out = CHUNK_SIZE;
+			stream.next_out = out_buffer.data();
+			
+			ret = inflate(&stream, Z_NO_FLUSH);
+			if (ret != Z_OK && ret != Z_STREAM_END) {
+				inflateEnd(&stream);
+				throw std::runtime_error("inflate failed");
+			}
+			
+			// Calculate how many bytes were decompressed in this iteration
+			size_t bytes_decompressed = CHUNK_SIZE - stream.avail_out;
+			
+			// Add the decompressed data to the stringstream
+			if (bytes_decompressed > 0) {
+				std::stringstream ss;
+				ss.write(reinterpret_cast<char*>(out_buffer.data()), bytes_decompressed);
+				decompressed_files.push_back(std::move(ss));
+			}
+			
+		} while (ret != Z_STREAM_END);
+		
+		// Clean up
+		inflateEnd(&stream);
+		
+		if (ret != Z_STREAM_END) {
+			throw std::runtime_error("inflate did not finish successfully");
+		}
+		
+		return decompressed_files;
+	}
+};
+
+
 
 // Utility class for serialization and deserialization with compression
 class CompressedSerialization {

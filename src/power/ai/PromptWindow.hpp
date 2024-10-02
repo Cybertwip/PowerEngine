@@ -7,9 +7,13 @@
 #include <nanogui/window.h>
 
 #include <memory>
+#include <string>
+#include <mutex>
+#include <optional>
 
 class DeepMotionApiClient;
 class MeshActorBuilder;
+class MeshActorExporter;
 class IMeshBatch;
 class ResourcesPanel;
 class ShaderWrapper;
@@ -32,11 +36,15 @@ public:
 	
 	void Preview(const std::string& path, const std::string& directory);
 	
+	void Preview(const std::string& path, const std::string& directory, CompressedSerialization::Deserializer& deserializer);
+	
 	void ProcessEvents();
 	
 private:
+	void SubmitPrompt();
 	void ImportIntoProject();
-	
+	std::string GenerateUniqueModelName(const std::string& hash_id0, const std::string& hash_id1);
+
 	ResourcesPanel& mResourcesPanel;
 	
 	std::unique_ptr<IMeshBatch> mMeshBatch;
@@ -62,4 +70,15 @@ private:
 
 	DeepMotionApiClient& mDeepMotionApiClient;
 
+	// Status Label
+	nanogui::Label* mStatusLabel;
+	std::mutex mStatusMutex;
+	
+	std::string mActorPath;
+	std::string mOutputDirectory;
+	uint64_t mHashId[2] = { 0, 0 };
+	
+	std::unique_ptr<MeshActorExporter> mMeshActorExporter;
+	
+	std::optional<CompressedSerialization::Serializer> mSerializedPrompt;
 };

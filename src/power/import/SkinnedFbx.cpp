@@ -50,9 +50,6 @@ inline glm::mat4 SfbxMatToGlmMat(const sfbx::double4x4 &from)
 }
 }  // namespace
 
-SkinnedFbx::SkinnedFbx(const std::string& path) : Fbx(path) {
-}
-
 void SkinnedFbx::ProcessBones(const std::shared_ptr<sfbx::Mesh>& mesh) {
 	if (!mesh) {
 		std::cerr << "Error: Invalid mesh pointer." << std::endl;

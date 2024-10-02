@@ -361,15 +361,14 @@ Json::Value DeepMotionApiClient::list_models() {
 	
 	return empty_response;
 }
-
-bool DeepMotionApiClient::upload_model(const std::vector<char>& model_data, const std::string& model_name, const std::string& model_ext) {
+bool DeepMotionApiClient::upload_model(std::stringstream& model_data_stream, const std::string& model_name, const std::string& model_ext) {
 	if (!authenticated_) {
 		std::cerr << "Client not authenticated. Please authenticate before uploading models." << std::endl;
 		return false;
 	}
 	
 	// Validate model data
-	if (model_data.empty()) {
+	if (model_data_stream.str().empty()) {
 		std::cerr << "Model data is empty." << std::endl;
 		return false;
 	}
@@ -419,9 +418,10 @@ bool DeepMotionApiClient::upload_model(const std::vector<char>& model_data, cons
 	
 	std::string content_type = "application/octet-stream";
 	
+	std::string model_data_str = model_data_stream.str();
 	auto res = upload_client.Put(upload_path.c_str(),
-								 model_data.data(),
-								 model_data.size(),
+								 model_data_str.c_str(),
+								 model_data_str.size(),
 								 content_type.c_str());
 	
 	if (!res) {
@@ -451,3 +451,4 @@ bool DeepMotionApiClient::upload_model(const std::vector<char>& model_data, cons
 	std::cout << "Model uploaded and stored successfully: " << model_name << std::endl;
 	return true;
 }
+

@@ -21,35 +21,6 @@
 
 #include <sstream>
 
-namespace {
-#include <openssl/md5.h>
-
-void generate_md5_from_compressed_data(std::stringstream& compressedData, uint64_t hash_id[2]) {
-	// Convert the stringstream to a string
-	std::string data = compressedData.str();
-	
-	// Create an MD5 digest array (16 bytes for 128 bits)
-	unsigned char digest[MD5_DIGEST_LENGTH];
-	
-	// Perform the MD5 hashing
-	MD5(reinterpret_cast<const unsigned char*>(data.c_str()), data.size(), digest);
-	
-	// First 8 bytes of the digest go into hash_id[0]
-	hash_id[0] = 0;
-	for (int i = 0; i < 8; ++i) {
-		hash_id[0] = (hash_id[0] << 8) | digest[i];
-	}
-	
-	// Next 8 bytes of the digest go into hash_id[1]
-	hash_id[1] = 0;
-	for (int i = 8; i < 16; ++i) {
-		hash_id[1] = (hash_id[1] << 8) | digest[i];
-	}
-}
-
-
-}
-
 ImportWindow::ImportWindow(nanogui::Widget* parent, ResourcesPanel& resourcesPanel, nanogui::RenderPass& renderpass, ShaderManager& shaderManager) : nanogui::Window(parent->screen()), mResourcesPanel(resourcesPanel) {
 	
 	set_fixed_size(nanogui::Vector2i(400, 320));
@@ -151,7 +122,6 @@ void ImportWindow::ImportIntoProject() {
 	mPreviewCanvas->take_snapshot([this](std::vector<uint8_t>& pixels) {
 		auto& serializer = mCompressedMeshData->mMesh.mSerializer;
 		
-		
 		std::stringstream compressedData;
 		
 		serializer->get_compressed_data(compressedData);
@@ -160,7 +130,7 @@ void ImportWindow::ImportIntoProject() {
 		
 		uint64_t hash_id[] = { 0, 0 };
 		
-		generate_md5_from_compressed_data(compressedData, hash_id);
+		Md5::generate_md5_from_compressed_data(compressedData, hash_id);
 		
 		// Write the unique hash identifier to the header
 		serializer->write_header_raw(hash_id, sizeof(hash_id));

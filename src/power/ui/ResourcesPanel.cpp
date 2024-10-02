@@ -560,7 +560,7 @@ void ResourcesPanel::export_assets() {
 											   return;
 										   }
 										   
-										   mMeshActorExporter->exportActor(deserializer, mSelectedNode->FullPath, destinationFile);
+										   mMeshActorExporter->exportToFile(deserializer, mSelectedNode->FullPath, destinationFile);
 										   
 										   std::cout << "Assets exported to: " << destinationFile << std::endl;
 									   } catch (const fs::filesystem_error& e) {
