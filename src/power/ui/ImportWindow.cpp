@@ -136,7 +136,7 @@ void ImportWindow::Preview(const std::string& path, const std::string& directory
 		mMeshActorBuilder->build_mesh(*actor, "DummyActor", deserializer, mPreviewCanvas->get_mesh_shader(), mPreviewCanvas->get_skinned_mesh_shader());
 	}
 	
-	//mPreviewCanvas->set_active_actor(actor);
+	mPreviewCanvas->set_active_actor(actor);
 	mPreviewCanvas->set_update(true);
 	
 	if (!mCompressedMeshData->mAnimations.has_value()) {
