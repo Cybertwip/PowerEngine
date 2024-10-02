@@ -159,10 +159,17 @@ std::string DeepMotionApiClient::process_text_to_motion(const std::string& promp
 		return "";
 	}
 	
-	// Construct JSON payload
+	
 	Json::Value post_json_data;
-	post_json_data["prompt"] = prompt;
-	post_json_data["model"] = model_id;
+	
+	auto params =  std::vector<std::string>{
+		"prompt="+prompt,
+		"model="+model_id
+	};
+	
+	for (const auto& param : params) {
+		post_json_data["params"].append(param);
+	}
 	
 	Json::StreamWriterBuilder writer;
 	std::string json_payload = Json::writeString(writer, post_json_data);
