@@ -60,6 +60,8 @@ add_executable(PowerEngine
     ${CMAKE_CURRENT_LIST_DIR}/ai/DeepMotionSettingsWindow.cpp
     ${CMAKE_CURRENT_LIST_DIR}/ai/DeepMotionApiClient.hpp
     ${CMAKE_CURRENT_LIST_DIR}/ai/DeepMotionApiClient.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/ai/PromptWindow.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/ai/PromptWindow.cpp
 
     ${CMAKE_CURRENT_LIST_DIR}/actors/IActorSelectedCallback.hpp
     ${CMAKE_CURRENT_LIST_DIR}/actors/IActorSelectedRegistry.hpp

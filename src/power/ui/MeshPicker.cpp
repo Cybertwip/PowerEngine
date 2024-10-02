@@ -1,8 +1,15 @@
 #include "MeshPicker.hpp"
+
+#include "filesystem/CompressedSerialization.hpp"
+#include "filesystem/DirectoryNode.hpp"
+
 #include <nanogui/layout.h>
 #include <nanogui/button.h>
+#include <nanogui/imageview.h>
 #include <nanogui/label.h>
-#include <nanogui/vscrollpanel.h> // Include ScrollPanel
+#include <nanogui/screen.h>
+#include <nanogui/vscrollpanel.h>
+
 #include <algorithm>
 #include <iostream>
 #include <chrono> // For double-click detection
