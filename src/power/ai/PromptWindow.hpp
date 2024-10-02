@@ -8,6 +8,7 @@
 
 #include <memory>
 
+class DeepMotionApiClient;
 class MeshActorBuilder;
 class IMeshBatch;
 class ResourcesPanel;
@@ -19,13 +20,15 @@ class ISkinnedMeshBatch;
 struct BatchUnit;
 
 namespace nanogui {
+class Button;
 class CheckBox;
 class RenderPass;
+class TextBox;
 }
 
 class PromptWindow : public nanogui::Window {
 public:
-	PromptWindow(nanogui::Widget* parent, ResourcesPanel& resourcesPanel, nanogui::RenderPass& renderpass, ShaderManager& shaderManager);
+	PromptWindow(nanogui::Widget* parent, ResourcesPanel& resourcesPanel, DeepMotionApiClient& deepMotionApiClient, nanogui::RenderPass& renderpass, ShaderManager& shaderManager);
 	
 	void Preview(const std::string& path, const std::string& directory);
 	
@@ -53,4 +56,10 @@ private:
 	std::unique_ptr<MeshActorImporter> mMeshActorImporter;
 	
 	std::unique_ptr<MeshActorImporter::CompressedMeshActor> mCompressedMeshData;
+	
+	nanogui::TextBox* mInputTextBox;
+	nanogui::Button* mSubmitButton;
+
+	DeepMotionApiClient& mDeepMotionApiClient;
+
 };

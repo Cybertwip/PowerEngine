@@ -16,6 +16,7 @@ class MeshActorExporter;
 class MeshActorLoader;
 class MeshActorBuilder;
 class MeshPicker;
+class PromptWindow;
 class SelfContainedMeshCanvas;
 class ShaderManager;
 class ShaderWrapper;
@@ -76,4 +77,6 @@ private:
 	
 	std::unique_ptr<MeshActorImporter> mMeshActorImporter;
 	std::unique_ptr<MeshActorExporter> mMeshActorExporter;
+	
+	PromptWindow* mPromptWindow;
 };

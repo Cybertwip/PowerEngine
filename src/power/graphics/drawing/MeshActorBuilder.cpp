@@ -164,7 +164,6 @@ Actor& MeshActorBuilder::build_skinned(Actor& actor, const std::string& actorNam
 		}
 		
 		skinnedMeshData.push_back(std::move(meshData));
-		
 	}
 	
 	// Set SkinnedMeshData in the model

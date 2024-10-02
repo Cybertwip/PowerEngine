@@ -1,6 +1,7 @@
 #include "ui/ResourcesPanel.hpp"
 
 #include "ai/DeepMotionSettingsWindow.hpp"
+#include "ai/PromptWindow.hpp"
 #include "actors/IActorSelectedRegistry.hpp"
 #include "filesystem/MeshActorImporter.hpp"
 #include "filesystem/MeshActorExporter.hpp"
@@ -132,8 +133,15 @@ mSelectedButtonColor(nanogui::Color(0.5f, 0.5f, 0.8f, 1.0f))
 	mToolbar->set_layout(new nanogui::BoxLayout(
 												nanogui::Orientation::Horizontal, nanogui::Alignment::Middle, 10, 10));
 	
+	mPromptWindow = new PromptWindow(parent.window(), *this, deepMotionApiClient, shaderManager.render_pass(), shaderManager);
+	
 	mMeshPicker = new MeshPicker(parent.window(), mRootDirectoryNode, [this](const std::string& modelPath){
+		mMeshPicker->set_visible(false);
+		mMeshPicker->set_modal(false);
 		
+		mPromptWindow->set_visible(true);
+		mPromptWindow->set_modal(true);
+		mPromptWindow->Preview(modelPath, mSelectedDirectoryPath);
 	});
 	
 	mMeshPicker->set_visible(false);
@@ -296,6 +304,10 @@ void ResourcesPanel::refresh_file_view() {
 					pixels.resize(512 * 512 * 4);
 					
 					uint64_t thumbnail_size = 0;
+					
+					uint64_t hash_id[] = { 0, 0 };
+
+					deserializer.read_header_raw(hash_id, sizeof(hash_id)); // To increase the offset and read the thumbnail size
 					
 					deserializer.read_header_uint64(thumbnail_size);
 					

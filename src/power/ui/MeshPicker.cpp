@@ -123,6 +123,11 @@ void MeshPicker::refresh_file_list() {
 		
 		uint64_t thumbnail_size = 0;
 		
+		
+		uint64_t hash_id[] = { 0, 0 };
+		
+		deserializer.read_header_raw(hash_id, sizeof(hash_id)); // To increase the offset and read the thumbnail size
+		
 		deserializer.read_header_uint64(thumbnail_size);
 		
 		if (thumbnail_size != 0) {
