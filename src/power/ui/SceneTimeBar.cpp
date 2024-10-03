@@ -494,8 +494,9 @@ void SceneTimeBar::update() {
 	}
 	
 	evaluate_animations();
-	
+	verify_uncommited_key();
 	evaluate_keyframe_status();
+
 	
 	auto ctx = screen()->nvg_context();
 	// Draw background
@@ -658,7 +659,7 @@ std::tuple<bool, bool> SceneTimeBar::find_previous_and_next_keyframes() {
 	}
 	
 	// Check next keyframe from AnimationComponent
-	if (nextKeyframeTime) {
+	if (nextKeyframeTime != -1) {
 		hasNextKeyframe = true;
 		if (nextKeyframeTime < earliestNextTime) {
 			earliestNextTime = nextKeyframeTime;
