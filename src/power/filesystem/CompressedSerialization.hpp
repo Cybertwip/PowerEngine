@@ -123,7 +123,6 @@ static int ZCALLBACK mem_error_func(voidpf opaque, voidpf stream) {
 	return 0;
 }
 
-*/
 
 // Function to fill zlib_filefunc_def with memory I/O functions
 static void fill_memory_filefunc(zlib_filefunc_def* pzlib_filefunc_def, MemoryBuffer* mem_buffer) {
@@ -137,6 +136,7 @@ static void fill_memory_filefunc(zlib_filefunc_def* pzlib_filefunc_def, MemoryBu
 	pzlib_filefunc_def->opaque = mem_buffer;
 }
 
+ */
 
 
 class Zip {
