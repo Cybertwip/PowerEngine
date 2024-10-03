@@ -22,6 +22,7 @@
 #include <sstream>
 #include <mutex>
 #include <future>
+#include <filesystem>
 
 using fs = std::filesystem;
 
