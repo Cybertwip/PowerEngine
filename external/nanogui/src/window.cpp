@@ -72,7 +72,6 @@ void Window::perform_layout(NVGcontext *ctx) {
 	}
 }
 
-
 void Window::set_modal(bool modal) {
 	m_modal = modal;
 	if (m_modal) {
@@ -89,6 +88,10 @@ void Window::set_modal(bool modal) {
 			parent_ptr->add_child(this);
 			
 			dec_ref();
+			
+			set_focused(true);
+			
+			request_focus();
 		}
 	}
 }
@@ -203,13 +206,23 @@ bool Window::mouse_drag_event(const Vector2i &, const Vector2i &rel,
 }
 
 bool Window::mouse_button_event(const Vector2i &p, int button, bool down, int modifiers) {
-    if (Widget::mouse_button_event(p, button, down, modifiers))
-        return true;
-    if (button == GLFW_MOUSE_BUTTON_1) {
-        m_drag = down && (p.y() - m_pos.y()) < m_theme->m_window_header_height;
-        return true;
-    }
-    return false;
+	if (m_modal) {
+		// Check if the click is outside the window
+		if (!contains(p)) {
+			// Optionally, you can add logic here to handle clicks outside,
+			// such as bringing the modal window back to front
+			return true; // Consume the event
+		}
+	}
+	
+	// Existing event handling
+	if (Widget::mouse_button_event(p, button, down, modifiers))
+		return true;
+	if (button == GLFW_MOUSE_BUTTON_1) {
+		m_drag = down && (p.y() - m_pos.y()) < m_theme->m_window_header_height;
+		return true;
+	}
+	return false;
 }
 
 bool Window::scroll_event(const Vector2i &p, const Vector2f &rel) {

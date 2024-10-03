@@ -31,6 +31,14 @@ void MeshPicker::setup_ui() {
 	
 	set_title("Select Mesh");
 	
+	// Close Button
+	auto close_button = new nanogui::Button(button_panel(), "X");
+	close_button->set_fixed_size(nanogui::Vector2i(20, 20));
+	close_button->set_callback([this]() {
+		set_visible(false);
+		set_modal(false);
+	});
+	
 	// Filter Box
 	filter_box_ = new nanogui::TextBox(this, "");
 	filter_box_->set_placeholder("Filter by name...");

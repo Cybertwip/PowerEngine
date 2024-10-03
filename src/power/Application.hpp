@@ -110,6 +110,15 @@ protected:
 		m_last_interaction = glfwGetTime();
 		
 		try {
+			if (m_focus_path.size() > 1) {
+				const Window *window =
+				dynamic_cast<Window *>(m_focus_path[m_focus_path.size() - 2]);
+				if (window && window->modal()) {
+					if (!window->contains(m_mouse_pos))
+						return;
+				}
+			}
+
 			if (action == GLFW_PRESS) {
 				m_mouse_state |= 1 << button;
 				if (m_drag_widget) {
