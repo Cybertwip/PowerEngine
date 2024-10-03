@@ -265,7 +265,7 @@ void PromptWindow::SubmitPrompt() {
 								for(auto& file : url){
 									
 									if(file.isMember("fbx")){
-										auto download_url = fule["fbx"].asString();
+										auto download_url = file["fbx"].asString();
 										
 										std::cout << "Download URL: " << download_url << std::endl;
 										
