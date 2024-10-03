@@ -374,7 +374,6 @@ void PromptWindow::SubmitPrompt() {
 										}
 										break;
 									}
-									break;
 								}
 							}
 						}

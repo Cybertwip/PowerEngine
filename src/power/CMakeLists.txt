@@ -214,6 +214,7 @@ SmallFBX
 httplib::httplib 
 OpenSSL::SSL
 OpenSSL::Crypto
+zlib
 #grpc++ 
 ${platform_specific_libraries})
 
