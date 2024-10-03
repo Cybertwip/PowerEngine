@@ -65,22 +65,26 @@ PromptWindow::PromptWindow(nanogui::Widget* parent, ResourcesPanel& resourcesPan
 	mInputTextBox->set_font_size(14);
 	mInputTextBox->set_editable(true);
 	
+	auto import_panel = new nanogui::Widget(this);
+	import_panel->set_layout(new nanogui::BoxLayout(nanogui::Orientation::Horizontal, nanogui::Alignment::Minimum, 0, 4));
+
 	// Add Submit Button
-	mSubmitButton = new nanogui::Button(this, "Submit");
+	mSubmitButton = new nanogui::Button(import_panel, "Submit");
 	mSubmitButton->set_callback([this]() {
 		nanogui::async([this]() { this->SubmitPromptAsync(); });
 	});
 	mSubmitButton->set_tooltip("Submit the animation import");
-	mSubmitButton->set_fixed_width(256);
-	
-	// Import Button (if still needed)
-	// If "Submit" replaces "Import", you can remove or rename this button
-	auto importButton = new nanogui::Button(this, "Import");
+	mSubmitButton->set_fixed_width(208);	
+
+	auto importButton = new nanogui::Button(import_panel, "");
+	importButton->set_icon(FA_SAVE);
+	importButton->set_enabled(false);
 	importButton->set_callback([this]() {
-		nanogui::async([this]() { this->ImportIntoProjectAsync(); });
+		nanogui::async([this]() { this->ImportIntoProjectAsync();
+		});
 	});
-	importButton->set_tooltip("Import the selected asset with the chosen options");
-	importButton->set_fixed_width(256);
+	importButton->set_tooltip("Import the generated animation");
+	importButton->set_fixed_width(44);
 	
 	mMeshActorExporter = std::make_unique<MeshActorExporter>();
 	
