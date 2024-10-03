@@ -76,7 +76,8 @@ private:
 	
 	nanogui::TextBox* mInputTextBox;
 	nanogui::Button* mSubmitButton;
-	
+	nanogui::Button* mImportButton; // New Import button member
+
 	DeepMotionApiClient& mDeepMotionApiClient;
 	
 	// Status Label

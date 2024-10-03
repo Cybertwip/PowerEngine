@@ -26,7 +26,7 @@
 PromptWindow::PromptWindow(nanogui::Widget* parent, ResourcesPanel& resourcesPanel, DeepMotionApiClient& deepMotionApiClient, nanogui::RenderPass& renderpass, ShaderManager& shaderManager)
 : nanogui::Window(parent->screen()), mResourcesPanel(resourcesPanel), mDeepMotionApiClient(deepMotionApiClient) {
 	
-	set_fixed_size(nanogui::Vector2i(400, 544)); // Adjusted height for additional UI elements
+	set_fixed_size(nanogui::Vector2i(400, 512)); // Adjusted height for additional UI elements
 	set_layout(new nanogui::BoxLayout(nanogui::Orientation::Vertical, nanogui::Alignment::Middle));
 	set_title("Animation Prompt");
 	
@@ -37,6 +37,12 @@ PromptWindow::PromptWindow(nanogui::Widget* parent, ResourcesPanel& resourcesPan
 		this->set_visible(false);
 		this->set_modal(false);
 		mPreviewCanvas->set_update(false);
+		
+		// Disable Import Button when closing the window
+		nanogui::async([this]() {
+			mImportButton->set_enabled(false);
+		});
+
 	});
 	
 	// Preview Canvas
@@ -74,17 +80,17 @@ PromptWindow::PromptWindow(nanogui::Widget* parent, ResourcesPanel& resourcesPan
 		nanogui::async([this]() { this->SubmitPromptAsync(); });
 	});
 	mSubmitButton->set_tooltip("Submit the animation import");
-	mSubmitButton->set_fixed_width(208);	
+	mSubmitButton->set_fixed_width(208);
 
-	auto importButton = new nanogui::Button(import_panel, "");
-	importButton->set_icon(FA_SAVE);
-	importButton->set_enabled(false);
-	importButton->set_callback([this]() {
+	mImportButton = new nanogui::Button(import_panel, "");
+	mImportButton->set_icon(FA_SAVE);
+	mImportButton->set_enabled(false);
+	mImportButton->set_callback([this]() {
 		nanogui::async([this]() { this->ImportIntoProjectAsync();
 		});
 	});
-	importButton->set_tooltip("Import the generated animation");
-	importButton->set_fixed_width(44);
+	mImportButton->set_tooltip("Import the generated animation");
+	mImportButton->set_fixed_width(44);
 	
 	mMeshActorExporter = std::make_unique<MeshActorExporter>();
 	
@@ -100,6 +106,8 @@ void PromptWindow::Preview(const std::string& path, const std::string& directory
 	mActorPath = path;
 	mOutputDirectory = directory;
 	
+	mImportButton->set_enabled(false);
+
 	std::filesystem::path filePath(mActorPath);
 	std::string extension = filePath.extension().string();
 	
@@ -123,6 +131,8 @@ void PromptWindow::Preview(const std::string& path, const std::string& directory
 	mActorPath = path;
 	mOutputDirectory = directory;
 	
+	mImportButton->set_enabled(false);
+
 	std::filesystem::path filePath(mActorPath);
 	std::string extension = filePath.extension().string();
 	
@@ -165,6 +175,9 @@ void PromptWindow::SubmitPromptAsync() {
 	// Disable Submit Button to prevent multiple submissions
 	mSubmitButton->set_enabled(false);
 	
+	// Disable Import Button since a new submission is starting
+	mImportButton->set_enabled(false);
+
 	// Update Status
 	{
 		std::lock_guard<std::mutex> lock(mStatusMutex);
@@ -336,11 +349,11 @@ void PromptWindow::PollJobStatusAsync(const std::string& request_id) {
 																		[this](const Json::Value& results, const std::string& error) {
 							if (!error.empty()) {
 								std::cerr << "Failed to download animations: " << error << std::endl;
-								{
+								nanogui::async([this]() {
 									std::lock_guard<std::mutex> lock(mStatusMutex);
 									mStatusLabel->set_caption("Status: Failed to download animations.");
-								}
-								mSubmitButton->set_enabled(true);
+									mSubmitButton->set_enabled(true); // Re-enable Submit button
+								});
 								return;
 							}
 							
@@ -469,6 +482,13 @@ void PromptWindow::PollJobStatusAsync(const std::string& request_id) {
 													std::lock_guard<std::mutex> lock(mStatusMutex);
 													mStatusLabel->set_caption("Status: Animations Imported.");
 												}
+												
+												// Enable the Import button and re-enable Submit button
+												nanogui::async([this]() {
+													mImportButton->set_enabled(true);
+													mSubmitButton->set_enabled(true); // Re-enable Submit button
+												});
+
 											} else {
 												std::cerr << "Failed to download animations. HTTP Status: " << (res_download ? std::to_string(res_download->status) : "No Response") << std::endl;
 												{
