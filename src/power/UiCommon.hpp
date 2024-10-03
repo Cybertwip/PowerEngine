@@ -21,7 +21,7 @@ class UiManager;
 
 class UiCommon {
 public:
-    UiCommon(nanogui::Widget& parent, ActorManager& actorManager);
+    UiCommon(nanogui::Widget& parent, ActorManager& actorManager, AnimationTimeProvider& animationTimeProvider);
         
     HierarchyPanel& hierarchy_panel() {
         return *mHierarchyPanel;
