@@ -555,8 +555,8 @@ void DeepMotionApiClient::process_text_to_motion_async(const std::string& prompt
 void DeepMotionApiClient::upload_model_async(std::stringstream model_stream, const std::string& model_name,
 											 const std::string& model_ext, UploadModelCallback callback) {
 	// Launch asynchronous task
-	std::thread([this, &model_stream, model_name, model_ext, callback]() mutable {
-		std::string model_id = upload_model(model_stream, model_name, model_ext);
+	std::thread([this, stream = std::move(model_stream), model_name, model_ext, callback]() mutable {
+		std::string model_id = upload_model(stream, model_name, model_ext);
 		if (callback) {
 			if (!model_id.empty()) {
 				callback(model_id, "");
