@@ -444,8 +444,12 @@ std::string DeepMotionApiClient::upload_model(std::stringstream& model_stream, c
 		return "";
 	}
 	
+	lock.unlock();
 	// Step 1: Get the model upload URL
 	std::string upload_url = get_model_upload_url(false, model_ext);
+	
+	lock.lock();
+	
 	if (upload_url.empty()) {
 		std::cerr << "Failed to obtain model upload URL." << std::endl;
 		return "";
@@ -499,8 +503,11 @@ std::string DeepMotionApiClient::upload_model(std::stringstream& model_stream, c
 		return "";
 	}
 	
+	lock.unlock();
 	// Step 4: Store the model using the API
 	std::string modelId = store_model_internal(upload_url, model_name);
+	lock.lock();
+	
 	if (modelId.empty()) {
 		std::cerr << "Failed to store the uploaded model." << std::endl;
 		return "";
