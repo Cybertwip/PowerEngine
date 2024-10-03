@@ -176,7 +176,7 @@ void PromptWindow::Preview(const std::string& path, const std::string& directory
 	
 	auto actor = std::make_shared<Actor>(mDummyRegistry);
 	
-	mMeshActorBuilder->build(*actor, path, mPreviewCanvas->get_mesh_shader(), mPreviewCanvas->get_skinned_mesh_shader());
+	mMeshActorBuilder->build(*actor, mDummyAnimationTimeProvider, path, mPreviewCanvas->get_mesh_shader(), mPreviewCanvas->get_skinned_mesh_shader());
 	
 	if (path.find(".psk") == std::string::npos) {
 		// Mesh rigging is still not implemented
@@ -636,6 +636,8 @@ void PromptWindow::ImportIntoProjectAsync() {
 }
 
 void PromptWindow::ProcessEvents() {
+	mDummyAnimationTimeProvider.Update();
+	
 	mPreviewCanvas->process_events();
 }
 

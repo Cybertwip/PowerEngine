@@ -120,7 +120,6 @@ void Application::draw(NVGcontext *ctx) {
 }
 
 void Application::process_events() {
-	
 	mGlobalAnimationTimeProvider.Update();
 	
 	// Dispatch queued click events
