@@ -7,6 +7,8 @@
 
 #include <nanogui/layout.h>
 #include <nanogui/theme.h>
+#include <nanogui/imageview.h> // Added for nanogui::ImageView
+#include <nanogui/texture.h>    // Added for nanogui::Texture
 
 #include <httplib.h>
 #include <json/json.h>
@@ -102,14 +104,18 @@ mDeepMotionApiClient(deepMotionApiClient)
 		this->on_sync();
 	});
 	
+	// Spacer to align the Sync button to the left
+	auto sync_spacer = new nanogui::Widget(this);
+	sync_spacer->set_fixed_size(nanogui::Vector2i(10, 0));
 	
+	// Status Panel
 	auto status_panel = new nanogui::Widget(this);
 	status_panel->set_layout(new nanogui::GridLayout(
 													 nanogui::Orientation::Horizontal, // Layout orientation
 													 2,                               // Number of columns
-													 nanogui::Alignment::Maximum,      // Alignment within cells
-													 0,                              // Column padding
-													 0                               // Row padding
+													 nanogui::Alignment::Maximum,     // Alignment within cells
+													 0,                               // Column padding
+													 0                                // Row padding
 													 ));
 	
 	// Spacer
@@ -120,7 +126,7 @@ mDeepMotionApiClient(deepMotionApiClient)
 	status_label_->set_fixed_size(nanogui::Vector2i(175, 20));
 	status_label_->set_color(nanogui::Color(255, 255, 255, 255)); // White color
 	
-	
+	// DeepMotion Button with Image
 	auto deep_motion_button = new nanogui::Button(status_panel, "");
 	deep_motion_button->set_fixed_size(nanogui::Vector2i(48, 48));
 	deep_motion_button->set_callback([this]() {
@@ -141,9 +147,9 @@ mDeepMotionApiClient(deepMotionApiClient)
 	
 	imageView->image()->resize(nanogui::Vector2i(96, 96));
 	
-	//	// Initially hide the window
-	//	set_visible(false);
-	//	set_modal(true);
+	// Initially hide the window
+	// set_visible(false);
+	// set_modal(true);
 	
 	// Attempt to load existing credentials and synchronize
 	if (load_from_file("powerkey.dat")) {
@@ -155,20 +161,19 @@ mDeepMotionApiClient(deepMotionApiClient)
 		// Perform synchronization
 		on_sync();
 	}
-	
 }
 
 void DeepMotionSettingsWindow::on_sync() {
 	// Retrieve input values
-	std::string api_base_url = api_base_url_box_->value();
-	int api_base_port = 443;
+	std::string api_base_url_input = api_base_url_box_->value();
+	int api_base_port = 443; // Default port
 	
-	// Inside the callback
+	// Regex to extract host and optional port
 	std::regex url_regex(R"(^(?:https?://)?([^:/\s]+)(?::(\d+))?)");
 	std::smatch matches;
 	
-	if (std::regex_match(api_base_url, matches, url_regex)) {
-		api_base_url = matches[1].str();
+	if (std::regex_match(api_base_url_input, matches, url_regex)) {
+		std::string host = matches[1].str();
 		if (matches[2].matched) {
 			try {
 				api_base_port = std::stoi(matches[2].str());
@@ -179,9 +184,10 @@ void DeepMotionSettingsWindow::on_sync() {
 		} else {
 			api_base_port = 443; // Default port
 		}
+		api_base_url_ = host;
 	} else {
 		// Handle invalid URL format
-		api_base_url = "";
+		api_base_url_ = "";
 		api_base_port = 443;
 	}
 	
@@ -189,41 +195,56 @@ void DeepMotionSettingsWindow::on_sync() {
 	std::string client_secret = client_secret_box_->value();
 	
 	// Validate input
-	if (api_base_url.empty() || client_id.empty() || client_secret.empty()) {
+	if (api_base_url_.empty() || client_id.empty() || client_secret.empty()) {
 		status_label_->set_caption("API Base URL, Client ID, and Secret cannot be empty.");
 		status_label_->set_color(nanogui::Color(255, 0, 0, 255)); // Red color
 		return;
 	}
 	
-	mDeepMotionApiClient.authenticate(api_base_url, api_base_port, client_id, client_secret);
+	// Disable the Sync button to prevent multiple clicks
+	// Optionally, you can pass a reference to the Sync button to disable it here
+	// For simplicity, assume 'sync_button' is accessible. If not, consider making it a member variable.
 	
-	if (mDeepMotionApiClient.is_authenticated()) {
-		
-		// Update status label to success
-		status_label_->set_caption("Synchronization successful.");
-		status_label_->set_color(nanogui::Color(0, 255, 0, 255)); // Green color
-		
-		// Save credentials and API Base URL if not already saved
-		if (!data_saved_) {
-			save_to_file("powerkey.dat", api_base_url, std::to_string(api_base_port), client_id, client_secret);
-			data_saved_ = true;
-		}
-		
-		if (visible()) {
-			set_visible(false);
-			set_modal(false);
-			
-			if(mSuccessCallback) {
-				mSuccessCallback();
+	// Update status label to indicate authentication is in progress
+	status_label_->set_caption("Status: Authenticating...");
+	status_label_->set_color(nanogui::Color(255, 255, 0, 255)); // Yellow color
+	
+	// Call the asynchronous authenticate method
+	mDeepMotionApiClient.authenticate_async(api_base_url_, api_base_port, client_id, client_secret,
+											[this](bool success, const std::string& error_message) {
+		// Ensure UI updates are performed on the main thread
+		nanogui::async([this, success, error_message]() {
+			if (success) {
+				// Update status label to success
+				status_label_->set_caption("Synchronization successful.");
+				status_label_->set_color(nanogui::Color(0, 255, 0, 255)); // Green color
+				
+				// Save credentials and API Base URL if not already saved
+				if (!data_saved_) {
+					save_to_file("powerkey.dat", api_base_url_, std::to_string(api_base_port), client_id_, client_secret_);
+					data_saved_ = true;
+				}
+				
+				// Hide the window if visible
+				if (visible()) {
+					set_visible(false);
+					set_modal(false);
+					
+					// Call the success callback
+					if(mSuccessCallback) {
+						mSuccessCallback();
+					}
+				}
+				
+			} else {
+				// Authentication failed
+				status_label_->set_caption("Invalid credentials or server error.");
+				status_label_->set_color(nanogui::Color(255, 0, 0, 255)); // Red color
+				data_saved_ = false;
 			}
-		}
-		
-	} else {
-		// Authentication failed
-		status_label_->set_caption("Invalid credentials or server error.");
-		status_label_->set_color(nanogui::Color(255, 0, 0, 255)); // Red color
-		data_saved_ = false;
+		});
 	}
+											);
 }
 
 bool DeepMotionSettingsWindow::load_from_file(const std::string& filename) {
@@ -257,7 +278,11 @@ bool DeepMotionSettingsWindow::load_from_file(const std::string& filename) {
 		if (key == "APIBaseURL") {
 			api_base_url_ = value;
 		} else if (key == "APIBasePort") {
-			api_base_port_ = std::stoi(value);
+			try {
+				api_base_port_ = std::stoi(value);
+			} catch (...) {
+				api_base_port_ = 443; // Default port
+			}
 		} else if (key == "ClientID") {
 			client_id_ = value;
 		} else if (key == "ClientSecret") {

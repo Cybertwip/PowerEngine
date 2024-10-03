@@ -1,18 +1,19 @@
 #pragma once
 
 #include "filesystem/MeshActorImporter.hpp"
-
 #include "components/SkinnedAnimationComponent.hpp"
 
 #include <entt/entt.hpp>
 
 #include <nanogui/window.h>
+#include <nanogui/label.h> // Added for nanogui::Label
 
 #include <memory>
 #include <string>
 #include <mutex>
 #include <optional>
 
+// Forward Declarations
 class DeepMotionApiClient;
 class MeshActorBuilder;
 class MeshActorExporter;
@@ -43,10 +44,16 @@ public:
 	void ProcessEvents();
 	
 private:
-	void SubmitPrompt();
-	void ImportIntoProject();
+	// Asynchronous Methods
+	void SubmitPromptAsync();
+	void ImportIntoProjectAsync();
+	void PollJobStatusAsync(const std::string& request_id);
+	
+	// Existing Private Methods
+	void SubmitPrompt(); // May be removed if entirely replaced by SubmitPromptAsync
+	void ImportIntoProject(); // May be removed if entirely replaced by ImportIntoProjectAsync
 	std::string GenerateUniqueModelName(const std::string& hash_id0, const std::string& hash_id1);
-
+	
 	ResourcesPanel& mResourcesPanel;
 	
 	std::unique_ptr<IMeshBatch> mMeshBatch;
@@ -69,9 +76,9 @@ private:
 	
 	nanogui::TextBox* mInputTextBox;
 	nanogui::Button* mSubmitButton;
-
+	
 	DeepMotionApiClient& mDeepMotionApiClient;
-
+	
 	// Status Label
 	nanogui::Label* mStatusLabel;
 	std::mutex mStatusMutex;

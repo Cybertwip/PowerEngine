@@ -20,7 +20,8 @@
 
 #include <iostream>
 #include <sstream>
-
+#include <mutex>
+#include <future>
 
 PromptWindow::PromptWindow(nanogui::Widget* parent, ResourcesPanel& resourcesPanel, DeepMotionApiClient& deepMotionApiClient, nanogui::RenderPass& renderpass, ShaderManager& shaderManager)
 : nanogui::Window(parent->screen()), mResourcesPanel(resourcesPanel), mDeepMotionApiClient(deepMotionApiClient) {
@@ -67,8 +68,7 @@ PromptWindow::PromptWindow(nanogui::Widget* parent, ResourcesPanel& resourcesPan
 	// Add Submit Button
 	mSubmitButton = new nanogui::Button(this, "Submit");
 	mSubmitButton->set_callback([this]() {
-		nanogui::async([this]() { this->SubmitPrompt();
-		});
+		nanogui::async([this]() { this->SubmitPromptAsync(); });
 	});
 	mSubmitButton->set_tooltip("Submit the animation import");
 	mSubmitButton->set_fixed_width(256);
@@ -77,12 +77,16 @@ PromptWindow::PromptWindow(nanogui::Widget* parent, ResourcesPanel& resourcesPan
 	// If "Submit" replaces "Import", you can remove or rename this button
 	auto importButton = new nanogui::Button(this, "Import");
 	importButton->set_callback([this]() {
-		nanogui::async([this]() { this->ImportIntoProject(); });
+		nanogui::async([this]() { this->ImportIntoProjectAsync(); });
 	});
 	importButton->set_tooltip("Import the selected asset with the chosen options");
 	importButton->set_fixed_width(256);
 	
 	mMeshActorExporter = std::make_unique<MeshActorExporter>();
+	
+	// Initialize Status Label
+	mStatusLabel = new nanogui::Label(this, "Status: Idle", "sans-bold");
+	mStatusLabel->set_fixed_size(nanogui::Vector2i(300, 20));
 }
 
 void PromptWindow::Preview(const std::string& path, const std::string& directory) {
@@ -146,55 +150,67 @@ void PromptWindow::Preview(const std::string& path, const std::string& directory
 	mPreviewCanvas->set_active_actor(actor);
 	mPreviewCanvas->set_update(true);
 	
-	// Add Status Label
-	mStatusLabel = new nanogui::Label(this, "Status: Idle", "sans-bold");
-	mStatusLabel->set_fixed_size(nanogui::Vector2i(300, 20));
+	// Update Status Label to Idle
+	{
+		std::lock_guard<std::mutex> lock(mStatusMutex);
+		mStatusLabel->set_caption("Status: Idle");
+	}
 }
 
-void PromptWindow::SubmitPrompt() {
+void PromptWindow::SubmitPromptAsync() {
+	// Disable Submit Button to prevent multiple submissions
+	mSubmitButton->set_enabled(false);
+	
+	// Update Status
+	{
+		std::lock_guard<std::mutex> lock(mStatusMutex);
+		mStatusLabel->set_caption("Status: Preparing to upload model...");
+	}
+	
 	// Determine file type based on extension
 	std::filesystem::path filePath(mActorPath);
 	std::string extension = filePath.extension().string();
 	
 	std::string actorName = std::filesystem::path(mActorPath).stem().string();
 	
-	
 	// Create Deserializer
 	CompressedSerialization::Deserializer deserializer;
 	
 	if (!deserializer.load_from_file(mActorPath)) {
 		std::cerr << "Failed to load serialized file: " << mActorPath << "\n";
+		{
+			std::lock_guard<std::mutex> lock(mStatusMutex);
+			mStatusLabel->set_caption("Status: Failed to load model.");
+		}
+		mSubmitButton->set_enabled(true);
 		return;
 	}
-
+	
 	std::string prompt = mInputTextBox->value();
 	if (prompt.empty()) {
-		// Optionally, show an error message to the user
+		// Show error message to the user
 		std::cerr << "Prompt is empty. Please enter a valid prompt." << std::endl;
 		{
 			std::lock_guard<std::mutex> lock(mStatusMutex);
 			mStatusLabel->set_caption("Status: Prompt is empty.");
 		}
+		mSubmitButton->set_enabled(true);
 		return;
 	}
 	
 	if (!mDeepMotionApiClient.is_authenticated()) {
-		// Optionally, prompt the user to authenticate
+		// Prompt the user to authenticate
 		std::cerr << "Client is not authenticated. Please authenticate first." << std::endl;
 		{
 			std::lock_guard<std::mutex> lock(mStatusMutex);
 			mStatusLabel->set_caption("Status: Not authenticated.");
 		}
+		mSubmitButton->set_enabled(true);
 		return;
 	}
 	
-	// Generate hash IDs (for demonstration, we'll generate SHA-256 hashes of prompt and current time)
-	
-	std::string hash_id0 = std::to_string(mHashId[0]);
-	std::string hash_id1 = std::to_string(mHashId[1]);
-	
 	// Generate Unique Model Name
-	std::string unique_model_name = GenerateUniqueModelName(hash_id1, hash_id1);
+	std::string unique_model_name = GenerateUniqueModelName(std::to_string(mHashId[0]), std::to_string(mHashId[1]));
 	std::cout << "Generated Unique Model Name: " << unique_model_name << std::endl;
 	
 	// Update Status
@@ -203,52 +219,82 @@ void PromptWindow::SubmitPrompt() {
 		mStatusLabel->set_caption("Status: Uploading model...");
 	}
 	
-
 	std::stringstream modelData;
-
 	mMeshActorExporter->exportToStream(deserializer, mActorPath, modelData);
+	
+	// Asynchronously upload the model
+	mDeepMotionApiClient.upload_model_async(std::move(modelData), unique_model_name, "fbx",
+											[this, prompt](const std::string& modelId, const std::string& error) {
+		if (!error.empty()) {
+			std::cerr << "Failed to upload model: " << error << std::endl;
+			{
+				std::lock_guard<std::mutex> lock(mStatusMutex);
+				mStatusLabel->set_caption("Status: Failed to upload model.");
+			}
+			mSubmitButton->set_enabled(true);
+			return;
+		}
 		
-	// Upload and Store Model
-	std::string modelId = mDeepMotionApiClient.upload_model(modelData, unique_model_name, "fbx");
-	if (modelId.empty()) {
-		std::cerr << "Failed to upload and store model." << std::endl;
+		std::cout << "Model uploaded successfully. Model ID: " << modelId << std::endl;
 		{
 			std::lock_guard<std::mutex> lock(mStatusMutex);
-			mStatusLabel->set_caption("Status: Failed to upload model.");
+			mStatusLabel->set_caption("Status: Model uploaded. Processing prompt...");
 		}
-		return;
-	}
-	
-	// Update Status
-	{
-		std::lock_guard<std::mutex> lock(mStatusMutex);
-		mStatusLabel->set_caption("Status: Model uploaded. Processing prompt...");
-	}
-	
-	// Send Prompt to DeepMotion API
-	std::string request_id = mDeepMotionApiClient.process_text_to_motion(prompt, modelId);
-	if (request_id.empty()) {
-		std::cerr << "Failed to process text to motion." << std::endl;
-		{
-			std::lock_guard<std::mutex> lock(mStatusMutex);
-			mStatusLabel->set_caption("Status: Failed to process prompt.");
+		
+		// Asynchronously process text to motion
+		mDeepMotionApiClient.process_text_to_motion_async(prompt, modelId,
+														  [this](const std::string& request_id, const std::string& error) {
+			if (!error.empty()) {
+				std::cerr << "Failed to process text to motion: " << error << std::endl;
+				{
+					std::lock_guard<std::mutex> lock(mStatusMutex);
+					mStatusLabel->set_caption("Status: Failed to process prompt.");
+				}
+				mSubmitButton->set_enabled(true);
+				return;
+			}
+			
+			std::cout << "Submitted prompt. Request ID: " << request_id << std::endl;
+			{
+				std::lock_guard<std::mutex> lock(mStatusMutex);
+				mStatusLabel->set_caption("Status: Processing animation...");
+			}
+			
+			// Start polling job status asynchronously
+			PollJobStatusAsync(request_id);
 		}
-		return;
+														  );
 	}
-	
-	std::cout << "Submitted prompt. Request ID: " << request_id << std::endl;
-	
-	// Update Status
-	{
-		std::lock_guard<std::mutex> lock(mStatusMutex);
-		mStatusLabel->set_caption("Status: Processing animation...");
-	}
-	
-	// Poll Job Status Asynchronously
-	std::thread([this, request_id]() {
+											);
+}
+
+void PromptWindow::PollJobStatusAsync(const std::string& request_id) {
+	// Lambda to poll job status
+	auto poll = [this, request_id]() {
 		bool keep_polling = true;
 		while (keep_polling) {
-			Json::Value status = mDeepMotionApiClient.check_job_status(request_id);
+			std::promise<Json::Value> status_promise;
+			std::future<Json::Value> status_future = status_promise.get_future();
+			
+			// Asynchronously check job status
+			mDeepMotionApiClient.check_job_status_async(request_id,
+														[&status_promise](const Json::Value& status, const std::string& error) {
+				if (!error.empty()) {
+					std::cerr << "Failed to check job status: " << error << std::endl;
+					status_promise.set_value(Json::Value()); // Return empty on error
+					return;
+				}
+				status_promise.set_value(status);
+			}
+														);
+			
+			Json::Value status = status_future.get();
+			
+			if (status.empty()) {
+				// Handle error or retry
+				std::this_thread::sleep_for(std::chrono::seconds(3));
+				continue;
+			}
 			
 			int status_count = status["count"].asInt();
 			
@@ -260,161 +306,171 @@ void PromptWindow::SubmitPrompt() {
 					
 					if (job_status == "SUCCESS") {
 						keep_polling = false;
-						// Download results
-						Json::Value results = mDeepMotionApiClient.download_job_results(request_id);
-						// Process results as needed (e.g., download URLs)
-						// For example:
-						if (results.isMember("links")) {
+						// Asynchronously download results
+						mDeepMotionApiClient.download_job_results_async(request_id,
+																		[this](const Json::Value& results, const std::string& error) {
+							if (!error.empty()) {
+								std::cerr << "Failed to download animations: " << error << std::endl;
+								{
+									std::lock_guard<std::mutex> lock(mStatusMutex);
+									mStatusLabel->set_caption("Status: Failed to download animations.");
+								}
+								mSubmitButton->set_enabled(true);
+								return;
+							}
 							
-							Json::Value urls = results["links"][0]["urls"];
-							
-							for(auto& url : urls){
-								for(auto& file : url["files"]){
-									
-									if(file.isMember("fbx")){
-										auto download_url = file["fbx"].asString();
+							// Process the results
+							if (results.isMember("links")) {
+								Json::Value urls = results["links"][0]["urls"];
+								
+								for(auto& url : urls){
+									for(auto& file : url["files"]){
 										
-										std::cout << "Download URL: " << download_url << std::endl;
-										
-										// Parse the download URL
-										std::string protocol, host, path;
-										std::string::size_type protocol_pos = download_url.find("://");
-										if (protocol_pos != std::string::npos) {
-											protocol = download_url.substr(0, protocol_pos);
-											protocol_pos += 3;
-										} else {
-											std::cerr << "Invalid download URL format: " << download_url << std::endl;
-											{
-												std::lock_guard<std::mutex> lock(mStatusMutex);
-												mStatusLabel->set_caption("Status: Invalid download URL.");
-											}
-											break;
-										}
-										
-										std::string::size_type host_pos = download_url.find("/", protocol_pos);
-										if (host_pos != std::string::npos) {
-											host = download_url.substr(protocol_pos, host_pos - protocol_pos);
-											path = download_url.substr(host_pos);
-										} else {
-											host = download_url.substr(protocol_pos);
-											path = "/";
-										}
-										
-										// Determine port
-										int port = 443; // Default HTTPS
-										if (protocol == "http") {
-											port = 80;
-										}
-										
-										// Initialize HTTP client for download
-										httplib::SSLClient download_client(host.c_str(), port);
-										download_client.set_compress(false);
-										
-										// Perform GET request
-										auto res_download = download_client.Get(path.c_str());
-										if (res_download && res_download->status == 200) {
-											// Assuming the response body contains ZIP data
-											std::vector<unsigned char> zip_data(res_download->body.begin(), res_download->body.end());
+										if(file.isMember("fbx")){
+											auto download_url = file["fbx"].asString();
 											
-											// Decompress ZIP data (use your existing decompress_zip_data function)
-											std::vector<std::stringstream> animation_files = Zip::decompress(zip_data);
+											std::cout << "Download URL: " << download_url << std::endl;
 											
-											// Process the extracted animation files as needed
-											
-											std::filesystem::path path(mActorPath);
-											
-											auto actorName = path.stem().string();
-											
-											for (auto& stream : animation_files) {
-												
-												auto modelData = mMeshActorImporter->process(stream, actorName, mOutputDirectory);
-												
-												auto& serializer = modelData->mMesh.mSerializer;
-												
-												
-												// Generate the unique hash identifier from the compressed data
-												
-												std::stringstream compressedData;
-												
-												serializer->get_compressed_data(compressedData);
-												
-												uint64_t hash_id[] = { 0, 0 };
-												
-												Md5::generate_md5_from_compressed_data(compressedData, hash_id);
-												
-												// Write the unique hash identifier to the header
-												serializer->write_header_raw(hash_id, sizeof(hash_id));
-												
-												// Proceed with serialization
-												
-												// no thumbnails yet as this will be animated, then re-serialized in the import method
-												serializer->write_header_uint64(0);
-												
-												CompressedSerialization::Deserializer deserializer;
-												
-												if (!deserializer.initialize(compressedData)) {
-													
-													mStatusLabel->set_caption("Status: Unable to deserialize model.");
-													
-													nanogui::async([this]() {
-														mResourcesPanel.refresh_file_view();
-													});
-													
-													return;
+											// Parse the download URL
+											std::string protocol, host, path;
+											std::string::size_type protocol_pos = download_url.find("://");
+											if (protocol_pos != std::string::npos) {
+												protocol = download_url.substr(0, protocol_pos);
+												protocol_pos += 3;
+											} else {
+												std::cerr << "Invalid download URL format: " << download_url << std::endl;
+												{
+													std::lock_guard<std::mutex> lock(mStatusMutex);
+													mStatusLabel->set_caption("Status: Invalid download URL.");
 												}
-												
-												auto& animationSerializer = modelData->mAnimations.value()[0].mSerializer;
-												
-												std::stringstream animationCompressedData;
-												
-												animationSerializer->get_compressed_data(animationCompressedData);
-
-												CompressedSerialization::Deserializer animationDeserializer;
-
-												animationDeserializer.initialize(animationCompressedData);
-												auto pdo = std::make_unique<SkinnedAnimationComponent::SkinnedAnimationPdo> ();
-												
-												auto animation = std::make_unique<Animation>();
-												
-												animation->deserialize(animationDeserializer);
-												
-												pdo->mAnimationData.push_back(std::move(animation));
-												
-												Preview(mActorPath, mOutputDirectory, deserializer, std::move(pdo));
-												
 												break;
 											}
 											
-											{
-												std::lock_guard<std::mutex> lock(mStatusMutex);
-												mStatusLabel->set_caption("Status: Animations Imported.");
+											std::string::size_type host_pos = download_url.find("/", protocol_pos);
+											if (host_pos != std::string::npos) {
+												host = download_url.substr(protocol_pos, host_pos - protocol_pos);
+												path = download_url.substr(host_pos);
+											} else {
+												host = download_url.substr(protocol_pos);
+												path = "/";
 											}
-										} else {
-											std::cerr << "Failed to download animations. HTTP Status: " << (res_download ? std::to_string(res_download->status) : "No Response") << std::endl;
-											{
-												std::lock_guard<std::mutex> lock(mStatusMutex);
-												mStatusLabel->set_caption("Status: Failed to download animations.");
+											
+											// Determine port
+											int port = 443; // Default HTTPS
+											if (protocol == "http") {
+												port = 80;
 											}
+											
+											// Initialize HTTP client for download
+											httplib::SSLClient download_client(host.c_str(), port);
+											download_client.set_compress(false);
+											
+											// Perform GET request
+											auto res_download = download_client.Get(path.c_str());
+											if (res_download && res_download->status == 200) {
+												// Assuming the response body contains ZIP data
+												std::vector<unsigned char> zip_data(res_download->body.begin(), res_download->body.end());
+												
+												// Decompress ZIP data (use your existing decompress_zip_data function)
+												std::vector<std::stringstream> animation_files = Zip::decompress(zip_data);
+												
+												// Process the extracted animation files as needed
+												
+												std::filesystem::path path(mActorPath);
+												
+												auto actorName = path.stem().string();
+												
+												for (auto& stream : animation_files) {
+													
+													auto modelData = mMeshActorImporter->process(stream, actorName, mOutputDirectory);
+													
+													auto& serializer = modelData->mMesh.mSerializer;
+													
+													
+													// Generate the unique hash identifier from the compressed data
+													
+													std::stringstream compressedData;
+													
+													serializer->get_compressed_data(compressedData);
+													
+													uint64_t hash_id[] = { 0, 0 };
+													
+													Md5::generate_md5_from_compressed_data(compressedData, hash_id);
+													
+													// Write the unique hash identifier to the header
+													serializer->write_header_raw(hash_id, sizeof(hash_id));
+													
+													// Proceed with serialization
+													
+													// no thumbnails yet as this will be animated, then re-serialized in the import method
+													serializer->write_header_uint64(0);
+													
+													CompressedSerialization::Deserializer deserializer;
+													
+													if (!deserializer.initialize(compressedData)) {
+														
+														mStatusLabel->set_caption("Status: Unable to deserialize model.");
+														
+														nanogui::async([this]() {
+															mResourcesPanel.refresh_file_view();
+														});
+														
+														return;
+													}
+													
+													auto& animationSerializer = modelData->mAnimations.value()[0].mSerializer;
+													
+													std::stringstream animationCompressedData;
+													
+													animationSerializer->get_compressed_data(animationCompressedData);
+													
+													CompressedSerialization::Deserializer animationDeserializer;
+													
+													animationDeserializer.initialize(animationCompressedData);
+													auto pdo = std::make_unique<SkinnedAnimationComponent::SkinnedAnimationPdo> ();
+													
+													auto animation = std::make_unique<Animation>();
+													
+													animation->deserialize(animationDeserializer);
+													
+													pdo->mAnimationData.push_back(std::move(animation));
+													
+													Preview(mActorPath, mOutputDirectory, deserializer, std::move(pdo));
+													
+													break;
+												}
+												
+												{
+													std::lock_guard<std::mutex> lock(mStatusMutex);
+													mStatusLabel->set_caption("Status: Animations Imported.");
+												}
+											} else {
+												std::cerr << "Failed to download animations. HTTP Status: " << (res_download ? std::to_string(res_download->status) : "No Response") << std::endl;
+												{
+													std::lock_guard<std::mutex> lock(mStatusMutex);
+													mStatusLabel->set_caption("Status: Failed to download animations.");
+												}
+											}
+											break;
 										}
-										break;
 									}
 								}
 							}
 						}
-						break;
+																		);
 					} else if (job_status == "FAILURE") {
 						keep_polling = false;
 						
 						std::cerr << "Job failed." << std::endl;
-
+						
 						std::string messsage = status["details"]["exc_message"].asString();
 						std::string type = status["details"]["exc_type"].asString();
-
+						
 						std::cerr << "Failure: " << messsage << std::endl;
 						
 						std::cerr << "Exception: " << type << std::endl;
-
-
+						
+						
 						{
 							std::lock_guard<std::mutex> lock(mStatusMutex);
 							mStatusLabel->set_caption("Status: Job failed.");
@@ -437,25 +493,29 @@ void PromptWindow::SubmitPrompt() {
 							mStatusLabel->set_caption("Status: " + job_status);
 						}
 					}
-
-
+					
 					break;
 				}
 			}
 			
-			
-			
 			// Wait before next poll
 			std::this_thread::sleep_for(std::chrono::seconds(3));
 		}
-	}).detach();
+	};
+	
+	// Launch polling in a separate thread
+	std::thread(poll).detach();
 }
 
-
-void PromptWindow::ImportIntoProject() {
+void PromptWindow::ImportIntoProjectAsync() {
 	std::string animationName = mInputTextBox->value();
 	if (animationName.empty()) {
 		// Optionally show an error message to the user
+		std::cerr << "Animation name is empty." << std::endl;
+		{
+			std::lock_guard<std::mutex> lock(mStatusMutex);
+			mStatusLabel->set_caption("Status: Animation name is empty.");
+		}
 		return;
 	}
 	
@@ -471,7 +531,7 @@ void PromptWindow::ImportIntoProject() {
 		if (!deserializer.initialize(compressedData)) {
 			
 			mStatusLabel->set_caption("Status: Unable to deserialize model.");
-
+			
 			nanogui::async([this]() {
 				mResourcesPanel.refresh_file_view();
 			});
@@ -511,4 +571,3 @@ void PromptWindow::ProcessEvents() {
 std::string PromptWindow::GenerateUniqueModelName(const std::string& hash_id0, const std::string& hash_id1) {
 	return hash_id0 + hash_id1;
 }
-

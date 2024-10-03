@@ -26,6 +26,8 @@
 #include <chrono>
 #include <mutex>
 #include <iostream>
+#include <atomic>         // Added for atomic variables
+#include <functional>     // Added for std::function
 
 #if !defined(_WIN32)
 #  include <locale.h>
@@ -45,6 +47,47 @@ extern std::unordered_map<GLFWwindow *, Screen *> __nanogui_screens;
 #if defined(__APPLE__)
 extern void disable_saved_application_state_osx();
 #endif
+
+// Redraw thread management variables
+static std::atomic<bool> redraw_thread_running(false);
+static std::thread redraw_thread;
+
+// Mutex and queue for asynchronous functions
+std::mutex m_async_mutex;
+// Changed from std::vector to std::queue for better FIFO handling
+std::queue<std::function<void()>> m_async_functions;
+
+#if defined(__APPLE__)
+extern void disable_saved_application_state_osx();
+#endif
+
+// Function to start the redraw thread
+void start_redraw_thread() {
+	redraw_thread_running = true;
+	redraw_thread = std::thread([](){
+		while (redraw_thread_running) {
+			// Enqueue redraw for all visible screens
+			async([](){
+				for (auto &kv : __nanogui_screens) {
+					Screen *screen = kv.second;
+					if (screen->visible()) {
+						screen->redraw();
+					}
+				}
+			});
+			// Sleep for approximately 16ms to achieve ~60fps
+			std::this_thread::sleep_for(std::chrono::milliseconds(16));
+		}
+	});
+}
+
+// Function to stop the redraw thread
+void stop_redraw_thread() {
+	redraw_thread_running = false;
+	if (redraw_thread.joinable()) {
+		redraw_thread.join();
+	}
+}
 
 void init() {
 #if !defined(_WIN32)
@@ -82,13 +125,12 @@ static double emscripten_last = 0;
 static float emscripten_refresh = 0;
 #endif
 
-std::mutex m_async_mutex;
-// Changed from std::vector to std::queue for better FIFO handling
-std::queue<std::function<void()>> m_async_functions;
-
 void mainloop() {
 	if (mainloop_active)
 		throw std::runtime_error("Main loop is already running!");
+	
+	// Start the redraw thread
+	start_redraw_thread();
 	
 	auto mainloop_iteration = []() {
 		int num_screens = 0;
@@ -128,10 +170,7 @@ void mainloop() {
 			if (emscripten_redraw || screen->tooltip_fade_in_progress())
 				screen->redraw();
 #endif
-			screen->redraw();
 			screen->draw_all();
-			// Removed redundant redraw call for improved performance
-			// screen->redraw();
 			num_screens++;
 		}
 		
@@ -142,11 +181,8 @@ void mainloop() {
 		}
 		
 #if !defined(EMSCRIPTEN)
-		// Replaced glfwWaitEvents() with glfwPollEvents() to avoid blocking
+		// Poll for and process events
 		glfwPollEvents();
-		
-		// Introduce a short sleep to prevent high CPU usage
-		//std::this_thread::sleep_for(std::chrono::milliseconds(1));
 #endif
 	};
 	
@@ -165,11 +201,14 @@ void mainloop() {
 			mainloop_iteration();
 		
 		/* Process events once more */
-		glfwPollEvents(); // Changed from glfwWaitEvents()
+		glfwPollEvents();
 	} catch (const std::exception &e) {
 		std::cerr << "Caught exception in main loop: " << e.what() << std::endl;
 		leave();
 	}
+	
+	// Stop the redraw thread after exiting the main loop
+	stop_redraw_thread();
 }
 
 void async(const std::function<void()> &func) {
@@ -194,6 +233,9 @@ std::pair<bool, bool> test_10bit_edr_support() {
 }
 
 void shutdown() {
+	leave(); // Ensure mainloop_active is set to false
+	stop_redraw_thread(); // Stop the redraw thread
+	
 	glfwTerminate();
 	
 #if defined(NANOGUI_USE_METAL)
