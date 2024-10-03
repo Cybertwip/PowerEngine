@@ -49,14 +49,16 @@ public:
 	}
 	
 	void Evaluate() override {
-		auto evaluationContainer = evaluate(mAnimationTimeProvider.GetTime());
-		
-		if (evaluationContainer.has_value()) {
-			auto [t, r, s] = *evaluationContainer;
+		if (!mFrozen) {
+			auto evaluationContainer = evaluate(mAnimationTimeProvider.GetTime());
 			
-			mProvider.set_translation(t);
-			mProvider.set_rotation(r);
-			mProvider.set_scale(s);
+			if (evaluationContainer.has_value()) {
+				auto [t, r, s] = *evaluationContainer;
+				
+				mProvider.set_translation(t);
+				mProvider.set_rotation(r);
+				mProvider.set_scale(s);
+			}
 		}
 	}
 	

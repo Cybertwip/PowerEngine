@@ -578,6 +578,9 @@ void SceneTimeBar::evaluate_transforms() {
 	for (auto& animatableActor : mAnimatableActors) {
 		auto& component = animatableActor.get().get_component<TransformAnimationComponent>();
 		
+		if (!mRecording) {
+			component.Unfreeze();
+		}
 		component.Evaluate();
 	}
 }
@@ -631,7 +634,7 @@ std::tuple<bool, bool> SceneTimeBar::find_previous_and_next_keyframes() {
 		// No active actor; disable both buttons
 		mPrevKeyBtn->set_enabled(false);
 		mNextKeyBtn->set_enabled(false);
-		std::make_tuple(false, false);
+		return std::make_tuple(false, false);
 	}
 	
 	float currentTimeFloat = static_cast<float>(mCurrentTime);
