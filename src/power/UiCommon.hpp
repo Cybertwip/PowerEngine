@@ -11,6 +11,7 @@ class Widget;
 class Actor;
 class ActorManager;
 class AnimationPanel;
+class AnimationTimeProvider;
 class HierarchyPanel;
 class ScenePanel;
 class SceneTimeBar;
