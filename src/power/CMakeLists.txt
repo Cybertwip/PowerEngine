@@ -188,6 +188,8 @@ add_executable(PowerEngine
     ${CMAKE_CURRENT_LIST_DIR}/ui/ResourcesPanel.cpp
     ${CMAKE_CURRENT_LIST_DIR}/ui/ScenePanel.hpp
     ${CMAKE_CURRENT_LIST_DIR}/ui/ScenePanel.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/ui/SceneTimeBar.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/ui/SceneTimeBar.cpp
     ${CMAKE_CURRENT_LIST_DIR}/ui/StatusBarPanel.hpp
     ${CMAKE_CURRENT_LIST_DIR}/ui/StatusBarPanel.cpp
     ${CMAKE_CURRENT_LIST_DIR}/ui/TransformPanel.hpp

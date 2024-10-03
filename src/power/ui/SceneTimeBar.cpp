@@ -1,0 +1,752 @@
+#include "SceneTimeBar.hpp"
+
+// Include necessary headers
+#include "actors/ActorManager.hpp"
+#include "actors/Actor.hpp"
+#include "components/AnimationComponent.hpp"
+#include "components/SkinnedAnimationComponent.hpp"
+#include "components/TransformComponent.hpp"
+#include "components/PlaybackComponent.hpp"
+
+#include <nanogui/button.h>
+#include <nanogui/slider.h>
+#include <nanogui/toolbutton.h>
+#include <nanogui/textbox.h>
+#include <iostream>
+
+// Anonymous namespace for helper functions
+namespace {
+
+glm::vec3 ScreenToWorld(glm::vec2 screenPos, float depth, glm::mat4 projectionMatrix, glm::mat4 viewMatrix, int screenWidth, int screenHeight) {
+	glm::mat4 Projection = projectionMatrix;
+	glm::mat4 ProjectionInv = glm::inverse(Projection);
+	
+	int WINDOW_WIDTH = screenWidth;
+	int WINDOW_HEIGHT = screenHeight;
+	
+	// Step 1 - Viewport to NDC
+	float mouse_x = screenPos.x;
+	float mouse_y = screenPos.y;
+	
+	float ndc_x = (2.0f * mouse_x) / WINDOW_WIDTH - 1.0f;
+	float ndc_y = 1.0f - (2.0f * mouse_y) / WINDOW_HEIGHT; // flip the Y axis
+	
+	// Step 2 - NDC to view (Anton's version)
+	glm::vec4 ray_ndc_4d(ndc_x, ndc_y, 1.0f, 1.0f);
+	glm::vec4 ray_view_4d = ProjectionInv * ray_ndc_4d;
+	
+	// Step 3 - intersect view vector with object Z plane (in view)
+	glm::vec4 view_space_intersect = glm::vec4(glm::vec3(ray_view_4d) * depth, 1.0f);
+	
+	// Step 4 - View to World space
+	glm::mat4 View = viewMatrix;
+	glm::mat4 InvView = glm::inverse(viewMatrix);
+	glm::vec4 point_world = InvView * view_space_intersect;
+	return glm::vec3(point_world);
+}
+
+} // namespace
+
+// Constructor Implementation
+SceneTimeBar::SceneTimeBar(nanogui::Widget* parent, ActorManager& actorManager, IActorSelectedRegistry& registry, int width, int height)
+: nanogui::Widget(parent),
+mActorManager(actorManager),
+mRegistry(registry),
+mTransformRegistrationId(-1),
+mPlaybackRegistrationId(-1),
+mCurrentTime(0),
+mTotalFrames(1800), // 30 seconds at 60 FPS
+mRecording(false),
+mPlaying(false),
+mUncommittedKey(false),
+mNormalButtonColor(theme()->m_text_color) // Initialize normal button color
+{
+	// Set fixed dimensions
+	set_fixed_width(width);
+	set_fixed_height(height);
+	
+	mBackgroundColor = theme()->m_button_gradient_bot_unfocused;
+	mBackgroundColor.a() = 0.25f;
+	
+	// Cache fixed dimensions
+	int fixedWidth = fixed_width();
+	int fixedHeight = fixed_height();
+	int buttonWidth = static_cast<int>(fixedWidth * 0.08f);
+	int buttonHeight = static_cast<int>(fixedHeight * 0.15f);
+	
+	// Define smaller size for mKeyBtn
+	int keyBtnWidth = static_cast<int>(buttonWidth * 0.5f);
+	int keyBtnHeight = static_cast<int>(buttonHeight * 1.0f);
+	
+	// Vertical layout for slider above buttons
+	set_layout(new nanogui::BoxLayout(nanogui::Orientation::Vertical, nanogui::Alignment::Maximum, 1, 1));
+	
+	// Slider Wrapper
+	nanogui::Widget* sliderWrapper = new nanogui::Widget(this);
+	sliderWrapper->set_layout(new nanogui::BoxLayout(nanogui::Orientation::Horizontal, nanogui::Alignment::Fill, 1, 1));
+	
+	auto normalButtonColor = theme()->m_text_color;
+	
+	// Timeline Slider
+	mTimelineSlider = new nanogui::Slider(sliderWrapper);
+	mTimelineSlider->set_value(0.0f);  // Start at 0%
+	mTimelineSlider->set_fixed_width(fixedWidth * 0.985f);
+	mTimelineSlider->set_range(std::make_pair(0.0f, 1.0f));  // Normalized range
+	
+	// Slider Callback to update mCurrentTime
+	mTimelineSlider->set_callback([this](float value) {
+		mCurrentTime = static_cast<int>(value * mTotalFrames);
+		update_time_display(mCurrentTime);
+		
+		stop_playback();
+		
+		refresh_actors();
+		
+		mRecordBtn->set_text_color(mNormalButtonColor);
+		
+		evaluate_transforms();
+		evaluate_animations();
+		
+		// Verify keyframes after time update
+		verify_previous_next_keyframes(mActiveActor);
+	});
+	
+	// Buttons Wrapper
+	nanogui::Widget* buttonWrapperWrapper = new nanogui::Widget(this);
+	buttonWrapperWrapper->set_layout(new nanogui::BoxLayout(nanogui::Orientation::Vertical, nanogui::Alignment::Middle, 1, 1));
+	
+	// Time Counter Display
+	mTimeLabel = new nanogui::TextBox(buttonWrapperWrapper);
+	mTimeLabel->set_fixed_width(fixedWidth);
+	mTimeLabel->set_font_size(36);
+	mTimeLabel->set_alignment(nanogui::TextBox::Alignment::Center);
+	mTimeLabel->set_background_color(nanogui::Color(0, 0, 0, 0));
+	mTimeLabel->set_value("00:00:00:00");
+	
+	// Buttons Horizontal Layout
+	nanogui::Widget* buttonWrapper = new nanogui::Widget(buttonWrapperWrapper);
+	buttonWrapper->set_layout(new nanogui::BoxLayout(nanogui::Orientation::Horizontal, nanogui::Alignment::Middle, 10, 5));
+	
+	// Rewind Button
+	nanogui::Button* rewindBtn = new nanogui::Button(buttonWrapper, "", FA_FAST_BACKWARD);
+	rewindBtn->set_fixed_width(buttonWidth);
+	rewindBtn->set_fixed_height(buttonHeight);
+	rewindBtn->set_tooltip("Rewind to Start");
+	rewindBtn->set_callback([this]() {
+		stop_playback(); // Ensure playback is stopped
+		
+		verify_previous_next_keyframes(mActiveActor);
+		
+		mCurrentTime = 0;
+		update_time_display(mCurrentTime);
+		mTimelineSlider->set_value(0.0f);
+		
+		refresh_actors();
+		evaluate_transforms();
+		evaluate_animations();
+	});
+	
+	// Previous Frame Button
+	nanogui::Button* prevFrameBtn = new nanogui::Button(buttonWrapper, "", FA_STEP_BACKWARD);
+	prevFrameBtn->set_fixed_width(buttonWidth);
+	prevFrameBtn->set_fixed_height(buttonHeight);
+	prevFrameBtn->set_tooltip("Previous Frame");
+	prevFrameBtn->set_callback([this]() {
+		if (mCurrentTime > 0) {
+			stop_playback();
+			verify_previous_next_keyframes(mActiveActor);
+			
+			mCurrentTime--;
+			update_time_display(mCurrentTime);
+			mTimelineSlider->set_value(static_cast<float>(mCurrentTime) / mTotalFrames);
+			
+			refresh_actors();
+			evaluate_transforms();
+			evaluate_animations();
+		}
+	});
+	
+	// Stop Button
+	nanogui::Button* stopBtn = new nanogui::Button(buttonWrapper, "", FA_STOP);
+	stopBtn->set_fixed_width(buttonWidth);
+	stopBtn->set_fixed_height(buttonHeight);
+	stopBtn->set_tooltip("Stop");
+	stopBtn->set_callback([this]() {
+		stop_playback();
+		verify_previous_next_keyframes(mActiveActor);
+		
+		mCurrentTime = 0;
+		update_time_display(mCurrentTime);
+		mTimelineSlider->set_value(0.0f);
+		evaluate_transforms();
+		evaluate_animations();
+		
+		mAnimatableActors.clear();
+	});
+	
+	// Play/Pause Button
+	mPlayPauseBtn = new nanogui::ToolButton(buttonWrapper, FA_PLAY);
+	mPlayPauseBtn->set_fixed_width(buttonWidth);
+	mPlayPauseBtn->set_fixed_height(buttonHeight);
+	mPlayPauseBtn->set_tooltip("Play");
+	
+	mPlayPauseBtn->set_change_callback([this](bool active) {
+		verify_previous_next_keyframes(mActiveActor);
+		
+		if (active) {
+			// Play
+			toggle_play_pause(true);
+			mPlayPauseBtn->set_icon(FA_PAUSE);
+			mPlayPauseBtn->set_tooltip("Pause");
+			mPlayPauseBtn->set_text_color(nanogui::Color(0.0f, 0.0f, 1.0f, 1.0f)); // Blue
+		} else {
+			// Pause
+			toggle_play_pause(false);
+			mPlayPauseBtn->set_icon(FA_PLAY);
+			mPlayPauseBtn->set_tooltip("Play");
+			mPlayPauseBtn->set_text_color(mNormalButtonColor);
+		}
+	});
+	
+	// Record Button
+	mRecordBtn = new nanogui::ToolButton(buttonWrapper, FA_CIRCLE);
+	mRecordBtn->set_fixed_width(buttonWidth);
+	mRecordBtn->set_fixed_height(buttonHeight);
+	mRecordBtn->set_tooltip("Record");
+	
+	auto normalRecordColor = mRecordBtn->text_color();
+	
+	mRecordBtn->set_change_callback([this, normalRecordColor](bool active) {
+		verify_previous_next_keyframes(mActiveActor);
+		
+		if (!mPlaying) {
+			mRecording = active;
+			mRecordBtn->set_text_color(active ? nanogui::Color(1.0f, 0.0f, 0.0f, 1.0f) : normalRecordColor); // Red when recording
+			
+			register_actor_callbacks(mActiveActor);
+		}
+	});
+	
+	// Next Frame Button
+	nanogui::Button* nextFrameBtn = new nanogui::Button(buttonWrapper, "", FA_STEP_FORWARD);
+	nextFrameBtn->set_fixed_width(buttonWidth);
+	nextFrameBtn->set_fixed_height(buttonHeight);
+	nextFrameBtn->set_tooltip("Next Frame");
+	nextFrameBtn->set_callback([this]() {
+		if (mCurrentTime < mTotalFrames) {
+			stop_playback();
+			
+			mCurrentTime++;
+			update_time_display(mCurrentTime);
+			mTimelineSlider->set_value(static_cast<float>(mCurrentTime) / mTotalFrames);
+			
+			refresh_actors();
+			evaluate_transforms();
+			evaluate_animations();
+		}
+	});
+	
+	// Seek to End Button
+	nanogui::Button* seekEndBtn = new nanogui::Button(buttonWrapper, "", FA_FAST_FORWARD);
+	seekEndBtn->set_fixed_width(buttonWidth);
+	seekEndBtn->set_fixed_height(buttonHeight);
+	seekEndBtn->set_tooltip("Seek to End");
+	seekEndBtn->set_callback([this]() {
+		stop_playback(); // Ensure playback is stopped
+		
+		verify_previous_next_keyframes(mActiveActor);
+		
+		mCurrentTime = mTotalFrames;
+		update_time_display(mCurrentTime);
+		mTimelineSlider->set_value(1.0f);
+		
+		refresh_actors();
+		evaluate_transforms();
+		evaluate_animations();
+	});
+	
+	// Keyframe Buttons Wrapper
+	nanogui::Widget* keyBtnWrapper = new nanogui::Widget(this);
+	keyBtnWrapper->set_layout(new nanogui::BoxLayout(nanogui::Orientation::Horizontal, nanogui::Alignment::Middle, 1, 1));
+	
+	mPrevKeyBtn = new nanogui::Button(keyBtnWrapper, "", FA_STEP_BACKWARD);
+	mPrevKeyBtn->set_enabled(false);
+	mPrevKeyBtn->set_fixed_width(keyBtnWidth);
+	mPrevKeyBtn->set_fixed_height(keyBtnHeight);
+	mPrevKeyBtn->set_tooltip("Previous Keyframe");
+	mPrevKeyBtn->set_callback([this]() {
+		stop_playback();
+		
+		if (!mActiveActor.has_value()) return; // No active actor selected
+		
+		float currentTimeFloat = static_cast<float>(mCurrentTime);
+		float latestPrevTime = -std::numeric_limits<float>::infinity();
+		bool hasPrevKeyframe = false;
+		
+		// Get the AnimationComponent
+		const AnimationComponent& animComp = mActiveActor->get().get_component<AnimationComponent>();
+		
+		// Get previous keyframe from AnimationComponent
+		std::optional<AnimationComponent::Keyframe> prevKeyframe = animComp.get_previous_keyframe(currentTimeFloat);
+		
+		if (prevKeyframe) {
+			hasPrevKeyframe = true;
+			if (prevKeyframe->time > latestPrevTime) {
+				latestPrevTime = prevKeyframe->time;
+			}
+		}
+		
+		// If SkinnedAnimationComponent exists, consider its keyframes as well
+		if (mActiveActor->get().find_component<SkinnedAnimationComponent>()) {
+			const SkinnedAnimationComponent& skinnedComponent = mActiveActor->get().get_component<SkinnedAnimationComponent>();
+			
+			// Get previous keyframe from SkinnedAnimationComponent
+			std::optional<SkinnedAnimationComponent::Keyframe> prevSkinnedKeyframe = skinnedComponent.get_previous_keyframe(currentTimeFloat);
+			
+			if (prevSkinnedKeyframe) {
+				hasPrevKeyframe = true;
+				if (prevSkinnedKeyframe->time > latestPrevTime) {
+					latestPrevTime = prevSkinnedKeyframe->time;
+				}
+			}
+		}
+		
+		if (hasPrevKeyframe) {
+			// Update current time to the latest previous keyframe's time
+			mCurrentTime = static_cast<int>(latestPrevTime);
+			update_time_display(mCurrentTime);
+			mTimelineSlider->set_value(static_cast<float>(mCurrentTime) / mTotalFrames);
+			
+			refresh_actors();
+			evaluate_transforms();
+			evaluate_animations();
+			
+			// Verify keyframes after time update
+			verify_previous_next_keyframes(mActiveActor);
+		} else {
+			// No previous keyframe available
+			std::cout << "No previous keyframe available." << std::endl;
+		}
+	});
+	
+	mKeyBtn = new nanogui::Button(keyBtnWrapper, "", FA_KEY);
+	mKeyBtn->set_fixed_width(keyBtnWidth);
+	mKeyBtn->set_fixed_height(keyBtnHeight);
+	mKeyBtn->set_tooltip("Keyframe Tool");
+	
+	// Initially set to the normal button color
+	mKeyBtn->set_text_color(mNormalButtonColor);
+	
+	mKeyBtn->set_callback([this](){
+		bool wasUncommitted = mUncommittedKey;
+		
+		stop_playback();
+		
+		if (mActiveActor.has_value()) {
+			if (!mPlaying) {
+				auto& transformComponent = mActiveActor->get().get_component<TransformComponent>();
+				auto& animationComponent = mActiveActor->get().get_component<AnimationComponent>();
+				
+				if (wasUncommitted){
+					mUncommittedKey = false;
+					animationComponent.updateKeyframe(mCurrentTime, transformComponent.get_translation(), transformComponent.get_rotation(), transformComponent.get_scale());
+				} else if (animationComponent.is_keyframe(mCurrentTime)) {
+					animationComponent.removeKeyframe(mCurrentTime);
+				} else {
+					animationComponent.addKeyframe(mCurrentTime, transformComponent.get_translation(), transformComponent.get_rotation(), transformComponent.get_scale());
+				}
+				
+				if (mActiveActor->get().find_component<SkinnedAnimationComponent>()){
+					auto& skinnedAnimationComponent = mActiveActor->get().get_component<SkinnedAnimationComponent>();
+					auto& playback = mActiveActor->get().get_component<PlaybackComponent>();
+					
+					auto state = playback.get_state();
+					
+					if (wasUncommitted){
+						mUncommittedKey = false;
+						skinnedAnimationComponent.updateKeyframe(mCurrentTime, state.getPlaybackState(), state.getPlaybackModifier(), state.getPlaybackTrigger());
+					} else if (skinnedAnimationComponent.is_keyframe(mCurrentTime)) {
+						skinnedAnimationComponent.removeKeyframe(mCurrentTime);
+					} else {
+						skinnedAnimationComponent.addKeyframe(mCurrentTime, state.getPlaybackState(), state.getPlaybackModifier(), state.getPlaybackTrigger());
+					}
+				}
+			}
+			evaluate_transforms();
+			evaluate_animations();
+			verify_previous_next_keyframes(mActiveActor);
+		}
+	});
+	
+	// Next Frame Button
+	mNextKeyBtn = new nanogui::Button(keyBtnWrapper, "", FA_STEP_FORWARD);
+	mNextKeyBtn->set_enabled(false);
+	mNextKeyBtn->set_fixed_width(keyBtnWidth);
+	mNextKeyBtn->set_fixed_height(keyBtnHeight);
+	mNextKeyBtn->set_tooltip("Next Keyframe");
+	mNextKeyBtn->set_callback([this]() {
+		stop_playback();
+		
+		if (!mActiveActor.has_value()) return; // No active actor selected
+		
+		float currentTimeFloat = static_cast<float>(mCurrentTime);
+		float earliestNextTime = std::numeric_limits<float>::infinity();
+		bool hasNextKeyframe = false;
+		
+		// Get the AnimationComponent
+		const AnimationComponent& animComp = mActiveActor->get().get_component<AnimationComponent>();
+		
+		// Get next keyframe from AnimationComponent
+		std::optional<AnimationComponent::Keyframe> nextKeyframe = animComp.get_next_keyframe(currentTimeFloat);
+		
+		if (nextKeyframe) {
+			hasNextKeyframe = true;
+			if (nextKeyframe->time < earliestNextTime) {
+				earliestNextTime = nextKeyframe->time;
+			}
+		}
+		
+		// If SkinnedAnimationComponent exists, consider its keyframes as well
+		if (mActiveActor->get().find_component<SkinnedAnimationComponent>()) {
+			const SkinnedAnimationComponent& skinnedComponent = mActiveActor->get().get_component<SkinnedAnimationComponent>();
+			
+			// Get next keyframe from SkinnedAnimationComponent
+			std::optional<SkinnedAnimationComponent::Keyframe> nextSkinnedKeyframe = skinnedComponent.get_next_keyframe(currentTimeFloat);
+			
+			if (nextSkinnedKeyframe) {
+				hasNextKeyframe = true;
+				if (nextSkinnedKeyframe->time < earliestNextTime) {
+					earliestNextTime = nextSkinnedKeyframe->time;
+				}
+			}
+		}
+		
+		if (hasNextKeyframe) {
+			// Update current time to the earliest next keyframe's time
+			mCurrentTime = static_cast<int>(earliestNextTime);
+			update_time_display(mCurrentTime);
+			mTimelineSlider->set_value(static_cast<float>(mCurrentTime) / mTotalFrames);
+			
+			refresh_actors();
+			evaluate_transforms();
+			evaluate_animations();
+			
+			// Verify keyframes after time update
+			verify_previous_next_keyframes(mActiveActor);
+		} else {
+			// No next keyframe available
+			std::cout << "No next keyframe available." << std::endl;
+		}
+	});
+	
+	
+	mRegistry.RegisterOnActorSelectedCallback(*this);
+	
+	set_position(nanogui::Vector2i(0, 0));  // Stick to top
+}
+
+SceneTimeBar::~SceneTimeBar() {
+	mRegistry.UnregisterOnActorSelectedCallback(*this);
+}
+
+// Override OnActorSelected from IActorSelectedCallback
+void SceneTimeBar::OnActorSelected(std::optional<std::reference_wrapper<Actor>> actor) {
+	mActiveActor = actor;
+	
+	register_actor_callbacks(mActiveActor);
+	
+	verify_previous_next_keyframes(mActiveActor);
+}
+
+// Override mouse_button_event to consume the event
+bool SceneTimeBar::mouse_button_event(const nanogui::Vector2i &p, int button, bool down, int modifiers) {
+	nanogui::Widget::mouse_button_event(p, button, down, modifiers);
+	return true; // Consume the event
+}
+
+// Override mouse_motion_event to consume the event
+bool SceneTimeBar::mouse_motion_event(const nanogui::Vector2i &p, const nanogui::Vector2i &rel, int button, int modifiers) {
+	nanogui::Widget::mouse_motion_event(p, rel, button, modifiers);
+	return true; // Consume the event
+}
+
+// Override the draw method to handle time updates and rendering
+void SceneTimeBar::draw(NVGcontext *ctx) {
+	if (mPlaying) {
+		if (mCurrentTime < mTotalFrames) {
+			mCurrentTime++;
+			update_time_display(mCurrentTime);
+			mTimelineSlider->set_value(static_cast<float>(mCurrentTime) / mTotalFrames);
+		} else {
+			// Stop playing when end is reached
+			stop_playback();
+		}
+		evaluate_transforms();
+	}
+	
+	evaluate_animations();
+	
+	evaluate_keyframe_status();
+	
+	// Draw background
+	nvgBeginPath(ctx);
+	nvgRect(ctx, m_pos.x(), m_pos.y(), m_size.x(), m_size.y());
+	nvgFillColor(ctx, mBackgroundColor);
+	nvgFill(ctx);
+	
+	// Call the parent class draw method to render the child widgets
+	nanogui::Widget::draw(ctx);
+}
+
+// Getter for current time
+int SceneTimeBar::current_time() const {
+	return mCurrentTime;
+}
+
+// Helper method to toggle play/pause
+void SceneTimeBar::toggle_play_pause(bool play) {
+	mPlaying = play;
+	if (play) {
+		refresh_actors();
+	} else {
+		register_actor_callbacks(mActiveActor);
+	}
+}
+
+// Helper method to stop playback
+void SceneTimeBar::stop_playback() {
+	mUncommittedKey = false;
+	
+	if (mPlaying) {
+		mPlaying = false;
+		mPlayPauseBtn->set_pushed(false);
+		mPlayPauseBtn->set_icon(FA_PLAY);
+		mPlayPauseBtn->set_tooltip("Play");
+		// Reset play button color
+		mPlayPauseBtn->set_text_color(mNormalButtonColor);
+	}
+}
+
+// Helper method to update the time display
+void SceneTimeBar::update_time_display(int frameCount) {
+	const int framesPerSecond = 60; // 60 FPS
+	int totalSeconds = frameCount / framesPerSecond;
+	int frames = frameCount % framesPerSecond;
+	
+	int hours = totalSeconds / 3600;
+	int minutes = (totalSeconds % 3600) / 60;
+	int seconds = totalSeconds % 60;
+	
+	char buffer[12]; // Adjust buffer size to accommodate frames
+	snprintf(buffer, sizeof(buffer), "%02d:%02d:%02d:%02d", hours, minutes, seconds, frames);
+	mTimeLabel->set_value(buffer);
+}
+
+// Helper method to evaluate transforms
+void SceneTimeBar::evaluate_transforms() {
+	for (auto& animatableActor : mAnimatableActors) {
+		auto& animationComponent = animatableActor.get().get_component<AnimationComponent>();
+		auto& transformComponent = animatableActor.get().get_component<TransformComponent>();
+		
+		auto evaluationContainer = animationComponent.evaluate(mCurrentTime);
+		
+		if (evaluationContainer.has_value()) {
+			auto [t, r, s] = *evaluationContainer;
+			
+			transformComponent.set_translation(t);
+			transformComponent.set_rotation(r);
+			transformComponent.set_scale(s);
+		}
+	}
+}
+
+// Helper method to evaluate animations
+void SceneTimeBar::evaluate_animations() {
+	for (auto& animatableActor : mAnimatableActors) {
+		if (animatableActor.get().find_component<SkinnedAnimationComponent>()) {
+			auto& skinnedAnimationComponent = animatableActor.get().get_component<SkinnedAnimationComponent>();
+			
+			skinnedAnimationComponent.evaluate(mCurrentTime);
+		}
+	}
+}
+
+// Helper method to evaluate keyframe status
+void SceneTimeBar::evaluate_keyframe_status() {
+	bool atKeyframe = false;
+	bool betweenKeyframes = false;
+	
+	// Loop through animatable actors to determine keyframe status
+	if (mActiveActor.has_value()) {
+		auto& animatableActor = mActiveActor;
+		
+		auto& animationComponent = animatableActor->get().get_component<AnimationComponent>();
+		
+		if (animationComponent.is_keyframe(mCurrentTime)) {
+			atKeyframe = true;
+		} else if (animationComponent.is_between_keyframes(mCurrentTime)) {
+			betweenKeyframes = true;
+		}
+	}
+	
+	// Set the color based on keyframe status
+	if (atKeyframe) {
+		mKeyBtn->set_text_color(nanogui::Color(0.0f, 0.0f, 1.0f, 1.0f)); // Blue
+	} else if (betweenKeyframes) {
+		mKeyBtn->set_text_color(nanogui::Color(1.0f, 1.0f, 0.0f, 1.0f)); // Yellow
+	} else {
+		mKeyBtn->set_text_color(mNormalButtonColor); // Normal
+	}
+	
+	if (atKeyframe || betweenKeyframes) {
+		if (mUncommittedKey) {
+			mKeyBtn->set_text_color(nanogui::Color(1.0f, 0.0f, 0.0f, 1.0f));
+		}
+	}
+}
+
+// Helper method to verify previous and next keyframes
+void SceneTimeBar::verify_previous_next_keyframes(const std::optional<std::reference_wrapper<Actor>>& activeActor) {
+	if (!activeActor.has_value()) {
+		// No active actor; disable both buttons
+		mPrevKeyBtn->set_enabled(false);
+		mNextKeyBtn->set_enabled(false);
+		return;
+	}
+	
+	float currentTimeFloat = static_cast<float>(mCurrentTime);
+	
+	// Get the AnimationComponent
+	const AnimationComponent& animComp = activeActor->get().get_component<AnimationComponent>();
+	
+	// Get previous and next keyframes from AnimationComponent
+	std::optional<AnimationComponent::Keyframe> prevKeyframe = animComp.get_previous_keyframe(currentTimeFloat);
+	std::optional<AnimationComponent::Keyframe> nextKeyframe = animComp.get_next_keyframe(currentTimeFloat);
+	
+	// Variables to track the latest previous keyframe and earliest next keyframe times
+	float latestPrevTime = -std::numeric_limits<float>::infinity();
+	float earliestNextTime = std::numeric_limits<float>::infinity();
+	
+	// Flags to indicate if we have previous or next keyframes
+	bool hasPrevKeyframe = false;
+	bool hasNextKeyframe = false;
+	
+	// Check previous keyframe from AnimationComponent
+	if (prevKeyframe) {
+		hasPrevKeyframe = true;
+		if (prevKeyframe->time > latestPrevTime) {
+			latestPrevTime = prevKeyframe->time;
+		}
+	}
+	
+	// Check next keyframe from AnimationComponent
+	if (nextKeyframe) {
+		hasNextKeyframe = true;
+		if (nextKeyframe->time < earliestNextTime) {
+			earliestNextTime = nextKeyframe->time;
+		}
+	}
+	
+	// If SkinnedAnimationComponent exists, consider its keyframes as well
+	if (activeActor->get().find_component<SkinnedAnimationComponent>()) {
+		const SkinnedAnimationComponent& skinnedComponent = activeActor->get().get_component<SkinnedAnimationComponent>();
+		
+		// Get previous and next keyframes from SkinnedAnimationComponent
+		std::optional<SkinnedAnimationComponent::Keyframe> prevSkinnedKeyframe = skinnedComponent.get_previous_keyframe(currentTimeFloat);
+		std::optional<SkinnedAnimationComponent::Keyframe> nextSkinnedKeyframe = skinnedComponent.get_next_keyframe(currentTimeFloat);
+		
+		// Check previous keyframe from SkinnedAnimationComponent
+		if (prevSkinnedKeyframe) {
+			hasPrevKeyframe = true;
+			if (prevSkinnedKeyframe->time > latestPrevTime) {
+				latestPrevTime = prevSkinnedKeyframe->time;
+			}
+		}
+		
+		// Check next keyframe from SkinnedAnimationComponent
+		if (nextSkinnedKeyframe) {
+			hasNextKeyframe = true;
+			if (nextSkinnedKeyframe->time < earliestNextTime) {
+				earliestNextTime = nextSkinnedKeyframe->time;
+			}
+		}
+	}
+	
+	// Enable or disable the Previous Keyframe button
+	mPrevKeyBtn->set_enabled(hasPrevKeyframe);
+	
+	// Enable or disable the Next Keyframe button
+	mNextKeyBtn->set_enabled(hasNextKeyframe);
+}
+
+// Helper method to refresh animatable actors
+void SceneTimeBar::refresh_actors() {
+	mAnimatableActors = mActorManager.get_actors_with_component<AnimationComponent>();
+}
+
+// Helper method to register actor callbacks
+void SceneTimeBar::register_actor_callbacks(std::optional<std::reference_wrapper<Actor>> actor) {
+	if(mTransformRegistrationId != -1) {
+		mRegisteredTransformComponent->get()
+			.unregister_on_transform_changed_callback(mTransformRegistrationId);
+		
+		mTransformRegistrationId = -1;
+		
+		mRegisteredTransformComponent = std::nullopt;
+	}
+	
+	if(mPlaybackRegistrationId != -1) {
+		mRegisteredPlaybackComponent->get()
+			.unregister_on_playback_changed_callback(mPlaybackRegistrationId);
+		
+		mPlaybackRegistrationId = -1;
+		
+		mRegisteredPlaybackComponent = std::nullopt;
+	}
+	
+	if (actor != std::nullopt) {
+		mRegisteredTransformComponent = actor->get().get_component<TransformComponent>();
+		
+		auto& animationComponent = actor->get().get_component<AnimationComponent>();
+		
+		mTransformRegistrationId = mRegisteredTransformComponent->get().register_on_transform_changed_callback([this, &animationComponent](const TransformComponent& transform) {
+			if (mRecording && !mPlaying) {
+				animationComponent.addKeyframe(mCurrentTime, transform.get_translation(), transform.get_rotation(), transform.get_scale());
+			} else if (!mRecording && !mPlaying) {
+				if (animationComponent.is_keyframe(mCurrentTime)) {
+					auto m1 = transform.get_matrix();
+					auto m2 = animationComponent.evaluate_as_matrix(mCurrentTime);
+					
+					if (m1 != *m2) {
+						mUncommittedKey = true;
+					}
+				}
+			}
+		});
+		
+		if (actor->get().find_component<PlaybackComponent>()) {
+			mRegisteredPlaybackComponent = actor->get().get_component<PlaybackComponent>();
+		}
+		
+		if (mRegisteredPlaybackComponent.has_value()) {
+			auto& skinnedAnimationComponent = actor->get().get_component<SkinnedAnimationComponent>();
+			
+			mPlaybackRegistrationId = mRegisteredPlaybackComponent->get().register_on_playback_changed_callback([this, &skinnedAnimationComponent](const PlaybackComponent& playback) {
+				if (mRecording && !mPlaying) {
+					skinnedAnimationComponent.addKeyframe(mCurrentTime, playback.getPlaybackState(), playback.getPlaybackModifier(), playback.getPlaybackTrigger());
+				} else if (!mRecording && !mPlaying) {
+					if (skinnedAnimationComponent.is_keyframe(mCurrentTime)) {
+						auto m1 = const_cast<SkinnedAnimationComponent::Keyframe&>(playback.get_state());
+						m1.time = mCurrentTime;
+						
+						auto m2 = skinnedAnimationComponent.get_keyframe(mCurrentTime);
+						
+						if (m1 != m2) {
+							mUncommittedKey = true;
+						}
+					}
+				}
+			});
+		}
+	}
+}

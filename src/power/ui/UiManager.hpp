@@ -33,7 +33,7 @@ class StatusBarPanel;
 // UiManager class definition
 class UiManager : public IActorSelectedCallback, public Drawable {
 public:
-	UiManager(IActorSelectedRegistry& registry, IActorVisualManager& actorVisualManager, ActorManager& actorManager, MeshActorLoader& meshActorLoader, ShaderManager& shaderManager, ScenePanel& scenePanel, Canvas& canvas, nanogui::Widget& toolbox, nanogui::Widget& statusBar, AnimationPanel& animationPanel, CameraManager& cameraManager, DeepMotionApiClient& deepMotionApiClient, std::function<void(std::function<void(int, int)>)> applicationClickRegistrator);
+	UiManager(IActorSelectedRegistry& registry, IActorVisualManager& actorVisualManager, ActorManager& actorManager, MeshActorLoader& meshActorLoader, ShaderManager& shaderManager, ScenePanel& scenePanel, Canvas& canvas, nanogui::Widget& toolbox, nanogui::Widget& statusBar, AnimationPanel& animationPanel, SceneTimeBar& sceneTimeBar, CameraManager& cameraManager, DeepMotionApiClient& deepMotionApiClient, std::function<void(std::function<void(int, int)>)> applicationClickRegistrator);
 	~UiManager();
 	
 	void OnActorSelected(std::optional<std::reference_wrapper<Actor>> actor) override;
@@ -62,7 +62,7 @@ private:
 	AnimationPanel& mAnimationPanel;
 	nanogui::RenderPass* mRenderPass;
 	
-	SceneTimeBar* mSceneTimeBar;
+	SceneTimeBar& mSceneTimeBar;
 	
 	glm::vec4 mSelectionColor;
 	

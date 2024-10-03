@@ -13,6 +13,7 @@ class ActorManager;
 class AnimationPanel;
 class HierarchyPanel;
 class ScenePanel;
+class SceneTimeBar;
 class ShaderManager;
 class StatusBarPanel;
 class TransformPanel;
@@ -41,6 +42,10 @@ public:
 	AnimationPanel& animation_panel() {
 		return *mAnimationPanel;
 	}
+	
+	SceneTimeBar& scene_time_bar() {
+		return *mSceneTimeBar;
+	}
 
 	nanogui::Widget& toolbox() {
 		return *mToolbox;
@@ -54,4 +59,5 @@ private:
 	nanogui::Widget* mStatusBar;
 	StatusBarPanel* mStatusBarPanel;
 	nanogui::Widget* mToolbox;
+	SceneTimeBar* mSceneTimeBar;
 };

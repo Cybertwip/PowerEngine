@@ -17,6 +17,7 @@ class MeshActorLoader;
 class MeshActorBuilder;
 class MeshPicker;
 class PromptWindow;
+class SceneTimeBar;
 class SelfContainedMeshCanvas;
 class ShaderManager;
 class ShaderWrapper;
@@ -24,7 +25,8 @@ class ShaderWrapper;
 class ResourcesPanel : public Panel {
 public:
 	ResourcesPanel(nanogui::Widget &parent,
-				   DirectoryNode& root_directory_node, IActorVisualManager& actorVisualManager,  MeshActorLoader& meshActorLoader, ShaderManager& shaderManager, DeepMotionApiClient& deepMotionApiClient);
+				   DirectoryNode& root_directory_node, IActorVisualManager& actorVisualManager,
+					   SceneTimeBar& sceneTimeBar, MeshActorLoader& meshActorLoader, ShaderManager& shaderManager, DeepMotionApiClient& deepMotionApiClient);
 	
 	~ResourcesPanel();
 	
@@ -79,4 +81,5 @@ private:
 	std::unique_ptr<MeshActorExporter> mMeshActorExporter;
 	
 	PromptWindow* mPromptWindow;
+	SceneTimeBar& mSceneTimeBar;
 };

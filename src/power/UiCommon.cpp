@@ -80,5 +80,8 @@ UiCommon::UiCommon(nanogui::Widget& parent, ActorManager& actorManager) {
 	rightWrapper->add_child(mTransformPanel); // Add TransformPanel second
 	rightWrapper->add_child(mAnimationPanel); // Add AnimationPanel third
 //	rightWrapper->add_child(promptbox); // Add Grok third
+	
+	// Initialize the scene time bar
+	mSceneTimeBar = new SceneTimeBar(mScenePanel, actorManager,  mScenePanel->fixed_width(), mScenePanel->fixed_height() * 0.25f);
 }
 

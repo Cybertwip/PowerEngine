@@ -81,7 +81,7 @@ Application::Application() : nanogui::DraggableScreen("Power Engine") {
 		register_click_callback(callbackWrapee);
 	};
 
-	mUiManager = std::make_unique<UiManager>(mUiCommon->hierarchy_panel(), mUiCommon->hierarchy_panel(), *mActorManager, *mMeshActorLoader, mRenderCommon->shader_manager(), mUiCommon->scene_panel(), mRenderCommon->canvas(), mUiCommon->toolbox(), mUiCommon->status_bar(), mUiCommon->animation_panel(), *mCameraManager, *mDeepMotionApiClient, applicationClickCallbackRegistrator);
+	mUiManager = std::make_unique<UiManager>(mUiCommon->hierarchy_panel(), mUiCommon->hierarchy_panel(), *mActorManager, *mMeshActorLoader, mRenderCommon->shader_manager(), mUiCommon->scene_panel(), mRenderCommon->canvas(), mUiCommon->toolbox(), mUiCommon->status_bar(), mUiCommon->animation_panel(), mUiCommon->scene_time_bar(), *mCameraManager, *mDeepMotionApiClient, applicationClickCallbackRegistrator);
 	
     std::vector<std::reference_wrapper<Actor>> actors;
 

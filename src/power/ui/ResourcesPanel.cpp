@@ -109,7 +109,7 @@ const DirectoryNode* FindNodeByPath(const DirectoryNode& currentNode, const std:
 }
 
 
-ResourcesPanel::ResourcesPanel(nanogui::Widget& parent, DirectoryNode& root_directory_node, IActorVisualManager& actorVisualManager,  MeshActorLoader& meshActorLoader, ShaderManager& shaderManager, DeepMotionApiClient& deepMotionApiClient)
+ResourcesPanel::ResourcesPanel(nanogui::Widget& parent, DirectoryNode& root_directory_node, IActorVisualManager& actorVisualManager, SceneTimeBar& sceneTimeBar,  MeshActorLoader& meshActorLoader, ShaderManager& shaderManager, DeepMotionApiClient& deepMotionApiClient)
 : Panel(parent, "Resources"),
 mRootDirectoryNode(root_directory_node),
 mActorVisualManager(actorVisualManager),
@@ -119,7 +119,8 @@ mSkinnedShader(std::make_unique<ShaderWrapper>(*shaderManager.get_shader("skinne
 mSelectedButton(nullptr),
 mSelectedNode(nullptr),
 mNormalButtonColor(nanogui::Color(0.7f, 0.7f, 0.7f, 1.0f)),
-mSelectedButtonColor(nanogui::Color(0.5f, 0.5f, 0.8f, 1.0f))
+mSelectedButtonColor(nanogui::Color(0.5f, 0.5f, 0.8f, 1.0f)),
+mSceneTimeBar(sceneTimeBar)
 {
 	mNormalButtonColor = theme()->m_button_gradient_bot_unfocused;
 	
@@ -159,8 +160,6 @@ mSelectedButtonColor(nanogui::Color(0.5f, 0.5f, 0.8f, 1.0f))
 	
 	mImportWindow->set_visible(false);
 	mImportWindow->set_modal(false);
-	
-	
 	
 	// Add the Add Asset button with a "+" icon
 	mAddButton = new nanogui::PopupButton(mToolbar, "Add");
