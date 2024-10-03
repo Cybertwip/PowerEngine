@@ -6,6 +6,7 @@
 #include "ui/AnimationPanel.hpp"
 #include "ui/HierarchyPanel.hpp"
 #include "ui/ScenePanel.hpp"
+#include "ui/SceneTimeBar.hpp"
 #include "ui/TransformPanel.hpp"
 #include "ui/UiManager.hpp"
 
