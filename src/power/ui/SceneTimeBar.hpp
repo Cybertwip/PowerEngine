@@ -12,6 +12,7 @@
 class ActorManager;
 class Actor;
 class AnimationComponent;
+class AnimationTimeProvider;
 class SkinnedAnimationComponent;
 class TransformComponent;
 class PlaybackComponent;
@@ -29,7 +30,7 @@ class Widget;
 // SceneTimeBar Class Declaration
 class SceneTimeBar : public nanogui::Widget, public IActorSelectedCallback {
 public:
-	SceneTimeBar(nanogui::Widget* parent, ActorManager& actorManager, IActorSelectedRegistry& registry, int width, int height);
+	SceneTimeBar(nanogui::Widget* parent, ActorManager& actorManager, AnimationTimeProvider& animationTimeProvider, IActorSelectedRegistry& registry, int width, int height);
 	~SceneTimeBar();
 	
 	// Override OnActorSelected from IActorSelectedCallback
@@ -64,6 +65,7 @@ private:
 private:
 	// Member variables
 	ActorManager& mActorManager;
+	AnimationTimeProvider& mAnimationTimeProvider;
 	IActorSelectedRegistry& mRegistry;
 	nanogui::TextBox* mTimeLabel;
 	nanogui::Slider* mTimelineSlider;

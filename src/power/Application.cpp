@@ -57,7 +57,7 @@ Application::Application() : nanogui::DraggableScreen("Power Engine"), mGlobalAn
 
 	mDeepMotionApiClient = std::make_unique<DeepMotionApiClient>();
 	
-	mUiCommon = std::make_unique<UiCommon>(*this, *mActorManager);
+	mUiCommon = std::make_unique<UiCommon>(*this, *mActorManager, mGlobalAnimationTimeProvider);
 
 	mRenderCommon =
         std::make_unique<RenderCommon>(mUiCommon->scene_panel(), *mEntityRegistry, *mActorManager, *mCameraManager);

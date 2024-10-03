@@ -48,9 +48,10 @@ glm::vec3 ScreenToWorld(glm::vec2 screenPos, float depth, glm::mat4 projectionMa
 } // namespace
 
 // Constructor Implementation
-SceneTimeBar::SceneTimeBar(nanogui::Widget* parent, ActorManager& actorManager, IActorSelectedRegistry& registry, int width, int height)
+SceneTimeBar::SceneTimeBar(nanogui::Widget* parent, ActorManager& actorManager, AnimationTimeProvider& animationTimeProvider, IActorSelectedRegistry& registry, int width, int height)
 : nanogui::Widget(parent),
 mActorManager(actorManager),
+mAnimationTimeProvider(animationTimeProvider),
 mRegistry(registry),
 mTransformRegistrationId(-1),
 mPlaybackRegistrationId(-1),
@@ -481,6 +482,9 @@ bool SceneTimeBar::mouse_motion_event(const nanogui::Vector2i &p, const nanogui:
 
 // Manual force draw to draw on top
 void SceneTimeBar::update() {
+	
+	mAnimationTimeProvider.Update(mCurrentTime);
+	
 	if (mPlaying) {
 		if (mCurrentTime < mTotalFrames) {
 			mCurrentTime++;

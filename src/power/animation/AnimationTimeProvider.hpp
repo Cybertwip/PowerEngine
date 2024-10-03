@@ -7,8 +7,10 @@ public:
 	AnimationTimeProvider(float duration) : mTime(0.0f), mDuration(duration) {
 		
 	}
+	virtual ~AnimationTimeProvider() = default;
 	
-	void Update() {
+	virtual void Update(float time = 0.0f) {
+		mTime = time;
 		mTime = std::fmod(mTime, mDuration);
 	}
 	

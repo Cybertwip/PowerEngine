@@ -10,7 +10,7 @@
 #include "ui/TransformPanel.hpp"
 #include "ui/UiManager.hpp"
 
-UiCommon::UiCommon(nanogui::Widget& parent, ActorManager& actorManager) {
+UiCommon::UiCommon(nanogui::Widget& parent, ActorManager& actorManager, AnimationTimeProvider& animationTimeProvider) {
 
     auto mainWrapper = new nanogui::Window(&parent, "");
 	
@@ -83,6 +83,6 @@ UiCommon::UiCommon(nanogui::Widget& parent, ActorManager& actorManager) {
 //	rightWrapper->add_child(promptbox); // Add Grok third
 	
 	// Initialize the scene time bar
-	mSceneTimeBar = new SceneTimeBar(mScenePanel, actorManager, *mHierarchyPanel,  mScenePanel->fixed_width(), mScenePanel->fixed_height() * 0.25f);
+	mSceneTimeBar = new SceneTimeBar(mScenePanel, actorManager, animationTimeProvider, *mHierarchyPanel,  mScenePanel->fixed_width(), mScenePanel->fixed_height() * 0.25f);
 }
 
