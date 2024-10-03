@@ -135,9 +135,12 @@ void PromptWindow::Preview(const std::string& path, const std::string& directory
 		// Mesh rigging is still not implemented
 		mSubmitButton->set_enabled(false);
 	} else {
-		auto& skinnedComponent = actor->get_component<SkinnedAnimationComponent>();
 		
-		skinnedComponent.set_pdo(std::move(pdo));
+		if (pdo.has_value()) {
+			auto& skinnedComponent = actor->get_component<SkinnedAnimationComponent>();
+			
+			skinnedComponent.set_pdo(std::move(*pdo));
+		}
 	}
 	
 	mPreviewCanvas->set_active_actor(actor);
@@ -360,7 +363,7 @@ void PromptWindow::SubmitPrompt() {
 													return;
 												}
 												
-												auto& animationSerializer = modelData->mAnimations[0].mSerializer;
+												auto& animationSerializer = modelData->mAnimations.value()[0].mSerializer;
 												
 												std::stringstream animationCompressedData;
 												
