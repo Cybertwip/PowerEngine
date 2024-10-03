@@ -24,6 +24,7 @@
 #include "ui/AnimationPanel.hpp"
 #include "ui/HierarchyPanel.hpp"
 #include "ui/ScenePanel.hpp"
+#include "ui/SceneTimeBar.hpp"
 #include "ui/StatusBarPanel.hpp"
 #include "ui/ResourcesPanel.hpp"
 #include "ui/TransformPanel.hpp"
@@ -163,6 +164,8 @@ bool Application::drop_event(nanogui::Widget* sender, const std::vector<std::str
 		if (mRenderCommon->canvas().contains(m_mouse_pos, true, true)) {
 			if (filenames[0].find(".psk") != std::string::npos || filenames[0].find(".pma") != std::string::npos){
 				mUiCommon->hierarchy_panel().add_actor(mMeshActorLoader->create_actor(filenames[0], *mMeshShader, *mSkinnedShader));
+				
+				mUiCommon->scene_time_bar().refresh_actors();
 			}
 		}
 	}

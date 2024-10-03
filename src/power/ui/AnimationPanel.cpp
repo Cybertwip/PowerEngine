@@ -107,8 +107,6 @@ void AnimationPanel::parse_file(const std::string& path) {
 			mReversePlayButton->set_pushed(false);
 
 		}
-		
-		mSceneTimeBar.refresh_actors();
 	}
 }
 
