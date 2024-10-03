@@ -281,6 +281,7 @@ void UiManager::OnActorSelected(std::optional<std::reference_wrapper<Actor>> act
 }
 
 void UiManager::draw() {
+	mSceneTimeBar.update();
 	mAnimationPanel.update_with(mSceneTimeBar.current_time());
 	
 	// Begin the first render pass for actors

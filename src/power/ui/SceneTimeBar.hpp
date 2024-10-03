@@ -34,7 +34,10 @@ public:
 	
 	// Override OnActorSelected from IActorSelectedCallback
 	void OnActorSelected(std::optional<std::reference_wrapper<Actor>> actor) override;
-		
+	
+	// Method to update the SceneTimeBar
+	void update();
+	
 	// Getter for current time
 	int current_time() const;
 	
@@ -54,9 +57,6 @@ private:
 	// Override mouse events to consume them
 	bool mouse_button_event(const nanogui::Vector2i &p, int button, bool down, int modifiers) override;
 	bool mouse_motion_event(const nanogui::Vector2i &p, const nanogui::Vector2i &rel, int button, int modifiers) override;
-	
-	// Override the draw method to handle time updates and rendering
-	void draw(NVGcontext *ctx) override;
 	
 private:
 	// Member variables

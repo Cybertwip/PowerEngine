@@ -470,8 +470,9 @@ bool SceneTimeBar::mouse_motion_event(const nanogui::Vector2i &p, const nanogui:
 	return true; // Consume the event
 }
 
-// Override the draw method to handle time updates and rendering
-void SceneTimeBar::draw(NVGcontext *ctx) {
+// Manual force draw to draw on top
+
+void update() {
 	if (mPlaying) {
 		if (mCurrentTime < mTotalFrames) {
 			mCurrentTime++;
@@ -488,6 +489,7 @@ void SceneTimeBar::draw(NVGcontext *ctx) {
 	
 	evaluate_keyframe_status();
 	
+	auto ctx = screen()->nvg_context();
 	// Draw background
 	nvgBeginPath(ctx);
 	nvgRect(ctx, m_pos.x(), m_pos.y(), m_size.x(), m_size.y());
