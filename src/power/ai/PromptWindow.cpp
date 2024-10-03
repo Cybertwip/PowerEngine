@@ -262,113 +262,117 @@ void PromptWindow::SubmitPrompt() {
 							Json::Value urls = results["links"][0]["urls"];
 							
 							for(auto& url : urls){
-								if(url.isMember("fbx")){
-									auto download_url = url["fbx"].asString();
+								for(auto& file : url){
 									
-									std::cout << "Download URL: " << download_url << std::endl;
-									
-									// Parse the download URL
-									std::string protocol, host, path;
-									std::string::size_type protocol_pos = download_url.find("://");
-									if (protocol_pos != std::string::npos) {
-										protocol = download_url.substr(0, protocol_pos);
-										protocol_pos += 3;
-									} else {
-										std::cerr << "Invalid download URL format: " << download_url << std::endl;
-										{
-											std::lock_guard<std::mutex> lock(mStatusMutex);
-											mStatusLabel->set_caption("Status: Invalid download URL.");
-										}
-										break;
-									}
-									
-									std::string::size_type host_pos = download_url.find("/", protocol_pos);
-									if (host_pos != std::string::npos) {
-										host = download_url.substr(protocol_pos, host_pos - protocol_pos);
-										path = download_url.substr(host_pos);
-									} else {
-										host = download_url.substr(protocol_pos);
-										path = "/";
-									}
-									
-									// Determine port
-									int port = 443; // Default HTTPS
-									if (protocol == "http") {
-										port = 80;
-									}
-									
-									// Initialize HTTP client for download
-									httplib::SSLClient download_client(host.c_str(), port);
-									download_client.set_compress(false);
-									
-									// Perform GET request
-									auto res_download = download_client.Get(path.c_str());
-									if (res_download && res_download->status == 200) {
-										// Assuming the response body contains ZIP data
-										std::vector<unsigned char> zip_data(res_download->body.begin(), res_download->body.end());
+									if(file.isMember("fbx")){
+										auto download_url = fule["fbx"].asString();
 										
-										// Decompress ZIP data (use your existing decompress_zip_data function)
-										std::vector<std::stringstream> animation_files = Zip::decompress(zip_data);
+										std::cout << "Download URL: " << download_url << std::endl;
 										
-										// Process the extracted animation files as needed
-										
-										std::filesystem::path path(mActorPath);
-										
-										auto actorName = path.stem().string();
-										
-										for (auto& stream : animation_files) {
-											
-											auto modelData = mMeshActorImporter->process(stream, actorName, mOutputDirectory);
-											
-											auto& serializer = modelData->mMesh.mSerializer;
-											
-											
-											// Generate the unique hash identifier from the compressed data
-											
-											std::stringstream compressedData;
-											
-											serializer->get_compressed_data(compressedData);
-											
-											uint64_t hash_id[] = { 0, 0 };
-											
-											Md5::generate_md5_from_compressed_data(compressedData, hash_id);
-											
-											// Write the unique hash identifier to the header
-											serializer->write_header_raw(hash_id, sizeof(hash_id));
-											
-											// Proceed with serialization
-											
-											// no thumbnails yet as this will be animated, then re-serialized in the import method
-											serializer->write_header_uint64(0);
-											
-											CompressedSerialization::Deserializer deserializer;
-											
-											if (!deserializer.initialize(compressedData)) {
-												
-												mStatusLabel->set_caption("Status: Unable to deserialize model.");
-												
-												nanogui::async([this]() {
-													mResourcesPanel.refresh_file_view();
-												});
-												
-												return;
+										// Parse the download URL
+										std::string protocol, host, path;
+										std::string::size_type protocol_pos = download_url.find("://");
+										if (protocol_pos != std::string::npos) {
+											protocol = download_url.substr(0, protocol_pos);
+											protocol_pos += 3;
+										} else {
+											std::cerr << "Invalid download URL format: " << download_url << std::endl;
+											{
+												std::lock_guard<std::mutex> lock(mStatusMutex);
+												mStatusLabel->set_caption("Status: Invalid download URL.");
 											}
-											
-											Preview(mActorPath, mOutputDirectory, deserializer);
-											
 											break;
 										}
 										
-										{
-											std::lock_guard<std::mutex> lock(mStatusMutex);
-											mStatusLabel->set_caption("Status: Animations Imported.");
+										std::string::size_type host_pos = download_url.find("/", protocol_pos);
+										if (host_pos != std::string::npos) {
+											host = download_url.substr(protocol_pos, host_pos - protocol_pos);
+											path = download_url.substr(host_pos);
+										} else {
+											host = download_url.substr(protocol_pos);
+											path = "/";
 										}
-									} else {
-										std::cerr << "Failed to download animations. HTTP Status: " << (res_download ? std::to_string(res_download->status) : "No Response") << std::endl;
-										{
-											std::lock_guard<std::mutex> lock(mStatusMutex);
-											mStatusLabel->set_caption("Status: Failed to download animations.");
+										
+										// Determine port
+										int port = 443; // Default HTTPS
+										if (protocol == "http") {
+											port = 80;
 										}
+										
+										// Initialize HTTP client for download
+										httplib::SSLClient download_client(host.c_str(), port);
+										download_client.set_compress(false);
+										
+										// Perform GET request
+										auto res_download = download_client.Get(path.c_str());
+										if (res_download && res_download->status == 200) {
+											// Assuming the response body contains ZIP data
+											std::vector<unsigned char> zip_data(res_download->body.begin(), res_download->body.end());
+											
+											// Decompress ZIP data (use your existing decompress_zip_data function)
+											std::vector<std::stringstream> animation_files = Zip::decompress(zip_data);
+											
+											// Process the extracted animation files as needed
+											
+											std::filesystem::path path(mActorPath);
+											
+											auto actorName = path.stem().string();
+											
+											for (auto& stream : animation_files) {
+												
+												auto modelData = mMeshActorImporter->process(stream, actorName, mOutputDirectory);
+												
+												auto& serializer = modelData->mMesh.mSerializer;
+												
+												
+												// Generate the unique hash identifier from the compressed data
+												
+												std::stringstream compressedData;
+												
+												serializer->get_compressed_data(compressedData);
+												
+												uint64_t hash_id[] = { 0, 0 };
+												
+												Md5::generate_md5_from_compressed_data(compressedData, hash_id);
+												
+												// Write the unique hash identifier to the header
+												serializer->write_header_raw(hash_id, sizeof(hash_id));
+												
+												// Proceed with serialization
+												
+												// no thumbnails yet as this will be animated, then re-serialized in the import method
+												serializer->write_header_uint64(0);
+												
+												CompressedSerialization::Deserializer deserializer;
+												
+												if (!deserializer.initialize(compressedData)) {
+													
+													mStatusLabel->set_caption("Status: Unable to deserialize model.");
+													
+													nanogui::async([this]() {
+														mResourcesPanel.refresh_file_view();
+													});
+													
+													return;
+												}
+												
+												Preview(mActorPath, mOutputDirectory, deserializer);
+												
+												break;
+											}
+											
+											{
+												std::lock_guard<std::mutex> lock(mStatusMutex);
+												mStatusLabel->set_caption("Status: Animations Imported.");
+											}
+										} else {
+											std::cerr << "Failed to download animations. HTTP Status: " << (res_download ? std::to_string(res_download->status) : "No Response") << std::endl;
+											{
+												std::lock_guard<std::mutex> lock(mStatusMutex);
+												mStatusLabel->set_caption("Status: Failed to download animations.");
+											}
+										}
+										break;
 									}
 									break;
 								}
