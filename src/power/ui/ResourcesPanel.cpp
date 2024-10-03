@@ -467,7 +467,7 @@ void ResourcesPanel::handle_file_interaction(DirectoryNode& node) {
 		if (node.FileName.find(".seq") != std::string::npos || node.FileName.find(".cmp") != std::string::npos) {
 			// Logic for opening sequence or composition
 		} else if (node.FileName.find(".fbx") != std::string::npos) {
-			mActorVisualManager.add_actor(mMeshActorLoader.create_actor(node.FullPath, *mMeshShader, *mSkinnedShader));
+			mActorVisualManager.add_actor(mMeshActorLoader.create_actor(node.FullPath, mAnimationTimeProvider, *mMeshShader, *mSkinnedShader));
 		}
 		// Handle other file type interactions...
 	}
