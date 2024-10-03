@@ -618,7 +618,7 @@ void PromptWindow::ImportIntoProjectAsync() {
 			
 			auto actorName = std::filesystem::path(mActorPath).stem().string();
 			
-			auto animationName = PromptUtils::GenerateUniqueFilename(mOutputDirectory, actorName, "pma");
+			auto animationName = PromptUtils::GenerateUniqueFilename(mOutputDirectory, actorName, "pan");
 			
 			mSerializedPrompt.value()->save_to_file(animationName);
 			
