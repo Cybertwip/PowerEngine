@@ -472,7 +472,7 @@ bool SceneTimeBar::mouse_motion_event(const nanogui::Vector2i &p, const nanogui:
 
 // Manual force draw to draw on top
 
-void update() {
+void SceneTimeBar::update() {
 	if (mPlaying) {
 		if (mCurrentTime < mTotalFrames) {
 			mCurrentTime++;
