@@ -567,6 +567,10 @@ private:
 	}
 	
 	void updateAnimationOffset() {
+		if (mAnimationData.empty()) {
+			return;
+		}
+
 		const Animation& animation = mAnimationData[0].get();
 		float duration = static_cast<float>(animation.get_duration());
 		

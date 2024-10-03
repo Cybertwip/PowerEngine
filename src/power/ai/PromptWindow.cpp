@@ -90,7 +90,7 @@ PromptWindow::PromptWindow(nanogui::Widget* parent, ResourcesPanel& resourcesPan
 	auto input_panel = new nanogui::Widget(this);
 	input_panel->set_layout(new nanogui::BoxLayout(nanogui::Orientation::Vertical, nanogui::Alignment::Middle, 10, 10));
 	
-	auto label = new nanogui::Label(input_panel, "Prompt:", "sans-bold");
+	auto label = new nanogui::Label(input_panel, "Preview", "sans-bold");
 	mInputTextBox = new nanogui::TextBox(input_panel, "");
 	mInputTextBox->set_fixed_size(nanogui::Vector2i(256, 96));
 	
