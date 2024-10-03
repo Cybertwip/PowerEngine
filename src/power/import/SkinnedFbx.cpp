@@ -140,7 +140,7 @@ void SkinnedFbx::ProcessBones(const std::shared_ptr<sfbx::Mesh>& mesh) {
 				
 				// Get local matrix
 				glm::mat4 poseMatrix = SkinnedFbxUtil::SfbxMatToGlmMat(model->getLocalMatrix());
-				
+
 				// Store bone info
 				BoneHierarchyInfo boneInfo;
 				boneInfo.bone_id = newBoneID;

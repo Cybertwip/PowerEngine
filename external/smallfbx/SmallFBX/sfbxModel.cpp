@@ -173,34 +173,34 @@ double3 Model::getPreRotation() const { return m_pre_rotation; }
 double3 Model::getRotation() const { return m_rotation; }
 double3 Model::getPostRotation() const { return m_post_rotation; }
 double3 Model::getScale() const { return m_scale; }
-
-void Model::updateMatrices() const
+void Model::updateMatrices()
 {
-    if (m_matrix_dirty) {
-        // scale
-        double4x4 r = scale44(m_scale);
-
-        // rotation
-        if (m_post_rotation != double3::zero())
-            r *= transpose(to_mat4x4(rotate_euler(m_rotation_order, m_post_rotation * DegToRad)));
-        if (m_rotation != double3::zero())
-            r *= transpose(to_mat4x4(rotate_euler(m_rotation_order, m_rotation * DegToRad)));
-        if (m_pre_rotation != double3::zero())
-            r *= transpose(to_mat4x4(rotate_euler(m_rotation_order, m_pre_rotation * DegToRad)));
-
-        // translation
-        (double3&)r[3] = m_position;
-
-        m_matrix_local = r;
-        m_matrix_global = m_matrix_local;
-        if (m_parent_model)
-            m_matrix_global *= m_parent_model->getGlobalMatrix();
-
-        m_matrix_dirty = false;
-    }
+	if (m_matrix_dirty) {
+		// Initialize with scale
+		double4x4 r = scale44(m_scale);
+		
+		// Apply rotations in the correct order
+		if (m_post_rotation != double3::zero())
+			r = transpose(to_mat4x4(rotate_euler(m_rotation_order, m_post_rotation * DegToRad))) * r;
+		if (m_rotation != double3::zero())
+			r = transpose(to_mat4x4(rotate_euler(m_rotation_order, m_rotation * DegToRad))) * r;
+		if (m_pre_rotation != double3::zero())
+			r = transpose(to_mat4x4(rotate_euler(m_rotation_order, m_pre_rotation * DegToRad))) * r;
+		
+		// Set translation safely
+		r[3].x = m_position.x;
+		r[3].y = m_position.y;
+		r[3].z = m_position.z;
+		
+		m_matrix_local = r;
+		m_matrix_global = m_parent_model ? m_matrix_local * m_parent_model->getGlobalMatrix() : m_matrix_local;
+		
+		m_matrix_dirty = false;
+	}
 }
 
-double4x4 Model::getLocalMatrix() const
+
+double4x4 Model::getLocalMatrix()
 {
     updateMatrices();
     return m_matrix_local;
@@ -210,13 +210,13 @@ void Model::setLocalMatrix(const double4x4& matrix)
 {
 	if (m_matrix_local != matrix) {
 		m_matrix_local = matrix;
+		m_matrix_global = m_parent_model ? m_matrix_local * m_parent_model->getGlobalMatrix() : m_matrix_local;
 		m_matrix_dirty = false;
-		updateMatrices();
 	}
 }
 
 
-double4x4 Model::getGlobalMatrix() const
+double4x4 Model::getGlobalMatrix()
 {
     updateMatrices();
     return m_matrix_global;

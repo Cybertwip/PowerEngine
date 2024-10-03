@@ -281,7 +281,6 @@ void Cluster::setTransform(double4x4 v)
 	m_transform_link = invert(v);
 }
 
-
 ObjectSubClass BlendShape::getSubClass() const { return ObjectSubClass::BlendShape; }
 
 void BlendShape::exportFBXObjects()

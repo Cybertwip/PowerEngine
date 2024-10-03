@@ -79,8 +79,8 @@ public:
     double3 getRotation() const;
     double3 getPostRotation() const;
     double3 getScale() const;
-    double4x4 getLocalMatrix() const;
-    double4x4 getGlobalMatrix() const;
+    double4x4 getLocalMatrix();
+    double4x4 getGlobalMatrix();
     std::string getPath() const;
 
     void setVisibility(bool v);
@@ -98,7 +98,7 @@ protected:
     void addParent(ObjectPtr v) override;
     void eraseParent(ObjectPtr v) override;
     void propagateDirty();
-    void updateMatrices() const;
+    void updateMatrices();
 
     std::shared_ptr<Model> m_parent_model{};
     std::vector<std::shared_ptr<Model>> m_child_models;

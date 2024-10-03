@@ -12,6 +12,11 @@
 
 namespace ExporterUtil {
 
+glm::vec3 ExtractEulerAngles(const glm::quat& rotation) {
+	glm::vec3 euler = glm::eulerAngles(rotation);
+	// Convert from radians to degrees
+	return glm::degrees(euler);
+}
 
 // return translate, rotate, scale
 inline std::tuple<glm::vec3, glm::quat, glm::vec3> DecomposeTransform(const glm::mat4 &transform)
@@ -104,27 +109,23 @@ bool MeshActorExporter::exportToFile(CompressedSerialization::Deserializer& dese
 
 	// Step 3: Create Meshes and Models
 	// After creating the mesh
+	
+	std::shared_ptr<sfbx::Mesh> meshModel = std::make_shared<sfbx::Mesh>();
+
 	for (size_t i = 0; i < mMeshes.size(); ++i) {
 		auto& meshData = *mMeshes[i];
 		
-		std::shared_ptr<sfbx::Mesh> meshModel = std::make_shared<sfbx::Mesh>();
-		
 		rootModel->addChild(meshModel); // to set m_document
 
-		meshModel->setName("Mesh_" + std::to_string(i));
-		
+		meshModel->setName("Mesh_Node_" + std::to_string(i));
+
 		
 		assert(meshModel != nullptr);
 		createMesh(meshData, materialMap, meshModel);
 		
-		// Create a node for each mesh
-		
-		// Set transformations on the meshModel
-		meshModel->setName("Node_" + std::to_string(i));
-		meshModel->setPosition({0.0f, 0.0f, 0.0f});
-		meshModel->setRotation({0.0f, 0.0f, 0.0f});
-		meshModel->setScale({1.0f, 1.0f, 1.0f});
-		
+		glm::mat4 localMatrix = glm::mat4(1.0f); // Identity or desired transformation
+		meshModel->setLocalMatrix(ExporterUtil::GlmMatToSfbxMat(localMatrix));
+
 		mMeshModels.push_back(meshModel);
 	}
 
@@ -137,7 +138,7 @@ bool MeshActorExporter::exportToFile(CompressedSerialization::Deserializer& dese
 		auto& skeletonData = *skeleton;
 		
 		// Map to store bone index to sfbx::Model
-		std::map<int, std::shared_ptr<sfbx::LimbNode>> boneModels;
+		std::map<int, std::shared_ptr<sfbx::Model>> boneModels;
 		
 		// Step 1: Create sfbx::Model nodes for each bone
 		for (int boneIndex = 0; boneIndex < skeletonData.num_bones(); ++boneIndex) {
@@ -145,31 +146,24 @@ bool MeshActorExporter::exportToFile(CompressedSerialization::Deserializer& dese
 			int parentIndex = skeletonData.get_bone(boneIndex).parent_index;
 			
 			// Create a new Model node for the bone
-			auto boneModel = document->createObject<sfbx::LimbNode>(boneName);
+			auto limbNode = document->createObject<sfbx::LimbNode>(boneName);
+			
+			auto boneModel = sfbx::as<sfbx::Model>(limbNode);
 			
 			// Step 2: Set bone's local transformations
 			glm::mat4 poseMatrix = skeletonData.get_bone(boneIndex).bindpose;
-			
-			// Set the local transformations for the boneModel
-			boneModel->setLocalMatrix(ExporterUtil::GlmMatToSfbxMat(poseMatrix));
-			
+
 			glm::vec3 translation, scale;
 			glm::quat rotation;
 			std::tie(translation, rotation, scale) = ExporterUtil::DecomposeTransform(poseMatrix);
 			
-			if (parentIndex == -1) {
-				boneModel->setPosition(sfbx::glmToDouble3(glm::vec3(0.0f, 0.0f, 0.f)));
-				boneModel->setRotation(sfbx::glmToDouble3(glm::vec3(0.0f, 0.0f, 0.f)));
-				boneModel->setScale(sfbx::glmToDouble3(glm::vec3(1.0f, 1.0f, 1.0f)));
+			boneModel->setPosition(sfbx::glmToDouble3(translation));
+			glm::vec3 eulerAngles = ExporterUtil::ExtractEulerAngles(rotation);
+			boneModel->setRotation(sfbx::glmToDouble3(eulerAngles));
+			boneModel->setScale(sfbx::glmToDouble3(scale));
 
-			} else {
-				// Set the local transformations for the boneModel
-				boneModel->setPosition(sfbx::glmToDouble3(translation));
-				boneModel->setRotation(sfbx::glmToDouble3(glm::degrees(glm::eulerAngles(rotation))));
-				boneModel->setScale(sfbx::glmToDouble3(scale));
-
-			}
-
+			// Set the local transformations for the boneModel
+			boneModel->setLocalMatrix(ExporterUtil::GlmMatToSfbxMat(poseMatrix));
 
 			// Store the bone model in the map
 			boneModels[boneIndex] = boneModel;
@@ -182,7 +176,7 @@ bool MeshActorExporter::exportToFile(CompressedSerialization::Deserializer& dese
 			
 			if (parentIndex == -1) {
 				// Root bone: attach to the root model
-				rootModel->addChild(boneModel);
+				meshModel->addChild(boneModel);
 			} else {
 				// Child bone: attach to its parent bone
 				auto parentModel = boneModels[parentIndex];
@@ -393,7 +387,7 @@ bool MeshActorExporter::exportToStream(CompressedSerialization::Deserializer& de
 		auto& skeletonData = *skeleton;
 		
 		// Map to store bone index to sfbx::Model
-		std::map<int, std::shared_ptr<sfbx::LimbNode>> boneModels;
+		std::map<int, std::shared_ptr<sfbx::Model>> boneModels;
 		
 		// Step 1: Create sfbx::Model nodes for each bone
 		for (int boneIndex = 0; boneIndex < skeletonData.num_bones(); ++boneIndex) {
@@ -401,29 +395,25 @@ bool MeshActorExporter::exportToStream(CompressedSerialization::Deserializer& de
 			int parentIndex = skeletonData.get_bone(boneIndex).parent_index;
 			
 			// Create a new Model node for the bone
-			auto boneModel = document->createObject<sfbx::LimbNode>(boneName);
+			auto limbNode = document->createObject<sfbx::LimbNode>(boneName);
 			
+			auto boneModel = sfbx::as<sfbx::Model>(limbNode);
+
 			// Step 2: Set bone's local transformations
 			glm::mat4 poseMatrix = skeletonData.get_bone(boneIndex).bindpose;
-			
-			// Set the local transformations for the boneModel
-			boneModel->setLocalMatrix(ExporterUtil::GlmMatToSfbxMat(poseMatrix));
-			
+
 			glm::vec3 translation, scale;
 			glm::quat rotation;
 			std::tie(translation, rotation, scale) = ExporterUtil::DecomposeTransform(poseMatrix);
 			
-			if (parentIndex == -1) {
-				boneModel->setPosition(sfbx::glmToDouble3(glm::vec3(0.0f, 0.0f, 0.f)));
-				boneModel->setRotation(sfbx::glmToDouble3(glm::vec3(0.0f, 0.0f, 0.f)));
-				boneModel->setScale(sfbx::glmToDouble3(glm::vec3(1.0f, 1.0f, 1.0f)));
-			} else {
-				// Set the local transformations for the boneModel
-				boneModel->setPosition(sfbx::glmToDouble3(translation));
-				boneModel->setRotation(sfbx::glmToDouble3(glm::degrees(glm::eulerAngles(rotation))));
-				boneModel->setScale(sfbx::glmToDouble3(scale));
-			}
+			// Set the local transformations for the boneModel
+			boneModel->setPosition(sfbx::glmToDouble3(translation));
+			boneModel->setRotation(sfbx::glmToDouble3(glm::degrees(glm::eulerAngles(rotation))));
+			boneModel->setScale(sfbx::glmToDouble3(scale));
 			
+			// Set the local transformations for the boneModel
+			boneModel->setLocalMatrix(ExporterUtil::GlmMatToSfbxMat(poseMatrix));
+
 			// Store the bone model in the map
 			boneModels[boneIndex] = boneModel;
 		}
