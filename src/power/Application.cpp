@@ -41,7 +41,7 @@
 #include <cmath>
 #include <functional>
 
-Application::Application() : nanogui::DraggableScreen("Power Engine") {
+Application::Application() : nanogui::DraggableScreen("Power Engine"), mGlobalAnimationTimeProvider(60 * 30) {
 				
 	Batch::init_dummy_texture();
 
@@ -120,6 +120,9 @@ void Application::draw(NVGcontext *ctx) {
 }
 
 void Application::process_events() {
+	
+	mGlobalAnimationTimeProvider.Update();
+	
 	// Dispatch queued click events
 	while (!mClickQueue.empty()) {
 		auto [down, w, h, x, y] = mClickQueue.front();
@@ -163,7 +166,7 @@ bool Application::drop_event(nanogui::Widget* sender, const std::vector<std::str
 
 		if (mRenderCommon->canvas().contains(m_mouse_pos, true, true)) {
 			if (filenames[0].find(".psk") != std::string::npos || filenames[0].find(".pma") != std::string::npos){
-				mUiCommon->hierarchy_panel().add_actor(mMeshActorLoader->create_actor(filenames[0], *mMeshShader, *mSkinnedShader));
+				mUiCommon->hierarchy_panel().add_actor(mMeshActorLoader->create_actor(filenames[0], mGlobalAnimationTimeProvider, *mMeshShader, *mSkinnedShader));
 				
 				mUiCommon->scene_time_bar().refresh_actors();
 			}

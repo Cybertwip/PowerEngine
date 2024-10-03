@@ -43,7 +43,7 @@ public:
 private:
 	bool mouse_button_event(const nanogui::Vector2i &p, int button, bool down, int modifiers) override;
 	
-	AnimationTimeProvider mAnimationTimeProvider;
+	AnimationTimeProvider mDummyAnimationTimeProvider;
 	
 	DirectoryNode& mRootDirectoryNode;
 	std::string mSelectedDirectoryPath;

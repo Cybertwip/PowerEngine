@@ -1,4 +1,7 @@
-#pragma once 
+#pragma once
+
+#include "animation/AnimationTimeProvider.hpp"
+
 #include <entt/entt.hpp>
 
 #include <nanogui/screen.h>
@@ -215,6 +218,8 @@ class Application : public nanogui::DraggableScreen
 	bool drop_event(Widget* sender, const std::vector<std::string> & filenames) override;
 
 	bool mouse_button_event(const nanogui::Vector2i &p, int button, bool down, int modifiers) override;
+	
+	AnimationTimeProvider mGlobalAnimationTimeProvider;
 
     std::unique_ptr<entt::registry> mEntityRegistry;
     std::unique_ptr<CameraManager> mCameraManager;

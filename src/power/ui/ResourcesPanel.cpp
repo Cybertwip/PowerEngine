@@ -111,7 +111,7 @@ const DirectoryNode* FindNodeByPath(const DirectoryNode& currentNode, const std:
 
 ResourcesPanel::ResourcesPanel(nanogui::Widget& parent, DirectoryNode& root_directory_node, IActorVisualManager& actorVisualManager, SceneTimeBar& sceneTimeBar,  MeshActorLoader& meshActorLoader, ShaderManager& shaderManager, DeepMotionApiClient& deepMotionApiClient)
 : Panel(parent, "Resources"),
-mAnimationTimeProvider(60 * 30),
+mDummyAnimationTimeProvider(60 * 30),
 mRootDirectoryNode(root_directory_node),
 mActorVisualManager(actorVisualManager),
 mMeshActorLoader(meshActorLoader),
@@ -467,7 +467,7 @@ void ResourcesPanel::handle_file_interaction(DirectoryNode& node) {
 		if (node.FileName.find(".seq") != std::string::npos || node.FileName.find(".cmp") != std::string::npos) {
 			// Logic for opening sequence or composition
 		} else if (node.FileName.find(".fbx") != std::string::npos) {
-			mActorVisualManager.add_actor(mMeshActorLoader.create_actor(node.FullPath, mAnimationTimeProvider, *mMeshShader, *mSkinnedShader));
+			mActorVisualManager.add_actor(mMeshActorLoader.create_actor(node.FullPath, mDummyAnimationTimeProvider, *mMeshShader, *mSkinnedShader));
 		}
 		// Handle other file type interactions...
 	}
@@ -590,8 +590,6 @@ void ResourcesPanel::navigate_up_to_cwd() {
 }
 
 void ResourcesPanel::process_events() {
-	mAnimationTimeProvider.Update();
-	
 	mImportWindow->ProcessEvents();
 	mPromptWindow->ProcessEvents();
 }
