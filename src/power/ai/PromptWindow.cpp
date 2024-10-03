@@ -262,7 +262,7 @@ void PromptWindow::SubmitPrompt() {
 							Json::Value urls = results["links"][0]["urls"];
 							
 							for(auto& url : urls){
-								for(auto& file : url){
+								for(auto& file : url["files"]){
 									
 									if(file.isMember("fbx")){
 										auto download_url = file["fbx"].asString();
