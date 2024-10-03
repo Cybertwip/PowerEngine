@@ -425,7 +425,7 @@ Json::Value DeepMotionApiClient::list_models() {
 }
 
 std::string DeepMotionApiClient::upload_model(std::stringstream& model_stream, const std::string& model_name, const std::string& model_ext) {
-	std::lock_guard<std::mutex> lock(client_mutex_);
+	std::unique_lock<std::mutex> lock(client_mutex_);
 	
 	if (!authenticated_) {
 		std::cerr << "Client not authenticated. Please authenticate before uploading models." << std::endl;
