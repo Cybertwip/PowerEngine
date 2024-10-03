@@ -360,7 +360,7 @@ void PromptWindow::SubmitPrompt() {
 													return;
 												}
 												
-												auto& animationSerializer = modelData.mAnimations[0].mSerializer;
+												auto& animationSerializer = modelData->mAnimations[0].mSerializer;
 												
 												std::stringstream animationCompressedData;
 												
