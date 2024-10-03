@@ -19,12 +19,12 @@
 #include <nanogui/textbox.h>
 
 #include <iostream>
-#include <sstream>
-#include <mutex>
-#include <future>
 #include <filesystem>
+#include <future>
+#include <mutex>
+#include <sstream>
 
-using fs = std::filesystem;
+namespace fs = std::filesystem;
 
 namespace PromptUtils {
 
