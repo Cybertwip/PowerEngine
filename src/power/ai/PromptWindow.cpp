@@ -23,6 +23,8 @@
 #include <mutex>
 #include <future>
 
+using fs = std::filesystem;
+
 namespace PromptUtils {
 
 // Helper function to generate a unique numeric-based filename
@@ -613,11 +615,11 @@ void PromptWindow::ImportIntoProjectAsync() {
 			mSerializedPrompt.value()->write_header_uint64(pixels.size());
 			mSerializedPrompt.value()->write_header_raw(pixels.data(), pixels.size()); // Corrected variable name
 			
-			auto actorName = std::filesystem::path(mActorName).stem().string();
+			auto actorName = std::filesystem::path(mActorPath).stem().string();
 			
 			auto animationName = PromptUtils::GenerateUniqueFilename(mOutputDirectory, actorName, "pma");
 			
-			mSerializedPrompt->value()->save_to_file(animationName);
+			mSerializedPrompt.value()->save_to_file(animationName);
 			
 			nanogui::async([this]() {
 				mResourcesPanel.refresh_file_view();
