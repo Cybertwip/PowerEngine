@@ -2,6 +2,8 @@
 
 #include "filesystem/MeshActorImporter.hpp"
 
+#include "components/SkinnedAnimationComponent.hpp"
+
 #include <entt/entt.hpp>
 
 #include <nanogui/window.h>
@@ -36,7 +38,7 @@ public:
 	
 	void Preview(const std::string& path, const std::string& directory);
 	
-	void Preview(const std::string& path, const std::string& directory, CompressedSerialization::Deserializer& deserializer);
+	void Preview(const std::string& path, const std::string& directory, CompressedSerialization::Deserializer& deserializer, std::optional<std::unique_ptr<SkinnedAnimationComponent::SkinnedAnimationPdo>> pdo);
 	
 	void ProcessEvents();
 	

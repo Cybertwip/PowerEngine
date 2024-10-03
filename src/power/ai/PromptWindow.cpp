@@ -105,10 +105,10 @@ void PromptWindow::Preview(const std::string& path, const std::string& directory
 		return;
 	}
 	
-	Preview(path, directory, deserializer);
+	Preview(path, directory, deserializer, std::nullopt);
 }
 
-void PromptWindow::Preview(const std::string& path, const std::string& directory, CompressedSerialization::Deserializer& deserializer) {
+void PromptWindow::Preview(const std::string& path, const std::string& directory, CompressedSerialization::Deserializer& deserializer, std::optional<std::unique_ptr<SkinnedAnimationComponent::SkinnedAnimationPdo>> pdo) {
 	set_visible(true);
 	set_modal(true);
 	
@@ -134,6 +134,10 @@ void PromptWindow::Preview(const std::string& path, const std::string& directory
 	if (path.find(".psk") == std::string::npos) {
 		// Mesh rigging is still not implemented
 		mSubmitButton->set_enabled(false);
+	} else {
+		auto& skinnedComponent = actor->get_component<SkinnedAnimationComponent>();
+		
+		skinnedComponent.set_pdo(std::move(pdo));
 	}
 	
 	mPreviewCanvas->set_active_actor(actor);
@@ -356,7 +360,24 @@ void PromptWindow::SubmitPrompt() {
 													return;
 												}
 												
-												Preview(mActorPath, mOutputDirectory, deserializer);
+												auto& animationSerializer = modelData.mAnimations[0].mSerializer;
+												
+												std::stringstream animationCompressedData;
+												
+												animationSerializer->get_compressed_data(animationCompressedData);
+
+												CompressedSerialization::Deserializer animationDeserializer;
+
+												animationDeserializer.initialize(animationCompressedData);
+												auto pdo = std::make_unique<SkinnedAnimationComponent::SkinnedAnimationPdo> ();
+												
+												auto animation = std::make_unique<Animation>();
+												
+												animation->deserialize(animationDeserializer);
+												
+												pdo->mAnimationData.push_back(std::move(animation));
+												
+												Preview(mActorPath, mOutputDirectory, deserializer, std::move(pdo));
 												
 												break;
 											}
