@@ -5,8 +5,6 @@
 #include "sfbxDeformer.h"
 #include "sfbxDocument.h"
 
-#include <numeric>
-
 namespace sfbx {
 
 ObjectClass Geometry::getClass() const { return ObjectClass::Geometry; }
@@ -183,6 +181,7 @@ void GeomMesh::checkModes(LayerElement<T>& layer)
 void GeomMesh::importFBXObjects()
 {
 	super::importFBXObjects();
+	
 	for (auto n : getNode()->getChildren()) {
 		auto name = n->getName();
 		if (name == sfbxS_Vertices) {
@@ -274,24 +273,6 @@ void GeomMesh::importFBXObjects()
 		}
 	}
 	
-	
-	std::vector<int> original_counts {m_counts.begin(), m_counts.end()};
-	
-	// Store original material indices per material layer
-	std::vector<std::vector<int>> original_material_indices;
-	if (!m_material_layers.empty()) {
-		original_material_indices.resize(m_material_layers.size());
-		for (size_t layer = 0; layer < m_material_layers.size(); ++layer) {
-			original_material_indices[layer].assign( m_material_layers[layer].indices.begin(), m_material_layers[layer].indices.end());
-		}
-	}
-
-	// Triangulate polygons with more than three vertices
-	triangulatePolygons();
-	
-	recalculateMaterialMap(original_counts, original_material_indices);
-
-	
 	// Prefill the vertex-to-material map with all material layers
 	if (!m_material_layers.empty()) {
 		// Clear the map before populating
@@ -357,7 +338,7 @@ void GeomMesh::importFBXObjects()
 					}
 					break;
 				}
-
+					
 					
 				case LayerMappingMode::ByPolygonVertex: {
 					// One material per polygon vertex
@@ -601,200 +582,6 @@ int GeomMesh::getMaterialForVertexIndex(unsigned int vertex_index) const
 		return static_cast<int>(it->second); // Assign the first material
 	}
 	return -1; // Material not found for this vertex
-}
-
-void GeomMesh::triangulatePolygons()
-{
-	std::vector<int> tri_indices;
-	std::vector<int> tri_counts;
-	
-	// Assuming only one UV layer for simplicity. Extend as needed for multiple layers.
-	size_t uv_layer_count = m_uv_layers.size();
-	
-	// Create new UV layers to hold triangulated UVs
-	std::vector<std::vector<double2>> tri_uv_layers(uv_layer_count, std::vector<double2>());
-	
-	size_t polygon_count = m_counts.size();
-	size_t index_offset = 0;
-	
-	for (size_t poly_idx = 0; poly_idx < polygon_count; ++poly_idx) {
-		int vertex_count = m_counts[poly_idx];
-		if (vertex_count < 3) {
-			sfbxPrint("Warning: Polygon %zu has less than 3 vertices. Skipping.\n", poly_idx);
-			index_offset += vertex_count;
-			continue;
-		}
-		
-		if (vertex_count == 3) {
-			// Triangle polygon, copy as is
-			tri_indices.push_back(m_indices[index_offset]);
-			tri_indices.push_back(m_indices[index_offset + 1]);
-			tri_indices.push_back(m_indices[index_offset + 2]);
-			tri_counts.push_back(3);
-			
-			// Copy UVs
-			for (size_t layer = 0; layer < uv_layer_count; ++layer) {
-				tri_uv_layers[layer].push_back(m_uv_layers[layer].data[m_uv_layers[layer].indices[index_offset]]);
-				tri_uv_layers[layer].push_back(m_uv_layers[layer].data[m_uv_layers[layer].indices[index_offset + 1]]);
-				tri_uv_layers[layer].push_back(m_uv_layers[layer].data[m_uv_layers[layer].indices[index_offset + 2]]);
-			}
-			
-			index_offset += 3;
-			continue;
-		}
-		
-		// Fan triangulation for polygons with more than 3 vertices
-		for (int i = 1; i < vertex_count - 1; ++i) {
-			tri_indices.push_back(m_indices[index_offset]);
-			tri_indices.push_back(m_indices[index_offset + i]);
-			tri_indices.push_back(m_indices[index_offset + i + 1]);
-			tri_counts.push_back(3);
-			
-			// Copy UVs for the new triangle
-			for (size_t layer = 0; layer < uv_layer_count; ++layer) {
-				// Pivot UV
-				tri_uv_layers[layer].push_back(m_uv_layers[layer].data[m_uv_layers[layer].indices[index_offset]]);
-				// i-th UV
-				tri_uv_layers[layer].push_back(m_uv_layers[layer].data[m_uv_layers[layer].indices[index_offset + i]]);
-				// (i+1)-th UV
-				tri_uv_layers[layer].push_back(m_uv_layers[layer].data[m_uv_layers[layer].indices[index_offset + i + 1]]);
-			}
-		}
-		index_offset += vertex_count;
-	}
-	
-	// Replace original indices and counts with triangulated data
-	m_indices.assign(tri_indices.begin(), tri_indices.end());
-	m_counts.assign(tri_counts.begin(), tri_counts.end());
-	
-	// Replace original UV layers with triangulated UV layers
-	for (size_t layer = 0; layer < uv_layer_count; ++layer) {
-		m_uv_layers[layer].data.assign(tri_uv_layers[layer].begin(), tri_uv_layers[layer].end());
-		// Since mapping mode is already per vertex, indices can be set to direct
-		m_uv_layers[layer].indices.resize(m_uv_layers[layer].data.size());
-		std::iota(m_uv_layers[layer].indices.begin(), m_uv_layers[layer].indices.end(), 0);
-	}
-	
-	// Optional: Log triangulation results for verification
-	sfbxPrint("Triangulation complete. Total polygons: %zu, Total triangles: %zu\n",
-			  polygon_count, m_counts.size());
-}
-
-void GeomMesh::recalculateMaterialMap(const std::vector<int>& original_counts, const std::vector<std::vector<int>>& original_material_indices)
-{
-	if (m_material_layers.empty()) {
-		return;
-	}
-	
-	for (size_t layer = 0; layer < m_material_layers.size(); ++layer) {
-		const auto& material_layer = m_material_layers[layer];
-		const auto& polygon_material_indices = original_material_indices[layer];
-		const auto& polygon_counts = original_counts;
-		
-		if (material_layer.mapping_mode == LayerMappingMode::ByPolygon) {
-			// Clear previous mappings for this layer
-			for (auto& pair : m_vertex_to_material_map) {
-				if (pair.second == UINT32_MAX) { // Assuming UINT32_MAX is invalid
-					pair.second = 0; // Or some default material
-				}
-			}
-			
-			size_t triangle_index = 0;
-			size_t polygon_count = polygon_counts.size();
-			for (size_t poly_idx = 0; poly_idx < polygon_count; ++poly_idx) {
-				if (poly_idx >= polygon_material_indices.size()) {
-					sfbxPrint("Warning: Not enough material indices for all polygons in ByPolygon mapping.\n");
-					break;
-				}
-				unsigned int material_index = polygon_material_indices[poly_idx];
-				int vertex_count = polygon_counts[poly_idx];
-				int triangle_count = vertex_count - 2;
-				
-				for (int t = 0; t < triangle_count; ++t) {
-					size_t tri_start = triangle_index * 3;
-					if (tri_start + 2 >= m_indices.size()) {
-						sfbxPrint("Warning: Triangulated indices out of range for polygon %zu.\n", poly_idx);
-						break;
-					}
-					
-					unsigned int idx1 = m_indices[tri_start];
-					unsigned int idx2 = m_indices[tri_start + 1];
-					unsigned int idx3 = m_indices[tri_start + 2];
-					
-					// Assign material_index to these vertices in the map
-					m_vertex_to_material_map[idx1] = material_index;
-					m_vertex_to_material_map[idx2] = material_index;
-					m_vertex_to_material_map[idx3] = material_index;
-					
-					triangle_index++;
-				}
-			}
-		}
-		// Handle other mapping modes (ByControlPoint, ByPolygonVertex, AllSame) as before
-		else {
-			// Existing mapping code for other modes
-			switch (material_layer.mapping_mode) {
-				case LayerMappingMode::ByControlPoint: {
-					// One material per vertex
-					if (material_layer.indices.size() != m_points.size()) {
-						sfbxPrint("Warning: Material layer indices size (%zu) does not match number of vertices (%zu) in ByControlPoint mapping.\n",
-								  material_layer.indices.size(), m_points.size());
-					}
-					size_t limit = std::min(material_layer.indices.size(), m_points.size());
-					for (size_t i = 0; i < limit; ++i) {
-						unsigned int material_index = material_layer.indices[i];
-						// Insert or update the map entry for vertex i
-						m_vertex_to_material_map[i] = material_index;
-					}
-					break;
-				}
-				case LayerMappingMode::ByPolygonVertex: {
-					// One material per polygon vertex
-					size_t limit = std::min(material_layer.indices.size(), m_indices.size());
-					for (size_t i = 0; i < limit; ++i) {
-						unsigned int material_index = material_layer.indices[i];
-						unsigned int vertex_idx = m_indices[i];
-						if (vertex_idx >= 0 && vertex_idx < static_cast<int>(m_points.size())) {
-							m_vertex_to_material_map[vertex_idx] = material_index;
-						} else {
-							sfbxPrint("Warning: Vertex index %u out of range in ByPolygonVertex mapping.\n", vertex_idx);
-						}
-					}
-					if (material_layer.indices.size() > m_indices.size()) {
-						sfbxPrint("Warning: More material indices (%zu) than polygon vertices (%zu) in ByPolygonVertex mapping.\n",
-								  material_layer.indices.size(), m_indices.size());
-					}
-					break;
-				}
-				case LayerMappingMode::AllSame: {
-					// Apply the same material to all vertices
-					if (!material_layer.indices.empty()) {
-						unsigned int universal_material_index = material_layer.indices[0];
-						
-						if (material_layer.indices.size() > 1) {
-							sfbxPrint("Warning: More than one material index provided for AllSame mapping mode. Only the first (%u) will be used.\n",
-									  universal_material_index);
-						}
-						
-						for (size_t index = 0; index < m_indices.size(); ++index) {
-							unsigned int vertex_idx = m_indices[index];
-							if (vertex_idx >= 0 && vertex_idx < static_cast<int>(m_points.size())) {
-								m_vertex_to_material_map[vertex_idx]= universal_material_index;
-							} else {
-								sfbxPrint("Warning: Vertex index %u out of range in AllSame mapping.\n", vertex_idx);
-							}
-						}
-					} else {
-						sfbxPrint("Warning: No material index provided for AllSame mapping mode.\n");
-					}
-					break;
-				}
-				default:
-					sfbxPrint("Unsupported material mapping mode: %s\n", toString(material_layer.mapping_mode).c_str());
-					break;
-			}
-		}
-	}
 }
 
 ObjectSubClass Shape::getSubClass() const { return ObjectSubClass::Shape; }

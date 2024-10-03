@@ -242,148 +242,169 @@ void PromptWindow::SubmitPrompt() {
 	std::thread([this, request_id]() {
 		while (true) {
 			Json::Value status = mDeepMotionApiClient.check_job_status(request_id);
-			std::string job_status = status["status"].asString();
 			
-			std::cout << "Job Status: " << job_status << std::endl;
+			int status_count = status["count"].asInt();
 			
-			if (job_status == "SUCCESS") {
-				// Download results
-				Json::Value results = mDeepMotionApiClient.download_job_results(request_id);
-				// Process results as needed (e.g., download URLs)
-				// For example:
-				if (results.isMember("download_url")) {
-					std::string download_url = results["download_url"].asString();
-					std::cout << "Download URL: " << download_url << std::endl;
+			if (status_count > 0) {
+				for(auto& json : status["status"]){
+					auto job_status = json["status"].asString();
 					
-					// Parse the download URL
-					std::string protocol, host, path;
-					std::string::size_type protocol_pos = download_url.find("://");
-					if (protocol_pos != std::string::npos) {
-						protocol = download_url.substr(0, protocol_pos);
-						protocol_pos += 3;
-					} else {
-						std::cerr << "Invalid download URL format: " << download_url << std::endl;
-						{
-							std::lock_guard<std::mutex> lock(mStatusMutex);
-							mStatusLabel->set_caption("Status: Invalid download URL.");
+					std::cout << "Job Status: " << job_status << std::endl;
+					
+					if (job_status == "SUCCESS") {
+						// Download results
+						Json::Value results = mDeepMotionApiClient.download_job_results(request_id);
+						// Process results as needed (e.g., download URLs)
+						// For example:
+						if (results.isMember("download_url")) {
+							std::string download_url = results["download_url"].asString();
+							std::cout << "Download URL: " << download_url << std::endl;
+							
+							// Parse the download URL
+							std::string protocol, host, path;
+							std::string::size_type protocol_pos = download_url.find("://");
+							if (protocol_pos != std::string::npos) {
+								protocol = download_url.substr(0, protocol_pos);
+								protocol_pos += 3;
+							} else {
+								std::cerr << "Invalid download URL format: " << download_url << std::endl;
+								{
+									std::lock_guard<std::mutex> lock(mStatusMutex);
+									mStatusLabel->set_caption("Status: Invalid download URL.");
+								}
+								break;
+							}
+							
+							std::string::size_type host_pos = download_url.find("/", protocol_pos);
+							if (host_pos != std::string::npos) {
+								host = download_url.substr(protocol_pos, host_pos - protocol_pos);
+								path = download_url.substr(host_pos);
+							} else {
+								host = download_url.substr(protocol_pos);
+								path = "/";
+							}
+							
+							// Determine port
+							int port = 443; // Default HTTPS
+							if (protocol == "http") {
+								port = 80;
+							}
+							
+							// Initialize HTTP client for download
+							httplib::SSLClient download_client(host.c_str(), port);
+							download_client.set_compress(false);
+							
+							// Perform GET request
+							auto res_download = download_client.Get(path.c_str());
+							if (res_download && res_download->status == 200) {
+								// Assuming the response body contains ZIP data
+								std::vector<unsigned char> zip_data(res_download->body.begin(), res_download->body.end());
+								
+								// Decompress ZIP data (use your existing decompress_zip_data function)
+								std::vector<std::stringstream> animation_files = Zip::decompress(zip_data);
+								
+								// Process the extracted animation files as needed
+								
+								std::filesystem::path path(mActorPath);
+								
+								auto actorName = path.stem().string();
+								
+								for (auto& stream : animation_files) {
+									
+									auto modelData = mMeshActorImporter->process(stream, actorName, mOutputDirectory);
+									
+									auto& serializer = modelData->mMesh.mSerializer;
+									
+									
+									// Generate the unique hash identifier from the compressed data
+									
+									std::stringstream compressedData;
+									
+									serializer->get_compressed_data(compressedData);
+									
+									uint64_t hash_id[] = { 0, 0 };
+									
+									Md5::generate_md5_from_compressed_data(compressedData, hash_id);
+									
+									// Write the unique hash identifier to the header
+									serializer->write_header_raw(hash_id, sizeof(hash_id));
+									
+									// Proceed with serialization
+									
+									// no thumbnails yet as this will be animated, then re-serialized in the import method
+									serializer->write_header_uint64(0);
+									
+									CompressedSerialization::Deserializer deserializer;
+									
+									if (!deserializer.initialize(compressedData)) {
+										
+										mStatusLabel->set_caption("Status: Unable to deserialize model.");
+										
+										nanogui::async([this]() {
+											mResourcesPanel.refresh_file_view();
+										});
+										
+										return;
+									}
+									
+									Preview(mActorPath, mOutputDirectory, deserializer);
+									
+									break;
+								}
+								
+								{
+									std::lock_guard<std::mutex> lock(mStatusMutex);
+									mStatusLabel->set_caption("Status: Animations Imported.");
+								}
+							} else {
+								std::cerr << "Failed to download animations. HTTP Status: " << (res_download ? std::to_string(res_download->status) : "No Response") << std::endl;
+								{
+									std::lock_guard<std::mutex> lock(mStatusMutex);
+									mStatusLabel->set_caption("Status: Failed to download animations.");
+								}
+							}
 						}
 						break;
-					}
-					
-					std::string::size_type host_pos = download_url.find("/", protocol_pos);
-					if (host_pos != std::string::npos) {
-						host = download_url.substr(protocol_pos, host_pos - protocol_pos);
-						path = download_url.substr(host_pos);
-					} else {
-						host = download_url.substr(protocol_pos);
-						path = "/";
-					}
-					
-					// Determine port
-					int port = 443; // Default HTTPS
-					if (protocol == "http") {
-						port = 80;
-					}
-					
-					// Initialize HTTP client for download
-					httplib::SSLClient download_client(host.c_str(), port);
-					download_client.set_compress(false);
-					
-					// Perform GET request
-					auto res_download = download_client.Get(path.c_str());
-					if (res_download && res_download->status == 200) {
-						// Assuming the response body contains ZIP data
-						std::vector<unsigned char> zip_data(res_download->body.begin(), res_download->body.end());
-						
-						// Decompress ZIP data (use your existing decompress_zip_data function)
-						std::vector<std::stringstream> animation_files = Zip::decompress(zip_data);
-						
-						// Process the extracted animation files as needed
-						
-						std::filesystem::path path(mActorPath);
-						
-						auto actorName = path.stem().string();
-						
-						for (auto& stream : animation_files) {
-							
-							auto modelData = mMeshActorImporter->process(stream, actorName, mOutputDirectory);
-							
-							auto& serializer = modelData->mMesh.mSerializer;
-							
-							
-							// Generate the unique hash identifier from the compressed data
-							
-							std::stringstream compressedData;
-							
-							serializer->get_compressed_data(compressedData);
+					} else if (job_status == "FAILURE") {
+						std::cerr << "Job failed." << std::endl;
 
-							uint64_t hash_id[] = { 0, 0 };
-							
-							Md5::generate_md5_from_compressed_data(compressedData, hash_id);
-							
-							// Write the unique hash identifier to the header
-							serializer->write_header_raw(hash_id, sizeof(hash_id));
-							
-							// Proceed with serialization
-							
-							// no thumbnails yet as this will be animated, then re-serialized in the import method
-							serializer->write_header_uint64(0);
-							
-							CompressedSerialization::Deserializer deserializer;
-							
-							if (!deserializer.initialize(compressedData)) {
-								
-								mStatusLabel->set_caption("Status: Unable to deserialize model.");
-								
-								nanogui::async([this]() {
-									mResourcesPanel.refresh_file_view();
-								});
-								
-								return;
-							}
+						std::string messsage = status["details"]["exc_message"].asString();
+						std::string type = status["details"]["exc_type"].asString();
 
-							Preview(mActorPath, mOutputDirectory, deserializer);
-							
-							break;
-						}
+						std::cerr << "Failure: " << messsage << std::endl;
 						
+						std::cerr << "Exception: " << type << std::endl;
+
+
 						{
 							std::lock_guard<std::mutex> lock(mStatusMutex);
-							mStatusLabel->set_caption("Status: Animations Imported.");
+							mStatusLabel->set_caption("Status: Job failed.");
 						}
-					} else {
-						std::cerr << "Failed to download animations. HTTP Status: " << (res_download ? std::to_string(res_download->status) : "No Response") << std::endl;
+						break;
+					} else if (job_status == "PROGRESS") {
+						float total = status["details"]["total"].asFloat();
+						float current = status["details"]["step"].asFloat();
+						if (current > total){
+							current = total;
+						}
+						float percentage = (current * 100.0f) / total;
 						{
 							std::lock_guard<std::mutex> lock(mStatusMutex);
-							mStatusLabel->set_caption("Status: Failed to download animations.");
+							mStatusLabel->set_caption("Status: In Progress (" + std::to_string(static_cast<int>(percentage)) + "%)");
+						}
+					} else {
+						{
+							std::lock_guard<std::mutex> lock(mStatusMutex);
+							mStatusLabel->set_caption("Status: " + job_status);
 						}
 					}
-				}
-				break;
-			} else if (job_status == "FAILURE") {
-				std::cerr << "Job failed." << std::endl;
-				{
-					std::lock_guard<std::mutex> lock(mStatusMutex);
-					mStatusLabel->set_caption("Status: Job failed.");
-				}
-				break;
-			} else if (job_status == "PROGRESS") {
-				float total = status["details"]["total"].asFloat();
-				float current = status["details"]["step"].asFloat();
-				if (current > total){
-					current = total;
-				}
-				float percentage = (current * 100.0f) / total;
-				{
-					std::lock_guard<std::mutex> lock(mStatusMutex);
-					mStatusLabel->set_caption("Status: In Progress (" + std::to_string(static_cast<int>(percentage)) + "%)");
-				}
-			} else {
-				{
-					std::lock_guard<std::mutex> lock(mStatusMutex);
-					mStatusLabel->set_caption("Status: " + job_status);
+
+
+					break;
 				}
 			}
+			
+			
 			
 			// Wait before next poll
 			std::this_thread::sleep_for(std::chrono::seconds(3));
