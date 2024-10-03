@@ -353,12 +353,13 @@ bool MeshActorExporter::exportToStream(CompressedSerialization::Deserializer& de
 	
 	auto rootModel = document->getRootModel();
 	
+	
+	std::shared_ptr<sfbx::Mesh> meshModel = std::make_shared<sfbx::Mesh>();
+
 	// Step 3: Create Meshes and Models
 	// After creating the mesh
 	for (size_t i = 0; i < mMeshes.size(); ++i) {
 		auto& meshData = *mMeshes[i];
-		
-		std::shared_ptr<sfbx::Mesh> meshModel = std::make_shared<sfbx::Mesh>();
 		
 		rootModel->addChild(meshModel); // to set m_document
 		
@@ -425,7 +426,7 @@ bool MeshActorExporter::exportToStream(CompressedSerialization::Deserializer& de
 			
 			if (parentIndex == -1) {
 				// Root bone: attach to the root model
-				rootModel->addChild(boneModel);
+				meshModel->addChild(boneModel);
 			} else {
 				// Child bone: attach to its parent bone
 				auto parentModel = boneModels[parentIndex];
