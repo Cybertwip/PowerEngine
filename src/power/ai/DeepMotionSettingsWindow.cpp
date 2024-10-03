@@ -211,9 +211,9 @@ void DeepMotionSettingsWindow::on_sync() {
 	
 	// Call the asynchronous authenticate method
 	mDeepMotionApiClient.authenticate_async(api_base_url_, api_base_port, client_id, client_secret,
-											[this](bool success, const std::string& error_message) {
+											[this, api_base_port](bool success, const std::string& error_message) {
 		// Ensure UI updates are performed on the main thread
-		nanogui::async([this, api_base_port, success, error_message]() {
+		nanogui::async([this, success, error_message, api_base_port]() {
 			if (success) {
 				// Update status label to success
 				status_label_->set_caption("Synchronization successful.");
