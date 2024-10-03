@@ -181,7 +181,7 @@ public:
 	}
 	
 	// Evaluate the playback state at a given time
-	std::optional<Keyframe> evaluate(float time) {
+	std::optional<Keyframe> evaluate_keyframe(float time) {
 		if (keyframes_.empty()) {
 			return std::nullopt; // Default state if no keyframes
 		}
@@ -309,7 +309,32 @@ public:
 		return adjustedTime;
 	}
 
-	void evaluate_time(float time) {
+	void evaluate_time(float time, PlaybackModifier modifier) {
+		if (mAnimationData.empty()) {
+			return; // No animations to process
+		}
+		
+		const Animation& animation = mAnimationData[0].get();
+		float duration = static_cast<float>(animation.get_duration());
+		
+		bool reverse = modifier == PlaybackModifier::Reverse;
+		float animationTime = 0.0f;
+		
+		// Handle reverse playback
+		if (reverse) {
+			animationTime = fmod(duration - time, duration);
+		} else {
+			animationTime = fmod(time, duration);
+		}
+		
+		// Evaluate the animation at the adjusted time
+		evaluate_animation(animation, animationTime);
+		
+		// Update the skeleton with the new transforms
+		apply_pose_to_skeleton();
+	}
+	
+	void evaluate(float time) {
 		if (mAnimationData.empty()) {
 			return; // No animations to process
 		}
@@ -324,7 +349,7 @@ public:
 			mAnimationOffset = 0.0f;
 		}
 		
-		auto keyframe = evaluate(time);
+		auto keyframe = evaluate_keyframe(time);
 		
 		// Default playback state and modifier
 		PlaybackState currentState = PlaybackState::Pause; // Default to Pause
@@ -333,6 +358,8 @@ public:
 		if (keyframe.has_value()) {
 			currentState = keyframe->getPlaybackState();
 			currentModifier = keyframe->getPlaybackModifier();
+		} else {
+			
 		}
 		
 		bool reverse = currentModifier == PlaybackModifier::Reverse;
@@ -352,7 +379,6 @@ public:
 		// Update the skeleton with the new transforms
 		apply_pose_to_skeleton();
 	}
-
 	
 	int adjust_wrapped_time(int currentTime, int start_time, int end_time, int offset, int duration) {
 		int wrapped_time = currentTime;
@@ -525,7 +551,6 @@ private:
 	std::vector<glm::mat4> evaluate_animation_once(const Animation& animation, float time) {
 		return animation.evaluate(time);
 	}
-
 	
 	void evaluate_animation(const Animation& animation, float time) {
 		mModelPose = animation.evaluate(time);

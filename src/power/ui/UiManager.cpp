@@ -135,7 +135,7 @@ public:
 			
 			stop_playback();
 			
-			mAnimatableActors = mActorManager.get_actors_with_component<AnimationComponent>();
+			refresh_actors();
 			
 			mRecordBtn->set_text_color(mNormalButtonColor);
 			
@@ -176,7 +176,7 @@ public:
 			update_time_display(mCurrentTime);
 			mTimelineSlider->set_value(0.0f);
 			
-			mAnimatableActors = mActorManager.get_actors_with_component<AnimationComponent>();
+			refresh_actors();
 			evaluate_transforms();
 			evaluate_animations();
 		});
@@ -195,7 +195,7 @@ public:
 				update_time_display(mCurrentTime);
 				mTimelineSlider->set_value(static_cast<float>(mCurrentTime) / mTotalFrames);
 				
-				mAnimatableActors = mActorManager.get_actors_with_component<AnimationComponent>();
+				refresh_actors();
 				evaluate_transforms();
 				evaluate_animations();
 			}
@@ -277,7 +277,7 @@ public:
 				update_time_display(mCurrentTime);
 				mTimelineSlider->set_value(static_cast<float>(mCurrentTime) / mTotalFrames);
 				
-				mAnimatableActors = mActorManager.get_actors_with_component<AnimationComponent>();
+				refresh_actors();
 				evaluate_transforms();
 				evaluate_animations();
 			}
@@ -297,7 +297,8 @@ public:
 			update_time_display(mCurrentTime);
 			mTimelineSlider->set_value(1.0f);
 			
-			mAnimatableActors = mActorManager.get_actors_with_component<AnimationComponent>();
+
+			refresh_actors();
 			evaluate_transforms();
 			evaluate_animations();
 		});
@@ -354,7 +355,7 @@ public:
 				update_time_display(mCurrentTime);
 				mTimelineSlider->set_value(static_cast<float>(mCurrentTime) / mTotalFrames);
 				
-				mAnimatableActors = mActorManager.get_actors_with_component<AnimationComponent>();
+				refresh_actors();
 				evaluate_transforms();
 				evaluate_animations();
 				
@@ -471,7 +472,8 @@ public:
 				update_time_display(mCurrentTime);
 				mTimelineSlider->set_value(static_cast<float>(mCurrentTime) / mTotalFrames);
 				
-				mAnimatableActors = mActorManager.get_actors_with_component<AnimationComponent>();
+				refresh_actors();
+				
 				evaluate_transforms();
 				evaluate_animations();
 				
@@ -525,6 +527,10 @@ public:
 		register_actor_callbacks(mActiveActor);
 		
 		verify_previous_next_keyframes(mActiveActor);
+	}
+	
+	void refresh_actors() {
+		mAnimatableActors = mActorManager.get_actors_with_component<AnimationComponent>();
 	}
 	
 	void register_actor_callbacks(std::optional<std::reference_wrapper<Actor>> actor) {
@@ -648,7 +654,7 @@ private:
 	void toggle_play_pause(bool play) {
 		mPlaying = play;
 		if (play) {
-			mAnimatableActors = mActorManager.get_actors_with_component<AnimationComponent>();
+			refresh_actors();
 		} else {
 			register_actor_callbacks(mActiveActor);
 		}
@@ -698,12 +704,6 @@ private:
 				transformComponent.set_rotation(r);
 				transformComponent.set_scale(s);
 			}
-			
-			if (animatableActor.get().find_component<SkinnedAnimationComponent>()) {
-				auto& skinnedAnimationComponent = animatableActor.get().get_component<SkinnedAnimationComponent>();
-				
-				skinnedAnimationComponent.evaluate_time(mCurrentTime);
-			}
 		}
 	}
 	
@@ -712,7 +712,7 @@ private:
 			if (animatableActor.get().find_component<SkinnedAnimationComponent>()) {
 				auto& skinnedAnimationComponent = animatableActor.get().get_component<SkinnedAnimationComponent>();
 				
-				skinnedAnimationComponent.evaluate_time(mCurrentTime);
+				skinnedAnimationComponent.evaluate(mCurrentTime);
 			}
 		}
 	}

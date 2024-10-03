@@ -242,7 +242,6 @@ void Fbx::ProcessMesh(const std::shared_ptr<sfbx::Mesh>& mesh) {
 				}
 			}
 			
-			
 			// Assign Vertex Color
 			if (!colorData.empty() && colorIndices[i] >= 0) {
 				const auto& color = colorData[colorIndices[i]];

@@ -144,6 +144,15 @@ void SelfContainedMeshCanvas::draw_content(const nanogui::Matrix4f& view,
 	
 	Drawable& drawableRef = drawableComponent.drawable();
 	
+	
+	if (mPreviewActor->get().find_component<SkinnedAnimationComponent>()) {
+		SkinnedAnimationComponent& animationComponent = mPreviewActor->get().get_component<SkinnedAnimationComponent>();
+		
+		animationComponent.evaluate_time(mCurrentTime, SkinnedAnimationComponent::PlaybackModifier::Forward);
+		
+		mCurrentTime += 1;
+	}
+	
 	drawableRef.draw_content(CanvasUtils::glm_to_nanogui(mModelMatrix), view, projection);
 	
 	mMeshBatch->draw_content(view, projection);
