@@ -11,6 +11,7 @@
 #include "components/SkinnedAnimationComponent.hpp"
 #include "components/SkinnedMeshComponent.hpp"
 #include "components/TransformComponent.hpp"
+#include "components/TransformAnimationComponent.hpp"
 
 #include "graphics/drawing/BatchUnit.hpp"
 #include "graphics/drawing/IMeshBatch.hpp"
@@ -29,7 +30,7 @@ MeshActorBuilder::MeshActorBuilder(BatchUnit& batchUnit)
 : mBatchUnit(batchUnit), mMeshActorImporter(std::make_unique<MeshActorImporter>()) {
 }
 
-Actor& MeshActorBuilder::build_mesh(Actor& actor, const std::string& actorName, CompressedSerialization::Deserializer& deserializer, ShaderWrapper& meshShader, ShaderWrapper& skinnedShader) {
+Actor& MeshActorBuilder::build_mesh(Actor& actor, AnimationTimeProvider& timeProvider, const std::string& actorName, CompressedSerialization::Deserializer& deserializer, ShaderWrapper& meshShader, ShaderWrapper& skinnedShader) {
 	// Deserialize Non-Skinned Mesh Data
 	
 	// Add MetadataComponent to the actor
@@ -107,13 +108,13 @@ Actor& MeshActorBuilder::build_mesh(Actor& actor, const std::string& actorName, 
 	actor.add_component<DrawableComponent>(std::move(drawableComponent));
 	
 	// Add TransformComponent and AnimationComponent
-	actor.add_component<TransformComponent>();
-	actor.add_component<AnimationComponent>();
+	auto& transform = actor.add_component<TransformComponent>();
+	actor.add_component<TransformAnimationComponent>(transform, timeProvider);
 	
 	return actor;
 }
 
-Actor& MeshActorBuilder::build_skinned(Actor& actor, const std::string& actorName,  CompressedSerialization::Deserializer& deserializer, ShaderWrapper& meshShader, ShaderWrapper& skinnedShader){
+Actor& MeshActorBuilder::build_skinned(Actor& actor, AnimationTimeProvider& timeProvider, const std::string& actorName,  CompressedSerialization::Deserializer& deserializer, ShaderWrapper& meshShader, ShaderWrapper& skinnedShader){
 	
 	// Add MetadataComponent to the actor
 	actor.add_component<MetadataComponent>(actor.identifier(), actorName);
@@ -231,13 +232,13 @@ Actor& MeshActorBuilder::build_skinned(Actor& actor, const std::string& actorNam
 	actor.add_component<DrawableComponent>(std::move(drawableComponent));
 	
 	// Add TransformComponent and AnimationComponent
-	actor.add_component<TransformComponent>();
-	actor.add_component<AnimationComponent>();
+	auto& transform = actor.add_component<TransformComponent>();
+	actor.add_component<TransformAnimationComponent>(transform, timeProvider);
 	
 	return actor;
 }
 
-Actor& MeshActorBuilder::build(Actor& actor, const std::string& path, ShaderWrapper& meshShader, ShaderWrapper& skinnedShader) {
+Actor& MeshActorBuilder::build(Actor& actor, AnimationTimeProvider& timeProvider, const std::string& path, ShaderWrapper& meshShader, ShaderWrapper& skinnedShader) {
 	
 	// Determine file type based on extension
 	std::filesystem::path filePath(path);
@@ -275,9 +276,9 @@ Actor& MeshActorBuilder::build(Actor& actor, const std::string& path, ShaderWrap
 	}
 	
 	if (extension == ".psk") {
-		return build_skinned(actor, actorName, deserializer, meshShader, skinnedShader);
+		return build_skinned(actor, timeProvider, actorName, deserializer, meshShader, skinnedShader);
 	} else if (extension == ".pma") {
-		return build_mesh(actor, actorName, deserializer, meshShader, skinnedShader);
+		return build_mesh(actor, timeProvider, actorName, deserializer, meshShader, skinnedShader);
 	} else {
 		std::cerr << "Unsupported file extension: " << extension << "\n";
 		return actor;

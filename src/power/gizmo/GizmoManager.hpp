@@ -1,5 +1,6 @@
 #pragma once
 
+#include "animation/AnimationTimeProvider.hpp"
 #include "graphics/drawing/Drawable.hpp"
 
 #include <nanogui/nanogui.h>
@@ -53,6 +54,8 @@ public:
 private:
 	void set_mode(GizmoMode mode);
 
+	AnimationTimeProvider mDummyAnimationTimeProvider;
+	
     ShaderManager& mShaderManager;
     ActorManager& mActorManager;
 	MeshActorLoader& mMeshActorLoader;

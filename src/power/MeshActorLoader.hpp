@@ -7,6 +7,7 @@
 
 class Actor;
 class ActorManager;
+class AnimationTimeProvider;
 class BatchUnit;
 class MeshActorBuilder;
 class ShaderManager;
@@ -21,7 +22,7 @@ class MeshActorLoader
 
 	~MeshActorLoader();
 	
-    Actor& create_actor(const std::string& path, ShaderWrapper& meshShader, ShaderWrapper& skinnedShader);
+    Actor& create_actor(const std::string& path, AnimationTimeProvider& timeProvider,  ShaderWrapper& meshShader, ShaderWrapper& skinnedShader);
 	
 	const BatchUnit& get_batch_unit();
 

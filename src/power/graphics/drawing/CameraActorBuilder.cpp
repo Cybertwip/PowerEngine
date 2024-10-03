@@ -12,17 +12,20 @@
 #include "components/MetadataComponent.hpp"
 
 #include "components/TransformComponent.hpp"
+#include "components/TransformAnimationComponent.hpp"
+
+AnimationTimeProvider CameraActorBuilder::mDummyAnimationTimeProvider  (60 * 30);
 
 Actor& CameraActorBuilder::build(Actor& actor,
                      ShaderWrapper& meshShaderWrapper, float fov, float near, float far, float aspect) {
 	std::unique_ptr<Drawable> drawable = std::make_unique<NullDrawable>();
 	actor.add_component<DrawableComponent>(std::move(drawable));
-	actor.add_component<TransformComponent>();
+	auto& transform = actor.add_component<TransformComponent>();
 	actor.add_component<MetadataComponent>(actor.identifier(), "Camera");
 	actor.add_component<ColorComponent>(actor.get_component<MetadataComponent>());
 	actor.add_component<CameraComponent>(actor.get_component<TransformComponent>(), fov, near, far, aspect);
 	
-	actor.add_component<AnimationComponent>();
+	actor.add_component<TransformAnimationComponent>(transform, CameraActorBuilder::mDummyAnimationTimeProvider);
 	
 	return actor;
 }

@@ -21,7 +21,7 @@
 
 #include <sstream>
 
-ImportWindow::ImportWindow(nanogui::Widget* parent, ResourcesPanel& resourcesPanel, nanogui::RenderPass& renderpass, ShaderManager& shaderManager) : nanogui::Window(parent->screen()), mResourcesPanel(resourcesPanel) {
+ImportWindow::ImportWindow(nanogui::Widget* parent, ResourcesPanel& resourcesPanel, nanogui::RenderPass& renderpass, ShaderManager& shaderManager) : nanogui::Window(parent->screen()), mResourcesPanel(resourcesPanel), mDummyAnimationTimeProvider(60 * 30) {
 	
 	set_fixed_size(nanogui::Vector2i(400, 320));
 	set_layout(new nanogui::GroupLayout());
@@ -101,9 +101,9 @@ void ImportWindow::Preview(const std::string& path, const std::string& directory
 	
 	if (mCompressedMeshData->mMesh.mPrecomputedPath.find(".psk") != std::string::npos) {
 		
-		mMeshActorBuilder->build_skinned(*actor, "DummyActor", deserializer, mPreviewCanvas->get_mesh_shader(), mPreviewCanvas->get_skinned_mesh_shader());
+		mMeshActorBuilder->build_skinned(*actor, mDummyAnimationTimeProvider, "DummyActor", deserializer, mPreviewCanvas->get_mesh_shader(), mPreviewCanvas->get_skinned_mesh_shader());
 	} else {
-		mMeshActorBuilder->build_mesh(*actor, "DummyActor", deserializer, mPreviewCanvas->get_mesh_shader(), mPreviewCanvas->get_skinned_mesh_shader());
+		mMeshActorBuilder->build_mesh(*actor, mDummyAnimationTimeProvider, "DummyActor", deserializer, mPreviewCanvas->get_mesh_shader(), mPreviewCanvas->get_skinned_mesh_shader());
 	}
 	
 	mPreviewCanvas->set_active_actor(actor);
@@ -156,5 +156,7 @@ void ImportWindow::ImportIntoProject() {
 }
 
 void ImportWindow::ProcessEvents() {
+	mDummyAnimationTimeProvider.Update();
+	
 	mPreviewCanvas->process_events();
 }

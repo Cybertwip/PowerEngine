@@ -162,6 +162,8 @@ void SelfContainedMeshCanvas::draw_content(const nanogui::Matrix4f& view,
 
 void SelfContainedMeshCanvas::draw_contents() {
 	if (mPreviewActor.has_value() && mUpdate) {
+		update_camera_view();
+
 		auto& camera = mCamera.get_component<CameraComponent>();
 		
 		camera.update_view();

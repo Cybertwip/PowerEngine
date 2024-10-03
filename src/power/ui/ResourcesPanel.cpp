@@ -111,6 +111,7 @@ const DirectoryNode* FindNodeByPath(const DirectoryNode& currentNode, const std:
 
 ResourcesPanel::ResourcesPanel(nanogui::Widget& parent, DirectoryNode& root_directory_node, IActorVisualManager& actorVisualManager, SceneTimeBar& sceneTimeBar,  MeshActorLoader& meshActorLoader, ShaderManager& shaderManager, DeepMotionApiClient& deepMotionApiClient)
 : Panel(parent, "Resources"),
+mAnimationTimeProvider(60 * 30),
 mRootDirectoryNode(root_directory_node),
 mActorVisualManager(actorVisualManager),
 mMeshActorLoader(meshActorLoader),
@@ -589,6 +590,8 @@ void ResourcesPanel::navigate_up_to_cwd() {
 }
 
 void ResourcesPanel::process_events() {
+	mAnimationTimeProvider.Update();
+	
 	mImportWindow->ProcessEvents();
 	mPromptWindow->ProcessEvents();
 }

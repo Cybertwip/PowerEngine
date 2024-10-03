@@ -1,5 +1,7 @@
 #pragma once
 
+#include "animation/AnimationTimeProvider.hpp"
+
 #include "filesystem/MeshActorImporter.hpp"
 #include "components/SkinnedAnimationComponent.hpp"
 
@@ -69,6 +71,8 @@ private:
 	nanogui::CheckBox* mAnimationsCheckbox;
 	
 	entt::registry mDummyRegistry;
+	
+	AnimationTimeProvider mDummyAnimationTimeProvider;
 	
 	std::unique_ptr<MeshActorImporter> mMeshActorImporter;
 	

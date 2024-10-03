@@ -44,6 +44,8 @@ public:
 	void refresh_actors();
 
 private:
+	void verify_uncommited_key();
+	
 	// Helper methods
 	void toggle_play_pause(bool play);
 	void stop_playback();
@@ -51,8 +53,9 @@ private:
 	void evaluate_transforms();
 	void evaluate_animations();
 	void evaluate_keyframe_status();
-	void verify_previous_next_keyframes(const std::optional<std::reference_wrapper<Actor>>& activeActor);
-	void register_actor_callbacks(std::optional<std::reference_wrapper<Actor>> actor);
+	std::tuple<bool, bool> find_previous_and_next_keyframes();
+	
+	void register_actor_callbacks();
 	
 	// Override mouse events to consume them
 	bool mouse_button_event(const nanogui::Vector2i &p, int button, bool down, int modifiers) override;

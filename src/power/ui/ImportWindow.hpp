@@ -1,5 +1,7 @@
 #pragma once
 
+#include "animation/AnimationTimeProvider.hpp"
+
 #include "filesystem/MeshActorImporter.hpp"
 
 #include <entt/entt.hpp>
@@ -49,7 +51,8 @@ private:
 	nanogui::CheckBox* mAnimationsCheckbox;
 
 	entt::registry mDummyRegistry;
-
+	AnimationTimeProvider mDummyAnimationTimeProvider;
+	
 	std::unique_ptr<MeshActorImporter> mMeshActorImporter;
 	
 	std::unique_ptr<MeshActorImporter::CompressedMeshActor> mCompressedMeshData;

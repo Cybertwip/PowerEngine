@@ -2,6 +2,7 @@
 
 #include "Panel.hpp"
 
+#include "animation/AnimationTimeProvider.hpp"
 #include "filesystem/DirectoryNode.hpp"
 
 #include <nanogui/nanogui.h>
@@ -41,6 +42,8 @@ public:
 	
 private:
 	bool mouse_button_event(const nanogui::Vector2i &p, int button, bool down, int modifiers) override;
+	
+	AnimationTimeProvider mAnimationTimeProvider;
 	
 	DirectoryNode& mRootDirectoryNode;
 	std::string mSelectedDirectoryPath;
