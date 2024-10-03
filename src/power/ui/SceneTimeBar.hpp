@@ -34,10 +34,7 @@ public:
 	
 	// Override OnActorSelected from IActorSelectedCallback
 	void OnActorSelected(std::optional<std::reference_wrapper<Actor>> actor) override;
-	
-	// Method to update the SceneTimeBar
-	void update();
-	
+		
 	// Getter for current time
 	int current_time() const;
 	
