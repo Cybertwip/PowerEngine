@@ -26,7 +26,7 @@
 PromptWindow::PromptWindow(nanogui::Widget* parent, ResourcesPanel& resourcesPanel, DeepMotionApiClient& deepMotionApiClient, nanogui::RenderPass& renderpass, ShaderManager& shaderManager)
 : nanogui::Window(parent->screen()), mResourcesPanel(resourcesPanel), mDeepMotionApiClient(deepMotionApiClient) {
 	
-	set_fixed_size(nanogui::Vector2i(400, 512)); // Adjusted height for additional UI elements
+	set_fixed_size(nanogui::Vector2i(400, 544)); // Adjusted height for additional UI elements
 	set_layout(new nanogui::BoxLayout(nanogui::Orientation::Vertical, nanogui::Alignment::Middle));
 	set_title("Animation Prompt");
 	
@@ -55,9 +55,9 @@ PromptWindow::PromptWindow(nanogui::Widget* parent, ResourcesPanel& resourcesPan
 	auto input_panel = new nanogui::Widget(this);
 	input_panel->set_layout(new nanogui::BoxLayout(nanogui::Orientation::Vertical, nanogui::Alignment::Middle, 10, 10));
 	
-	auto label = new nanogui::Label(input_panel, "Description:", "sans-bold");
+	auto label = new nanogui::Label(input_panel, "Prompt:", "sans-bold");
 	mInputTextBox = new nanogui::TextBox(input_panel, "");
-	mInputTextBox->set_fixed_size(nanogui::Vector2i(200, 96));
+	mInputTextBox->set_fixed_size(nanogui::Vector2i(256, 96));
 	
 	mInputTextBox->set_alignment(nanogui::TextBox::Alignment::Left);
 	
@@ -174,9 +174,9 @@ void PromptWindow::SubmitPromptAsync() {
 	std::string actorName = std::filesystem::path(mActorPath).stem().string();
 	
 	// Create Deserializer
-	CompressedSerialization::Deserializer deserializer;
+	auto deserializer = std::make_unique<CompressedSerialization::Deserializer>();
 	
-	if (!deserializer.load_from_file(mActorPath)) {
+	if (!deserializer->load_from_file(mActorPath)) {
 		std::cerr << "Failed to load serialized file: " << mActorPath << "\n";
 		{
 			std::lock_guard<std::mutex> lock(mStatusMutex);
@@ -216,54 +216,75 @@ void PromptWindow::SubmitPromptAsync() {
 	// Update Status
 	{
 		std::lock_guard<std::mutex> lock(mStatusMutex);
-		mStatusLabel->set_caption("Status: Uploading model...");
+		mStatusLabel->set_caption("Status: Exporting model...");
 	}
 	
-	std::stringstream modelData;
-	mMeshActorExporter->exportToStream(deserializer, mActorPath, modelData);
+	// Prepare a stringstream to hold the exported model data
+	auto modelData = std::make_shared<std::stringstream>();
 	
-	// Asynchronously upload the model
-	mDeepMotionApiClient.upload_model_async(std::move(modelData), unique_model_name, "fbx",
-											[this, prompt](const std::string& modelId, const std::string& error) {
-		if (!error.empty()) {
-			std::cerr << "Failed to upload model: " << error << std::endl;
-			{
+	// Asynchronously export the model to the stream
+	mMeshActorExporter->exportToStreamAsync(std::move(deserializer), mActorPath, *modelData,
+											[this, modelData, unique_model_name, prompt](bool success) {
+		if (!success) {
+			std::cerr << "Failed to export model to stream." << std::endl;
+			nanogui::async([this]() {
 				std::lock_guard<std::mutex> lock(mStatusMutex);
-				mStatusLabel->set_caption("Status: Failed to upload model.");
-			}
-			mSubmitButton->set_enabled(true);
+				mStatusLabel->set_caption("Status: Failed to export model.");
+				mSubmitButton->set_enabled(true);
+			});
 			return;
 		}
 		
-		std::cout << "Model uploaded successfully. Model ID: " << modelId << std::endl;
-		{
+		std::cout << "Model exported successfully." << std::endl;
+		nanogui::async([this]() {
 			std::lock_guard<std::mutex> lock(mStatusMutex);
-			mStatusLabel->set_caption("Status: Model uploaded. Processing prompt...");
-		}
+			mStatusLabel->set_caption("Status: Uploading model...");
+		});
 		
-		// Asynchronously process text to motion
-		mDeepMotionApiClient.process_text_to_motion_async(prompt, modelId,
-														  [this](const std::string& request_id, const std::string& error) {
+		// Asynchronously upload the model
+		mDeepMotionApiClient.upload_model_async(std::move(*modelData), unique_model_name, "fbx",
+												[this, prompt](const std::string& modelId, const std::string& error) {
 			if (!error.empty()) {
-				std::cerr << "Failed to process text to motion: " << error << std::endl;
-				{
+				std::cerr << "Failed to upload model: " << error << std::endl;
+				nanogui::async([this]() {
 					std::lock_guard<std::mutex> lock(mStatusMutex);
-					mStatusLabel->set_caption("Status: Failed to process prompt.");
-				}
-				mSubmitButton->set_enabled(true);
+					mStatusLabel->set_caption("Status: Failed to upload model.");
+					mSubmitButton->set_enabled(true);
+				});
 				return;
 			}
 			
-			std::cout << "Submitted prompt. Request ID: " << request_id << std::endl;
-			{
+			std::cout << "Model uploaded successfully. Model ID: " << modelId << std::endl;
+			nanogui::async([this]() {
 				std::lock_guard<std::mutex> lock(mStatusMutex);
-				mStatusLabel->set_caption("Status: Processing animation...");
-			}
+				mStatusLabel->set_caption("Status: Model uploaded. Processing prompt...");
+			});
 			
-			// Start polling job status asynchronously
-			PollJobStatusAsync(request_id);
+			// Asynchronously process text to motion
+			mDeepMotionApiClient.process_text_to_motion_async(prompt, modelId,
+															  [this](const std::string& request_id, const std::string& error) {
+				if (!error.empty()) {
+					std::cerr << "Failed to process text to motion: " << error << std::endl;
+					nanogui::async([this]() {
+						std::lock_guard<std::mutex> lock(mStatusMutex);
+						mStatusLabel->set_caption("Status: Failed to process prompt.");
+						mSubmitButton->set_enabled(true);
+					});
+					return;
+				}
+				
+				std::cout << "Submitted prompt. Request ID: " << request_id << std::endl;
+				nanogui::async([this]() {
+					std::lock_guard<std::mutex> lock(mStatusMutex);
+					mStatusLabel->set_caption("Status: Processing animation...");
+				});
+				
+				// Start polling job status asynchronously
+				PollJobStatusAsync(request_id);
+			}
+															  );
 		}
-														  );
+												);
 	}
 											);
 }
@@ -477,8 +498,8 @@ void PromptWindow::PollJobStatusAsync(const std::string& request_id) {
 						}
 						break;
 					} else if (job_status == "PROGRESS") {
-						float total = status["details"]["total"].asFloat();
-						float current = status["details"]["step"].asFloat();
+						float total = json["details"]["total"].asFloat();
+						float current = json["details"]["step"].asFloat();
 						if (current > total){
 							current = total;
 						}

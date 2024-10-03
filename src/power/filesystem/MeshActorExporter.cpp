@@ -9,16 +9,20 @@
 #include <glm/gtx/matrix_decompose.hpp>
 
 #include <iostream>
+#include <thread>       // For std::thread
+#include <exception>    // For std::exception
+#include <functional>   // For std::function
 
 namespace ExporterUtil {
 
+// Extract Euler angles (in degrees) from a quaternion rotation
 glm::vec3 ExtractEulerAngles(const glm::quat& rotation) {
 	glm::vec3 euler = glm::eulerAngles(rotation);
 	// Convert from radians to degrees
 	return glm::degrees(euler);
 }
 
-// return translate, rotate, scale
+// Decompose a transformation matrix into translation, rotation, and scale
 inline std::tuple<glm::vec3, glm::quat, glm::vec3> DecomposeTransform(const glm::mat4 &transform)
 {
 	glm::vec3 scale;
@@ -29,6 +33,8 @@ inline std::tuple<glm::vec3, glm::quat, glm::vec3> DecomposeTransform(const glm:
 	glm::decompose(transform, scale, rotation, translation, skew, perspective);
 	return {translation, rotation, scale};
 }
+
+// Extract scale factors from a transformation matrix
 glm::vec3 ExtractScale(const glm::mat4& matrix) {
 	glm::vec3 scale;
 	scale.x = glm::length(glm::vec3(matrix[0]));
@@ -37,7 +43,7 @@ glm::vec3 ExtractScale(const glm::mat4& matrix) {
 	return scale;
 }
 
-
+// Convert sfbx::double4x4 to glm::mat4
 inline glm::mat4 SfbxMatToGlmMat(const sfbx::double4x4 &from)
 {
 	glm::mat4 to;
@@ -51,6 +57,7 @@ inline glm::mat4 SfbxMatToGlmMat(const sfbx::double4x4 &from)
 	return to;
 }
 
+// Convert glm::mat4 to sfbx::double4x4
 inline sfbx::double4x4 GlmMatToSfbxMat(const glm::mat4 &from)
 {
 	sfbx::double4x4 to;
@@ -64,26 +71,27 @@ inline sfbx::double4x4 GlmMatToSfbxMat(const glm::mat4 &from)
 	return to;
 }
 
-}  // namespace
+}  // namespace ExporterUtil
 
+// Constructor
 MeshActorExporter::MeshActorExporter()
 {
-	
 	mMeshDeserializer = std::make_unique<MeshDeserializer>();
-
-	// Initialize the document (already done via constructor)
+	// Initialize other members if necessary
 }
 
+// Destructor
 MeshActorExporter::~MeshActorExporter() {
-	// Document will clean up automatically
+	// Resources are managed by smart pointers, so no manual cleanup is needed
 }
 
+// Synchronous exportToFile implementation
 bool MeshActorExporter::exportToFile(CompressedSerialization::Deserializer& deserializer, const std::string& sourcePath, const std::string& exportPath) {
 	
 	mMeshModels.clear();
 	
 	auto document = sfbx::MakeDocument();
-
+	
 	// Step 1: Deserialize or transfer data from CompressedMeshActor to internal structures
 	mMeshDeserializer->load_mesh(deserializer, sourcePath);
 	// Retrieve the deserialized meshes
@@ -106,29 +114,29 @@ bool MeshActorExporter::exportToFile(CompressedSerialization::Deserializer& dese
 	
 	
 	auto rootModel = document->getRootModel();
-
+	
 	// Step 3: Create Meshes and Models
 	// After creating the mesh
 	
 	std::shared_ptr<sfbx::Mesh> meshModel = std::make_shared<sfbx::Mesh>();
-
+	
 	for (size_t i = 0; i < mMeshes.size(); ++i) {
 		auto& meshData = *mMeshes[i];
 		
 		rootModel->addChild(meshModel); // to set m_document
-
+		
 		meshModel->setName("Mesh_Node_" + std::to_string(i));
-
+		
 		
 		assert(meshModel != nullptr);
 		createMesh(meshData, materialMap, meshModel);
 		
 		glm::mat4 localMatrix = glm::mat4(1.0f); // Identity or desired transformation
 		meshModel->setLocalMatrix(ExporterUtil::GlmMatToSfbxMat(localMatrix));
-
+		
 		mMeshModels.push_back(meshModel);
 	}
-
+	
 	// Step 5: Build skeleton
 	
 	auto skeleton = mMeshDeserializer->get_skeleton();
@@ -152,7 +160,7 @@ bool MeshActorExporter::exportToFile(CompressedSerialization::Deserializer& dese
 			
 			// Step 2: Set bone's local transformations
 			glm::mat4 poseMatrix = skeletonData.get_bone(boneIndex).bindpose;
-
+			
 			glm::vec3 translation, scale;
 			glm::quat rotation;
 			std::tie(translation, rotation, scale) = ExporterUtil::DecomposeTransform(poseMatrix);
@@ -161,10 +169,10 @@ bool MeshActorExporter::exportToFile(CompressedSerialization::Deserializer& dese
 			glm::vec3 eulerAngles = ExporterUtil::ExtractEulerAngles(rotation);
 			boneModel->setRotation(sfbx::glmToDouble3(eulerAngles));
 			boneModel->setScale(sfbx::glmToDouble3(scale));
-
+			
 			// Set the local transformations for the boneModel
 			boneModel->setLocalMatrix(ExporterUtil::GlmMatToSfbxMat(poseMatrix));
-
+			
 			// Store the bone model in the map
 			boneModels[boneIndex] = boneModel;
 		}
@@ -232,16 +240,16 @@ bool MeshActorExporter::exportToFile(CompressedSerialization::Deserializer& dese
 				
 				// Extract indices and weights
 				std::vector<int> indices;
-				std::vector<float> weights;
+				std::vector<float> weightsList;
 				for (const auto& [vertexIndex, weight] : weightData) {
 					indices.push_back(vertexIndex);
-					weights.push_back(weight);
+					weightsList.push_back(weight);
 				}
 				
 				// Set indices and weights in the cluster
 				cluster->setIndices(indices);
-				cluster->setWeights(weights);
-								
+				cluster->setWeights(weightsList);
+				
 				// Set the link node to the corresponding bone model
 				auto offsetMatrix = skeletonData.get_bone(boneID).offset;
 				cluster->setTransform(ExporterUtil::GlmMatToSfbxMat(offsetMatrix));
@@ -250,7 +258,7 @@ bool MeshActorExporter::exportToFile(CompressedSerialization::Deserializer& dese
 			}
 		}
 	}
-
+	
 	// Step 6: Export the Document to a file
 	document->exportFBXNodes();
 	
@@ -263,66 +271,7 @@ bool MeshActorExporter::exportToFile(CompressedSerialization::Deserializer& dese
 	return true;
 }
 
-void MeshActorExporter::createMaterials(std::shared_ptr<sfbx::Document> document, 
-										const std::vector<std::shared_ptr<SerializableMaterialProperties>>& materials,
-										std::map<int, std::shared_ptr<sfbx::Material>>& materialMap
-										) {
-	for (size_t i = 0; i < materials.size(); ++i) {
-		const auto& matProps = materials[i];
-		std::shared_ptr<sfbx::Material> material = document->createObject<sfbx::Material>("Material_" + std::to_string(i));
-		assert(material != nullptr);
-		
-		// Set material properties using helper functions
-		material->setAmbientColor(sfbx::glmToDouble3(glm::vec3(matProps->mAmbient)));
-		material->setDiffuseColor(sfbx::glmToDouble3(glm::vec3(matProps->mDiffuse)));
-		material->setSpecularColor(sfbx::glmToDouble3(glm::vec3(matProps->mSpecular)));
-		material->setShininess(matProps->mShininess);
-		material->setOpacity(matProps->mOpacity);
-		
-		// Handle textures
-		if (matProps->mHasDiffuseTexture) {
-			std::shared_ptr<sfbx::Texture> texture = document->createObject<sfbx::Texture>("Texture_" + std::to_string(i));
-			assert(texture != nullptr);
-			texture->setData(matProps->mTextureDiffuse); // Ensure setFilename accepts std::vector<uint8_t>
-			texture->setEmbedded(true); // Set based on your requirements
-			// Optionally, load texture data here if necessary
-			material->setTexture("Diffuse", texture);
-		}
-		
-		materialMap[i] = material;
-	}
-}
-
-void MeshActorExporter::createMesh(
-								   MeshData& meshData,
-								   const std::map<int, std::shared_ptr<sfbx::Material>>& materialMap,
-								   std::shared_ptr<sfbx::Mesh> parentModel
-								   ) {
-	auto geometryName = "Geometry_" + std::string{ parentModel->getName() };
-	std::shared_ptr<sfbx::GeomMesh> geometry = std::make_shared<sfbx::GeomMesh>();
-	
-	geometry->setName(geometryName);
-	
-	parentModel->addChild(geometry);
-	assert(geometry != nullptr);
-	
-	// Set control points (vertices)
-	for (auto& vertexPtr : meshData.get_vertices()) {
-		auto& vertex = *vertexPtr;
-		
-		geometry->addControlPoint(vertex.get_position().x, vertex.get_position().y, vertex.get_position().z);
-	}
-
-	// Set indices (polygons)
-	auto& indices = meshData.get_indices();
-	for (size_t i = 0; i + 2 < indices.size(); i += 3) { // Assuming triangles
-		geometry->addPolygon(indices[i], indices[i + 1], indices[i + 2]);
-	}
-	
-	// **Link geometry to model**
-	parentModel->setGeometry(geometry);
-}
-
+// Synchronous exportToStream implementation
 bool MeshActorExporter::exportToStream(CompressedSerialization::Deserializer& deserializer,
 									   const std::string& sourcePath,
 									   std::ostream& outStream)
@@ -355,7 +304,7 @@ bool MeshActorExporter::exportToStream(CompressedSerialization::Deserializer& de
 	
 	
 	std::shared_ptr<sfbx::Mesh> meshModel = std::make_shared<sfbx::Mesh>();
-
+	
 	// Step 3: Create Meshes and Models
 	// After creating the mesh
 	for (size_t i = 0; i < mMeshes.size(); ++i) {
@@ -399,10 +348,10 @@ bool MeshActorExporter::exportToStream(CompressedSerialization::Deserializer& de
 			auto limbNode = document->createObject<sfbx::LimbNode>(boneName);
 			
 			auto boneModel = sfbx::as<sfbx::Model>(limbNode);
-
+			
 			// Step 2: Set bone's local transformations
 			glm::mat4 poseMatrix = skeletonData.get_bone(boneIndex).bindpose;
-
+			
 			glm::vec3 translation, scale;
 			glm::quat rotation;
 			std::tie(translation, rotation, scale) = ExporterUtil::DecomposeTransform(poseMatrix);
@@ -414,7 +363,7 @@ bool MeshActorExporter::exportToStream(CompressedSerialization::Deserializer& de
 			
 			// Set the local transformations for the boneModel
 			boneModel->setLocalMatrix(ExporterUtil::GlmMatToSfbxMat(poseMatrix));
-
+			
 			// Store the bone model in the map
 			boneModels[boneIndex] = boneModel;
 		}
@@ -517,4 +466,129 @@ bool MeshActorExporter::exportToStream(CompressedSerialization::Deserializer& de
 	
 	std::cout << "Successfully exported actor to the provided stream." << std::endl;
 	return true;
+}
+
+// Asynchronous exportToFileAsync implementation
+void MeshActorExporter::exportToFileAsync(CompressedSerialization::Deserializer& actor,
+										  const std::string& sourcePath,
+										  const std::string& exportPath,
+										  std::function<void(bool success)> callback)
+{
+	// Launch a new thread to perform the export
+	std::thread([this, &actor, sourcePath, exportPath, callback]() {
+		bool success = false;
+		try {
+			success = this->exportToFile(actor, sourcePath, exportPath);
+		}
+		catch (const std::exception& e) {
+			std::cerr << "Exception in exportToFileAsync: " << e.what() << std::endl;
+			success = false;
+		}
+		catch (...) {
+			std::cerr << "Unknown exception in exportToFileAsync." << std::endl;
+			success = false;
+		}
+		
+		// Invoke the callback with the result
+		if (callback) {
+			callback(success);
+		}
+	}).detach(); // Detach the thread to allow it to run independently
+}
+
+// Asynchronous exportToStreamAsync implementation
+void MeshActorExporter::exportToStreamAsync(std::unique_ptr<CompressedSerialization::Deserializer> deserializerPtr,
+											const std::string& sourcePath,
+											std::ostream& outStream,
+											std::function<void(bool success)> callback)
+{
+	// It's important to ensure that 'outStream' is thread-safe or exclusively used by this thread.
+	// If 'outStream' is accessed elsewhere, consider synchronizing access.
+	
+	// To safely pass the ostream to the new thread, we can use a mutex or ensure exclusive access.
+	// Here, we'll assume exclusive access for simplicity.
+	
+	// Launch a new thread to perform the export
+	std::thread([this, deserializer = std::move(deserializerPtr), sourcePath, &outStream, callback]() {
+		bool success = false;
+		try {
+			success = this->exportToStream(*deserializer, sourcePath, outStream);
+		}
+		catch (const std::exception& e) {
+			std::cerr << "Exception in exportToStreamAsync: " << e.what() << std::endl;
+			success = false;
+		}
+		catch (...) {
+			std::cerr << "Unknown exception in exportToStreamAsync." << std::endl;
+			success = false;
+		}
+		
+		// Invoke the callback with the result
+		if (callback) {
+			callback(success);
+		}
+	}).detach(); // Detach the thread to allow it to run independently
+}
+
+// Helper function to create materials
+void MeshActorExporter::createMaterials(std::shared_ptr<sfbx::Document> document,
+										const std::vector<std::shared_ptr<SerializableMaterialProperties>>& materials,
+										std::map<int, std::shared_ptr<sfbx::Material>>& materialMap)
+{
+	for (size_t i = 0; i < materials.size(); ++i) {
+		const auto& matProps = materials[i];
+		std::shared_ptr<sfbx::Material> material = document->createObject<sfbx::Material>("Material_" + std::to_string(i));
+		assert(material != nullptr);
+		
+		// Set material properties using helper functions
+		material->setAmbientColor(sfbx::glmToDouble3(glm::vec3(matProps->mAmbient)));
+		material->setDiffuseColor(sfbx::glmToDouble3(glm::vec3(matProps->mDiffuse)));
+		material->setSpecularColor(sfbx::glmToDouble3(glm::vec3(matProps->mSpecular)));
+		material->setShininess(matProps->mShininess);
+		material->setOpacity(matProps->mOpacity);
+		
+		// Handle textures
+		if (matProps->mHasDiffuseTexture) {
+			std::shared_ptr<sfbx::Texture> texture = document->createObject<sfbx::Texture>("Texture_" + std::to_string(i));
+			assert(texture != nullptr);
+			texture->setData(matProps->mTextureDiffuse); // Ensure setFilename accepts std::vector<uint8_t>
+			texture->setEmbedded(true); // Set based on your requirements
+			// Optionally, load texture data here if necessary
+			material->setTexture("Diffuse", texture);
+		}
+		
+		materialMap[i] = material;
+	}
+}
+
+// Helper function to create mesh geometry
+void MeshActorExporter::createMesh(
+								   MeshData& meshData,
+								   const std::map<int, std::shared_ptr<sfbx::Material>>& materialMap,
+								   std::shared_ptr<sfbx::Mesh> parentModel
+								   )
+{
+	auto geometryName = "Geometry_" + std::string{ parentModel->getName() };
+	std::shared_ptr<sfbx::GeomMesh> geometry = std::make_shared<sfbx::GeomMesh>();
+	
+	geometry->setName(geometryName);
+	
+	parentModel->addChild(geometry);
+	assert(geometry != nullptr);
+	
+	// Set control points (vertices)
+	for (auto& vertexPtr : meshData.get_vertices()) {
+		auto& vertex = *vertexPtr;
+		
+		geometry->addControlPoint(vertex.get_position().x, vertex.get_position().y, vertex.get_position().z);
+	}
+	
+	// Set indices (polygons)
+	auto& indices = meshData.get_indices();
+	for (size_t i = 0; i + 2 < indices.size(); i += 3) { // Assuming triangles
+		geometry->addPolygon(indices[i], indices[i + 1], indices[i + 2]);
+	}
+	
+	// **Link geometry to model**
+	parentModel->setGeometry(geometry);
 }
