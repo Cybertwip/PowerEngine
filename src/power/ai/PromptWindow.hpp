@@ -90,5 +90,5 @@ private:
 	
 	std::unique_ptr<MeshActorExporter> mMeshActorExporter;
 	
-	std::optional<CompressedSerialization::Serializer> mSerializedPrompt;
+	std::optional<std::unique_ptr<CompressedSerialization::Serializer>> mSerializedPrompt;
 };

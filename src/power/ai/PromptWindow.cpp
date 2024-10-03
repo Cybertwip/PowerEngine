@@ -23,6 +23,32 @@
 #include <mutex>
 #include <future>
 
+namespace PromptUtils {
+
+// Helper function to generate a unique numeric-based filename
+static std::string GenerateUniqueFilename(const std::string& baseDir, const std::string& prefix, const std::string& extension) {
+	int maxNumber = 0; // Track the highest number found
+	std::regex filenamePattern("^" + prefix + "_(\\d+)\\." + extension + "$"); // Pattern to match filenames with numbers
+	
+	for (const auto& entry : fs::directory_iterator(baseDir)) {
+		if (entry.is_regular_file()) {
+			std::smatch match;
+			std::string filename = entry.path().filename().string();
+			
+			if (std::regex_match(filename, match, filenamePattern) && match.size() == 2) {
+				int number = std::stoi(match[1].str());
+				maxNumber = std::max(maxNumber, number);
+			}
+		}
+	}
+	
+	// Generate the new filename with the next number
+	std::string newFilename = prefix + "_" + std::to_string(maxNumber + 1) + "." + extension;
+	return baseDir + "/" + newFilename;
+}
+
+}
+
 PromptWindow::PromptWindow(nanogui::Widget* parent, ResourcesPanel& resourcesPanel, DeepMotionApiClient& deepMotionApiClient, nanogui::RenderPass& renderpass, ShaderManager& shaderManager)
 : nanogui::Window(parent->screen()), mResourcesPanel(resourcesPanel), mDeepMotionApiClient(deepMotionApiClient) {
 	
@@ -456,11 +482,11 @@ void PromptWindow::PollJobStatusAsync(const std::string& request_id) {
 														return;
 													}
 													
-													auto& animationSerializer = modelData->mAnimations.value()[0].mSerializer;
+													mSerializedPrompt = std::move(modelData->mAnimations.value()[0].mSerializer);
 													
 													std::stringstream animationCompressedData;
 													
-													animationSerializer->get_compressed_data(animationCompressedData);
+													mSerializedPrompt.value()->get_compressed_data(animationCompressedData);
 													
 													CompressedSerialization::Deserializer animationDeserializer;
 													
@@ -553,59 +579,56 @@ void PromptWindow::PollJobStatusAsync(const std::string& request_id) {
 }
 
 void PromptWindow::ImportIntoProjectAsync() {
-	std::string animationName = mInputTextBox->value();
-	if (animationName.empty()) {
-		// Optionally show an error message to the user
-		std::cerr << "Animation name is empty." << std::endl;
-		{
-			std::lock_guard<std::mutex> lock(mStatusMutex);
-			mStatusLabel->set_caption("Status: Animation name is empty.");
-		}
-		return;
-	}
-	
+//	std::string animationName = mInputTextBox->value();
+//	if (animationName.empty()) {
+//		// Optionally show an error message to the user
+//		std::cerr << "Animation name is empty." << std::endl;
+//		{
+//			std::lock_guard<std::mutex> lock(mStatusMutex);
+//			mStatusLabel->set_caption("Status: Animation name is empty.");
+//		}
+//		return;
+//	} // maybe a save dialog
+	 
 	mPreviewCanvas->take_snapshot([this](std::vector<uint8_t>& pixels) {
-		auto& serializer = mCompressedMeshData->mMesh.mSerializer;
 		
-		std::stringstream compressedData;
-		
-		serializer->get_compressed_data(compressedData);
-		
-		CompressedSerialization::Deserializer deserializer;
-		
-		if (!deserializer.initialize(compressedData)) {
+		if (mSerializedPrompt.has_value()) {
+			std::stringstream compressedData;
 			
-			mStatusLabel->set_caption("Status: Unable to deserialize model.");
+			mSerializedPrompt.value()->get_compressed_data(compressedData);
+			
+			uint64_t hash_id[2] = { 0, 0 };
+			
+			Md5::generate_md5_from_compressed_data(compressedData, hash_id);
+			
+			// Write the unique hash identifier to the header
+			mSerializedPrompt.value()->write_header_raw(hash_id, sizeof(hash_id));
+			
+			// Proceed with serialization
+			mSerializedPrompt.value()->write_header_uint64(pixels.size());
+			
+			mSerializedPrompt.value()->write_header_raw(pixels.data(), pixels.size());
+
+			// Proceed with serialization
+			mSerializedPrompt.value()->write_header_uint64(pixels.size());
+			mSerializedPrompt.value()->write_header_raw(pixels.data(), pixels.size()); // Corrected variable name
+			
+			auto actorName = std::filesystem::path(mActorName).stem().string();
+			
+			auto animationName = PromptUtils::GenerateUniqueFilename(mOutputDirectory, actorName, "pma");
+			
+			mSerializedPrompt->value()->save_to_file(animationName);
 			
 			nanogui::async([this]() {
 				mResourcesPanel.refresh_file_view();
 			});
 			
-			return;
+			mPreviewCanvas->set_active_actor(nullptr);
+			mPreviewCanvas->set_update(false);
+			
+			set_visible(false);
+			set_modal(false);
 		}
-		
-		uint64_t hash_id[2] = { 0, 0 };
-		
-		deserializer.read_header_raw(hash_id, sizeof(hash_id));
-		
-		serializer->write_header_raw(hash_id, sizeof(hash_id));
-		
-		// Proceed with serialization
-		serializer->write_header_uint64(pixels.size());
-		serializer->write_header_raw(pixels.data(), pixels.size()); // Corrected variable name
-		
-		// Since we're enforcing only animations, ensure only animations are persisted
-		mCompressedMeshData->persist_animations(); // Assume a method to persist animations with a name
-		
-		nanogui::async([this]() {
-			mResourcesPanel.refresh_file_view();
-		});
-		
-		mPreviewCanvas->set_active_actor(nullptr);
-		mPreviewCanvas->set_update(false);
-		
-		set_visible(false);
-		set_modal(false);
 	});
 }
 
