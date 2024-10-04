@@ -47,6 +47,10 @@ public:
 	SceneTimeBar& scene_time_bar() {
 		return *mSceneTimeBar;
 	}
+	
+	StatusBarPanel& status_bar_panel() {
+		return *mStatusBarPanel;
+	}
 
 	nanogui::Widget& toolbox() {
 		return *mToolbox;
