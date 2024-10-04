@@ -136,6 +136,31 @@ public:
 		mModelPose = mEmptyPose;
 	}
 	
+	// Retrieve the bones for rendering
+	std::vector<BoneCPU> get_bones() {
+		// Ensure we have a valid number of bones
+		size_t numBones = mProvider.get_skeleton().num_bones();
+		
+		std::vector<BoneCPU> bonesCPU(numBones);
+		
+		for (size_t i = 0; i < numBones; ++i) {
+			// Get the bone transform as a glm::mat4
+			glm::mat4 boneTransform = mProvider.get_skeleton().get_bone(i).transform;
+			
+			// Reference to the BoneCPU structure
+			BoneCPU& boneCPU = bonesCPU[i];
+			
+			// Copy each element from glm::mat4 to the BoneCPU's transform array
+			for (int row = 0; row < 4; ++row) {
+				for (int col = 0; col < 4; ++col) {
+					boneCPU.transform[row][col] = boneTransform[row][col];
+				}
+			}
+		}
+		return bonesCPU;
+	}
+	
+	
 	void evaluate_provider(float time, PlaybackModifier modifier) {
 		
 		Animation& animation = mProvider.get_animation();
@@ -346,6 +371,7 @@ private:
 			mAnimationOffset = keyframe->time;
 			animation = *keyframe->getPlaybackData()->mAnimation;
 		} else {
+			reset_pose();
 			return std::nullopt;
 		}
 		
@@ -375,30 +401,6 @@ private:
 		apply_pose_to_skeleton();
 		
 		return keyframe;
-	}
-	
-	// Retrieve the bones for rendering
-	std::vector<BoneCPU> get_bones() {
-		// Ensure we have a valid number of bones
-		size_t numBones = mProvider.get_skeleton().num_bones();
-		
-		std::vector<BoneCPU> bonesCPU(numBones);
-		
-		for (size_t i = 0; i < numBones; ++i) {
-			// Get the bone transform as a glm::mat4
-			glm::mat4 boneTransform = mProvider.get_skeleton().get_bone(i).transform;
-			
-			// Reference to the BoneCPU structure
-			BoneCPU& boneCPU = bonesCPU[i];
-			
-			// Copy each element from glm::mat4 to the BoneCPU's transform array
-			for (int row = 0; row < 4; ++row) {
-				for (int col = 0; col < 4; ++col) {
-					boneCPU.transform[row][col] = boneTransform[row][col];
-				}
-			}
-		}
-		return bonesCPU;
 	}
 	
 	std::optional<PlaybackComponent::Keyframe> get_keyframe(float time) const {
