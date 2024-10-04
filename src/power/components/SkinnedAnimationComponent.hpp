@@ -465,7 +465,16 @@ private:
 		
 		// Find the first keyframe
 		if (!keyframes_.empty()) {
+			auto& currentAnimation = keyframes_.front().getPlaybackData()->mAnimation;
+			
 			mAnimationOffset = keyframes_.front().time;
+			
+			for (auto& keyframe : keyframes_) {
+				if (keyframe.getPlaybackData()->mAnimation != currentAnimation){
+					mAnimationOffset = 0.0f;
+					break;
+				}
+			}
 		}
 	}
 	
