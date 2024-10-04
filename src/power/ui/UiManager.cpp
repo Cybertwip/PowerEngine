@@ -31,6 +31,7 @@
 #include "graphics/drawing/Grid.hpp"
 
 #include "ui/AnimationPanel.hpp"
+#include "ui/ResourcesPanel.hpp"
 #include "ui/ScenePanel.hpp"
 #include "ui/SceneTimeBar.hpp"
 #include "ui/StatusBarPanel.hpp"
@@ -290,6 +291,9 @@ void UiManager::OnActorSelected(std::optional<std::reference_wrapper<Actor>> act
 }
 
 void UiManager::export_movie(const std::string& path) {
+	mStatusBarPanel->resources_panel().set_visible(false);
+	
+	
 	mSceneTimeBar.stop_playback();
 	mSceneTimeBar.toggle_play_pause(true);
 	
@@ -350,12 +354,12 @@ void UiManager::draw() {
 			}
 		});
 		
-		if (mSceneTimeBar.is_playing()) {
+		if (!mSceneTimeBar.is_playing()) {
 			mIsMovieExporting = false;
 			
 			// Assemble the movie using ffmpeg
 			std::ostringstream ffmpeg_command;
-			ffmpeg_command << "ffmpeg -y -framerate 30 -i \"" << mMovieExportDirectory << "/frame%0" << mFramePadding << "d.png\" -c:v libx264 -pix_fmt yuv420p \"" << mMovieExportFile << "\"";
+			ffmpeg_command << "ffmpeg -y -framerate 60 -i \"" << mMovieExportDirectory << "/frame%0" << mFramePadding << "d.png\" -c:v libx264 -pix_fmt yuv420p \"" << mMovieExportFile << "\"";
 			
 			std::cout << "Running ffmpeg command: " << ffmpeg_command.str() << std::endl;
 			

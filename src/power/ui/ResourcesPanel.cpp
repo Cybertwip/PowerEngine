@@ -542,7 +542,7 @@ void ResourcesPanel::import_assets() {
 }
 
 void ResourcesPanel::export_assets() {
-	if (mSelectedNode != nullptr) {
+	if (false) {
 		// Open a file dialog to select the destination directory
 		nanogui::file_dialog_async(
 								   { {"fbx", "All Files"} }, true, false, [this](const std::vector<std::string>& files){

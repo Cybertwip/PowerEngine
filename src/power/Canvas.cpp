@@ -56,11 +56,10 @@ void Canvas::process_events() {
 		
 		MetalHelper::readPixelsFromMetal(scr->nswin(), texture, offset.x(), offset.y(), fbsize.x(), fbsize.y(), pixels);
 		
-		
 		std::vector<uint8_t> png_data;
 		
 		// Now write the converted RGBA data to PNG
-		write_to_png(pixels, 512, 512, 4, png_data);
+		write_to_png(pixels, fbsize.x(), fbsize.y(), 4, png_data);
 		
 		mSnapshotCallback(png_data);
 		mSnapshotCallback = nullptr;
