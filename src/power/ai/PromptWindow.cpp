@@ -186,9 +186,9 @@ void PromptWindow::Preview(const std::string& path, const std::string& directory
 		if (playbackData.has_value()) {
 			auto& playbackComponent = actor->get_component<PlaybackComponent>();
 			
-			playbackData->mSkeleton = playbackComponent.getPlaybackData()->mSkeleton;
+			playbackData.value()->mSkeleton = playbackComponent.getPlaybackData()->mSkeleton;
 			
-			skinnedComponent.setplaybackData(playbackData);
+			skinnedComponent.setplaybackData(playbackData.value());
 		}
 	}
 	
