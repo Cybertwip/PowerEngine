@@ -14,7 +14,7 @@
 
 static std::unique_ptr<DirectoryNode> rootNode = DirectoryNode::create(std::filesystem::current_path().string());
 
-StatusBarPanel::StatusBarPanel(nanogui::Widget &parent, IActorVisualManager& actorVisualManager, SceneTimeBar& sceneTimeBar,  MeshActorLoader& meshActorLoader, ShaderManager& shaderManager, DeepMotionApiClient& deepMotionApiClient, std::function<void(std::function<void(int, int)>)> applicationClickRegistrator) : Panel(parent, ""), mSceneTimeBar(sceneTimeBar) {
+StatusBarPanel::StatusBarPanel(nanogui::Widget &parent, IActorVisualManager& actorVisualManager, SceneTimeBar& sceneTimeBar,  MeshActorLoader& meshActorLoader, ShaderManager& shaderManager, DeepMotionApiClient& deepMotionApiClient, UiManager& uiManager, std::function<void(std::function<void(int, int)>)> applicationClickRegistrator) : Panel(parent, ""), mSceneTimeBar(sceneTimeBar) {
 	set_layout(new nanogui::GroupLayout());
 	
 	// Status bar setup
@@ -30,7 +30,7 @@ StatusBarPanel::StatusBarPanel(nanogui::Widget &parent, IActorVisualManager& act
 	resourcesButton->set_enabled(false);
 	
 	// Resources panel setup
-	mResourcesPanel = new ResourcesPanel(*parent.parent(), *rootNode, actorVisualManager, sceneTimeBar, meshActorLoader, shaderManager, deepMotionApiClient);
+	mResourcesPanel = new ResourcesPanel(*parent.parent(), *rootNode, actorVisualManager, sceneTimeBar, meshActorLoader, shaderManager, deepMotionApiClient, uiManager);
 	mResourcesPanel->set_visible(true);
 	// Add widgets to resourcesPanel here
 	

@@ -77,4 +77,10 @@ private:
 	
 	StatusBarPanel* mStatusBarPanel;
 	bool mIsMovieExporting;
+	
+	std::string mMovieExportFile;
+	std::string mMovieExportDirectory;
+	
+	int mFrameCounter;
+	int mFramePadding; // Number of digits for frame numbering
 };

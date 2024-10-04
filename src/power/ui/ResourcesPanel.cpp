@@ -7,6 +7,7 @@
 #include "filesystem/MeshActorExporter.hpp"
 #include "ui/ImportWindow.hpp"
 #include "ui/MeshPicker.hpp"
+#include "ui/UiManager.hpp"
 
 #include "MeshActorLoader.hpp"
 #include "ShaderManager.hpp"
@@ -109,7 +110,7 @@ const DirectoryNode* FindNodeByPath(const DirectoryNode& currentNode, const std:
 }
 
 
-ResourcesPanel::ResourcesPanel(nanogui::Widget& parent, DirectoryNode& root_directory_node, IActorVisualManager& actorVisualManager, SceneTimeBar& sceneTimeBar,  MeshActorLoader& meshActorLoader, ShaderManager& shaderManager, DeepMotionApiClient& deepMotionApiClient)
+ResourcesPanel::ResourcesPanel(nanogui::Widget& parent, DirectoryNode& root_directory_node, IActorVisualManager& actorVisualManager, SceneTimeBar& sceneTimeBar,  MeshActorLoader& meshActorLoader, ShaderManager& shaderManager, DeepMotionApiClient& deepMotionApiClient, UiManager& uiManager)
 : Panel(parent, "Resources"),
 mDummyAnimationTimeProvider(60 * 30),
 mRootDirectoryNode(root_directory_node),
@@ -121,7 +122,8 @@ mSelectedButton(nullptr),
 mSelectedNode(nullptr),
 mNormalButtonColor(nanogui::Color(0.7f, 0.7f, 0.7f, 1.0f)),
 mSelectedButtonColor(nanogui::Color(0.5f, 0.5f, 0.8f, 1.0f)),
-mSceneTimeBar(sceneTimeBar)
+mSceneTimeBar(sceneTimeBar),
+mUiManager(uiManager)
 {
 	mNormalButtonColor = theme()->m_button_gradient_bot_unfocused;
 	
@@ -569,6 +571,17 @@ void ResourcesPanel::export_assets() {
 								   });
 		
 		
+	} else {
+		nanogui::file_dialog_async(
+								   { {"mp4", "All Files"} }, true, false, [this](const std::vector<std::string>& files){
+									   if (files.empty()) {
+										   return; // User canceled
+									   }
+									   
+									   std::string destinationFile = files.front();
+									   
+									   mUiManager.export_movie(destinationFile);
+								   });
 	}
 }
 

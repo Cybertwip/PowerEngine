@@ -19,10 +19,11 @@ class MeshActorLoader;
 class ResourcesPanel;
 class SceneTimeBar;
 class ShaderManager;
+class UiManager;
 
 class StatusBarPanel : public Panel {
 public:
-	StatusBarPanel(nanogui::Widget &parent, IActorVisualManager& actorVisualManager, SceneTimeBar& sceneTimeBar, MeshActorLoader& meshActorLoader, ShaderManager& shaderManager, DeepMotionApiClient& deepMotionApiClient, std::function<void(std::function<void(int, int)>)> applicationClickRegistrator);
+	StatusBarPanel(nanogui::Widget &parent, IActorVisualManager& actorVisualManager, SceneTimeBar& sceneTimeBar, MeshActorLoader& meshActorLoader, ShaderManager& shaderManager, DeepMotionApiClient& deepMotionApiClient, UiManager& uiManager, std::function<void(std::function<void(int, int)>)> applicationClickRegistrator);
 	
 	ResourcesPanel& resources_panel() {
 		return *mResourcesPanel;

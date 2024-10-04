@@ -22,12 +22,13 @@ class SceneTimeBar;
 class SelfContainedMeshCanvas;
 class ShaderManager;
 class ShaderWrapper;
+class UiManager;
 
 class ResourcesPanel : public Panel {
 public:
 	ResourcesPanel(nanogui::Widget &parent,
 				   DirectoryNode& root_directory_node, IActorVisualManager& actorVisualManager,
-					   SceneTimeBar& sceneTimeBar, MeshActorLoader& meshActorLoader, ShaderManager& shaderManager, DeepMotionApiClient& deepMotionApiClient);
+					   SceneTimeBar& sceneTimeBar, MeshActorLoader& meshActorLoader, ShaderManager& shaderManager, DeepMotionApiClient& deepMotionApiClient, UiManager& uiManager);
 	
 	~ResourcesPanel();
 	
@@ -85,4 +86,6 @@ private:
 	
 	PromptWindow* mPromptWindow;
 	SceneTimeBar& mSceneTimeBar;
+	
+	UiManager& mUiManager;
 };

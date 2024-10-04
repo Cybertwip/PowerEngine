@@ -264,7 +264,7 @@ UiManager::UiManager(IActorSelectedRegistry& registry, IActorVisualManager& acto
 		}
 	});
 	
-	mStatusBarPanel = new StatusBarPanel(statusBar, actorVisualManager, mSceneTimeBar, meshActorLoader, shaderManager, deepMotionApiClient, applicationClickRegistrator);
+	mStatusBarPanel = new StatusBarPanel(statusBar, actorVisualManager, mSceneTimeBar, meshActorLoader, shaderManager, deepMotionApiClient, *this, applicationClickRegistrator);
 	mStatusBarPanel->set_fixed_width(statusBar.fixed_height());
 	mStatusBarPanel->set_fixed_height(statusBar.fixed_height());
 	mStatusBarPanel->set_layout(new nanogui::BoxLayout(nanogui::Orientation::Horizontal,
@@ -273,6 +273,10 @@ UiManager::UiManager(IActorSelectedRegistry& registry, IActorVisualManager& acto
 	mSelectionColor = glm::vec4(0.83f, 0.68f, 0.21f, 1.0f); // A gold-ish color
 	
 	mSelectionColor = glm::normalize(mSelectionColor);
+	
+	mFrameCounter = 0;
+	mFramePadding = 4; // Start with 4 digits (0000)
+
 }
 
 UiManager::~UiManager() {
@@ -290,6 +294,9 @@ void UiManager::export_movie(const std::string& path) {
 	mSceneTimeBar.toggle_play_pause(true);
 	
 	mIsMovieExporting = true;
+	
+	mMovieExportFile = path;
+	mMovieExportDirectory = std::filesystem::path(path).parent_path().string();
 }
 
 void UiManager::draw() {
@@ -314,12 +321,62 @@ void UiManager::draw() {
 		
 		mActorManager.visit(batch_unit.mSkinnedMeshBatch);
 		
-		mCanvas.take_snapshot([this](std::vector<uint8_t>& pixels) {
+		mCanvas.take_snapshot([this](std::vector<uint8_t>& png_data) {
+			// Generate the frame filename with padded zeros
+			std::ostringstream filename_stream;
+			filename_stream << "frame" << std::setw(mFramePadding) << std::setfill('0') << mFrameCounter << ".png";
+			std::string filename = filename_stream.str();
 			
+			// Full path for the frame
+			std::filesystem::path frame_path = std::filesystem::path(mMovieExportDirectory) / filename;
+			
+			// Write the PNG data to the file
+			std::ofstream file(frame_path, std::ios::binary);
+			if (file.is_open()) {
+				file.write(reinterpret_cast<const char*>(png_data.data()), png_data.size());
+				file.close();
+				std::cout << "Saved frame: " << frame_path << std::endl;
+			} else {
+				std::cerr << "Failed to save frame: " << frame_path << std::endl;
+			}
+			
+			mFrameCounter++;
+			
+			// Check if padding needs to be increased
+			int max_frames = std::pow(10, mFramePadding) - 1;
+			if (mFrameCounter > max_frames) {
+				mFramePadding += 1; // Increase padding by 1 digit
+				std::cout << "Increased frame padding to: " << mFramePadding << " digits." << std::endl;
+			}
 		});
 		
 		if (mSceneTimeBar.is_playing()) {
 			mIsMovieExporting = false;
+			
+			// Assemble the movie using ffmpeg
+			std::ostringstream ffmpeg_command;
+			ffmpeg_command << "ffmpeg -y -framerate 30 -i \"" << mMovieExportDirectory << "/frame%0" << mFramePadding << "d.png\" -c:v libx264 -pix_fmt yuv420p \"" << mMovieExportFile << "\"";
+			
+			std::cout << "Running ffmpeg command: " << ffmpeg_command.str() << std::endl;
+			
+			int ret = std::system(ffmpeg_command.str().c_str());
+			if (ret != 0) {
+				std::cerr << "ffmpeg failed with return code: " << ret << std::endl;
+			} else {
+				std::cout << "Movie exported successfully to: " << mMovieExportFile << std::endl;
+			}
+			
+			// Optional: Clean up frame images
+			for (int i = 0; i < mFrameCounter; ++i) {
+				std::ostringstream cleanup_stream;
+				cleanup_stream << "frame" << std::setw(mFramePadding) << std::setfill('0') << i << ".png";
+				std::string cleanup_filename = cleanup_stream.str();
+				std::filesystem::path cleanup_path = std::filesystem::path(mMovieExportDirectory) / cleanup_filename;
+				if (std::remove(cleanup_path.string().c_str()) != 0) {
+					std::cerr << "Failed to delete frame: " << cleanup_path << std::endl;
+				}
+			}
+			
 		}
 	} else {
 		mSceneTimeBar.update();
