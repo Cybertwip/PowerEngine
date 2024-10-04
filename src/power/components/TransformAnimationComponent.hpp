@@ -50,10 +50,10 @@ public:
 	
 	void Evaluate() override {
 		if (!mFrozen) {
-			auto evaluationContainer = evaluate(mAnimationTimeProvider.GetTime());
+			auto keyframe = evaluate(mAnimationTimeProvider.GetTime());
 			
-			if (evaluationContainer.has_value()) {
-				auto [t, r, s] = *evaluationContainer;
+			if (keyframe.has_value()) {
+				auto [t, r, s] = *keyframe;
 				
 				mProvider.set_translation(t);
 				mProvider.set_rotation(r);
@@ -70,7 +70,12 @@ public:
 		auto m1 = mProvider.get_matrix();
 		auto m2 = evaluate_as_matrix(mAnimationTimeProvider.GetTime());
 		
-		return m1 == *m2;
+		if (m2.has_value()) {
+			return m1 == *m2;
+		} else {
+			return true;
+		}
+		
 	}
 	
 	bool KeyframeExists() override {

@@ -102,8 +102,7 @@ public:
 			getPlaybackState() == rhs.getPlaybackState() &&
 			getPlaybackModifier() == rhs.getPlaybackModifier() &&
 			getPlaybackTrigger() == rhs.getPlaybackTrigger() &&
-			mPlaybackData->mSkeleton.get() == rhs.getPlaybackData()->mSkeleton.get() &&
-			mPlaybackData->mAnimation.get() == rhs.getPlaybackData()->mAnimation.get();
+			getPlaybackData().get() == rhs.getPlaybackData().get();
 		}
 		
 		// Overloaded != operator for Keyframe

@@ -79,7 +79,15 @@ public:
 	
 	void Evaluate() override {
 		if (!mFrozen) {
-			evaluate(mAnimationTimeProvider.GetTime());
+			auto keyframe = evaluate(mAnimationTimeProvider.GetTime());
+			
+			if (keyframe.has_value()) {
+				mProvider.setPlaybackState(keyframe->getPlaybackState());
+				mProvider.setPlaybackModifier(keyframe->getPlaybackModifier());
+				mProvider.setPlaybackTrigger(keyframe->getPlaybackTrigger());
+				mProvider.setPlaybackData(keyframe->getPlaybackData());
+			}
+
 		}
 	}
 	
@@ -91,9 +99,13 @@ public:
 		auto m1 = const_cast<PlaybackComponent::Keyframe&>(mProvider.get_state());
 		m1.time = mAnimationTimeProvider.GetTime();
 		
-		auto m2 = get_keyframe(mAnimationTimeProvider.GetTime());
-		
-		return m1 == m2;
+		auto m2 = evaluate_keyframe(mAnimationTimeProvider.GetTime());
+				
+		if (m2.has_value()) {
+			return m1 == *m2;
+		} else {
+			return true;
+		}
 	}
 	
 	bool KeyframeExists() override {
@@ -296,52 +308,20 @@ public:
 		
 		return adjustedTime;
 	}
-
-	void evaluate_time(float time, PlaybackModifier modifier) {
-		std::optional<PlaybackComponent::Keyframe> keyframe;
-		
-		Animation& animation = mProvider.get_animation();
-		
-		if (!keyframes_.empty()) {
-			keyframe = evaluate_keyframe(time);
-			animation = *keyframe->getPlaybackData()->mAnimation;
-		}
-		
-		float duration = static_cast<float>(animation.get_duration());
-		
-		bool reverse = modifier == PlaybackModifier::Reverse;
-
-		float animationTime = 0.0f;
-		
-		// Handle reverse playback
-		if (reverse) {
-			animationTime = fmod(duration - time, duration);
-		} else {
-			animationTime = fmod(time, duration);
-		}
-		
-		// Evaluate the animation at the adjusted time
-		evaluate_animation(animation, animationTime);
-		
-		// Update the skeleton with the new transforms
-		apply_pose_to_skeleton();
-	}
 	
-	void evaluate(float time) {
-		std::optional<PlaybackComponent::Keyframe> keyframe;
+	std::optional<PlaybackComponent::Keyframe>  evaluate(float time) {
+		auto keyframe = evaluate_keyframe(time);
 
-		Animation& animation = mProvider.get_animation();
+		std::optional<std::reference_wrapper<Animation>> animation;
 
-		if (!keyframes_.empty()) {
-			mAnimationOffset = keyframes_[0].time;
-			
-			keyframe = evaluate_keyframe(time);
+		if (keyframe.has_value()) {
+			mAnimationOffset = keyframe->time;
 			animation = *keyframe->getPlaybackData()->mAnimation;
 		} else {
-			mAnimationOffset = 0.0f;
+			return std::nullopt;
 		}
 		
-		float duration = static_cast<float>(animation.get_duration());
+		float duration = static_cast<float>(animation->get().get_duration());
 
 		PlaybackModifier currentModifier = PlaybackModifier::Forward;
 		
@@ -361,27 +341,12 @@ public:
 		}
 		
 		// Evaluate the animation at the adjusted time
-		evaluate_animation(animation, animationTime);
+		evaluate_animation(animation->get(), animationTime);
 		
 		// Update the skeleton with the new transforms
 		apply_pose_to_skeleton();
-	}
-	
-	int adjust_wrapped_time(int currentTime, int start_time, int end_time, int offset, int duration) {
-		int wrapped_time = currentTime;
-		if (wrapped_time != -1) {
-			if (offset < 0 && wrapped_time + offset < start_time + offset) {
-				wrapped_time = duration - std::fabs(std::fmod(wrapped_time - start_time, duration));
-			} else {
-				wrapped_time = std::fmod(wrapped_time - start_time, duration);
-			}
-			
-			if (wrapped_time > end_time) {
-				wrapped_time = start_time;
-			}
-			
-		}
-		return wrapped_time;
+		
+		return keyframe;
 	}
 	
 	// Retrieve the bones for rendering
@@ -408,54 +373,14 @@ public:
 		return bonesCPU;
 	}
 	
-	std::vector<BoneCPU> get_bones_at_time(int time) {
-		// For simplicity, use the first animation in the list
-		std::optional<PlaybackComponent::Keyframe> keyframe;
+	std::optional<PlaybackComponent::Keyframe> get_keyframe(float time) const {
+		auto it = findKeyframe(time);
 		
-		Animation& animation = mProvider.get_animation();
-		
-		if (!keyframes_.empty()) {
-			keyframe = evaluate_keyframe(time);
-			animation = *keyframe->getPlaybackData()->mAnimation;
+		if (it != keyframes_.end()) {
+			return *it;
+		} else {
+			return std::nullopt;
 		}
-		
-		int duration = animation.get_duration();
-		
-		time = fmax(0, fmod(duration + time, duration));
-		
-		// Evaluate the animation at the current time
-		auto model = evaluate_animation_once(animation, time);
-		
-		// Update the skeleton with the new transforms
-		apply_pose_to_skeleton(model);
-		
-		// Ensure we have a valid number of bones
-		size_t numBones = mProvider.get_skeleton().num_bones();
-		
-		std::vector<BoneCPU> bonesCPU(numBones);
-		
-		for (size_t i = 0; i < numBones; ++i) {
-			// Get the bone transform as a glm::mat4
-			glm::mat4 boneTransform = mProvider.get_skeleton().get_bone(i).transform;
-			
-			// Reference to the BoneCPU structure
-			BoneCPU& boneCPU = bonesCPU[i];
-			
-			// Copy each element from glm::mat4 to the BoneCPU's transform array
-			for (int row = 0; row < 4; ++row) {
-				for (int col = 0; col < 4; ++col) {
-					boneCPU.transform[row][col] = boneTransform[row][col];
-				}
-			}
-		}
-		
-		apply_pose_to_skeleton(); // return default pose
-
-		return bonesCPU;
-	}
-	
-	PlaybackComponent::Keyframe get_keyframe(float time) const {
-		return *findKeyframe(time);
 	}
 
 private:

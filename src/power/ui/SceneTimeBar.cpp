@@ -426,8 +426,6 @@ void SceneTimeBar::update() {
 			find_previous_and_next_keyframes();
 		}
 		evaluate_timelines();
-	} else {
-		evaluate_timelines();
 	}
 	
 	verify_uncommited_key();
@@ -466,7 +464,6 @@ void SceneTimeBar::verify_uncommited_key() {
 			auto& component = mActiveActor->get().get_component<TimelineComponent>();
 			
 			if (component.KeyframeExists()) {
-				
 				mUncommittedKey = !component.IsSyncWithProvider();
 				
 			}
