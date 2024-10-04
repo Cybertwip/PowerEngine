@@ -69,6 +69,10 @@ public:
 
 	};
 	
+	Animation() : m_duration(0) {
+		
+	}
+	
 	// Add keyframes for a specific bone
 	void add_bone_keyframes(int boneIndex, const std::vector<KeyFrame>& keyframes) {
 		m_bone_animations.push_back({boneIndex, keyframes});

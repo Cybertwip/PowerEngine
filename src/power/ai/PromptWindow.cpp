@@ -153,7 +153,7 @@ void PromptWindow::Preview(const std::string& path, const std::string& directory
 	Preview(path, directory, deserializer, std::nullopt);
 }
 
-void PromptWindow::Preview(const std::string& path, const std::string& directory, CompressedSerialization::Deserializer& deserializer, std::optional<std::unique_ptr<SkinnedAnimationComponent::SkinnedAnimationPdo>> pdo) {
+void PromptWindow::Preview(const std::string& path, const std::string& directory, CompressedSerialization::Deserializer& deserializer, std::optional<std::shared_ptr<PlaybackData>> playbackData) {
 	set_visible(true);
 	set_modal(true);
 	
@@ -183,10 +183,12 @@ void PromptWindow::Preview(const std::string& path, const std::string& directory
 		mSubmitButton->set_enabled(false);
 	} else {
 		
-		if (pdo.has_value()) {
-			auto& skinnedComponent = actor->get_component<SkinnedAnimationComponent>();
+		if (playbackData.has_value()) {
+			auto& playbackComponent = actor->get_component<PlaybackComponent>();
 			
-			skinnedComponent.set_pdo(std::move(*pdo));
+			playbackData->mSkeleton = playbackComponent.getPlaybackData()->mSkeleton;
+			
+			skinnedComponent.setplaybackData(playbackData);
 		}
 	}
 	
@@ -494,15 +496,14 @@ void PromptWindow::PollJobStatusAsync(const std::string& request_id) {
 													CompressedSerialization::Deserializer animationDeserializer;
 													
 													animationDeserializer.initialize(animationCompressedData);
-													auto pdo = std::make_unique<SkinnedAnimationComponent::SkinnedAnimationPdo> ();
+								
+								auto animation = std::make_unique<Animation>();
 													
-													auto animation = std::make_unique<Animation>();
+								animation->deserialize(animationDeserializer);
 													
-													animation->deserialize(animationDeserializer);
+									auto playbackData = std::make_shared<PlaybackData>(std::make_shared<Skeleton>(), std::move(animation));
 													
-													pdo->mAnimationData.push_back(std::move(animation));
-													
-													Preview(mActorPath, mOutputDirectory, deserializer, std::move(pdo));
+																										Preview(mActorPath, mOutputDirectory, deserializer, playbackData);
 													
 													break;
 												}

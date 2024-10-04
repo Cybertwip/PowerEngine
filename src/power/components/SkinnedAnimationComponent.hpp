@@ -30,26 +30,12 @@ public:
 		};
 	};
 	
-	struct SkinnedAnimationPdo {
-		SkinnedAnimationPdo() = default;
-		
-		SkinnedAnimationPdo(std::unique_ptr<Skeleton> skeleton) : mSkeleton(std::move(skeleton)) {}
-		
-		std::unique_ptr<Skeleton> mSkeleton;
-		std::vector<std::unique_ptr<Animation>> mAnimationData;
-	};
-	
 public:
-	SkinnedAnimationComponent(std::unique_ptr<SkinnedAnimationPdo> animationPdo, PlaybackComponent& provider, AnimationTimeProvider& animationTimeProvider)
-	: mProvider(provider), mAnimationTimeProvider(animationTimeProvider), mRegistrationId(-1), mFrozen(false) , mAnimationPdo(std::move(animationPdo))
-	, mSkeleton(*mAnimationPdo->mSkeleton)
+	SkinnedAnimationComponent(PlaybackComponent& provider, AnimationTimeProvider& animationTimeProvider)
+	: mProvider(provider), mAnimationTimeProvider(animationTimeProvider), mRegistrationId(-1), mFrozen(false)
 	, mAnimationOffset(0.0f) {
-		for (auto& animation : mAnimationPdo->mAnimationData) {
-			mAnimationData.push_back(*animation);
-		}
-		
 		// Initialize the pose buffers
-		size_t numBones = mSkeleton.get().num_bones();
+		size_t numBones = provider.get_skeleton().num_bones();
 		mModelPose.resize(numBones);
 		
 		std::fill(mModelPose.begin(), mModelPose.end(), glm::identity<glm::mat4>());
@@ -70,17 +56,18 @@ public:
 		mRegistrationId = mProvider.register_on_playback_changed_callback([this](const PlaybackComponent& playback) {
 			
 			if (mFrozen) {
-				addKeyframe(mAnimationTimeProvider.GetTime(), playback.getPlaybackState(), playback.getPlaybackModifier(), playback.getPlaybackTrigger());
+				addKeyframe(mAnimationTimeProvider.GetTime(), playback.getPlaybackState(), playback.getPlaybackModifier(), playback.getPlaybackTrigger(), playback.getPlaybackData());
 			}
 		});
 	}
 	
 	void AddKeyframe() override {
-		addKeyframe(mAnimationTimeProvider.GetTime(), mProvider.getPlaybackState(), mProvider.getPlaybackModifier(), mProvider.getPlaybackTrigger());
+		addKeyframe(mAnimationTimeProvider.GetTime(), mProvider.getPlaybackState(), mProvider.getPlaybackModifier(), mProvider.getPlaybackTrigger(), mProvider.getPlaybackData());
 	}
 	
 	void UpdateKeyframe() override {
-		updateKeyframe(mAnimationTimeProvider.GetTime(), mProvider.getPlaybackState(), mProvider.getPlaybackModifier(), mProvider.getPlaybackTrigger());
+		updateKeyframe(mAnimationTimeProvider.GetTime(), mProvider.getPlaybackState(), mProvider.getPlaybackModifier(), mProvider.getPlaybackTrigger(),
+		    mProvider.getPlaybackData());
 	}
 	void RemoveKeyframe() override {
 		removeKeyframe(mAnimationTimeProvider.GetTime());
@@ -141,14 +128,14 @@ private:
 	
 public:
 	// Add a keyframe to the animation
-	void addKeyframe(float time, PlaybackState state, PlaybackModifier modifier, PlaybackTrigger trigger) {
+	void addKeyframe(float time, PlaybackState state, PlaybackModifier modifier, PlaybackTrigger trigger, std::shared_ptr<PlaybackData> playbackData) {
 		// Check if a keyframe at this time already exists
 		if (keyframeExists(time)) {
 			// Update the existing keyframe
-			updateKeyframe(time, state, modifier, trigger);
+			updateKeyframe(time, state, modifier, trigger, playbackData);
 			return;
 		}
-		PlaybackComponent::Keyframe keyframe(time, state, modifier, trigger);
+		PlaybackComponent::Keyframe keyframe(time, state, modifier, trigger, playbackData);
 		keyframes_.push_back(keyframe);
 		// Keep keyframes sorted
 		std::sort(keyframes_.begin(), keyframes_.end(),
@@ -160,7 +147,7 @@ public:
 	}
 	
 	// Update an existing keyframe at a specified time
-	void updateKeyframe(float time, PlaybackState state, PlaybackModifier modifier, PlaybackTrigger trigger) {
+	void updateKeyframe(float time, PlaybackState state, PlaybackModifier modifier, PlaybackTrigger trigger, std::shared_ptr<PlaybackData> playbackData) {
 		auto it = findKeyframe(time);
 		if (it != keyframes_.end()) {
 			it->setPlaybackState(state);
@@ -168,7 +155,7 @@ public:
 			it->setPlaybackTrigger(trigger);
 		} else {
 			// If the keyframe does not exist, add it
-			addKeyframe(time, state, modifier, trigger);
+			addKeyframe(time, state, modifier, trigger, playbackData);
 		}
 		
 		updateAnimationOffset();
@@ -194,7 +181,7 @@ public:
 		// If time is before the first keyframe
 		if (time < keyframes_.front().time) {
 			// Set the model pose to the first keyframe's pose
-			const Animation& animation = mAnimationData[0].get();
+			const Animation& animation = mProvider.get_animation();
 
 			evaluate_animation(animation, keyframes_.front().time);
 			
@@ -205,7 +192,7 @@ public:
 		if (time > keyframes_.back().time) {
 			// Set the model pose to the last keyframe's pose
 			
-			const Animation& animation = mAnimationData[0].get();
+			const Animation& animation = mProvider.get_animation();
 
 			evaluate_animation(animation, keyframes_.back().time);
 			
@@ -315,11 +302,8 @@ public:
 	}
 
 	void evaluate_time(float time, PlaybackModifier modifier) {
-		if (mAnimationData.empty()) {
-			return; // No animations to process
-		}
+		const Animation& animation = mProvider.get_animation();
 		
-		const Animation& animation = mAnimationData[0].get();
 		float duration = static_cast<float>(animation.get_duration());
 		
 		bool reverse = modifier == PlaybackModifier::Reverse;
@@ -340,11 +324,8 @@ public:
 	}
 	
 	void evaluate(float time) {
-		if (mAnimationData.empty()) {
-			return; // No animations to process
-		}
+		const Animation& animation = mProvider.get_animation();
 		
-		const Animation& animation = mAnimationData[0].get();
 		float duration = static_cast<float>(animation.get_duration());
 		
 		// Set mAnimationOffset based on the first keyframe
@@ -403,11 +384,7 @@ public:
 	}
 	
 	int get_animation_duration() {
-		if (mAnimationData.empty()) {
-			return 0;
-		}
-		
-		const Animation& animation = mAnimationData[0].get();
+		const Animation& animation = mProvider.get_animation();
 		
 		return animation.get_duration();
 	}
@@ -415,13 +392,13 @@ public:
 	// Retrieve the bones for rendering
 	std::vector<BoneCPU> get_bones() {
 		// Ensure we have a valid number of bones
-		size_t numBones = mSkeleton.get().num_bones();
+		size_t numBones = mProvider.get_skeleton().num_bones();
 		
 		std::vector<BoneCPU> bonesCPU(numBones);
 		
 		for (size_t i = 0; i < numBones; ++i) {
 			// Get the bone transform as a glm::mat4
-			glm::mat4 boneTransform = mSkeleton.get().get_bone(i).transform;
+			glm::mat4 boneTransform = mProvider.get_skeleton().get_bone(i).transform;
 			
 			// Reference to the BoneCPU structure
 			BoneCPU& boneCPU = bonesCPU[i];
@@ -437,31 +414,9 @@ public:
 	}
 	
 	std::vector<BoneCPU> get_bones_at_time(int time) {
-		if (mAnimationData.empty()) {
-			size_t numBones = mSkeleton.get().num_bones();
-			
-			std::vector<BoneCPU> bonesCPU(numBones);
-			
-			for (size_t i = 0; i < numBones; ++i) {
-				// Get the bone transform as a glm::mat4
-				glm::mat4 boneTransform = mSkeleton.get().get_bone(i).transform;
-				
-				// Reference to the BoneCPU structure
-				BoneCPU& boneCPU = bonesCPU[i];
-				
-				// Copy each element from glm::mat4 to the BoneCPU's transform array
-				for (int row = 0; row < 4; ++row) {
-					for (int col = 0; col < 4; ++col) {
-						boneCPU.transform[row][col] = boneTransform[row][col];
-					}
-				}
-			}
-		
-			return bonesCPU;
-		}
-		
 		// For simplicity, use the first animation in the list
-		const Animation& animation = mAnimationData[0].get();
+		const Animation& animation = mProvider.get_animation();
+		
 		int duration = animation.get_duration();
 		
 		time = fmax(0, fmod(duration + time, duration));
@@ -473,13 +428,13 @@ public:
 		apply_pose_to_skeleton(model);
 		
 		// Ensure we have a valid number of bones
-		size_t numBones = mSkeleton.get().num_bones();
+		size_t numBones = mProvider.get_skeleton().num_bones();
 		
 		std::vector<BoneCPU> bonesCPU(numBones);
 		
 		for (size_t i = 0; i < numBones; ++i) {
 			// Get the bone transform as a glm::mat4
-			glm::mat4 boneTransform = mSkeleton.get().get_bone(i).transform;
+			glm::mat4 boneTransform = mProvider.get_skeleton().get_bone(i).transform;
 			
 			// Reference to the BoneCPU structure
 			BoneCPU& boneCPU = bonesCPU[i];
@@ -496,26 +451,26 @@ public:
 
 		return bonesCPU;
 	}
-	
-	void set_pdo(std::unique_ptr<SkinnedAnimationPdo> animationPdo){
-		mAnimationData.clear();
-		
-		// skeleton does not change but must match this animation.
-		animationPdo->mSkeleton = std::move(mAnimationPdo->mSkeleton);
-		
-		// do skeleton matching (index and bone naming)
-		
-		//@TODO
-		
-		//
-		mAnimationPdo = std::move(animationPdo);
-		
-		for (auto& animation : mAnimationPdo->mAnimationData) {
-			mAnimationData.push_back(*animation);
-		}
-		
-	}
-	
+//	
+//	void set_pdo(std::unique_ptr<SkinnedAnimationPdo> animationPdo){
+//		mAnimationData.clear();
+//		
+//		// skeleton does not change but must match this animation.
+//		animationPdo->mSkeleton = std::move(mAnimationPdo->mSkeleton);
+//		
+//		// do skeleton matching (index and bone naming)
+//		
+//		//@TODO
+//		
+//		//
+//		mAnimationPdo = std::move(animationPdo);
+//		
+//		for (auto& animation : mAnimationPdo->mAnimationData) {
+//			mAnimationData.push_back(*animation);
+//		}
+//		
+//	}
+//	
 	PlaybackComponent::Keyframe get_keyframe(float time) const {
 		return *findKeyframe(time);
 	}
@@ -561,21 +516,17 @@ private:
 	}
 	
 	void apply_pose_to_skeleton() {
-		Skeleton& skeleton = mSkeleton.get();
+		Skeleton& skeleton = mProvider.get_skeleton();
 		skeleton.compute_offsets(mModelPose);
 	}
 	
 	void apply_pose_to_skeleton(std::vector<glm::mat4> modelPose) {
-		Skeleton& skeleton = mSkeleton.get();
+		Skeleton& skeleton = mProvider.get_skeleton();
 		skeleton.compute_offsets(modelPose);
 	}
 	
 	void updateAnimationOffset() {
-		if (mAnimationData.empty()) {
-			return;
-		}
-
-		const Animation& animation = mAnimationData[0].get();
+		const Animation& animation = mProvider.get_animation();
 		float duration = static_cast<float>(animation.get_duration());
 		
 		// Reset offset to 0.0f by default
@@ -598,7 +549,6 @@ private:
 		
 		return std::nullopt;
 	}
-	
 	
 	std::optional<PlaybackComponent::Keyframe> getPreviousPauseStateKeyframe(float fromTime) {
 		for (auto it = keyframes_.rbegin(); it != keyframes_.rend(); ++it) {
@@ -638,11 +588,6 @@ private:
 		
 		return std::nullopt;
 	}
-
-	std::unique_ptr<SkinnedAnimationPdo> mAnimationPdo;
-	
-	std::reference_wrapper<Skeleton> mSkeleton;
-	std::vector<std::reference_wrapper<Animation>> mAnimationData;
 	
 	float mAnimationOffset; // Animation offset time
 	

@@ -58,7 +58,7 @@ AnimationPanel::AnimationPanel(nanogui::Widget &parent)
 		if (mActiveActor.has_value()) {
 			auto& playback = mActiveActor->get().get_component<PlaybackComponent>();
 			
-			playback.update_state(active ? PlaybackState::Play : PlaybackState::Pause, PlaybackModifier::Reverse, PlaybackTrigger::None);
+			playback.update_state(active ? PlaybackState::Play : PlaybackState::Pause, PlaybackModifier::Reverse, PlaybackTrigger::None, playback.getPlaybackData());
 		}
 	});
 
@@ -69,7 +69,7 @@ AnimationPanel::AnimationPanel(nanogui::Widget &parent)
 		if (mActiveActor.has_value()) {
 			auto& playback = mActiveActor->get().get_component<PlaybackComponent>();
 			
-			playback.update_state(active ? PlaybackState::Play : PlaybackState::Pause, PlaybackModifier::Forward, PlaybackTrigger::None);
+			playback.update_state(active ? PlaybackState::Play : PlaybackState::Pause, PlaybackModifier::Forward, PlaybackTrigger::None, playback.getPlaybackData());
 		}
 	});
 	
@@ -91,21 +91,18 @@ void AnimationPanel::parse_file(const std::string& path) {
 		if (!deserializer.load_from_file(path)) {
 			std::cerr << "Failed to load serialized file: " << path << "\n";
 		} else {
-			auto pdo = std::make_unique<SkinnedAnimationComponent::SkinnedAnimationPdo> ();
-			
 			auto animation = std::make_unique<Animation>();
 			
 			animation->deserialize(deserializer);
-			
-			pdo->mAnimationData.push_back(std::move(animation));
 
-			auto& skinnedComponent = mActiveActor->get().get_component<SkinnedAnimationComponent>();
+			auto& playbackComponent = mActiveActor->get().get_component<PlaybackComponent>();
+
+			auto playbackData = std::make_shared<PlaybackData>(playbackComponent.getPlaybackData()->mSkeleton, std::move(animation));
 			
-			skinnedComponent.set_pdo(std::move(pdo));
+			playbackComponent.setPlaybackData(playbackData);
 			
 			mPlayPauseButton->set_pushed(false);
 			mReversePlayButton->set_pushed(false);
-
 		}
 	}
 }

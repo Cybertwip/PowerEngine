@@ -1,7 +1,19 @@
 #pragma once
 
 #include <functional>
+#include <memory>
+#include <vector>
 #include <unordered_map>
+
+class Animation;
+class Skeleton;
+
+struct PlaybackData {
+	PlaybackData(std::shared_ptr<Skeleton> skeleton, std::unique_ptr<Animation> animation) : mSkeleton(std::move(skeleton)), mAnimation(std::move(animation)) {}
+	
+	std::shared_ptr<Skeleton> mSkeleton;
+	std::unique_ptr<Animation> mAnimation;
+};
 
 enum class PlaybackState {
 	Play,
@@ -27,11 +39,13 @@ public:
 		PlaybackState mPlaybackState;
 		PlaybackModifier mPlaybackModifier;
 		PlaybackTrigger mPlaybackTrigger;
+		std::shared_ptr<PlaybackData> mPlaybackData;
 		
 	public:
 		// Constructors
-		Keyframe(float t, PlaybackState state, PlaybackModifier modifier, PlaybackTrigger trigger)
-		: time(t), mPlaybackState(state), mPlaybackModifier(modifier), mPlaybackTrigger(trigger) {
+		Keyframe(float t, PlaybackState state, PlaybackModifier modifier, PlaybackTrigger trigger, std::shared_ptr<PlaybackData> playbackData)
+		: time(t), mPlaybackState(state), mPlaybackModifier(modifier), mPlaybackTrigger(trigger),
+			mPlaybackData(playbackData) {
 			// Setting trigger sets state to Pause
 			if (trigger == PlaybackTrigger::Rewind || trigger == PlaybackTrigger::FastForward) {
 				mPlaybackState = PlaybackState::Pause;
@@ -62,7 +76,17 @@ public:
 		PlaybackTrigger getPlaybackTrigger() const {
 			return mPlaybackTrigger;
 		}
+
+		// Getter for PlaybackTrigger
+		std::shared_ptr<PlaybackData> getPlaybackData() const {
+			return mPlaybackData;
+		}
 		
+		void setPlaybackData(std::shared_ptr<PlaybackData> playbackData)  {
+			mPlaybackData = playbackData;
+		}
+
+
 		// Setter for PlaybackTrigger
 		void setPlaybackTrigger(PlaybackTrigger trigger) {
 			mPlaybackTrigger = trigger;
@@ -93,7 +117,8 @@ public:
 	mState(0,
 		   PlaybackState::Pause,
 		   PlaybackModifier::Forward,
-		   PlaybackTrigger::None) {
+		   PlaybackTrigger::None,
+		   std::make_shared<PlaybackData>(std::make_unique<Skeleton>(), std::make_unique<Animation>())) {
 		
 	}
 	
@@ -145,14 +170,33 @@ public:
 	const Keyframe& get_state() const {
 		return mState;
 	}
+
+	void setPlaybackData(std::shared_ptr<PlaybackData> playbackData) {
+		mState.setPlaybackData(playbackData);
+	}
+
+	// Getter for PlaybackTrigger
+	std::shared_ptr<PlaybackData> getPlaybackData() const {
+		return mState.getPlaybackData();
+	}
+
+	Animation& get_animation() const {
+		return *mState.getPlaybackData()->mAnimation;
+	}
 	
-	void update_state(PlaybackState state, PlaybackModifier modifier, PlaybackTrigger trigger) {
+	Skeleton& get_skeleton() const {
+		return *mState.getPlaybackData()->mSkeleton;
+	}
+	
+	void update_state(PlaybackState state, PlaybackModifier modifier, PlaybackTrigger trigger, std::shared_ptr<PlaybackData> playbackData) {
 		mState.setPlaybackState(state);
 
 		mState.setPlaybackModifier(modifier);
 
 		mState.setPlaybackTrigger(trigger);
-		
+
+		mState.setPlaybackData(playbackData);
+
 		trigger_on_playback_changed();
 	}
 	
