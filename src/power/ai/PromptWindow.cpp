@@ -188,7 +188,7 @@ void PromptWindow::Preview(const std::string& path, const std::string& directory
 			
 			playbackData.value()->mSkeleton = playbackComponent.getPlaybackData()->mSkeleton;
 			
-			skinnedComponent.setplaybackData(playbackData.value());
+			playbackComponent.setplaybackData(playbackData.value());
 		}
 	}
 	
