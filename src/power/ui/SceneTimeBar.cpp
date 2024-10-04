@@ -482,7 +482,6 @@ bool SceneTimeBar::mouse_motion_event(const nanogui::Vector2i &p, const nanogui:
 
 // Manual force draw to draw on top
 void SceneTimeBar::update() {
-	
 	mAnimationTimeProvider.Update(mCurrentTime);
 	
 	if (mPlaying) {
@@ -544,6 +543,8 @@ void SceneTimeBar::verify_uncommited_key() {
 
 // Helper method to stop playback
 void SceneTimeBar::stop_playback() {
+	mAnimationTimeProvider.Update(mCurrentTime);
+
 	mUncommittedKey = false;
 	
 	if (mPlaying) {
