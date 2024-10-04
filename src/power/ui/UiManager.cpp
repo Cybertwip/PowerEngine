@@ -305,7 +305,7 @@ void UiManager::export_movie(const std::string& path) {
 	
 	mActiveActor = std::nullopt;
 	
-	actorVisualManager.fire_actor_selected_event(mActiveActor);
+	mActorVisualManager.fire_actor_selected_event(mActiveActor);
 	mGizmoManager->select(mActiveActor);
 	mGizmoManager->select(GizmoManager::GizmoAxis(0));
 

@@ -90,6 +90,8 @@ public:
 				mProvider.setPlaybackTrigger(keyframe->getPlaybackTrigger());
 				mProvider.setPlaybackData(keyframe->getPlaybackData());
 			}
+		} else {
+			auto _ = evaluate_keyframe(mAnimationTimeProvider.GetTime());
 		}
 	}
 	
@@ -208,7 +210,7 @@ private:
 			return a.time < b.time;
 		});
 		
-		updateAnimationOffset();
+		updateAnimationOffset(time);
 	}
 	
 	// Update an existing keyframe at a specified time
@@ -224,7 +226,7 @@ private:
 			addKeyframe(time, state, modifier, trigger, playbackData);
 		}
 		
-		updateAnimationOffset();
+		updateAnimationOffset(time);
 	}
 	
 	// Remove a keyframe at the specified time
@@ -235,7 +237,7 @@ private:
 		}
 		// Optionally handle the case where the keyframe does not exist
 		
-		updateAnimationOffset();
+		updateAnimationOffset(time);
 	}
 	
 	// Evaluate the playback state at a given time
@@ -318,6 +320,8 @@ private:
 		if (keyframes_.empty()) {
 			return 0.0f;
 		}
+		
+		updateAnimationOffset(currentTime);
 		
 		// Initialize lastState and lastStateChangeTime based on the first keyframe
 		float lastStateChangeTime = mAnimationOffset;
@@ -502,24 +506,31 @@ private:
 		skeleton.compute_offsets(modelPose);
 	}
 	
-	void updateAnimationOffset() {
+	void updateAnimationOffset(float time) {
 		// Reset offset to 0.0f by default
 		mAnimationOffset = 0.0f;
 		
-		// Find the first keyframe
-		if (!keyframes_.empty()) {
+		// Find the keyframe with the largest time less than or equal to the given time
+		auto keyframe_it = std::find_if(keyframes_.rbegin(), keyframes_.rend(),
+										[time](const PlaybackComponent::Keyframe& kf) { return kf.time <= time; });
+		
+		// Check if the iterator is valid
+		if (keyframe_it != keyframes_.rend()) {
 			auto& currentAnimation = keyframes_.front().getPlaybackData()->mAnimation;
 			
-			mAnimationOffset = keyframes_.front().time;
-			
-			for (auto& keyframe : keyframes_) {
-				if (keyframe.getPlaybackData()->mAnimation != currentAnimation){
+			// Loop backwards through the keyframes starting from the found keyframe
+			for (auto it = keyframe_it; it != keyframes_.rend(); ++it) {
+				if (it->getPlaybackData()->mAnimation != currentAnimation) {
+					// If the animation has changed, reset the offset and break
 					mAnimationOffset = 0.0f;
 					break;
+				} else {
+					mAnimationOffset = it->time;  // Set offset to the found keyframe's time
 				}
 			}
 		}
 	}
+
 	
 	std::optional<PlaybackComponent::Keyframe> getPreviousPlayStateKeyframe(float fromTime) {
 		for (auto it = keyframes_.rbegin(); it != keyframes_.rend(); ++it) {

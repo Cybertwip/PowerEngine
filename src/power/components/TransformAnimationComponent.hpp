@@ -51,7 +51,7 @@ public:
 	void Evaluate() override {
 		if (!mFrozen) {
 			auto keyframe = evaluate(mAnimationTimeProvider.GetTime());
-			
+
 			if (keyframe.has_value()) {
 				auto [t, r, s] = *keyframe;
 				
@@ -59,6 +59,8 @@ public:
 				mProvider.set_rotation(r);
 				mProvider.set_scale(s);
 			}
+		} else {
+			auto _ = evaluate(mAnimationTimeProvider.GetTime());
 		}
 	}
 	
