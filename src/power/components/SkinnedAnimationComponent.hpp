@@ -302,11 +302,19 @@ public:
 	}
 
 	void evaluate_time(float time, PlaybackModifier modifier) {
-		const Animation& animation = mProvider.get_animation();
+		std::optional<PlaybackComponent::Keyframe> keyframe;
+		
+		Animation& animation = mProvider.get_animation();
+		
+		if (!keyframes_.empty()) {
+			keyframe = evaluate_keyframe(time);
+			animation = *keyframe->getPlaybackData()->mAnimation;
+		}
 		
 		float duration = static_cast<float>(animation.get_duration());
 		
 		bool reverse = modifier == PlaybackModifier::Reverse;
+
 		float animationTime = 0.0f;
 		
 		// Handle reverse playback
@@ -324,28 +332,25 @@ public:
 	}
 	
 	void evaluate(float time) {
-		const Animation& animation = mProvider.get_animation();
-		
-		float duration = static_cast<float>(animation.get_duration());
-		
-		// Set mAnimationOffset based on the first keyframe
+		std::optional<PlaybackComponent::Keyframe> keyframe;
+
+		Animation& animation = mProvider.get_animation();
+
 		if (!keyframes_.empty()) {
 			mAnimationOffset = keyframes_[0].time;
+			
+			keyframe = evaluate_keyframe(time);
+			animation = *keyframe->getPlaybackData()->mAnimation;
 		} else {
 			mAnimationOffset = 0.0f;
 		}
 		
-		auto keyframe = evaluate_keyframe(time);
-		
-		// Default playback state and modifier
-		PlaybackState currentState = PlaybackState::Pause; // Default to Pause
+		float duration = static_cast<float>(animation.get_duration());
+
 		PlaybackModifier currentModifier = PlaybackModifier::Forward;
 		
 		if (keyframe.has_value()) {
-			currentState = keyframe->getPlaybackState();
 			currentModifier = keyframe->getPlaybackModifier();
-		} else {
-			
 		}
 		
 		bool reverse = currentModifier == PlaybackModifier::Reverse;
@@ -451,26 +456,7 @@ public:
 
 		return bonesCPU;
 	}
-//	
-//	void set_pdo(std::unique_ptr<SkinnedAnimationPdo> animationPdo){
-//		mAnimationData.clear();
-//		
-//		// skeleton does not change but must match this animation.
-//		animationPdo->mSkeleton = std::move(mAnimationPdo->mSkeleton);
-//		
-//		// do skeleton matching (index and bone naming)
-//		
-//		//@TODO
-//		
-//		//
-//		mAnimationPdo = std::move(animationPdo);
-//		
-//		for (auto& animation : mAnimationPdo->mAnimationData) {
-//			mAnimationData.push_back(*animation);
-//		}
-//		
-//	}
-//	
+	
 	PlaybackComponent::Keyframe get_keyframe(float time) const {
 		return *findKeyframe(time);
 	}
