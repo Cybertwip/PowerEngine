@@ -66,7 +66,7 @@ public:
 	
 	void UpdateKeyframe() override {
 		updateKeyframe(mAnimationTimeProvider.GetTime(), mProvider.getPlaybackState(), mProvider.getPlaybackModifier(), mProvider.getPlaybackTrigger(),
-		    mProvider.getPlaybackData());
+					   mProvider.getPlaybackData());
 	}
 	void RemoveKeyframe() override {
 		removeKeyframe(mAnimationTimeProvider.GetTime());
@@ -86,7 +86,6 @@ public:
 				mProvider.setPlaybackTrigger(keyframe->getPlaybackTrigger());
 				mProvider.setPlaybackData(keyframe->getPlaybackData());
 			}
-
 		}
 	}
 	
@@ -99,7 +98,7 @@ public:
 		m1.time = mAnimationTimeProvider.GetTime();
 		
 		auto m2 = evaluate_keyframe(mAnimationTimeProvider.GetTime());
-				
+		
 		if (m2.has_value()) {
 			return m1 == *m2;
 		} else {
@@ -358,18 +357,17 @@ private:
 	
 	std::optional<PlaybackComponent::Keyframe>  evaluate_keyframe(float time) {
 		auto keyframe = evaluate(time);
-
+		
 		std::optional<std::reference_wrapper<Animation>> animation;
-
+		
 		if (keyframe.has_value()) {
-			mAnimationOffset = keyframe->time;
 			animation = *keyframe->getPlaybackData()->mAnimation;
 		} else {
 			return std::nullopt;
 		}
 		
 		float duration = static_cast<float>(animation->get().get_duration());
-
+		
 		PlaybackModifier currentModifier = PlaybackModifier::Forward;
 		
 		if (keyframe.has_value()) {
@@ -405,7 +403,7 @@ private:
 			return std::nullopt;
 		}
 	}
-
+	
 private:
 	// Helper to check if a keyframe exists at the given time
 	bool keyframeExists(float time) const {
@@ -461,9 +459,8 @@ private:
 		mAnimationOffset = 0.0f;
 		
 		// Find the first keyframe
-		for (const auto& kf : keyframes_) {
-			mAnimationOffset = kf.time;
-			break;
+		if (!keyframes_.empty()) {
+			mAnimationOffset = keyframes_.front().time;
 		}
 	}
 	
@@ -478,7 +475,7 @@ private:
 		return std::nullopt;
 	}
 	
-	std::optional<PlaybackComponent::Keyframe> getPreviousPauseStateKeyframe(float fromTime) {
+	std::optional<PlaybackComponent::Keyframe> getPreviousPauseStateKeyframe(float fromTime) const {
 		for (auto it = keyframes_.rbegin(); it != keyframes_.rend(); ++it) {
 			const PlaybackComponent::Keyframe& kf = *it;
 			if (kf.time < fromTime && kf.getPlaybackState() == PlaybackState::Pause) {
@@ -489,7 +486,7 @@ private:
 		return std::nullopt;
 	}
 	
-	std::optional<PlaybackComponent::Keyframe> getFirstButPreviousPauseStateKeyframe(float fromTime) {
+	std::optional<PlaybackComponent::Keyframe> getFirstButPreviousPauseStateKeyframe(float fromTime) const {
 		std::optional<PlaybackComponent::Keyframe> keyframe;
 		for (auto it = keyframes_.rbegin(); it != keyframes_.rend(); ++it) {
 			const PlaybackComponent::Keyframe& kf = *it;
@@ -503,7 +500,7 @@ private:
 		return std::nullopt;
 	}
 	
-	std::optional<PlaybackComponent::Keyframe> getFirstButPreviousPlayStateKeyframe(float fromTime) {
+	std::optional<PlaybackComponent::Keyframe> getFirstButPreviousPlayStateKeyframe(float fromTime) const {
 		std::optional<PlaybackComponent::Keyframe> keyframe;
 		for (auto it = keyframes_.rbegin(); it != keyframes_.rend(); ++it) {
 			const PlaybackComponent::Keyframe& kf = *it;
@@ -521,7 +518,11 @@ private:
 	
 	// Buffers to store poses
 	std::vector<glm::mat4> mModelPose;
-
+	
 	// Keyframes for playback control
 	std::vector<PlaybackComponent::Keyframe> keyframes_;
+	
+	// Current state tracking
+	PlaybackState mLastPlaybackState = PlaybackState::Pause; // Initialize to Pause
 };
+
