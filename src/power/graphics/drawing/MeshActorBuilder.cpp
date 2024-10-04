@@ -203,8 +203,6 @@ Actor& MeshActorBuilder::build_skinned(Actor& actor, AnimationTimeProvider& time
 		
 		// Add SkinnedAnimationComponent
 		auto& skinnedComponent = actor.add_component<SkinnedAnimationComponent>(playbackComponent, timeProvider);
-		
-		actor.add_component<SimpleSkinnedAnimationComponent>(playbackComponent, timeProvider);
 				
 		// Create SkinnedMesh instances from deserialized data
 		for (auto& skinnedMeshData : model->GetSkinnedMeshData()) {
