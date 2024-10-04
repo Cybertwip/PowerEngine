@@ -144,11 +144,10 @@ void SelfContainedMeshCanvas::draw_content(const nanogui::Matrix4f& view,
 	
 	Drawable& drawableRef = drawableComponent.drawable();
 	
-	
 	if (mPreviewActor->get().find_component<SkinnedAnimationComponent>()) {
 		SkinnedAnimationComponent& animationComponent = mPreviewActor->get().get_component<SkinnedAnimationComponent>();
 		
-		//animationComponent.evaluate_time(mCurrentTime, PlaybackModifier::Forward);
+		animationComponent.evaluate_provider(mCurrentTime, PlaybackModifier::Forward);
 		
 		mCurrentTime += 1;
 	}
@@ -158,6 +157,14 @@ void SelfContainedMeshCanvas::draw_content(const nanogui::Matrix4f& view,
 	mMeshBatch->draw_content(view, projection);
 	
 	mSkinnedMeshBatch->draw_content(view, projection);
+	
+	
+	
+	if (mPreviewActor->get().find_component<SkinnedAnimationComponent>()) {
+		SkinnedAnimationComponent& animationComponent = mPreviewActor->get().get_component<SkinnedAnimationComponent>();
+		
+		animationComponent.reset_pose();
+	}
 }
 
 void SelfContainedMeshCanvas::draw_contents() {

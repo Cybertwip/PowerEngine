@@ -79,7 +79,7 @@ public:
 	
 	void Evaluate() override {
 		if (!mFrozen) {
-			auto keyframe = evaluate(mAnimationTimeProvider.GetTime());
+			auto keyframe = evaluate_keyframe(mAnimationTimeProvider.GetTime());
 			
 			if (keyframe.has_value()) {
 				mProvider.setPlaybackState(keyframe->getPlaybackState());
@@ -132,13 +132,41 @@ public:
 		}
 	}
 	
+	void reset_pose() {
+		mModelPose = mEmptyPose;
+	}
+	
+	void evaluate_provider(float time, PlaybackModifier modifier) {
+		
+		Animation& animation = mProvider.get_animation();
+		
+		float duration = static_cast<float>(animation.get_duration());
+		
+		bool reverse = modifier == PlaybackModifier::Reverse;
+		
+		float animationTime = 0.0f;
+		
+		// Handle reverse playback
+		if (reverse) {
+			animationTime = fmod(duration - time, duration);
+		} else {
+			animationTime = fmod(time, duration);
+		}
+		
+		// Evaluate the animation at the adjusted time
+		evaluate_animation(animation, animationTime);
+		
+		// Update the skeleton with the new transforms
+		apply_pose_to_skeleton();
+	}
+	
 private:
 	PlaybackComponent& mProvider;
 	AnimationTimeProvider& mAnimationTimeProvider;
 	int mRegistrationId;
 	bool mFrozen;
 	
-public:
+private:
 	// Add a keyframe to the animation
 	void addKeyframe(float time, PlaybackState state, PlaybackModifier modifier, PlaybackTrigger trigger, std::shared_ptr<PlaybackData> playbackData) {
 		// Check if a keyframe at this time already exists
@@ -186,7 +214,7 @@ public:
 	}
 	
 	// Evaluate the playback state at a given time
-	std::optional<PlaybackComponent::Keyframe> evaluate_keyframe(float time) {
+	std::optional<PlaybackComponent::Keyframe> evaluate(float time) {
 		if (keyframes_.empty()) {
 			return std::nullopt; // Default state if no keyframes
 		}
@@ -309,7 +337,7 @@ public:
 		return adjustedTime;
 	}
 	
-	std::optional<PlaybackComponent::Keyframe>  evaluate(float time) {
+	std::optional<PlaybackComponent::Keyframe>  evaluate_keyframe(float time) {
 		auto keyframe = evaluate_keyframe(time);
 
 		std::optional<std::reference_wrapper<Animation>> animation;
