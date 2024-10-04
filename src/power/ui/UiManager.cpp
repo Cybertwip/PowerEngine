@@ -281,7 +281,7 @@ void UiManager::OnActorSelected(std::optional<std::reference_wrapper<Actor>> act
 	mGizmoManager->select(std::nullopt);
 }
 
-void UIManager::export_movie(const std::string& path) {
+void UiManager::export_movie(const std::string& path) {
 	mSceneTimeBar.stop_playback();
 	mSceneTimeBar.toggle_play_pause(true);
 	
