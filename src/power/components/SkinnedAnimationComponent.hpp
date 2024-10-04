@@ -39,7 +39,6 @@ public:
 		mModelPose.resize(numBones);
 		
 		std::fill(mModelPose.begin(), mModelPose.end(), glm::identity<glm::mat4>());
-		std::fill(mEmptyPose.begin(), mEmptyPose.end(), glm::identity<glm::mat4>());
 		
 		apply_pose_to_skeleton();
 	}
@@ -132,10 +131,6 @@ public:
 		}
 	}
 	
-	void reset_pose() {
-		mModelPose = mEmptyPose;
-	}
-	
 	// Retrieve the bones for rendering
 	std::vector<BoneCPU> get_bones() {
 		// Ensure we have a valid number of bones
@@ -159,7 +154,6 @@ public:
 		}
 		return bonesCPU;
 	}
-	
 	
 	void evaluate_provider(float time, PlaybackModifier modifier) {
 		
@@ -363,7 +357,7 @@ private:
 	}
 	
 	std::optional<PlaybackComponent::Keyframe>  evaluate_keyframe(float time) {
-		auto keyframe = evaluate_keyframe(time);
+		auto keyframe = evaluate(time);
 
 		std::optional<std::reference_wrapper<Animation>> animation;
 
@@ -371,7 +365,6 @@ private:
 			mAnimationOffset = keyframe->time;
 			animation = *keyframe->getPlaybackData()->mAnimation;
 		} else {
-			reset_pose();
 			return std::nullopt;
 		}
 		
@@ -528,7 +521,6 @@ private:
 	
 	// Buffers to store poses
 	std::vector<glm::mat4> mModelPose;
-	std::vector<glm::mat4> mEmptyPose;
 
 	// Keyframes for playback control
 	std::vector<PlaybackComponent::Keyframe> keyframes_;

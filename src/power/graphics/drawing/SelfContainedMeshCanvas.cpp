@@ -158,13 +158,6 @@ void SelfContainedMeshCanvas::draw_content(const nanogui::Matrix4f& view,
 	
 	mSkinnedMeshBatch->draw_content(view, projection);
 	
-	
-	
-	if (mPreviewActor->get().find_component<SkinnedAnimationComponent>()) {
-		SkinnedAnimationComponent& animationComponent = mPreviewActor->get().get_component<SkinnedAnimationComponent>();
-		
-		animationComponent.reset_pose();
-	}
 }
 
 void SelfContainedMeshCanvas::draw_contents() {
