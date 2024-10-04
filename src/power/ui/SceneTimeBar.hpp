@@ -58,6 +58,10 @@ public:
 	int current_time() const;
 	
 	void refresh_actors();
+	
+	bool is_playing() const {
+		return mPlaying;
+	}
 
 private:
 	void verify_uncommited_key();

@@ -317,6 +317,10 @@ void UiManager::draw() {
 		mCanvas.take_snapshot([this](std::vector<uint8_t>& pixels) {
 			
 		});
+		
+		if (mSceneTimeBar.is_playing()) {
+			mIsMovieExporting = false;
+		}
 	} else {
 		mSceneTimeBar.update();
 		mSceneTimeBar.overlay();
