@@ -40,6 +40,8 @@ public:
 		
 		std::fill(mModelPose.begin(), mModelPose.end(), glm::identity<glm::mat4>());
 		
+		mDefaultPose = mModelPose;
+		
 		apply_pose_to_skeleton();
 	}
 	
@@ -154,6 +156,33 @@ public:
 		return bonesCPU;
 	}
 
+	void reset_pose() {
+		apply_pose_to_skeleton(mDefaultPose);
+	}
+	
+	void evaluate_provider(float time, PlaybackModifier modifier) {
+		
+		Animation& animation = mProvider.get_animation();
+		
+		float duration = static_cast<float>(animation.get_duration());
+		
+		bool reverse = modifier == PlaybackModifier::Reverse;
+		
+		float animationTime = 0.0f;
+		
+		// Handle reverse playback
+		if (reverse) {
+			animationTime = fmod(duration - time, duration);
+		} else {
+			animationTime = fmod(time, duration);
+		}
+		
+		// Evaluate the animation at the adjusted time
+		evaluate_animation(animation, animationTime);
+		
+		// Update the skeleton with the new transforms
+		apply_pose_to_skeleton();
+	}
 private:
 	PlaybackComponent& mProvider;
 	AnimationTimeProvider& mAnimationTimeProvider;
@@ -425,7 +454,7 @@ private:
 		skeleton.compute_offsets(mModelPose);
 	}
 	
-	void apply_pose_to_skeleton(std::vector<glm::mat4> modelPose) {
+	void apply_pose_to_skeleton(std::vector<glm::mat4>& modelPose) {
 		Skeleton& skeleton = mProvider.get_skeleton();
 		skeleton.compute_offsets(modelPose);
 	}
@@ -494,149 +523,12 @@ private:
 	
 	// Buffers to store poses
 	std::vector<glm::mat4> mModelPose;
-	
+	std::vector<glm::mat4> mDefaultPose;
+
 	// Keyframes for playback control
 	std::vector<PlaybackComponent::Keyframe> keyframes_;
 	
 	// Current state tracking
 	PlaybackState mLastPlaybackState = PlaybackState::Pause; // Initialize to Pause
 };
-
-
-
-class SimpleSkinnedAnimationComponent : public AnimationComponent {
-public:
-	struct BoneCPU {
-		float transform[4][4] =
-		{
-			{ 0.0f, 0.0f, 0.0f, 0.0f },
-			{ 0.0f, 0.0f, 0.0f, 0.0f },
-			{ 0.0f, 0.0f, 0.0f, 0.0f },
-			{ 0.0f, 0.0f, 0.0f, 0.0f }
-		};
-	};
-	
-public:
-	SimpleSkinnedAnimationComponent(PlaybackComponent& provider, AnimationTimeProvider& animationTimeProvider)
-	: mProvider(provider), mAnimationTimeProvider(animationTimeProvider) {
-		// Initialize the pose buffers
-		size_t numBones = provider.get_skeleton().num_bones();
-		mModelPose.resize(numBones);
-		
-		std::fill(mModelPose.begin(), mModelPose.end(), glm::identity<glm::mat4>());
-		
-		apply_pose_to_skeleton();
-	}
-	
-	void TriggerRegistration() override {
-
-	}
-	
-	void AddKeyframe() override {
-	}
-	
-	void UpdateKeyframe() override {
-		
-	}
-	void RemoveKeyframe() override {
-	}
-	
-	void Freeze() override {
-	}
-	
-	void Evaluate() override {
-		evaluate_keyframe(mAnimationTimeProvider.GetTime());
-	}
-	
-	void Unfreeze() override {
-	}
-	
-	bool IsSyncWithProvider() override {
-		return true;
-	}
-	
-	bool KeyframeExists() override {
-		return true;
-	}
-	
-	float GetPreviousKeyframeTime() override {
-		return 0.0f;
-	}
-	
-	float GetNextKeyframeTime() override {
-		return 0.0f;
-	}
-	
-	// Retrieve the bones for rendering
-	std::vector<BoneCPU> get_bones() {
-		// Ensure we have a valid number of bones
-		size_t numBones = mProvider.get_skeleton().num_bones();
-		
-		std::vector<BoneCPU> bonesCPU(numBones);
-		
-		for (size_t i = 0; i < numBones; ++i) {
-			// Get the bone transform as a glm::mat4
-			glm::mat4 boneTransform = mProvider.get_skeleton().get_bone(i).transform;
-			
-			// Reference to the BoneCPU structure
-			BoneCPU& boneCPU = bonesCPU[i];
-			
-			// Copy each element from glm::mat4 to the BoneCPU's transform array
-			for (int row = 0; row < 4; ++row) {
-				for (int col = 0; col < 4; ++col) {
-					boneCPU.transform[row][col] = boneTransform[row][col];
-				}
-			}
-		}
-		return bonesCPU;
-	}
-	
-	void set_animation_time_provider(AnimationTimeProvider& animationTimeProvider) {
-		mAnimationTimeProvider = animationTimeProvider;
-	}
-	
-	void evaluate_keyframe(float time, PlaybackModifier modifier) {
-		std::optional<std::reference_wrapper<Animation>> animation = mProvider.get_animation();
-		
-		float duration = static_cast<float>(animation->get().get_duration());
-		
-		PlaybackModifier currentModifier = modifier;
-		
-		bool reverse = currentModifier == PlaybackModifier::Reverse;
-		
-		float animationTime = time;
-		
-		// Handle reverse playback
-		if (reverse) {
-			animationTime = fmod(duration - animationTime, duration);
-		} else {
-			// Calculate adjusted animation time
-			animationTime = fmod(animationTime, duration);
-		}
-		
-		// Evaluate the animation at the adjusted time
-		evaluate_animation(animation->get(), animationTime);
-		
-		// Update the skeleton with the new transforms
-		apply_pose_to_skeleton();
-	}
-	
-private:
-	PlaybackComponent& mProvider;
-	AnimationTimeProvider& mAnimationTimeProvider;
-	int mRegistrationId;
-		
-private:
-	void evaluate_animation(const Animation& animation, float time) {
-		mModelPose = animation.evaluate(time);
-	}
-	
-	void apply_pose_to_skeleton() {
-		Skeleton& skeleton = mProvider.get_skeleton();
-		skeleton.compute_offsets(mModelPose);
-	}
-
-	std::vector<glm::mat4> mModelPose;
-};
-
 
