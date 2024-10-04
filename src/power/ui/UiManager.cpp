@@ -370,5 +370,5 @@ void UiManager::draw_content(const nanogui::Matrix4f& model, const nanogui::Matr
 }
 
 void UiManager::process_events() {
-	mCanvas.ProcessEvents();
+	mCanvas.process_events();
 }
