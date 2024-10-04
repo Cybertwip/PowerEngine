@@ -516,15 +516,19 @@ void SceneTimeBar::evaluate_timelines() {
 	for (auto& animatableActor : mAnimatableActors) {
 		auto& component = animatableActor.get().get_component<TimelineComponent>();
 		
-		if (!mRecording) {
+		if (!mRecording && !mPlaying){
+			component.Freeze();
+		} else if (!mRecording) {
 			component.Unfreeze();
 		}
 		
-		if (!mRecording && !mPlaying){
-			component.Freeze();
-		}
-		
 		component.Evaluate();
+		
+		// double Freezing check due to overridal of mProvider
+		if (!mRecording) {
+			component.Unfreeze();
+		}
+
 	}
 }
 

@@ -164,6 +164,49 @@ public:
 		apply_pose_to_skeleton(mDefaultPose);
 	}
 	
+	std::optional<PlaybackComponent::Keyframe> evaluate_keyframe(float time) {
+		if (keyframes_.empty()) {
+			return std::nullopt;
+		}
+		
+		// Find the next keyframe after the current time
+		auto nextKeyframeIt = std::upper_bound(keyframes_.begin(), keyframes_.end(), time,
+											   [](float t, const PlaybackComponent::Keyframe& kf) {
+			return t < kf.time;
+		});
+		
+		if (nextKeyframeIt == keyframes_.end()) {
+			// If there is no next keyframe, use the last keyframe
+			return evaluate_keyframe(keyframes_.back(), time);
+		}
+		
+		if (nextKeyframeIt == keyframes_.begin()) {
+			// If the current time is before the first keyframe
+			return evaluate_keyframe(*nextKeyframeIt, time);
+		}
+		
+		// Get the previous keyframe (current keyframe)
+		auto currentKeyframeIt = nextKeyframeIt - 1;
+		
+		// Calculate interpolation factor
+		float segmentDuration = nextKeyframeIt->time - currentKeyframeIt->time;
+		float t = (time - currentKeyframeIt->time) / segmentDuration;
+		
+		t = glm::clamp(t, 0.0f, 1.0f);
+		
+		// Handle playback modifiers (e.g., reverse)
+		PlaybackModifier currentModifier = currentKeyframeIt->getPlaybackModifier();
+		bool reverse = (currentModifier == PlaybackModifier::Reverse);
+		if (reverse) {
+			t = 1.0f - t;
+		}
+		
+		// Blend poses from current and next keyframes on a per-bone basis
+		blend_keyframes(*currentKeyframeIt, *nextKeyframeIt, time, t);
+		
+		return *currentKeyframeIt;
+	}
+	
 	void evaluate_provider(float time, PlaybackModifier modifier) {
 		
 		Animation& animation = mProvider.get_animation();
@@ -365,49 +408,6 @@ private:
 		
 		return adjustedTime;
 	}
-	std::optional<PlaybackComponent::Keyframe> evaluate_keyframe(float time) {
-		if (keyframes_.empty()) {
-			return std::nullopt;
-		}
-		
-		// Find the next keyframe after the current time
-		auto nextKeyframeIt = std::upper_bound(keyframes_.begin(), keyframes_.end(), time,
-											   [](float t, const PlaybackComponent::Keyframe& kf) {
-			return t < kf.time;
-		});
-		
-		if (nextKeyframeIt == keyframes_.end()) {
-			// If there is no next keyframe, use the last keyframe
-			return evaluate_keyframe(keyframes_.back(), time);
-		}
-		
-		if (nextKeyframeIt == keyframes_.begin()) {
-			// If the current time is before the first keyframe
-			return evaluate_keyframe(*nextKeyframeIt, time);
-		}
-		
-		// Get the previous keyframe (current keyframe)
-		auto currentKeyframeIt = nextKeyframeIt - 1;
-		
-		// Calculate interpolation factor
-		float segmentDuration = nextKeyframeIt->time - currentKeyframeIt->time;
-		float t = (time - currentKeyframeIt->time) / segmentDuration;
-		
-		t = glm::clamp(t, 0.0f, 1.0f);
-
-		// Handle playback modifiers (e.g., reverse)
-		PlaybackModifier currentModifier = currentKeyframeIt->getPlaybackModifier();
-		bool reverse = (currentModifier == PlaybackModifier::Reverse);
-		if (reverse) {
-			t = 1.0f - t;
-		}
-		
-		// Blend poses from current and next keyframes on a per-bone basis
-		blend_keyframes(*currentKeyframeIt, *nextKeyframeIt, time, t);
-		
-		return *currentKeyframeIt;
-	}
-	
 	
 	std::optional<PlaybackComponent::Keyframe>  evaluate_keyframe(std::optional<PlaybackComponent::Keyframe> keyframe, float time) {
 		std::optional<std::reference_wrapper<Animation>> animation;
