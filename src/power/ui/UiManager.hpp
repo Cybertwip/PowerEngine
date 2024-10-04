@@ -83,4 +83,6 @@ private:
 	
 	int mFrameCounter;
 	int mFramePadding; // Number of digits for frame numbering
+	
+	IActorVisualManager& mActorVisualManager;
 };

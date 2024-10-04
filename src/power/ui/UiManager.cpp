@@ -99,7 +99,8 @@ UiManager::UiManager(IActorSelectedRegistry& registry, IActorVisualManager& acto
 , mCanvas(canvas)
 , mAnimationPanel(animationPanel)
 , mSceneTimeBar(sceneTimeBar)
-, mIsMovieExporting(false) {
+, mIsMovieExporting(false)
+, mActorVisualManager(actorVisualManager) {
 	//
 	//	mRenderPass = new nanogui::RenderPass({mCanvas.render_pass()->targets()[2],
 	//		mCanvas.render_pass()->targets()[3]}, mCanvas.render_pass()->targets()[0], mCanvas.render_pass()->targets()[1], nullptr);
@@ -301,6 +302,13 @@ void UiManager::export_movie(const std::string& path) {
 	
 	mMovieExportFile = path;
 	mMovieExportDirectory = std::filesystem::path(path).parent_path().string();
+	
+	mActiveActor = std::nullopt;
+	
+	actorVisualManager.fire_actor_selected_event(mActiveActor);
+	mGizmoManager->select(mActiveActor);
+	mGizmoManager->select(GizmoManager::GizmoAxis(0));
+
 }
 
 void UiManager::draw() {
