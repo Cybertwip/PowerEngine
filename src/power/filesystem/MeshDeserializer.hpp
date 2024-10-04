@@ -1,5 +1,8 @@
 #pragma once
 
+
+#include "animation/Skeleton.hpp"
+
 #include "graphics/shading/MeshData.hpp"
 #include "filesystem/MeshActorImporter.hpp"
 #include "filesystem/CompressedSerialization.hpp"
