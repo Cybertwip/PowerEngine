@@ -328,7 +328,7 @@ void UiManager::draw() {
 		mCanvas.take_snapshot([this](std::vector<uint8_t>& png_data) {
 			// Generate the frame filename with padded zeros
 			std::ostringstream filename_stream;
-			filename_stream << "frame" << std::setw(mFramePadding) << std::setfill('0') << mFrameCounter << ".png";
+			filename_stream << "frame" << std::setw(mFramePadding) << std::setfill('0') << mFrameCounter << ".jpg";
 			std::string filename = filename_stream.str();
 			
 			// Full path for the frame
@@ -359,7 +359,7 @@ void UiManager::draw() {
 			
 			// Assemble the movie using ffmpeg
 			std::ostringstream ffmpeg_command;
-			ffmpeg_command << "ffmpeg -y -framerate 60 -i \"" << mMovieExportDirectory << "/frame%0" << mFramePadding << "d.png\" -c:v libx264 -pix_fmt yuv420p \"" << mMovieExportFile << "\"";
+			ffmpeg_command << "/usr/local/bin/ffmpeg -y -framerate 60 -i \"" << mMovieExportDirectory << "/frame%0" << mFramePadding << "d.jpg\" -c:v libx264 -pix_fmt yuv420p \"" << mMovieExportFile << "\"";
 			
 			std::cout << "Running ffmpeg command: " << ffmpeg_command.str() << std::endl;
 			
@@ -373,7 +373,7 @@ void UiManager::draw() {
 			// Optional: Clean up frame images
 			for (int i = 0; i < mFrameCounter; ++i) {
 				std::ostringstream cleanup_stream;
-				cleanup_stream << "frame" << std::setw(mFramePadding) << std::setfill('0') << i << ".png";
+				cleanup_stream << "frame" << std::setw(mFramePadding) << std::setfill('0') << i << ".jpg";
 				std::string cleanup_filename = cleanup_stream.str();
 				std::filesystem::path cleanup_path = std::filesystem::path(mMovieExportDirectory) / cleanup_filename;
 				if (std::remove(cleanup_path.string().c_str()) != 0) {

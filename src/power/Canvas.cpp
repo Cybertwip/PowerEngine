@@ -59,7 +59,7 @@ void Canvas::process_events() {
 		std::vector<uint8_t> png_data;
 		
 		// Now write the converted RGBA data to PNG
-		write_to_png(pixels, fbsize.x(), fbsize.y(), 4, png_data);
+		write_to_jpeg(pixels, fbsize.x(), fbsize.y(), 4, png_data);
 		
 		mSnapshotCallback(png_data);
 		mSnapshotCallback = nullptr;
