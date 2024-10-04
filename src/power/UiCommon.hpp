@@ -47,10 +47,6 @@ public:
 	SceneTimeBar& scene_time_bar() {
 		return *mSceneTimeBar;
 	}
-	
-	StatusBarPanel& status_bar_panel() {
-		return *mStatusBarPanel;
-	}
 
 	nanogui::Widget& toolbox() {
 		return *mToolbox;
@@ -62,7 +58,6 @@ private:
 	AnimationPanel* mAnimationPanel;
     HierarchyPanel* mHierarchyPanel;
 	nanogui::Widget* mStatusBar;
-	StatusBarPanel* mStatusBarPanel;
 	nanogui::Widget* mToolbox;
 	SceneTimeBar* mSceneTimeBar;
 };
