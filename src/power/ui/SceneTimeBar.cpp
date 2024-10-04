@@ -431,7 +431,9 @@ void SceneTimeBar::update() {
 
 	verify_uncommited_key();
 	evaluate_keyframe_status();
+}
 
+void SceneTimeBar::overlay() {
 	
 	auto ctx = screen()->nvg_context();
 	// Draw background

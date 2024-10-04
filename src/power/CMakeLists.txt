@@ -106,6 +106,9 @@ add_executable(PowerEngine
     ${CMAKE_CURRENT_LIST_DIR}/filesystem/DirectoryNode.hpp
     ${CMAKE_CURRENT_LIST_DIR}/filesystem/DirectoryNode.cpp
 
+    ${CMAKE_CURRENT_LIST_DIR}/filesystem/ImageUtils.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/filesystem/ImageUtils.cpp
+
     ${CMAKE_CURRENT_LIST_DIR}/filesystem/MeshActorImporter.hpp
     ${CMAKE_CURRENT_LIST_DIR}/filesystem/MeshActorImporter.cpp
 

@@ -46,6 +46,15 @@ public:
 	StatusBarPanel& status_bar_panel() {
 		return *mStatusBarPanel;
 	}
+	
+	void export_movie(const std::string& path);
+	
+	bool is_movie_exporting() const {
+		return mIsMovieExporting;
+	}
+	
+	void process_events();
+	
 private:
 	IActorSelectedRegistry& mRegistry;
 	ActorManager& mActorManager;
@@ -67,5 +76,5 @@ private:
 	glm::vec4 mSelectionColor;
 	
 	StatusBarPanel* mStatusBarPanel;
-	
+	bool mIsMovieExporting;
 };

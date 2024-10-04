@@ -2,6 +2,8 @@
 
 #include "MeshDeserializer.hpp"
 
+#include "animation/Skeleton.hpp"
+
 bool MeshDeserializer::load_mesh(CompressedSerialization::Deserializer& deserializer, const std::string& path) {
 	// Clear any previously loaded meshes
 	clear();

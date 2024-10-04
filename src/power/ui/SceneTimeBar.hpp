@@ -45,9 +45,15 @@ public:
 	// Override OnActorSelected from IActorSelectedCallback
 	void OnActorSelected(std::optional<std::reference_wrapper<Actor>> actor) override;
 	
+	void stop_playback();
+
 	// Method to update the SceneTimeBar
 	void update();
 	
+	void overlay();
+	
+	void toggle_play_pause(bool play);
+
 	// Getter for current time
 	int current_time() const;
 	
@@ -57,8 +63,6 @@ private:
 	void verify_uncommited_key();
 	
 	// Helper methods
-	void toggle_play_pause(bool play);
-	void stop_playback();
 	void update_time_display(int frameCount);
 	void evaluate_timelines();
 	void evaluate_keyframe_status();
