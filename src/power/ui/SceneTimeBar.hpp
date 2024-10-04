@@ -29,6 +29,15 @@ class Widget;
 
 // SceneTimeBar Class Declaration
 class SceneTimeBar : public nanogui::Widget, public IActorSelectedCallback {
+	struct KeyframeStamp {
+		bool mActive;
+		float mTime;
+		
+		KeyframeStamp(bool active, float time) : mActive(active), mTime(time) {
+			
+		}
+	};
+	
 public:
 	SceneTimeBar(nanogui::Widget* parent, ActorManager& actorManager, AnimationTimeProvider& animationTimeProvider, IActorSelectedRegistry& registry, int width, int height);
 	~SceneTimeBar();
@@ -54,7 +63,7 @@ private:
 	void evaluate_transforms();
 	void evaluate_animations();
 	void evaluate_keyframe_status();
-	std::tuple<bool, bool> find_previous_and_next_keyframes();
+	std::tuple<KeyframeStamp, KeyframeStamp> find_previous_and_next_keyframes();
 	
 	void register_actor_callbacks();
 	
