@@ -144,10 +144,10 @@ void SelfContainedMeshCanvas::draw_content(const nanogui::Matrix4f& view,
 	
 	Drawable& drawableRef = drawableComponent.drawable();
 	
-	if (mPreviewActor->get().find_component<SkinnedAnimationComponent>()) {
-		SkinnedAnimationComponent& animationComponent = mPreviewActor->get().get_component<SkinnedAnimationComponent>();
+	if (mPreviewActor->get().find_component<SimpleSkinnedAnimationComponent>()) {
+		SkinnedAnimationComponent& animationComponent = mPreviewActor->get().get_component<SimpleSkinnedAnimationComponent>();
 		
-		animationComponent.evaluate_provider(mCurrentTime, PlaybackModifier::Forward);
+		animationComponent.evaluate_keyframe(mCurrentTime, PlaybackModifier::Forward);
 		
 		mCurrentTime += 1;
 	}
