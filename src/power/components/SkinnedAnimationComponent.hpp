@@ -8,8 +8,9 @@
 #include "animation/Transform.hpp"
 #include "animation/Skeleton.hpp"
 
-#include <glm/gtc/matrix_transform.hpp>
+
 #include <glm/gtx/matrix_decompose.hpp>
+#include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtx/quaternion.hpp>
 
@@ -373,13 +374,13 @@ private:
 		
 		if (nextKeyframeIt == keyframes_.end()) {
 			// If there is no next keyframe, use the last keyframe
-			apply_pose_from_keyframe(keyframes_.back(), time);
+			apply_pose_from_keyframe(keyframes_.back());
 			return keyframes_.back();
 		}
 		
 		if (nextKeyframeIt == keyframes_.begin()) {
 			// If the current time is before the first keyframe
-			apply_pose_from_keyframe(*nextKeyframeIt, time);
+			apply_pose_from_keyframe(*nextKeyframeIt);
 			return *nextKeyframeIt;
 		}
 		
@@ -397,65 +398,11 @@ private:
 			t = 1.0f - t;
 		}
 		
-		// Interpolate poses
-		interpolate_poses(*currentKeyframeIt, *nextKeyframeIt, t);
+		// Blend poses from current and next keyframes on a per-bone basis
+		blend_keyframes(*currentKeyframeIt, *nextKeyframeIt, t);
 		
 		return *currentKeyframeIt;
 	}
-	
-	void interpolate_poses(const PlaybackComponent::Keyframe& current,
-						   const PlaybackComponent::Keyframe& next,
-						   float t) {
-		const Animation& currentAnimation = *current.getPlaybackData()->mAnimation;
-		const Animation& nextAnimation = *next.getPlaybackData()->mAnimation;
-		
-		// Evaluate both animations at their respective times
-		std::vector<glm::mat4> currentPose = currentAnimation.evaluate(current.time);
-		std::vector<glm::mat4> nextPose = nextAnimation.evaluate(next.time);
-		
-		// Ensure both poses have the same number of bones
-		if (currentPose.size() != nextPose.size()) {
-			std::cerr << "Pose size mismatch between keyframes." << std::endl;
-			return;
-		}
-		
-		// Initialize blended pose
-		std::vector<glm::mat4> blendedPose(currentPose.size(), glm::mat4(1.0f));
-		
-		for (size_t i = 0; i < currentPose.size(); ++i) {
-			// Decompose matrices into translation, rotation, and scale
-			glm::vec3 translationCurrent, scaleCurrent;
-			glm::quat rotationCurrent;
-			glm::vec3 skewCurrent;
-			glm::vec4 perspectiveCurrent;
-
-			glm::decompose(currentPose[i], scaleCurrent, rotationCurrent, translationCurrent, skewCurrent, perspectiveCurrent);
-			
-			glm::vec3 translationNext, scaleNext;
-			glm::quat rotationNext;
-			
-			glm::vec3 skewNext;
-			glm::vec4 perspectiveNext;
-
-			glm::decompose(nextPose[i], scaleNext, rotationNext, translationNext, skewNext, perspectiveNext);
-			
-			// Interpolate translation and scale linearly
-			glm::vec3 blendedTranslation = glm::mix(translationCurrent, translationNext, t);
-			glm::vec3 blendedScale = glm::mix(scaleCurrent, scaleNext, t);
-			
-			// Interpolate rotation using SLERP
-			glm::quat blendedRotation = glm::slerp(rotationCurrent, rotationNext, t);
-			
-			// Recompose the blended transformation matrix
-			blendedPose[i] = glm::translate(glm::mat4(1.0f), blendedTranslation) *
-			glm::mat4_cast(blendedRotation) *
-			glm::scale(glm::mat4(1.0f), blendedScale);
-		}
-		
-		// Apply the blended pose to the skeleton
-		apply_pose_to_skeleton(blendedPose);
-	}
-
 
 	std::optional<PlaybackComponent::Keyframe> get_keyframe(float time) const {
 		auto it = findKeyframe(time);
@@ -499,41 +446,9 @@ private:
 		return std::nullopt;
 	}
 	
-	void apply_pose_from_keyframe(const PlaybackComponent::Keyframe& keyframe, float currentTime) {
-		if (!keyframe.getPlaybackData() || !keyframe.getPlaybackData()->mAnimation) {
-			std::cerr << "Invalid playback data or animation in keyframe." << std::endl;
-			return;
-		}
-		
-		// Retrieve the associated animation
-		Animation& animation = *keyframe.getPlaybackData()->mAnimation;
-		
-		// Get the duration of the animation
-		float duration = static_cast<float>(animation.get_duration());
-		
-		// Determine if playback is reversed
-		bool reverse = (keyframe.getPlaybackModifier() == PlaybackModifier::Reverse);
-		
-		// Calculate the adjusted animation time based on playback state
-		float animationTime = getAdjustedAnimationTime(currentTime - keyframe.time, duration);
-		
-		// Handle reverse playback
-		if (reverse) {
-			animationTime = fmod(duration - animationTime, duration);
-		} else {
-			animationTime = fmod(animationTime, duration);
-		}
-		
-		// Evaluate the animation at the adjusted time to get the pose
-		evaluate_animation(animation, animationTime);
-		
-		// Apply the evaluated pose to the skeleton
-		apply_pose_to_skeleton();
-		
-		// Optionally, update the internal pose buffer if needed
-		// mModelPose has already been updated in evaluate_animation
+	std::vector<glm::mat4> evaluate_animation_once(const Animation& animation, float time) {
+		return animation.evaluate(time);
 	}
-
 	
 	void evaluate_animation(const Animation& animation, float time) {
 		mModelPose = animation.evaluate(time);
@@ -617,6 +532,226 @@ private:
 		
 		return std::nullopt;
 	}
+	/**
+	 * @brief Blends two keyframes by interpolating each bone's transformation.
+	 *
+	 * @param current The current keyframe.
+	 * @param next The next keyframe.
+	 * @param t The interpolation factor (0.0 to 1.0).
+	 */
+	void blend_keyframes(const PlaybackComponent::Keyframe& current,
+						 const PlaybackComponent::Keyframe& next,
+						 float t) {
+		if (!current.getPlaybackData() || !current.getPlaybackData()->mAnimation ||
+			!next.getPlaybackData() || !next.getPlaybackData()->mAnimation) {
+			std::cerr << "Invalid playback data or animation in keyframes." << std::endl;
+			return;
+		}
+		
+		// Retrieve the associated animations
+		Animation& animationA = *current.getPlaybackData()->mAnimation;
+		Animation& animationB = *next.getPlaybackData()->mAnimation;
+		
+		// Get the total number of bones from the skeleton
+		size_t numBones = mProvider.get_skeleton().num_bones();
+		
+		// Initialize blended pose
+		std::vector<glm::mat4> blendedPose(numBones, glm::mat4(1.0f));
+		
+		// Iterate over each bone to interpolate its transformation
+		for (size_t boneIndex = 0; boneIndex < numBones; ++boneIndex) {
+			// Retrieve keyframes for the current bone from both animations
+			const std::vector<Animation::KeyFrame>* boneKeyframesA = animationA.get_bone_keyframes(static_cast<int>(boneIndex));
+			const std::vector<Animation::KeyFrame>* boneKeyframesB = animationB.get_bone_keyframes(static_cast<int>(boneIndex));
+			
+			if (!boneKeyframesA || boneKeyframesA->empty() ||
+				!boneKeyframesB || boneKeyframesB->empty()) {
+				// If no keyframes exist for this bone in either animation, use identity matrix
+				blendedPose[boneIndex] = glm::mat4(1.0f);
+				continue;
+			}
+			
+			// Interpolate transformation from animation A
+			glm::mat4 transformA = interpolate_bone_pose(*boneKeyframesA, t);
+			
+			// Interpolate transformation from animation B
+			glm::mat4 transformB = interpolate_bone_pose(*boneKeyframesB, t);
+			
+			// Blend the two transformations based on factor t
+			blendedPose[boneIndex] = blend_transformations(transformA, transformB, t);
+		}
+		
+		// Update the internal pose buffer
+		mModelPose = blendedPose;
+		
+		// Apply the blended pose to the skeleton
+		apply_pose_to_skeleton();
+	}
+
+	/**
+	 * @brief Interpolates a bone's pose based on its keyframes and the interpolation factor.
+	 *
+	 * @param keyframes The keyframes for the bone.
+	 * @param t The interpolation factor (0.0 to 1.0).
+	 * @return glm::mat4 The interpolated transformation matrix.
+	 */
+	glm::mat4 interpolate_bone_pose(const std::vector<Animation::KeyFrame>& keyframes, float t) const {
+		// Handle edge cases
+		if (keyframes.empty()) {
+			return glm::mat4(1.0f);
+		}
+		
+		if (t <= 0.0f) {
+			return construct_transform_matrix(keyframes.front());
+		}
+		
+		if (t >= 1.0f) {
+			return construct_transform_matrix(keyframes.back());
+		}
+		
+		// Find the two keyframes surrounding the interpolation factor t
+		size_t nextKeyframeIdx = 0;
+		for (; nextKeyframeIdx < keyframes.size(); ++nextKeyframeIdx) {
+			if ((keyframes.begin() + nextKeyframeIdx)->time >= t) {
+				break;
+			}
+		}
+		
+		size_t currentKeyframeIdx = (nextKeyframeIdx == 0) ? 0 : nextKeyframeIdx - 1;
+		
+		const Animation::KeyFrame& keyA = keyframes[currentKeyframeIdx];
+		const Animation::KeyFrame& keyB = keyframes[nextKeyframeIdx];
+		
+		// Calculate local interpolation factor between keyA and keyB
+		float segmentDuration = keyB.time - keyA.time;
+		float local_t = (t - keyA.time) / segmentDuration;
+		
+		// Interpolate translation and scale linearly
+		glm::vec3 blendedTranslation = glm::mix(keyA.translation, keyB.translation, local_t);
+		glm::vec3 blendedScale = glm::mix(keyA.scale, keyB.scale, local_t);
+		
+		// Interpolate rotation using SLERP
+		glm::quat blendedRotation = glm::slerp(keyA.rotation, keyB.rotation, local_t);
+		
+		// Recompose the blended transformation matrix
+		glm::mat4 translation_matrix = glm::translate(glm::mat4(1.0f), blendedTranslation);
+		glm::mat4 rotation_matrix = glm::mat4_cast(blendedRotation);
+		glm::mat4 scale_matrix = glm::scale(glm::mat4(1.0f), blendedScale);
+		
+		return translation_matrix * rotation_matrix * scale_matrix;
+	}
+
+	/**
+	 * @brief Blends two transformation matrices based on the interpolation factor.
+	 *
+	 * @param transformA The first transformation matrix.
+	 * @param transformB The second transformation matrix.
+	 * @param t The interpolation factor (0.0 to 1.0).
+	 * @return glm::mat4 The blended transformation matrix.
+	 */
+	glm::mat4 blend_transformations(const glm::mat4& transformA, const glm::mat4& transformB, float t) const {
+		// Decompose matrices into translation, rotation, and scale
+		glm::vec3 translationA, scaleA, skewA;
+		glm::vec4 perspectiveA;
+		
+		glm::quat rotationA;
+		glm::decompose(transformA, scaleA, rotationA, translationA, skewA, perspectiveA);
+		
+		glm::vec3 translationB, scaleB, skewB;
+		glm::quat rotationB;
+		glm::vec4 perspectiveB;
+
+		glm::decompose(transformB, scaleB, rotationB, translationB, skewB, perspectiveB);
+		
+		// Interpolate translation and scale linearly
+		glm::vec3 blendedTranslation = glm::mix(translationA, translationB, t);
+		glm::vec3 blendedScale = glm::mix(scaleA, scaleB, t);
+		
+		// Interpolate rotation using SLERP
+		glm::quat blendedRotation = glm::slerp(rotationA, rotationB, t);
+		
+		// Recompose the blended transformation matrix
+		glm::mat4 translation_matrix = glm::translate(glm::mat4(1.0f), blendedTranslation);
+		glm::mat4 rotation_matrix = glm::mat4_cast(blendedRotation);
+		glm::mat4 scale_matrix = glm::scale(glm::mat4(1.0f), blendedScale);
+		
+		return translation_matrix * rotation_matrix * scale_matrix;
+	}
+
+	/**
+	 * @brief Applies the pose from a specific keyframe by blending per-bone transformations.
+	 *
+	 * @param keyframe The keyframe from which to extract and apply the pose.
+	 */
+	void apply_pose_from_keyframe(const PlaybackComponent::Keyframe& keyframe) {
+		if (!keyframe.getPlaybackData() || !keyframe.getPlaybackData()->mAnimation) {
+			std::cerr << "Invalid playback data or animation in keyframe." << std::endl;
+			return;
+		}
+		
+		// Retrieve the associated animation
+		Animation& animation = *keyframe.getPlaybackData()->mAnimation;
+		
+		// Get the current time relative to the keyframe's time
+		float relativeTime = mAnimationTimeProvider.GetTime() - keyframe.time;
+		
+		// Calculate the adjusted animation time based on playback modifier
+		float duration = static_cast<float>(animation.get_duration());
+		PlaybackModifier modifier = keyframe.getPlaybackModifier();
+		
+		float animationTime = 0.0f;
+		
+		if (modifier == PlaybackModifier::Reverse) {
+			animationTime = fmod(duration - relativeTime, duration);
+		} else { // Forward playback
+			animationTime = fmod(relativeTime, duration);
+		}
+		
+		// Initialize blended pose
+		size_t numBones = mProvider.get_skeleton().num_bones();
+		std::vector<glm::mat4> blendedPose(numBones, glm::mat4(1.0f));
+		
+		// Iterate over each bone to interpolate its transformation
+		for (size_t boneIndex = 0; boneIndex < numBones; ++boneIndex) {
+			// Retrieve keyframes for the current bone
+			const std::vector<Animation::KeyFrame>* boneKeyframes = animation.get_bone_keyframes(static_cast<int>(boneIndex));
+			
+			if (!boneKeyframes || boneKeyframes->empty()) {
+				// If no keyframes exist for this bone, use identity matrix
+				blendedPose[boneIndex] = glm::mat4(1.0f);
+				continue;
+			}
+			
+			// Calculate normalized time for interpolation (0.0 to 1.0)
+			float normalizedTime = duration > 0.0f ? (animationTime / duration) : 0.0f;
+			normalizedTime = glm::clamp(normalizedTime, 0.0f, 1.0f);
+			
+			// Interpolate bone transformation
+			glm::mat4 interpolatedTransform = interpolate_bone_pose(*boneKeyframes, normalizedTime);
+			
+			blendedPose[boneIndex] = interpolatedTransform;
+		}
+		
+		// Update the internal pose buffer
+		mModelPose = blendedPose;
+		
+		// Apply the blended pose to the skeleton
+		apply_pose_to_skeleton();
+	}
+
+	/**
+	 * @brief Constructs a transformation matrix from a KeyFrame.
+	 *
+	 * @param keyframe The keyframe containing translation, rotation, and scale.
+	 * @return glm::mat4 The resulting transformation matrix.
+	 */
+	glm::mat4 construct_transform_matrix(const Animation::KeyFrame& keyframe) const {
+		glm::mat4 translation_matrix = glm::translate(glm::mat4(1.0f), keyframe.translation);
+		glm::mat4 rotation_matrix = glm::mat4_cast(keyframe.rotation);
+		glm::mat4 scale_matrix = glm::scale(glm::mat4(1.0f), keyframe.scale);
+		return translation_matrix * rotation_matrix * scale_matrix;
+	}
+
 	
 	float mAnimationOffset; // Animation offset time
 	
