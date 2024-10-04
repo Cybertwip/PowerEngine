@@ -153,6 +153,7 @@ public:
 			it->setPlaybackState(state);
 			it->setPlaybackModifier(modifier);
 			it->setPlaybackTrigger(trigger);
+			it->setPlaybackData(playbackData);
 		} else {
 			// If the keyframe does not exist, add it
 			addKeyframe(time, state, modifier, trigger, playbackData);
@@ -181,9 +182,7 @@ public:
 		// If time is before the first keyframe
 		if (time < keyframes_.front().time) {
 			// Set the model pose to the first keyframe's pose
-			const Animation& animation = mProvider.get_animation();
-
-			evaluate_animation(animation, keyframes_.front().time);
+			evaluate_animation(*keyframes_.front().getPlaybackData()->mAnimation, keyframes_.front().time);
 			
 			return std::nullopt;
 		}
@@ -191,10 +190,7 @@ public:
 		// If time is after the last keyframe
 		if (time > keyframes_.back().time) {
 			// Set the model pose to the last keyframe's pose
-			
-			const Animation& animation = mProvider.get_animation();
-
-			evaluate_animation(animation, keyframes_.back().time);
+			evaluate_animation(*keyframes_.back().getPlaybackData()->mAnimation, keyframes_.back().time);
 			
 			return keyframes_.back();
 		}
@@ -388,12 +384,6 @@ public:
 		return wrapped_time;
 	}
 	
-	int get_animation_duration() {
-		const Animation& animation = mProvider.get_animation();
-		
-		return animation.get_duration();
-	}
-	
 	// Retrieve the bones for rendering
 	std::vector<BoneCPU> get_bones() {
 		// Ensure we have a valid number of bones
@@ -420,7 +410,14 @@ public:
 	
 	std::vector<BoneCPU> get_bones_at_time(int time) {
 		// For simplicity, use the first animation in the list
-		const Animation& animation = mProvider.get_animation();
+		std::optional<PlaybackComponent::Keyframe> keyframe;
+		
+		Animation& animation = mProvider.get_animation();
+		
+		if (!keyframes_.empty()) {
+			keyframe = evaluate_keyframe(time);
+			animation = *keyframe->getPlaybackData()->mAnimation;
+		}
 		
 		int duration = animation.get_duration();
 		
@@ -512,9 +509,6 @@ private:
 	}
 	
 	void updateAnimationOffset() {
-		const Animation& animation = mProvider.get_animation();
-		float duration = static_cast<float>(animation.get_duration());
-		
 		// Reset offset to 0.0f by default
 		mAnimationOffset = 0.0f;
 		

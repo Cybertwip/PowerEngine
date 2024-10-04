@@ -175,6 +175,7 @@ public:
 
 	void setPlaybackData(std::shared_ptr<PlaybackData> playbackData) {
 		mState.setPlaybackData(playbackData);
+		trigger_on_playback_changed();
 	}
 
 	// Getter for PlaybackTrigger
