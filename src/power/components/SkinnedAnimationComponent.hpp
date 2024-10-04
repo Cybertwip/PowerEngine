@@ -426,11 +426,18 @@ private:
 			// Decompose matrices into translation, rotation, and scale
 			glm::vec3 translationCurrent, scaleCurrent;
 			glm::quat rotationCurrent;
-			glm::decompose(currentPose[i], scaleCurrent, rotationCurrent, translationCurrent, glm::vec3(0.0f), glm::vec4(0.0f));
+			glm::vec3 skewCurrent;
+			glm::vec4 perspectiveCurrent;
+
+			glm::decompose(currentPose[i], scaleCurrent, rotationCurrent, translationCurrent, skewCurrent, perspectiveCurrent);
 			
 			glm::vec3 translationNext, scaleNext;
 			glm::quat rotationNext;
-			glm::decompose(nextPose[i], scaleNext, rotationNext, translationNext, glm::vec3(0.0f), glm::vec4(0.0f));
+			
+			glm::vec3 skewNext;
+			glm::vec4 perspectiveNext;
+
+			glm::decompose(nextPose[i], scaleNext, rotationNext, translationNext, skewNext, perspectiveNext);
 			
 			// Interpolate translation and scale linearly
 			glm::vec3 blendedTranslation = glm::mix(translationCurrent, translationNext, t);
@@ -492,9 +499,41 @@ private:
 		return std::nullopt;
 	}
 	
-	std::vector<glm::mat4> evaluate_animation_once(const Animation& animation, float time) {
-		return animation.evaluate(time);
+	void apply_pose_from_keyframe(const PlaybackComponent::Keyframe& keyframe, float currentTime) {
+		if (!keyframe.getPlaybackData() || !keyframe.getPlaybackData()->mAnimation) {
+			std::cerr << "Invalid playback data or animation in keyframe." << std::endl;
+			return;
+		}
+		
+		// Retrieve the associated animation
+		Animation& animation = *keyframe.getPlaybackData()->mAnimation;
+		
+		// Get the duration of the animation
+		float duration = static_cast<float>(animation.get_duration());
+		
+		// Determine if playback is reversed
+		bool reverse = (keyframe.getPlaybackModifier() == PlaybackModifier::Reverse);
+		
+		// Calculate the adjusted animation time based on playback state
+		float animationTime = getAdjustedAnimationTime(currentTime - keyframe.time, duration);
+		
+		// Handle reverse playback
+		if (reverse) {
+			animationTime = fmod(duration - animationTime, duration);
+		} else {
+			animationTime = fmod(animationTime, duration);
+		}
+		
+		// Evaluate the animation at the adjusted time to get the pose
+		evaluate_animation(animation, animationTime);
+		
+		// Apply the evaluated pose to the skeleton
+		apply_pose_to_skeleton();
+		
+		// Optionally, update the internal pose buffer if needed
+		// mModelPose has already been updated in evaluate_animation
 	}
+
 	
 	void evaluate_animation(const Animation& animation, float time) {
 		mModelPose = animation.evaluate(time);
