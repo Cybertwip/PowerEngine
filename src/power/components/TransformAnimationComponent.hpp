@@ -80,6 +80,18 @@ public:
 		
 	}
 	
+	void SyncWithProvider() override {
+		auto keyframe = evaluate(mAnimationTimeProvider.GetTime());
+		
+		if (keyframe.has_value()) {
+			auto [t, r, s] = *keyframe;
+			
+			mProvider.set_translation(t);
+			mProvider.set_rotation(r);
+			mProvider.set_scale(s);
+		}
+	}
+	
 	bool KeyframeExists() override {
 		return is_keyframe(mAnimationTimeProvider.GetTime());
 	}

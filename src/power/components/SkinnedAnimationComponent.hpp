@@ -112,6 +112,17 @@ public:
 		}
 	}
 	
+	void SyncWithProvider() override {
+		auto keyframe = evaluate_keyframe(mAnimationTimeProvider.GetTime());
+		
+		if (keyframe.has_value()) {
+			mProvider.setPlaybackState(keyframe->getPlaybackState());
+			mProvider.setPlaybackModifier(keyframe->getPlaybackModifier());
+			mProvider.setPlaybackTrigger(keyframe->getPlaybackTrigger());
+			mProvider.setPlaybackData(keyframe->getPlaybackData());
+		}
+	}
+	
 	bool KeyframeExists() override {
 		return is_keyframe(mAnimationTimeProvider.GetTime());
 	}

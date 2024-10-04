@@ -66,6 +66,12 @@ public:
 		return true;
 	}
 	
+	void SyncWithProvider() override {
+		for (auto& component : mComponents) {
+			component.get().SyncWithProvider();
+		}
+	}
+
 	bool KeyframeExists() override {
 		for (auto& component : mComponents) {
 			if (component.get().KeyframeExists()) {

@@ -338,6 +338,8 @@ mNormalButtonColor(theme()->m_text_color) // Initialize normal button color
 				} else {
 					component.AddKeyframe();
 				}
+				
+				component.SyncWithProvider();
 			}
 			
 			find_previous_and_next_keyframes();
@@ -426,11 +428,12 @@ void SceneTimeBar::update() {
 			find_previous_and_next_keyframes();
 		}
 	}
-
+	
 	evaluate_timelines();
-
+	
 	verify_uncommited_key();
 	evaluate_keyframe_status();
+	
 }
 
 void SceneTimeBar::overlay() {

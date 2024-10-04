@@ -148,14 +148,10 @@ void SelfContainedMeshCanvas::draw_content(const nanogui::Matrix4f& view,
 		auto& component = mPreviewActor->get().get_component<SkinnedAnimationComponent>();
 		
 		
-		component.Freeze();
-		
-		auto keyframe = component.evaluate_keyframe(mCurrentTime);
-		
-		if (!keyframe.has_value()) {
-			component.evaluate_provider(mCurrentTime, PlaybackModifier::Forward);
-		}
-		
+		component.Unfreeze();
+
+		component.evaluate_provider(mCurrentTime, PlaybackModifier::Forward);
+
 		mCurrentTime += 1;
 	}
 	
