@@ -60,8 +60,7 @@ private:
 	void toggle_play_pause(bool play);
 	void stop_playback();
 	void update_time_display(int frameCount);
-	void evaluate_transforms();
-	void evaluate_animations();
+	void evaluate_timelines();
 	void evaluate_keyframe_status();
 	std::tuple<KeyframeStamp, KeyframeStamp> find_previous_and_next_keyframes();
 	
@@ -93,10 +92,6 @@ private:
 	bool mPlaying;
 	bool mUncommittedKey;
 	
-	std::optional<std::reference_wrapper<TransformComponent>> mRegisteredTransformComponent;
-	std::optional<std::reference_wrapper<PlaybackComponent>> mRegisteredPlaybackComponent;
-	int mTransformRegistrationId;
-	int mPlaybackRegistrationId;
 	int mCurrentTime;
 	int mTotalFrames;
 };

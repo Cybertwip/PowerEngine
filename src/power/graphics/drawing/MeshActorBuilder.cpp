@@ -10,6 +10,7 @@
 #include "components/PlaybackComponent.hpp"
 #include "components/SkinnedAnimationComponent.hpp"
 #include "components/SkinnedMeshComponent.hpp"
+#include "components/TimelineComponent.hpp"
 #include "components/TransformComponent.hpp"
 #include "components/TransformAnimationComponent.hpp"
 
@@ -109,7 +110,13 @@ Actor& MeshActorBuilder::build_mesh(Actor& actor, AnimationTimeProvider& timePro
 	
 	// Add TransformComponent and AnimationComponent
 	auto& transform = actor.add_component<TransformComponent>();
-	actor.add_component<TransformAnimationComponent>(transform, timeProvider);
+	auto& transformAnimationComponent = actor.add_component<TransformAnimationComponent>(transform, timeProvider);
+	
+	std::vector<std::reference_wrapper<AnimationComponent>> components = {
+		std::ref(transformAnimationComponent)
+	};
+
+	actor.add_component<TimelineComponent>(std::move(components), timeProvider);
 	
 	return actor;
 }
@@ -233,7 +240,17 @@ Actor& MeshActorBuilder::build_skinned(Actor& actor, AnimationTimeProvider& time
 	
 	// Add TransformComponent and AnimationComponent
 	auto& transform = actor.add_component<TransformComponent>();
-	actor.add_component<TransformAnimationComponent>(transform, timeProvider);
+	
+	auto& transformAnimationComponent = actor.add_component<TransformAnimationComponent>(transform, timeProvider);
+	
+	auto& skinnedAnimationComponent = actor.add_component<SkinnedAnimationComponent>();
+
+	std::vector<std::reference_wrapper<AnimationComponent>> components = {
+		std::ref(transformAnimationComponent),
+		std::ref(skinnedAnimationComponent)
+	};
+	
+	actor.add_component<TimelineComponent>(std::move(components), timeProvider);
 	
 	return actor;
 }

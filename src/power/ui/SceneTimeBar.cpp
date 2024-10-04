@@ -3,10 +3,7 @@
 // Include necessary headers
 #include "actors/ActorManager.hpp"
 #include "actors/Actor.hpp"
-#include "components/TransformAnimationComponent.hpp"
-#include "components/SkinnedAnimationComponent.hpp"
-#include "components/TransformComponent.hpp"
-#include "components/PlaybackComponent.hpp"
+#include "components/TimelineComponent.hpp"
 
 #include <nanogui/button.h>
 #include <nanogui/slider.h>
@@ -53,8 +50,6 @@ SceneTimeBar::SceneTimeBar(nanogui::Widget* parent, ActorManager& actorManager, 
 mActorManager(actorManager),
 mAnimationTimeProvider(animationTimeProvider),
 mRegistry(registry),
-mTransformRegistrationId(-1),
-mPlaybackRegistrationId(-1),
 mCurrentTime(0),
 mTotalFrames(1800), // 30 seconds at 60 FPS
 mRecording(false),
@@ -108,9 +103,7 @@ mNormalButtonColor(theme()->m_text_color) // Initialize normal button color
 		// Verify keyframes after time update
 		find_previous_and_next_keyframes();
 
-		evaluate_transforms();
-		evaluate_animations();
-		
+		evaluate_timelines();
 	});
 	
 	// Buttons Wrapper
@@ -145,8 +138,7 @@ mNormalButtonColor(theme()->m_text_color) // Initialize normal button color
 		
 		find_previous_and_next_keyframes();
 
-		evaluate_transforms();
-		evaluate_animations();
+		evaluate_timelines();
 	});
 	
 	// Previous Frame Button
@@ -166,8 +158,7 @@ mNormalButtonColor(theme()->m_text_color) // Initialize normal button color
 			
 			find_previous_and_next_keyframes();
 
-			evaluate_transforms();
-			evaluate_animations();
+			evaluate_timelines();
 		}
 	});
 	
@@ -187,8 +178,7 @@ mNormalButtonColor(theme()->m_text_color) // Initialize normal button color
 
 		find_previous_and_next_keyframes();
 
-		evaluate_transforms();
-		evaluate_animations();
+		evaluate_timelines();
 		
 	});
 	
@@ -236,12 +226,12 @@ mNormalButtonColor(theme()->m_text_color) // Initialize normal button color
 			
 			
 			if (mActiveActor != std::nullopt) {
-				auto& transformAnimationComponent = mActiveActor->get().get_component<TransformAnimationComponent>();
+				auto& component = mActiveActor->get().get_component<TimelineComponent>();
 				
 				if (mRecording) {
-					transformAnimationComponent.Freeze();
+					component.Freeze();
 				} else {
-					transformAnimationComponent.Unfreeze();
+					component.Unfreeze();
 				}
 			}
 
@@ -266,8 +256,7 @@ mNormalButtonColor(theme()->m_text_color) // Initialize normal button color
 			
 			find_previous_and_next_keyframes();
 			
-			evaluate_transforms();
-			evaluate_animations();
+			evaluate_timelines();
 		}
 	});
 	
@@ -287,8 +276,7 @@ mNormalButtonColor(theme()->m_text_color) // Initialize normal button color
 		
 		find_previous_and_next_keyframes();
 
-		evaluate_transforms();
-		evaluate_animations();
+		evaluate_timelines();
 	});
 	
 	// Keyframe Buttons Wrapper
@@ -317,9 +305,7 @@ mNormalButtonColor(theme()->m_text_color) // Initialize normal button color
 			// Re-evaluate
 			find_previous_and_next_keyframes();
 
-			evaluate_transforms();
-			evaluate_animations();
-			
+			evaluate_timelines();
 			
 		} else {
 			// No previous keyframe available
@@ -342,7 +328,7 @@ mNormalButtonColor(theme()->m_text_color) // Initialize normal button color
 		
 		if (mActiveActor.has_value()) {
 			if (!mPlaying) {
-				auto& component = mActiveActor->get().get_component<TransformAnimationComponent>();
+				auto& component = mActiveActor->get().get_component<TimelineComponent>();
 				
 				if (wasUncommitted){
 					mUncommittedKey = false;
@@ -352,26 +338,11 @@ mNormalButtonColor(theme()->m_text_color) // Initialize normal button color
 				} else {
 					component.AddKeyframe();
 				}
-				
-				if (mActiveActor->get().find_component<SkinnedAnimationComponent>()){
-					auto& skinnedAnimationComponent = mActiveActor->get().get_component<SkinnedAnimationComponent>();
-					
-					if (wasUncommitted){
-						mUncommittedKey = false;
-						skinnedAnimationComponent.UpdateKeyframe();
-					} else if (skinnedAnimationComponent.KeyframeExists()) {
-						skinnedAnimationComponent.RemoveKeyframe();
-					} else {
-						skinnedAnimationComponent.AddKeyframe();
-					}
-
-				}
 			}
 			
 			find_previous_and_next_keyframes();
 
-			evaluate_transforms();
-			evaluate_animations();
+			evaluate_timelines();
 		}
 	});
 	
@@ -399,8 +370,7 @@ mNormalButtonColor(theme()->m_text_color) // Initialize normal button color
 			// Verify keyframes after time update
 			find_previous_and_next_keyframes();
 
-			evaluate_transforms();
-			evaluate_animations();
+			evaluate_timelines();
 			
 		} else {
 			// No next keyframe available
@@ -455,10 +425,11 @@ void SceneTimeBar::update() {
 			stop_playback();
 			find_previous_and_next_keyframes();
 		}
-		evaluate_transforms();
+		evaluate_timelines();
+	} else {
+		evaluate_timelines();
 	}
 	
-	evaluate_animations();
 	verify_uncommited_key();
 	evaluate_keyframe_status();
 
@@ -492,7 +463,7 @@ void SceneTimeBar::toggle_play_pause(bool play) {
 void SceneTimeBar::verify_uncommited_key() {
 	if (!mRecording && !mPlaying) {
 		if (mActiveActor != std::nullopt) {
-			auto& component = mActiveActor->get().get_component<TransformAnimationComponent>();
+			auto& component = mActiveActor->get().get_component<TimelineComponent>();
 			
 			if (component.KeyframeExists()) {
 				
@@ -519,7 +490,7 @@ void SceneTimeBar::stop_playback() {
 	}
 	
 	if (mActiveActor.has_value()) {
-		auto& component = mActiveActor->get().get_component<TransformAnimationComponent>();
+		auto& component = mActiveActor->get().get_component<TimelineComponent>();
 		
 		component.Unfreeze();
 	}
@@ -540,26 +511,15 @@ void SceneTimeBar::update_time_display(int frameCount) {
 	mTimeLabel->set_value(buffer);
 }
 
-// Helper method to evaluate transforms
-void SceneTimeBar::evaluate_transforms() {
+// Helper method to evaluate timelines
+void SceneTimeBar::evaluate_timelines() {
 	for (auto& animatableActor : mAnimatableActors) {
-		auto& component = animatableActor.get().get_component<TransformAnimationComponent>();
+		auto& component = animatableActor.get().get_component<TimelineComponent>();
 		
 		if (!mRecording) {
 			component.Unfreeze();
 		}
 		component.Evaluate();
-	}
-}
-
-// Helper method to evaluate animations
-void SceneTimeBar::evaluate_animations() {
-	for (auto& animatableActor : mAnimatableActors) {
-		if (animatableActor.get().find_component<SkinnedAnimationComponent>()) {
-			auto& skinnedAnimationComponent = animatableActor.get().get_component<SkinnedAnimationComponent>();
-			
-			skinnedAnimationComponent.Evaluate();
-		}
 	}
 }
 
@@ -570,7 +530,7 @@ void SceneTimeBar::evaluate_keyframe_status() {
 	
 	// Loop through animatable actors to determine keyframe status
 	if (mActiveActor.has_value()) {
-		auto& component = mActiveActor->get().get_component<TransformAnimationComponent>();
+		auto& component = mActiveActor->get().get_component<TimelineComponent>();
 		
 		if (component.KeyframeExists()) {
 			atKeyframe = true;
@@ -610,7 +570,7 @@ std::tuple<SceneTimeBar::KeyframeStamp, SceneTimeBar::KeyframeStamp> SceneTimeBa
 	float currentTimeFloat = static_cast<float>(mCurrentTime);
 	
 	// Get the AnimationComponent
-	auto& component = mActiveActor->get().get_component<TransformAnimationComponent>();
+	auto& component = mActiveActor->get().get_component<TimelineComponent>();
 	
 	float previousKeyframeTime = component.GetPreviousKeyframeTime();
 	
@@ -639,32 +599,6 @@ std::tuple<SceneTimeBar::KeyframeStamp, SceneTimeBar::KeyframeStamp> SceneTimeBa
 		}
 	}
 	
-	// If SkinnedAnimationComponent exists, consider its keyframes as well
-	if (mActiveActor->get().find_component<SkinnedAnimationComponent>()) {
-		auto& skinnedAnimationComponent = mActiveActor->get().get_component<SkinnedAnimationComponent>();
-		
-		// Get previous and next keyframes from SkinnedAnimationComponent
-		float previousKeyframeTime = skinnedAnimationComponent.GetPreviousKeyframeTime();
-		
-		float nextKeyframeTime = skinnedAnimationComponent.GetNextKeyframeTime();
-
-		// Check previous keyframe from SkinnedAnimationComponent
-		if (previousKeyframeTime != -1) {
-			hasPrevKeyframe = true;
-			if (previousKeyframeTime > latestPrevTime) {
-				latestPrevTime = previousKeyframeTime;
-			}
-		}
-		
-		// Check next keyframe from SkinnedAnimationComponent
-		if (nextKeyframeTime != -1) {
-			hasNextKeyframe = true;
-			if (nextKeyframeTime < earliestNextTime) {
-				earliestNextTime = nextKeyframeTime;
-			}
-		}
-	}
-	
 	// Enable or disable the Previous Keyframe button
 	mPrevKeyBtn->set_enabled(hasPrevKeyframe);
 	
@@ -676,28 +610,14 @@ std::tuple<SceneTimeBar::KeyframeStamp, SceneTimeBar::KeyframeStamp> SceneTimeBa
 
 // Helper method to refresh animatable actors
 void SceneTimeBar::refresh_actors() {
-	mAnimatableActors = mActorManager.get_actors_with_component<TransformAnimationComponent>();
+	mAnimatableActors = mActorManager.get_actors_with_component<TimelineComponent>();
 }
 
 // Helper method to register actor callbacks
 void SceneTimeBar::register_actor_callbacks() {
-	if(mPlaybackRegistrationId != -1) {
-		mRegisteredPlaybackComponent->get()
-			.unregister_on_playback_changed_callback(mPlaybackRegistrationId);
-		
-		mPlaybackRegistrationId = -1;
-		
-		mRegisteredPlaybackComponent = std::nullopt;
-	}
-	
 	if (mActiveActor != std::nullopt) {
-		auto& transformAnimationComponent = mActiveActor->get().get_component<TransformAnimationComponent>();
+		auto& component = mActiveActor->get().get_component<TimelineComponent>();
 		
-		transformAnimationComponent.TriggerRegistration();
-		
-		auto& skinnedAnimationComponent = mActiveActor->get().get_component<SkinnedAnimationComponent>();
-		
-		skinnedAnimationComponent.TriggerRegistration();
-		
+		component.TriggerRegistration();
 	}
 }
