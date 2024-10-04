@@ -12,6 +12,9 @@
 #include "actors/Actor.hpp"
 #include "actors/ActorManager.hpp"
 
+#include "animation/Animation.hpp"
+#include "animation/Skeleton.hpp"
+
 #include "components/AnimationComponent.hpp"
 #include "components/ColorComponent.hpp"
 #include "components/DrawableComponent.hpp"
@@ -29,6 +32,7 @@
 
 #include "ui/AnimationPanel.hpp"
 #include "ui/ScenePanel.hpp"
+#include "ui/SceneTimeBar.hpp"
 #include "ui/StatusBarPanel.hpp"
 
 #if defined(NANOGUI_USE_OPENGL) || defined(NANOGUI_USE_GLES)
@@ -310,7 +314,7 @@ void UiManager::draw() {
 		
 		mActorManager.visit(batch_unit.mSkinnedMeshBatch);
 		
-		mPreviewCanvas->take_snapshot([this](std::vector<uint8_t>& pixels) {
+		mCanvas.take_snapshot([this](std::vector<uint8_t>& pixels) {
 			
 		});
 	} else {
@@ -365,6 +369,6 @@ void UiManager::draw_content(const nanogui::Matrix4f& model, const nanogui::Matr
 	mGrid->draw_content(model, view, projection);
 }
 
-void UiManager::ProcessEvents() {
+void UiManager::process_events() {
 	mCanvas.ProcessEvents();
 }
