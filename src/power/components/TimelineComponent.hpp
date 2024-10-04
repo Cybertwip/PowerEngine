@@ -8,7 +8,7 @@
 
 class TimelineComponent : public AnimationComponent {
 public:
-	TimelineComponent(const std::vector<std::reference_wrapper<AnimationComponent>> components, AnimationTimeProvider& animationTimeProvider) : mAnimationTimeProvider(animationTimeProvider) {
+	TimelineComponent(const std::vector<std::reference_wrapper<AnimationComponent>>& components, AnimationTimeProvider& animationTimeProvider) : mAnimationTimeProvider(animationTimeProvider) {
 		mComponents = std::move(components);
 	}
 	
