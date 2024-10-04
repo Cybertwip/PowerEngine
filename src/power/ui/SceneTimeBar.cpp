@@ -105,11 +105,12 @@ mNormalButtonColor(theme()->m_text_color) // Initialize normal button color
 		
 		mRecordBtn->set_text_color(mNormalButtonColor);
 		
+		// Verify keyframes after time update
+		find_previous_and_next_keyframes();
+
 		evaluate_transforms();
 		evaluate_animations();
 		
-		// Verify keyframes after time update
-		find_previous_and_next_keyframes();
 	});
 	
 	// Buttons Wrapper
@@ -183,6 +184,7 @@ mNormalButtonColor(theme()->m_text_color) // Initialize normal button color
 		mTimelineSlider->set_value(0.0f);
 		
 		refresh_actors();
+
 		find_previous_and_next_keyframes();
 
 		evaluate_transforms();
@@ -313,12 +315,11 @@ mNormalButtonColor(theme()->m_text_color) // Initialize normal button color
 			refresh_actors();
 			
 			// Re-evaluate
-			mAnimationTimeProvider.Update(mCurrentTime);
+			find_previous_and_next_keyframes();
+
 			evaluate_transforms();
 			evaluate_animations();
 			
-			// Re-evaluate
-			find_previous_and_next_keyframes();
 			
 		} else {
 			// No previous keyframe available
@@ -368,9 +369,11 @@ mNormalButtonColor(theme()->m_text_color) // Initialize normal button color
 					}
 				}
 			}
+			
+			find_previous_and_next_keyframes();
+
 			evaluate_transforms();
 			evaluate_animations();
-			find_previous_and_next_keyframes();
 		}
 	});
 	
@@ -394,15 +397,13 @@ mNormalButtonColor(theme()->m_text_color) // Initialize normal button color
 			mTimelineSlider->set_value(static_cast<float>(mCurrentTime) / mTotalFrames);
 			
 			refresh_actors();
-			
-			// Re-evaluate
-			mAnimationTimeProvider.Update(mCurrentTime);
+
+			// Verify keyframes after time update
+			find_previous_and_next_keyframes();
 
 			evaluate_transforms();
 			evaluate_animations();
 			
-			// Verify keyframes after time update
-			find_previous_and_next_keyframes();
 		} else {
 			// No next keyframe available
 			std::cout << "No next keyframe available." << std::endl;
@@ -454,6 +455,7 @@ void SceneTimeBar::update() {
 		} else {
 			// Stop playing when end is reached
 			stop_playback();
+			find_previous_and_next_keyframes();
 		}
 		evaluate_transforms();
 	}
@@ -597,6 +599,9 @@ void SceneTimeBar::evaluate_keyframe_status() {
 
 // Helper method to verify previous and next keyframes
 std::tuple<SceneTimeBar::KeyframeStamp, SceneTimeBar::KeyframeStamp> SceneTimeBar::find_previous_and_next_keyframes() {
+	// Re-evaluate
+	mAnimationTimeProvider.Update(mCurrentTime);
+	
 	if (!mActiveActor.has_value()) {
 		// No active actor; disable both buttons
 		mPrevKeyBtn->set_enabled(false);

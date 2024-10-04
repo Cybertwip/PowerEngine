@@ -11,8 +11,13 @@ public:
 	virtual ~AnimationTimeProvider() = default;
 	
 	virtual void Update(float time = 0.0f) {
-		mTime = time;
-		mTime = std::fmod(mTime, mDuration);
+		if (time >= mDuration) {
+			mTime = mDuration;
+		} else if (time < 0.0f) {
+			mTime = 0;
+		} else {
+			mTime = std::fmod(time, mDuration);
+		}
 	}
 	
 	float GetTime() {
