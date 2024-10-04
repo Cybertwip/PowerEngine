@@ -425,9 +425,10 @@ void SceneTimeBar::update() {
 			stop_playback();
 			find_previous_and_next_keyframes();
 		}
-		evaluate_timelines();
 	}
 	
+	evaluate_timelines();
+
 	verify_uncommited_key();
 	evaluate_keyframe_status();
 
