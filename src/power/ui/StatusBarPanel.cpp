@@ -38,7 +38,7 @@ StatusBarPanel::StatusBarPanel(nanogui::Widget &parent, IActorVisualManager& act
 	mResourcesPanel->set_position(nanogui::Vector2i(0, 0));
 	
 	mResourcesPanel->set_fixed_width(parent.parent()->fixed_width());
-	mResourcesPanel->set_fixed_height(parent.parent()->fixed_height() * 0.75f);
+	mResourcesPanel->set_fixed_height(parent.parent()->fixed_height() * 0.5f);
 	
 	applicationClickRegistrator([this, resourcesButton](int x, int y){
 		if (!mResourcesPanel->contains(nanogui::Vector2i(x, y))){
@@ -63,7 +63,7 @@ void StatusBarPanel::toggle_resources_panel(bool active) {
 	
 	if (active) {
 		mAnimationFuture = std::async(std::launch::async, [this]() {
-			auto target = nanogui::Vector2i(0, parent()->parent()->fixed_height() * 0.25f - fixed_height());
+			auto target = nanogui::Vector2i(0, parent()->parent()->fixed_height() * 0.5f - fixed_height());
 			animate_panel_position(target);
 		});
 	} else {
