@@ -69,6 +69,38 @@ public:
 
 	};
 	
+	
+	/**
+	 * Blends two KeyFrames based on the provided blend factor alpha.
+	 *
+	 * @param kf1   The first KeyFrame.
+	 * @param kf2   The second KeyFrame.
+	 * @param alpha The blend factor (0.0 = kf1, 1.0 = kf2).
+	 * @return      A new KeyFrame that is the blend of kf1 and kf2.
+	 */
+	static KeyFrame blendKeyframes(const KeyFrame& kf1, const KeyFrame& kf2, float alpha) {
+		// Clamp alpha to the range [0, 1] to avoid extrapolation
+		alpha = std::clamp(alpha, 0.0f, 1.0f);
+		
+		KeyFrame blended;
+		
+		// Linearly interpolate the time
+		blended.time = glm::mix(kf1.time, kf2.time, alpha);
+		
+		// Linearly interpolate the translation and scale vectors
+		blended.translation = glm::mix(kf1.translation, kf2.translation, alpha);
+		blended.scale = glm::mix(kf1.scale, kf2.scale, alpha);
+		
+		// Spherically interpolate the rotation quaternions
+		blended.rotation = glm::slerp(kf1.rotation, kf2.rotation, alpha);
+		
+		// Ensure the quaternion is normalized after slerp
+		blended.rotation = glm::normalize(blended.rotation);
+		
+		return blended;
+	}
+
+	
 	Animation() : m_duration(0) {
 		
 	}
@@ -83,17 +115,60 @@ public:
 			return a.bone_index < b.bone_index;
 		});
 	}
-	
-	// Get keyframes for a bone by name
-	const std::vector<KeyFrame>* get_bone_keyframes(int boneIndex) const {
+
+	// Evaluate the animation for a specific time, returning the KeyFrame for each bone
+	std::vector<KeyFrame> evaluate_keyframes(float time) const {
+		std::vector<KeyFrame> bone_keyframes;
+		
+		// For each bone animation
 		for (const auto& bone_anim : m_bone_animations) {
-			if (bone_anim.bone_index == boneIndex) {
-				return &bone_anim.keyframes;
+			const auto& keyframes = bone_anim.keyframes;
+			
+			// If there are no keyframes, continue to the next bone
+			if (keyframes.empty()) {
+				continue;
 			}
+			
+			KeyFrame current_keyframe;
+			
+			// If the time is before the first keyframe, use the first keyframe
+			if (time <= keyframes.front().time) {
+				current_keyframe = keyframes.front();
+			}
+			// If the time is after the last keyframe, use the last keyframe
+			else if (time >= keyframes.back().time) {
+				current_keyframe = keyframes.back();
+			}
+			else {
+				// Find the two keyframes surrounding the given time
+				auto it1 = std::find_if(keyframes.begin(), keyframes.end(), [&](const KeyFrame& kf) {
+					return kf.time >= time;
+				});
+				
+				auto it0 = (it1 != keyframes.begin()) ? std::prev(it1) : it1;
+				
+				// Calculate the interpolation factor
+				float t = (time - it0->time) / (it1->time - it0->time);
+				
+				// Interpolate translation, rotation, and scale
+				glm::vec3 interpolated_translation = glm::mix(it0->translation, it1->translation, t);
+				glm::quat interpolated_rotation = glm::slerp(it0->rotation, it1->rotation, t);
+				glm::vec3 interpolated_scale = glm::mix(it0->scale, it1->scale, t);
+				
+				// Assign interpolated values to the current keyframe
+				current_keyframe.time = time;
+				current_keyframe.translation = interpolated_translation;
+				current_keyframe.rotation = interpolated_rotation;
+				current_keyframe.scale = interpolated_scale;
+			}
+			
+			// Add the current keyframe to the list
+			bone_keyframes.push_back(current_keyframe);
 		}
-		return nullptr;  // Bone not found
+		
+		return bone_keyframes;
 	}
-	
+
 	// Set the total duration of the animation
 	void set_duration(int duration) {
 		m_duration = duration;
