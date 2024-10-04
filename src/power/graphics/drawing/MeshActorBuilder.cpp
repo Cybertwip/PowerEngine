@@ -192,12 +192,12 @@ Actor& MeshActorBuilder::build_skinned(Actor& actor, AnimationTimeProvider& time
 			pdo->mAnimationData.push_back(std::move(animation));
 		}
 		
-		// Add SkinnedAnimationComponent
-		auto& skinnedComponent = actor.add_component<SkinnedAnimationComponent>(std::move(pdo));
-		
 		// Add PlaybackComponent
-		actor.add_component<PlaybackComponent>();
-		
+		auto& plabackComponent = actor.add_component<PlaybackComponent>();
+
+		// Add SkinnedAnimationComponent
+		auto& skinnedComponent = actor.add_component<SkinnedAnimationComponent>(std::move(pdo), plabackComponent, timeProvider);
+				
 		// Create SkinnedMesh instances from deserialized data
 		for (auto& skinnedMeshData : model->GetSkinnedMeshData()) {
 			skinnedMeshComponentData.push_back(std::make_unique<SkinnedMesh>(

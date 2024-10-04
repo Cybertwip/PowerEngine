@@ -355,18 +355,16 @@ mNormalButtonColor(theme()->m_text_color) // Initialize normal button color
 				
 				if (mActiveActor->get().find_component<SkinnedAnimationComponent>()){
 					auto& skinnedAnimationComponent = mActiveActor->get().get_component<SkinnedAnimationComponent>();
-					auto& playback = mActiveActor->get().get_component<PlaybackComponent>();
-					
-					auto state = playback.get_state();
 					
 					if (wasUncommitted){
 						mUncommittedKey = false;
-						skinnedAnimationComponent.updateKeyframe(mCurrentTime, state.getPlaybackState(), state.getPlaybackModifier(), state.getPlaybackTrigger());
-					} else if (skinnedAnimationComponent.is_keyframe(mCurrentTime)) {
-						skinnedAnimationComponent.removeKeyframe(mCurrentTime);
+						skinnedAnimationComponent.UpdateKeyframe();
+					} else if (skinnedAnimationComponent.KeyframeExists()) {
+						skinnedAnimationComponent.RemoveKeyframe();
 					} else {
-						skinnedAnimationComponent.addKeyframe(mCurrentTime, state.getPlaybackState(), state.getPlaybackModifier(), state.getPlaybackTrigger());
+						skinnedAnimationComponent.AddKeyframe();
 					}
+
 				}
 			}
 			
@@ -560,7 +558,7 @@ void SceneTimeBar::evaluate_animations() {
 		if (animatableActor.get().find_component<SkinnedAnimationComponent>()) {
 			auto& skinnedAnimationComponent = animatableActor.get().get_component<SkinnedAnimationComponent>();
 			
-			skinnedAnimationComponent.evaluate(mCurrentTime);
+			skinnedAnimationComponent.Evaluate();
 		}
 	}
 }
@@ -643,25 +641,26 @@ std::tuple<SceneTimeBar::KeyframeStamp, SceneTimeBar::KeyframeStamp> SceneTimeBa
 	
 	// If SkinnedAnimationComponent exists, consider its keyframes as well
 	if (mActiveActor->get().find_component<SkinnedAnimationComponent>()) {
-		const SkinnedAnimationComponent& skinnedComponent = mActiveActor->get().get_component<SkinnedAnimationComponent>();
+		auto& skinnedAnimationComponent = mActiveActor->get().get_component<SkinnedAnimationComponent>();
 		
 		// Get previous and next keyframes from SkinnedAnimationComponent
-		std::optional<SkinnedAnimationComponent::Keyframe> prevSkinnedKeyframe = skinnedComponent.get_previous_keyframe(currentTimeFloat);
-		std::optional<SkinnedAnimationComponent::Keyframe> nextSkinnedKeyframe = skinnedComponent.get_next_keyframe(currentTimeFloat);
+		float previousKeyframeTime = skinnedAnimationComponent.GetPreviousKeyframeTime();
 		
+		float nextKeyframeTime = skinnedAnimationComponent.GetNextKeyframeTime();
+
 		// Check previous keyframe from SkinnedAnimationComponent
-		if (prevSkinnedKeyframe) {
+		if (previousKeyframeTime != -1) {
 			hasPrevKeyframe = true;
-			if (prevSkinnedKeyframe->time > latestPrevTime) {
-				latestPrevTime = prevSkinnedKeyframe->time;
+			if (previousKeyframeTime > latestPrevTime) {
+				latestPrevTime = previousKeyframeTime;
 			}
 		}
 		
 		// Check next keyframe from SkinnedAnimationComponent
-		if (nextSkinnedKeyframe) {
+		if (nextKeyframeTime != -1) {
 			hasNextKeyframe = true;
-			if (nextSkinnedKeyframe->time < earliestNextTime) {
-				earliestNextTime = nextSkinnedKeyframe->time;
+			if (nextKeyframeTime < earliestNextTime) {
+				earliestNextTime = nextKeyframeTime;
 			}
 		}
 	}
@@ -693,32 +692,12 @@ void SceneTimeBar::register_actor_callbacks() {
 	
 	if (mActiveActor != std::nullopt) {
 		auto& transformAnimationComponent = mActiveActor->get().get_component<TransformAnimationComponent>();
-
+		
 		transformAnimationComponent.TriggerRegistration();
 		
-		if (mActiveActor->get().find_component<PlaybackComponent>()) {
-			mRegisteredPlaybackComponent = mActiveActor->get().get_component<PlaybackComponent>();
-		}
+		auto& skinnedAnimationComponent = mActiveActor->get().get_component<SkinnedAnimationComponent>();
 		
-		if (mRegisteredPlaybackComponent.has_value()) {
-			auto& skinnedAnimationComponent = mActiveActor->get().get_component<SkinnedAnimationComponent>();
-			
-			mPlaybackRegistrationId = mRegisteredPlaybackComponent->get().register_on_playback_changed_callback([this, &skinnedAnimationComponent](const PlaybackComponent& playback) {
-				if (mRecording && !mPlaying) {
-					skinnedAnimationComponent.addKeyframe(mCurrentTime, playback.getPlaybackState(), playback.getPlaybackModifier(), playback.getPlaybackTrigger());
-				} else if (!mRecording && !mPlaying) {
-					if (skinnedAnimationComponent.is_keyframe(mCurrentTime)) {
-						auto m1 = const_cast<SkinnedAnimationComponent::Keyframe&>(playback.get_state());
-						m1.time = mCurrentTime;
-						
-						auto m2 = skinnedAnimationComponent.get_keyframe(mCurrentTime);
-						
-						if (m1 != m2) {
-							mUncommittedKey = true;
-						}
-					}
-				}
-			});
-		}
+		skinnedAnimationComponent.TriggerRegistration();
+		
 	}
 }

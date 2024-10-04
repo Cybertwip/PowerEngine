@@ -70,11 +70,7 @@ public:
 		auto m1 = mProvider.get_matrix();
 		auto m2 = evaluate_as_matrix(mAnimationTimeProvider.GetTime());
 		
-		if (m1 == *m2) {
-			return true;
-		} else {
-			return false;
-		}
+		return m1 == *m2;
 	}
 	
 	bool KeyframeExists() override {

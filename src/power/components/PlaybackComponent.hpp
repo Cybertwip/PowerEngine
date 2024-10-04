@@ -1,20 +1,99 @@
 #pragma once
 
-#include "SkinnedAnimationComponent.hpp"
-
 #include <functional>
 #include <unordered_map>
 
+enum class PlaybackState {
+	Play,
+	Pause
+};
+
+enum class PlaybackModifier {
+	Forward,
+	Reverse
+};
+
+enum class PlaybackTrigger {
+	None,
+	Rewind,
+	FastForward
+};
+
 class PlaybackComponent {
+public:
+	struct Keyframe {
+		float time; // Keyframe time
+	private:
+		PlaybackState mPlaybackState;
+		PlaybackModifier mPlaybackModifier;
+		PlaybackTrigger mPlaybackTrigger;
+		
+	public:
+		// Constructors
+		Keyframe(float t, PlaybackState state, PlaybackModifier modifier, PlaybackTrigger trigger)
+		: time(t), mPlaybackState(state), mPlaybackModifier(modifier), mPlaybackTrigger(trigger) {
+			// Setting trigger sets state to Pause
+			if (trigger == PlaybackTrigger::Rewind || trigger == PlaybackTrigger::FastForward) {
+				mPlaybackState = PlaybackState::Pause;
+			}
+		}
+		
+		// Getter for PlaybackState
+		PlaybackState getPlaybackState() const {
+			return mPlaybackState;
+		}
+		
+		// Setter for PlaybackState
+		void setPlaybackState(PlaybackState state) {
+			mPlaybackState = state;
+		}
+		
+		// Getter for PlaybackModifier
+		PlaybackModifier getPlaybackModifier() const {
+			return mPlaybackModifier;
+		}
+		
+		// Setter for PlaybackModifier
+		void setPlaybackModifier(PlaybackModifier modifier) {
+			mPlaybackModifier = modifier;
+		}
+		
+		// Getter for PlaybackTrigger
+		PlaybackTrigger getPlaybackTrigger() const {
+			return mPlaybackTrigger;
+		}
+		
+		// Setter for PlaybackTrigger
+		void setPlaybackTrigger(PlaybackTrigger trigger) {
+			mPlaybackTrigger = trigger;
+			// Setting the trigger should also set PlaybackState to Pause
+			if (mPlaybackTrigger != PlaybackTrigger::None) {
+				mPlaybackState = PlaybackState::Pause;
+			}
+		}
+		
+		// Overloaded == operator for Keyframe
+		bool operator==(const Keyframe& rhs) {
+			return time == rhs.time &&
+			getPlaybackState() == rhs.getPlaybackState() &&
+			getPlaybackModifier() == rhs.getPlaybackModifier() &&
+			getPlaybackTrigger() == rhs.getPlaybackTrigger();
+		}
+		
+		// Overloaded != operator for Keyframe
+		bool operator!=(const Keyframe& rhs) {
+			return !(*this == rhs);
+		}
+	};
 public:
 	using PlaybackChangedCallback = std::function<void(const PlaybackComponent&)>;
 		
 	PlaybackComponent()
 	:
 	mState(0,
-		   SkinnedAnimationComponent::PlaybackState::Pause,
-		   SkinnedAnimationComponent::PlaybackModifier::Forward,
-		   SkinnedAnimationComponent::PlaybackTrigger::None) {
+		   PlaybackState::Pause,
+		   PlaybackModifier::Forward,
+		   PlaybackTrigger::None) {
 		
 	}
 	
@@ -31,43 +110,43 @@ public:
 	}
 	
 	// Getter for PlaybackState
-	SkinnedAnimationComponent::PlaybackState getPlaybackState() const {
+	PlaybackState getPlaybackState() const {
 		return mState.getPlaybackState();
 	}
 	
 	// Setter for PlaybackState
-	void setPlaybackState(SkinnedAnimationComponent::PlaybackState state) {
+	void setPlaybackState(PlaybackState state) {
 		mState.setPlaybackState(state);
 		trigger_on_playback_changed();
 	}
 	
 	// Getter for PlaybackModifier
-	SkinnedAnimationComponent::PlaybackModifier getPlaybackModifier() const {
+	PlaybackModifier getPlaybackModifier() const {
 		return mState.getPlaybackModifier();
 	}
 	
 	// Setter for PlaybackModifier
-	void setPlaybackModifier(SkinnedAnimationComponent::PlaybackModifier modifier) {
+	void setPlaybackModifier(PlaybackModifier modifier) {
 		mState.setPlaybackModifier(modifier);
 		trigger_on_playback_changed();
 	}
 	
 	// Getter for PlaybackTrigger
-	SkinnedAnimationComponent::PlaybackTrigger getPlaybackTrigger() const {
+	PlaybackTrigger getPlaybackTrigger() const {
 		return mState.getPlaybackTrigger();
 	}
 	
 	// Setter for PlaybackTrigger
-	void setPlaybackTrigger(SkinnedAnimationComponent::PlaybackTrigger trigger) {
+	void setPlaybackTrigger(PlaybackTrigger trigger) {
 		mState.setPlaybackTrigger(trigger);
 		trigger_on_playback_changed();
 	}
 	
-	const SkinnedAnimationComponent::Keyframe& get_state() const {
+	const Keyframe& get_state() const {
 		return mState;
 	}
 	
-	void update_state(SkinnedAnimationComponent::PlaybackState state, SkinnedAnimationComponent::PlaybackModifier modifier, SkinnedAnimationComponent::PlaybackTrigger trigger) {
+	void update_state(PlaybackState state, PlaybackModifier modifier, PlaybackTrigger trigger) {
 		mState.setPlaybackState(state);
 
 		mState.setPlaybackModifier(modifier);
@@ -78,7 +157,7 @@ public:
 	}
 	
 private:
-	SkinnedAnimationComponent::Keyframe mState;
+	Keyframe mState;
 
 	// Use an unordered_map to store callbacks with an integer key (ID)
 	std::unordered_map<int, PlaybackChangedCallback> callbacks;

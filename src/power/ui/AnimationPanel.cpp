@@ -58,7 +58,7 @@ AnimationPanel::AnimationPanel(nanogui::Widget &parent)
 		if (mActiveActor.has_value()) {
 			auto& playback = mActiveActor->get().get_component<PlaybackComponent>();
 			
-			playback.update_state(active ? SkinnedAnimationComponent::PlaybackState::Play : SkinnedAnimationComponent::PlaybackState::Pause, SkinnedAnimationComponent::PlaybackModifier::Reverse, SkinnedAnimationComponent::PlaybackTrigger::None);
+			playback.update_state(active ? PlaybackState::Play : PlaybackState::Pause, PlaybackModifier::Reverse, PlaybackTrigger::None);
 		}
 	});
 
@@ -69,7 +69,7 @@ AnimationPanel::AnimationPanel(nanogui::Widget &parent)
 		if (mActiveActor.has_value()) {
 			auto& playback = mActiveActor->get().get_component<PlaybackComponent>();
 			
-			playback.update_state(active ? SkinnedAnimationComponent::PlaybackState::Play : SkinnedAnimationComponent::PlaybackState::Pause, SkinnedAnimationComponent::PlaybackModifier::Forward, SkinnedAnimationComponent::PlaybackTrigger::None);
+			playback.update_state(active ? PlaybackState::Play : PlaybackState::Pause, PlaybackModifier::Forward, PlaybackTrigger::None);
 		}
 	});
 	
@@ -129,15 +129,15 @@ void AnimationPanel::set_active_actor(std::optional<std::reference_wrapper<Actor
 			
 			auto state = playback.get_state();
 			
-			if (state.getPlaybackState() == SkinnedAnimationComponent::PlaybackState::Pause) {
+			if (state.getPlaybackState() == PlaybackState::Pause) {
 				mPlayPauseButton->set_pushed(false);
 				mReversePlayButton->set_pushed(false);
-			} else if (state.getPlaybackState() == SkinnedAnimationComponent::PlaybackState::Play &&
-					   state.getPlaybackModifier() == SkinnedAnimationComponent::PlaybackModifier::Forward) {
+			} else if (state.getPlaybackState() == PlaybackState::Play &&
+					   state.getPlaybackModifier() == PlaybackModifier::Forward) {
 				mPlayPauseButton->set_pushed(true);
 				mReversePlayButton->set_pushed(false);
-			} else if (state.getPlaybackState() == SkinnedAnimationComponent::PlaybackState::Play &&
-					   state.getPlaybackModifier() == SkinnedAnimationComponent::PlaybackModifier::Reverse) {
+			} else if (state.getPlaybackState() == PlaybackState::Play &&
+					   state.getPlaybackModifier() == PlaybackModifier::Reverse) {
 				mPlayPauseButton->set_pushed(false);
 				mReversePlayButton->set_pushed(true);
 			}
