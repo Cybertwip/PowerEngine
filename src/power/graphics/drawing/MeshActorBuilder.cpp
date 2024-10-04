@@ -113,7 +113,7 @@ Actor& MeshActorBuilder::build_mesh(Actor& actor, AnimationTimeProvider& timePro
 	auto& transformAnimationComponent = actor.add_component<TransformAnimationComponent>(transform, timeProvider);
 	
 	std::vector<std::reference_wrapper<AnimationComponent>> components = {
-		std::ref(transformAnimationComponent)
+		transformAnimationComponent
 	};
 
 	actor.add_component<TimelineComponent>(std::move(components), timeProvider);
@@ -243,11 +243,11 @@ Actor& MeshActorBuilder::build_skinned(Actor& actor, AnimationTimeProvider& time
 	
 	auto& transformAnimationComponent = actor.add_component<TransformAnimationComponent>(transform, timeProvider);
 	
-	auto& skinnedAnimationComponent = actor.add_component<SkinnedAnimationComponent>();
+	auto& skinnedAnimationComponent = actor.get_component<SkinnedAnimationComponent>();
 
 	std::vector<std::reference_wrapper<AnimationComponent>> components = {
-		std::ref(transformAnimationComponent),
-		std::ref(skinnedAnimationComponent)
+		transformAnimationComponent,
+		skinnedAnimationComponent
 	};
 	
 	actor.add_component<TimelineComponent>(std::move(components), timeProvider);
