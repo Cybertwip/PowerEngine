@@ -50,7 +50,7 @@ void HierarchyPanel::remove_actor(std::reference_wrapper<Actor> actor) {
 	
 	mActorManager.remove_actor(actor);
 	
-	auto actors = mActorManager.get_actors_with_component<MetadataComponent>();
+	auto actors = mActorManager.get_actors_with_component<UiComponent>();
 	
 	for (auto& actor : actors) {
 		populate_tree(actor);
@@ -120,18 +120,14 @@ void HierarchyPanel::OnActorSelected(std::optional<std::reference_wrapper<Actor>
 
 void HierarchyPanel::fire_actor_selected_event(std::optional<std::reference_wrapper<Actor>> actor) {
 	
-	if (actor.has_value()) {
-		mTransformPanel.set_active_actor(actor);
-		mAnimationPanel.set_active_actor(actor);
+	mTransformPanel.set_active_actor(actor);
+	mAnimationPanel.set_active_actor(actor);
+	
+	for (auto& callbackRef : mActorSelectedCallbacks) {
+		callbackRef.get().OnActorSelected(actor);
+	}
 
-		for (auto& callbackRef : mActorSelectedCallbacks) {
-			callbackRef.get().OnActorSelected(actor);
-		}
-		
-	} else {
-		mTransformPanel.set_active_actor(actor);
-		mAnimationPanel.set_active_actor(actor);
-
+	if (!actor.has_value()) {
 		mTreeView->set_selected(nullptr);
 	}
 }
