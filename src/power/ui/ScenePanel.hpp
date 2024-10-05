@@ -2,7 +2,7 @@
 
 #include "Panel.hpp"
 
-#include <queue>
+#include <deque>
 #include <functional>
 #include <map>
 
@@ -25,9 +25,9 @@ private:
 	void draw(NVGcontext *ctx) override;
 	
 	// Queues to store events along with the button information
-	std::queue<std::tuple<bool, int, int, int, int, int>> mClickQueue; // down, width, height, x, y, button
-	std::queue<std::tuple<int, int, int, int, int, int, int, bool>> mMotionQueue; // width, height, x, y, dx, dy, button, dragging
-	std::queue<std::tuple<int, int, int, int, float, float>> mScrollQueue; // width, height, x, y, dx, dy
+	std::deque<std::tuple<bool, int, int, int, int, int>> mClickQueue; // down, width, height, x, y, button
+	std::deque<std::tuple<int, int, int, int, int, int, int, bool>> mMotionQueue; // width, height, x, y, dx, dy, button, dragging
+	std::deque<std::tuple<int, int, int, int, float, float>> mScrollQueue; // width, height, x, y, dx, dy
 	
 	// Maps to store callbacks associated with specific buttons
 	std::map<int, std::vector<std::function<void(bool, int, int, int, int)>>> mClickCallbacks;
