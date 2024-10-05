@@ -25,7 +25,6 @@ TreeViewItem* TreeView::add_node(const std::string &caption, std::function<void(
 void TreeView::clear() {
     for (auto item : m_items) {
         remove_child(item);
-        delete item;
     }
     m_items.clear();
 }
