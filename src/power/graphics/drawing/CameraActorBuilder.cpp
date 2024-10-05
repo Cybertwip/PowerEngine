@@ -14,8 +14,9 @@
 #include "components/TransformComponent.hpp"
 #include "components/TransformAnimationComponent.hpp"
 
-Actor& CameraActorBuilder::build(Actor& actor, AnimationTimeProvider& animationTimeProvider,
-                     ShaderWrapper& meshShaderWrapper, float fov, float near, float far, float aspect) {
+Actor& CameraActorBuilder::build(Actor& actor,
+								 AnimationTimeProvider& animationTimeProvider,
+								 ShaderWrapper& meshShaderWrapper, float fov, float near, float far, float aspect) {
 	std::unique_ptr<Drawable> drawable = std::make_unique<NullDrawable>();
 	actor.add_component<DrawableComponent>(std::move(drawable));
 	auto& transform = actor.add_component<TransformComponent>();
@@ -25,9 +26,10 @@ Actor& CameraActorBuilder::build(Actor& actor, AnimationTimeProvider& animationT
 	
 	auto& transformAnimationComponent = actor.add_component<TransformAnimationComponent>(transform, animationTimeProvider);
 	
-	std::vector<AnimationComponent> timelineComponents = {
+	std::vector<std::reference_wrapper<AnimationComponent>> timelineComponents = {
 		transformAnimationComponent
 	};
+	
 	actor.add_component<TimelineComponent>(std::move(timelineComponents));
 	
 	return actor;
