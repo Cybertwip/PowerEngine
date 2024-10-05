@@ -10,11 +10,11 @@
 #include "components/DrawableComponent.hpp"
 //#include "components/MeshComponent.hpp"
 #include "components/MetadataComponent.hpp"
-
+#include "components/TimelineComponent.hpp"
 #include "components/TransformComponent.hpp"
 #include "components/TransformAnimationComponent.hpp"
 
-Actor& CameraActorBuilder::build(Actor& actor,
+Actor& CameraActorBuilder::build(Actor& actor, AnimationTimeProvider& animationTimeProvider,
                      ShaderWrapper& meshShaderWrapper, float fov, float near, float far, float aspect) {
 	std::unique_ptr<Drawable> drawable = std::make_unique<NullDrawable>();
 	actor.add_component<DrawableComponent>(std::move(drawable));
@@ -28,6 +28,7 @@ Actor& CameraActorBuilder::build(Actor& actor,
 	std::vector<AnimationComponent> timelineComponents = {
 		transformAnimationComponent
 	};
-	actor.add_component<TimelineComponent>(std::move(timelineComponents))
+	actor.add_component<TimelineComponent>(std::move(timelineComponents));
+	
 	return actor;
 }
