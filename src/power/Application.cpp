@@ -55,31 +55,32 @@ mBatchUnit(std::make_unique<BatchUnit>(*mMeshBatch, *mSkinnedMeshBatch)),
 mMeshShader(std::make_unique<ShaderWrapper>(*mRenderCommon->shader_manager().get_shader("mesh"))),
 mSkinnedShader(std::make_unique<ShaderWrapper>(*mRenderCommon->shader_manager().get_shader("skinned_mesh"))),
 mMeshActorLoader(std::make_unique<MeshActorLoader>(*mActorManager, mRenderCommon->shader_manager(), *mBatchUnit)),
-mGizmoManager(std::make_unique<GizmoManager>(mUiCommon->toolbox(), mRenderCommon->shader_manager(), *mActorManager, *mMeshActorLoader)),
-mUiManager(std::make_unique<UiManager>(
-									   mUiCommon->hierarchy_panel(),
-									   mUiCommon->hierarchy_panel(),
-									   *mActorManager,
-									   *mMeshActorLoader,
-									   mRenderCommon->shader_manager(),
-									   mUiCommon->scene_panel(),
-									   mRenderCommon->canvas(),
-									   mUiCommon->toolbox(),
-									   mUiCommon->status_bar(),
-									   mUiCommon->animation_panel(),
-									   mUiCommon->scene_time_bar(),
-									   *mCameraManager,
-									   *mDeepMotionApiClient,
-									   *mGizmoManager,
-									   [this](std::function<void(int, int)> callback){
-										   auto callbackWrapee = [this, callback](bool down, int width, int height, int x, int y){
-											   callback(x, y);
-										   };
-										   register_click_callback(callbackWrapee);
-									   }
-									   ))
+mGizmoManager(std::make_unique<GizmoManager>(mUiCommon->toolbox(), mRenderCommon->shader_manager(), *mActorManager, *mMeshActorLoader))
 {
 	Batch::init_dummy_texture();
+	
+	mUiManager = std::make_unique<UiManager>(
+										   mUiCommon->hierarchy_panel(),
+										   mUiCommon->hierarchy_panel(),
+										   *mActorManager,
+										   *mMeshActorLoader,
+										   mRenderCommon->shader_manager(),
+										   mUiCommon->scene_panel(),
+										   mRenderCommon->canvas(),
+										   mUiCommon->toolbox(),
+										   mUiCommon->status_bar(),
+										   mUiCommon->animation_panel(),
+										   mUiCommon->scene_time_bar(),
+										   *mCameraManager,
+										   *mDeepMotionApiClient,
+										   *mGizmoManager,
+										   [this](std::function<void(int, int)> callback){
+											   auto callbackWrapee = [this, callback](bool down, int width, int height, int x, int y){
+												   callback(x, y);
+											   };
+											   register_click_callback(callbackWrapee);
+										   }
+											 );
 	
 	theme()->m_window_drop_shadow_size = 0;
 	
