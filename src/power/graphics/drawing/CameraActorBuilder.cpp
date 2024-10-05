@@ -30,7 +30,7 @@ Actor& CameraActorBuilder::build(Actor& actor,
 		transformAnimationComponent
 	};
 	
-	actor.add_component<TimelineComponent>(std::move(timelineComponents));
+	actor.add_component<TimelineComponent>(std::move(timelineComponents), animationTimeProvider);
 	
 	return actor;
 }
