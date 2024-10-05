@@ -13,6 +13,15 @@
 #include <glm/gtx/quaternion.hpp>
 #include <glm/gtx/matrix_decompose.hpp>
 
+namespace {
+
+// Constants
+const int MAX_BONES = 128;
+const int MAX_BONE_INFLUENCE = 4;
+const int DEFAULT_BONE_ID = 0; // Ensure this bone exists in your shader and skeleton
+
+}
+
 namespace SkinnedFbxUtil {
 
 
@@ -55,7 +64,7 @@ void SkinnedFbx::ProcessBoneAndParents(const std::shared_ptr<sfbx::LimbNode>& bo
 		return;
 	}
 	
-	std::string boneName = bone->getName();
+	std::string boneName = std::string {bone->getName() };
 	if (mBoneMapping.find(boneName) == mBoneMapping.end()) {
 		if (mBoneMapping.size() >= MAX_BONES) {
 			std::cerr << "Error: Exceeded maximum number of bones (" << MAX_BONES << "). Bone " << boneName << " cannot be assigned." << std::endl;
@@ -135,11 +144,6 @@ void SkinnedFbx::ProcessBones(const std::shared_ptr<sfbx::Mesh>& mesh) {
 			std::cerr << "Warning: No skin clusters found for the mesh." << std::endl;
 		}
 		
-		// Constants
-		const int MAX_BONES = 128;
-		const int MAX_BONE_INFLUENCE = 4;
-		const int DEFAULT_BONE_ID = 0; // Ensure this bone exists in your shader and skeleton
-		
 		// Process skin clusters
 		for (const auto& clusterObj : skinClusters) {
 			auto skinCluster = std::dynamic_pointer_cast<sfbx::Cluster>(clusterObj);
@@ -164,7 +168,7 @@ void SkinnedFbx::ProcessBones(const std::shared_ptr<sfbx::Mesh>& mesh) {
 			ProcessBoneAndParents(bone);
 			
 			// Now you can safely get the bone ID
-			std::string boneName = bone->getName();
+			std::string boneName = std::string {  bone->getName() };
 			int boneID = mBoneMapping[boneName];
 			
 			// Assign weights to vertices
@@ -226,7 +230,7 @@ void SkinnedFbx::ProcessBones(const std::shared_ptr<sfbx::Mesh>& mesh) {
 			int parentIndex = -1;
 			auto parentBone = std::dynamic_pointer_cast<sfbx::LimbNode>(boneInfo.limb->getParent());
 			if (parentBone) {
-				std::string parentBoneName = parentBone->getName();
+				std::string parentBoneName = std::string { parentBone->getName() };
 				int parentId = GetBoneIdByName(parentBoneName);
 				
 				if (parentId != -1) {
