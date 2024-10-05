@@ -42,15 +42,20 @@
 #include <functional>
 Application::Application()
 : nanogui::DraggableScreen("Power Engine"),
-mGlobalAnimationTimeProvider(60 * 30),
-mEntityRegistry(std::make_unique<entt::registry>()),
-mCameraManager(std::make_unique<CameraManager>(*mEntityRegistry)),
-mActorManager(std::make_unique<ActorManager>(*mEntityRegistry, *mCameraManager)),
-mDeepMotionApiClient(std::make_unique<DeepMotionApiClient>()),
-mUiCommon(std::make_unique<UiCommon>(*this, *mActorManager, mGlobalAnimationTimeProvider))
+mGlobalAnimationTimeProvider(60 * 30)
 {
 	Batch::init_dummy_texture();
 	
+	mEntityRegistry = std::make_unique<entt::registry>();
+	
+	mCameraManager = std::make_unique<CameraManager>(*mEntityRegistry);
+	
+	mActorManager  = std::make_unique<ActorManager>(*mEntityRegistry, *mCameraManager);
+	
+	mDeepMotionApiClient = std::make_unique<DeepMotionApiClient>();
+	
+	mUiCommon = std::make_unique<UiCommon>(*this, *mActorManager, mGlobalAnimationTimeProvider);
+
 	mRenderCommon = std::make_unique<RenderCommon>(mUiCommon->scene_panel(), *mEntityRegistry, *mActorManager, *mCameraManager);
 	
 	mMeshBatch = std::make_unique<MeshBatch>(*mRenderCommon->canvas().render_pass());
