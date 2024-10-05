@@ -444,6 +444,8 @@ void UiManager::draw_content(const nanogui::Matrix4f& model, const nanogui::Matr
 void UiManager::remove_active_actor() {
 	if (mActiveActor.has_value()) {
 		mActorVisualManager.remove_actor(mActiveActor->get());
+		
+		mSceneTimeBar.refresh_actors();
 	}
 }
 

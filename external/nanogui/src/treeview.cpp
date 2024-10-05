@@ -27,6 +27,8 @@ void TreeView::clear() {
         remove_child(item);
     }
     m_items.clear();
+	
+	m_selected_item = nullptr;
 }
 
 void TreeView::set_selected(TreeViewItem* item) {
