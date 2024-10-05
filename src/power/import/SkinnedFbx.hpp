@@ -65,8 +65,10 @@ private:
 	std::string GetBoneNameById(int boneId) const;
 	int GetBoneIdByName(const std::string& boneName) const;
 	
-	void ProcessBoneAndParents(const std::shared_ptr<sfbx::LimbNode>& bone);
-	
+	void ProcessBoneAndParents(
+						  const std::shared_ptr<sfbx::LimbNode>& bone,
+							   const std::unordered_map<std::string, sfbx::double4x4>& boneOffsetMatrices);
+
 	void ProcessBones(const std::shared_ptr<sfbx::Mesh>& mesh) override;
 	
 	std::unordered_map<std::string, int> mBoneMapping;

@@ -59,12 +59,21 @@ inline glm::mat4 SfbxMatToGlmMat(const sfbx::double4x4 &from)
 }
 }  // namespace
 
-void SkinnedFbx::ProcessBoneAndParents(const std::shared_ptr<sfbx::LimbNode>& bone) {
+void SkinnedFbx::ProcessBoneAndParents(
+									   const std::shared_ptr<sfbx::LimbNode>& bone,
+									   const std::unordered_map<std::string, sfbx::double4x4>& boneOffsetMatrices) {
 	if (!bone) {
 		return;
 	}
 	
-	std::string boneName = std::string {bone->getName() };
+	// Recursively process parent bone first
+	auto parentBone = std::dynamic_pointer_cast<sfbx::LimbNode>(bone->getParent());
+	if (parentBone) {
+		ProcessBoneAndParents(parentBone, boneOffsetMatrices);
+	}
+	
+	// Now process the current bone
+	std::string boneName = std::string{ bone->getName() };
 	if (mBoneMapping.find(boneName) == mBoneMapping.end()) {
 		if (mBoneMapping.size() >= MAX_BONES) {
 			std::cerr << "Error: Exceeded maximum number of bones (" << MAX_BONES << "). Bone " << boneName << " cannot be assigned." << std::endl;
@@ -74,10 +83,17 @@ void SkinnedFbx::ProcessBoneAndParents(const std::shared_ptr<sfbx::LimbNode>& bo
 		int newBoneID = static_cast<int>(mBoneMapping.size());
 		mBoneMapping[boneName] = newBoneID;
 		
-		// Get global bind pose matrix
-		glm::mat4 offsetMatrix = SkinnedFbxUtil::SfbxMatToGlmMat(bone->getGlobalMatrix());
+		// Get the offset matrix from boneOffsetMatrices, or use identity if not found
+		glm::mat4 offsetMatrix;
+		auto it = boneOffsetMatrices.find(boneName);
+		if (it != boneOffsetMatrices.end()) {
+			offsetMatrix = SkinnedFbxUtil::SfbxMatToGlmMat(it->second);
+		} else {
+			// If the bone is not directly associated with a skin cluster, use identity matrix
+			offsetMatrix = glm::mat4(1.0f);
+		}
 		
-		// Get local matrix
+		// Get local bind pose matrix
 		glm::mat4 poseMatrix = SkinnedFbxUtil::SfbxMatToGlmMat(bone->getLocalMatrix());
 		
 		// Store bone info
@@ -89,12 +105,6 @@ void SkinnedFbx::ProcessBoneAndParents(const std::shared_ptr<sfbx::LimbNode>& bo
 		
 		// Add to hierarchy
 		mBoneHierarchy.push_back(boneInfo);
-	}
-	
-	// Recursively process parent bone
-	auto parentBone = std::dynamic_pointer_cast<sfbx::LimbNode>(bone->getParent());
-	if (parentBone) {
-		ProcessBoneAndParents(parentBone);
 	}
 }
 
@@ -144,6 +154,9 @@ void SkinnedFbx::ProcessBones(const std::shared_ptr<sfbx::Mesh>& mesh) {
 			std::cerr << "Warning: No skin clusters found for the mesh." << std::endl;
 		}
 		
+		// Map to store bone offset matrices
+		std::unordered_map<std::string, sfbx::double4x4> boneOffsetMatrices;
+		
 		// Process skin clusters
 		for (const auto& clusterObj : skinClusters) {
 			auto skinCluster = std::dynamic_pointer_cast<sfbx::Cluster>(clusterObj);
@@ -164,11 +177,15 @@ void SkinnedFbx::ProcessBones(const std::shared_ptr<sfbx::Mesh>& mesh) {
 				continue;
 			}
 			
-			// Process this bone and its parents
-			ProcessBoneAndParents(bone);
+			std::string boneName = std::string{ bone->getName() };
+			
+			// Store the offset matrix from skinCluster->getTransform()
+			boneOffsetMatrices[boneName] = skinCluster->getTransform();
+			
+			// Process this bone and its parents, passing the offset matrices map
+			ProcessBoneAndParents(bone, boneOffsetMatrices);
 			
 			// Now you can safely get the bone ID
-			std::string boneName = std::string {  bone->getName() };
 			int boneID = mBoneMapping[boneName];
 			
 			// Assign weights to vertices
@@ -230,17 +247,25 @@ void SkinnedFbx::ProcessBones(const std::shared_ptr<sfbx::Mesh>& mesh) {
 			int parentIndex = -1;
 			auto parentBone = std::dynamic_pointer_cast<sfbx::LimbNode>(boneInfo.limb->getParent());
 			if (parentBone) {
-				std::string parentBoneName = std::string { parentBone->getName() };
+				std::string parentBoneName = std::string{ parentBone->getName() };
 				int parentId = GetBoneIdByName(parentBoneName);
 				
 				if (parentId != -1) {
 					parentIndex = parentId;
 				} else {
-					std::cerr << "Warning: Parent bone not found for bone: " << boneName << std::endl;
+					// Parent bone may not have been processed yet
+					// Process the parent bone
+					ProcessBoneAndParents(parentBone, boneOffsetMatrices);
+					parentId = GetBoneIdByName(parentBoneName);
+					if (parentId != -1) {
+						parentIndex = parentId;
+					} else {
+						std::cerr << "Warning: Parent bone not found for bone: " << boneName << std::endl;
+					}
 				}
 			}
 			
-			// Add bone to skeleton
+			// Add bone to skeleton with the correct offset and bind pose matrices
 			skeleton.add_bone(boneName, boneInfo.offset, boneInfo.bindpose, parentIndex);
 		}
 		
