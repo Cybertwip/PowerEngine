@@ -414,9 +414,9 @@ SceneTimeBar::~SceneTimeBar() {
 
 // Override OnActorSelected from IActorSelectedCallback
 void SceneTimeBar::OnActorSelected(std::optional<std::reference_wrapper<Actor>> actor) {
-	stop_playback();
-
 	mActiveActor = actor;
+
+	stop_playback();
 	
 	register_actor_callbacks();
 	
