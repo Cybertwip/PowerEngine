@@ -50,9 +50,11 @@ void HierarchyPanel::remove_actor(std::reference_wrapper<Actor> actor) {
 	
 	mActorManager.remove_actor(actor);
 	
-	auto actors = mActorManager.get_actors_with_component<MetadataCompoent>();
+	auto actors = mActorManager.get_actors_with_component<MetadataComponent>();
 	
-	populate_tree(actors);
+	for (auto& actor : actors) {
+		populate_tree(actor);
+	}
 	
 	fire_actor_selected_event(std::nullopt);
 }
