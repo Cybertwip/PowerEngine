@@ -15,8 +15,15 @@ CameraComponent::CameraComponent(TransformComponent& transformComponent, float f
 }
 
 void CameraComponent::update_view() {
-	auto matrix = mTransformComponent.get_matrix();
-	// Convert glm::mat4 to nanogui::Matrix4f
+	glm::vec3 position = mTransformComponent.get_translation();
+	glm::quat rotation = mTransformComponent.get_rotation();
+	
+	// Calculate forward vector from rotation
+	glm::vec3 forward = rotation * glm::vec3(0.0f, 0.0f, -1.0f);
+	
+	// Calculate the view matrix
+	auto matrix = glm::lookAt(position, position + forward, glm::vec3(0.0f, -1.0f, 0.0f));
+
 	std::memcpy(mView.m, glm::value_ptr(matrix), sizeof(float) * 16);
 }
 void CameraComponent::look_at(Actor& actor)

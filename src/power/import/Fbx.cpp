@@ -40,7 +40,8 @@ glm::mat4 GetUpAxisRotation(int up_axis, int up_axis_sign) {
 	return rotation;
 }
 
-}  // namespace FbxUtil
+}  // namespace
+
 
 void Fbx::LoadModel(const std::string& path) {
 	mDoc = sfbx::MakeDocument(path);
@@ -71,7 +72,6 @@ void Fbx::ProcessNode(const std::shared_ptr<sfbx::Model>& node) {
 		}
 	}
 }
-
 void Fbx::ProcessMesh(const std::shared_ptr<sfbx::Mesh>& mesh) {
 	if (!mesh) {
 		std::cerr << "Error: Invalid mesh pointer." << std::endl;
@@ -107,7 +107,7 @@ void Fbx::ProcessMesh(const std::shared_ptr<sfbx::Mesh>& mesh) {
 	// Reserve space for vertices and indices
 	const size_t vertexCount = points.size();
 	const size_t indexCount = vertexIndices.size();
-	resultMesh->get_vertices().resize(indexCount);
+	resultMesh->get_vertices().resize(vertexCount);
 	resultMesh->get_indices().resize(indexCount);
 	
 	// Retrieve materials and map them to indices
@@ -153,6 +153,7 @@ void Fbx::ProcessMesh(const std::shared_ptr<sfbx::Mesh>& mesh) {
 		}
 	}
 	
+	
 	// Precompute Color Indices
 	const auto& colorLayers = geometry->getColorLayers();
 	std::vector<int> colorIndices(indexCount, -1);
@@ -173,7 +174,6 @@ void Fbx::ProcessMesh(const std::shared_ptr<sfbx::Mesh>& mesh) {
 			}
 		}
 	}
-	
 	// Determine the number of threads to use
 	unsigned int numThreads = std::thread::hardware_concurrency();
 	if (numThreads == 0) numThreads = 1;
@@ -187,9 +187,16 @@ void Fbx::ProcessMesh(const std::shared_ptr<sfbx::Mesh>& mesh) {
 		for (size_t i = startIndex; i < endIndex; ++i) {
 			int controlPointIndex = vertexIndices[i];
 			
-			// Create a new MeshVertex per index
-			auto& vertexPtr = resultMesh->get_vertices()[i];
-			vertexPtr = std::make_unique<MeshVertex>();
+			// Ensure controlPointIndex is within bounds
+			if (controlPointIndex >= vertexCount) {
+				sfbxPrint("Error: controlPointIndex %d out of bounds.\n", controlPointIndex);
+				continue;
+			}
+			
+			auto& vertexPtr = resultMesh->get_vertices()[controlPointIndex];
+			if (vertexPtr.get() == nullptr) {
+				vertexPtr = std::make_unique<MeshVertex>();
+			}
 			auto& vertex = *vertexPtr;
 			
 			// Transform position
@@ -222,7 +229,7 @@ void Fbx::ProcessMesh(const std::shared_ptr<sfbx::Mesh>& mesh) {
 					finalUV = glm::fract(finalUV);
 					
 					// Flip Y-axis if needed
-					// finalUV.y = 1.0f - finalUV.y;
+					finalUV.y = finalUV.y;
 					
 					if (layerIndex == 0) {
 						vertex.set_texture_coords1(finalUV);
@@ -238,21 +245,21 @@ void Fbx::ProcessMesh(const std::shared_ptr<sfbx::Mesh>& mesh) {
 			// Assign Vertex Color
 			if (!colorData.empty() && colorIndices[i] >= 0) {
 				const auto& color = colorData[colorIndices[i]];
-				vertex.set_color({ color.x, color.y, color.z, color.w }); // Including alpha channel
+				vertex.set_color({ color.x, color.y, color.z, color.w }); // Ignoring alpha channel
 			} else {
 				vertex.set_color({ 1.0f, 1.0f, 1.0f, 1.0f }); // Default color (white)
 			}
-			
 			// Set material ID
-			int matIndex = geometry->getMaterialForPolygonIndex(i / 3); // Assuming triangles
+			// Assign material ID with bounds checking
+			int matIndex = geometry->getMaterialForVertexIndex(controlPointIndex);
 			if (matIndex >= 0 && matIndex < static_cast<int>(materials.size())) {
 				vertex.set_material_id(matIndex);
 			} else {
-				vertex.set_material_id(0); // Default material ID
+				vertex.set_material_id(0); // or a default material ID
 			}
 			
-			// Set the index
-			resultMesh->get_indices()[i] = static_cast<unsigned int>(i);
+			// Assign vertex and index
+			resultMesh->get_indices()[i] = controlPointIndex;
 		}
 	};
 	
@@ -269,6 +276,8 @@ void Fbx::ProcessMesh(const std::shared_ptr<sfbx::Mesh>& mesh) {
 	}
 	
 	// Process materials
+	//	resultMesh->get_material_properties().reserve(materials.size());
+	
 	std::vector<std::shared_ptr<SerializableMaterialProperties>> serializableMaterials;
 	
 	serializableMaterials.reserve(materials.size());
@@ -312,5 +321,5 @@ void Fbx::ProcessMesh(const std::shared_ptr<sfbx::Mesh>& mesh) {
 	mMaterialProperties.push_back(std::move(serializableMaterials));
 	
 	// Proceed to process bones separately
-	 ProcessBones(mesh); // Uncomment if you have a ProcessBones function
+	ProcessBones(mesh); // This call should be handled externally or after ProcessMesh
 }

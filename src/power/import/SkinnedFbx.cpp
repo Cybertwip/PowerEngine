@@ -89,6 +89,10 @@ void SkinnedFbx::ProcessBones(const std::shared_ptr<sfbx::Mesh>& mesh) {
 		
 		// Initialize skinned vertices
 		auto& skinnedVertices = mSkinnedMeshes.back()->get_vertices();
+		size_t totalVertices = skinnedVertices.size();
+		
+		// Ensure that skinnedVertices are initialized properly
+		// This assumes that SkinnedMeshData's constructor initializes skinned_vertices appropriately
 		
 		// Get all the skin clusters (bones) attached to the mesh
 		auto skinClusters = skin->getClusters();
@@ -109,10 +113,9 @@ void SkinnedFbx::ProcessBones(const std::shared_ptr<sfbx::Mesh>& mesh) {
 				continue;
 			}
 			
-			// Use getLink() to retrieve the bone associated with the cluster
 			auto model = sfbx::as<sfbx::Model>(skinCluster->getChild());
 			if (!model) {
-				std::cerr << "Error: Skin cluster's link is not a valid model." << std::endl;
+				std::cerr << "Error: Skin cluster's child is not a valid model." << std::endl;
 				continue;
 			}
 			
@@ -132,24 +135,22 @@ void SkinnedFbx::ProcessBones(const std::shared_ptr<sfbx::Mesh>& mesh) {
 				int newBoneID = static_cast<int>(mBoneMapping.size());
 				mBoneMapping[boneName] = newBoneID;
 				
-				// Get the inverse bind pose matrix from the skin cluster
-				glm::mat4 offsetMatrix = glm::inverse(SkinnedFbxUtil::SfbxMatToGlmMat(skinCluster->getTransformLink()));
+				// Get global bind pose matrix
+				glm::mat4 offsetMatrix = SkinnedFbxUtil::SfbxMatToGlmMat(skinCluster->getTransform());
 				
-				// Get the bone's bind pose (global transform at bind time)
-				glm::mat4 bindPoseMatrix = SkinnedFbxUtil::SfbxMatToGlmMat(model->getGlobalMatrix());
+				// Get local matrix
+				glm::mat4 poseMatrix = SkinnedFbxUtil::SfbxMatToGlmMat(model->getLocalMatrix());
 				
 				// Store bone info
 				BoneHierarchyInfo boneInfo;
 				boneInfo.bone_id = newBoneID;
 				boneInfo.offset = offsetMatrix;
-				boneInfo.bindpose = bindPoseMatrix;
-				boneInfo.model = model; // Store the model
+				boneInfo.bindpose = poseMatrix;
+				boneInfo.limb = sfbx::as<sfbx::LimbNode>(skinCluster->getChild());
 				
-				// Add to hierarchy
+				// Add to hierarchy and mapping
 				mBoneHierarchy.push_back(boneInfo);
-				
-				// Debug: Print bone info
-				std::cout << "Assigned Bone: " << boneName << " with ID: " << newBoneID << std::endl;
+				//				std::cout << "Assigned Bone: " << boneName << " with ID: " << newBoneID << std::endl;
 			}
 			
 			// Assign weights to vertices
@@ -166,44 +167,72 @@ void SkinnedFbx::ProcessBones(const std::shared_ptr<sfbx::Mesh>& mesh) {
 			// Assign actual weights
 			for (size_t i = 0; i < weights.size(); ++i) {
 				int vertexID = indices[i];
-				float weight = static_cast<float>(weights[i]);
+				float weight = weights[i];
 				
 				// Validate weight
 				if (weight <= 0.0f) {
+					std::cerr << "Warning: Non-positive weight (" << weight << ") for Vertex ID: " << vertexID << " in Bone: " << boneName << std::endl;
 					continue;
 				}
 				
 				// Ensure valid vertex ID
 				if (vertexID >= 0 && static_cast<size_t>(vertexID) < skinnedVertices.size()) {
+					
 					auto& vertex = static_cast<SkinnedMeshVertex&>(*skinnedVertices[vertexID]);
-					vertex.add_bone_weight(boneID, weight);
+					
+					vertex.set_bone(boneID, weight);
+					
 				} else {
 					std::cerr << "Error: Invalid vertex ID (" << vertexID << ") for bone: " << boneName << ". Skinned Vertices Size: " << skinnedVertices.size() << std::endl;
 				}
 			}
 		}
 		
-		// Normalize bone weights and limit influences
-		for (auto& vertexPtr : skinnedVertices) {
-			auto& vertex = static_cast<SkinnedMeshVertex&>(*vertexPtr);
-			vertex.normalize_weights(MAX_BONE_INFLUENCE);
+		// Post-Processing: Assign default bone to vertices with no influences
+		for (size_t i = 0; i < skinnedVertices.size(); ++i) {
+			
+			auto& vertex = static_cast<SkinnedMeshVertex&>(*skinnedVertices[i]);
+			
+			if (vertex.has_no_bones()) {
+				vertex.set_bone(DEFAULT_BONE_ID, 1.0f);
+				std::cerr << "Info: Vertex ID " << i << " had no bone influences. Assigned to Default Bone ID " << DEFAULT_BONE_ID << "." << std::endl;
+			}
+		}
+		
+		// Validate that all vertices have at least one bone influence
+		for (size_t i = 0; i < skinnedVertices.size(); ++i) {
+			
+			auto& vertex = static_cast<SkinnedMeshVertex&>(*skinnedVertices[i]);
+			
+			if (vertex.has_no_bones()) {
+				std::cerr << "Error: Vertex ID " << i << " still has no bone influences after default assignment." << std::endl;
+			}
 		}
 		
 		// Build skeleton
 		auto skeletonPointer = std::make_unique<Skeleton>();
 		auto& skeleton = *skeletonPointer;
 		
-		for (const auto& boneInfo : mBoneHierarchy) {
+		for (int i = 0; i<mBoneHierarchy.size(); ++i) {
+			auto& boneInfo = mBoneHierarchy[i];
 			std::string boneName = GetBoneNameById(boneInfo.bone_id);
+			if (boneName.empty()) {
+				std::cerr << "Warning: Bone name not found for bone ID " << boneInfo.bone_id << std::endl;
+				continue;
+			}
 			
 			// Determine parent index
 			int parentIndex = -1;
-			auto parentModel = sfbx::as<sfbx::Model>(boneInfo.model->getParent());
-			if (parentModel) {
-				std::string parentBoneName = std::string{ parentModel->getName() };
+			auto parentNode = as<sfbx::LimbNode>(boneInfo.limb->getParent());
+			if (parentNode) {
+				std::string parentBoneName = std::string{ parentNode->getName() };
+				
 				int parentId = GetBoneIdByName(parentBoneName);
+				
 				if (parentId != -1) {
 					parentIndex = parentId;
+				} else {
+					std::cerr << "Warning: Parent bone not found for bone: " << boneName << std::endl;
 				}
 			}
 			
@@ -214,12 +243,11 @@ void SkinnedFbx::ProcessBones(const std::shared_ptr<sfbx::Mesh>& mesh) {
 		// Assign the skeleton if it has bones
 		mSkeleton = skeleton.num_bones() > 0 ? std::move(skeletonPointer) : nullptr;
 		
-		std::cout << "Finished processing bones for skinned mesh." << std::endl;
+		//		std::cout << "Finished processing bones for skinned mesh." << std::endl;
 	} else {
 		std::cerr << "Warning: No skin deformer found for the mesh." << std::endl;
 	}
 }
-
 std::string SkinnedFbx::GetBoneNameById(int boneId) const {
 	for (const auto& [name, id] : mBoneMapping) {
 		if (id == boneId) {
