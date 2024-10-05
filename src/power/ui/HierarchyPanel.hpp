@@ -27,7 +27,7 @@ public:
 
 	void add_actor(std::reference_wrapper<Actor> actor) override;
 	
-	void remove_actor(std::reference_wrapper<Actor> actor);
+	void remove_actor(std::reference_wrapper<Actor> actor) override;
 	
 	void fire_actor_selected_event(std::optional<std::reference_wrapper<Actor>> actor) override;
 	void RegisterOnActorSelectedCallback(IActorSelectedCallback& callback) override;
