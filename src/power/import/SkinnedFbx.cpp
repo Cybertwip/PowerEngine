@@ -50,6 +50,45 @@ inline glm::mat4 SfbxMatToGlmMat(const sfbx::double4x4 &from)
 }
 }  // namespace
 
+void SkinnedFbx::ProcessBoneAndParents(const std::shared_ptr<sfbx::LimbNode>& bone) {
+	if (!bone) {
+		return;
+	}
+	
+	std::string boneName = bone->getName();
+	if (mBoneMapping.find(boneName) == mBoneMapping.end()) {
+		if (mBoneMapping.size() >= MAX_BONES) {
+			std::cerr << "Error: Exceeded maximum number of bones (" << MAX_BONES << "). Bone " << boneName << " cannot be assigned." << std::endl;
+			return; // Skip this bone
+		}
+		
+		int newBoneID = static_cast<int>(mBoneMapping.size());
+		mBoneMapping[boneName] = newBoneID;
+		
+		// Get global bind pose matrix
+		glm::mat4 offsetMatrix = SkinnedFbxUtil::SfbxMatToGlmMat(bone->getGlobalMatrix());
+		
+		// Get local matrix
+		glm::mat4 poseMatrix = SkinnedFbxUtil::SfbxMatToGlmMat(bone->getLocalMatrix());
+		
+		// Store bone info
+		BoneHierarchyInfo boneInfo;
+		boneInfo.bone_id = newBoneID;
+		boneInfo.offset = offsetMatrix;
+		boneInfo.bindpose = poseMatrix;
+		boneInfo.limb = bone;
+		
+		// Add to hierarchy
+		mBoneHierarchy.push_back(boneInfo);
+	}
+	
+	// Recursively process parent bone
+	auto parentBone = std::dynamic_pointer_cast<sfbx::LimbNode>(bone->getParent());
+	if (parentBone) {
+		ProcessBoneAndParents(parentBone);
+	}
+}
+
 void SkinnedFbx::ProcessBones(const std::shared_ptr<sfbx::Mesh>& mesh) {
 	if (!mesh) {
 		std::cerr << "Error: Invalid mesh pointer." << std::endl;
@@ -64,13 +103,13 @@ void SkinnedFbx::ProcessBones(const std::shared_ptr<sfbx::Mesh>& mesh) {
 	}
 	
 	auto deformers = geometry->getDeformers();
-	const auto& vertexIndices = geometry->getIndices();
 	
 	std::shared_ptr<sfbx::Skin> skin;
 	
 	// Find the skin deformer in the mesh
 	for (auto& deformer : deformers) {
-		if (skin = sfbx::as<sfbx::Skin>(deformer); skin) {
+		skin = std::dynamic_pointer_cast<sfbx::Skin>(deformer);
+		if (skin) {
 			break;
 		}
 	}
@@ -89,10 +128,6 @@ void SkinnedFbx::ProcessBones(const std::shared_ptr<sfbx::Mesh>& mesh) {
 		
 		// Initialize skinned vertices
 		auto& skinnedVertices = mSkinnedMeshes.back()->get_vertices();
-		size_t totalVertices = skinnedVertices.size();
-		
-		// Ensure that skinnedVertices are initialized properly
-		// This assumes that SkinnedMeshData's constructor initializes skinned_vertices appropriately
 		
 		// Get all the skin clusters (bones) attached to the mesh
 		auto skinClusters = skin->getClusters();
@@ -107,54 +142,32 @@ void SkinnedFbx::ProcessBones(const std::shared_ptr<sfbx::Mesh>& mesh) {
 		
 		// Process skin clusters
 		for (const auto& clusterObj : skinClusters) {
-			auto skinCluster = sfbx::as<sfbx::Cluster>(clusterObj);
+			auto skinCluster = std::dynamic_pointer_cast<sfbx::Cluster>(clusterObj);
 			if (!skinCluster) {
 				std::cerr << "Error: Invalid skin cluster object." << std::endl;
 				continue;
 			}
 			
-			auto model = sfbx::as<sfbx::Model>(skinCluster->getChild());
+			auto model = std::dynamic_pointer_cast<sfbx::Model>(skinCluster->getChild());
 			if (!model) {
 				std::cerr << "Error: Skin cluster's child is not a valid model." << std::endl;
 				continue;
 			}
 			
-			std::string boneName = std::string{ model->getName() };
-			if (boneName.empty()) {
-				std::cerr << "Error: Bone name is empty." << std::endl;
+			auto bone = std::dynamic_pointer_cast<sfbx::LimbNode>(model);
+			if (!bone) {
+				std::cerr << "Error: Skin cluster's child is not a LimbNode." << std::endl;
 				continue;
 			}
 			
-			// Assign bone ID if not already mapped
-			if (mBoneMapping.find(boneName) == mBoneMapping.end()) {
-				if (mBoneMapping.size() >= MAX_BONES) {
-					std::cerr << "Error: Exceeded maximum number of bones (" << MAX_BONES << "). Bone " << boneName << " cannot be assigned." << std::endl;
-					continue; // Skip this bone
-				}
-				
-				int newBoneID = static_cast<int>(mBoneMapping.size());
-				mBoneMapping[boneName] = newBoneID;
-				
-				// Get global bind pose matrix
-				glm::mat4 offsetMatrix = SkinnedFbxUtil::SfbxMatToGlmMat(skinCluster->getTransform());
-				
-				// Get local matrix
-				glm::mat4 poseMatrix = SkinnedFbxUtil::SfbxMatToGlmMat(model->getLocalMatrix());
-				
-				// Store bone info
-				BoneHierarchyInfo boneInfo;
-				boneInfo.bone_id = newBoneID;
-				boneInfo.offset = offsetMatrix;
-				boneInfo.bindpose = poseMatrix;
-				boneInfo.limb = sfbx::as<sfbx::LimbNode>(skinCluster->getChild());
-				
-				// Add to hierarchy and mapping
-				mBoneHierarchy.push_back(boneInfo);
-				//				std::cout << "Assigned Bone: " << boneName << " with ID: " << newBoneID << std::endl;
-			}
+			// Process this bone and its parents
+			ProcessBoneAndParents(bone);
+			
+			// Now you can safely get the bone ID
+			std::string boneName = bone->getName();
+			int boneID = mBoneMapping[boneName];
 			
 			// Assign weights to vertices
-			int boneID = mBoneMapping[boneName];
 			auto weights = skinCluster->getWeights();
 			auto indices = skinCluster->getIndices();
 			
@@ -177,11 +190,8 @@ void SkinnedFbx::ProcessBones(const std::shared_ptr<sfbx::Mesh>& mesh) {
 				
 				// Ensure valid vertex ID
 				if (vertexID >= 0 && static_cast<size_t>(vertexID) < skinnedVertices.size()) {
-					
 					auto& vertex = static_cast<SkinnedMeshVertex&>(*skinnedVertices[vertexID]);
-					
 					vertex.set_bone(boneID, weight);
-					
 				} else {
 					std::cerr << "Error: Invalid vertex ID (" << vertexID << ") for bone: " << boneName << ". Skinned Vertices Size: " << skinnedVertices.size() << std::endl;
 				}
@@ -190,9 +200,7 @@ void SkinnedFbx::ProcessBones(const std::shared_ptr<sfbx::Mesh>& mesh) {
 		
 		// Post-Processing: Assign default bone to vertices with no influences
 		for (size_t i = 0; i < skinnedVertices.size(); ++i) {
-			
 			auto& vertex = static_cast<SkinnedMeshVertex&>(*skinnedVertices[i]);
-			
 			if (vertex.has_no_bones()) {
 				vertex.set_bone(DEFAULT_BONE_ID, 1.0f);
 				std::cerr << "Info: Vertex ID " << i << " had no bone influences. Assigned to Default Bone ID " << DEFAULT_BONE_ID << "." << std::endl;
@@ -201,9 +209,7 @@ void SkinnedFbx::ProcessBones(const std::shared_ptr<sfbx::Mesh>& mesh) {
 		
 		// Validate that all vertices have at least one bone influence
 		for (size_t i = 0; i < skinnedVertices.size(); ++i) {
-			
 			auto& vertex = static_cast<SkinnedMeshVertex&>(*skinnedVertices[i]);
-			
 			if (vertex.has_no_bones()) {
 				std::cerr << "Error: Vertex ID " << i << " still has no bone influences after default assignment." << std::endl;
 			}
@@ -213,20 +219,14 @@ void SkinnedFbx::ProcessBones(const std::shared_ptr<sfbx::Mesh>& mesh) {
 		auto skeletonPointer = std::make_unique<Skeleton>();
 		auto& skeleton = *skeletonPointer;
 		
-		for (int i = 0; i<mBoneHierarchy.size(); ++i) {
-			auto& boneInfo = mBoneHierarchy[i];
+		for (const auto& boneInfo : mBoneHierarchy) {
 			std::string boneName = GetBoneNameById(boneInfo.bone_id);
-			if (boneName.empty()) {
-				std::cerr << "Warning: Bone name not found for bone ID " << boneInfo.bone_id << std::endl;
-				continue;
-			}
 			
 			// Determine parent index
 			int parentIndex = -1;
-			auto parentNode = as<sfbx::LimbNode>(boneInfo.limb->getParent());
-			if (parentNode) {
-				std::string parentBoneName = std::string{ parentNode->getName() };
-				
+			auto parentBone = std::dynamic_pointer_cast<sfbx::LimbNode>(boneInfo.limb->getParent());
+			if (parentBone) {
+				std::string parentBoneName = parentBone->getName();
 				int parentId = GetBoneIdByName(parentBoneName);
 				
 				if (parentId != -1) {
@@ -243,11 +243,11 @@ void SkinnedFbx::ProcessBones(const std::shared_ptr<sfbx::Mesh>& mesh) {
 		// Assign the skeleton if it has bones
 		mSkeleton = skeleton.num_bones() > 0 ? std::move(skeletonPointer) : nullptr;
 		
-		//		std::cout << "Finished processing bones for skinned mesh." << std::endl;
 	} else {
 		std::cerr << "Warning: No skin deformer found for the mesh." << std::endl;
 	}
 }
+
 std::string SkinnedFbx::GetBoneNameById(int boneId) const {
 	for (const auto& [name, id] : mBoneMapping) {
 		if (id == boneId) {
@@ -291,6 +291,10 @@ void SkinnedFbx::TryImportAnimations() {
 					
 					// Retrieve all animation curve nodes
 					auto curve_nodes = animation_layer->getAnimationCurveNodes();
+					
+					if (curve_nodes.empty()) {
+						break;
+					}
 					
 					// Filter for position, rotation, and scale curves
 					std::shared_ptr<sfbx::AnimationCurveNode> position_curve = nullptr;
