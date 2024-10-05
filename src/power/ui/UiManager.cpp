@@ -258,7 +258,7 @@ UiManager::UiManager(IActorSelectedRegistry& registry,
 	
 	scenePanel.register_motion_callback(GLFW_MOUSE_BUTTON_RIGHT, [this](int width, int height, int x, int y, int dx, int dy, int button, bool down){
 		if (down) {
-			mCameraManager.rotate_camera(dx, dy);
+			mCameraManager.rotate_camera(-dx, -dy);
 		}
 	});
 
@@ -267,7 +267,7 @@ UiManager::UiManager(IActorSelectedRegistry& registry,
 	});
 	
 	scenePanel.register_scroll_callback([this](int width, int height, int x, int y, int dx, int dy){
-		mCameraManager.zoom_camera(dy);
+		mCameraManager.zoom_camera(-dy);
 	});
 
 }

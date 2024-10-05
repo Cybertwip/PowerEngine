@@ -118,7 +118,7 @@ void CameraManager::rotate_camera(float dx, float dy) {
 		auto& transform = cameraActor.get_component<TransformComponent>();
 		
 		// Define rotation sensitivity
-		float sensitivity = 0.005f; // Adjust as needed
+		float sensitivity = 0.05f; // Adjust as needed
 		
 		// Calculate rotation angles
 		float yaw = -dx * sensitivity;
@@ -152,7 +152,7 @@ void CameraManager::zoom_camera(float dy) {
 		auto& transform = cameraActor.get_component<TransformComponent>();
 		
 		// Define zoom sensitivity
-		float sensitivity = 0.1f; // Adjust as needed
+		float sensitivity = 1; // Adjust as needed
 		
 		// Get the forward direction
 		glm::vec3 forward = transform.get_forward();
@@ -179,7 +179,7 @@ void CameraManager::pan_camera(float dx, float dy) {
 		auto& transform = cameraActor.get_component<TransformComponent>();
 		
 		// Define pan sensitivity
-		float sensitivity = 0.01f; // Adjust as needed
+		float sensitivity = 0.1f; // Adjust as needed
 		
 		// Get the right and up vectors
 		glm::vec3 right = transform.get_right();
