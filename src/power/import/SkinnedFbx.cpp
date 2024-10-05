@@ -143,7 +143,7 @@ void SkinnedFbx::ProcessBones(const std::shared_ptr<sfbx::Mesh>& mesh) {
 				boneInfo.bone_id = newBoneID;
 				boneInfo.offset = offsetMatrix;
 				boneInfo.bindpose = bindPoseMatrix;
-				boneInfo.limb = model; // Store the model
+				boneInfo.model = model; // Store the model
 				
 				// Add to hierarchy
 				mBoneHierarchy.push_back(boneInfo);
@@ -198,7 +198,7 @@ void SkinnedFbx::ProcessBones(const std::shared_ptr<sfbx::Mesh>& mesh) {
 			
 			// Determine parent index
 			int parentIndex = -1;
-			auto parentModel = sfbx::as<sfbx::Model>(boneInfo.limb->getParent());
+			auto parentModel = sfbx::as<sfbx::Model>(boneInfo.model->getParent());
 			if (parentModel) {
 				std::string parentBoneName = std::string{ parentModel->getName() };
 				int parentId = GetBoneIdByName(parentBoneName);

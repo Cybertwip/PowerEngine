@@ -27,7 +27,7 @@ struct BoneHierarchyInfo {
 	int bone_id;
 	glm::mat4 offset;
 	glm::mat4 bindpose;
-	std::shared_ptr<sfbx::LimbNode> limb;
+	std::shared_ptr<sfbx::Model> model;
 	std::string parent_bone_name;
 };
 
