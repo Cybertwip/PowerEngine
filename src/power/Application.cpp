@@ -47,18 +47,26 @@ mEntityRegistry(std::make_unique<entt::registry>()),
 mCameraManager(std::make_unique<CameraManager>(*mEntityRegistry)),
 mActorManager(std::make_unique<ActorManager>(*mEntityRegistry, *mCameraManager)),
 mDeepMotionApiClient(std::make_unique<DeepMotionApiClient>()),
-mUiCommon(std::make_unique<UiCommon>(*this, *mActorManager, mGlobalAnimationTimeProvider)),
-mRenderCommon(std::make_unique<RenderCommon>(mUiCommon->scene_panel(), *mEntityRegistry, *mActorManager, *mCameraManager)),
-mMeshBatch(std::make_unique<MeshBatch>(*mRenderCommon->canvas().render_pass())),
-mSkinnedMeshBatch(std::make_unique<SkinnedMeshBatch>(*mRenderCommon->canvas().render_pass())),
-mBatchUnit(std::make_unique<BatchUnit>(*mMeshBatch, *mSkinnedMeshBatch)),
-mMeshShader(std::make_unique<ShaderWrapper>(*mRenderCommon->shader_manager().get_shader("mesh"))),
-mSkinnedShader(std::make_unique<ShaderWrapper>(*mRenderCommon->shader_manager().get_shader("skinned_mesh"))),
-mMeshActorLoader(std::make_unique<MeshActorLoader>(*mActorManager, mRenderCommon->shader_manager(), *mBatchUnit)),
-mGizmoManager(std::make_unique<GizmoManager>(mUiCommon->toolbox(), mRenderCommon->shader_manager(), *mActorManager, *mMeshActorLoader))
+mUiCommon(std::make_unique<UiCommon>(*this, *mActorManager, mGlobalAnimationTimeProvider))
 {
 	Batch::init_dummy_texture();
 	
+	mRenderCommon = std::make_unique<RenderCommon>(mUiCommon->scene_panel(), *mEntityRegistry, *mActorManager, *mCameraManager);
+	
+	mMeshBatch = std::make_unique<MeshBatch>(*mRenderCommon->canvas().render_pass());
+	
+	mSkinnedMeshBatch = std::make_unique<SkinnedMeshBatch>(*mRenderCommon->canvas().render_pass());
+	
+	mBatchUnit = std::make_unique<BatchUnit>(*mMeshBatch, *mSkinnedMeshBatch);
+	
+	mMeshShader = std::make_unique<ShaderWrapper>(*mRenderCommon->shader_manager().get_shader("mesh"));
+
+	mSkinnedShader = std::make_unique<ShaderWrapper>(*mRenderCommon->shader_manager().get_shader("skinned_mesh"));
+	
+	mMeshActorLoader = std::make_unique<MeshActorLoader>(*mActorManager, mRenderCommon->shader_manager(), *mBatchUnit);
+	
+	mGizmoManager = std::make_unique<GizmoManager>(mUiCommon->toolbox(), mRenderCommon->shader_manager(), *mActorManager, *mMeshActorLoader);
+
 	mUiManager = std::make_unique<UiManager>(
 										   mUiCommon->hierarchy_panel(),
 										   mUiCommon->hierarchy_panel(),
