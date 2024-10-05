@@ -256,16 +256,22 @@ UiManager::UiManager(IActorSelectedRegistry& registry,
 	mSelectionColor = glm::normalize(glm::vec4(0.83f, 0.68f, 0.21f, 1.0f)); // A gold-ish color
 	
 	
-	scenePanel.register_motion_callback(GLFW_MOUSE_BUTTON_LEFT, [this](int width, int height, int x, int y, int dx, int dy, int button, bool down){
-		mCameraManager.rotate_camera(dx, dy);
+	scenePanel.register_motion_callback(GLFW_MOUSE_BUTTON_1, [this](int width, int height, int x, int y, int dx, int dy, int button, bool down){
+		
+		if (down) {
+			mCameraManager.rotate_camera(dx, dy);
+		}
 	});
 
-	scenePanel.register_motion_callback(GLFW_MOUSE_BUTTON_RIGHT, [this](int width, int height, int x, int y, int dx, int dy, int button, bool down){
+	scenePanel.register_motion_callback(GLFW_MOUSE_BUTTON_MIDDLE, [this](int width, int height, int x, int y, int dx, int dy, int button, bool down){
 		mCameraManager.pan_camera(dx, dy);
 	});
 	
-	scenePanel.register_motion_callback(GLFW_MOUSE_BUTTON_MIDDLE, [this](int width, int height, int x, int y, int dx, int dy, int button, bool down){
-		mCameraManager.zoom_camera(dy);
+	scenePanel.register_motion_callback(GLFW_MOUSE_BUTTON_2, [this](int width, int height, int x, int y, int dx, int dy, int button, bool down){
+		
+		if (down) {
+			mCameraManager.zoom_camera(dy);
+		}
 	});
 
 }
