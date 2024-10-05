@@ -104,7 +104,7 @@ mGlobalAnimationTimeProvider(60 * 30)
 	if (mCameraManager->active_camera().has_value()) {
 		actors.push_back(mCameraManager->active_camera()->get());
 	} else {
-		actors.push_back(mRenderCommon->camera_actor_loader().create_actor(
+		actors.push_back(mRenderCommon->camera_actor_loader().create_actor(mGlobalAnimationTimeProvider,
 																		   45.0f, 0.01f, 5e3f,
 																		   mRenderCommon->canvas().fixed_size().x() /
 																		   static_cast<float>(mRenderCommon->canvas().fixed_size().y())));

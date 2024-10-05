@@ -7,6 +7,7 @@
 
 class Actor;
 class ActorManager;
+class AnimationTimeProvider;
 class CameraManager;
 class ShaderManager;
 class ShaderWrapper;
@@ -19,7 +20,7 @@ class CameraActorLoader
 	~CameraActorLoader();
 	
 	
-	Actor& create_actor(float fov, float near, float far, float aspect);
+	Actor& create_actor(AnimationTimeProvider& animationTimeProvider, float fov, float near, float far, float aspect);
 
    private:
 	ActorManager& mActorManager;

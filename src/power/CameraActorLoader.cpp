@@ -15,8 +15,8 @@ CameraActorLoader::CameraActorLoader(ActorManager& actorManager, CameraManager& 
 CameraActorLoader::~CameraActorLoader() {
 }
 
-Actor& CameraActorLoader::create_actor(float fov, float near, float far, float aspect) {
-	auto& actor = CameraActorBuilder::build(mActorManager.create_actor(), *mMeshShaderWrapper, fov, near, far, aspect);
+Actor& CameraActorLoader::create_actor(AnimationTimeProvider& animationTimeProvider, float fov, float near, float far, float aspect) {
+	auto& actor = CameraActorBuilder::build(mActorManager.create_actor(), animationTimeProvider, *mMeshShaderWrapper, fov, near, far, aspect);
 	
 	mCameraManager.update_from(mActorManager);
 	
