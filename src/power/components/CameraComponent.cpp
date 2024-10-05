@@ -19,7 +19,7 @@ void CameraComponent::update_view() {
 	glm::quat rotation = mTransformComponent.get_rotation();
 	
 	// Calculate forward vector from rotation
-	glm::vec3 forward = rotation * glm::vec3(0.0f, 0.0f, -1.0f);
+	glm::vec3 forward = rotation * glm::vec3(0.0f, 0.0f, 1.0f);
 	
 	// Calculate the view matrix
 	auto matrix = glm::lookAt(position, position + forward, glm::vec3(0.0f, -1.0f, 0.0f));
