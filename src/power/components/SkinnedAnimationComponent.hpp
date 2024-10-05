@@ -121,6 +121,7 @@ public:
 			mProvider.setPlaybackTrigger(keyframe->getPlaybackTrigger());
 			mProvider.setPlaybackData(keyframe->getPlaybackData());
 		}
+
 	}
 	
 	bool KeyframeExists() override {

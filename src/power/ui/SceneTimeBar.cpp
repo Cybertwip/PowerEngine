@@ -104,6 +104,8 @@ mNormalButtonColor(theme()->m_text_color) // Initialize normal button color
 		find_previous_and_next_keyframes();
 
 		evaluate_timelines();
+		
+		commit();
 	});
 	
 	// Buttons Wrapper
@@ -139,6 +141,8 @@ mNormalButtonColor(theme()->m_text_color) // Initialize normal button color
 		find_previous_and_next_keyframes();
 
 		evaluate_timelines();
+		
+		commit();
 	});
 	
 	// Previous Frame Button
@@ -159,6 +163,9 @@ mNormalButtonColor(theme()->m_text_color) // Initialize normal button color
 			find_previous_and_next_keyframes();
 
 			evaluate_timelines();
+			
+			commit();
+
 		}
 	});
 	
@@ -180,6 +187,8 @@ mNormalButtonColor(theme()->m_text_color) // Initialize normal button color
 
 		evaluate_timelines();
 		
+		commit();
+
 	});
 	
 	// Play/Pause Button
@@ -257,6 +266,9 @@ mNormalButtonColor(theme()->m_text_color) // Initialize normal button color
 			find_previous_and_next_keyframes();
 			
 			evaluate_timelines();
+			
+			commit();
+
 		}
 	});
 	
@@ -277,6 +289,9 @@ mNormalButtonColor(theme()->m_text_color) // Initialize normal button color
 		find_previous_and_next_keyframes();
 
 		evaluate_timelines();
+		
+		commit();
+
 	});
 	
 	// Keyframe Buttons Wrapper
@@ -306,6 +321,9 @@ mNormalButtonColor(theme()->m_text_color) // Initialize normal button color
 			find_previous_and_next_keyframes();
 
 			evaluate_timelines();
+			
+			commit();
+
 			
 		} else {
 			// No previous keyframe available
@@ -338,13 +356,14 @@ mNormalButtonColor(theme()->m_text_color) // Initialize normal button color
 				} else {
 					component.AddKeyframe();
 				}
-				
-				component.SyncWithProvider();
 			}
 			
 			find_previous_and_next_keyframes();
 
 			evaluate_timelines();
+			
+			commit();
+
 		}
 	});
 	
@@ -374,6 +393,9 @@ mNormalButtonColor(theme()->m_text_color) // Initialize normal button color
 
 			evaluate_timelines();
 			
+			commit();
+
+			
 		} else {
 			// No next keyframe available
 			std::cout << "No next keyframe available." << std::endl;
@@ -392,11 +414,11 @@ SceneTimeBar::~SceneTimeBar() {
 
 // Override OnActorSelected from IActorSelectedCallback
 void SceneTimeBar::OnActorSelected(std::optional<std::reference_wrapper<Actor>> actor) {
+	stop_playback();
+
 	mActiveActor = actor;
 	
 	register_actor_callbacks();
-	
-	stop_playback();
 	
 	find_previous_and_next_keyframes();
 }
@@ -497,6 +519,7 @@ void SceneTimeBar::stop_playback() {
 		
 		component.Unfreeze();
 	}
+	
 }
 
 // Helper method to update the time display
@@ -531,8 +554,22 @@ void SceneTimeBar::evaluate_timelines() {
 		if (!mRecording) {
 			component.Unfreeze();
 		}
-
 	}
+}
+
+void SceneTimeBar::commit() {
+	mAnimationTimeProvider.Update(mCurrentTime);
+	
+	mUncommittedKey = false;
+	
+	if (mActiveActor.has_value()) {
+		auto& component = mActiveActor->get().get_component<TimelineComponent>();
+		
+		component.Unfreeze();
+		
+		component.SyncWithProvider();
+	}
+
 }
 
 // Helper method to evaluate keyframe status

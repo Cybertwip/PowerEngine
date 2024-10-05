@@ -69,6 +69,7 @@ private:
 	// Helper methods
 	void update_time_display(int frameCount);
 	void evaluate_timelines();
+	void commit();
 	void evaluate_keyframe_status();
 	std::tuple<KeyframeStamp, KeyframeStamp> find_previous_and_next_keyframes();
 	
