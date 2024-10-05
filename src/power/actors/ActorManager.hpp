@@ -19,7 +19,8 @@ class ActorManager {
 public:
     ActorManager(entt::registry& registry, CameraManager& cameraManager);
 	Actor& create_actor();
-	
+	void remove_actor(Actor& actor);
+
 	template<typename T>
 	const std::vector<std::reference_wrapper<Actor>> get_actors_with_component() const {
 		

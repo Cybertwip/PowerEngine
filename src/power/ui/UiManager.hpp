@@ -53,6 +53,8 @@ public:
 		return mIsMovieExporting;
 	}
 	
+	void remove_active_actor();
+	
 	void process_events();
 	
 private:

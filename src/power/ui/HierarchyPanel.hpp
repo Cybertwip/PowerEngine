@@ -12,19 +12,22 @@
 class IActorSelectedCallback;
 
 class Actor;
+class ActorManager;
 class AnimationPanel;
 class ScenePanel;
 class TransformPanel;
 
 class HierarchyPanel : public IActorSelectedRegistry, public IActorVisualManager, public Panel {
 public:
-	HierarchyPanel(ScenePanel& scenePanel, TransformPanel& transformPanel, AnimationPanel& animationPanel, nanogui::Widget &parent);
+	HierarchyPanel(ScenePanel& scenePanel, TransformPanel& transformPanel, AnimationPanel& animationPanel, ActorManager& actorManager, nanogui::Widget &parent);
 	
 	~HierarchyPanel() = default;
 
     void add_actors(const std::vector<std::reference_wrapper<Actor>> &actors) override;
 
 	void add_actor(std::reference_wrapper<Actor> actor) override;
+	
+	void remove_actor(std::reference_wrapper<Actor> actor);
 	
 	void fire_actor_selected_event(std::optional<std::reference_wrapper<Actor>> actor) override;
 	void RegisterOnActorSelectedCallback(IActorSelectedCallback& callback) override;
@@ -44,6 +47,8 @@ private:
 	TransformPanel& mTransformPanel;
 	AnimationPanel& mAnimationPanel;
     nanogui::VScrollPanel *mScrollPanel;
+	ActorManager& mActorManager;
+	
     nanogui::TreeView *mTreeView;
     void populate_tree(Actor& actor, nanogui::TreeViewItem *parentNode = nullptr);
 };

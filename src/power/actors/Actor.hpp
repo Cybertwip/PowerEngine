@@ -33,6 +33,8 @@ public:
 		static_assert(sizeof(this) <= sizeof(long long), "Pointer size is too large for long long type.");
 		return reinterpret_cast<long long>(this);
 	}
+	
+	entt::entity get_entity() const { return mEntity; }
 
 private:
     entt::registry& mRegistry;

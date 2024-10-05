@@ -10,11 +10,12 @@
 #include <nanogui/treeviewitem.h>
 
 #include "actors/Actor.hpp"
+#include "actors/ActorManager.hpp"
 #include "actors/IActorSelectedCallback.hpp"
 #include "components/MetadataComponent.hpp"
 #include "components/UiComponent.hpp"
 
-HierarchyPanel::HierarchyPanel(ScenePanel& scenePanel, TransformPanel& transformPanel, AnimationPanel& animationPanel, nanogui::Widget &parent) : Panel(parent, "Scene"), mTransformPanel(transformPanel), mAnimationPanel(animationPanel) {
+HierarchyPanel::HierarchyPanel(ScenePanel& scenePanel, TransformPanel& transformPanel, AnimationPanel& animationPanel, ActorManager& actorManager, nanogui::Widget &parent) : Panel(parent, "Scene"), mTransformPanel(transformPanel), mAnimationPanel(animationPanel), mActorManager(actorManager) {
 	set_position(nanogui::Vector2i(0, 0));
 	set_layout(new nanogui::GroupLayout());
 	
@@ -41,6 +42,19 @@ void HierarchyPanel::add_actors(const std::vector<std::reference_wrapper<Actor>>
 
 void HierarchyPanel::add_actor(std::reference_wrapper<Actor> actor) {
 	populate_tree(actor.get());
+}
+
+void HierarchyPanel::remove_actor(std::reference_wrapper<Actor> actor) {
+	
+	mTreeView->clear();
+	
+	mActorManager.remove_actor(actor);
+	
+	auto actors = mActorManager.get_actors_with_component<MetadataCompoent>();
+	
+	populate_tree(actors);
+	
+	fire_actor_selected_event(std::nullopt);
 }
 
 void HierarchyPanel::populate_tree(Actor &actor, nanogui::TreeViewItem *parent_node) {
@@ -119,7 +133,3 @@ void HierarchyPanel::fire_actor_selected_event(std::optional<std::reference_wrap
 		mTreeView->set_selected(nullptr);
 	}
 }
-
-
-
-
