@@ -121,7 +121,6 @@ mGlobalAnimationTimeProvider(60 * 30)
 	perform_layout();
 }
 
-
 bool Application::keyboard_event(int key, int scancode, int action, int modifiers) {
     if (Screen::keyboard_event(key, scancode, action, modifiers)) return true;
 	if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS) {

@@ -339,7 +339,6 @@ void SkinnedMeshBatch::remove(std::reference_wrapper<SkinnedMesh> meshRef) {
 		// Note: Depending on your rendering backend, you might need to handle this differently
 		// For simplicity, we'll re-upload all data for this shader
 		upload_vertex_data(shader, identifier);
-
 	}
 }
 

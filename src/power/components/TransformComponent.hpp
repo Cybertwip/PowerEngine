@@ -93,6 +93,21 @@ public:
 		set_rotation(newRotation);
 	}
 	
+	// Get the forward vector (negative Z-axis)
+	glm::vec3 get_forward() const {
+		return glm::normalize(transform.rotation * glm::vec3(0.0f, 0.0f, -1.0f));
+	}
+	
+	// Get the up vector (positive Y-axis)
+	glm::vec3 get_up() const {
+		return glm::normalize(transform.rotation * glm::vec3(0.0f, 1.0f, 0.0f));
+	}
+	
+	// Get the right vector (positive X-axis)
+	glm::vec3 get_right() const {
+		return glm::normalize(transform.rotation * glm::vec3(1.0f, 0.0f, 0.0f));
+	}
+	
 private:
 	// Use an unordered_map to store callbacks with an integer key (ID)
 	std::unordered_map<int, TransformChangedCallback> callbacks;

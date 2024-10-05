@@ -85,9 +85,6 @@ void HierarchyPanel::populate_tree(Actor &actor, nanogui::TreeViewItem *parent_n
 }
 
 void HierarchyPanel::RegisterOnActorSelectedCallback(IActorSelectedCallback& callback) {
-	if (mActorSelectedCallbacks.size() >= 2) {
-		throw std::runtime_error("Cannot register more than two callbacks.");
-	}
 	mActorSelectedCallbacks.push_back(std::ref(callback));
 }
 

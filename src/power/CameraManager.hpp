@@ -1,5 +1,7 @@
 #pragma once
 
+#include "actors/IActorSelectedCallback.hpp"
+
 #include <entt/entt.hpp>
 
 #include <nanogui/vector.h>
@@ -9,10 +11,15 @@
 class Actor;
 class ActorManager;
 
-class CameraManager
+class IActorSelectedRegistry;
+class ScenePanel;
+
+class CameraManager : public IActorSelectedCallback
 {
 public:
     CameraManager(entt::registry& registry);
+	
+	~CameraManager();
 	
 	void update_from(const ActorManager& actorManager);
     
@@ -24,10 +31,25 @@ public:
     const nanogui::Matrix4f get_projection() const;
     
     void look_at(Actor& actor);
+	
+	void look_at(const glm::vec3& position);
+
+	void set_transform(const glm::mat4& transform);
+
+	std::optional<glm::mat4> get_transform();
+	
+	void rotate_camera(float dx, float dy);
+	void zoom_camera(float dy);
+	void pan_camera(float dx, float dy);
+
 
 private:
+	
+	void OnActorSelected(std::optional<std::reference_wrapper<Actor>> actor) override;
+
     entt::registry& mRegistry;
     std::optional<std::reference_wrapper<Actor>> mActiveCamera;
-	
 	std::vector<std::reference_wrapper<Actor>> mCameras;
+	
+	std::optional<std::reference_wrapper<Actor>> mActiveActor;
 };
