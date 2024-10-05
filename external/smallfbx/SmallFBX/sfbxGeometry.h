@@ -2,6 +2,8 @@
 #include "sfbxObject.h"
 
 #include <vector>
+#include <unordered_map>
+#include <unordered_set>
 
 namespace sfbx {
 
@@ -178,7 +180,9 @@ public:
 	span<double3> getNormalsDeformed(size_t layer_index = 0, bool apply_transform = false);
 	
 	int getMaterialForVertexIndex(unsigned int vertex_index) const;
-		
+	
+	int getMaterialForPolygonIndex(int polygon_index) const;
+
 	void exportFBXObjects() override;
 
 protected:
@@ -207,6 +211,9 @@ protected:
 	
 private:
 	std::unordered_map<int, unsigned int> m_vertex_to_material_map;
+	
+	std::unordered_map<int, int> m_polygon_to_material_map;
+
 };
 
 
