@@ -40,71 +40,73 @@
 
 #include <cmath>
 #include <functional>
-
-Application::Application() : nanogui::DraggableScreen("Power Engine"), mGlobalAnimationTimeProvider(60 * 30) {
-				
+Application::Application()
+: nanogui::DraggableScreen("Power Engine"),
+mGlobalAnimationTimeProvider(60 * 30),
+mEntityRegistry(std::make_unique<entt::registry>()),
+mCameraManager(std::make_unique<CameraManager>(*mEntityRegistry)),
+mActorManager(std::make_unique<ActorManager>(*mEntityRegistry, *mCameraManager)),
+mDeepMotionApiClient(std::make_unique<DeepMotionApiClient>()),
+mUiCommon(std::make_unique<UiCommon>(*this, *mActorManager, mGlobalAnimationTimeProvider)),
+mRenderCommon(std::make_unique<RenderCommon>(mUiCommon->scene_panel(), *mEntityRegistry, *mActorManager, *mCameraManager)),
+mMeshBatch(std::make_unique<MeshBatch>(*mRenderCommon->canvas().render_pass())),
+mSkinnedMeshBatch(std::make_unique<SkinnedMeshBatch>(*mRenderCommon->canvas().render_pass())),
+mBatchUnit(std::make_unique<BatchUnit>(*mMeshBatch, *mSkinnedMeshBatch)),
+mMeshShader(std::make_unique<ShaderWrapper>(*mRenderCommon->shader_manager().get_shader("mesh"))),
+mSkinnedShader(std::make_unique<ShaderWrapper>(*mRenderCommon->shader_manager().get_shader("skinned_mesh"))),
+mMeshActorLoader(std::make_unique<MeshActorLoader>(*mActorManager, mRenderCommon->shader_manager(), *mBatchUnit)),
+mGizmoManager(std::make_unique<GizmoManager>(mUiCommon->toolbox(), mRenderCommon->shader_manager(), *mActorManager, *mMeshActorLoader)),
+mUiManager(std::make_unique<UiManager>(
+									   mUiCommon->hierarchy_panel(),
+									   mUiCommon->hierarchy_panel(),
+									   *mActorManager,
+									   *mMeshActorLoader,
+									   mRenderCommon->shader_manager(),
+									   mUiCommon->scene_panel(),
+									   mRenderCommon->canvas(),
+									   mUiCommon->toolbox(),
+									   mUiCommon->status_bar(),
+									   mUiCommon->animation_panel(),
+									   mUiCommon->scene_time_bar(),
+									   *mCameraManager,
+									   *mDeepMotionApiClient,
+									   *mGizmoManager,
+									   [this](std::function<void(int, int)> callback){
+										   auto callbackWrapee = [this, callback](bool down, int width, int height, int x, int y){
+											   callback(x, y);
+										   };
+										   register_click_callback(callbackWrapee);
+									   }
+									   ))
+{
 	Batch::init_dummy_texture();
-
-    theme()->m_window_drop_shadow_size = 0;
-
-    set_layout(new nanogui::GroupLayout(0, 0, 0, 0));
-
-    mEntityRegistry = std::make_unique<entt::registry>();
-
-    mCameraManager = std::make_unique<CameraManager>(*mEntityRegistry);
-
-	mActorManager = std::make_unique<ActorManager>(*mEntityRegistry, *mCameraManager);
-
-	mDeepMotionApiClient = std::make_unique<DeepMotionApiClient>();
 	
-	mUiCommon = std::make_unique<UiCommon>(*this, *mActorManager, mGlobalAnimationTimeProvider);
-
-	mRenderCommon =
-        std::make_unique<RenderCommon>(mUiCommon->scene_panel(), *mEntityRegistry, *mActorManager, *mCameraManager);
+	theme()->m_window_drop_shadow_size = 0;
 	
-	mMeshBatch = std::make_unique<MeshBatch>(*mRenderCommon->canvas().render_pass());
-
-	mSkinnedMeshBatch = std::make_unique<SkinnedMeshBatch>(*mRenderCommon->canvas().render_pass());
-
-	mBatchUnit = std::make_unique<BatchUnit>(*mMeshBatch, *mSkinnedMeshBatch);
+	set_layout(new nanogui::GroupLayout(0, 0, 0, 0));
 	
-	mMeshShader = std::make_unique<ShaderWrapper>(*mRenderCommon->shader_manager().get_shader("mesh"));
+	std::vector<std::reference_wrapper<Actor>> actors;
 	
-	mSkinnedShader = std::make_unique<ShaderWrapper>(*mRenderCommon->shader_manager().get_shader("skinned_mesh"));
-
-	mMeshActorLoader = std::make_unique<MeshActorLoader>(*mActorManager, mRenderCommon->shader_manager(), *mBatchUnit);
-
-	auto applicationClickCallbackRegistrator = [this](std::function<void(int, int)> callback){
-		auto callbackWrapee = [this, callback](bool down, int width, int height, int x, int y){
-			callback(x, y);
-		};
-		
-		register_click_callback(callbackWrapee);
-	};
-
-	mUiManager = std::make_unique<UiManager>(mUiCommon->hierarchy_panel(), mUiCommon->hierarchy_panel(), *mActorManager, *mMeshActorLoader, mRenderCommon->shader_manager(), mUiCommon->scene_panel(), mRenderCommon->canvas(), mUiCommon->toolbox(), mUiCommon->status_bar(), mUiCommon->animation_panel(), mUiCommon->scene_time_bar(), *mCameraManager, *mDeepMotionApiClient, applicationClickCallbackRegistrator);
-	
-    std::vector<std::reference_wrapper<Actor>> actors;
-
-    if (mCameraManager->active_camera().has_value()) {
-        actors.push_back(mCameraManager->active_camera()->get());
-    } else {
+	if (mCameraManager->active_camera().has_value()) {
+		actors.push_back(mCameraManager->active_camera()->get());
+	} else {
 		actors.push_back(mRenderCommon->camera_actor_loader().create_actor(
-            45.0f, 0.01f, 5e3f,
-            mRenderCommon->canvas().fixed_size().x() /
-                static_cast<float>(mRenderCommon->canvas().fixed_size().y())));
-    }
-
+																		   45.0f, 0.01f, 5e3f,
+																		   mRenderCommon->canvas().fixed_size().x() /
+																		   static_cast<float>(mRenderCommon->canvas().fixed_size().y())));
+	}
+	
 	if (mCameraManager->active_camera().has_value()) {
 		mCameraManager->active_camera()->get().get_component<TransformComponent>().set_translation(glm::vec3(0, -100, -250));
 	}
 	
-    mUiCommon->hierarchy_panel().add_actors(std::move(actors));
-
+	mUiCommon->hierarchy_panel().add_actors(std::move(actors));
+	
 	set_background(mRenderCommon->canvas().background_color());
 	
-    perform_layout();
+	perform_layout();
 }
+
 
 bool Application::keyboard_event(int key, int scancode, int action, int modifiers) {
     if (Screen::keyboard_event(key, scancode, action, modifiers)) return true;

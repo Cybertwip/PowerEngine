@@ -88,14 +88,13 @@ glm::vec3 ScreenToWorld(glm::vec2 screenPos, float depth, glm::mat4 projectionMa
 
 }
 
-UiManager::UiManager(IActorSelectedRegistry& registry, IActorVisualManager& actorVisualManager, ActorManager& actorManager, MeshActorLoader& meshActorLoader, ShaderManager& shaderManager, ScenePanel& scenePanel, Canvas& canvas, nanogui::Widget& toolbox, nanogui::Widget& statusBar, AnimationPanel& animationPanel, SceneTimeBar& sceneTimeBar, CameraManager& cameraManager, DeepMotionApiClient& deepMotionApiClient, std::function<void(std::function<void(int, int)>)> applicationClickRegistrator)
+UiManager::UiManager(IActorSelectedRegistry& registry, IActorVisualManager& actorVisualManager, ActorManager& actorManager, MeshActorLoader& meshActorLoader, ShaderManager& shaderManager, ScenePanel& scenePanel, Canvas& canvas, nanogui::Widget& toolbox, nanogui::Widget& statusBar, AnimationPanel& animationPanel, SceneTimeBar& sceneTimeBar, CameraManager& cameraManager, DeepMotionApiClient& deepMotionApiClient, GizmoManager& gizmoManager, std::function<void(std::function<void(int, int)>)> applicationClickRegistrator)
 : mRegistry(registry)
 , mActorManager(actorManager)
 , mShaderManager(shaderManager)
 , mGrid(std::make_unique<Grid>(shaderManager))
 , mMeshActorLoader(meshActorLoader)
-, mGizmoManager(std::make_unique<GizmoManager>(toolbox, shaderManager, actorManager, mMeshActorLoader))
-
+, mGizmoManager(gizmoManager)
 , mCanvas(canvas)
 , mAnimationPanel(animationPanel)
 , mSceneTimeBar(sceneTimeBar)
@@ -194,22 +193,22 @@ UiManager::UiManager(IActorSelectedRegistry& registry, IActorVisualManager& acto
 							actor.get().get_component<UiComponent>().select();
 						}
 						OnActorSelected(actor.get());
-						mGizmoManager->select(mActiveActor);
+						mGizmoManager.select(mActiveActor);
 						break;
 					}
 				}
 				
-				mGizmoManager->select(GizmoManager::GizmoAxis(id));
+				mGizmoManager.select(GizmoManager::GizmoAxis(id));
 			} else {
 				mActiveActor = std::nullopt;
 				
 				actorVisualManager.fire_actor_selected_event(mActiveActor);
-				mGizmoManager->select(mActiveActor);
-				mGizmoManager->select(GizmoManager::GizmoAxis(0));
+				mGizmoManager.select(mActiveActor);
+				mGizmoManager.select(GizmoManager::GizmoAxis(0));
 			}
 		} else {
-			mGizmoManager->select(GizmoManager::GizmoAxis(0));
-			mGizmoManager->hover(GizmoManager::GizmoAxis(0));
+			mGizmoManager.select(GizmoManager::GizmoAxis(0));
+			mGizmoManager.hover(GizmoManager::GizmoAxis(0));
 		}
 	});
 	
@@ -254,15 +253,15 @@ UiManager::UiManager(IActorSelectedRegistry& registry, IActorVisualManager& acto
 			int id = readFromFramebuffer(width, height, x, y);
 			
 			if (id != 0 && !down) {
-				mGizmoManager->hover(GizmoManager::GizmoAxis(id));
+				mGizmoManager.hover(GizmoManager::GizmoAxis(id));
 			} else if (id == 0 && !down){
-				mGizmoManager->hover(GizmoManager::GizmoAxis(0));
+				mGizmoManager.hover(GizmoManager::GizmoAxis(0));
 			} else if (id != 0 && down) {
-				mGizmoManager->hover(GizmoManager::GizmoAxis(id));
+				mGizmoManager.hover(GizmoManager::GizmoAxis(id));
 			}
 			
 			// Step 3: Apply the world-space delta transformation
-			mGizmoManager->transform(offset.x - world.x, offset.y - world.y);
+			mGizmoManager.transform(offset.x - world.x, offset.y - world.y);
 		}
 	});
 	
@@ -288,7 +287,7 @@ UiManager::~UiManager() {
 void UiManager::OnActorSelected(std::optional<std::reference_wrapper<Actor>> actor) {
 	mActiveActor = actor;
 	
-	mGizmoManager->select(std::nullopt);
+	mGizmoManager.select(std::nullopt);
 }
 
 void UiManager::export_movie(const std::string& path) {
@@ -306,8 +305,8 @@ void UiManager::export_movie(const std::string& path) {
 	mActiveActor = std::nullopt;
 	
 	mActorVisualManager.fire_actor_selected_event(mActiveActor);
-	mGizmoManager->select(mActiveActor);
-	mGizmoManager->select(GizmoManager::GizmoAxis(0));
+	mGizmoManager.select(mActiveActor);
+	mGizmoManager.select(GizmoManager::GizmoAxis(0));
 
 }
 
@@ -416,7 +415,7 @@ void UiManager::draw() {
 		mCanvas.render_pass()->push_depth_test_state(nanogui::RenderPass::DepthTest::Always, true, mShaderManager.identifier("gizmo"));
 		
 		// Draw gizmos
-		mGizmoManager->draw();
+		mGizmoManager.draw();
 		
 		// One for each batch
 		mCanvas.render_pass()->push_depth_test_state(nanogui::RenderPass::DepthTest::Less, true, mShaderManager.identifier("mesh"));

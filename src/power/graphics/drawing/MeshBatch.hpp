@@ -25,6 +25,8 @@ private:
 public:
 	MeshBatch(nanogui::RenderPass& renderPass);
 	
+	~MeshBatch() = default;
+	
 	void add_mesh(std::reference_wrapper<Mesh> mesh) override;
 	void clear() override;
 	void append(std::reference_wrapper<Mesh> meshRef) override;

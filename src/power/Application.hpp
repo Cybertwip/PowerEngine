@@ -219,25 +219,26 @@ class Application : public nanogui::DraggableScreen
 
 	bool mouse_button_event(const nanogui::Vector2i &p, int button, bool down, int modifiers) override;
 	
+	
 	AnimationTimeProvider mGlobalAnimationTimeProvider;
-
-    std::unique_ptr<entt::registry> mEntityRegistry;
-    std::unique_ptr<CameraManager> mCameraManager;
-    std::unique_ptr<Canvas> mCanvas;
-	std::unique_ptr<ActorManager> mActorManager;
-	std::unique_ptr<RenderCommon> mRenderCommon;
-	std::unique_ptr<MeshActorLoader> mMeshActorLoader;
-	std::unique_ptr<DeepMotionApiClient> mDeepMotionApiClient;
-    std::unique_ptr<UiCommon> mUiCommon;
+	
+	// Reversed unique_ptr declarations
+	std::unique_ptr<Canvas> mCanvas; // Place appropriately based on actual dependencies
 	std::unique_ptr<UiManager> mUiManager;
-	
-	std::unique_ptr<MeshBatch> mMeshBatch;
-	std::unique_ptr<SkinnedMeshBatch> mSkinnedMeshBatch;
-
-	std::unique_ptr<BatchUnit> mBatchUnit;
-	
-	std::unique_ptr<ShaderWrapper> mMeshShader;
+	std::unique_ptr<GizmoManager> mGizmoManager;
+	std::unique_ptr<MeshActorLoader> mMeshActorLoader;
 	std::unique_ptr<ShaderWrapper> mSkinnedShader;
+	std::unique_ptr<ShaderWrapper> mMeshShader;
+	std::unique_ptr<BatchUnit> mBatchUnit;
+	std::unique_ptr<SkinnedMeshBatch> mSkinnedMeshBatch;
+	std::unique_ptr<MeshBatch> mMeshBatch;
+	std::unique_ptr<RenderCommon> mRenderCommon;
+	std::unique_ptr<UiCommon> mUiCommon;
+	std::unique_ptr<DeepMotionApiClient> mDeepMotionApiClient;
+	std::unique_ptr<ActorManager> mActorManager;
+	std::unique_ptr<CameraManager> mCameraManager;
+	std::unique_ptr<entt::registry> mEntityRegistry;
+	
 
 	std::queue<std::tuple<bool, int, int, int, int>> mClickQueue;
 	std::vector<std::function<void(bool, int, int, int, int)>> mClickCallbacks;
