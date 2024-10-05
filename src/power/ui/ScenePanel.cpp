@@ -39,12 +39,26 @@ bool ScenePanel::mouse_motion_event(const nanogui::Vector2i &p, const nanogui::V
 	
 	if (Widget::mouse_motion_event(p, rel, button, modifiers)) {
 		return true;
+	} else {
+		// Queue the motion event
+		mMotionQueue.push(std::make_tuple(width(), height(), p.x(), p.y(), rel.x(), rel.y(), button, mDragging));
+		
+		return false;
 	}
-	
-	// Queue the motion event
-	mMotionQueue.push(std::make_tuple(width(), height(), p.x(), p.y(), rel.x(), rel.y(), button, mDragging));
-	
-	return Widget::mouse_motion_event(p, rel, button, modifiers);
+}
+
+bool ScenePanel::scroll_event(const nanogui::Vector2i &p, const nanogui::Vector2f &rel) {
+	if (Widget::scroll_event(p, rel)) {
+		return true;
+	} else {
+		// Queue the scroll event
+		mScrollQueue.push(std::make_tuple(width(), height(), p.x(), p.y(), rel.x(), rel.y()));
+		return false;
+	}
+}
+
+void ScenePanel::register_scroll_callback(std::function<void(int, int, int, int, float, float)> callback) {
+	mScrollCallbacks.push_back(callback);
 }
 
 void ScenePanel::register_motion_callback(int button, std::function<void(int, int, int, int, int, int, int, bool)> callback) {
@@ -85,6 +99,16 @@ void ScenePanel::process_events() {
 			for (auto& callback : it->second) {
 				callback(w, h, x, y, dx, dy, button, down);
 			}
+		}
+	}
+	
+	// Process scroll events
+	while (!mScrollQueue.empty()) {
+		auto [w, h, x, y, dx, dy] = mScrollQueue.front();
+		mScrollQueue.pop();
+		
+		for (auto& callback : mScrollCallbacks) {
+			callback(w, h, x, y, dx, dy);
 		}
 	}
 }
