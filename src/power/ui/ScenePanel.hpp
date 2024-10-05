@@ -32,7 +32,7 @@ private:
 	// Maps to store callbacks associated with specific buttons
 	std::map<int, std::vector<std::function<void(bool, int, int, int, int)>>> mClickCallbacks;
 	std::map<int, std::vector<std::function<void(int, int, int, int, int, int, int, bool)>>> mMotionCallbacks;
-	std::vector<std::function<void(int, int, int, int, float, float)>> mScrollCallbacks;
+	std::deque<std::function<void(int, int, int, int, float, float)>> mScrollCallbacks;
 	
 	bool mDragging;
 };

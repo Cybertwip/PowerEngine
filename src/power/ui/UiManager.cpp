@@ -51,23 +51,35 @@
 namespace UIUtils {
 
 glm::vec3 ScreenToWorld(glm::vec2 screenPos, float depth, glm::mat4 projectionMatrix, glm::mat4 viewMatrix, int screenWidth, int screenHeight) {
-	glm::mat4 ProjectionInv = glm::inverse(projectionMatrix);
+	glm::mat4 Projection = projectionMatrix;
+	glm::mat4 ProjectionInv = glm::inverse(Projection);
+	
+	int WINDOW_WIDTH = screenWidth;
+	int WINDOW_HEIGHT = screenHeight;
 	
 	// Step 1 - Viewport to NDC
-	float ndc_x = (2.0f * screenPos.x) / screenWidth - 1.0f;
-	float ndc_y = 1.0f - (2.0f * screenPos.y) / screenHeight; // flip the Y axis
+	float mouse_x = screenPos.x;
+	float mouse_y = screenPos.y;
 	
-	// Step 2 - NDC to View Space
-	glm::vec4 ray_ndc(ndc_x, ndc_y, 1.0f, 1.0f);
-	glm::vec4 ray_view = ProjectionInv * ray_ndc;
-	ray_view /= ray_view.w;
+	float ndc_x = (2.0f * mouse_x) / WINDOW_WIDTH - 1.0f;
+	float ndc_y = 1.0f - (2.0f * mouse_y) / WINDOW_HEIGHT; // flip the Y axis
 	
-	// Step 3 - Intersect with Z Plane
-	glm::vec3 view_space_intersect = glm::vec3(ray_view) * depth;
+	// Step 2 - NDC to view (my version)
+	float focal_length = 1.0f/tanf(glm::radians(45.0f / 2.0f));
+	float ar = (float)WINDOW_HEIGHT / (float)WINDOW_WIDTH;
+	glm::vec3 ray_view(ndc_x / focal_length, (ndc_y * ar) / focal_length, 1.0f);
 	
-	// Step 4 - View to World Space
+	// Step 2 - NDC to view (Anton's version)
+	glm::vec4 ray_ndc_4d(ndc_x, ndc_y, 1.0f, 1.0f);
+	glm::vec4 ray_view_4d = ProjectionInv * ray_ndc_4d;
+	
+	// Step 3 - intersect view vector with object Z plane (in view)
+	glm::vec4 view_space_intersect = glm::vec4(ray_view * depth, 1.0f);
+	
+	// Step 4 - View to World space
+	glm::mat4 View = viewMatrix;
 	glm::mat4 InvView = glm::inverse(viewMatrix);
-	glm::vec4 point_world = InvView * glm::vec4(view_space_intersect, 1.0f);
+	glm::vec4 point_world = InvView * view_space_intersect;
 	return glm::vec3(point_world);
 }
 
@@ -195,7 +207,9 @@ UiManager::UiManager(IActorSelectedRegistry& registry,
 	});
 	
 	// Register motion callback with ScenePanel
-	scenePanel.register_motion_callback(GLFW_MOUSE_BUTTON_1, [this, &canvas, &toolbox, &cameraManager, readFromFramebuffer](int width, int height, int x, int y, int dx, int dy, int button, bool down) {
+	scenePanel.register_motion_callback(GLFW_MOUSE_BUTTON_RIGHT, [this, &canvas, &toolbox, &cameraManager, readFromFramebuffer](int width, int height, int x, int y, int dx, int dy, int button, bool down) {
+		
+		
 		if (toolbox.contains(nanogui::Vector2f(x, y)) || !canvas.contains(nanogui::Vector2f(x, y))) {
 			return;
 		}
@@ -205,40 +219,44 @@ UiManager::UiManager(IActorSelectedRegistry& registry,
 			glm::mat4 projMatrix = TransformComponent::nanogui_to_glm(cameraManager.get_projection());
 			
 			auto viewport = canvas.render_pass()->viewport();
-			glm::vec4 glmViewport(viewport.first[0], viewport.first[1], viewport.second[0], viewport.second[1]);
+			auto glmViewport = glm::vec4(viewport.first[0], viewport.first[1], viewport.second[0], viewport.second[1]);
 			
-			glm::mat4 viewInverse = glm::inverse(viewMatrix);
+			auto viewInverse = glm::inverse(viewMatrix);
 			glm::vec3 cameraPosition(viewInverse[3][0], viewInverse[3][1], viewInverse[3][2]);
 			
-			float scaleX = viewport.second[0] / static_cast<float>(width);
-			float scaleY = viewport.second[1] / static_cast<float>(height);
+			// Calculate the scaling factors
+			float scaleX = viewport.second[0] / float(width);
+			float scaleY = viewport.second[1] / float(height);
+			
 			
 			int adjusted_y = height - y + canvas.parent()->position().y();
 			int adjusted_x = x + canvas.parent()->position().x();
+			
 			int adjusted_dx = x + canvas.parent()->position().x() + dx;
 			int adjusted_dy = height - y + canvas.parent()->position().y() + dy;
 			
+			// Scale x and y accordingly
 			adjusted_x *= scaleX;
 			adjusted_y *= scaleY;
+			
 			adjusted_dx *= scaleX;
 			adjusted_dy *= scaleY;
 			
-			glm::vec3 world = UIUtils::ScreenToWorld(glm::vec2(adjusted_x, adjusted_y), cameraPosition.z,
-													 projMatrix, viewMatrix, width, height);
-			glm::vec3 offset = UIUtils::ScreenToWorld(glm::vec2(adjusted_dx, adjusted_dy), cameraPosition.z,
-													  projMatrix, viewMatrix, width, height);
+			auto world = UIUtils::ScreenToWorld(glm::vec2(adjusted_x, adjusted_y), cameraPosition.z, projMatrix, viewMatrix, width, height);
+			
+			auto offset = UIUtils::ScreenToWorld(glm::vec2(adjusted_dx, adjusted_dy), cameraPosition.z, projMatrix, viewMatrix, width, height);
 			
 			int id = readFromFramebuffer(width, height, x, y);
 			
 			if (id != 0 && !down) {
 				mGizmoManager.hover(GizmoManager::GizmoAxis(id));
-			} else if (id == 0 && !down) {
+			} else if (id == 0 && !down){
 				mGizmoManager.hover(GizmoManager::GizmoAxis(0));
 			} else if (id != 0 && down) {
 				mGizmoManager.hover(GizmoManager::GizmoAxis(id));
 			}
 			
-			// Apply the world-space delta transformation
+			// Step 3: Apply the world-space delta transformation
 			mGizmoManager.transform(offset.x - world.x, offset.y - world.y);
 		}
 	});

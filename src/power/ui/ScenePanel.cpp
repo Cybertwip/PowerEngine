@@ -19,7 +19,7 @@ bool ScenePanel::mouse_button_event(const nanogui::Vector2i &p, int button, bool
 		// Queue the button up event
 		if (!down) {
 			mDragging = down;
-			mClickQueue.push(std::make_tuple(down, width(), height(), p.x(), p.y(), button));
+			mClickQueue.push_back(std::make_tuple(down, width(), height(), p.x(), p.y(), button));
 		}
 		return true;
 	}
@@ -30,7 +30,7 @@ bool ScenePanel::mouse_button_event(const nanogui::Vector2i &p, int button, bool
 	
 	// Queue the click event
 	mDragging = down;
-	mClickQueue.push(std::make_tuple(down, width(), height(), p.x(), p.y(), button));
+	mClickQueue.push_back(std::make_tuple(down, width(), height(), p.x(), p.y(), button));
 	
 	return false;
 }
@@ -41,7 +41,7 @@ bool ScenePanel::mouse_motion_event(const nanogui::Vector2i &p, const nanogui::V
 		return true;
 	} else {
 		// Queue the motion event
-		mMotionQueue.push(std::make_tuple(width(), height(), p.x(), p.y(), rel.x(), rel.y(), button, mDragging));
+		mMotionQueue.push_front(std::make_tuple(width(), height(), p.x(), p.y(), rel.x(), rel.y(), button, mDragging));
 		
 		return false;
 	}
@@ -52,13 +52,13 @@ bool ScenePanel::scroll_event(const nanogui::Vector2i &p, const nanogui::Vector2
 		return true;
 	} else {
 		// Queue the scroll event
-		mScrollQueue.push(std::make_tuple(width(), height(), p.x(), p.y(), rel.x(), rel.y()));
+		mScrollQueue.push_front(std::make_tuple(width(), height(), p.x(), p.y(), rel.x(), rel.y()));
 		return false;
 	}
 }
 
 void ScenePanel::register_scroll_callback(std::function<void(int, int, int, int, float, float)> callback) {
-	mScrollCallbacks.push_back(callback);
+	mScrollCallbacks.push_front(callback);
 }
 
 void ScenePanel::register_motion_callback(int button, std::function<void(int, int, int, int, int, int, int, bool)> callback) {

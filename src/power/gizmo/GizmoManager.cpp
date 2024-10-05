@@ -108,8 +108,8 @@ void GizmoManager::translate(float px, float py) {
 			
 			auto translation = transformComponent.get_translation();
 			
-			translation.z += px;
-			
+			translation.z -= py; // Use py instead of px
+
 			transformComponent.set_translation(translation);
 		}
 			break;
@@ -182,7 +182,7 @@ void GizmoManager::scale(float px, float py) {
 			
 			auto scale = transformComponent.get_scale();
 			
-			scale.z += px;
+			scale.z -= py;
 			
 			transformComponent.set_scale(scale);
 		}

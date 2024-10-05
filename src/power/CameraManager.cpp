@@ -93,8 +93,7 @@ std::optional<glm::mat4> CameraManager::get_transform() {
 	}
 }
 void CameraManager::set_transform(const glm::mat4& transform) {
-	if (mActiveActor.has_value() && mActiveCamera.has_value()) {
-		if (&mActiveActor->get() == &mActiveCamera->get()) {
+	if (mActiveCamera.has_value()) {
 			auto& cameraTransform = mActiveCamera->get().get_component<TransformComponent>();
 			
 			glm::vec3 scale;
@@ -107,13 +106,12 @@ void CameraManager::set_transform(const glm::mat4& transform) {
 			cameraTransform.set_translation(translation);
 			cameraTransform.set_rotation(rotation);
 			cameraTransform.set_scale(scale);
-		}
 	}
 }
 
 // Rotate the camera based on mouse movement
 void CameraManager::rotate_camera(float dx, float dy) {
-	if (mActiveCamera.has_value() && mActiveActor.has_value() && &mActiveCamera->get() == &mActiveActor->get()) {
+	if (mActiveCamera.has_value() && mActiveActor == std::nullopt) {
 		auto& cameraActor = mActiveCamera->get();
 		auto& transform = cameraActor.get_component<TransformComponent>();
 		
@@ -147,7 +145,7 @@ void CameraManager::rotate_camera(float dx, float dy) {
 
 // Zoom the camera based on mouse movement
 void CameraManager::zoom_camera(float dy) {
-	if (mActiveCamera.has_value() && mActiveActor.has_value() && &mActiveCamera->get() == &mActiveActor->get()) {
+	if (mActiveCamera.has_value() && mActiveActor == std::nullopt) {
 		auto& cameraActor = mActiveCamera->get();
 		auto& transform = cameraActor.get_component<TransformComponent>();
 		
@@ -174,7 +172,7 @@ void CameraManager::zoom_camera(float dy) {
 
 // Pan the camera based on mouse movement
 void CameraManager::pan_camera(float dx, float dy) {
-	if (mActiveCamera.has_value() && mActiveActor.has_value() && &mActiveCamera->get() == &mActiveActor->get()) {
+	if (mActiveCamera.has_value() && mActiveActor == std::nullopt) {
 		auto& cameraActor = mActiveCamera->get();
 		auto& transform = cameraActor.get_component<TransformComponent>();
 		
