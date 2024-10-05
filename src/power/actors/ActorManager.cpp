@@ -32,7 +32,7 @@ void ActorManager::remove_actor(Actor& actor) {
 	
 	if (it != mActors.end()) {
 		// Assuming Actor has a get_entity() method
-		entt::entity entity = it->get().get_entity();
+		entt::entity entity = it->get()->get_entity();
 		
 		// Destroy the entity in the registry
 		if (mRegistry.valid(entity)) {
