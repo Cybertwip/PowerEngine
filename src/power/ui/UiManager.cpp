@@ -156,7 +156,7 @@ UiManager::UiManager(IActorSelectedRegistry& registry,
 	};
 	
 	// Register click callback with ScenePanel
-	scenePanel.register_click_callback(GLFW_MOUSE_BUTTON_LEFT, [this, &canvas, &toolbox, readFromFramebuffer](bool down, int width, int height, int x, int y) {
+	scenePanel.register_click_callback(GLFW_MOUSE_BUTTON_1, [this, &canvas, &toolbox, readFromFramebuffer](bool down, int width, int height, int x, int y) {
 		if (toolbox.contains(nanogui::Vector2f(x, y))) {
 			return;
 		}
@@ -195,7 +195,7 @@ UiManager::UiManager(IActorSelectedRegistry& registry,
 	});
 	
 	// Register motion callback with ScenePanel
-	scenePanel.register_motion_callback(GLFW_MOUSE_BUTTON_LEFT, [this, &canvas, &toolbox, &cameraManager, readFromFramebuffer](int width, int height, int x, int y, int dx, int dy, int button, bool down) {
+	scenePanel.register_motion_callback(GLFW_MOUSE_BUTTON_1, [this, &canvas, &toolbox, &cameraManager, readFromFramebuffer](int width, int height, int x, int y, int dx, int dy, int button, bool down) {
 		if (toolbox.contains(nanogui::Vector2f(x, y)) || !canvas.contains(nanogui::Vector2f(x, y))) {
 			return;
 		}

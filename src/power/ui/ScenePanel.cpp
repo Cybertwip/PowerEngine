@@ -78,7 +78,7 @@ void ScenePanel::process_events() {
 	// Dispatch queued click events
 	while (!mClickQueue.empty()) {
 		auto [down, w, h, x, y, button] = mClickQueue.front();
-		mClickQueue.pop();
+		mClickQueue.pop_front();
 		
 		// Call callbacks registered for this button
 		auto it = mClickCallbacks.find(button);
@@ -92,7 +92,7 @@ void ScenePanel::process_events() {
 	// Process motion events
 	while (!mMotionQueue.empty()) {
 		auto [w, h, x, y, dx, dy, button, down] = mMotionQueue.front();
-		mMotionQueue.pop();
+		mMotionQueue.pop_front();
 		
 		auto it = mMotionCallbacks.find(button);
 		if (it != mMotionCallbacks.end()) {
@@ -105,7 +105,7 @@ void ScenePanel::process_events() {
 	// Process scroll events
 	while (!mScrollQueue.empty()) {
 		auto [w, h, x, y, dx, dy] = mScrollQueue.front();
-		mScrollQueue.pop();
+		mScrollQueue.pop_front();
 		
 		for (auto& callback : mScrollCallbacks) {
 			callback(w, h, x, y, dx, dy);

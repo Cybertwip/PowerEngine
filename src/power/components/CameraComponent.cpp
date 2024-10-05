@@ -18,14 +18,16 @@ void CameraComponent::update_view() {
 	glm::vec3 position = mTransformComponent.get_translation();
 	glm::quat rotation = mTransformComponent.get_rotation();
 	
-	// Calculate forward vector from rotation
-	glm::vec3 forward = rotation * glm::vec3(0.0f, 0.0f, 1.0f);
+	// Calculate forward and up vectors from rotation
+	glm::vec3 forward = rotation * glm::vec3(0.0f, 0.0f, -1.0f);
+	glm::vec3 up = rotation * glm::vec3(0.0f, 1.0f, 0.0f);
 	
-	// Calculate the view matrix
-	auto matrix = glm::lookAt(position, position + forward, glm::vec3(0.0f, -1.0f, 0.0f));
-
-	std::memcpy(mView.m, glm::value_ptr(matrix), sizeof(float) * 16);
+	// Calculate the view matrix with the rotated up vector
+	glm::mat4 viewMatrix = glm::lookAt(position, position + forward, up);
+	
+	std::memcpy(mView.m, glm::value_ptr(viewMatrix), sizeof(float) * 16);
 }
+
 void CameraComponent::look_at(Actor& actor)
 {
 	auto& cameraTransform = mTransformComponent;
