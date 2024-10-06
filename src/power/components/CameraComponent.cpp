@@ -19,7 +19,7 @@ void CameraComponent::update_view() {
 	glm::quat rotation = mTransformComponent.get_rotation();
 	
 	// Calculate forward and up vectors from rotation
-	glm::vec3 forward = rotation * glm::vec3(0.0f, 1.0f, 0.0f);
+	glm::vec3 forward = glm::normalize(glm::rotate(rotation, glm::vec3(0.0f, 1.0f, 0.0f)));
 	glm::vec3 up = rotation * glm::vec3(0.0f, 0.0f, 1.0f);
 	
 	// Calculate the view matrix with the rotated up vector
@@ -30,37 +30,36 @@ void CameraComponent::update_view() {
 
 void CameraComponent::look_at(Actor& actor)
 {
-	auto& cameraTransform = mTransformComponent;
 	auto& actorTransform = actor.get_component<TransformComponent>();
 	
-	glm::vec3 cameraPosition = cameraTransform.get_translation();
 	glm::vec3 targetPosition = actorTransform.get_translation();
 	
-	glm::vec3 direction = glm::normalize(targetPosition - cameraPosition);
-	
-	// Assuming the up vector is the world up vector (0, 0, 1)
-	glm::vec3 up = glm::vec3(0.0f, 0.0f, 1.0f);
-	
-	glm::mat4 lookAtMatrix = glm::lookAt(cameraPosition, targetPosition, up);
-	glm::quat orientation = glm::quat_cast(lookAtMatrix);
-	
-	cameraTransform.set_rotation(orientation);
+	look_at(targetPosition);
 }
 
-void CameraComponent::look_at(const glm::vec3& position)
-{
+void CameraComponent::look_at(const glm::vec3& targetPosition) {
 	auto& cameraTransform = mTransformComponent;
 	
 	glm::vec3 cameraPosition = cameraTransform.get_translation();
+
+	// Direction vector towards the target
+	glm::vec3 direction = glm::normalize(targetPosition - cameraPosition);
 	
-	glm::vec3 direction = glm::normalize(position - cameraPosition);
+	// Here we adjust for Z-up. Assuming forward in this context means looking along Y:
+	glm::vec3 forward = glm::vec3(0.0f, 1.0f, 0.0f);
+	glm::vec3 right = glm::normalize(glm::cross(forward, glm::vec3(0.0f, 0.0f, 1.0f)));
+	glm::vec3 up = glm::cross(right, direction); // Adjust up to be perpendicular to new forward and right
 	
-	// Assuming the up vector is the world up vector (0, 0, 1)
-	glm::vec3 up = glm::vec3(0.0f, 0.0f, 1.0f);
+	// Build rotation matrix from these vectors
+	glm::mat4 lookAtMatrix = glm::mat4(
+									   glm::vec4(right, 0),
+									   glm::vec4(-glm::normalize(direction), 0), // Note the negative for correct orientation
+									   glm::vec4(up, 0),
+									   glm::vec4(0, 0, 0, 1)
+									   );
+	lookAtMatrix = glm::translate(lookAtMatrix, -cameraPosition);
 	
-	glm::mat4 lookAtMatrix = glm::lookAt(cameraPosition, position, up);
 	glm::quat orientation = glm::quat_cast(lookAtMatrix);
-	
 	cameraTransform.set_rotation(orientation);
 }
 
