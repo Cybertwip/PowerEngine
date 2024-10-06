@@ -66,7 +66,7 @@ private:
 	ShaderWrapper mMeshPreviewShader;
 	ShaderWrapper mSkinnedMeshPreviewShader;
 
-	std::unordered_map<int, std::vector<float>> mBatchPositions;
+	std::vector<float> mBatchPositions;
 
 	glm::mat4 mModelMatrix;
 	

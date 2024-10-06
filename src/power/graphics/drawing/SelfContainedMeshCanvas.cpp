@@ -29,9 +29,9 @@ mSkinnedMeshPreviewShader(*mShaderManager.load_shader("skinned_mesh_preview",
 													  "internal/shaders/metal/preview_diffuse_fs.metal",
 													  nanogui::Shader::BlendMode::AlphaBlend)),
 mMeshPreviewShader(*mShaderManager.load_shader("mesh_preview",
-											  "internal/shaders/metal/preview_diffuse_vs.metal",
-											  "internal/shaders/metal/preview_diffuse_fs.metal",
-											  nanogui::Shader::BlendMode::AlphaBlend)),
+											   "internal/shaders/metal/preview_diffuse_vs.metal",
+											   "internal/shaders/metal/preview_diffuse_fs.metal",
+											   nanogui::Shader::BlendMode::AlphaBlend)),
 mUpdate(true) {
 	
 	set_background_color(nanogui::Color{70, 130, 180, 255});
@@ -53,7 +53,7 @@ mUpdate(true) {
 void SelfContainedMeshCanvas::set_active_actor(std::optional<std::reference_wrapper<Actor>> actor) {
 	clear();
 	mCurrentTime = 0;
-
+	
 	mPreviewActor = actor;
 	
 	if (mPreviewActor.has_value()) {
@@ -87,7 +87,7 @@ void SelfContainedMeshCanvas::set_active_actor(std::optional<std::reference_wrap
 				
 				update_camera_view();
 				set_update(true);
-
+				
 			}
 			else {
 				// Handle the case where drawable is neither SkinnedMeshComponent nor MeshComponent
@@ -107,17 +107,15 @@ void SelfContainedMeshCanvas::update_camera_view() {
 	auto& batchPositions = mBatchPositions;
 	if (!batchPositions.empty()) {
 		auto& camera = mCamera.get_component<CameraComponent>();
-
+		
 		// Initialize min and max bounds with extreme values
 		glm::vec3 minBounds(std::numeric_limits<float>::max());
 		glm::vec3 maxBounds(std::numeric_limits<float>::lowest());
 		
-		for (const auto& [identifier, positions] : batchPositions) {
-			for (size_t i = 0; i < positions.size(); i += 3) {
-				glm::vec3 pos(positions[i], positions[i + 1], positions[i + 2]);
-				minBounds = glm::min(minBounds, pos);
-				maxBounds = glm::max(maxBounds, pos);
-			}
+		for (size_t i = 0; i < batchPositions.size(); i += 3) {
+			glm::vec3 pos(batchPositions[i], batchPositions[i + 1], batchPositions[i + 2]);
+			minBounds = glm::min(minBounds, pos);
+			maxBounds = glm::max(maxBounds, pos);
 		}
 		
 		// Calculate center and size of the bounding box
@@ -136,7 +134,7 @@ void SelfContainedMeshCanvas::update_camera_view() {
 
 void SelfContainedMeshCanvas::draw_content(const nanogui::Matrix4f& view,
 										   const nanogui::Matrix4f& projection) {
-
+	
 	DrawableComponent& drawableComponent = mPreviewActor->get().get_component<DrawableComponent>();
 	
 	Drawable& drawableRef = drawableComponent.drawable();
@@ -146,9 +144,9 @@ void SelfContainedMeshCanvas::draw_content(const nanogui::Matrix4f& view,
 		
 		
 		component.Unfreeze();
-
+		
 		component.evaluate_provider(mCurrentTime, PlaybackModifier::Forward);
-
+		
 		mCurrentTime += 1;
 	}
 	
@@ -162,14 +160,14 @@ void SelfContainedMeshCanvas::draw_content(const nanogui::Matrix4f& view,
 		auto& animationComponent = mPreviewActor->get().get_component<SkinnedAnimationComponent>();
 		
 		animationComponent.reset_pose();
-	
+		
 	}
 }
 
 void SelfContainedMeshCanvas::draw_contents() {
 	if (mPreviewActor.has_value() && mUpdate) {
 		update_camera_view();
-
+		
 		auto& camera = mCamera.get_component<CameraComponent>();
 		
 		camera.update_view();
@@ -187,7 +185,7 @@ void SelfContainedMeshCanvas::draw_contents() {
 
 void SelfContainedMeshCanvas::clear() {
 	set_update(false);
-
+	
 	mMeshBatch->clear();
 	mSkinnedMeshBatch->clear();
 }
