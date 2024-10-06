@@ -93,9 +93,9 @@ public:
 		set_rotation(newRotation);
 	}
 	
-	// Get the forward vector (negative Y-axis)
+	// Get the forward vector (positive Y-axis)
 	glm::vec3 get_forward() const {
-		return glm::normalize(transform.rotation * glm::vec3(0.0f, -1.0f, 0.0f));
+		return glm::normalize(transform.rotation * glm::vec3(0.0f, 1.0f, 0.0f));
 	}
 	
 	// Get the up vector (positive Z-axis)
