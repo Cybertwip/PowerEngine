@@ -23,7 +23,6 @@ public:
 		glm::mat4 offset;
 		glm::mat4 bindpose;
 		glm::mat4 local;
-		glm::mat4 global;
 		glm::mat4 transform;
 		std::vector<int> children;
 		
@@ -32,7 +31,7 @@ public:
 		}
 
 		Bone(const std::string& name, int index, int parent_index, const glm::mat4& offset, const glm::mat4& bindpose, const glm::mat4& local)
-		: name(name), index(index), parent_index(parent_index), offset(offset), bindpose(bindpose), local(local), global(1.0f), transform(1.0f) {}
+		: name(name), index(index), parent_index(parent_index), offset(offset), bindpose(bindpose), local(local), transform(1.0f) {}
 		
 		// Serialize method for Bone
 		void serialize(CompressedSerialization::Serializer& serializer) const {
@@ -42,7 +41,6 @@ public:
 			serializer.write_mat4(offset);
 			serializer.write_mat4(bindpose);
 			serializer.write_mat4(local);
-			serializer.write_mat4(global);
 			serializer.write_mat4(transform);
 			
 			// Serialize number of children
@@ -63,7 +61,6 @@ public:
 			if (!deserializer.read_mat4(offset)) return false;
 			if (!deserializer.read_mat4(bindpose)) return false;
 			if (!deserializer.read_mat4(local)) return false;
-			if (!deserializer.read_mat4(global)) return false;
 			if (!deserializer.read_mat4(transform)) return false;
 			
 			// Deserialize number of children

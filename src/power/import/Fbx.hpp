@@ -6,7 +6,7 @@
 
 #include "graphics/shading/MaterialProperties.hpp"
 
-#include <SmallFBX.h>
+#include "ozz/animation/offline/fbx/fbx.h"
 
 #include <glm/glm.hpp>
 
@@ -18,6 +18,12 @@
 #include <array>
 
 struct MeshData;
+
+namespace fbxsdk {
+	class FbxMesh;
+	class FbxNode;
+	class FbxScene;
+}
 
 class Fbx {
 public:
@@ -42,20 +48,26 @@ public:
 	bool LoadFrom(const std::string& filename);
 	
 protected:
-	virtual void ProcessBones(const std::shared_ptr<sfbx::Mesh>& mesh) {
+	virtual void ProcessBones(fbxsdk::FbxMesh* mesh) {
 		
 	}
 
-	sfbx::DocumentPtr mDoc;
-	
 	std::string mPath;
 
 	std::vector<std::unique_ptr<MeshData>> mMeshes;
 	
 	std::vector<std::vector<std::shared_ptr<SerializableMaterialProperties>>> mMaterialProperties;
 
+	std::unique_ptr<ozz::animation::offline::fbx::FbxManagerInstance> mFbxManager;
+	
+	std::unique_ptr<ozz::animation::offline::fbx::FbxDefaultIOSettings> mSettings;
+		
+	std::unique_ptr<ozz::animation::offline::fbx::FbxSceneLoader> mSceneLoader;
+		
 private:
-    void ProcessNode(const std::shared_ptr<sfbx::Model>& node);
-    void ProcessMesh(const std::shared_ptr<sfbx::Mesh>& mesh);
+    void ProcessNode(fbxsdk::FbxNode* node);
+	void ProcessMesh(fbxsdk::FbxMesh* mesh, fbxsdk::FbxNode* node);
+	
+	std::string mFBXFilePath;
 
 };

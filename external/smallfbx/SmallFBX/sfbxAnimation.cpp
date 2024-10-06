@@ -621,8 +621,6 @@ ObjectClass AnimationCurve::getClass() const { return ObjectClass::AnimationCurv
 
 void AnimationCurve::importFBXObjects()
 {
-    
-
     for (auto n : getNode()->getChildren()) {
         auto name = n->getName();
         if (name == sfbxS_Default) {

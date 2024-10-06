@@ -1,7 +1,6 @@
 #include "import/Fbx.hpp"
 
 #include <algorithm>
-#include <execution>
 #include <thread>
 #include <filesystem>
 #include <map>
@@ -42,253 +41,183 @@ glm::mat4 GetUpAxisRotation(int up_axis, int up_axis_sign) {
 
 }  // namespace
 
-
 void Fbx::LoadModel(const std::string& path) {
-	mDoc = sfbx::MakeDocument(path);
+	mFbxManager = std::make_unique<ozz::animation::offline::fbx::FbxManagerInstance>();
 	
-	if (mDoc && mDoc->valid()) {
-		ProcessNode(mDoc->getRootModel());
+	mSettings = std::make_unique<ozz::animation::offline::fbx::FbxDefaultIOSettings>(*mFbxManager);
+	
+	mSceneLoader = std::make_unique<ozz::animation::offline::fbx::FbxSceneLoader>(path.c_str(), "", *mFbxManager, *mSettings);
+	
+	mFBXFilePath = path;
+	
+	if (mSceneLoader->scene()) {
+		ProcessNode(mSceneLoader->scene()->GetRootNode());
+	} else {
+		std::cerr << "Error: Failed to load FBX scene from file " << path << std::endl;
 	}
 }
 
 void Fbx::LoadModel(std::stringstream& data) {
-	mDoc = sfbx::MakeDocument(data);
+	// ozz::FbxSceneLoader does not support loading from a stringstream directly.
+	// If needed, write the data to a temporary file and load from it.
+	std::cerr << "Error: Loading from std::stringstream is not supported with ozz" << std::endl;
+}
+
+void Fbx::ProcessNode(fbxsdk::FbxNode* node) {
+	if (!node) return;
 	
-	if (mDoc && mDoc->valid()) {
-		ProcessNode(mDoc->getRootModel());
+	FbxMesh* mesh = node->GetMesh();
+	if (mesh) {
+		ProcessMesh(mesh, node);
+	}
+	
+	// Process child nodes
+	const int childCount = node->GetChildCount();
+	for (int i = 0; i < childCount; ++i) {
+		FbxNode* childNode = node->GetChild(i);
+		ProcessNode(childNode);
 	}
 }
 
-void Fbx::ProcessNode(const std::shared_ptr<sfbx::Model>& node) {
-	if (!node) return;
-	
-	if (auto mesh = std::dynamic_pointer_cast<sfbx::Mesh>(node); mesh) {
-		ProcessMesh(mesh);
-	}
-	
-	for (const auto& child : node->getChildren()) {
-		if (auto childModel = sfbx::as<sfbx::Model>(child); childModel) {
-			ProcessNode(childModel);
-		}
-	}
-}
-void Fbx::ProcessMesh(const std::shared_ptr<sfbx::Mesh>& mesh) {
+void Fbx::ProcessMesh(fbxsdk::FbxMesh* mesh, fbxsdk::FbxNode* node) {
 	if (!mesh) {
 		std::cerr << "Error: Invalid mesh pointer." << std::endl;
 		return;
 	}
 	
-	// Retrieve the absolute path of the mesh document
-	auto path = std::filesystem::absolute(mesh->document()->global_settings.path).string();
-	
 	// Create a new MeshData instance and add it to mMeshes
 	auto& resultMesh = mMeshes.emplace_back(std::make_unique<MeshData>());
 	
-	// Precompute transformation matrices
-	const glm::mat4 rotationMatrix = FbxUtil::GetUpAxisRotation(
-																mesh->document()->global_settings.up_axis,
-																mesh->document()->global_settings.up_axis_sign
-																);
-	const float scaleFactor = static_cast<float>(mesh->document()->global_settings.unit_scale);
-	const glm::mat4 scaleMatrix = glm::scale(glm::mat4(1.0f), glm::vec3(scaleFactor));
-	const glm::mat4 transformMatrix = rotationMatrix * scaleMatrix;
+	// Retrieve control points (vertices)
+	int controlPointCount = mesh->GetControlPointsCount();
+	FbxVector4* controlPoints = mesh->GetControlPoints();
 	
-	// Retrieve geometry data
-	auto geometry = mesh->getGeometry();
-	if (!geometry) {
-		std::cerr << "Error: Mesh has no geometry." << std::endl;
-		return;
-	}
-	
-	const auto& points = geometry->getPointsDeformed();
-	const auto& vertexIndices = geometry->getIndices();
-	const auto& indexCounts = geometry->getCounts();
+	// Get global transform of the node
+	FbxAMatrix globalTransform = node->EvaluateGlobalTransform();
 	
 	// Reserve space for vertices and indices
-	const size_t vertexCount = points.size();
-	const size_t indexCount = vertexIndices.size();
-	resultMesh->get_vertices().resize(vertexCount);
+	resultMesh->get_vertices().resize(controlPointCount);
+	int polygonCount = mesh->GetPolygonCount();
+	int indexCount = polygonCount * 3; // Assuming triangulated mesh
 	resultMesh->get_indices().resize(indexCount);
 	
-	// Retrieve materials and map them to indices
-	const auto& materials = mesh->getMaterials();
-	
-	// Precompute normal indices
-	const auto& normalLayers = geometry->getNormalLayers();
-	std::vector<int> normalIndices(indexCount, -1);
-	sfbx::RawVector<sfbx::double3> normalData;
-	if (!normalLayers.empty()) {
-		const auto& normalLayer = normalLayers[0];
-		normalData = normalLayer.data;
-		const auto mappingMode = normalLayer.mapping_mode;
-		const auto referenceMode = normalLayer.reference_mode;
-		const auto& normalLayerIndices = normalLayer.indices;
+	// Process each polygon
+	for (int i = 0; i < polygonCount; ++i) {
+		assert(mesh->GetPolygonSize(i) == 3 && "Mesh must be triangulated.");
 		
-		for (size_t i = 0; i < indexCount; ++i) {
-			int controlPointIndex = vertexIndices[i];
-			if (mappingMode == sfbx::LayerMappingMode::ByPolygonVertex) {
-				normalIndices[i] = (referenceMode == sfbx::LayerReferenceMode::Direct) ? static_cast<int>(i) : normalLayerIndices[i];
-			} else if (mappingMode == sfbx::LayerMappingMode::ByControlPoint) {
-				normalIndices[i] = (referenceMode == sfbx::LayerReferenceMode::Direct) ? controlPointIndex : normalLayerIndices[controlPointIndex];
-			}
-		}
-	}
-	
-	// Precompute UV indices for each layer
-	const auto& uvLayers = geometry->getUVLayers();
-	std::vector<std::vector<int>> uvIndicesPerLayer(uvLayers.size(), std::vector<int>(indexCount, -1));
-	for (size_t layerIndex = 0; layerIndex < uvLayers.size(); ++layerIndex) {
-		const auto& uvLayer = uvLayers[layerIndex];
-		const auto mappingMode = uvLayer.mapping_mode;
-		const auto referenceMode = uvLayer.reference_mode;
-		const auto& uvLayerIndices = uvLayer.indices;
-		
-		for (size_t i = 0; i < indexCount; ++i) {
-			int controlPointIndex = vertexIndices[i];
-			if (mappingMode == sfbx::LayerMappingMode::ByPolygonVertex) {
-				uvIndicesPerLayer[layerIndex][i] = (referenceMode == sfbx::LayerReferenceMode::Direct) ? static_cast<int>(i) : uvLayerIndices[i];
-			} else if (mappingMode == sfbx::LayerMappingMode::ByControlPoint) {
-				uvIndicesPerLayer[layerIndex][i] = (referenceMode == sfbx::LayerReferenceMode::Direct) ? controlPointIndex : uvLayerIndices[controlPointIndex];
-			}
-		}
-	}
-	
-	
-	// Precompute Color Indices
-	const auto& colorLayers = geometry->getColorLayers();
-	std::vector<int> colorIndices(indexCount, -1);
-	sfbx::RawVector<sfbx::double4> colorData; // Assuming colors are RGBA
-	if (!colorLayers.empty()) {
-		const auto& colorLayer = colorLayers[0]; // Use the first color layer
-		colorData = colorLayer.data;
-		const auto mappingMode = colorLayer.mapping_mode;
-		const auto referenceMode = colorLayer.reference_mode;
-		const auto& colorLayerIndices = colorLayer.indices;
-		
-		for (size_t i = 0; i < indexCount; ++i) {
-			int controlPointIndex = vertexIndices[i];
-			if (mappingMode == sfbx::LayerMappingMode::ByPolygonVertex) {
-				colorIndices[i] = (referenceMode == sfbx::LayerReferenceMode::Direct) ? static_cast<int>(i) : colorLayerIndices[i];
-			} else if (mappingMode == sfbx::LayerMappingMode::ByControlPoint) {
-				colorIndices[i] = (referenceMode == sfbx::LayerReferenceMode::Direct) ? controlPointIndex : colorLayerIndices[controlPointIndex];
-			}
-		}
-	}
-	// Determine the number of threads to use
-	unsigned int numThreads = std::thread::hardware_concurrency();
-	if (numThreads == 0) numThreads = 1;
-	
-	// Divide the work among threads
-	std::vector<std::thread> threads(numThreads);
-	size_t chunkSize = indexCount / numThreads;
-	size_t remainder = indexCount % numThreads;
-	
-	auto processVertices = [&](size_t startIndex, size_t endIndex) {
-		for (size_t i = startIndex; i < endIndex; ++i) {
-			int controlPointIndex = vertexIndices[i];
+		for (int j = 0; j < 3; ++j) {
+			int controlPointIndex = mesh->GetPolygonVertex(i, j);
 			
-			// Ensure controlPointIndex is within bounds
-			if (controlPointIndex >= vertexCount) {
-				sfbxPrint("Error: controlPointIndex %d out of bounds.\n", controlPointIndex);
-				continue;
-			}
-			
+			// Get or create the vertex
 			auto& vertexPtr = resultMesh->get_vertices()[controlPointIndex];
 			if (vertexPtr.get() == nullptr) {
 				vertexPtr = std::make_unique<MeshVertex>();
 			}
 			auto& vertex = *vertexPtr;
 			
-			// Transform position
-			const auto& point = points[controlPointIndex];
-			glm::vec4 position(point.x, point.y, point.z, 1.0f);
-			position = transformMatrix * position;
-			vertex.set_position({ position.x, position.y, position.z });
+			// Get position
+			FbxVector4 position = controlPoints[controlPointIndex];
 			
-			// Transform normal
-			if (!normalData.empty() && normalIndices[i] >= 0) {
-				const auto& normal = normalData[normalIndices[i]];
-				glm::vec4 normalVec(normal.x, normal.y, normal.z, 0.0f);
-				normalVec = rotationMatrix * normalVec;
-				normalVec = glm::normalize(normalVec);
-				vertex.set_normal({ normalVec.x, normalVec.y, normalVec.z });
+			// Apply global transform
+			FbxVector4 transformedPosition = globalTransform.MultT(position);
+			
+			// Convert to glm::vec3
+			vertex.set_position({ static_cast<float>(transformedPosition[0]),
+				static_cast<float>(transformedPosition[1]),
+				static_cast<float>(transformedPosition[2]) });
+			// Now, get normal
+			// Get normal from mesh
+			
+			FbxVector4 normal;
+			if (mesh->GetPolygonVertexNormal(i, j, normal)) {
+				// Apply the global transform to the normal
+				FbxVector4 transformedNormal = globalTransform.MultT(normal);
+				
+				// Convert to glm::vec3
+				vertex.set_normal({ static_cast<float>(transformedNormal[0]),
+					static_cast<float>(transformedNormal[1]),
+					static_cast<float>(transformedNormal[2]) });
 			} else {
 				vertex.set_normal({ 0.0f, 1.0f, 0.0f }); // Default normal
 			}
 			
-			// Set UVs
-			for (size_t layerIndex = 0; layerIndex < uvLayers.size(); ++layerIndex) {
-				int uvIndex = uvIndicesPerLayer[layerIndex][i];
-				if (uvIndex >= 0 && static_cast<size_t>(uvIndex) < uvLayers[layerIndex].data.size()) {
-					const auto& uv = uvLayers[layerIndex].data[uvIndex];
-					
-					// Apply transformation if needed
-					glm::vec2 finalUV(uv.x, uv.y);
-					
-					// Optionally clamp the UVs between 0 and 1
-					finalUV = glm::fract(finalUV);
-					
-					// Flip Y-axis if needed
-					finalUV.y = finalUV.y;
-					
-					if (layerIndex == 0) {
-						vertex.set_texture_coords1(finalUV);
-					} else if (layerIndex == 1) {
-						vertex.set_texture_coords2(finalUV);
-					}
+			// Get UVs
+			FbxStringList uvSetNameList;
+			mesh->GetUVSetNames(uvSetNameList);
+			if (uvSetNameList.GetCount() > 0) {
+				const char* uvSetName = uvSetNameList.GetStringAt(0);
+				FbxVector2 uv;
+				bool unmapped;
+				if (mesh->GetPolygonVertexUV(i, j, uvSetName, uv, unmapped)) {
+					vertex.set_texture_coords1({ static_cast<float>(uv[0]),
+						static_cast<float>(uv[1]) });
 				} else {
 					vertex.set_texture_coords1(glm::vec2(0.0f, 0.0f)); // Default UV
-					vertex.set_texture_coords2(glm::vec2(0.0f, 0.0f)); // Default UV
+				}
+			} else {
+				vertex.set_texture_coords1(glm::vec2(0.0f, 0.0f)); // Default UV
+			}
+			
+			// Get color
+			if (mesh->GetElementVertexColorCount() > 0) {
+				// Get the color element
+				FbxGeometryElementVertexColor* colorElement = mesh->GetElementVertexColor(0);
+				
+				// The mapping mode can be eByPolygonVertex or eByControlPoint
+				FbxColor color;
+				int colorIndex = 0;
+				if (colorElement->GetMappingMode() == FbxGeometryElement::eByControlPoint) {
+					colorIndex = controlPointIndex;
+				} else if (colorElement->GetMappingMode() == FbxGeometryElement::eByPolygonVertex) {
+					colorIndex = mesh->GetPolygonVertexIndex(i) + j;
+				}
+				if (colorElement->GetReferenceMode() == FbxGeometryElement::eDirect) {
+					color = colorElement->GetDirectArray().GetAt(colorIndex);
+				} else if (colorElement->GetReferenceMode() == FbxGeometryElement::eIndexToDirect) {
+					int id = colorElement->GetIndexArray().GetAt(colorIndex);
+					color = colorElement->GetDirectArray().GetAt(id);
+				}
+				vertex.set_color({ static_cast<float>(color.mRed),
+					static_cast<float>(color.mGreen),
+					static_cast<float>(color.mBlue),
+					static_cast<float>(color.mAlpha) });
+			} else {
+				vertex.set_color({ 1.0f, 1.0f, 1.0f, 1.0f }); // Default color
+			}
+			
+			// Set material ID
+			// This requires getting the material assigned to the polygon
+			int materialIndex = 0;
+			FbxLayerElementArrayTemplate<int>* materialIndices = nullptr;
+			if (mesh->GetElementMaterial()) {
+				materialIndices = &mesh->GetElementMaterial()->GetIndexArray();
+				FbxGeometryElement::EMappingMode materialMappingMode = mesh->GetElementMaterial()->GetMappingMode();
+				if (materialMappingMode == FbxGeometryElement::eByPolygon) {
+					materialIndex = materialIndices->GetAt(i);
+				} else if (materialMappingMode == FbxGeometryElement::eAllSame) {
+					materialIndex = materialIndices->GetAt(0);
 				}
 			}
+			vertex.set_material_id(materialIndex);
 			
-			// Assign Vertex Color
-			if (!colorData.empty() && colorIndices[i] >= 0) {
-				const auto& color = colorData[colorIndices[i]];
-				vertex.set_color({ color.x, color.y, color.z, color.w }); // Ignoring alpha channel
-			} else {
-				vertex.set_color({ 1.0f, 1.0f, 1.0f, 1.0f }); // Default color (white)
-			}
-			// Set material ID
-			// Assign material ID with bounds checking
-			int matIndex = geometry->getMaterialForVertexIndex(controlPointIndex);
-			if (matIndex >= 0 && matIndex < static_cast<int>(materials.size())) {
-				vertex.set_material_id(matIndex);
-			} else {
-				vertex.set_material_id(0); // or a default material ID
-			}
-			
-			// Assign vertex and index
-			resultMesh->get_indices()[i] = controlPointIndex;
+			// Assign index
+			resultMesh->get_indices()[i * 3 + j] = controlPointIndex;
 		}
-	};
-	
-	size_t startIndex = 0;
-	for (unsigned int t = 0; t < numThreads; ++t) {
-		size_t endIndex = startIndex + chunkSize + (t < remainder ? 1 : 0);
-		threads[t] = std::thread(processVertices, startIndex, endIndex);
-		startIndex = endIndex;
-	}
-	
-	// Wait for all threads to finish
-	for (auto& thread : threads) {
-		thread.join();
 	}
 	
 	// Process materials
-	//	resultMesh->get_material_properties().reserve(materials.size());
-	
+	// Retrieve materials from the node
+	int materialCount = node->GetMaterialCount();
 	std::vector<std::shared_ptr<SerializableMaterialProperties>> serializableMaterials;
-	
-	serializableMaterials.reserve(materials.size());
-	
-	for (size_t i = 0; i < materials.size(); ++i) {
-		const auto& material = materials[i];
+	serializableMaterials.reserve(materialCount);
+	for (int i = 0; i < materialCount; ++i) {
+		FbxSurfaceMaterial* material = node->GetMaterial(i);
+		// Create SerializableMaterialProperties
 		auto matPtr = std::make_shared<SerializableMaterialProperties>();
 		SerializableMaterialProperties& matData = *matPtr;
 		
 		// Combine the path and index into a single string
-		std::string combined = path + std::to_string(i);
+		std::string combined = node->GetName() + std::to_string(i);
 		
 		// Compute the hash of the combined string
 		std::size_t hashValue = std::hash<std::string>{}(combined);
@@ -297,22 +226,65 @@ void Fbx::ProcessMesh(const std::shared_ptr<sfbx::Mesh>& mesh) {
 		matData.mIdentifier = hashValue;
 		
 		// Set material properties
-		auto color = material->getAmbientColor();
-		matData.mAmbient = glm::vec4{ color.x, color.y, color.z, 1.0f };
-		color = material->getDiffuseColor();
-		matData.mDiffuse = glm::vec4{ color.x, color.y, color.z, 1.0f };
-		color = material->getSpecularColor();
-		matData.mSpecular = glm::vec4{ color.x, color.y, color.z, 1.0f };
-		matData.mShininess = 0.1f; // Default shininess; adjust as needed
-		matData.mOpacity = material->getOpacity();
+		FbxPropertyT<FbxDouble3> ambientProperty = material->FindProperty(FbxSurfaceMaterial::sAmbient);
+		FbxPropertyT<FbxDouble3> diffuseProperty = material->FindProperty(FbxSurfaceMaterial::sDiffuse);
+		FbxPropertyT<FbxDouble3> specularProperty = material->FindProperty(FbxSurfaceMaterial::sSpecular);
+		FbxPropertyT<FbxDouble> shininessProperty = material->FindProperty(FbxSurfaceMaterial::sShininess);
+		FbxPropertyT<FbxDouble> opacityProperty = material->FindProperty(FbxSurfaceMaterial::sTransparencyFactor);
+		
+		FbxDouble3 ambient = ambientProperty.IsValid() ? ambientProperty.Get() : FbxDouble3(0, 0, 0);
+		FbxDouble3 diffuse = diffuseProperty.IsValid() ? diffuseProperty.Get() : FbxDouble3(0, 0, 0);
+		FbxDouble3 specular = specularProperty.IsValid() ? specularProperty.Get() : FbxDouble3(0, 0, 0);
+		double shininess = shininessProperty.IsValid() ? shininessProperty.Get() : 0.1;
+		double opacity = opacityProperty.IsValid() ? 1.0 - opacityProperty.Get() : 1.0;
+		
+		matData.mAmbient = glm::vec4(ambient[0], ambient[1], ambient[2], 1.0f);
+		matData.mDiffuse = glm::vec4(diffuse[0], diffuse[1], diffuse[2], 1.0f);
+		matData.mSpecular = glm::vec4(specular[0], specular[1], specular[2], 1.0f);
+		matData.mShininess = static_cast<float>(shininess);
+		matData.mOpacity = static_cast<float>(opacity);
 		matData.mHasDiffuseTexture = false;
 		
 		// Load texture if available
-		if (auto fbxTexture = material->getTexture("DiffuseColor"); fbxTexture && !fbxTexture->getData().empty()) {
-			matData.mTextureDiffuse = fbxTexture->getData();
-			matData.mHasDiffuseTexture = true;
+		FbxProperty diffusePropertyTexture = material->FindProperty(FbxSurfaceMaterial::sDiffuse);
+		int textureCount = diffusePropertyTexture.GetSrcObjectCount<FbxFileTexture>();
+		if (textureCount > 0) {
+			FbxFileTexture* texture = diffusePropertyTexture.GetSrcObject<FbxFileTexture>(0);
+			if (texture) {
+				std::string textureFileName = texture->GetFileName();
+				bool textureLoaded = false;
+				
+				// Texture is not embedded; try to load from file path
+				// The texture file path can be absolute or relative
+				// Try to resolve the file path
+				std::string textureFilePath = textureFileName;
+				
+				// If the path is relative, make it relative to the FBX file
+				if (!std::filesystem::path(textureFilePath).is_absolute()) {
+					std::filesystem::path fbxFilePath = mFBXFilePath;
+					std::filesystem::path fbxDirectory = fbxFilePath.parent_path();
+					textureFilePath = (fbxDirectory / textureFilePath).string();
+				}
+				
+				// Try to read the texture file
+				std::ifstream textureFile(textureFilePath, std::ios::binary);
+				if (textureFile) {
+					// Read file into mTextureDiffuse
+					matData.mTextureDiffuse.assign(std::istreambuf_iterator<char>(textureFile),
+												   std::istreambuf_iterator<char>());
+					matData.mHasDiffuseTexture = true;
+					textureLoaded = true;
+				} else {
+					std::cerr << "Warning: Unable to open texture file: " << textureFilePath << std::endl;
+				}
+				
+				if (!textureLoaded) {
+					std::cerr << "Warning: Texture data could not be loaded for material: " << material->GetName() << std::endl;
+				}
+			}
 		}
 		
+		// Add material to the list
 		serializableMaterials.push_back(matPtr);
 	}
 	
@@ -320,6 +292,6 @@ void Fbx::ProcessMesh(const std::shared_ptr<sfbx::Mesh>& mesh) {
 	
 	mMaterialProperties.push_back(std::move(serializableMaterials));
 	
-	// Proceed to process bones separately
-	ProcessBones(mesh); // This call should be handled externally or after ProcessMesh
+	// Ignore this for now
+	 ProcessBones(mesh); // This call should be handled externally or after ProcessMesh
 }

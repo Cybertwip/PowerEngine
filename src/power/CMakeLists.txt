@@ -223,6 +223,8 @@ SmallFBX
 httplib::httplib 
 OpenSSL::SSL
 OpenSSL::Crypto
+ozz_animation_tools
+ozz_animation_fbx
 zlib
 #grpc++ 
 ${platform_specific_libraries})

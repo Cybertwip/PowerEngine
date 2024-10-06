@@ -110,6 +110,10 @@ public:
 		m_bone_animations.push_back({boneIndex, keyframes});
 	}
 	
+	bool empty() const {
+		return m_bone_animations.empty();
+	}
+	
 	void sort() {
 		std::sort(m_bone_animations.begin(), m_bone_animations.end(), [](const BoneAnimation& a, const BoneAnimation& b) {
 			return a.bone_index < b.bone_index;
