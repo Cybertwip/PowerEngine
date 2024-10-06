@@ -154,8 +154,9 @@ void ImportWindow::ImportIntoProject() {
 		nanogui::async([this](){
 			mResourcesPanel.refresh_file_view();
 		});
-		mPreviewCanvas->set_active_actor(nullptr);
+		
 		mPreviewCanvas->set_update(false);
+		mPreviewCanvas->set_active_actor(nullptr);
 		
 		set_visible(false);
 		set_modal(false);
