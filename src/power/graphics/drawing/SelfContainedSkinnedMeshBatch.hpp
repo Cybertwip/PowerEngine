@@ -22,7 +22,7 @@ public:
 		float mShininess;
 		float mOpacity;
 		float mHasDiffuseTexture;
-		// Padding to align to 16 bytes if necessary
+		float _; //padding
 	};
 	
 	struct Indexer {
