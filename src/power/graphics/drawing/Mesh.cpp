@@ -83,9 +83,6 @@ Mesh::Mesh(std::unique_ptr<MeshData> meshData, ShaderWrapper& shader, IMeshBatch
 	
 	// Properly pass a reference_wrapper<Mesh> to add_mesh
 	mMeshBatch.add_mesh(std::ref(*this));
-	
-	// Append the mesh (assuming append takes Mesh&)
-	mMeshBatch.append(*this);
 }
 
 Mesh::~Mesh() {

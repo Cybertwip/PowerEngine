@@ -81,7 +81,6 @@ void SelfContainedMeshCanvas::set_active_actor(std::optional<std::reference_wrap
 				// Successfully cast to MeshComponent
 				for (auto& meshData : meshComponent->get_mesh_data()) {
 					mMeshBatch->add_mesh(*meshData);
-					mMeshBatch->append(*meshData);
 					mBatchPositions = mMeshBatch->get_batch_positions();
 				}
 				
