@@ -13,20 +13,24 @@ struct FragmentOutput {
 
 // Helper function to compute grid color
 float4 compute_grid(float3 point, float scale, bool is_axis) {
-    float2 coord = point.xz / scale;
+    // Change from XZ to XY plane
+    float2 coord = point.xy / scale;
     float2 dd = abs(fwidth(coord));
     float2 uv = fract(coord - 0.5) - 0.5;
     float2 grid = abs(uv) / dd;
     float line = min(grid.x, grid.y);
-    float min_z = min(dd.y, 1.0);
+    float min_y = min(dd.y, 1.0);
     float min_x = min(dd.x, 1.0);
     float4 col = float4(1.0);
     col.a = 1.0 - min(line, 1.0);
 
+    // Adjust axis coloring for X and Y axes
     if ((-1.0 * min_x) < point.x && point.x < (0.1 * min_x) && is_axis) {
+        // X-axis color
         col.rgb = float3(0.427, 0.792, 0.909);
     }
-    if ((-1.0 * min_z) < point.z && point.z < (0.1 * min_z) && is_axis) {
+    if ((-1.0 * min_y) < point.y && point.y < (0.1 * min_y) && is_axis) {
+        // Y-axis color
         col.rgb = float3(0.984, 0.380, 0.490);
     }
     return col;
@@ -61,7 +65,8 @@ fragment FragmentOutput fragment_main(VertexInput in [[stage_in]],
                                       constant float &u_far [[buffer(1)]],
                                       constant float4x4 &aView [[buffer(2)]],
                                       constant float4x4 &aProjection [[buffer(3)]]) {
-    float t = -in.near.y / (in.far.y - in.near.y);
+    // Change intersection calculation from Y to Z axis
+    float t = -in.near.z / (in.far.z - in.near.z);
     float3 R = in.near + t * (in.far - in.near);
     float is_on = step(0.0, t);
 
