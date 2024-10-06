@@ -284,21 +284,19 @@ void SkinnedMeshBatch::draw_content(const nanogui::Matrix4f& view,
 		
 		if (mesh_vector.empty()) continue;
 		
-		auto& shader = mesh_vector[0].get().get_shader();
-		
-		// Begin shader program
-		shader.begin();
-		
-		// Set uniforms that are common to all meshes
-		shader.set_uniform("aView", view);
-		shader.set_uniform("aProjection", projection);
-		
 		for (size_t i = 0; i < mesh_vector.size(); ++i) {
 			auto& mesh = mesh_vector[i].get();
 			
 			if (!mesh.get_color_component().get_visible()) {
 				continue;
 			}
+			
+			auto& shader = mesh.get_shader();
+			
+			// Set uniforms that are common to all meshes
+			shader.set_uniform("aView", view);
+			shader.set_uniform("aProjection", projection);
+
 			
 			// Set the model matrix for the current mesh
 			shader.set_uniform("aModel", mesh.get_model_matrix());
@@ -326,12 +324,17 @@ void SkinnedMeshBatch::draw_content(const nanogui::Matrix4f& view,
 			mBatchIndices[identifier].size();
 			size_t count = endIdx - startIdx;
 			
+			// Begin shader program
+			shader.begin();
+
 			// Draw the mesh segment
 			shader.draw_array(nanogui::Shader::PrimitiveType::Triangle,
 							  startIdx, count, true);
+			
+			
+			// End shader program
+			shader.end();
+
 		}
-		
-		// End shader program
-		shader.end();
 	}
 }

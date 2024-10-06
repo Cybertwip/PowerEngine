@@ -123,6 +123,11 @@ void SelfContainedMeshBatch::append(std::reference_wrapper<Mesh> meshRef) {
 }
 
 void SelfContainedMeshBatch::upload_vertex_data() {
+	
+	if (mMeshes.empty()) {
+		return;
+	}
+	
 	// Upload consolidated data to GPU
 	mShader.persist_buffer("aPosition", nanogui::VariableType::Float32, { mBatchPositions.size() / 3, 3 },
 						   mBatchPositions.data());

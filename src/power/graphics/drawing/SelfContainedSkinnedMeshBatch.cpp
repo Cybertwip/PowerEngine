@@ -231,6 +231,11 @@ void SelfContainedSkinnedMeshBatch::remove(std::reference_wrapper<SkinnedMesh> m
 }
 
 void SelfContainedSkinnedMeshBatch::upload_vertex_data() {
+	
+	if (mMeshes.empty()) {
+		return;
+	}
+	
 	// Upload consolidated data to GPU
 	mShader.persist_buffer("aPosition", nanogui::VariableType::Float32, { mBatchPositions.size() / 3, 3 },
 						   mBatchPositions.data());
