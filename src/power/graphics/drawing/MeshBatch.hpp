@@ -29,7 +29,6 @@ public:
 	
 	void add_mesh(std::reference_wrapper<Mesh> mesh) override;
 	void clear() override;
-	void append(std::reference_wrapper<Mesh> meshRef) override;
 	void remove(std::reference_wrapper<Mesh> meshRef) override;
 	void draw_content(const nanogui::Matrix4f& view,
 					  const nanogui::Matrix4f& projection) override;
@@ -39,11 +38,13 @@ public:
 	}
 	
 private:
+	void append(std::reference_wrapper<Mesh> meshRef) override;
+
 	void upload_material_data(ShaderWrapper& shader, const std::vector<std::shared_ptr<MaterialProperties>>& materialData);
 	
 	void upload_vertex_data(ShaderWrapper& shader, int identifier);
 
-	std::unordered_map<ShaderWrapper*, std::vector<std::reference_wrapper<Mesh>>> mMeshes;
+	std::unordered_map<int, std::vector<std::reference_wrapper<Mesh>>> mMeshes;
 	
 	// Consolidated buffers
 	std::unordered_map<int, std::vector<float>> mBatchPositions;
@@ -58,6 +59,8 @@ private:
 	// Offset tracking
 	std::unordered_map<int, std::vector<size_t>> mMeshStartIndices;
 	
+	std::unordered_map<int, std::vector<size_t>> mMeshVertexStartIndices;
+
 	std::unordered_map<int, VertexIndexer> mVertexIndexingMap;
 	
 	nanogui::RenderPass& mRenderPass;

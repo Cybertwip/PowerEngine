@@ -71,21 +71,15 @@ void SkinnedMeshBatch::upload_material_data(ShaderWrapper& shader, const std::ve
 
 SkinnedMeshBatch::SkinnedMeshBatch(nanogui::RenderPass& renderPass) : mRenderPass(renderPass) {
 }
-
 void SkinnedMeshBatch::add_mesh(std::reference_wrapper<SkinnedMesh> mesh) {
-	
-	auto it = std::find_if(mMeshes.begin(), mMeshes.end(), [mesh](auto kp) {
-		return kp.first->identifier() == mesh.get().get_shader().identifier();
-	});
-	
-	if (it != mMeshes.end()) {
-		it->second.push_back(mesh);
-	} else {
-		mMeshes[&(mesh.get().get_shader())].push_back(mesh);
-	}
+	int identifier = mesh.get().get_shader().identifier();
+	mMeshes[identifier].push_back(mesh);
+	append(mesh);
 }
 
+
 void SkinnedMeshBatch::clear() {
+	mMeshes.clear();
 	mBatchPositions.clear();
 	mBatchNormals.clear();
 	mBatchTexCoords1.clear();
@@ -94,6 +88,8 @@ void SkinnedMeshBatch::clear() {
 	mBatchIndices.clear();
 	mBatchMaterials.clear();
 	mMeshStartIndices.clear();
+	mMeshVertexStartIndices.clear();
+	mVertexIndexingMap.clear();
 }
 
 void SkinnedMeshBatch::append(std::reference_wrapper<SkinnedMesh> meshRef) {
@@ -103,6 +99,12 @@ void SkinnedMeshBatch::append(std::reference_wrapper<SkinnedMesh> meshRef) {
 	int identifier = shader.identifier();
 	auto& indexer = mVertexIndexingMap[identifier];
 	
+	size_t vertexOffset = indexer.mVertexOffset;
+	size_t indexOffset = indexer.mIndexOffset;
+	
+	mMeshStartIndices[identifier].push_back(indexOffset);
+	mMeshVertexStartIndices[identifier].push_back(vertexOffset);
+	
 	// Append vertex data using getters
 	mBatchPositions[identifier].insert(mBatchPositions[identifier].end(),
 									   mesh.get_flattened_positions().begin(),
@@ -110,39 +112,32 @@ void SkinnedMeshBatch::append(std::reference_wrapper<SkinnedMesh> meshRef) {
 	mBatchNormals[identifier].insert(mBatchNormals[identifier].end(),
 									 mesh.get_flattened_normals().begin(),
 									 mesh.get_flattened_normals().end());
-	mBatchTexCoords1[shader.identifier()].insert(mBatchTexCoords1[shader.identifier()].end(),
-												 mesh.get_flattened_tex_coords1().begin(),
-												 mesh.get_flattened_tex_coords1().end());
-	mBatchTexCoords2[shader.identifier()].insert(mBatchTexCoords2[shader.identifier()].end(),
-												 mesh.get_flattened_tex_coords2().begin(),
-												 mesh.get_flattened_tex_coords2().end());
-	mBatchMaterialIds[shader.identifier()].insert(mBatchMaterialIds[shader.identifier()].end(),
-												 mesh.get_flattened_material_ids().begin(),
-												 mesh.get_flattened_material_ids().end());
+	mBatchTexCoords1[identifier].insert(mBatchTexCoords1[identifier].end(),
+										mesh.get_flattened_tex_coords1().begin(),
+										mesh.get_flattened_tex_coords1().end());
+	mBatchTexCoords2[identifier].insert(mBatchTexCoords2[identifier].end(),
+										mesh.get_flattened_tex_coords2().begin(),
+										mesh.get_flattened_tex_coords2().end());
+	mBatchMaterialIds[identifier].insert(mBatchMaterialIds[identifier].end(),
+										 mesh.get_flattened_material_ids().begin(),
+										 mesh.get_flattened_material_ids().end());
+	mBatchColors[identifier].insert(mBatchColors[identifier].end(),
+									mesh.get_flattened_colors().begin(),
+									mesh.get_flattened_colors().end());
+	mBatchBoneIds[identifier].insert(mBatchBoneIds[identifier].end(),
+									 mesh.get_flattened_bone_ids().begin(),
+									 mesh.get_flattened_bone_ids().end());
+	mBatchBoneWeights[identifier].insert(mBatchBoneWeights[identifier].end(),
+										 mesh.get_flattened_weights().begin(),
+										 mesh.get_flattened_weights().end());
 	
-	mBatchColors[shader.identifier()].insert(mBatchColors[shader.identifier()].end(),
-											 mesh.get_flattened_colors().begin(),
-											 mesh.get_flattened_colors().end());
-	
-	mBatchBoneIds[shader.identifier()].insert(mBatchBoneIds[shader.identifier()].end(),
-mesh.get_flattened_bone_ids().begin(),
-mesh.get_flattened_bone_ids().end());
-
-	
-	mBatchBoneWeights[shader.identifier()].insert(mBatchBoneWeights[shader.identifier()].end(),
-											  mesh.get_flattened_weights().begin(),
-											  mesh.get_flattened_weights().end());
-
 	// Adjust and append indices
-	auto& indices = mesh.get_mesh_data().get_indices()
-	;
+	auto& indices = mesh.get_mesh_data().get_indices();
 	for (auto index : indices) {
-		mBatchIndices[shader.identifier()].push_back(index + indexer.mVertexOffset);
+		mBatchIndices[identifier].push_back(index + vertexOffset);
 	}
 	
-	mMeshStartIndices[shader.identifier()].push_back(indexer.mIndexOffset);
-	
-	indexer.mIndexOffset += mesh.get_mesh_data().get_indices().size();
+	indexer.mIndexOffset += indices.size();
 	indexer.mVertexOffset += mesh.get_mesh_data().get_vertices().size();
 	
 	upload_vertex_data(shader, identifier);
@@ -154,7 +149,7 @@ void SkinnedMeshBatch::remove(std::reference_wrapper<SkinnedMesh> meshRef) {
 	int identifier = shader.identifier();
 	
 	// 1. Locate the mesh in mMeshes
-	auto mesh_it = mMeshes.find(&shader);
+	auto mesh_it = mMeshes.find(identifier);
 	if (mesh_it == mMeshes.end()) {
 		// Shader not found; nothing to remove
 		return;
@@ -177,121 +172,70 @@ void SkinnedMeshBatch::remove(std::reference_wrapper<SkinnedMesh> meshRef) {
 	// Determine the index of the mesh within the vector
 	size_t meshIndex = std::distance(mesh_vector.begin(), it);
 	
-	// 2. Remove the mesh from the mesh vector
+	// Remove the mesh from the mesh vector
 	mesh_vector.erase(it);
 	
-	// 3. Remove associated vertex and index data
-	// Ensure that mMeshStartIndices has an entry for this shader
-	auto startIdxIt = mMeshStartIndices.find(identifier);
-	if (startIdxIt == mMeshStartIndices.end()) {
-		// No start indices found; inconsistent state
-		assert(false && "Start indices for shader identifier not found.");
-		return;
+	// Get starting indices
+	size_t indexStartIdx = mMeshStartIndices[identifier][meshIndex];
+	size_t indexEndIdx = (meshIndex + 1 < mMeshStartIndices[identifier].size()) ?
+	mMeshStartIndices[identifier][meshIndex + 1] :
+	mBatchIndices[identifier].size();
+	size_t indexCount = indexEndIdx - indexStartIdx;
+	
+	size_t vertexStartIdx = mMeshVertexStartIndices[identifier][meshIndex];
+	size_t vertexEndIdx = (meshIndex + 1 < mMeshVertexStartIndices[identifier].size()) ?
+	mMeshVertexStartIndices[identifier][meshIndex + 1] :
+	mBatchPositions[identifier].size() / 3;
+	size_t vertexCount = vertexEndIdx - vertexStartIdx;
+	
+	// Remove indices
+	mBatchIndices[identifier].erase(mBatchIndices[identifier].begin() + indexStartIdx,
+									mBatchIndices[identifier].begin() + indexEndIdx);
+	
+	// Adjust indices after the removed indices
+	for (size_t i = 0; i < mBatchIndices[identifier].size(); ++i) {
+		if (mBatchIndices[identifier][i] >= vertexEndIdx) {
+			mBatchIndices[identifier][i] -= vertexCount;
+		} else if (mBatchIndices[identifier][i] >= vertexStartIdx) {
+			mBatchIndices[identifier][i] = 0; // Or handle appropriately if needed
+		}
 	}
 	
-	auto& meshStartIndices = startIdxIt->second;
-	
-	if (meshIndex >= meshStartIndices.size()) {
-		// Invalid mesh index; inconsistent state
-		assert(false && "Mesh index out of range in start indices.");
-		return;
-	}
-	
-	size_t startIdx = meshStartIndices[meshIndex];
-	size_t endIdx;
-	
-	if (meshIndex + 1 < meshStartIndices.size()) {
-		endIdx = meshStartIndices[meshIndex + 1];
-	} else {
-		endIdx = mBatchIndices[identifier].size();
-	}
-	
-	size_t count = endIdx - startIdx;
-	
-	// 3.a. Remove indices
-	mBatchIndices[identifier].erase(
-									mBatchIndices[identifier].begin() + startIdx,
-									mBatchIndices[identifier].begin() + endIdx
-									);
-	
-	// 3.b. Remove vertex data
-	// Assuming that each mesh's vertices are contiguous and added sequentially
-	// Calculate the number of vertices to remove
-	size_t numVertices = mesh.get_mesh_data().get_vertices().size();
-	size_t vertexCount = numVertices * 3; // Assuming 3 floats per vertex position
-	
-	// Remove from positions
-	auto& positions = mBatchPositions[identifier];
-	positions.erase(
-					positions.begin() + startIdx * 3, // 3 floats per position
-					positions.begin() + (startIdx + numVertices) * 3
-					);
-	
-	// Remove from normals
-	auto& normals = mBatchNormals[identifier];
-	normals.erase(
-				  normals.begin() + startIdx * 3,
-				  normals.begin() + (startIdx + numVertices) * 3
-				  );
-	
-	// Remove from texcoords1
-	auto& texcoords1 = mBatchTexCoords1[identifier];
-	texcoords1.erase(
-					 texcoords1.begin() + startIdx * 2, // 2 floats per texcoord
-					 texcoords1.begin() + (startIdx + numVertices) * 2
-					 );
-	
-	// Remove from texcoords2
-	auto& texcoords2 = mBatchTexCoords2[identifier];
-	texcoords2.erase(
-					 texcoords2.begin() + startIdx * 2,
-					 texcoords2.begin() + (startIdx + numVertices) * 2
-					 );
-	
-	// Remove from texture IDs
-	auto& materialIds = mBatchMaterialIds[identifier];
-	materialIds.erase(
-					  materialIds.begin() + startIdx,
-					  materialIds.begin() + (startIdx + numVertices)
-					 );
-	
-	// Remove from colors
-	auto& colors = mBatchColors[identifier];
-	colors.erase(
-				 colors.begin() + startIdx * 4, // 4 floats per color
-				 colors.begin() + (startIdx + numVertices) * 4
-				 );
-	
-	// Remove from bone IDs
-	auto& boneIds = mBatchBoneIds[identifier];
-	boneIds.erase(
-				  boneIds.begin() + startIdx * 4, // 4 ints per bone ID
-				  boneIds.begin() + (startIdx + numVertices) * 4
-				  );
-	
-	// Remove from bone weights
-	auto& boneWeights = mBatchBoneWeights[identifier];
-	boneWeights.erase(
-					  boneWeights.begin() + startIdx * 4, // 4 floats per weight
-					  boneWeights.begin() + (startIdx + numVertices) * 4
+	// Remove per-vertex data
+	auto removeRange = [](auto& dataVec, size_t startIdx, size_t count, size_t componentsPerVertex) {
+		dataVec.erase(
+					  dataVec.begin() + startIdx * componentsPerVertex,
+					  dataVec.begin() + (startIdx + count) * componentsPerVertex
 					  );
+	};
 	
-	// 3.c. Update mesh start indices
-	meshStartIndices.erase(meshStartIndices.begin() + meshIndex);
+	removeRange(mBatchPositions[identifier], vertexStartIdx, vertexCount, 3);
+	removeRange(mBatchNormals[identifier], vertexStartIdx, vertexCount, 3);
+	removeRange(mBatchTexCoords1[identifier], vertexStartIdx, vertexCount, 2);
+	removeRange(mBatchTexCoords2[identifier], vertexStartIdx, vertexCount, 2);
+	removeRange(mBatchMaterialIds[identifier], vertexStartIdx, vertexCount, 1);
+	removeRange(mBatchColors[identifier], vertexStartIdx, vertexCount, 4);
+	removeRange(mBatchBoneIds[identifier], vertexStartIdx, vertexCount, 4);
+	removeRange(mBatchBoneWeights[identifier], vertexStartIdx, vertexCount, 4);
+	
+	// Remove from mMeshStartIndices and mMeshVertexStartIndices
+	mMeshStartIndices[identifier].erase(mMeshStartIndices[identifier].begin() + meshIndex);
+	mMeshVertexStartIndices[identifier].erase(mMeshVertexStartIndices[identifier].begin() + meshIndex);
 	
 	// Adjust subsequent start indices
-	for (size_t i = meshIndex; i < meshStartIndices.size(); ++i) {
-		meshStartIndices[i] -= count;
+	for (size_t i = meshIndex; i < mMeshStartIndices[identifier].size(); ++i) {
+		mMeshStartIndices[identifier][i] -= indexCount;
+		mMeshVertexStartIndices[identifier][i] -= vertexCount;
 	}
 	
-	// 3.d. Update vertex indexing map
+	// Update indexer
 	auto& indexer = mVertexIndexingMap[identifier];
-	indexer.mVertexOffset -= numVertices;
-	indexer.mIndexOffset -= count;
+	indexer.mIndexOffset -= indexCount;
+	indexer.mVertexOffset -= vertexCount;
 	
-	// If there are no more meshes using this shader, clean up
+	// If no meshes left, clean up
 	if (mesh_vector.empty()) {
-		mMeshes.erase(&shader);
+		mMeshes.erase(mesh_it);
 		mBatchPositions.erase(identifier);
 		mBatchNormals.erase(identifier);
 		mBatchTexCoords1.erase(identifier);
@@ -302,79 +246,74 @@ void SkinnedMeshBatch::remove(std::reference_wrapper<SkinnedMesh> meshRef) {
 		mBatchBoneIds.erase(identifier);
 		mBatchBoneWeights.erase(identifier);
 		mMeshStartIndices.erase(identifier);
+		mMeshVertexStartIndices.erase(identifier);
 		mVertexIndexingMap.erase(identifier);
 	} else {
-		// 4. Re-upload updated vertex and index data to the GPU
-		// Note: Depending on your rendering backend, you might need to handle this differently
-		// For simplicity, we'll re-upload all data for this shader
+		// Re-upload updated vertex and index data to the GPU
 		upload_vertex_data(shader, identifier);
 	}
 }
 
 void SkinnedMeshBatch::upload_vertex_data(ShaderWrapper& shader, int identifier) {
 	// Upload consolidated data to GPU
-	shader.persist_buffer("aPosition", nanogui::VariableType::Float32, {mBatchPositions[identifier].size() / 3, 3},
-					  mBatchPositions[identifier].data());
-	shader.persist_buffer("aNormal", nanogui::VariableType::Float32, {mBatchNormals[identifier].size() / 3, 3},
-					  mBatchNormals[identifier].data());
-	shader.persist_buffer("aTexcoords1", nanogui::VariableType::Float32, {mBatchTexCoords1[identifier].size() / 2, 2},
-					  mBatchTexCoords1[identifier].data());
-	shader.persist_buffer("aTexcoords2", nanogui::VariableType::Float32, {mBatchTexCoords2[identifier].size() / 2, 2},
-					  mBatchTexCoords2[identifier].data());
-	shader.persist_buffer("aMaterialId", nanogui::VariableType::Int32, {mBatchMaterialIds[identifier].size(), 1},
+	shader.persist_buffer("aPosition", nanogui::VariableType::Float32, { mBatchPositions[identifier].size() / 3, 3 },
+						  mBatchPositions[identifier].data());
+	shader.persist_buffer("aNormal", nanogui::VariableType::Float32, { mBatchNormals[identifier].size() / 3, 3 },
+						  mBatchNormals[identifier].data());
+	shader.persist_buffer("aTexcoords1", nanogui::VariableType::Float32, { mBatchTexCoords1[identifier].size() / 2, 2 },
+						  mBatchTexCoords1[identifier].data());
+	shader.persist_buffer("aTexcoords2", nanogui::VariableType::Float32, { mBatchTexCoords2[identifier].size() / 2, 2 },
+						  mBatchTexCoords2[identifier].data());
+	shader.persist_buffer("aMaterialId", nanogui::VariableType::Int32, { mBatchMaterialIds[identifier].size(), 1 },
 						  mBatchMaterialIds[identifier].data());
-	
-	// Set Buffer for Vertex Colors
-	shader.persist_buffer("aColor", nanogui::VariableType::Float32, {mBatchColors[identifier].size() / 4, 4},
-					  mBatchColors[identifier].data());
-	
-	// Set Buffer for Bone IDs
-	shader.persist_buffer("aBoneIds", nanogui::VariableType::Int32, {mBatchBoneIds[identifier].size() / 4, 4},
-					  mBatchBoneIds[identifier].data());
-	
-	// Set Buffer for Weights
-	shader.persist_buffer("aWeights", nanogui::VariableType::Float32, {mBatchBoneWeights[identifier].size() / 4, 4},
-					  mBatchBoneWeights[identifier].data());
-	
+	shader.persist_buffer("aColor", nanogui::VariableType::Float32, { mBatchColors[identifier].size() / 4, 4 },
+						  mBatchColors[identifier].data());
+	shader.persist_buffer("aBoneIds", nanogui::VariableType::Int32, { mBatchBoneIds[identifier].size() / 4, 4 },
+						  mBatchBoneIds[identifier].data());
+	shader.persist_buffer("aWeights", nanogui::VariableType::Float32, { mBatchBoneWeights[identifier].size() / 4, 4 },
+						  mBatchBoneWeights[identifier].data());
 	// Upload indices
-	shader.persist_buffer("indices", nanogui::VariableType::UInt32, {mBatchIndices[identifier].size()},
-					  mBatchIndices[identifier].data());
+	shader.persist_buffer("indices", nanogui::VariableType::UInt32, { mBatchIndices[identifier].size() },
+						  mBatchIndices[identifier].data());
 }
 
 void SkinnedMeshBatch::draw_content(const nanogui::Matrix4f& view,
-							 const nanogui::Matrix4f& projection) {
-	
-	for (auto& [shader_pointer, mesh_vector] : mMeshes) {
-		auto& shader = *shader_pointer;
-		int identifier = shader.identifier();
-				
+									const nanogui::Matrix4f& projection) {
+	for (auto& [identifier, mesh_vector] : mMeshes) {
 		mRenderPass.pop_depth_test_state(identifier);
 		
-		for (int i = 0; i<mesh_vector.size(); ++i) {
+		if (mesh_vector.empty()) continue;
+		
+		auto& shader = mesh_vector[0].get().get_shader();
+		
+		// Begin shader program
+		shader.begin();
+		
+		// Set uniforms that are common to all meshes
+		shader.set_uniform("aView", view);
+		shader.set_uniform("aProjection", projection);
+		
+		for (size_t i = 0; i < mesh_vector.size(); ++i) {
 			auto& mesh = mesh_vector[i].get();
 			
 			if (!mesh.get_color_component().get_visible()) {
 				continue;
 			}
 			
-			auto& shader = mesh.get_shader();
-			
-			// Set uniforms and draw the mesh content
-			shader.set_uniform("aView", view);
-			shader.set_uniform("aProjection", projection);
-			
 			// Set the model matrix for the current mesh
 			shader.set_uniform("aModel", mesh.get_model_matrix());
 			
 			// Apply skinning and animations (if any)
 			auto bones = mesh.get_skinned_component().get_bones();
-
+			
 			shader.set_buffer(
 							  "bones",
 							  nanogui::VariableType::Float32,
-							  {bones.size(), sizeof(SkinnedAnimationComponent::BoneCPU) / sizeof(float)},
-							  bones.data());
-			// Apply color component (assuming it sets relevant uniforms)
+							  { bones.size(), sizeof(SkinnedAnimationComponent::BoneCPU) / sizeof(float) },
+							  bones.data()
+							  );
+			
+			// Apply color component
 			mesh.get_color_component().apply_to(shader);
 			
 			// Upload materials for the current mesh
@@ -382,20 +321,17 @@ void SkinnedMeshBatch::draw_content(const nanogui::Matrix4f& view,
 			
 			// Calculate the range of indices to draw for this mesh
 			size_t startIdx = mMeshStartIndices[identifier][i];
-			size_t count = (i < mesh_vector.size() - 1) ?
-			(mMeshStartIndices[identifier][i + 1] - startIdx) :
-			(mBatchIndices[identifier].size() - startIdx);
-			
-			// Begin shader program
-			shader.begin();
+			size_t endIdx = (i + 1 < mMeshStartIndices[identifier].size()) ?
+			mMeshStartIndices[identifier][i + 1] :
+			mBatchIndices[identifier].size();
+			size_t count = endIdx - startIdx;
 			
 			// Draw the mesh segment
 			shader.draw_array(nanogui::Shader::PrimitiveType::Triangle,
 							  startIdx, count, true);
-			
-			// End shader program
-			shader.end();
 		}
 		
+		// End shader program
+		shader.end();
 	}
 }

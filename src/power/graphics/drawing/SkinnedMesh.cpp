@@ -97,7 +97,6 @@ mModelMatrix(nanogui::Matrix4f::identity()) {
 	
 	// Append the mesh to the batch
 	mMeshBatch.add_mesh(*this);
-	mMeshBatch.append(*this);
 }
 
 SkinnedMesh::~SkinnedMesh() {
