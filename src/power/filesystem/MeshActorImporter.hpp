@@ -34,18 +34,9 @@ public:
 		CompressedAsset mMesh;
 		std::optional<std::vector<CompressedAsset>> mAnimations;
 		
-		void persist(bool persistAnimations) {
+		void persist_mesh() {
 			mMesh.persist();
-			
-			if (persistAnimations) {
-				if (mAnimations.has_value()) {
-					for (auto& animation : *mAnimations) {
-						animation.persist();
-					}
-				}
-			}
 		}
-		
 		
 		void persist_animations() {
 			

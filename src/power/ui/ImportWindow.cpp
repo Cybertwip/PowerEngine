@@ -31,9 +31,12 @@ ImportWindow::ImportWindow(nanogui::Widget* parent, ResourcesPanel& resourcesPan
 	auto close_button = new nanogui::Button(button_panel(), "X");
 	close_button->set_fixed_size(nanogui::Vector2i(20, 20));
 	close_button->set_callback([this]() {
+		mPreviewCanvas->set_update(false);
+		
+		mPreviewCanvas->set_active_actor(nullptr);
+
 		this->set_visible(false);
 		this->set_modal(false);
-		mPreviewCanvas->set_update(false);
 	});
 	
 	mPreviewCanvas = new SharedSelfContainedMeshCanvas(this);
@@ -140,7 +143,13 @@ void ImportWindow::ImportIntoProject() {
 		
 		serializer->write_header_raw(pixels.data(), pixels.size());
 		
-		mCompressedMeshData->persist(mAnimationsCheckbox->checked());
+		if (mMeshCheckbox->checked()) {
+			mCompressedMeshData->persist_mesh();
+		}
+		
+		if (mAnimationsCheckbox->checked()) {
+			mCompressedMeshData->persist_animations();
+		}
 
 		nanogui::async([this](){
 			mResourcesPanel.refresh_file_view();
