@@ -31,18 +31,6 @@ void ActorManager::remove_actor(Actor& actor) {
 	});
 	
 	if (it != mActors.end()) {
-		// Assuming Actor has a get_entity() method
-		entt::entity entity = it->get()->get_entity();
-		
-		// Destroy the entity in the registry
-		if (mRegistry.valid(entity)) {
-			mRegistry.destroy(entity);
-		} else {
-			// Handle the case where the entity is already invalid
-			// This could be a warning or exception based on your design
-			throw std::runtime_error("Attempted to remove an actor with an invalid entity.");
-		}
-		
 		// Remove the Actor from the mActors vector
 		mActors.erase(it);
 	} else {

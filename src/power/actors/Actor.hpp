@@ -6,7 +6,7 @@ class Actor {
 public:
     Actor(entt::registry& registry);
 
-	virtual ~Actor() = default;
+	virtual ~Actor();
 	
     template<typename T>
     bool find_component() {
@@ -17,7 +17,6 @@ public:
     T& get_component() {
         return mRegistry.get<T>(mEntity);
     }
-
     
     template<typename Type, typename... Args>
     Type& add_component(Args &&...args) {
@@ -33,8 +32,6 @@ public:
 		static_assert(sizeof(this) <= sizeof(long long), "Pointer size is too large for long long type.");
 		return reinterpret_cast<long long>(this);
 	}
-	
-	entt::entity get_entity() const { return mEntity; }
 
 private:
     entt::registry& mRegistry;
