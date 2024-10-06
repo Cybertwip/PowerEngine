@@ -11,7 +11,6 @@
 #include <glm/gtc/type_ptr.hpp>
 
 void SkinnedMeshBatch::upload_material_data(ShaderWrapper& shader, const std::vector<std::shared_ptr<MaterialProperties>>& materialData) {
-#if defined(NANOGUI_USE_METAL)
 	// Ensure we have a valid number of materials
 	size_t numMaterials = materialData.size();
 	
@@ -67,36 +66,6 @@ void SkinnedMeshBatch::upload_material_data(ShaderWrapper& shader, const std::ve
 		shader.set_texture(textureBaseName, Batch::get_dummy_texture(), i);
 	}
 	
-#else
-	for (int i = 0; i < materialData.size(); ++i) {
-		// Create the uniform name dynamically for each material (e.g., "materials[0].ambient")
-		auto& material = *materialData[i];
-		std::string baseName = "materials[" + std::to_string(i) + "].";
-		
-		// Uploading vec3 uniforms for each material (ambient, diffuse, specular)
-		mShader.set_uniform(baseName + "ambient",
-							nanogui::Vector3f(material.mAmbient.x, material.mAmbient.y, material.mAmbient.z));
-		mShader.set_uniform(baseName + "diffuse",
-							nanogui::Vector3f(material.mDiffuse.x, material.mDiffuse.y, material.mDiffuse.z));
-		mShader.set_uniform(baseName + "specular",
-							nanogui::Vector3f(material.mSpecular.x, material.mSpecular.y, material.mSpecular.z));
-		
-		// Upload float uniforms for shininess and opacity
-		mShader.set_uniform(baseName + "shininess", material.mShininess);
-		mShader.set_uniform(baseName + "opacity", material.mOpacity);
-		
-		// Convert boolean to integer for setting in the shader (0 or 1)
-		mShader.set_uniform(baseName + "diffuse_texture", material.mHasDiffuseTexture ? 1.0f : 0.0f);
-		
-		// Set the diffuse texture (if it exists) or a dummy texture
-		std::string textureBaseName = "textures[" + std::to_string(i) + "]";
-		if (material.mHasDiffuseTexture) {
-			mShader.set_texture(textureBaseName, material.mTextureDiffuse.get());
-		} else {
-			mShader.set_texture(textureBaseName, mDummyTexture.get());
-		}
-	}
-#endif
 }
 
 

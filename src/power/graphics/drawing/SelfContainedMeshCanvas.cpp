@@ -67,7 +67,6 @@ void SelfContainedMeshCanvas::set_active_actor(std::optional<std::reference_wrap
 			// Successfully cast to SkinnedMeshComponent
 			for (auto& skinnedData : skinnedMeshComponent->get_skinned_mesh_data()) {
 				mSkinnedMeshBatch->add_mesh(*skinnedData);
-				mSkinnedMeshBatch->append(*skinnedData);
 				mBatchPositions = mSkinnedMeshBatch->get_batch_positions();
 			}
 			

@@ -324,16 +324,14 @@ void SkinnedFbx::TryImportAnimations() {
 				FbxTime endTime = timeSpan.GetStop();
 				
 				// Sample the animation at the specified frame rate
-				double startSeconds = startTime.GetSecondDouble();
-				double endSeconds = endTime.GetSecondDouble();
-				
-				double timeStep = 1.0 / frameRate;
+				FbxLongLong startFrame = startTime.GetFrameCount(timeMode);
+				FbxLongLong endFrame = endTime.GetFrameCount(timeMode);
 				
 				std::vector<Animation::KeyFrame> keyframes;
 				
-				for (double time = startSeconds; time <= endSeconds; time += timeStep) {
+				for (FbxLongLong frameIdx = startFrame; frameIdx <= endFrame; ++frameIdx) {
 					FbxTime currTime;
-					currTime.SetSecondDouble(time);
+					currTime.SetFrame(frameIdx, timeMode);
 					
 					// Evaluate the node's local transform at currTime
 					FbxAMatrix localTransform = boneNode->EvaluateLocalTransform(currTime);
@@ -351,7 +349,7 @@ void SkinnedFbx::TryImportAnimations() {
 					
 					// Store the keyframe
 					Animation::KeyFrame keyframe;
-					keyframe.time = static_cast<float>(time - startSeconds); // Adjust time relative to start
+					keyframe.time = frameIdx;
 					keyframe.translation = translation;
 					keyframe.rotation = rotation;
 					keyframe.scale = scale;
