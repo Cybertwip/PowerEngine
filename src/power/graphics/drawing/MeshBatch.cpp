@@ -261,10 +261,6 @@ void MeshBatch::draw_content(const nanogui::Matrix4f& view,
 		
 		if (mesh_vector.empty()) continue;
 		
-		// Set uniforms that are common to all meshes
-		shader.set_uniform("aProjection", projection);
-		shader.set_uniform("aView", view);
-		
 		for (size_t i = 0; i < mesh_vector.size(); ++i) {
 			auto& mesh = mesh_vector[i].get();
 			
@@ -274,7 +270,8 @@ void MeshBatch::draw_content(const nanogui::Matrix4f& view,
 			
 			
 			auto& shader = mesh.get_shader();
-			
+			shader.set_uniform("aProjection", projection);
+			shader.set_uniform("aView", view);
 			// Set the model matrix for the current mesh
 			shader.set_uniform("aModel", mesh.get_model_matrix());
 			
