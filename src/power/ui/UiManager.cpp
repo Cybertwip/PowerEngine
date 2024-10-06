@@ -310,19 +310,21 @@ void UiManager::OnActorSelected(std::optional<std::reference_wrapper<Actor>> act
 void UiManager::export_movie(const std::string& path) {
 	mStatusBarPanel->resources_panel().set_visible(false);
 	
-	mSceneTimeBar.stop_playback();
-	mSceneTimeBar.toggle_play_pause(true);
-	
-	mIsMovieExporting = true;
-	
-	mMovieExportFile = path;
-	mMovieExportDirectory = std::filesystem::path(path).parent_path().string();
-	
 	mActiveActor = std::nullopt;
 	
 	mActorVisualManager.fire_actor_selected_event(mActiveActor);
 	mGizmoManager.select(mActiveActor);
 	mGizmoManager.select(GizmoManager::GizmoAxis(0));
+	
+	mSceneTimeBar.stop_playback();
+	mSceneTimeBar.toggle_play_pause(true);
+
+	nanogui::async([this, path]() {
+		mIsMovieExporting = true;
+		
+		mMovieExportFile = path;
+		mMovieExportDirectory = std::filesystem::path(path).parent_path().string();
+	});
 }
 
 bool UiManager::is_movie_exporting() const {

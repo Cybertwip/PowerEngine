@@ -285,6 +285,7 @@ void SkinnedFbx::TryImportAnimations() {
 	
 	// Get the global time mode and frame rate
 	FbxTime::EMode timeMode = scene->GetGlobalSettings().GetTimeMode();
+		
 	double frameRate = FbxTime::GetFrameRate(timeMode);
 	
 	int animStackCount = scene->GetSrcObjectCount<FbxAnimStack>();
