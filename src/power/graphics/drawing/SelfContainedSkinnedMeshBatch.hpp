@@ -3,6 +3,7 @@
 #include "components/ColorComponent.hpp"
 #include "components/SkinnedAnimationComponent.hpp"
 
+#include "graphics/drawing/ISkinnedMeshBatch.hpp"
 #include "graphics/drawing/SkinnedMesh.hpp"
 #include "graphics/shading/ShaderWrapper.hpp"
 
@@ -12,7 +13,7 @@
 #include <unordered_map>
 #include <functional>
 
-class SelfContainedSkinnedMeshBatch {
+class SelfContainedSkinnedMeshBatch : public ISkinnedMeshBatch {
 public:
 	struct MaterialCPU {
 		float mAmbient[4];
