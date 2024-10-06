@@ -39,11 +39,9 @@ mUpdate(true) {
 	mCamera.add_component<TransformComponent>();
 	mCamera.add_component<CameraComponent>(mCamera.get_component<TransformComponent>(),
 										   45.0f, 0.01f, 5e3f, 192.0f / 128.0f);
-	
-	glm::quat rotationQuat = glm::angleAxis(glm::radians(180.0f),
-											glm::normalize(glm::vec3(0.0f, 1.0f, 0.0f)));
-	mModelMatrix = glm::identity<glm::mat4>() * glm::mat4_cast(rotationQuat);
-	
+
+	mModelMatrix = glm::identity<glm::mat4>();
+
 	// Initialize MeshBatch with its shader
 	mMeshBatch = std::make_unique<SelfContainedMeshBatch>(*render_pass(), mMeshPreviewShader);
 	
@@ -125,9 +123,11 @@ void SelfContainedMeshCanvas::update_camera_view() {
 		// Set the camera position and view direction
 		auto& cameraTransform = mCamera.get_component<TransformComponent>();
 		
-		cameraTransform.set_translation(center - glm::vec3(0.0f, distance, 0.0f));
+		auto zUpCenter = glm::vec3(center.x, center.z, center.y);
 		
-		camera.look_at(center);
+		cameraTransform.set_translation(zUpCenter - glm::vec3(0.0f, distance, 0.0f));
+
+		camera.look_at(zUpCenter);
 	}
 }
 

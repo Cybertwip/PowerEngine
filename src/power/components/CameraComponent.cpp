@@ -38,8 +38,8 @@ void CameraComponent::look_at(Actor& actor)
 	
 	glm::vec3 direction = glm::normalize(targetPosition - cameraPosition);
 	
-	// Assuming the up vector is the world up vector (0, 0, 1)
-	glm::vec3 up = glm::vec3(0.0f, 0.0f, 1.0f);
+	// Assuming the up vector is the world up vector (0, 1, 0)
+	glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f);
 	
 	glm::mat4 lookAtMatrix = glm::lookAt(cameraPosition, targetPosition, up);
 	glm::quat orientation = glm::quat_cast(lookAtMatrix);
@@ -56,7 +56,7 @@ void CameraComponent::look_at(const glm::vec3& position)
 	glm::vec3 direction = glm::normalize(position - cameraPosition);
 	
 	// Assuming the up vector is the world up vector (0, 0, 1)
-	glm::vec3 up = glm::vec3(0.0f, 0.0f, 1.0f);
+	glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f);
 	
 	glm::mat4 lookAtMatrix = glm::lookAt(cameraPosition, position, up);
 	glm::quat orientation = glm::quat_cast(lookAtMatrix);
