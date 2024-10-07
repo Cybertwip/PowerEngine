@@ -54,7 +54,7 @@ static std::string GenerateUniqueFilename(const std::string& baseDir, const std:
 
 PromptWindow::PromptWindow(std::weak_ptr<nanogui::Screen> screen, std::shared_ptr<ResourcesPanel> resourcesPanel, DeepMotionApiClient& deepMotionApiClient, std::shared_ptr<nanogui::RenderPass> renderpass, ShaderManager& shaderManager)
 : nanogui::Window(screen), mResourcesPanel(resourcesPanel), mDeepMotionApiClient(deepMotionApiClient), mDummyAnimationTimeProvider(60 * 30),
-	mRenderpass(renderpass) { // update with proper duration, dynamically after loading the animation
+	mRenderPass(renderpass) { // update with proper duration, dynamically after loading the animation
 	
 	set_fixed_size(nanogui::Vector2i(400, 512)); // Adjusted height for additional UI elements
 	set_layout(std::make_shared<nanogui::BoxLayout>(nanogui::Orientation::Vertical, nanogui::Alignment::Middle));
@@ -65,7 +65,7 @@ void PromptWindow::initialize() {
 	nanogui::Window::initialize();
 	
 	// Close Button
-	mCloseButton = new nanogui::Button(button_panel(), "X");
+	mCloseButton = std::make_shared<nanogui::Button>(button_panel(), "X");
 	mCloseButton->set_fixed_size(nanogui::Vector2i(20, 20));
 	mCloseButton->set_callback([this]() {
 		this->set_visible(false);
