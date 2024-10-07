@@ -51,6 +51,7 @@ StatusBarPanel::StatusBarPanel(nanogui::Widget &parent, IActorVisualManager& act
 		
 		if (resourcesButton->contains(nanogui::Vector2i(x, y), true)) {
 			rootNode->refresh();
+			mResourcesPanel->refresh_file_view();
 			toggle_resources_panel(!mIsPanelVisible);
 			resourcesButton->set_pushed(mIsPanelVisible);
 		}
