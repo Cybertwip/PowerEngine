@@ -435,8 +435,8 @@ void ResourcesPanel::refresh_file_view() {
 					if (mSelectedButton && mSelectedButton != icon) {
 						mSelectedButton->set_background_color(mNormalButtonColor);
 					}
-					mSelectedButton = icon;
-					icon->set_background_color(mSelectedButtonColor);
+					mSelectedButton = iconButton;
+					iconButton->set_background_color(mSelectedButtonColor);
 					
 					// Store the selected node for later use
 					mSelectedNode = child;
