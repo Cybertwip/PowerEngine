@@ -398,7 +398,7 @@ void ResourcesPanel::refresh_file_view() {
 				
 				// Set the callback for the icon button to handle interactions
 				
-				iconButton->set_callback([this, iconButton, child]() {
+				iconButton->set_callback([this, iconButton, thumbnailPixels, child]() {
 					int file_icon = get_icon_for_file(*child);
 					
 					if (file_icon  == FA_WALKING || file_icon == FA_PERSON_BOOTH || file_icon == FA_OBJECT_GROUP) {
