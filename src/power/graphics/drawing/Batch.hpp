@@ -23,10 +23,10 @@ public:
 	
 	static void init_dummy_texture();
 	
-	static nanogui::Texture& get_dummy_texture() {
-		return *mDummyTexture;
+	static std::shared_ptr<nanogui::Texture> get_dummy_texture() {
+		return mDummyTexture;
 	}
 	
 private:
-	static std::unique_ptr<nanogui::Texture> mDummyTexture;
+	static std::shared_ptr<nanogui::Texture> mDummyTexture;
 };

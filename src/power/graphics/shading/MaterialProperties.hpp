@@ -43,7 +43,7 @@ struct MaterialProperties
 	float mShininess{1.0f};
 	float mOpacity{1.0f};
 	bool mHasDiffuseTexture{false};
-	std::unique_ptr<nanogui::Texture> mTextureDiffuse;
+	std::shared_ptr<nanogui::Texture> mTextureDiffuse;
 	
 	MaterialProperties() = default;
 	MaterialProperties(MaterialProperties&& other) noexcept;
