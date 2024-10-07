@@ -94,7 +94,7 @@ private:
 	// ==============================
 	// Member Variables (Ordered by Dependencies)
 	// ==============================
-	IActorSelectedRegistry& mRegistry;
+	std::shared_ptr<IActorSelectedRegistry> mRegistry;
 	std::shared_ptr<IActorVisualManager> mActorVisualManager;
 	ActorManager& mActorManager;
 	ShaderManager& mShaderManager;

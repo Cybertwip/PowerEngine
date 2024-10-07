@@ -218,7 +218,7 @@ UiManager::UiManager(std::shared_ptr<IActorSelectedRegistry> registry,
 			glm::mat4 viewMatrix = TransformComponent::nanogui_to_glm(cameraManager.get_view());
 			glm::mat4 projMatrix = TransformComponent::nanogui_to_glm(cameraManager.get_projection());
 			
-			auto viewport = canvas.render_pass()->viewport();
+			auto viewport = canvas->render_pass()->viewport();
 			auto glmViewport = glm::vec4(viewport.first[0], viewport.first[1], viewport.second[0], viewport.second[1]);
 			
 			auto viewInverse = glm::inverse(viewMatrix);
@@ -312,12 +312,12 @@ void UiManager::export_movie(const std::string& path) {
 	
 	mActiveActor = std::nullopt;
 	
-	mActorVisualManager.fire_actor_selected_event(mActiveActor);
+	mActorVisualManager->fire_actor_selected_event(mActiveActor);
 	mGizmoManager.select(mActiveActor);
 	mGizmoManager.select(GizmoManager::GizmoAxis(0));
 	
-	mSceneTimeBar.stop_playback();
-	mSceneTimeBar.toggle_play_pause(true);
+	mSceneTimeBar->stop_playback();
+	mSceneTimeBar->toggle_play_pause(true);
 
 	nanogui::async([this, path]() {
 		mIsMovieExporting = true;
@@ -333,25 +333,25 @@ bool UiManager::is_movie_exporting() const {
 
 void UiManager::draw() {
 	if (mIsMovieExporting) {
-		mSceneTimeBar.update();
+		mSceneTimeBar->update();
 		// Begin the first render pass for actors
-		mCanvas.render_pass()->clear_color(0, mCanvas.background_color());
-		mCanvas.render_pass()->clear_color(1, nanogui::Color(0.0f, 0.0f, 0.0f, 0.0f));
-		mCanvas.render_pass()->clear_depth(1.0f);
+		mCanvas->render_pass()->clear_color(0, mCanvas.background_color());
+		mCanvas->render_pass()->clear_color(1, nanogui::Color(0.0f, 0.0f, 0.0f, 0.0f));
+		mCanvas->render_pass()->clear_depth(1.0f);
 		
 		// Draw all actors
 		mActorManager.draw();
 		
 		// Depth testing for mesh shaders
-		mCanvas.render_pass()->push_depth_test_state(nanogui::RenderPass::DepthTest::Less, true, mShaderManager.identifier("mesh"));
-		mCanvas.render_pass()->push_depth_test_state(nanogui::RenderPass::DepthTest::Less, true, mShaderManager.identifier("skinned_mesh"));
+		mCanvas->render_pass()->push_depth_test_state(nanogui::RenderPass::DepthTest::Less, true, mShaderManager.identifier("mesh"));
+		mCanvas->render_pass()->push_depth_test_state(nanogui::RenderPass::DepthTest::Less, true, mShaderManager.identifier("skinned_mesh"));
 		
 		auto& batch_unit = mMeshActorLoader.get_batch_unit();
 		mActorManager.visit(batch_unit.mMeshBatch);
 		mActorManager.visit(batch_unit.mSkinnedMeshBatch);
 		
 		// Take snapshot for movie export
-		mCanvas.take_snapshot([this](std::vector<uint8_t>& png_data) {
+		mCanvas->take_snapshot([this](std::vector<uint8_t>& png_data) {
 			// Generate the frame filename with padded zeros
 			std::ostringstream filename_stream;
 			filename_stream << "frame" << std::setw(mFramePadding) << std::setfill('0') << mFrameCounter << ".jpg";
@@ -380,7 +380,7 @@ void UiManager::draw() {
 			}
 		});
 		
-		if (!mSceneTimeBar.is_playing()) {
+		if (!mSceneTimeBar->is_playing()) {
 			mIsMovieExporting = false;
 			
 			// Assemble the movie using ffmpeg
@@ -411,15 +411,15 @@ void UiManager::draw() {
 			}
 		}
 	} else {
-		mSceneTimeBar.update();
-		mSceneTimeBar.overlay();
+		mSceneTimeBar->update();
+		mSceneTimeBar->overlay();
 		
 		mAnimationPanel.update_with(mSceneTimeBar.current_time());
 		
 		// Begin the first render pass for actors
-		mCanvas.render_pass()->clear_color(0, mCanvas.background_color());
-		mCanvas.render_pass()->clear_color(1, nanogui::Color(0.0f, 0.0f, 0.0f, 0.0f));
-		mCanvas.render_pass()->clear_depth(1.0f);
+		mCanvas->render_pass()->clear_color(0, mCanvas.background_color());
+		mCanvas->render_pass()->clear_color(1, nanogui::Color(0.0f, 0.0f, 0.0f, 0.0f));
+		mCanvas->render_pass()->clear_depth(1.0f);
 		
 		// Draw all actors
 		mActorManager.draw();
@@ -430,22 +430,22 @@ void UiManager::draw() {
 		}
 		
 		// Depth testing for gizmos
-		mCanvas.render_pass()->push_depth_test_state(nanogui::RenderPass::DepthTest::Always, true, mShaderManager.identifier("gizmo"));
-		mCanvas.render_pass()->push_depth_test_state(nanogui::RenderPass::DepthTest::Always, true, mShaderManager.identifier("gizmo"));
-		mCanvas.render_pass()->push_depth_test_state(nanogui::RenderPass::DepthTest::Always, true, mShaderManager.identifier("gizmo"));
+		mCanvas->render_pass()->push_depth_test_state(nanogui::RenderPass::DepthTest::Always, true, mShaderManager.identifier("gizmo"));
+		mCanvas->render_pass()->push_depth_test_state(nanogui::RenderPass::DepthTest::Always, true, mShaderManager.identifier("gizmo"));
+		mCanvas->render_pass()->push_depth_test_state(nanogui::RenderPass::DepthTest::Always, true, mShaderManager.identifier("gizmo"));
 		
 		// Draw gizmos
 		mGizmoManager.draw();
 		
 		// Depth testing for mesh shaders
-		mCanvas.render_pass()->push_depth_test_state(nanogui::RenderPass::DepthTest::Less, true, mShaderManager.identifier("mesh"));
-		mCanvas.render_pass()->push_depth_test_state(nanogui::RenderPass::DepthTest::Less, true, mShaderManager.identifier("skinned_mesh"));
+		mCanvas->render_pass()->push_depth_test_state(nanogui::RenderPass::DepthTest::Less, true, mShaderManager.identifier("mesh"));
+		mCanvas->render_pass()->push_depth_test_state(nanogui::RenderPass::DepthTest::Less, true, mShaderManager.identifier("skinned_mesh"));
 		
 		auto& batch_unit = mMeshActorLoader.get_batch_unit();
 		mActorManager.visit(batch_unit.mMeshBatch);
 		mActorManager.visit(batch_unit.mSkinnedMeshBatch);
 		
-		mCanvas.render_pass()->set_depth_test(nanogui::RenderPass::DepthTest::Less, true);
+		mCanvas->render_pass()->set_depth_test(nanogui::RenderPass::DepthTest::Less, true);
 		mActorManager.visit(*this);
 	}
 }
@@ -460,7 +460,7 @@ void UiManager::draw_content(const nanogui::Matrix4f& model,
 void UiManager::remove_active_actor() {
 	std::async([this]() {
 		if (mActiveActor.has_value()) {
-			mActorVisualManager.remove_actor(mActiveActor->get());
+			mActorVisualManager->remove_actor(mActiveActor->get());
 			mSceneTimeBar.refresh_actors();
 		}
 	});
