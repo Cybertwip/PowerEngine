@@ -19,7 +19,7 @@ class TransformPanel;
 
 class HierarchyPanel : public IActorSelectedRegistry, public IActorVisualManager, public Panel {
 public:
-	HierarchyPanel(ScenePanel& scenePanel, TransformPanel& transformPanel, AnimationPanel& animationPanel, ActorManager& actorManager, nanogui::Widget &parent);
+	HierarchyPanel(ScenePanel& scenePanel, TransformPanel& transformPanel, AnimationPanel& animationPanel, ActorManager& actorManager, std::shared_ptr<nanogui::Widget> parent);
 	
 	~HierarchyPanel() = default;
 

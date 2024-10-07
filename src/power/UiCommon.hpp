@@ -6,6 +6,7 @@
 
 namespace nanogui{
 class Widget;
+class Window;
 }
 
 class Actor;
@@ -56,6 +57,7 @@ private:
 	std::shared_ptr<nanogui::Window> mMainWrapper;
 	std::shared_ptr<nanogui::Window> mSceneWrapper;
 	std::shared_ptr<nanogui::Window> mLeftWrapper;
+	std::shared_ptr<nanogui::Window> mRightWrapper;
 	std::shared_ptr<ScenePanel> mScenePanel;
 	std::shared_ptr<TransformPanel> mTransformPanel;
 	std::shared_ptr<AnimationPanel> mAnimationPanel;

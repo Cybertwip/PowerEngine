@@ -11,10 +11,10 @@
 #include "actors/Actor.hpp"
 #include "components/TransformComponent.hpp"
 
-TransformPanel::TransformPanel(nanogui::Widget &parent)
+TransformPanel::TransformPanel(std::shared_ptr<nanogui::Widget> parent)
 : Panel(parent, "Transform"), mActiveActor(std::nullopt), mTransformRegistrationId(-1) {
 	set_position(nanogui::Vector2i(0, 0));
-	set_layout(new nanogui::GroupLayout());
+	set_layout(std::make_shared<nanogui::GroupLayout>());
 	
 	auto gatherValuesCallback = [this](int){
 		if (mActiveActor.has_value()) {
@@ -24,19 +24,19 @@ TransformPanel::TransformPanel(nanogui::Widget &parent)
 	};
 	
 	// Translation section
-	new nanogui::Label(this, "Translation", "sans-bold");
+	mTranlsationLabel = std::make_shared<nanogui::Label>(shared_from_this(), "Translation", "sans-bold");
 	
-	std::shared_ptr<Widget> translatePanel = new Widget(this);
+	mTranslatePanel = std::make_shared<nanogui::Widget>(shared_from_this());
 	
-	auto *translateLayout = new nanogui::GridLayout(nanogui::Orientation::Vertical, 2,
-												 nanogui::Alignment::Middle, 0, 0);
-
+	auto translateLayout = std::make_shared<nanogui::GridLayout>(nanogui::Orientation::Vertical, 2,
+																 nanogui::Alignment::Middle, 0, 0);
+	
 	translateLayout->set_col_alignment(nanogui::Alignment::Fill);
-
-	translatePanel->set_layout(translateLayout);
 	
-	new nanogui::Label(translatePanel, "X", "sans-bold");
-	mXTranslate = new nanogui::IntBox<int>(translatePanel);
+	mTranslatePanel->set_layout(translateLayout);
+	
+	mXLabel = std::make_shared<nanogui::Label>(mTranslatePanel, "X", "sans-bold");
+	mXTranslate = std::make_shared<nanogui::IntBox<int>>(mTranslatePanel);
 	mXTranslate->set_editable(true);
 	mXTranslate->set_value(0);
 	mXTranslate->set_default_value("0");
@@ -46,8 +46,8 @@ TransformPanel::TransformPanel(nanogui::Widget &parent)
 	mXTranslate->set_value_increment(1);
 	mXTranslate->set_callback(gatherValuesCallback);
 	
-	new nanogui::Label(translatePanel, "Y", "sans-bold");
-	mYTranslate = new nanogui::IntBox<int>(translatePanel);
+	mYLabel = std::make_shared<nanogui::Label>(mTranslatePanel, "Y", "sans-bold");
+	mYTranslate = std::make_shared<nanogui::IntBox<int>>(mTranslatePanel);
 	mYTranslate->set_editable(true);
 	mYTranslate->set_value(0);
 	mYTranslate->set_default_value("0");
@@ -56,9 +56,9 @@ TransformPanel::TransformPanel(nanogui::Widget &parent)
 	mYTranslate->set_spinnable(true);
 	mYTranslate->set_value_increment(1);
 	mYTranslate->set_callback(gatherValuesCallback);
-
-	new nanogui::Label(translatePanel, "Z", "sans-bold");
-	mZTranslate = new nanogui::IntBox<int>(translatePanel);
+	
+	mZLabel = std::make_shared<nanogui::Label>(mTranslatePanel, "Z", "sans-bold");
+	mZTranslate = std::make_shared<nanogui::IntBox<int>>(mTranslatePanel);
 	mZTranslate->set_editable(true);
 	mZTranslate->set_value(0);
 	mZTranslate->set_default_value("0");
@@ -67,20 +67,20 @@ TransformPanel::TransformPanel(nanogui::Widget &parent)
 	mZTranslate->set_spinnable(true);
 	mZTranslate->set_value_increment(1);
 	mZTranslate->set_callback(gatherValuesCallback);
-
+	
 	// Rotation section
-	new nanogui::Label(this, "Rotation", "sans-bold");
+	mRotationLabel = std::make_shared<nanogui::Label>(shared_from_this(), "Rotation", "sans-bold");
 	
-	std::shared_ptr<Widget> rotatePanel = new Widget(this);
+	mRotatePanel = std::make_shared<nanogui::Widget>(shared_from_this());
 	
-	auto *rotateLayout = new nanogui::GridLayout(nanogui::Orientation::Vertical, 2,
-		 nanogui::Alignment::Middle, 0, 0);
+	auto rotateLayout = std::make_shared<nanogui::GridLayout>(nanogui::Orientation::Vertical, 2,
+															  nanogui::Alignment::Middle, 0, 0);
 	rotateLayout->set_col_alignment(nanogui::Alignment::Fill);
 	
-	rotatePanel->set_layout(rotateLayout);
+	mRotatePanel->set_layout(rotateLayout);
 	
-	new nanogui::Label(rotatePanel, "Pitch", "sans-bold");
-	mPitchRotate = new nanogui::IntBox<int>(rotatePanel);
+	mPitchLabel = std::make_shared<nanogui::Label>(mRotatePanel, "Pitch", "sans-bold");
+	mPitchRotate = std::make_shared<nanogui::IntBox<int>>(mRotatePanel);
 	mPitchRotate->set_editable(true);
 	mPitchRotate->set_value(0);
 	mPitchRotate->set_default_value("0");
@@ -89,9 +89,9 @@ TransformPanel::TransformPanel(nanogui::Widget &parent)
 	mPitchRotate->set_spinnable(true);
 	mPitchRotate->set_value_increment(1);
 	mPitchRotate->set_callback(gatherValuesCallback);
-
-	new nanogui::Label(rotatePanel, "Yaw", "sans-bold");
-	mYawRotate = new nanogui::IntBox<int>(rotatePanel);
+	
+	mYawLabel = std::make_shared<nanogui::Label>(mRotatePanel, "Yaw", "sans-bold");
+	mYawRotate = std::make_shared<nanogui::IntBox<int>>(mRotatePanel);
 	mYawRotate->set_editable(true);
 	mYawRotate->set_value(0);
 	mYawRotate->set_default_value("0");
@@ -100,9 +100,9 @@ TransformPanel::TransformPanel(nanogui::Widget &parent)
 	mYawRotate->set_spinnable(true);
 	mYawRotate->set_value_increment(1);
 	mYawRotate->set_callback(gatherValuesCallback);
-
-	new nanogui::Label(rotatePanel, "Roll", "sans-bold");
-	mRollRotate = new nanogui::IntBox<int>(rotatePanel);
+	
+	mRollLabel = std::make_shared<nanogui::Label>(mRotatePanel, "Roll", "sans-bold");
+	mRollRotate = std::make_shared<nanogui::IntBox<int>>(mRotatePanel);
 	mRollRotate->set_editable(true);
 	mRollRotate->set_value(0);
 	mRollRotate->set_default_value("0");
@@ -111,20 +111,19 @@ TransformPanel::TransformPanel(nanogui::Widget &parent)
 	mRollRotate->set_spinnable(true);
 	mRollRotate->set_value_increment(1);
 	mRollRotate->set_callback(gatherValuesCallback);
-
+	
 	// Scale section
-	new nanogui::Label(this, "Scale", "sans-bold");
+	mScaleLabel = std::make_shared<nanogui::Label>(shared_from_this(), "Scale", "sans-bold");
 	
-	std::shared_ptr<Widget> scalePanel = new Widget(this);
-	auto *scaleLayout = new nanogui::GridLayout(nanogui::Orientation::Vertical, 2,
-												nanogui::Alignment::Middle, 0, 0);
-	
+	mScalePanel = std::make_shared<nanogui::Widget>(shared_from_this());
+	auto scaleLayout = std::make_shared<nanogui::GridLayout>(nanogui::Orientation::Vertical, 2,
+															 nanogui::Alignment::Middle, 0, 0);
 	scaleLayout->set_col_alignment(nanogui::Alignment::Fill);
 	
-	scalePanel->set_layout(scaleLayout);
+	mScalePanel->set_layout(scaleLayout);
 	
-	new nanogui::Label(scalePanel, "X", "sans-bold");
-	mXScale = new nanogui::FloatBox<float>(scalePanel);
+	mXScaleLabel = std::make_shared<nanogui::Label>(mScalePanel, "X", "sans-bold");
+	mXScale = std::make_shared<nanogui::FloatBox<float>>(mScalePanel);
 	mXScale->set_editable(true);
 	mXScale->set_value(1);
 	mXScale->set_default_value("1");
@@ -133,9 +132,9 @@ TransformPanel::TransformPanel(nanogui::Widget &parent)
 	mXScale->set_value_increment(0.01f);
 	mXScale->number_format("%.2f");
 	mXScale->set_callback(gatherValuesCallback);
-
-	new nanogui::Label(scalePanel, "Y", "sans-bold");
-	mYScale = new nanogui::FloatBox<float>(scalePanel);
+	
+	mYScaleLabel = std::make_shared<nanogui::Label>(mScalePanel, "Y", "sans-bold");
+	mYScale = std::make_shared<nanogui::FloatBox<float>>(mScalePanel);
 	mYScale->set_editable(true);
 	mYScale->set_value(1);
 	mYScale->set_default_value("1");
@@ -144,9 +143,9 @@ TransformPanel::TransformPanel(nanogui::Widget &parent)
 	mYScale->set_value_increment(0.01f);
 	mYScale->number_format("%.2f");
 	mYScale->set_callback(gatherValuesCallback);
-
-	new nanogui::Label(scalePanel, "float", "sans-bold");
-	mZScale = new nanogui::FloatBox<float>(scalePanel);
+	
+	mZScaleLabel = std::make_shared<nanogui::Label>(mScalePanel, "Z", "sans-bold");
+	mZScale = std::make_shared<nanogui::FloatBox<float>>(mScalePanel);
 	mZScale->set_editable(true);
 	mZScale->set_value(1);
 	mZScale->set_default_value("1");
@@ -155,9 +154,9 @@ TransformPanel::TransformPanel(nanogui::Widget &parent)
 	mZScale->number_format("%.2f");
 	mZScale->set_value_increment(0.01f);
 	mZScale->set_callback(gatherValuesCallback);
+	
 	set_active_actor(std::nullopt);
 }
-
 TransformPanel::~TransformPanel() {
 	if (mActiveActor.has_value()) {
 		auto& transformComponent = mActiveActor->get().get_component<TransformComponent>();

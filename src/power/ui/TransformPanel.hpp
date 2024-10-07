@@ -9,7 +9,7 @@ class TransformComponent;
 
 class TransformPanel : public Panel {
 public:
-    TransformPanel(nanogui::Widget& parent);
+    TransformPanel(std::shared_ptr<nanogui::Widget> parent);
 	~TransformPanel();
     
     void gather_values_into(TransformComponent& transform);
@@ -18,13 +18,13 @@ public:
     void set_active_actor(std::optional<std::reference_wrapper<Actor>> actor);
     
 private:
-    nanogui::IntBox<int> *mXTranslate;
-    nanogui::IntBox<int> *mYTranslate;
-    nanogui::IntBox<int> *mZTranslate;
+	std::shared_ptr<nanogui::IntBox<int>> mXTranslate;
+	std::shared_ptr<nanogui::IntBox<int>> mYTranslate;
+	std::shared_ptr<nanogui::IntBox<int>> mZTranslate;
 
-    nanogui::IntBox<int> *mPitchRotate;
-    nanogui::IntBox<int> *mYawRotate;
-    nanogui::IntBox<int> *mRollRotate;
+	std::shared_ptr<nanogui::IntBox<int>> mPitchRotate;
+	std::shared_ptr<nanogui::IntBox<int>> mYawRotate;
+    std::shared_ptr<nanogui::IntBox<int>> mRollRotate;
 
 	std::shared_ptr<nanogui::FloatBox<float>> mXScale;
 	std::shared_ptr<nanogui::FloatBox<float>> mYScale;
@@ -34,6 +34,18 @@ private:
 	std::shared_ptr<nanogui::Widget> mRotateWidget;
 	std::shared_ptr<nanogui::Widget> mScaleWidget;
     
+	std::shared_ptr<nanogui::Label> mTranslationLabel;
+	std::shared_ptr<nanogui::Label> mXLabel;
+	std::shared_ptr<nanogui::Label> mYLabel;
+	std::shared_ptr<nanogui::Label> mZLabel;
+
+	std::shared_ptr<nanogui::Label> mYawLabel;
+	std::shared_ptr<nanogui::Label> mPitchLabel;
+	std::shared_ptr<nanogui::Label> mRollLabel;
+
+	std::shared_ptr<nanogui::Widget> mTranslatePanel;
+	
+
     std::optional<std::reference_wrapper<Actor>> mActiveActor;
 	
 	int mTransformRegistrationId;

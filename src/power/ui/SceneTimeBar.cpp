@@ -146,7 +146,7 @@ mNormalButtonColor(theme()->m_text_color) // Initialize normal button color
 	});
 	
 	// Previous Frame Button
-	mPrevFrameBtn = std::make_shared<nanogui::Button>(buttonWrapper, "", FA_STEP_BACKWARD);
+	mPrevFrameBtn = std::make_shared<nanogui::Button>(mButtonWrapper, "", FA_STEP_BACKWARD);
 	mPrevFrameBtn->set_fixed_width(buttonWidth);
 	mPrevFrameBtn->set_fixed_height(buttonHeight);
 	mPrevFrameBtn->set_tooltip("Previous Frame");
@@ -170,7 +170,7 @@ mNormalButtonColor(theme()->m_text_color) // Initialize normal button color
 	});
 	
 	// Stop Button
-	mStopBtn = std::make_shared<nanogui::Button>(buttonWrapper, "", FA_STOP);
+	mStopBtn = std::make_shared<nanogui::Button>(mButtonWrapper, "", FA_STOP);
 	mStopBtn->set_fixed_width(buttonWidth);
 	mStopBtn->set_fixed_height(buttonHeight);
 	mStopBtn->set_tooltip("Stop");
@@ -249,7 +249,7 @@ mNormalButtonColor(theme()->m_text_color) // Initialize normal button color
 	});
 	
 	// Next Frame Button
-	mNextFrameBtn = std::make_shared<nanogui::Button>(buttonWrapper, "", FA_STEP_FORWARD);
+	mNextFrameBtn = std::make_shared<nanogui::Button>(mButtonWrapper, "", FA_STEP_FORWARD);
 	mNextFrameBtn->set_fixed_width(buttonWidth);
 	mNextFrameBtn->set_fixed_height(buttonHeight);
 	mNextFrameBtn->set_tooltip("Next Frame");

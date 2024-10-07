@@ -20,11 +20,11 @@ UiCommon::UiCommon(std::shared_ptr<nanogui::Widget> parent, ActorManager& actorM
 	mSceneWrapper->set_layout(std::make_shared<nanogui::GridLayout>(nanogui::Orientation::Horizontal, 2,
                                                      nanogui::Alignment::Fill, 0, 0));
 
-    int totalWidth = parent.size().x();
+    int totalWidth = parent->size().x();
     int sceneWidth = static_cast<int>(totalWidth * 0.80f);
     int rightWidth = totalWidth - sceneWidth;
 
-    int totalHeight = parent.size().y();
+    int totalHeight = parent->size().y();
 	int sceneHeight = static_cast<int>(totalHeight * 0.90);
 	int statusHeight = static_cast<int>(totalHeight * 0.05);
 	int toolboxHeight = static_cast<int>(totalHeight * 0.05);
@@ -39,17 +39,17 @@ UiCommon::UiCommon(std::shared_ptr<nanogui::Widget> parent, ActorManager& actorM
 	mLeftWrapper->set_fixed_width(sceneWidth);
 	mLeftWrapper->set_fixed_height(totalHeight);
 
-	mToolbox = new Panel(mLeftWrapper, "");
+	mToolbox = std::make_shared<Panel>(mLeftWrapper, "");
 	mToolbox->set_layout(std::make_shared<nanogui::BoxLayout>(nanogui::Orientation::Horizontal,
 												 nanogui::Alignment::Minimum, 4, 2));
 	mToolbox->set_fixed_height(toolboxHeight);
 
-    mScenePanel = new ScenePanel(mLeftWrapper);
+    mScenePanel = std::make_shared<ScenePanel>(mLeftWrapper);
 
     mScenePanel->set_fixed_width(sceneWidth);
     mScenePanel->set_fixed_height(sceneHeight);
 
-	mStatusBar = new nanogui::Widget(mLeftWrapper);
+	mStatusBar = std::make_shared<nanogui::Widget>(mLeftWrapper);
 
 	mStatusBar->set_fixed_width(mLeftWrapper->fixed_width());
 	mStatusBar->set_fixed_height(statusHeight);
@@ -59,26 +59,26 @@ UiCommon::UiCommon(std::shared_ptr<nanogui::Widget> parent, ActorManager& actorM
         std::make_shared<nanogui::BoxLayout>(nanogui::Orientation::Vertical, nanogui::Alignment::Fill));
 	mRightWrapper->set_fixed_width(rightWidth);
 
-	mTransformPanel = new TransformPanel(mRightWrapper);
+	mTransformPanel = std::make_shared<TransformPanel>(mRightWrapper);
 
-	mAnimationPanel = new AnimationPanel(mRightWrapper);
+	mAnimationPanel = std::make_shared<AnimationPanel>(mRightWrapper);
 
-	mHierarchyPanel = new HierarchyPanel(mScenePanel, mTransformPanel, mAnimationPanel, actorManager, *rightWrapper);
+	mHierarchyPanel = std::make_shared<HierarchyPanel>(mScenePanel, mTransformPanel, mAnimationPanel, actorManager, mRightWrapper);
 
 //	auto promptbox = new PromptBox(*rightWrapper);
 //	promptbox->inc_ref();
 	
-	rightWrapper->remove_child(mHierarchyPanel);
-	rightWrapper->remove_child(mTransformPanel);
-	rightWrapper->remove_child(mAnimationPanel);
+	mRightWrapper->remove_child(mHierarchyPanel);
+	mRightWrapper->remove_child(mTransformPanel);
+	mRightWrapper->remove_child(mAnimationPanel);
 //	rightWrapper->remove_child(promptbox);
 
-	rightWrapper->add_child(mHierarchyPanel); // Add HierarchyPanel first
-	rightWrapper->add_child(mTransformPanel); // Add TransformPanel second
-	rightWrapper->add_child(mAnimationPanel); // Add AnimationPanel third
+	mRightWrapper->add_child(mHierarchyPanel); // Add HierarchyPanel first
+	mRightWrapper->add_child(mTransformPanel); // Add TransformPanel second
+	mRightWrapper->add_child(mAnimationPanel); // Add AnimationPanel third
 //	rightWrapper->add_child(promptbox); // Add Grok third
 	
 	// Initialize the scene time bar
-	mSceneTimeBar = new SceneTimeBar(mScenePanel, actorManager, animationTimeProvider, mHierarchyPanel,  mScenePanel->fixed_width(), mScenePanel->fixed_height() * 0.25f);
+	mSceneTimeBar = std::make_shared<SceneTimeBar>(mScenePanel, actorManager, animationTimeProvider, mHierarchyPanel,  mScenePanel->fixed_width(), mScenePanel->fixed_height() * 0.25f);
 }
 
