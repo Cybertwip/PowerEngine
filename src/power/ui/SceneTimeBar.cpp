@@ -75,11 +75,11 @@ mNormalButtonColor(theme()->m_text_color) // Initialize normal button color
 	int keyBtnHeight = static_cast<int>(buttonHeight * 1.0f);
 	
 	// Vertical layout for slider above buttons
-	set_layout(std::make_shared<nanogui::BoxLayout>(nanogui::Orientation::Vertical, nanogui::Alignment::Maximum, 1, 1));
+	set_layout(std::make_unique<nanogui::BoxLayout>(nanogui::Orientation::Vertical, nanogui::Alignment::Maximum, 1, 1));
 	
 	// Slider Wrapper
-	Widget& sliderWrapper = std::make_shared<nanogui::Widget>(shared_from_this());
-	sliderWrapper->set_layout(std::make_shared<nanogui::BoxLayout>(nanogui::Orientation::Horizontal, nanogui::Alignment::Fill, 1, 1));
+	Widget& sliderWrapper = std::make_shared<nanogui::Widget>(*this);
+	sliderWrapper->set_layout(std::make_unique<nanogui::BoxLayout>(nanogui::Orientation::Horizontal, nanogui::Alignment::Fill, 1, 1));
 	
 	auto normalButtonColor = theme()->m_text_color;
 	
@@ -109,8 +109,8 @@ mNormalButtonColor(theme()->m_text_color) // Initialize normal button color
 	});
 	
 	// Buttons Wrapper
-	mButtonWrapperWrapper = std::make_shared<nanogui::Widget>(shared_from_this());
-	mButtonWrapperWrapper->set_layout(std::make_shared<nanogui::BoxLayout>(nanogui::Orientation::Vertical, nanogui::Alignment::Middle, 1, 1));
+	mButtonWrapperWrapper = std::make_shared<nanogui::Widget>(*this);
+	mButtonWrapperWrapper->set_layout(std::make_unique<nanogui::BoxLayout>(nanogui::Orientation::Vertical, nanogui::Alignment::Middle, 1, 1));
 	
 	// Time Counter Display
 	mTimeLabel = std::make_shared<nanogui::TextBox>(mButtonWrapperWrapper);
@@ -122,7 +122,7 @@ mNormalButtonColor(theme()->m_text_color) // Initialize normal button color
 	
 	// Buttons Horizontal Layout
 	mButtonWrapper = std::make_shared<nanogui::Widget>(mButtonWrapperWrapper);
-	mButtonWrapper->set_layout(std::make_shared<nanogui::BoxLayout>(nanogui::Orientation::Horizontal, nanogui::Alignment::Middle, 10, 5));
+	mButtonWrapper->set_layout(std::make_unique<nanogui::BoxLayout>(nanogui::Orientation::Horizontal, nanogui::Alignment::Middle, 10, 5));
 	
 	// Rewind Button
 	mRewindBtn = std::make_shared<nanogui::Button>(mButtonWrapper, "", FA_FAST_BACKWARD);
@@ -295,8 +295,8 @@ mNormalButtonColor(theme()->m_text_color) // Initialize normal button color
 	});
 	
 	// Keyframe Buttons Wrapper
-	mKeyBtnWrapper = std::make_shared<nanogui::Widget>(shared_from_this());
-	mKeyBtnWrapper->set_layout(std::make_shared<nanogui::BoxLayout>(nanogui::Orientation::Horizontal, nanogui::Alignment::Middle, 1, 1));
+	mKeyBtnWrapper = std::make_shared<nanogui::Widget>(*this);
+	mKeyBtnWrapper->set_layout(std::make_unique<nanogui::BoxLayout>(nanogui::Orientation::Horizontal, nanogui::Alignment::Middle, 1, 1));
 	
 	mPrevKeyBtn = std::make_shared<nanogui::Button>(mKeyBtnWrapper, "", FA_STEP_BACKWARD);
 	mPrevKeyBtn->set_enabled(false);

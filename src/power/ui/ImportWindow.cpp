@@ -21,10 +21,10 @@
 
 #include <sstream>
 
-ImportWindow::ImportWindow(std::shared_ptr<nanogui::Screen> screen, std::shared_ptr<ResourcesPanel> resourcesPanel, std::shared_ptr<nanogui::RenderPass> renderpass, ShaderManager& shaderManager) : nanogui::Window(screen), mResourcesPanel(resourcesPanel), mDummyAnimationTimeProvider(60 * 30), mRenderPass(renderpass) {
+ImportWindow::ImportWindow(nanogui::Screen& screen, std::shared_ptr<ResourcesPanel> resourcesPanel, std::shared_ptr<nanogui::RenderPass> renderpass, ShaderManager& shaderManager) : nanogui::Window(screen), mResourcesPanel(resourcesPanel), mDummyAnimationTimeProvider(60 * 30), mRenderPass(renderpass) {
 	
 	set_fixed_size(nanogui::Vector2i(400, 320));
-	set_layout(std::make_shared<nanogui::GroupLayout>());
+	set_layout(std::make_unique<nanogui::GroupLayout>());
 	set_title("Import Asset");
 	
 }
@@ -42,7 +42,7 @@ void ImportWindow::Initialize() {
 		this->set_modal(false);
 	});
 	
-	mPreviewCanvas = std::make_shared<SharedSelfContainedMeshCanvas>(shared_from_this());
+	mPreviewCanvas = std::make_shared<SharedSelfContainedMeshCanvas>(*this);
 	
 	mMeshBatch = std::make_unique<SelfContainedMeshBatch>(mRenderPass, mPreviewCanvas->get_mesh_shader());
 	
@@ -60,8 +60,8 @@ void ImportWindow::Initialize() {
 	mMeshActorImporter = std::make_unique<MeshActorImporter>();
 	
 	// Create a panel or container for checkboxes using GridLayout
-	mCheckboxPanel = std::make_shared<nanogui::Widget>(shared_from_this());
-	mCheckboxPanel->set_layout(std::make_shared<nanogui::GridLayout>(
+	mCheckboxPanel = std::make_shared<nanogui::Widget>(*this);
+	mCheckboxPanel->set_layout(std::make_unique<nanogui::GridLayout>(
 																	 nanogui::Orientation::Horizontal, // Layout orientation
 																	 2,                               // Number of columns
 																	 nanogui::Alignment::Minimum,      // Alignment within cells
@@ -80,7 +80,7 @@ void ImportWindow::Initialize() {
 	
 	
 	// Create "Import" button
-	mImportButton = std::make_shared<nanogui::Button>(shared_from_this(), "Import");
+	mImportButton = std::make_shared<nanogui::Button>(*this, "Import");
 	mImportButton->set_callback([this]() {
 		nanogui::async([this](){this->ImportIntoProject();});
 	});

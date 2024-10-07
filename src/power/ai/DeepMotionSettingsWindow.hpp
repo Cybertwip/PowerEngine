@@ -24,7 +24,7 @@ public:
 	 * @param parent Pointer to the parent widget.
 	 * @param api_base_url The base URL for the API endpoints.
 	 */
-	DeepMotionSettingsWindow(std::shared_ptr<nanogui::Screen> parent, DeepMotionApiClient& deepMotionApiClient, std::function<void()> successCallback);
+	DeepMotionSettingsWindow(nanogui::Screen& parent, DeepMotionApiClient& deepMotionApiClient, std::function<void()> successCallback);
 	
 private:
 	void initialize() override;
@@ -91,7 +91,7 @@ private:
 	std::shared_ptr<nanogui::Label> mClientIdLabel;
 	std::shared_ptr<nanogui::Label> mClientSecretLabel;
 	
-	std::shared_ptr<nanogui::Widget> mStatusPanel;
-	std::shared_ptr<nanogui::Widget> mTopPanel;
+	nanogui::Widget& mStatusPanel;
+	nanogui::Widget& mTopPanel;
 	std::shared_ptr<nanogui::ImageView> mImageView;
 };

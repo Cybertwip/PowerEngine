@@ -7,7 +7,7 @@
 #include <nanogui/toolbutton.h>
 #include <nanogui/window.h>
 
-ScenePanel::ScenePanel(std::shared_ptr<nanogui::Widget> parent)
+ScenePanel::ScenePanel(nanogui::Widget& parent)
 : Panel(parent, "Scene")
 , mDragging(false) {
 	set_position(nanogui::Vector2i(0, 0));

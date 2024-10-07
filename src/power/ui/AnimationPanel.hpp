@@ -14,7 +14,7 @@ class TransformComponent;
 
 class AnimationPanel : public Panel {
 public:
-	AnimationPanel(std::shared_ptr<nanogui::Widget> parent);
+	AnimationPanel(nanogui::Widget& parent);
 	~AnimationPanel();
 	
 	void initialize() override;
@@ -33,9 +33,9 @@ private:
 	std::shared_ptr<nanogui::ToolButton> mReversePlayButton; // New reverse play button
 	std::shared_ptr<nanogui::ToolButton> mPlayPauseButton;
 
-	std::shared_ptr<nanogui::Widget> mCanvasPanel;
+	nanogui::Widget& mCanvasPanel;
 
-	std::shared_ptr<nanogui::Widget> mPlaybackPanel;
+	nanogui::Widget& mPlaybackPanel;
 
 	std::shared_ptr<SelfContainedMeshCanvas> mPreviewCanvas;
 	

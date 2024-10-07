@@ -10,17 +10,17 @@
 #include "ui/TransformPanel.hpp"
 #include "ui/UiManager.hpp"
 
-UiCommon::UiCommon(std::shared_ptr<nanogui::Widget> parent, ActorManager& actorManager, AnimationTimeProvider& animationTimeProvider) : nanogui::Widget(parent), mActorManager(actorManager), mAnimationTimeProvider(animationTimeProvider) {
+UiCommon::UiCommon(nanogui::Widget& parent, ActorManager& actorManager, AnimationTimeProvider& animationTimeProvider) : nanogui::Widget(parent), mActorManager(actorManager), mAnimationTimeProvider(animationTimeProvider) {
 }
 
 void UiCommon::initialize() {
-	mMainWrapper = std::make_shared<nanogui::Window>(shared_from_this(), "");
+	mMainWrapper = std::make_shared<nanogui::Window>(*this, "");
 		
 	mMainWrapper->set_layout(
 							 std::make_shared<nanogui::GridLayout>(nanogui::Orientation::Vertical, 2, nanogui::Alignment::Fill, 0, 0));
 	mSceneWrapper = std::make_shared<nanogui::Window>(mMainWrapper, "");
 	
-	mSceneWrapper->set_layout(std::make_shared<nanogui::GridLayout>(nanogui::Orientation::Horizontal, 2,
+	mSceneWrapper->set_layout(std::make_unique<nanogui::GridLayout>(nanogui::Orientation::Horizontal, 2,
 																	nanogui::Alignment::Fill, 0, 0));
 	
 	int totalWidth = parent()->size().x();
@@ -45,7 +45,7 @@ void UiCommon::initialize() {
 	
 	mToolbox = std::make_shared<Panel>(mLeftWrapper, "");
 	
-	mToolbox->set_layout(std::make_shared<nanogui::BoxLayout>(nanogui::Orientation::Horizontal,
+	mToolbox->set_layout(std::make_unique<nanogui::BoxLayout>(nanogui::Orientation::Horizontal,
 															  nanogui::Alignment::Minimum, 4, 2));
 	mToolbox->set_fixed_height(toolboxHeight);
 	

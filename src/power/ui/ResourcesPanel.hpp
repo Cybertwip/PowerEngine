@@ -27,7 +27,7 @@ class UiManager;
 
 class ResourcesPanel : public Panel {
 public:
-	ResourcesPanel(std::shared_ptr<nanogui::Widget> parent,
+	ResourcesPanel(nanogui::Widget& parent,
 				   DirectoryNode& root_directory_node, std::shared_ptr<IActorVisualManager> actorVisualManager,
 				   std::shared_ptr<SceneTimeBar> sceneTimeBar, MeshActorLoader& meshActorLoader, ShaderManager& shaderManager, DeepMotionApiClient& deepMotionApiClient, UiManager& uiManager);
 	

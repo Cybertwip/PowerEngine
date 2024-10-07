@@ -25,7 +25,7 @@ class UiManager;
 
 class UiCommon : public nanogui::Widget {
 public:
-    UiCommon(std::shared_ptr<nanogui::Widget> parent, ActorManager& actorManager, AnimationTimeProvider& animationTimeProvider);
+    UiCommon(nanogui::Widget& parent, ActorManager& actorManager, AnimationTimeProvider& animationTimeProvider);
         
 	std::shared_ptr<HierarchyPanel> hierarchy_panel() {
         return mHierarchyPanel;
@@ -35,7 +35,7 @@ public:
         return mScenePanel;
     }
 
-	std::shared_ptr<nanogui::Widget> status_bar() {
+	nanogui::Widget& status_bar() {
         return mStatusBar;
     }
 
@@ -51,7 +51,7 @@ public:
 		return mSceneTimeBar;
 	}
 
-	std::shared_ptr<nanogui::Widget> toolbox() {
+	nanogui::Widget& toolbox() {
 		return mToolbox;
 	}
 
@@ -66,8 +66,8 @@ private:
 	std::shared_ptr<TransformPanel> mTransformPanel;
 	std::shared_ptr<AnimationPanel> mAnimationPanel;
 	std::shared_ptr<HierarchyPanel> mHierarchyPanel;
-	std::shared_ptr<nanogui::Widget> mStatusBar;
-	std::shared_ptr<nanogui::Widget> mToolbox;
+	nanogui::Widget& mStatusBar;
+	nanogui::Widget& mToolbox;
 	std::shared_ptr<SceneTimeBar> mSceneTimeBar;
 	
 	ActorManager& mActorManager;

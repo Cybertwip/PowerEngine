@@ -9,7 +9,7 @@ class TransformComponent;
 
 class TransformPanel : public Panel {
 public:
-    TransformPanel(std::shared_ptr<nanogui::Widget> parent);
+    TransformPanel(nanogui::Widget& parent);
 	~TransformPanel();
     
     void gather_values_into(TransformComponent& transform);
@@ -33,9 +33,9 @@ private:
 	std::shared_ptr<nanogui::FloatBox<float>> mYScale;
 	std::shared_ptr<nanogui::FloatBox<float>> mZScale;
 	
-	std::shared_ptr<nanogui::Widget> mTranslateWidget;
-	std::shared_ptr<nanogui::Widget> mRotateWidget;
-	std::shared_ptr<nanogui::Widget> mScaleWidget;
+	nanogui::Widget& mTranslateWidget;
+	nanogui::Widget& mRotateWidget;
+	nanogui::Widget& mScaleWidget;
     
 	std::shared_ptr<nanogui::Label> mTranslationLabel;
 	std::shared_ptr<nanogui::Label> mXLabel;
@@ -51,9 +51,9 @@ private:
 	std::shared_ptr<nanogui::Label> mPitchLabel;
 	std::shared_ptr<nanogui::Label> mRollLabel;
 
-	std::shared_ptr<nanogui::Widget> mTranslatePanel;
-	std::shared_ptr<nanogui::Widget> mRotatePanel;
-	std::shared_ptr<nanogui::Widget> mScalePanel;
+	nanogui::Widget& mTranslatePanel;
+	nanogui::Widget& mRotatePanel;
+	nanogui::Widget& mScalePanel;
 
 
     std::optional<std::reference_wrapper<Actor>> mActiveActor;

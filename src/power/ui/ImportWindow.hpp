@@ -27,7 +27,7 @@ class RenderPass;
 
 class ImportWindow : public nanogui::Window {
 public:
-	ImportWindow(std::shared_ptr<nanogui::Screen> screen, std::shared_ptr<ResourcesPanel> resourcesPanel, std::shared_ptr<nanogui::RenderPass> renderpass, ShaderManager& shaderManager);
+	ImportWindow(nanogui::Screen& screen, std::shared_ptr<ResourcesPanel> resourcesPanel, std::shared_ptr<nanogui::RenderPass> renderpass, ShaderManager& shaderManager);
 	
 	void Initialize();
 	
@@ -54,7 +54,7 @@ private:
 	
 	std::shared_ptr<nanogui::Button> mCloseButton;
 	std::shared_ptr<nanogui::Button> mImportButton;
-	std::shared_ptr<nanogui::Widget> mCheckboxPanel;
+	nanogui::Widget& mCheckboxPanel;
 
 	std::shared_ptr<nanogui::RenderPass> mRenderPass;
 	

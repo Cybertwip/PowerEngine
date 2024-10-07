@@ -14,7 +14,7 @@
 
 static std::unique_ptr<DirectoryNode> rootNode = DirectoryNode::create(std::filesystem::current_path().string());
 
-StatusBarPanel::StatusBarPanel(std::shared_ptr<nanogui::Widget> parent, std::shared_ptr<IActorVisualManager>  actorVisualManager, std::shared_ptr<SceneTimeBar> sceneTimeBar,  MeshActorLoader& meshActorLoader, ShaderManager& shaderManager, DeepMotionApiClient& deepMotionApiClient, UiManager& uiManager, std::function<void(std::function<void(int, int)>)> applicationClickRegistrator) : Panel(parent, ""),
+StatusBarPanel::StatusBarPanel(nanogui::Widget& parent, std::shared_ptr<IActorVisualManager>  actorVisualManager, std::shared_ptr<SceneTimeBar> sceneTimeBar,  MeshActorLoader& meshActorLoader, ShaderManager& shaderManager, DeepMotionApiClient& deepMotionApiClient, UiManager& uiManager, std::function<void(std::function<void(int, int)>)> applicationClickRegistrator) : Panel(parent, ""),
 mSceneTimeBar(sceneTimeBar),
 mActorVisualManager(actorVisualManager),
 mMeshActorLoader(meshActorLoader),
@@ -22,15 +22,15 @@ mShaderManager(shaderManager),
 mDeepMotionApiClient(deepMotionApiClient),
 mUiManager(uiManager),
 mApplicationClickRegistrator(applicationClickRegistrator) {
-	set_layout(std::make_shared<nanogui::GroupLayout>());
+	set_layout(std::make_unique<nanogui::GroupLayout>());
 }
 
 void StatusBarPanel::initialize() {
 	Panel::initialize();
 	
 	// Status bar setup
-	mStatusBar = std::make_shared<nanogui::Widget>(shared_from_this());
-	mStatusBar->set_layout(std::make_shared<nanogui::BoxLayout>(nanogui::Orientation::Horizontal,
+	mStatusBar = std::make_shared<nanogui::Widget>(*this);
+	mStatusBar->set_layout(std::make_unique<nanogui::BoxLayout>(nanogui::Orientation::Horizontal,
 																nanogui::Alignment::Minimum, 0, 0));
 	
 	// Button to toggle the resources panel

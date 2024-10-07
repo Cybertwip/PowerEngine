@@ -11,10 +11,10 @@
 #include "actors/Actor.hpp"
 #include "components/TransformComponent.hpp"
 
-TransformPanel::TransformPanel(std::shared_ptr<nanogui::Widget> parent)
+TransformPanel::TransformPanel(nanogui::Widget& parent)
 : Panel(parent, "Transform"), mActiveActor(std::nullopt), mTransformRegistrationId(-1) {
 	set_position(nanogui::Vector2i(0, 0));
-	set_layout(std::make_shared<nanogui::GroupLayout>());
+	set_layout(std::make_unique<nanogui::GroupLayout>());
 }
 
 void TransformPanel::initialize() {
@@ -28,9 +28,9 @@ void TransformPanel::initialize() {
 	};
 	
 	// Translation section
-	mTranslationLabel = std::make_shared<nanogui::Label>(shared_from_this(), "Translation", "sans-bold");
+	mTranslationLabel = std::make_shared<nanogui::Label>(*this, "Translation", "sans-bold");
 	
-	mTranslatePanel = std::make_shared<nanogui::Widget>(shared_from_this());
+	mTranslatePanel = std::make_shared<nanogui::Widget>(*this);
 	
 	auto translateLayout = std::make_shared<nanogui::GridLayout>(nanogui::Orientation::Vertical, 2,
 																 nanogui::Alignment::Middle, 0, 0);
@@ -73,9 +73,9 @@ void TransformPanel::initialize() {
 	mZTranslate->set_callback(gatherValuesCallback);
 	
 	// Rotation section
-	mRotationLabel = std::make_shared<nanogui::Label>(shared_from_this(), "Rotation", "sans-bold");
+	mRotationLabel = std::make_shared<nanogui::Label>(*this, "Rotation", "sans-bold");
 	
-	mRotatePanel = std::make_shared<nanogui::Widget>(shared_from_this());
+	mRotatePanel = std::make_shared<nanogui::Widget>(*this);
 	
 	auto rotateLayout = std::make_shared<nanogui::GridLayout>(nanogui::Orientation::Vertical, 2,
 															  nanogui::Alignment::Middle, 0, 0);
@@ -117,9 +117,9 @@ void TransformPanel::initialize() {
 	mRollRotate->set_callback(gatherValuesCallback);
 	
 	// Scale section
-	mScaleLabel = std::make_shared<nanogui::Label>(shared_from_this(), "Scale", "sans-bold");
+	mScaleLabel = std::make_shared<nanogui::Label>(*this, "Scale", "sans-bold");
 	
-	mScalePanel = std::make_shared<nanogui::Widget>(shared_from_this());
+	mScalePanel = std::make_shared<nanogui::Widget>(*this);
 	auto scaleLayout = std::make_shared<nanogui::GridLayout>(nanogui::Orientation::Vertical, 2,
 															 nanogui::Alignment::Middle, 0, 0);
 	scaleLayout->set_col_alignment(nanogui::Alignment::Fill);

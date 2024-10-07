@@ -34,10 +34,10 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/quaternion.hpp>
 
-AnimationPanel::AnimationPanel(std::shared_ptr<nanogui::Widget> parent)
+AnimationPanel::AnimationPanel(nanogui::Widget& parent)
 : Panel(parent, "Animation"), mActiveActor(std::nullopt), mCurrentTime(0) {
 	set_position(nanogui::Vector2i(0, 0));
-	set_layout(std::make_shared<nanogui::BoxLayout>(nanogui::Orientation::Vertical, nanogui::Alignment::Fill, 10, 10));
+	set_layout(std::make_unique<nanogui::BoxLayout>(nanogui::Orientation::Vertical, nanogui::Alignment::Fill, 10, 10));
 }
 
 AnimationPanel::~AnimationPanel() {
@@ -51,15 +51,15 @@ void AnimationPanel::initialize() {
 	auto playbackLayout = std::make_shared<nanogui::GridLayout>(nanogui::Orientation::Horizontal, 2,
 																nanogui::Alignment::Middle, 0, 0);
 	
-	mPlaybackPanel = std::make_shared<Widget>(shared_from_this());
+	mPlaybackPanel = std::make_shared<Widget>(*this);
 	
 	
 	playbackLayout->set_row_alignment(nanogui::Alignment::Fill);
 	
 	mPlaybackPanel->set_layout(playbackLayout);
 	
-	mCanvasPanel = std::make_shared<Widget>(shared_from_this());
-	mCanvasPanel->set_layout(std::make_shared<nanogui::BoxLayout>(nanogui::Orientation::Vertical, nanogui::Alignment::Middle, 0, 0));
+	mCanvasPanel = std::make_shared<Widget>(*this);
+	mCanvasPanel->set_layout(std::make_unique<nanogui::BoxLayout>(nanogui::Orientation::Vertical, nanogui::Alignment::Middle, 0, 0));
 	
 	mReversePlayButton = std::make_shared<nanogui::ToolButton>(mPlaybackPanel, FA_BACKWARD);
 	mReversePlayButton->set_tooltip("Reverse");

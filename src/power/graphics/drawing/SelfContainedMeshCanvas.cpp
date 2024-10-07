@@ -30,7 +30,7 @@ SelfContainedMeshCanvas::SelfContainedMeshCanvas(Widget& parent)
 
 void SelfContainedMeshCanvas::initialize() {
 	nanogui::Canvas::initialize();
-	mShaderManager = ShaderManager(std::dynamic_pointer_cast<nanogui::Canvas>(shared_from_this()));
+	mShaderManager = ShaderManager(std::dynamic_pointer_cast<nanogui::Canvas>(*this));
 	
 	mSkinnedMeshPreviewShader = ShaderWrapper(mShaderManager->load_shader("skinned_mesh_preview",
 														   "internal/shaders/metal/preview_diffuse_skinned_vs.metal",
@@ -176,11 +176,11 @@ void SelfContainedMeshCanvas::draw_contents() {
 		
 		camera.update_view();
 		
-		render_pass()->clear_color(0, nanogui::Color(0.0f, 0.0f, 0.0f, 1.0f));
+		render_pass().clear_color(0, nanogui::Color(0.0f, 0.0f, 0.0f, 1.0f));
 		
-		render_pass()->clear_depth(1.0f);
+		render_pass().clear_depth(1.0f);
 		
-		render_pass()->set_depth_test(nanogui::RenderPass::DepthTest::Less, true);
+		render_pass().set_depth_test(nanogui::RenderPass::DepthTest::Less, true);
 		
 		draw_content(camera.get_view(),
 					 camera.get_projection());

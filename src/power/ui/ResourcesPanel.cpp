@@ -110,7 +110,7 @@ const DirectoryNode* FindNodeByPath(const DirectoryNode& currentNode, const std:
 }
 
 
-ResourcesPanel::ResourcesPanel(std::shared_ptr<nanogui::Widget> parent, DirectoryNode& root_directory_node, std::shared_ptr<IActorVisualManager> actorVisualManager, std::shared_ptr<SceneTimeBar> sceneTimeBar,  MeshActorLoader& meshActorLoader, ShaderManager& shaderManager, DeepMotionApiClient& deepMotionApiClient, UiManager& uiManager)
+ResourcesPanel::ResourcesPanel(nanogui::Widget& parent, DirectoryNode& root_directory_node, std::shared_ptr<IActorVisualManager> actorVisualManager, std::shared_ptr<SceneTimeBar> sceneTimeBar,  MeshActorLoader& meshActorLoader, ShaderManager& shaderManager, DeepMotionApiClient& deepMotionApiClient, UiManager& uiManager)
 : Panel(parent, "Resources"),
 mDummyAnimationTimeProvider(60 * 30),
 mRootDirectoryNode(root_directory_node),
@@ -140,14 +140,14 @@ void ResourcesPanel::initialize() {
 	mSelectedButtonColor = mNormalButtonColor + nanogui::Color(0.25f, 0.25f, 0.32f, 1.0f);
 	
 	// Set the layout
-	set_layout(std::make_shared<nanogui::BoxLayout>(nanogui::Orientation::Vertical, nanogui::Alignment::Fill, 0, 10));
+	set_layout(std::make_unique<nanogui::BoxLayout>(nanogui::Orientation::Vertical, nanogui::Alignment::Fill, 0, 10));
 	
 	// Create the toolbar at the top
-	mToolbar = std::make_shared<nanogui::Widget>(shared_from_this());
-	mToolbar->set_layout(std::make_shared<nanogui::BoxLayout>(
+	mToolbar = std::make_shared<nanogui::Widget>(*this);
+	mToolbar->set_layout(std::make_unique<nanogui::BoxLayout>(
 															  nanogui::Orientation::Horizontal, nanogui::Alignment::Middle, 10, 10));
 	
-	mPromptWindow = std::make_shared<PromptWindow>(screen(), std::dynamic_pointer_cast<ResourcesPanel>(shared_from_this()), mDeepMotionApiClient, mShaderManager.render_pass(), mShaderManager);
+	mPromptWindow = std::make_shared<PromptWindow>(screen(), std::dynamic_pointer_cast<ResourcesPanel>(*this), mDeepMotionApiClient, mShaderManager.render_pass(), mShaderManager);
 	
 	mMeshPicker = std::make_shared<MeshPicker>(screen(), mRootDirectoryNode, [this](const std::string& modelPath){
 		mMeshPicker->set_visible(false);
@@ -169,7 +169,7 @@ void ResourcesPanel::initialize() {
 	mDeepMotionSettings->set_visible(false);
 	mDeepMotionSettings->set_modal(false);
 	
-	mImportWindow = std::make_shared<ImportWindow>(screen(), std::dynamic_pointer_cast<ResourcesPanel>(shared_from_this()), mShaderManager.render_pass(), mShaderManager);
+	mImportWindow = std::make_shared<ImportWindow>(screen(), std::dynamic_pointer_cast<ResourcesPanel>(*this), mShaderManager.render_pass(), mShaderManager);
 	
 	mImportWindow->set_visible(false);
 	mImportWindow->set_modal(false);
@@ -236,7 +236,7 @@ void ResourcesPanel::initialize() {
 	});
 	
 	// Create the file view below the toolbar
-	mFileView = std::make_shared<nanogui::Widget>(shared_from_this());
+	mFileView = std::make_shared<nanogui::Widget>(*this);
 	auto gridLayout = std::shared_ptr<nanogui::AdvancedGridLayout>(new nanogui::AdvancedGridLayout(
 																								   /* columns */ {144, 144, 144, 144, 144, 144, 144, 144}, // Initial column widths (can be adjusted)
 																								   /* rows */ {},                // Start with no predefined rows
@@ -452,7 +452,7 @@ void ResourcesPanel::refresh_file_view() {
 							
 							std::vector<std::string> path_vector = { path };
 							
-							screen()->drop_event(shared_from_this(), path_vector);
+							screen()->drop_event(*this, path_vector);
 						});
 					}
 					// Handle selection

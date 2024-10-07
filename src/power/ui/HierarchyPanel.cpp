@@ -15,16 +15,16 @@
 #include "components/MetadataComponent.hpp"
 #include "components/UiComponent.hpp"
 
-HierarchyPanel::HierarchyPanel(std::shared_ptr<ScenePanel> scenePanel, std::shared_ptr<TransformPanel> transformPanel, std::shared_ptr<AnimationPanel> animationPanel, ActorManager& actorManager, std::shared_ptr<nanogui::Widget> parent) : Panel(parent, "Scene"), mTransformPanel(transformPanel), mAnimationPanel(animationPanel), mActorManager(actorManager) {
+HierarchyPanel::HierarchyPanel(std::shared_ptr<ScenePanel> scenePanel, std::shared_ptr<TransformPanel> transformPanel, std::shared_ptr<AnimationPanel> animationPanel, ActorManager& actorManager, nanogui::Widget& parent) : Panel(parent, "Scene"), mTransformPanel(transformPanel), mAnimationPanel(animationPanel), mActorManager(actorManager) {
 	set_position(nanogui::Vector2i(0, 0));
-	set_layout(std::make_shared<nanogui::GroupLayout>());
+	set_layout(std::make_unique<nanogui::GroupLayout>());
 	
 }
 
 void HierarchyPanel::initialize() {
 	Panel::initialize();
 	
-	mScrollPanel = std::make_shared<nanogui::VScrollPanel>(shared_from_this());
+	mScrollPanel = std::make_shared<nanogui::VScrollPanel>(*this);
 	
 	mScrollPanel->set_fixed_size({0, 12 * 25});
 	

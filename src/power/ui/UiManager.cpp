@@ -95,8 +95,8 @@ UiManager::UiManager(std::shared_ptr<IActorSelectedRegistry> registry,
 					 ShaderManager& shaderManager,
 					 std::shared_ptr<ScenePanel> scenePanel,
 					 std::shared_ptr<Canvas> canvas,
-					 std::shared_ptr<nanogui::Widget> toolbox,
-					 std::shared_ptr<nanogui::Widget> statusBar,
+					 nanogui::Widget& toolbox,
+					 nanogui::Widget& statusBar,
 					 std::shared_ptr<AnimationPanel> animationPanel,
 					 std::shared_ptr<SceneTimeBar> sceneTimeBar,
 					 CameraManager& cameraManager,
@@ -129,7 +129,7 @@ UiManager::UiManager(std::shared_ptr<IActorSelectedRegistry> registry,
 	
 	// Lambda to read from framebuffer
 	auto readFromFramebuffer = [&canvas](int width, int height, int x, int y) -> int {
-		auto viewport = canvas->render_pass()->viewport();
+		auto viewport = canvas->render_pass().viewport();
 		float scaleX = viewport.second[0] / static_cast<float>(width);
 		float scaleY = viewport.second[1] / static_cast<float>(height);
 		
@@ -148,14 +148,14 @@ UiManager::UiManager(std::shared_ptr<IActorSelectedRegistry> registry,
 		std::vector<int> pixels(image_width * image_height, 0);
 		
 #if defined(NANOGUI_USE_OPENGL) || defined(NANOGUI_USE_GLES)
-		glBindFramebuffer(GL_READ_FRAMEBUFFER, canvas.render_pass()->framebuffer_handle());
+		glBindFramebuffer(GL_READ_FRAMEBUFFER, canvas.render_pass().framebuffer_handle());
 		glReadBuffer(GL_COLOR_ATTACHMENT1);
 		glReadPixels(adjusted_x, adjusted_y, image_width, image_height, GL_RED_INTEGER, GL_INT, pixels.data());
 		glReadBuffer(GL_COLOR_ATTACHMENT0);
 		glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
 #elif defined(NANOGUI_USE_METAL)
-		auto attachment_texture = std::dynamic_pointer_cast<nanogui::Texture>(canvas->render_pass()->targets()[3]);
-		MetalHelper::readPixelsFromMetal(canvas->screen()->nswin(), attachment_texture->texture_handle(),
+		auto* attachment_texture = dynamic_cast<nanogui::Texture*>(&canvas->render_pass().targets()[3]->get());
+		MetalHelper::readPixelsFromMetal(canvas->screen().nswin(), attachment_texture->texture_handle(),
 										 adjusted_x, adjusted_y, image_width, image_height, pixels);
 #endif
 		// Find the first non-zero pixel value
@@ -218,7 +218,7 @@ UiManager::UiManager(std::shared_ptr<IActorSelectedRegistry> registry,
 			glm::mat4 viewMatrix = TransformComponent::nanogui_to_glm(cameraManager.get_view());
 			glm::mat4 projMatrix = TransformComponent::nanogui_to_glm(cameraManager.get_projection());
 			
-			auto viewport = canvas->render_pass()->viewport();
+			auto viewport = canvas->render_pass().viewport();
 			auto glmViewport = glm::vec4(viewport.first[0], viewport.first[1], viewport.second[0], viewport.second[1]);
 			
 			auto viewInverse = glm::inverse(viewMatrix);
@@ -229,11 +229,11 @@ UiManager::UiManager(std::shared_ptr<IActorSelectedRegistry> registry,
 			float scaleY = viewport.second[1] / float(height);
 			
 			
-			int adjusted_y = height - y + canvas->parent()->position().y();
-			int adjusted_x = x + canvas->parent()->position().x();
+			int adjusted_y = height - y + canvas->parent().position().y();
+			int adjusted_x = x + canvas->parent().position().x();
 			
-			int adjusted_dx = x + canvas->parent()->position().x() + dx;
-			int adjusted_dy = height - y + canvas->parent()->position().y() + dy;
+			int adjusted_dx = x + canvas->parent().position().x() + dx;
+			int adjusted_dy = height - y + canvas->parent().position().y() + dy;
 			
 			// Scale x and y accordingly
 			adjusted_x *= scaleX;
@@ -268,7 +268,7 @@ UiManager::UiManager(std::shared_ptr<IActorSelectedRegistry> registry,
 	
 	mStatusBarPanel->set_fixed_width(statusBar->fixed_height());
 	mStatusBarPanel->set_fixed_height(statusBar->fixed_height());
-	mStatusBarPanel->set_layout(std::make_shared<nanogui::BoxLayout>(nanogui::Orientation::Horizontal,
+	mStatusBarPanel->set_layout(std::make_unique<nanogui::BoxLayout>(nanogui::Orientation::Horizontal,
 													   nanogui::Alignment::Minimum, 4, 2));
 	
 	// Initialize selection color
@@ -335,16 +335,16 @@ void UiManager::draw() {
 	if (mIsMovieExporting) {
 		mSceneTimeBar->update();
 		// Begin the first render pass for actors
-		mCanvas->render_pass()->clear_color(0, mCanvas->background_color());
-		mCanvas->render_pass()->clear_color(1, nanogui::Color(0.0f, 0.0f, 0.0f, 0.0f));
-		mCanvas->render_pass()->clear_depth(1.0f);
+		mCanvas->render_pass().clear_color(0, mCanvas->background_color());
+		mCanvas->render_pass().clear_color(1, nanogui::Color(0.0f, 0.0f, 0.0f, 0.0f));
+		mCanvas->render_pass().clear_depth(1.0f);
 		
 		// Draw all actors
 		mActorManager.draw();
 		
 		// Depth testing for mesh shaders
-		mCanvas->render_pass()->push_depth_test_state(nanogui::RenderPass::DepthTest::Less, true, mShaderManager.identifier("mesh"));
-		mCanvas->render_pass()->push_depth_test_state(nanogui::RenderPass::DepthTest::Less, true, mShaderManager.identifier("skinned_mesh"));
+		mCanvas->render_pass().push_depth_test_state(nanogui::RenderPass::DepthTest::Less, true, mShaderManager.identifier("mesh"));
+		mCanvas->render_pass().push_depth_test_state(nanogui::RenderPass::DepthTest::Less, true, mShaderManager.identifier("skinned_mesh"));
 		
 		auto& batch_unit = mMeshActorLoader.get_batch_unit();
 		mActorManager.visit(batch_unit.mMeshBatch);
@@ -417,9 +417,9 @@ void UiManager::draw() {
 		mAnimationPanel->update_with(mSceneTimeBar->current_time());
 		
 		// Begin the first render pass for actors
-		mCanvas->render_pass()->clear_color(0, mCanvas->background_color());
-		mCanvas->render_pass()->clear_color(1, nanogui::Color(0.0f, 0.0f, 0.0f, 0.0f));
-		mCanvas->render_pass()->clear_depth(1.0f);
+		mCanvas->render_pass().clear_color(0, mCanvas->background_color());
+		mCanvas->render_pass().clear_color(1, nanogui::Color(0.0f, 0.0f, 0.0f, 0.0f));
+		mCanvas->render_pass().clear_depth(1.0f);
 		
 		// Draw all actors
 		mActorManager.draw();
@@ -430,22 +430,22 @@ void UiManager::draw() {
 		}
 		
 		// Depth testing for gizmos
-		mCanvas->render_pass()->push_depth_test_state(nanogui::RenderPass::DepthTest::Always, true, mShaderManager.identifier("gizmo"));
-		mCanvas->render_pass()->push_depth_test_state(nanogui::RenderPass::DepthTest::Always, true, mShaderManager.identifier("gizmo"));
-		mCanvas->render_pass()->push_depth_test_state(nanogui::RenderPass::DepthTest::Always, true, mShaderManager.identifier("gizmo"));
+		mCanvas->render_pass().push_depth_test_state(nanogui::RenderPass::DepthTest::Always, true, mShaderManager.identifier("gizmo"));
+		mCanvas->render_pass().push_depth_test_state(nanogui::RenderPass::DepthTest::Always, true, mShaderManager.identifier("gizmo"));
+		mCanvas->render_pass().push_depth_test_state(nanogui::RenderPass::DepthTest::Always, true, mShaderManager.identifier("gizmo"));
 		
 		// Draw gizmos
 		mGizmoManager.draw();
 		
 		// Depth testing for mesh shaders
-		mCanvas->render_pass()->push_depth_test_state(nanogui::RenderPass::DepthTest::Less, true, mShaderManager.identifier("mesh"));
-		mCanvas->render_pass()->push_depth_test_state(nanogui::RenderPass::DepthTest::Less, true, mShaderManager.identifier("skinned_mesh"));
+		mCanvas->render_pass().push_depth_test_state(nanogui::RenderPass::DepthTest::Less, true, mShaderManager.identifier("mesh"));
+		mCanvas->render_pass().push_depth_test_state(nanogui::RenderPass::DepthTest::Less, true, mShaderManager.identifier("skinned_mesh"));
 		
 		auto& batch_unit = mMeshActorLoader.get_batch_unit();
 		mActorManager.visit(batch_unit.mMeshBatch);
 		mActorManager.visit(batch_unit.mSkinnedMeshBatch);
 		
-		mCanvas->render_pass()->set_depth_test(nanogui::RenderPass::DepthTest::Less, true);
+		mCanvas->render_pass().set_depth_test(nanogui::RenderPass::DepthTest::Less, true);
 		mActorManager.visit(*this);
 	}
 }

@@ -5,7 +5,7 @@
 class PromptBox : public nanogui::Window {
 public:
 	// Constructor initializes the chatbox and sets it up with a Nanogui screen
-	PromptBox(std::shared_ptr<nanogui::Widget> scene);
+	PromptBox(nanogui::Widget& scene);
 		
 private:
 	void initialize() override;

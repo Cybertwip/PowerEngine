@@ -57,7 +57,7 @@ mGlobalAnimationTimeProvider(60 * 30)
 }
 
 void Application::initialize() {	
-	mUiCommon = std::make_shared<UiCommon>(shared_from_this(), *mActorManager, mGlobalAnimationTimeProvider);
+	mUiCommon = std::make_shared<UiCommon>(*this, *mActorManager, mGlobalAnimationTimeProvider);
 	
 	mRenderCommon = std::make_shared<RenderCommon>(mUiCommon->scene_panel(), *mEntityRegistry, *mActorManager, *mCameraManager);
 	
@@ -100,7 +100,7 @@ void Application::initialize() {
 	
 	theme()->m_window_drop_shadow_size = 0;
 	
-	set_layout(std::make_shared<nanogui::GroupLayout>(0, 0, 0, 0));
+	set_layout(std::make_unique<nanogui::GroupLayout>(0, 0, 0, 0));
 	
 	std::vector<std::reference_wrapper<Actor>> actors;
 	
