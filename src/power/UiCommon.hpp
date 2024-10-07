@@ -53,7 +53,10 @@ public:
 	}
 	    
 private:
-    std::shared_ptr<ScenePanel> mScenePanel;
+	std::shared_ptr<nanogui::Window> mMainWrapper;
+	std::shared_ptr<nanogui::Window> mSceneWrapper;
+	std::shared_ptr<nanogui::Window> mLeftWrapper;
+	std::shared_ptr<ScenePanel> mScenePanel;
 	std::shared_ptr<TransformPanel> mTransformPanel;
 	std::shared_ptr<AnimationPanel> mAnimationPanel;
 	std::shared_ptr<HierarchyPanel> mHierarchyPanel;

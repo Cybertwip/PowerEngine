@@ -68,9 +68,9 @@ void Application::initialize() {
 	
 	mBatchUnit = std::make_unique<BatchUnit>(*mMeshBatch, *mSkinnedMeshBatch);
 	
-	mMeshShader = std::make_unique<ShaderWrapper>(*mRenderCommon->shader_manager().get_shader("mesh"));
+	mMeshShader = std::make_unique<ShaderWrapper>(mRenderCommon->shader_manager().get_shader("mesh"));
 	
-	mSkinnedShader = std::make_unique<ShaderWrapper>(*mRenderCommon->shader_manager().get_shader("skinned_mesh"));
+	mSkinnedShader = std::make_unique<ShaderWrapper>(mRenderCommon->shader_manager().get_shader("skinned_mesh"));
 	
 	mMeshActorLoader = std::make_unique<MeshActorLoader>(*mActorManager, mRenderCommon->shader_manager(), *mBatchUnit);
 	

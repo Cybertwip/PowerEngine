@@ -20,7 +20,7 @@
 #include "components/DrawableComponent.hpp"
 #include "components/TransformComponent.hpp"
 
-GizmoManager::GizmoManager(nanogui::Widget& parent, ShaderManager& shaderManager, ActorManager& actorManager, MeshActorLoader& meshActorLoader)
+GizmoManager::GizmoManager(std::shared_ptr<nanogui::Widget> parent, ShaderManager& shaderManager, ActorManager& actorManager, MeshActorLoader& meshActorLoader)
 : mDummyAnimationTimeProvider(60 * 30), mShaderManager(shaderManager), mActorManager(actorManager),
 mMeshActorLoader(meshActorLoader),
 mMeshShader(std::make_unique<ShaderWrapper>(*shaderManager.get_shader("gizmo"))),
@@ -31,19 +31,19 @@ mScaleGizmo(mMeshActorLoader.create_actor("internal/models/Gizmo/Scale.fbx", mDu
 {
 	
 	// Translation Button
-	mTranslationButton = new nanogui::Button(&parent, "", FA_ARROWS_ALT);
+	mTranslationButton = std::make_shared<nanogui::Button>(parent, "", FA_ARROWS_ALT);
 	mTranslationButton->set_callback([this]() {
 		set_mode(GizmoMode::Translation);
 	});
 	
 	// Rotation Button
-	mRotationButton = new nanogui::Button(&parent, "", FA_REDO);
+	mRotationButton = std::make_shared<nanogui::Button>(parent, "", FA_REDO);
 	mRotationButton->set_callback([this]() {
 		set_mode(GizmoMode::Rotation);
 	});
 	
 	// Scale Button
-	mScaleButton = new nanogui::Button(&parent, "", FA_EXPAND_ARROWS_ALT);
+	mScaleButton = std::make_shared<nanogui::Button>(parent, "", FA_EXPAND_ARROWS_ALT);
 	mScaleButton->set_callback([this]() {
 		set_mode(GizmoMode::Scale);
 	});

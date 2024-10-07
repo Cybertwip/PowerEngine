@@ -10,7 +10,7 @@
 CameraActorLoader::CameraActorLoader(ActorManager& actorManager, CameraManager& cameraManager, ShaderManager& shaderManager)
 : mActorManager(actorManager)
 , mCameraManager(cameraManager)
-, mMeshShaderWrapper(std::make_unique<ShaderWrapper>(*shaderManager.get_shader("mesh"))) {}
+, mMeshShaderWrapper(std::make_unique<ShaderWrapper>(shaderManager.get_shader("mesh"))) {}
 
 CameraActorLoader::~CameraActorLoader() {
 }

@@ -5,11 +5,11 @@
 class PromptBox : public nanogui::Window {
 public:
 	// Constructor initializes the chatbox and sets it up with a Nanogui screen
-	PromptBox(nanogui::Widget& scene);
+	PromptBox(std::shared_ptr<nanogui::Widget> scene);
 		
 private:	
 	// Text box for inputting new messages
-	nanogui::TextBox* mInputBox;
+	std::shared_ptr<nanogui::TextBox> mInputBox;
 	
 	// Method to handle sending of messages
 	void send_message();

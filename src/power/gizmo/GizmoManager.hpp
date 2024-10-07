@@ -71,9 +71,9 @@ private:
 
 	GizmoAxis mGizmoAxis = GizmoAxis::None;
 	
-	nanogui::Button* mTranslationButton;
-	nanogui::Button* mRotationButton;
-	nanogui::Button* mScaleButton;
+	std::shared_ptr<nanogui::Button> mTranslationButton;
+	std::shared_ptr<nanogui::Button> mRotationButton;
+	std::shared_ptr<nanogui::Button> mScaleButton;
 	
 	std::optional<std::reference_wrapper<Actor>> mActiveGizmo;
 };

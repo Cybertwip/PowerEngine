@@ -14,7 +14,7 @@ class Shader;
 class ShaderWrapper
 {
 public:
-	ShaderWrapper(nanogui::Shader& shader);
+	ShaderWrapper(std::shared_ptr<nanogui::Shader> shader);
 	~ShaderWrapper();
 	void persist_buffer(const std::string &name, nanogui::VariableType type,
 					std::initializer_list<size_t> shape, const void *data, int index = -1);
@@ -24,10 +24,10 @@ public:
 	
 	template <typename Array> void set_uniform(const std::string &name,
 															  const Array &value) {
-		mShader.set_uniform(name, value);
+		mShader->set_uniform(name, value);
 	}
 
-	void set_texture(const std::string &name, nanogui::Texture& texture, int index = 0);
+	void set_texture(const std::string &name, std::shared_ptr<nanogui::Texture> texture, int index = 0);
 	
 	size_t get_buffer_size(const std::string& name);
 	
@@ -39,12 +39,12 @@ public:
 					size_t offset, size_t count,
 					bool indexed = false);
 	
-	nanogui::RenderPass& render_pass() const {
-		return *mShader.render_pass();
+	std::shared_ptr<nanogui::RenderPass> render_pass() const {
+		return mShader->render_pass();
 	}
 
 protected:
-	nanogui::Shader& mShader;
+	std::shared_ptr<nanogui::Shader> mShader;
 	
 private:
 	MetadataComponent mMetadata;

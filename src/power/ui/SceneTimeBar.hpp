@@ -39,7 +39,7 @@ class SceneTimeBar : public nanogui::Widget, public IActorSelectedCallback {
 	};
 	
 public:
-	SceneTimeBar(std::shared_ptr<Widget> parent, ActorManager& actorManager, AnimationTimeProvider& animationTimeProvider, IActorSelectedRegistry& registry, int width, int height);
+	SceneTimeBar(std::shared_ptr<Widget> parent, ActorManager& actorManager, AnimationTimeProvider& animationTimeProvider, std::shared_ptr<IActorSelectedRegistry> registry, int width, int height);
 	~SceneTimeBar();
 	
 	// Override OnActorSelected from IActorSelectedCallback
@@ -83,14 +83,20 @@ private:
 	// Member variables
 	ActorManager& mActorManager;
 	AnimationTimeProvider& mAnimationTimeProvider;
-	IActorSelectedRegistry& mRegistry;
-	nanogui::TextBox* mTimeLabel;
-	nanogui::Slider* mTimelineSlider;
-	nanogui::Button* mRecordBtn;
-	nanogui::ToolButton* mPlayPauseBtn;
-	nanogui::Button* mKeyBtn;
-	nanogui::Button* mPrevKeyBtn;
-	nanogui::Button* mNextKeyBtn;
+	std::shared_ptr<IActorSelectedRegistry> mRegistry;
+	std::shared_ptr<nanogui::TextBox> mTimeLabel;
+	std::shared_ptr<nanogui::Slider> mTimelineSlider;
+	std::shared_ptr<nanogui::Button> mRecordBtn;
+	std::shared_ptr<nanogui::ToolButton> mPlayPauseBtn;
+	std::shared_ptr<nanogui::Button> mKeyBtn;
+	std::shared_ptr<nanogui::Button> mPrevKeyBtn;
+	std::shared_ptr<nanogui::Button> mNextKeyBtn;
+	std::shared_ptr<nanogui::Widget> mButtonWrapper;
+	
+	std::shared_ptr<nanogui::Widget> mKeyBtnWrapper;
+	
+	std::shared_ptr<nanogui::Widget> mButtonWrapperWrapper;
+	
 	nanogui::Color mBackgroundColor;
 	nanogui::Color mNormalButtonColor;
 	

@@ -1,12 +1,12 @@
 #include "PromptBox.hpp"
 
-PromptBox::PromptBox(nanogui::Widget& parent)
-: nanogui::Window(&parent, "Grok Prompt") {
+PromptBox::PromptBox(std::shared_ptr<nanogui::Widget> parent)
+: nanogui::Window(parent, "Grok Prompt") {
 	// Create a vertical layout for the chatbox
-	set_layout(new nanogui::GroupLayout());
+	set_layout(std::make_shared<nanogui::GroupLayout>());
 	
 	// Create an input box for typing new messages
-	mInputBox = new nanogui::TextBox(this, "");
+	mInputBox = std::make_shared<nanogui::TextBox>(shared_from_this(), "");
 	mInputBox->set_editable(true);
 	mInputBox->set_placeholder("Type your prompt...");
 	mInputBox->set_callback([this](const std::string& text) {
