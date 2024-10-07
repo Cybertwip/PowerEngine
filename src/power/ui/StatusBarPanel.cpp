@@ -15,22 +15,22 @@
 static std::unique_ptr<DirectoryNode> rootNode = DirectoryNode::create(std::filesystem::current_path().string());
 
 StatusBarPanel::StatusBarPanel(std::shared_ptr<nanogui::Widget> parent, std::shared_ptr<IActorVisualManager>  actorVisualManager, std::shared_ptr<SceneTimeBar> sceneTimeBar,  MeshActorLoader& meshActorLoader, ShaderManager& shaderManager, DeepMotionApiClient& deepMotionApiClient, UiManager& uiManager, std::function<void(std::function<void(int, int)>)> applicationClickRegistrator) : Panel(parent, ""), mSceneTimeBar(sceneTimeBar) {
-	set_layout(new nanogui::GroupLayout());
+	set_layout(std::make_shared<nanogui::GroupLayout>());
 	
 	// Status bar setup
-	nanogui::std::shared_ptr<Widget> statusBar = new nanogui::Widget(this);
-	statusBar->set_layout(new nanogui::BoxLayout(nanogui::Orientation::Horizontal,
+	mStatusBar = std::make_shared<nanogui::Widget>(shared_from_this());
+	mStatusBar->set_layout(std::make_shared<nanogui::BoxLayout>(nanogui::Orientation::Horizontal,
 												 nanogui::Alignment::Minimum, 0, 0));
 	
 	// Button to toggle the resources panel
-	nanogui::ToolButton *resourcesButton = new nanogui::ToolButton(statusBar, FA_FOLDER);
+	mResourcesButton = std::make_shared<nanogui::ToolButton>(mStatusBar, FA_FOLDER);
 
-	resourcesButton->set_tooltip("Toggle Resources Panel");
+	mResourcesButton->set_tooltip("Toggle Resources Panel");
 	
-	resourcesButton->set_enabled(false);
+	mResourcesButton->set_enabled(false);
 	
 	// Resources panel setup
-	mResourcesPanel = new ResourcesPanel(*parent.parent(), *rootNode, actorVisualManager, sceneTimeBar, meshActorLoader, shaderManager, deepMotionApiClient, uiManager);
+	mResourcesPanel = std::make_shared<ResourcesPanel>(*parent.parent(), *rootNode, actorVisualManager, sceneTimeBar, meshActorLoader, shaderManager, deepMotionApiClient, uiManager);
 	mResourcesPanel->set_visible(true);
 	// Add widgets to resourcesPanel here
 	

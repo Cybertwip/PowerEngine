@@ -119,8 +119,8 @@ UiManager::UiManager(std::shared_ptr<IActorSelectedRegistry> registry,
 , mFramePadding(4) // Initialize with 4 digits (0000)
 {
 	// Register callbacks
-	mRegistry.RegisterOnActorSelectedCallback(*this);
-	mRegistry.RegisterOnActorSelectedCallback(mCameraManager);
+	mRegistry->RegisterOnActorSelectedCallback(*this);
+	mRegistry->RegisterOnActorSelectedCallback(mCameraManager);
 	
 	// Register draw callback with Canvas
 	canvas->register_draw_callback([this]() {
@@ -196,7 +196,7 @@ UiManager::UiManager(std::shared_ptr<IActorSelectedRegistry> registry,
 			} else {
 				mActiveActor = std::nullopt;
 				
-				mActorVisualManager.fire_actor_selected_event(mActiveActor);
+				mActorVisualManager->fire_actor_selected_event(mActiveActor);
 				mGizmoManager.select(mActiveActor);
 				mGizmoManager.select(GizmoManager::GizmoAxis(0));
 			}
@@ -274,13 +274,13 @@ UiManager::UiManager(std::shared_ptr<IActorSelectedRegistry> registry,
 	mSelectionColor = glm::normalize(glm::vec4(0.83f, 0.68f, 0.21f, 1.0f)); // A gold-ish color
 	
 	
-	scenePanel.register_motion_callback(GLFW_MOUSE_BUTTON_RIGHT, [this](int width, int height, int x, int y, int dx, int dy, int button, bool down){
+	scenePanel->register_motion_callback(GLFW_MOUSE_BUTTON_RIGHT, [this](int width, int height, int x, int y, int dx, int dy, int button, bool down){
 		if (down) {
 			mCameraManager.rotate_camera(-dx, -dy);
 		}
 	});
 
-	scenePanel.register_motion_callback(GLFW_MOUSE_BUTTON_MIDDLE, [this](int width, int height, int x, int y, int dx, int dy, int button, bool down){
+	scenePanel->register_motion_callback(GLFW_MOUSE_BUTTON_MIDDLE, [this](int width, int height, int x, int y, int dx, int dy, int button, bool down){
 		mCameraManager.pan_camera(dx, dy);
 	});
 	
@@ -294,8 +294,8 @@ UiManager::UiManager(std::shared_ptr<IActorSelectedRegistry> registry,
 // UiManager Destructor
 // ==============================
 UiManager::~UiManager() {
-	mRegistry.UnregisterOnActorSelectedCallback(*this);
-	mRegistry.UnregisterOnActorSelectedCallback(mCameraManager);
+	mRegistry->UnregisterOnActorSelectedCallback(*this);
+	mRegistry->UnregisterOnActorSelectedCallback(mCameraManager);
 }
 
 // ==============================
@@ -335,7 +335,7 @@ void UiManager::draw() {
 	if (mIsMovieExporting) {
 		mSceneTimeBar->update();
 		// Begin the first render pass for actors
-		mCanvas->render_pass()->clear_color(0, mCanvas.background_color());
+		mCanvas->render_pass()->clear_color(0, mCanvas->background_color());
 		mCanvas->render_pass()->clear_color(1, nanogui::Color(0.0f, 0.0f, 0.0f, 0.0f));
 		mCanvas->render_pass()->clear_depth(1.0f);
 		
@@ -414,10 +414,10 @@ void UiManager::draw() {
 		mSceneTimeBar->update();
 		mSceneTimeBar->overlay();
 		
-		mAnimationPanel.update_with(mSceneTimeBar.current_time());
+		mAnimationPanel->update_with(mSceneTimeBar->current_time());
 		
 		// Begin the first render pass for actors
-		mCanvas->render_pass()->clear_color(0, mCanvas.background_color());
+		mCanvas->render_pass()->clear_color(0, mCanvas->background_color());
 		mCanvas->render_pass()->clear_color(1, nanogui::Color(0.0f, 0.0f, 0.0f, 0.0f));
 		mCanvas->render_pass()->clear_depth(1.0f);
 		
@@ -461,13 +461,13 @@ void UiManager::remove_active_actor() {
 	std::async([this]() {
 		if (mActiveActor.has_value()) {
 			mActorVisualManager->remove_actor(mActiveActor->get());
-			mSceneTimeBar.refresh_actors();
+			mSceneTimeBar->refresh_actors();
 		}
 	});
 }
 
 void UiManager::process_events() {
-	mCanvas.process_events();
+	mCanvas->process_events();
 }
 
 std::shared_ptr<StatusBarPanel> UiManager::status_bar_panel() {

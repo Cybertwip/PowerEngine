@@ -98,21 +98,21 @@ mDeepMotionApiClient(deepMotionApiClient)
 													 ));
 		
 	// Status Label
-	status_label_ = new nanogui::Label(status_panel, "", "sans");
-	status_label_->set_fixed_size(nanogui::Vector2i(175, 20));
-	status_label_->set_color(nanogui::Color(255, 255, 255, 255)); // White color
+	mStatusLabel = std::make_shared<nanogui::Label>(mStatusPanel, "", "sans");
+	mStatusLabel->set_fixed_size(nanogui::Vector2i(175, 20));
+	mStatusLabel->set_color(nanogui::Color(255, 255, 255, 255)); // White color
 	
 	// DeepMotion Button with Image
-	mDeepMotionButton = std::make_shared<nanogui::Button>(status_panel, "");
+	mDeepMotionButton = std::make_shared<nanogui::Button>(mStatuSpanel, "");
 	mDeepMotionButton->set_fixed_size(nanogui::Vector2i(48, 48));
 	mDeepMotionButton->set_callback([this]() {
 		UrlOpener::openUrl("https://deepmotion.com/");
 	});
 	
-	mImageView = std::make_shared<nanogui::ImageView>(deep_motion_button);
+	mImageView = std::make_shared<nanogui::ImageView>(mDeepMotionButton);
 	mImageView->set_size(nanogui::Vector2i(48, 48));
 	
-	mImageView->set_fixed_size(imageView->size());
+	mImageView->set_fixed_size(mImageView->size());
 	
 	mImageView->set_image(std::make_shared<nanogui::Texture>("internal/ui/poweredby.png",
 											  nanogui::Texture::InterpolationMode::Bilinear,
@@ -172,8 +172,8 @@ void DeepMotionSettingsWindow::on_sync() {
 	
 	// Validate input
 	if (api_base_url_.empty() || client_id.empty() || client_secret.empty()) {
-		status_label_->set_caption("API Base URL, Client ID, and Secret cannot be empty.");
-		status_label_->set_color(nanogui::Color(255, 0, 0, 255)); // Red color
+		mStatusLabel->set_caption("API Base URL, Client ID, and Secret cannot be empty.");
+		mStatusLabel->set_color(nanogui::Color(255, 0, 0, 255)); // Red color
 		return;
 	}
 	
@@ -182,8 +182,8 @@ void DeepMotionSettingsWindow::on_sync() {
 	// For simplicity, assume 'sync_button' is accessible. If not, consider making it a member variable.
 	
 	// Update status label to indicate authentication is in progress
-	status_label_->set_caption("Status: Authenticating...");
-	status_label_->set_color(nanogui::Color(255, 255, 0, 255)); // Yellow color
+	mStatusLabel->set_caption("Status: Authenticating...");
+	mStatusLabel->set_color(nanogui::Color(255, 255, 0, 255)); // Yellow color
 	
 	// Call the asynchronous authenticate method
 	mDeepMotionApiClient.authenticate_async(api_base_url_, api_base_port, client_id, client_secret,
@@ -192,8 +192,8 @@ void DeepMotionSettingsWindow::on_sync() {
 		nanogui::async([this, success, error_message, api_base_port]() {
 			if (success) {
 				// Update status label to success
-				status_label_->set_caption("Synchronization successful.");
-				status_label_->set_color(nanogui::Color(0, 255, 0, 255)); // Green color
+				mStatusLabel->set_caption("Synchronization successful.");
+				mStatusLabel->set_color(nanogui::Color(0, 255, 0, 255)); // Green color
 				
 				// Save credentials and API Base URL if not already saved
 				if (!data_saved_) {
@@ -214,8 +214,8 @@ void DeepMotionSettingsWindow::on_sync() {
 				
 			} else {
 				// Authentication failed
-				status_label_->set_caption("Invalid credentials or server error.");
-				status_label_->set_color(nanogui::Color(255, 0, 0, 255)); // Red color
+				mStatusLabel->set_caption("Invalid credentials or server error.");
+				mStatusLabel->set_color(nanogui::Color(255, 0, 0, 255)); // Red color
 				data_saved_ = false;
 			}
 		});
@@ -287,7 +287,7 @@ void DeepMotionSettingsWindow::save_to_file(const std::string& filename, const s
 		file.close();
 	} else {
 		// Handle file opening error
-		status_label_->set_caption("Failed to save credentials.");
-		status_label_->set_color(nanogui::Color(255, 0, 0, 255)); // Red color
+		mStatusLabel->set_caption("Failed to save credentials.");
+		mStatusLabel->set_color(nanogui::Color(255, 0, 0, 255)); // Red color
 	}
 }

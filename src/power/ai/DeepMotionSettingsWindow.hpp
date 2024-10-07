@@ -28,10 +28,9 @@ public:
 	
 private:
 	// UI Components
-	nanogui::TextBox* api_base_url_box_;
-	nanogui::TextBox* client_id_box_;
-	nanogui::TextBox* client_secret_box_;
-	nanogui::Label* status_label_;
+	std::shared_ptr<nanogui::TextBox> api_base_url_box_;
+	std::shared_ptr<nanogui::TextBox> client_id_box_;
+	std::shared_ptr<nanogui::TextBox> client_secret_box_;
 			bool data_saved_;
 	
 	/**
@@ -81,4 +80,12 @@ private:
 	std::function<void()> mSuccessCallback;
 	
 	DeepMotionApiClient& mDeepMotionApiClient;
+	
+	std::shared_ptr<nanogui::Button> mSyncButton;
+	std::shared_ptr<nanogui::Button> mDeepMotionButton;
+	std::shared_ptr<nanogui::Label> mApiBaseLabel;
+	std::shared_ptr<nanogui::Label> mClientIdLabel;
+	std::shared_ptr<nanogui::Label> mClientSecretLabel;
+
+	std::shared_ptr<nanogui::Widget> mStatusPanel;
 };

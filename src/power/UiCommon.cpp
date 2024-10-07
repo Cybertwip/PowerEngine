@@ -54,7 +54,7 @@ UiCommon::UiCommon(std::shared_ptr<nanogui::Widget> parent, ActorManager& actorM
 	mStatusBar->set_fixed_width(mLeftWrapper->fixed_width());
 	mStatusBar->set_fixed_height(statusHeight);
 
-    mRightWrapper = new nanogui::Window(mSceneWrapper, "");
+    mRightWrapper = std::make_shared<nanogui::Window>(mSceneWrapper, "");
 	mRightWrapper->set_layout(
         std::make_shared<nanogui::BoxLayout>(nanogui::Orientation::Vertical, nanogui::Alignment::Fill));
 	mRightWrapper->set_fixed_width(rightWidth);
