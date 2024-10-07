@@ -201,20 +201,24 @@ void Widget::remove_child_at(int index) {
 	widget->set_parent(nullptr);
 	widget->dec_ref();
 }
-
 void Widget::shed_children() {
-	
-	for (auto child : m_children) {
+	// Continue removing children until m_children is empty
+	while (!m_children.empty()) {
+		// Get the last child
+		Widget* child = m_children.back();
+		
+		// Remove the child from m_children
+		m_children.pop_back();
+		
+		// Recursively shed the child's children
 		child->shed_children();
 		
-		
-		size_t child_count = m_children.size();
-		m_children.erase(std::remove(m_children.begin(), m_children.end(), child),
-						 m_children.end());
-		if (m_children.size() == child_count)
-			throw std::runtime_error("Widget::remove_child(): widget not found!");
-		if (m_screen)
+		// If the widget is part of a screen, remove it from focus
+		if (m_screen) {
 			m_screen->remove_from_focus(child);
+		}
+		
+		// Detach the child from its parent and decrement its reference count
 		child->set_parent(nullptr);
 		child->dec_ref();
 	}
