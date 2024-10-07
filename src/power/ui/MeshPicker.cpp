@@ -14,9 +14,9 @@
 #include <iostream>
 #include <chrono> // For double-click detection
 
-MeshPicker::MeshPicker(nanogui::Screen& screen, DirectoryNode& root_directory_node,
+MeshPicker::MeshPicker(nanogui::Screen& parent, nanogui::Screen& screen, DirectoryNode& root_directory_node,
 					   std::function<void(const std::string&)> on_model_selected)
-: nanogui::Window(screen, screen),
+: nanogui::Window(parent, screen),
 root_directory_node_(root_directory_node),
 on_model_selected_(on_model_selected)
 {
@@ -88,16 +88,7 @@ void MeshPicker::search_model_files(const DirectoryNode& node) {
 
 void MeshPicker::refresh_file_list() {
 	// Clear existing items
-	// It's safer to remove all children from file_list_widget_
-	auto fileview_children = file_list_widget_->children();
-	
-	for (auto& file_view_child : fileview_children) {
-		auto child_children = file_view_child->children();
-		for (auto& child_child : child_children) {
-			file_view_child->remove_child(child_child);
-		}
-		file_list_widget_->remove_child(file_view_child);
-	}
+	file_list_widget_->shed_children();
 
 	std::transform(mFilterValue.begin(), mFilterValue.end(), mFilterValue.begin(), ::tolower);
 	
@@ -111,7 +102,7 @@ void MeshPicker::refresh_file_list() {
 		}
 		
 		// Create a button for each model file
-		Widget& itemContainer = std::make_shared<nanogui::Widget>(file_list_widget_);
+		std::shared_ptr<Widget> itemContainer = std::make_shared<nanogui::Widget>(file_list_widget_, screen());
 		itemContainer->set_layout(std::make_unique<nanogui::BoxLayout>(
 														 nanogui::Orientation::Vertical, nanogui::Alignment::Middle, 0, 5));
 		
@@ -175,7 +166,7 @@ void MeshPicker::refresh_file_list() {
 		});
 	}
 	
-	perform_layout(screen()->nvg_context());
+	perform_layout(screen().nvg_context());
 }
 
 void MeshPicker::handle_double_click(const std::string& model_path) {

@@ -52,8 +52,8 @@ static std::string GenerateUniqueFilename(const std::string& baseDir, const std:
 
 }
 
-PromptWindow::PromptWindow(nanogui::Screen& screen, std::shared_ptr<ResourcesPanel> resourcesPanel, DeepMotionApiClient& deepMotionApiClient, std::shared_ptr<nanogui::RenderPass> renderpass, ShaderManager& shaderManager)
-: nanogui::Window(screen), mResourcesPanel(resourcesPanel), mDeepMotionApiClient(deepMotionApiClient), mDummyAnimationTimeProvider(60 * 30),
+PromptWindow::PromptWindow(nanogui::Screen& parent, nanogui::Screen& screen, std::shared_ptr<ResourcesPanel> resourcesPanel, DeepMotionApiClient& deepMotionApiClient, std::shared_ptr<nanogui::RenderPass> renderpass, ShaderManager& shaderManager)
+: nanogui::Window(parent, screen), mResourcesPanel(resourcesPanel), mDeepMotionApiClient(deepMotionApiClient), mDummyAnimationTimeProvider(60 * 30),
 	mRenderPass(renderpass) { // update with proper duration, dynamically after loading the animation
 	
 	set_fixed_size(nanogui::Vector2i(400, 512)); // Adjusted height for additional UI elements

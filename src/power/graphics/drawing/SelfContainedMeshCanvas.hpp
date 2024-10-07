@@ -53,9 +53,7 @@ protected:
 
 	void draw_contents() override;
 
-private:
-	void initialize() override;
-	
+private:	
 	void update_camera_view();
 	
 	void draw_content(const nanogui::Matrix4f& view, const nanogui::Matrix4f& projection);

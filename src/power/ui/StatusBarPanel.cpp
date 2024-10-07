@@ -14,7 +14,7 @@
 
 static std::unique_ptr<DirectoryNode> rootNode = DirectoryNode::create(std::filesystem::current_path().string());
 
-StatusBarPanel::StatusBarPanel(nanogui::Widget& parent, std::shared_ptr<IActorVisualManager>  actorVisualManager, std::shared_ptr<SceneTimeBar> sceneTimeBar,  MeshActorLoader& meshActorLoader, ShaderManager& shaderManager, DeepMotionApiClient& deepMotionApiClient, UiManager& uiManager, std::function<void(std::function<void(int, int)>)> applicationClickRegistrator) : Panel(parent, ""),
+StatusBarPanel::StatusBarPanel(nanogui::Widget& parent, nanogui::Screen& screen, std::shared_ptr<IActorVisualManager>  actorVisualManager, std::shared_ptr<SceneTimeBar> sceneTimeBar,  MeshActorLoader& meshActorLoader, ShaderManager& shaderManager, DeepMotionApiClient& deepMotionApiClient, UiManager& uiManager, std::function<void(std::function<void(int, int)>)> applicationClickRegistrator) : Panel(parent, screen, ""),
 mSceneTimeBar(sceneTimeBar),
 mActorVisualManager(actorVisualManager),
 mMeshActorLoader(meshActorLoader),
@@ -48,8 +48,8 @@ void StatusBarPanel::initialize() {
 	// Initial positioning
 	mResourcesPanel->set_position(nanogui::Vector2i(0, 0));
 	
-	mResourcesPanel->set_fixed_width(parent()->parent()->fixed_width());
-	mResourcesPanel->set_fixed_height(parent()->parent()->fixed_height() * 0.5f);
+	mResourcesPanel->set_fixed_width(parent().parent().fixed_width());
+	mResourcesPanel->set_fixed_height(parent().parent().fixed_height() * 0.5f);
 	
 	mApplicationClickRegistrator([this](int x, int y){
 		if (!mResourcesPanel->contains(nanogui::Vector2i(x, y))){

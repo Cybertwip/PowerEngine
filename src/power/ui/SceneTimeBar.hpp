@@ -39,7 +39,7 @@ class SceneTimeBar : public nanogui::Widget, public IActorSelectedCallback {
 	};
 	
 public:
-	SceneTimeBar(Widget& parent, ActorManager& actorManager, AnimationTimeProvider& animationTimeProvider, std::shared_ptr<IActorSelectedRegistry> registry, int width, int height);
+	SceneTimeBar(nanogui::Widget& parent, nanogui::Screen& screen, ActorManager& actorManager, AnimationTimeProvider& animationTimeProvider, std::shared_ptr<IActorSelectedRegistry> registry, int width, int height);
 	~SceneTimeBar();
 	
 	// Override OnActorSelected from IActorSelectedCallback
@@ -91,7 +91,9 @@ private:
 	std::shared_ptr<nanogui::Button> mKeyBtn;
 	std::shared_ptr<nanogui::Button> mPrevKeyBtn;
 	std::shared_ptr<nanogui::Button> mNextKeyBtn;
-	nanogui::Widget& mButtonWrapper;
+	std::shared_ptr<nanogui::Widget> mSliderWrapper;
+
+	std::shared_ptr<nanogui::Widget> mButtonWrapper;
 	std::shared_ptr<nanogui::Button> mRewindBtn;
 	std::shared_ptr<nanogui::Button> mSeekEndBtn;
 	
@@ -100,9 +102,9 @@ private:
 	
 	std::shared_ptr<nanogui::Button> mStopBtn;
 
-	nanogui::Widget& mKeyBtnWrapper;
+	std::shared_ptr<nanogui::Widget> mKeyBtnWrapper;
 	
-	nanogui::Widget& mButtonWrapperWrapper;
+	std::shared_ptr<nanogui::Widget> mButtonWrapperWrapper;
 	
 	nanogui::Color mBackgroundColor;
 	nanogui::Color mNormalButtonColor;

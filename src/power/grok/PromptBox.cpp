@@ -1,6 +1,6 @@
 #include "PromptBox.hpp"
 
-PromptBox::PromptBox(nanogui::Widget& parent)
+PromptBox::PromptBox(nanogui::Widget&)
 : nanogui::Window(parent, "Grok Prompt") {
 	// Create a vertical layout for the chatbox
 	set_layout(std::make_unique<nanogui::GroupLayout>());

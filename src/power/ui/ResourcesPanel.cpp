@@ -110,8 +110,8 @@ const DirectoryNode* FindNodeByPath(const DirectoryNode& currentNode, const std:
 }
 
 
-ResourcesPanel::ResourcesPanel(nanogui::Widget& parent, DirectoryNode& root_directory_node, std::shared_ptr<IActorVisualManager> actorVisualManager, std::shared_ptr<SceneTimeBar> sceneTimeBar,  MeshActorLoader& meshActorLoader, ShaderManager& shaderManager, DeepMotionApiClient& deepMotionApiClient, UiManager& uiManager)
-: Panel(parent, "Resources"),
+ResourcesPanel::ResourcesPanel(nanogui::Widget& parent, nanogui::Screen& screen, DirectoryNode& root_directory_node, std::shared_ptr<IActorVisualManager> actorVisualManager, std::shared_ptr<SceneTimeBar> sceneTimeBar,  MeshActorLoader& meshActorLoader, ShaderManager& shaderManager, DeepMotionApiClient& deepMotionApiClient, UiManager& uiManager)
+: Panel(parent, screen, "Resources"),
 mDummyAnimationTimeProvider(60 * 30),
 mRootDirectoryNode(root_directory_node),
 mActorVisualManager(actorVisualManager),
@@ -127,15 +127,8 @@ mUiManager(uiManager),
 mDeepMotionApiClient(deepMotionApiClient),
 mShaderManager(shaderManager)
 {
-}
-
-ResourcesPanel::~ResourcesPanel() {
-}
-
-void ResourcesPanel::initialize() {
-	Panel::initialize();
 	
-	mNormalButtonColor = theme()->m_button_gradient_bot_unfocused;
+	mNormalButtonColor = theme().m_button_gradient_bot_unfocused;
 	
 	mSelectedButtonColor = mNormalButtonColor + nanogui::Color(0.25f, 0.25f, 0.32f, 1.0f);
 	
@@ -143,13 +136,13 @@ void ResourcesPanel::initialize() {
 	set_layout(std::make_unique<nanogui::BoxLayout>(nanogui::Orientation::Vertical, nanogui::Alignment::Fill, 0, 10));
 	
 	// Create the toolbar at the top
-	mToolbar = std::make_shared<nanogui::Widget>(*this);
+	mToolbar = std::make_shared<nanogui::Widget>(*this, screen);
 	mToolbar->set_layout(std::make_unique<nanogui::BoxLayout>(
 															  nanogui::Orientation::Horizontal, nanogui::Alignment::Middle, 10, 10));
 	
-	mPromptWindow = std::make_shared<PromptWindow>(screen(), std::dynamic_pointer_cast<ResourcesPanel>(*this), mDeepMotionApiClient, mShaderManager.render_pass(), mShaderManager);
+	mPromptWindow = std::make_shared<PromptWindow>(screen, screen, *this, mDeepMotionApiClient, mShaderManager.render_pass(), mShaderManager);
 	
-	mMeshPicker = std::make_shared<MeshPicker>(screen(), mRootDirectoryNode, [this](const std::string& modelPath){
+	mMeshPicker = std::make_shared<MeshPicker>(screen, screen, mRootDirectoryNode, [this](const std::string& modelPath){
 		mMeshPicker->set_visible(false);
 		mMeshPicker->set_modal(false);
 		
@@ -162,14 +155,14 @@ void ResourcesPanel::initialize() {
 	mMeshPicker->set_modal(false);
 	
 	/* Create the DeepMotion Settings Window (initially hidden) */
-	mDeepMotionSettings = std::make_shared<DeepMotionSettingsWindow>(screen(), mDeepMotionApiClient, [this](){
+	mDeepMotionSettings = std::make_shared<DeepMotionSettingsWindow>(screen, mDeepMotionApiClient, [this](){
 		mMeshPicker->set_visible(true);
 		mMeshPicker->set_modal(true);
 	});
 	mDeepMotionSettings->set_visible(false);
 	mDeepMotionSettings->set_modal(false);
 	
-	mImportWindow = std::make_shared<ImportWindow>(screen(), std::dynamic_pointer_cast<ResourcesPanel>(*this), mShaderManager.render_pass(), mShaderManager);
+	mImportWindow = std::make_shared<ImportWindow>(screen, screen, *this, mShaderManager.render_pass(), mShaderManager);
 	
 	mImportWindow->set_visible(false);
 	mImportWindow->set_modal(false);
@@ -198,9 +191,9 @@ void ResourcesPanel::initialize() {
 		//		}
 	});
 	
-	mAddButton->popup()->perform_layout(screen()->nvg_context());
+	mAddButton->popup()->perform_layout(screen.nvg_context());
 	
-	mDeepMotionSettings->perform_layout(screen()->nvg_context());
+	mDeepMotionSettings->perform_layout(screen.nvg_context());
 	
 	// Add the Import Assets button with a "+" icon
 	mImportButton = std::make_shared<nanogui::Button>(mToolbar, "Import");
@@ -269,6 +262,9 @@ void ResourcesPanel::initialize() {
 	mMeshActorExporter = std::make_unique<MeshActorExporter>();
 }
 
+ResourcesPanel::~ResourcesPanel() {
+}
+
 void ResourcesPanel::refresh_file_view() {
 	// Clear the buttons vector and reset selection
 	mFileButtons.clear();
@@ -276,7 +272,7 @@ void ResourcesPanel::refresh_file_view() {
 	mSelectedNode = nullptr;
 	
 	
-	auto gridLayout = std::dynamic_pointer_cast<nanogui::AdvancedGridLayout>(mFileView->layout());
+	auto gridLayout = dynamic_cast<nanogui::AdvancedGridLayout*>(&mFileView->layout());
 	
 	gridLayout->shed_anchor();
 
@@ -405,7 +401,7 @@ void ResourcesPanel::refresh_file_view() {
 					
 					if (file_icon  == FA_WALKING || file_icon == FA_PERSON_BOOTH || file_icon == FA_OBJECT_GROUP) {
 						
-						auto drag_widget = screen()->drag_widget();
+						auto drag_widget = screen().drag_widget();
 
 						auto content = std::make_shared<nanogui::ImageView>(drag_widget);
 						content->set_size(iconButton->fixed_size());
@@ -439,16 +435,16 @@ void ResourcesPanel::refresh_file_view() {
 						auto dragStartPosition = iconButton->absolute_position();
 						
 						drag_widget->set_position(dragStartPosition);
-						drag_widget->perform_layout(screen()->nvg_context());
+						drag_widget->perform_layout(screen().nvg_context());
 						
 						screen()->set_drag_widget(drag_widget, [this, content, drag_widget, child](){
 							
 							auto path = child->FullPath;
 							
 							// Remove drag widget
-							drag_widget->remove_child(content);
+							drag_widget->remove_child(*content);
 							
-							screen()->set_drag_widget(nullptr, nullptr);
+							screen().set_drag_widget(nullptr, nullptr);
 							
 							std::vector<std::string> path_vector = { path };
 							
@@ -536,10 +532,10 @@ int ResourcesPanel::get_icon_for_file(const DirectoryNode& node) {
 
 bool ResourcesPanel::mouse_button_event(const nanogui::Vector2i &p, int button, bool down, int modifiers) {
 	if (down && button == GLFW_MOUSE_BUTTON_1) {
-		Widget& widget = find_widget(p);
+		Widget* widget = find_widget(p);
 		bool clickOnButton = false;
 		for (auto fileButton : mFileButtons) {
-			if (widget == fileButton) {
+			if (widget == fileButton.get()) {
 				clickOnButton = true;
 				break;
 			}

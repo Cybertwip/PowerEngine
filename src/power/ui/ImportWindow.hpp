@@ -54,7 +54,7 @@ private:
 	
 	std::shared_ptr<nanogui::Button> mCloseButton;
 	std::shared_ptr<nanogui::Button> mImportButton;
-	nanogui::Widget& mCheckboxPanel;
+	std::shared_ptr<nanogui::Widget> mCheckboxPanel;
 
 	std::shared_ptr<nanogui::RenderPass> mRenderPass;
 	

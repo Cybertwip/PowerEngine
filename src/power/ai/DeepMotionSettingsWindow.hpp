@@ -26,9 +26,7 @@ public:
 	 */
 	DeepMotionSettingsWindow(nanogui::Screen& parent, DeepMotionApiClient& deepMotionApiClient, std::function<void()> successCallback);
 	
-private:
-	void initialize() override;
-	
+private:	
 	// UI Components
 	std::shared_ptr<nanogui::TextBox> api_base_url_box_;
 	std::shared_ptr<nanogui::TextBox> client_id_box_;
@@ -91,7 +89,7 @@ private:
 	std::shared_ptr<nanogui::Label> mClientIdLabel;
 	std::shared_ptr<nanogui::Label> mClientSecretLabel;
 	
-	nanogui::Widget& mStatusPanel;
-	nanogui::Widget& mTopPanel;
+	std::shared_ptr<nanogui::Widget> mStatusPanel;
+	std::shared_ptr<nanogui::Widget> mTopPanel;
 	std::shared_ptr<nanogui::ImageView> mImageView;
 };

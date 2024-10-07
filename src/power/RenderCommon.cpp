@@ -9,7 +9,7 @@
 #include "actors/Actor.hpp"
 #include "actors/ActorManager.hpp"
 
-RenderCommon::RenderCommon(nanogui::Widget& parent, entt::registry& registry,
+RenderCommon::RenderCommon(nanogui::Widget&, entt::registry& registry,
 						   ActorManager& actorManager, CameraManager& cameraManager) : nanogui::Widget(parent), mActorManager(actorManager), mCameraManager(cameraManager) {
 }
 

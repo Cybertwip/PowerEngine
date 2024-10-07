@@ -157,7 +157,7 @@ protected:
 private:
 	
 	
-	void set_drag_widget(Widget& widget, std::function<void()> drag_callback) override {
+	void set_drag_widget(Widget* widget, std::function<void()> drag_callback) override {
 		if(widget == nullptr){
 			m_draggable_window->set_visible(false);
 			m_draggable_window->set_drag_callback(nullptr);
@@ -172,12 +172,13 @@ private:
 			m_drag_callback = nullptr;
 		}
 	}
-	Widget& drag_widget() const override { return m_draggable_window; }
+	Widget* drag_widget() const override { return m_draggable_window; }
 
 	void move_widget_to_top(Widget& widget) {
-		if (!widget || !widget->parent()) return;
-		auto &children = const_cast<std::vector<Widget& > &>(widget->parent()->children());
-		auto it = std::find(children.begin(), children.end(), widget);
+		auto &children = widget->parent()->children();
+		auto it = std::find_if(children.begin(), children.end(), [&widget](std::reference_wrapper<Widget> item){
+			return &item.get() == &widget;
+		});
 		if (it != children.end()) {
 			// Move the widget to the end of the list to make it topmost
 			children.erase(it);

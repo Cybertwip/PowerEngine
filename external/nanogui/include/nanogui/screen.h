@@ -268,8 +268,8 @@ public:
 	void * nswin() { return m_nswin; }
 #endif
 	
-	virtual void set_drag_widget(Widget& widget, std::function<void()> drag_callback) {
-		m_drag_widget = &widget;
+	virtual void set_drag_widget(Widget* widget, std::function<void()> drag_callback) {
+		m_drag_widget = widget;
 		m_drag_callback = drag_callback;
 	}
 

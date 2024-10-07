@@ -10,7 +10,7 @@
 #include "ui/TransformPanel.hpp"
 #include "ui/UiManager.hpp"
 
-UiCommon::UiCommon(nanogui::Widget& parent, ActorManager& actorManager, AnimationTimeProvider& animationTimeProvider) : nanogui::Widget(parent), mActorManager(actorManager), mAnimationTimeProvider(animationTimeProvider) {
+UiCommon::UiCommon(nanogui::Widget&, ActorManager& actorManager, AnimationTimeProvider& animationTimeProvider) : nanogui::Widget(parent), mActorManager(actorManager), mAnimationTimeProvider(animationTimeProvider) {
 }
 
 void UiCommon::initialize() {

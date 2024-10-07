@@ -20,8 +20,6 @@ class Canvas : public nanogui::Canvas
 	
 	void process_events();
 
-	void initialize() override;
-
    private:
     std::vector<std::function<void()>> mDrawCallbacks;
 	

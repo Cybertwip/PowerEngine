@@ -37,7 +37,7 @@ class TextBox;
 
 class PromptWindow : public nanogui::Window {
 public:
-	PromptWindow(nanogui::Screen& parent, std::shared_ptr<ResourcesPanel> resourcesPanel, DeepMotionApiClient& deepMotionApiClient, std::shared_ptr<nanogui::RenderPass> renderpass, ShaderManager& shaderManager);
+	PromptWindow(nanogui::Screen& parent, nanogui::Screen& screen, std::shared_ptr<ResourcesPanel> resourcesPanel, DeepMotionApiClient& deepMotionApiClient, std::shared_ptr<nanogui::RenderPass> renderpass, ShaderManager& shaderManager);
 	
 	void Preview(const std::string& path, const std::string& directory);
 	
@@ -45,9 +45,7 @@ public:
 	
 	void ProcessEvents();
 	
-private:
-	void initialize() override;
-	
+private:	
 	// Asynchronous Methods
 	void SubmitPromptAsync();
 	void ImportIntoProjectAsync();
@@ -86,8 +84,8 @@ private:
 	std::shared_ptr<nanogui::Button> mSubmitButton;
 	std::shared_ptr<nanogui::Button> mImportButton; // New Import button member
 
-	nanogui::Widget& mInputPanel; // New Import button member
-	nanogui::Widget& mImportPanel; // New Import button member
+	std::shared_ptr<nanogui::Widget> mInputPanel; // New Import button member
+	std::shared_ptr<nanogui::Widget> mImportPanel; // New Import button member
 
 	DeepMotionApiClient& mDeepMotionApiClient;
 	

@@ -31,7 +31,7 @@ public:
 
 class RenderCommon : public nanogui::Widget {
 public:
-    RenderCommon(nanogui::Widget& parent, entt::registry& registry, ActorManager& actorManager, CameraManager& cameraManager);
+    RenderCommon(nanogui::Widget&, entt::registry& registry, ActorManager& actorManager, CameraManager& cameraManager);
 	
 	std::shared_ptr<Canvas> canvas() {
         return mCanvas;

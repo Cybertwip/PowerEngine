@@ -39,7 +39,7 @@ public:
 					size_t offset, size_t count,
 					bool indexed = false);
 	
-	std::shared_ptr<nanogui::RenderPass> render_pass() const {
+	nanogui::RenderPass& render_pass() const {
 		return mShader->render_pass();
 	}
 

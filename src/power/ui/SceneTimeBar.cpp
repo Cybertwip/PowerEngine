@@ -45,8 +45,8 @@ glm::vec3 ScreenToWorld(glm::vec2 screenPos, float depth, glm::mat4 projectionMa
 } // namespace
 
 // Constructor Implementation
-SceneTimeBar::SceneTimeBar(Widget& parent, ActorManager& actorManager, AnimationTimeProvider& animationTimeProvider, std::shared_ptr<IActorSelectedRegistry> registry, int width, int height)
-: nanogui::Widget(parent),
+SceneTimeBar::SceneTimeBar(nanogui::Widget& parent, nanogui::Screen& screen, ActorManager& actorManager, AnimationTimeProvider& animationTimeProvider, std::shared_ptr<IActorSelectedRegistry> registry, int width, int height)
+: nanogui::Widget(parent, screen),
 mActorManager(actorManager),
 mAnimationTimeProvider(animationTimeProvider),
 mRegistry(registry),
@@ -78,13 +78,13 @@ mNormalButtonColor(theme()->m_text_color) // Initialize normal button color
 	set_layout(std::make_unique<nanogui::BoxLayout>(nanogui::Orientation::Vertical, nanogui::Alignment::Maximum, 1, 1));
 	
 	// Slider Wrapper
-	Widget& sliderWrapper = std::make_shared<nanogui::Widget>(*this);
-	sliderWrapper->set_layout(std::make_unique<nanogui::BoxLayout>(nanogui::Orientation::Horizontal, nanogui::Alignment::Fill, 1, 1));
+	mSliderWrapper = std::make_shared<nanogui::Widget>(*this, screen);
+	mSliderWrapper->set_layout(std::make_unique<nanogui::BoxLayout>(nanogui::Orientation::Horizontal, nanogui::Alignment::Fill, 1, 1));
 	
-	auto normalButtonColor = theme()->m_text_color;
+	auto normalButtonColor = theme().m_text_color;
 	
 	// Timeline Slider
-	mTimelineSlider = std::make_shared<nanogui::Slider>(sliderWrapper);
+	mTimelineSlider = std::make_shared<nanogui::Slider>(mSliderWrapper);
 	mTimelineSlider->set_value(0.0f);  // Start at 0%
 	mTimelineSlider->set_fixed_width(fixedWidth * 0.985f);
 	mTimelineSlider->set_range(std::make_pair(0.0f, 1.0f));  // Normalized range
@@ -460,7 +460,7 @@ void SceneTimeBar::update() {
 
 void SceneTimeBar::overlay() {
 	
-	auto ctx = screen()->nvg_context();
+	auto ctx = screen().nvg_context();
 	// Draw background
 	nvgBeginPath(ctx);
 	nvgRect(ctx, m_pos.x(), m_pos.y(), m_size.x(), m_size.y());
