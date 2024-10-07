@@ -55,13 +55,13 @@ mTotalFrames(1800), // 30 seconds at 60 FPS
 mRecording(false),
 mPlaying(false),
 mUncommittedKey(false),
-mNormalButtonColor(theme()->m_text_color) // Initialize normal button color
+mNormalButtonColor(theme().m_text_color) // Initialize normal button color
 {
 	// Set fixed dimensions
 	set_fixed_width(width);
 	set_fixed_height(height);
 	
-	mBackgroundColor = theme()->m_button_gradient_bot_unfocused;
+	mBackgroundColor = theme().m_button_gradient_bot_unfocused;
 	mBackgroundColor.a() = 0.25f;
 	
 	// Cache fixed dimensions

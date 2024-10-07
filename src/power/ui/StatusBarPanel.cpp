@@ -41,7 +41,7 @@ void StatusBarPanel::initialize() {
 	mResourcesButton->set_enabled(false);
 	
 	// Resources panel setup
-	mResourcesPanel = std::make_shared<ResourcesPanel>(parent()->parent(), *rootNode, mActorVisualManager, mSceneTimeBar, mMeshActorLoader, mShaderManager, mDeepMotionApiClient, mUiManager);
+	mResourcesPanel = std::make_shared<ResourcesPanel>(parent().parent(), screen, *rootNode, mActorVisualManager, mSceneTimeBar, mMeshActorLoader, mShaderManager, mDeepMotionApiClient, mUiManager);
 	mResourcesPanel->set_visible(true);
 	// Add widgets to resourcesPanel here
 	
@@ -76,7 +76,7 @@ void StatusBarPanel::toggle_resources_panel(bool active) {
 	
 	if (active) {
 		mAnimationFuture = std::async(std::launch::async, [this]() {
-			auto target = nanogui::Vector2i(0, parent()->parent()->fixed_height() * 0.5f - fixed_height());
+			auto target = nanogui::Vector2i(0, parent().parent().fixed_height() * 0.5f - fixed_height());
 			animate_panel_position(target);
 		});
 	} else {
