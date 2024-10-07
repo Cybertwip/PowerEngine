@@ -9,7 +9,7 @@ class TransformComponent;
 
 class TransformPanel : public Panel {
 public:
-    TransformPanel(std::shared_ptr<nanogui::Widget> parent);
+    TransformPanel(std::weak_ptr<nanogui::Widget> parent);
 	~TransformPanel();
     
     void gather_values_into(TransformComponent& transform);

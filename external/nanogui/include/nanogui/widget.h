@@ -39,12 +39,12 @@ public:
     /// Free all resources used by the widget and any children
     virtual ~Widget();
 	
-	void initialize();
+	virtual void initialize();
 
     /// Return the parent widget
-    std::weak_ptr<Widget> parent() { return m_parent.lock(); }
+    std::shared_ptr<Widget> parent() { return m_parent.lock(); }
     /// Return the parent widget
-    const std::weak_ptr<Widget> parent() const { return m_parent.lock(); }
+    const std::shared_ptr<Widget> parent() const { return m_parent.lock(); }
     /// Set the parent widget
 	void set_parent(std::weak_ptr<Widget> parent);
 	
@@ -357,6 +357,8 @@ protected:
     Cursor m_cursor;
 	
 	std::weak_ptr<Screen> m_screen;
+	
+	bool m_initialized;
 };
 
 NAMESPACE_END(nanogui)

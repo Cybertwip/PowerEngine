@@ -10,7 +10,7 @@
 #include "ui/TransformPanel.hpp"
 #include "ui/UiManager.hpp"
 
-UiCommon::UiCommon(std::shared_ptr<nanogui::Widget> parent, ActorManager& actorManager, AnimationTimeProvider& animationTimeProvider) {
+UiCommon::UiCommon(std::weak_ptr<nanogui::Widget> parent, ActorManager& actorManager, AnimationTimeProvider& animationTimeProvider) {
 
     mMainWrapper = std::make_shared<nanogui::Window>(parent, "");
 	
@@ -40,6 +40,7 @@ UiCommon::UiCommon(std::shared_ptr<nanogui::Widget> parent, ActorManager& actorM
 	mLeftWrapper->set_fixed_height(totalHeight);
 
 	mToolbox = std::make_shared<Panel>(mLeftWrapper, "");
+	
 	mToolbox->set_layout(std::make_shared<nanogui::BoxLayout>(nanogui::Orientation::Horizontal,
 												 nanogui::Alignment::Minimum, 4, 2));
 	mToolbox->set_fixed_height(toolboxHeight);

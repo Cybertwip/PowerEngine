@@ -19,8 +19,8 @@
 #include <cctype>
 #include <regex>
 
-DeepMotionSettingsWindow::DeepMotionSettingsWindow(std::weak_ptr<Widget> parent, DeepMotionApiClient& deepMotionApiClient, std::function<void()> successCallback)
-: nanogui::Window(parent->screen()),
+DeepMotionSettingsWindow::DeepMotionSettingsWindow(std::weak_ptr<nanogui::Screen> screen, DeepMotionApiClient& deepMotionApiClient, std::function<void()> successCallback)
+: nanogui::Window(screen),
 data_saved_(false),
 mSuccessCallback(successCallback),
 mDeepMotionApiClient(deepMotionApiClient)
@@ -42,7 +42,7 @@ mDeepMotionApiClient(deepMotionApiClient)
 	
 	// Position the close button at the top-right corner
 	// Using a horizontal BoxLayout with a spacer
-	mTopPanel = std::make_shared<nanogui::Widget>(shared_from_this());
+	mTopPanel = std::make_shared<nanogui::Widget>(weak_from_this());
 	mTopPanel->set_layout(std::make_shared<nanogui::BoxLayout>(nanogui::Orientation::Horizontal,
 												 nanogui::Alignment::Middle, 0, 0));
 	// API Base URL Input

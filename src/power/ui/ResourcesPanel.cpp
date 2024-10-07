@@ -110,7 +110,7 @@ const DirectoryNode* FindNodeByPath(const DirectoryNode& currentNode, const std:
 }
 
 
-ResourcesPanel::ResourcesPanel(std::shared_ptr<nanogui::Widget> parent, DirectoryNode& root_directory_node, std::shared_ptr<IActorVisualManager> actorVisualManager, std::shared_ptr<SceneTimeBar> sceneTimeBar,  MeshActorLoader& meshActorLoader, ShaderManager& shaderManager, DeepMotionApiClient& deepMotionApiClient, UiManager& uiManager)
+ResourcesPanel::ResourcesPanel(std::weak_ptr<nanogui::Widget> parent, DirectoryNode& root_directory_node, std::shared_ptr<IActorVisualManager> actorVisualManager, std::shared_ptr<SceneTimeBar> sceneTimeBar,  MeshActorLoader& meshActorLoader, ShaderManager& shaderManager, DeepMotionApiClient& deepMotionApiClient, UiManager& uiManager)
 : Panel(parent, "Resources"),
 mDummyAnimationTimeProvider(60 * 30),
 mRootDirectoryNode(root_directory_node),
@@ -123,8 +123,18 @@ mSelectedNode(nullptr),
 mNormalButtonColor(nanogui::Color(0.7f, 0.7f, 0.7f, 1.0f)),
 mSelectedButtonColor(nanogui::Color(0.5f, 0.5f, 0.8f, 1.0f)),
 mSceneTimeBar(sceneTimeBar),
-mUiManager(uiManager)
+mUiManager(uiManager),
+mDeepMotionApiClient(deepMotionApiClient),
+mShaderManager(shaderManager)
 {
+}
+
+ResourcesPanel::~ResourcesPanel() {
+}
+
+void ResourcesPanel::initialize() {
+	Panel::initialize();
+	
 	mNormalButtonColor = theme()->m_button_gradient_bot_unfocused;
 	
 	mSelectedButtonColor = mNormalButtonColor + nanogui::Color(0.25f, 0.25f, 0.32f, 1.0f);
@@ -135,11 +145,11 @@ mUiManager(uiManager)
 	// Create the toolbar at the top
 	mToolbar = std::make_shared<nanogui::Widget>(shared_from_this());
 	mToolbar->set_layout(std::make_shared<nanogui::BoxLayout>(
-												nanogui::Orientation::Horizontal, nanogui::Alignment::Middle, 10, 10));
+															  nanogui::Orientation::Horizontal, nanogui::Alignment::Middle, 10, 10));
 	
-	mPromptWindow = std::make_shared<PromptWindow>(parent->window(), std::dynamic_pointer_cast<ResourcesPanel>(shared_from_this()), deepMotionApiClient, shaderManager.render_pass(), shaderManager);
+	mPromptWindow = std::make_shared<PromptWindow>(parent()->window(), std::dynamic_pointer_cast<ResourcesPanel>(shared_from_this()), mDeepMotionApiClient, mShaderManager.render_pass(), mShaderManager);
 	
-	mMeshPicker = std::make_shared<MeshPicker>(parent->window(), mRootDirectoryNode, [this](const std::string& modelPath){
+	mMeshPicker = std::make_shared<MeshPicker>(parent()->screen(), mRootDirectoryNode, [this](const std::string& modelPath){
 		mMeshPicker->set_visible(false);
 		mMeshPicker->set_modal(false);
 		
@@ -152,14 +162,14 @@ mUiManager(uiManager)
 	mMeshPicker->set_modal(false);
 	
 	/* Create the DeepMotion Settings Window (initially hidden) */
-	mDeepMotionSettings = std::make_shared<DeepMotionSettingsWindow>(parent->window(), deepMotionApiClient, [this](){
+	mDeepMotionSettings = std::make_shared<DeepMotionSettingsWindow>(parent()->window(), mDeepMotionApiClient, [this](){
 		mMeshPicker->set_visible(true);
 		mMeshPicker->set_modal(true);
 	});
 	mDeepMotionSettings->set_visible(false);
 	mDeepMotionSettings->set_modal(false);
 	
-	mImportWindow = std::make_shared<ImportWindow>(parent->window(), std::dynamic_pointer_cast<ResourcesPanel>(shared_from_this()), shaderManager.render_pass(), shaderManager);
+	mImportWindow = std::make_shared<ImportWindow>(parent()->screen(), std::dynamic_pointer_cast<ResourcesPanel>(shared_from_this()), mShaderManager.render_pass(), mShaderManager);
 	
 	mImportWindow->set_visible(false);
 	mImportWindow->set_modal(false);
@@ -207,7 +217,7 @@ mUiManager(uiManager)
 	mExportButton->set_callback([this]() {
 		export_assets();
 	});
-		
+	
 	// Add the Filter input box
 	mFilterBox = std::make_shared<nanogui::TextBox>(mToolbar, "");
 	mFilterBox->set_placeholder("Filter");
@@ -228,10 +238,10 @@ mUiManager(uiManager)
 	// Create the file view below the toolbar
 	mFileView = std::make_shared<nanogui::Widget>(shared_from_this());
 	auto gridLayout = std::shared_ptr<nanogui::AdvancedGridLayout>(new nanogui::AdvancedGridLayout(
-													  /* columns */ {144, 144, 144, 144, 144, 144, 144, 144}, // Initial column widths (can be adjusted)
-													  /* rows */ {},                // Start with no predefined rows
-													  /* margin */ 8
-													  ));
+																								   /* columns */ {144, 144, 144, 144, 144, 144, 144, 144}, // Initial column widths (can be adjusted)
+																								   /* rows */ {},                // Start with no predefined rows
+																								   /* margin */ 8
+																								   ));
 	
 	// Optionally, set stretch factors for columns and rows
 	gridLayout->set_col_stretch(0, 1.0f);
@@ -242,11 +252,11 @@ mUiManager(uiManager)
 	gridLayout->set_col_stretch(5, 1.0f);
 	gridLayout->set_col_stretch(6, 1.0f);
 	gridLayout->set_col_stretch(7, 1.0f);
-
+	
 	
 	mFileView->set_layout(gridLayout);
-
-
+	
+	
 	mSelectedDirectoryPath = fs::current_path().string();
 	mFilterText = "";
 	
@@ -257,9 +267,6 @@ mUiManager(uiManager)
 	mMeshActorImporter = std::make_unique<MeshActorImporter>();
 	
 	mMeshActorExporter = std::make_unique<MeshActorExporter>();
-}
-
-ResourcesPanel::~ResourcesPanel() {
 }
 
 void ResourcesPanel::refresh_file_view() {

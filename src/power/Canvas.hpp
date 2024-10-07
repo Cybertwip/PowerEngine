@@ -11,7 +11,7 @@ class Canvas : public nanogui::Canvas
 {
    public:
     Canvas(std::weak_ptr<Widget> parent, nanogui::Color backgroundColor);
-
+	
     virtual void draw_contents() override;
     
     void register_draw_callback(std::function<void()> callback);
@@ -22,6 +22,8 @@ class Canvas : public nanogui::Canvas
 
 
    private:
+	void initialize() override;
+
     std::vector<std::function<void()>> mDrawCallbacks;
 	
 	std::function<void(std::vector<uint8_t>&)> mSnapshotCallback;

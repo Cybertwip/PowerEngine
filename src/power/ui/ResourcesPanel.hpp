@@ -27,11 +27,13 @@ class UiManager;
 
 class ResourcesPanel : public Panel {
 public:
-	ResourcesPanel(std::shared_ptr<nanogui::Widget> parent,
+	ResourcesPanel(std::weak_ptr<nanogui::Widget> parent,
 				   DirectoryNode& root_directory_node, std::shared_ptr<IActorVisualManager> actorVisualManager,
 				   std::shared_ptr<SceneTimeBar> sceneTimeBar, MeshActorLoader& meshActorLoader, ShaderManager& shaderManager, DeepMotionApiClient& deepMotionApiClient, UiManager& uiManager);
 	
 	~ResourcesPanel();
+	
+	void initialize() override;
 	
 	void refresh_file_view();
 	int get_icon_for_file(const DirectoryNode& node);
@@ -94,4 +96,8 @@ private:
 	std::shared_ptr<SceneTimeBar> mSceneTimeBar;
 	
 	UiManager& mUiManager;
+	
+	DeepMotionApiClient& mDeepMotionApiClient;
+	
+	ShaderManager& mShaderManager;
 };

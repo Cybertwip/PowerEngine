@@ -14,7 +14,7 @@ class TransformComponent;
 
 class AnimationPanel : public Panel {
 public:
-	AnimationPanel(std::shared_ptr<nanogui::Widget> parent);
+	AnimationPanel(std::weak_ptr<nanogui::Widget> parent);
 	~AnimationPanel();
 
     void set_active_actor(std::optional<std::reference_wrapper<Actor>> actor);

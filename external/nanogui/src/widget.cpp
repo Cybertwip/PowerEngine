@@ -27,12 +27,20 @@ Widget::Widget(std::weak_ptr<Widget> parent)
 : m_parent(parent), m_theme(nullptr), m_layout(nullptr),
 m_pos(0), m_size(0), m_fixed_size(0), m_visible(true), m_enabled(true),
 m_focused(false), m_mouse_focus(false), m_tooltip(""), m_font_size(-1.f),
-m_icon_extra_scale(1.f), m_cursor(Cursor::Arrow), m_screen(std::weak_ptr<Screen>()) {
+m_icon_extra_scale(1.f), m_cursor(Cursor::Arrow), m_screen(std::weak_ptr<Screen>()), m_initialized(false) {
 }
 
 void Widget::initialize() {
+	assert(!m_initialized);
+	
 	if (m_parent.lock())
 		m_parent.lock()->add_child(shared_from_this());
+	
+	for (auto child : m_children) {
+		child->initialize();
+	}
+	
+	m_initialized = true;
 }
 
 Widget::~Widget() {
@@ -68,7 +76,7 @@ Vector2i Widget::preferred_size(NVGcontext *ctx) {
 		return m_size;
 }
 
-void Widget::perform_layout(NVGcontext *ctx) {
+void Widget::perform_layout(NVGcontext *ctx) {	
 	if (m_layout) {
 		m_layout->perform_layout(ctx, shared_from_this());
 	} else {

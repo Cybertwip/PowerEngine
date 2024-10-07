@@ -502,6 +502,8 @@ Screen::~Screen() {
 
 void Screen::initialize() {
 	set_screen(std::weak_ptr<Screen>(std::dynamic_pointer_cast<Screen>(shared_from_this())));
+	
+	Widget::initialize();
 }
 
 void Screen::set_visible(bool visible) {
