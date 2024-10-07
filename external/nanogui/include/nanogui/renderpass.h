@@ -151,27 +151,10 @@ public:
      * \brief Return the set of all render targets (including depth + stencil)
      * associated with this render pass
      */
-    std::vector<std::shared_ptr<Object>> &targets() { return m_targets; }
+    std::vector<std::optional<std::reference_wrapper<Object>>> &targets() { return m_targets; }
 
     /// Resize all texture targets attached to the render pass
     void resize(const Vector2i &size);
-
-    /**
-     * Blit the framebuffer to another target (which can either be another \ref
-     * RenderPass instance or a \ref Screen instance).
-     */
-    void blit_to(
-        const Vector2i &src_offset,
-        const Vector2i &src_size,
-        std::shared_ptr<Object> dst,
-        const Vector2i &dst_offset
-    );
-	
-	void blit_to(
-				 const Vector2i &src_offset,
-				 const Vector2i &src_size,
-				 nanogui::Texture *dst,
-				 const Vector2i &dst_offset);
 
 #if defined(NANOGUI_USE_OPENGL) || defined(NANOGUI_USE_GLES)
     uint32_t framebuffer_handle() const { return m_framebuffer_handle; }
@@ -182,7 +165,7 @@ public:
 #endif
 
 protected:
-    std::vector<std::shared_ptr<Object>> m_targets;
+    std::vector<std::optional<std::reference_wrapper<Object>>> m_targets;
     std::vector<Color> m_clear_color;
     bool m_clear;
     uint8_t m_clear_stencil;

@@ -625,8 +625,8 @@ void Screen::draw_widgets() {
 	
 	if (elapsed > 0.5f) {
 		/* Draw tooltips */
-		const Widget& widget = find_widget(m_mouse_pos);
-		if (widget && !widget.get().tooltip().empty()) {
+		Widget* widget = find_widget(m_mouse_pos);
+		if (widget && !widget->tooltip().empty()) {
 			int tooltip_width = 150;
 			
 			float bounds[4];
@@ -634,17 +634,17 @@ void Screen::draw_widgets() {
 			nvgFontSize(m_nvg_context, 15.0f);
 			nvgTextAlign(m_nvg_context, NVG_ALIGN_LEFT | NVG_ALIGN_TOP);
 			nvgTextLineHeight(m_nvg_context, 1.1f);
-			Vector2i pos = widget.get().absolute_position() +
-			Vector2i(widget.get().width() / 2, widget.get().height() + 10);
+			Vector2i pos = widget->absolute_position() +
+			Vector2i(widget->width() / 2, widget->height() + 10);
 			
 			nvgTextBounds(m_nvg_context, pos.x(), pos.y(),
-						  widget.get().tooltip().c_str(), nullptr, bounds);
+						  widget->tooltip().c_str(), nullptr, bounds);
 			
 			int h = (bounds[2] - bounds[0]) / 2;
 			if (h > tooltip_width / 2) {
 				nvgTextAlign(m_nvg_context, NVG_ALIGN_CENTER | NVG_ALIGN_TOP);
 				nvgTextBoxBounds(m_nvg_context, pos.x(), pos.y(), tooltip_width,
-								 widget.get().tooltip().c_str(), nullptr, bounds);
+								 widget->tooltip().c_str(), nullptr, bounds);
 				
 				h = (bounds[2] - bounds[0]) / 2;
 			}
@@ -676,7 +676,7 @@ void Screen::draw_widgets() {
 			nvgFillColor(m_nvg_context, Color(255, 255));
 			nvgFontBlur(m_nvg_context, 0.0f);
 			nvgTextBox(m_nvg_context, pos.x() - h, pos.y(), tooltip_width,
-					   widget.get().tooltip().c_str(), nullptr);
+					   widget->tooltip().c_str(), nullptr);
 		}
 	}
 	
@@ -684,21 +684,21 @@ void Screen::draw_widgets() {
 }
 
 bool Screen::keyboard_event(int key, int scancode, int action, int modifiers) {
-	if (m_focus_path.size() > 0) {
-		for (auto it = m_focus_path.rbegin() + 1; it != m_focus_path.rend(); ++it)
-			if ((*it)->focused() && (*it)->keyboard_event(key, scancode, action, modifiers))
-				return true;
+	if (m_focused_widget) {
+		m_focused_widget->keyboard_event(key, scancode, action, modifiers);
+			return true;
 	}
 	
 	return false;
 }
 
 bool Screen::keyboard_character_event(unsigned int codepoint) {
-	if (m_focus_path.size() > 0) {
-		for (auto it = m_focus_path.rbegin() + 1; it != m_focus_path.rend(); ++it)
-			if ((*it)->focused() && (*it)->keyboard_character_event(codepoint))
-				return true;
+	if (m_focused_widget) {
+		m_focused_widget->keyboard_character_event(codepoint);
+		
+		return true;
 	}
+	
 	return false;
 }
 
@@ -735,9 +735,9 @@ void Screen::cursor_pos_callback_event(double x, double y) {
 		
 		bool ret = false;
 		if (!m_drag_active) {
-			Widget& widget = find_widget(p);
-			if (widget != nullptr && widget.get().cursor() != m_cursor) {
-				m_cursor = widget.get().cursor();
+			Widget* widget = find_widget(p);
+			if (widget != nullptr && widget->cursor() != m_cursor) {
+				m_cursor = widget->cursor();
 				glfwSetCursor(m_glfw_window, m_cursors[(int) m_cursor]);
 			}
 		} else {
@@ -766,9 +766,9 @@ void Screen::mouse_button_callback_event(int button, int action, int modifiers) 
 #endif
 	
 	try {
-		if (m_focus_path.size() > 1) {
-			auto window =
-			dynamic_cast<Window>(m_focus_path[m_focus_path.size() - 2]);
+		if (m_focused_widget) {
+			auto* window =
+			dynamic_cast<Window*>(m_focused_widget);
 			if (window && window->modal()) {
 				if (!window->contains(m_mouse_pos))
 					return;
@@ -782,7 +782,7 @@ void Screen::mouse_button_callback_event(int button, int action, int modifiers) 
 		
 		auto drop_widget = find_widget(m_mouse_pos);
 		if (m_drag_active && action == GLFW_RELEASE && m_drag_widget &&
-			drop_widget != m_drag_widget && m_drag_widget->parent()) {
+			drop_widget != m_drag_widget) {
 			m_redraw |= m_drag_widget->mouse_button_event(
 														  m_mouse_pos - m_drag_widget->parent().absolute_position(), button,
 														  false, m_modifiers);
@@ -797,11 +797,11 @@ void Screen::mouse_button_callback_event(int button, int action, int modifiers) 
 		
 		if (!m_drag_active && action == GLFW_PRESS && btn12) {
 			m_drag_widget = find_widget(m_mouse_pos);
-			if (m_drag_widget == *this)
+			if (m_drag_widget == this)
 				m_drag_widget = nullptr;
 			m_drag_active = m_drag_widget != nullptr;
 			if (!m_drag_active)
-				update_focus(nullptr);
+				unfocus();
 		} else if (m_drag_active && action == GLFW_RELEASE && btn12) {
 			m_drag_active = false;
 			m_drag_widget = nullptr;
@@ -842,9 +842,9 @@ void Screen::drop_callback_event(int count, const char **filenames) {
 void Screen::scroll_callback_event(double x, double y) {
 	m_last_interaction = glfwGetTime();
 	try {
-		if (m_focus_path.size() > 1) {
+		if (m_focused_widget) {
 			auto window =
-			dynamic_cast<Window>(m_focus_path[m_focus_path.size() - 2]);
+			dynamic_cast<Window*>(m_focused_widget);
 			if (window && window->modal()) {
 				if (!window->contains(m_mouse_pos))
 					return;
@@ -888,71 +888,46 @@ void Screen::resize_callback_event(int, int) {
 }
 // src/screen.cpp
 
-void Screen::remove_from_focus(Widget& widget) {
-	if (widget == nullptr) {
-		// Optionally, log a warning instead of throwing
-		std::cerr << "Warning: Attempted to remove a nullptr from focus path.\n";
-		return;
-	}
-	auto it = std::find(m_focus_path.begin(), m_focus_path.end(), widget);
-	
-	if (it != m_focus_path.end()) {
-		// If the widget being removed is focused, trigger focus_event(false)
-		if ((*it)->focused()) {
-			(*it)->focus_event(false);
-		}
-		m_focus_path.erase(it);
-	}
-	
-	if (widget == m_drag_widget) {
-		m_drag_widget = nullptr;
-	}
-}
-
 void Screen::update_focus(Widget& widget) {
-	for (auto w: m_focus_path) {
-		if (!w.get().focused())
-			continue;
-		w.get().focus_event(false);
-	}
-	m_focus_path.clear();
-	Widget& window = nullptr;
-	while (widget) {
-		m_focus_path.push_back(widget);
-		if (dynamic_cast<Window>(widget))
-			window = widget;
-		widget = widget.get().parent();
-	}
-	for (auto it = m_focus_path.rbegin(); it != m_focus_path.rend(); ++it)
-		(*it)->focus_event(true);
 	
-	if (window)
-		move_window_to_front(dynamic_cast<Window>(window));
+	if (m_focused_widget) {
+		m_focused_widget->unfocus();
+	}
+	
+	widget.focus_event(true);
+
+	m_focused_widget = &widget;
+	
+	if (auto* window = dynamic_cast<Window*>(&widget); window) {
+		move_window_to_front(*window);
+	}
 }
 
 void Screen::center_window(Window& window) {
-	if (window->size() == 0) {
-		window->set_size(window->preferred_size(m_nvg_context));
-		window->perform_layout(m_nvg_context);
+	if (window.size() == 0) {
+		window.set_size(window.preferred_size(m_nvg_context));
+		window.perform_layout(m_nvg_context);
 	}
-	window->set_position((m_size - window->size()) / 2);
+	window.set_position((m_size - window.size()) / 2);
 }
 
-void Screen::move_window_to_front(std::shared_ptr<Window> window) {
-	m_children.erase(std::remove(m_children.begin(), m_children.end(), window), m_children.end());
+void Screen::move_window_to_front(Window& window) {
+	m_children.erase(std::remove_if(m_children.begin(), m_children.end(), [&window](std::reference_wrapper<Widget> item){
+		return &item.get() == &window;
+	}), m_children.end());
 	m_children.push_back(window);
 	/* Brute force topological sort (no problem for a few windows..) */
 	bool changed = false;
 	do {
 		size_t base_index = 0;
 		for (size_t index = 0; index < m_children.size(); ++index)
-			if (m_children[index] == window)
+			if (&m_children[index].get() == &window)
 				base_index = index;
 		changed = false;
 		for (size_t index = 0; index < m_children.size(); ++index) {
-			auto pw = dynamic_cast<Popup>(m_children[index]);
-			if (pw && pw->parent_window() == window && index < base_index) {
-				move_window_to_front(pw);
+			auto pw = dynamic_cast<Popup*>(&m_children[index].get());
+			if (pw && pw->parent_window() == &window && index < base_index) {
+				move_window_to_front(*pw);
 				changed = true;
 				break;
 			}
@@ -965,8 +940,8 @@ bool Screen::tooltip_fade_in_progress() {
 	if (elapsed < 0.25f || elapsed > 1.25f)
 		return false;
 	/* Temporarily increase the frame rate to fade in the tooltip */
-	Widget& widget = find_widget(m_mouse_pos);
-	return widget && !widget.get().tooltip().empty();
+	Widget* widget = find_widget(m_mouse_pos);
+	return widget && !widget->tooltip().empty();
 }
 
 Texture::PixelFormat Screen::pixel_format() const {

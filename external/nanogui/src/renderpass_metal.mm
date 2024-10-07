@@ -8,10 +8,10 @@
 
 NAMESPACE_BEGIN(nanogui)
 
-RenderPass::RenderPass(const std::vector<std::shared_ptr<Object>> &color_targets,
-					   std::shared_ptr<Object> depth_target,
-					   std::shared_ptr<Object> stencil_target,
-					   std::shared_ptr<Object> blit_target)
+RenderPass::RenderPass(const std::vector<std::reference_wrapper<<Object>>>> &color_targets,
+					   std::optional<std::reference_wrapper<<Object>>> depth_target,
+					   std::optional<std::reference_wrapper<<Object>>> stencil_target,
+					   std::optional<std::reference_wrapper<<Object>>> blit_target)
 : m_targets(color_targets.size() + 2),
 m_clear_color(color_targets.size()), m_clear_stencil(0),
 m_clear_depth(1.f), m_viewport_offset(0), m_viewport_size(0),
@@ -36,8 +36,8 @@ m_command_encoder(nullptr) {
 	[MTLRenderPassDescriptor renderPassDescriptor];
 	
 	for (size_t i = 0; i < m_targets.size(); ++i) {
-		auto texture = dynamic_cast<Texture>(m_targets[i]);
-		auto screen   = dynamic_cast<Screen>(m_targets[i]);
+		auto* texture = dynamic_cast<Texture*>(&m_targets[i]->get());
+		auto* screen   = dynamic_cast<Screen*>(&m_targets[i]->get());
 		
 		if (texture) {
 			if (!(texture->flags() & Texture::TextureFlags::RenderTarget))
@@ -433,151 +433,6 @@ void RenderPass::set_cull_mode(CullMode cull_mode) {
 		(__bridge id<MTLRenderCommandEncoder>) m_command_encoder;
 		[command_encoder setCullMode: cull_mode_mtl];
 	}
-}
-
-// Assuming RenderPass has access to m_targets and a method metal_command_queue()
-void RenderPass::blit_to(const Vector2i &src_offset,
-						 const Vector2i &src_size,
-						 nanogui::Texture *dst,
-						 const Vector2i &dst_offset) {
-	if (!dst) {
-		throw std::runtime_error("RenderPass::blit_to(): 'dst' nanogui::Texture is null.");
-	}
-	
-	// Attempt to cast dst to MetalTexture to access the Metal texture
-	id<MTLTexture> dst_texture = (__bridge id<MTLTexture>)dst->texture_handle();
-
-	if (!dst_texture) {
-		throw std::runtime_error("RenderPass::blit_to(): 'dst' MetalTexture has no Metal texture.");
-	}
-	
-	// Obtain the Metal command queue
-	id<MTLCommandQueue> command_queue = (__bridge id<MTLCommandQueue>) metal_command_queue();
-	if (!command_queue) {
-		throw std::runtime_error("RenderPass::blit_to(): Failed to obtain Metal command queue.");
-	}
-	
-	// Create a command buffer
-	id<MTLCommandBuffer> command_buffer = [command_queue commandBuffer];
-	if (!command_buffer) {
-		throw std::runtime_error("RenderPass::blit_to(): Failed to create Metal command buffer.");
-	}
-	
-	// Create a blit command encoder
-	id<MTLBlitCommandEncoder> command_encoder = [command_buffer blitCommandEncoder];
-	if (!command_encoder) {
-		throw std::runtime_error("RenderPass::blit_to(): Failed to create Metal blit command encoder.");
-	}
-	
-	// Iterate over the source and destination textures
-	auto src_texture_obj = dynamic_cast<Screen>(m_targets[2]);
-	
-	id<MTLTexture> src_texture = (__bridge id<MTLTexture>)src_texture_obj->metal_texture();
-	id<MTLTexture> current_dst_texture = (__bridge id<MTLTexture>)dst->texture_handle();
-	
-	if (src_texture == nil || current_dst_texture == nil) {
-		// Skip if either source or destination texture is null
-		return;
-	}
-	
-	// Define source and destination regions
-	MTLOrigin source_origin = MTLOriginMake((NSUInteger)src_offset.x(),
-											(NSUInteger)src_offset.y(),
-											0);
-	MTLSize source_size = MTLSizeMake((NSUInteger)src_size.x(),
-									  (NSUInteger)src_size.y(),
-									  1);
-	MTLOrigin destination_origin = MTLOriginMake((NSUInteger)dst_offset.x(),
-												 (NSUInteger)dst_offset.y(),
-												 0);
-	
-	// Perform the copy operation
-	[command_encoder copyFromTexture:src_texture
-						 sourceSlice:0
-						 sourceLevel:0
-						sourceOrigin:source_origin
-						  sourceSize:source_size
-						   toTexture:current_dst_texture
-					destinationSlice:0
-					destinationLevel:0
-				   destinationOrigin:destination_origin];
-	// Finalize encoding and commit the command buffer
-	[command_encoder endEncoding];
-	[command_buffer commit];
-}
-
-
-void RenderPass::blit_to(const Vector2i &src_offset,
-						 const Vector2i &src_size,
-						 std::shared_ptr<Object> dst,
-						 const Vector2i &dst_offset) {
-	
-	auto screen = dynamic_cast<Screen>(dst);
-	std::shared_ptr<RenderPass> rp = dynamic_cast<RenderPass>(dst);
-	std::vector<void *> dst_textures;
-	dst_textures.reserve(3);
-	
-	if (screen) {
-		auto depth_stencil_texture = screen->depth_stencil_texture();
-		if (depth_stencil_texture) {
-			dst_textures.push_back(depth_stencil_texture->texture_handle());
-		}
-		else {
-			dst_textures.push_back(nullptr);
-		}
-		if (screen->has_stencil_buffer()) {
-			dst_textures.push_back(depth_stencil_texture->texture_handle());
-		} else {
-			dst_textures.push_back(nullptr);
-		}
-		dst_textures.push_back(screen->metal_texture());
-	} else if (rp) {
-		auto & targets = rp->targets();
-		for (size_t i = 0; i < targets.size(); ++i) {
-			auto texture = dynamic_cast<Texture>(targets[i]);
-			if (texture)
-				dst_textures.push_back(texture->texture_handle());
-			else
-				dst_textures.push_back(nullptr);
-		}
-	} else {
-		throw std::runtime_error(
-								 "RenderPass::blit_to(): 'dst' must either be a RenderPass or a Screen instance.");
-	}
-	
-	id<MTLCommandQueue> command_queue =
-	(__bridge id<MTLCommandQueue>) metal_command_queue();
-	id<MTLCommandBuffer> command_buffer = [command_queue commandBuffer];
-	id<MTLBlitCommandEncoder> command_encoder =
-	[command_buffer blitCommandEncoder];
-	
-	for (size_t i = 0; i < std::min(dst_textures.size(), m_targets.size()); ++i) {
-		auto texture = dynamic_cast<Texture>(m_targets[i]);
-		id<MTLTexture> src_texture =
-		(__bridge id<MTLTexture>) (texture ? texture->texture_handle()
-								   : nullptr);
-		id<MTLTexture> dst_texture = (__bridge id<MTLTexture>) dst_textures[i];
-		
-		if (src_texture == nil || dst_texture == nil || i == 1)
-			continue;
-		
-		[command_encoder
-		 copyFromTexture: src_texture
-		 sourceSlice: 0
-		 sourceLevel: 0
-		 sourceOrigin: MTLOriginMake((NSUInteger) src_offset.x(),
-									 (NSUInteger) src_offset.y(), 0)
-		 sourceSize: MTLSizeMake((NSUInteger) src_size.x(),
-								 (NSUInteger) src_size.y(), 1)
-		 toTexture: dst_texture
-		 destinationSlice: 0
-		 destinationLevel: 0
-		 destinationOrigin: MTLOriginMake((NSUInteger) dst_offset.x(),
-										  (NSUInteger) dst_offset.y(), 0)];
-	}
-	
-	[command_encoder endEncoding];
-	[command_buffer commit];
 }
 
 NAMESPACE_END(nanogui)

@@ -258,10 +258,9 @@ public:
     void resize_callback_event(int width, int height);
 
     /* Internal helper functions */
-	void remove_from_focus(Widget& widget);
     void update_focus(Widget& widget);
     void center_window(Window& window);
-    void move_window_to_front(std::shared_ptr<Window> window);
+    void move_window_to_front(Window& window);
     void draw_widgets();
 	virtual void process_events() {}
 	
@@ -285,14 +284,14 @@ protected:
     NVGcontext *m_nvg_context = nullptr;
     GLFWcursor *m_cursors[(size_t) Cursor::CursorCount];
     Cursor m_cursor;
-    std::vector<std::reference_wrapper<Widget>> m_focus_path;
     Vector2i m_fbsize;
     float m_pixel_ratio;
     int m_mouse_state, m_modifiers;
     Vector2i m_mouse_pos;
     bool m_drag_active;
 	std::function<void()> m_drag_callback;
-    Widget* m_drag_widget;
+	Widget* m_drag_widget;
+	Widget* m_focused_widget;
     double m_last_interaction;
     bool m_process_events = true;
     Color m_background;

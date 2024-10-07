@@ -53,7 +53,7 @@ public:
     Side side() const { return m_side; }
 
     /// Return the parent window of the popup
-	std::shared_ptr<Window> parent_window() { return m_parent_window; }
+	Window* parent_window() { return m_parent_window; }
 
     /// Invoke the associated layout generator to properly place child widgets, if any
     virtual void perform_layout(NVGcontext *ctx) override;
@@ -65,7 +65,7 @@ protected:
     virtual void refresh_relative_placement() override;
 
 protected:
-	std::shared_ptr<Window> m_parent_window;
+	Window* m_parent_window;
     Vector2i m_anchor_pos;
     int m_anchor_offset, m_anchor_size;
     Side m_side;

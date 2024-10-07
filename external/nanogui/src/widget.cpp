@@ -33,8 +33,6 @@ m_icon_extra_scale(1.f), m_cursor(Cursor::Arrow), m_screen(screen), m_initialize
 
 
 Widget::~Widget() {
-	screen().remove_from_focus(*this);
-
 	if (std::uncaught_exceptions() > 0) {
 		/* If a widget constructor throws an exception, it is immediately
 		 deallocated but may still be referenced by a parent. Be conservative
@@ -149,6 +147,14 @@ bool Widget::focus_event(bool focused) {
 	return false;
 }
 
+void Widget::unfocus() {
+	for (auto& child : m_children){
+		child.get().unfocus();
+	}
+	
+	m_focused = false;
+}
+
 bool Widget::keyboard_event(int, int, int, int) {
 	return false;
 }
@@ -176,7 +182,6 @@ void Widget::remove_child(Widget& widget) {
 					 m_children.end());
 	if (m_children.size() == child_count)
 		throw std::runtime_error("Widget::remove_child(): widget not found!");
-	screen().remove_from_focus(widget);
 }
 
 void Widget::remove_child_at(int index) {
@@ -185,7 +190,6 @@ void Widget::remove_child_at(int index) {
 	Widget& widget = m_children[index];
 	m_children.erase(m_children.begin() + index);
 	
-	screen().remove_from_focus(widget);
 }
 void Widget::shed_children() {
 	// Continue removing children until m_children is empty
@@ -199,8 +203,6 @@ void Widget::shed_children() {
 		// Recursively shed the child's children
 		child.shed_children();
 		
-		// If the widget is part of a screen, remove it from focus
-		screen().remove_from_focus(child);
 	}
 }
 
@@ -268,7 +270,6 @@ void Widget::set_parent(Widget& parent) {
 	m_parent = parent;
 	m_screen = parent.screen(); // Update screen pointer
 	
-	screen().remove_from_focus(*this);
 }
 
 void Widget::set_screen(Screen& screen) {
