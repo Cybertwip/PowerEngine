@@ -20,10 +20,10 @@
 NAMESPACE_BEGIN(nanogui)
 
 ImageView::ImageView(Widget& parent, Screen& screen) : Canvas(parent, screen, 1, true, true) {
-    render_pass()->set_clear_color(0, Color(0.3f, 0.3f, 0.32f, 1.f));
+    render_pass().set_clear_color(0, Color(0.3f, 0.3f, 0.32f, 1.f));
 
     m_image_shader = std::shared_ptr<Shader>(new Shader(
-        *render_pass(),
+        render_pass(),
         /* An identifying name */
         "a_simple_shader",
         NANOGUI_SHADER(imageview_vertex),
@@ -206,7 +206,7 @@ void ImageView::draw_contents() {
     if ((m_offset.y() >= bound1.y()) != (m_offset.y() < bound2.y()))
         m_offset.y() = std::max(std::min(m_offset.y(), bound1.y()), bound2.y());
 
-    Vector2i viewport_size = render_pass()->viewport().second;
+    Vector2i viewport_size = render_pass().viewport().second;
 
     float scale = std::pow(2.f, m_scale / 5.f);
 

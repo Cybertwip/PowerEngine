@@ -66,7 +66,7 @@ public:
     );
 
     /// Return the render pass associated with the canvas object
-	RenderPass& render_pass() { return m_render_pass; }
+	RenderPass& render_pass() { return *m_render_pass; }
 
     /// Specify whether to draw the widget border
     void set_draw_border(const bool draw_border) {
@@ -97,10 +97,7 @@ public:
     virtual void draw(NVGcontext *ctx) override;
 
 protected:	
-    std::shared_ptr<RenderPass> m_render_pass;
-#if defined(NANOGUI_USE_METAL)
-	std::shared_ptr<RenderPass> m_render_pass_resolved;
-#endif
+    std::unique_ptr<RenderPass> m_render_pass;
     bool m_draw_border;
     Color m_border_color;
 	uint8_t	m_samples;

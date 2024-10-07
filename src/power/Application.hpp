@@ -28,7 +28,7 @@ public:
 		
 	bool mouse_drag_event(const nanogui::Vector2i &p, const nanogui::Vector2i &rel, int button, int modifiers) override {
 		// Custom behavior for dragging the window itself
-		if (screen()->drag_active()) {
+		if (screen().drag_active()) {
 			set_visible(true);
 			set_position(m_pos + rel);
 		} else {

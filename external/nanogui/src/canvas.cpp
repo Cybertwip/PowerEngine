@@ -55,7 +55,7 @@ Canvas::Canvas(Widget& parent, Screen& screen, uint8_t samples,
 																 m_samples, 					 Texture::TextureFlags::RenderTarget
 																 ));
 	
-	m_render_pass = std::shared_ptr<RenderPass>(new RenderPass(
+	m_render_pass = std::unique_ptr<RenderPass>(new RenderPass(
 															   { color_texture->get(), *m_attachment_texture},
 															   depth_texture,
 															   m_has_stencil_buffer ? depth_texture : std::nullopt
