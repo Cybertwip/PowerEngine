@@ -12,7 +12,7 @@
 #include "MetalHelper.hpp"
 #endif
 Grid::Grid(ShaderManager& shaderManager)
-: mShaderWrapper(*shaderManager.get_shader("grid"))
+: mShaderWrapper(shaderManager.get_shader("grid"))
 {
 	mGridVertices = {
 		// positions

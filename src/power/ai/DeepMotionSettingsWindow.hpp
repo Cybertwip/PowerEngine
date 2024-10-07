@@ -83,9 +83,13 @@ private:
 	
 	std::shared_ptr<nanogui::Button> mSyncButton;
 	std::shared_ptr<nanogui::Button> mDeepMotionButton;
+	std::shared_ptr<nanogui::Button> mCloseButton;
+	std::shared_ptr<nanogui::Label> mStatusLabel;
 	std::shared_ptr<nanogui::Label> mApiBaseLabel;
 	std::shared_ptr<nanogui::Label> mClientIdLabel;
 	std::shared_ptr<nanogui::Label> mClientSecretLabel;
-
+	
 	std::shared_ptr<nanogui::Widget> mStatusPanel;
+	std::shared_ptr<nanogui::Widget> mTopPanel;
+	std::shared_ptr<nanogui::ImageView> mImageView;
 };

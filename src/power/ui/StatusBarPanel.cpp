@@ -30,7 +30,7 @@ StatusBarPanel::StatusBarPanel(std::shared_ptr<nanogui::Widget> parent, std::sha
 	mResourcesButton->set_enabled(false);
 	
 	// Resources panel setup
-	mResourcesPanel = std::make_shared<ResourcesPanel>(*parent.parent(), *rootNode, actorVisualManager, sceneTimeBar, meshActorLoader, shaderManager, deepMotionApiClient, uiManager);
+	mResourcesPanel = std::make_shared<ResourcesPanel>(parent->parent(), *rootNode, actorVisualManager, sceneTimeBar, meshActorLoader, shaderManager, deepMotionApiClient, uiManager);
 	mResourcesPanel->set_visible(true);
 	// Add widgets to resourcesPanel here
 	
@@ -40,20 +40,20 @@ StatusBarPanel::StatusBarPanel(std::shared_ptr<nanogui::Widget> parent, std::sha
 	mResourcesPanel->set_fixed_width(parent->parent()->fixed_width());
 	mResourcesPanel->set_fixed_height(parent->parent()->fixed_height() * 0.5f);
 	
-	applicationClickRegistrator([this, resourcesButton](int x, int y){
+	applicationClickRegistrator([this](int x, int y){
 		if (!mResourcesPanel->contains(nanogui::Vector2i(x, y))){
 			if (mIsPanelVisible) {
 				toggle_resources_panel(false);
 				
-				resourcesButton->set_pushed(false);
+				mResourcesButton->set_pushed(false);
 			}
 		}
 		
-		if (resourcesButton->contains(nanogui::Vector2i(x, y), true)) {
+		if (mResourcesButton->contains(nanogui::Vector2i(x, y), true)) {
 			rootNode->refresh();
 			mResourcesPanel->refresh_file_view();
 			toggle_resources_panel(!mIsPanelVisible);
-			resourcesButton->set_pushed(mIsPanelVisible);
+			mResourcesButton->set_pushed(mIsPanelVisible);
 		}
 	});
 }

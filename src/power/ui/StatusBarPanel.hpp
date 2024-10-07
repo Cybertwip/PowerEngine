@@ -38,4 +38,9 @@ private:
 	void animate_panel_position(const nanogui::Vector2i &targetPosition);
 	
 	std::shared_ptr<SceneTimeBar> mSceneTimeBar;
+	
+	std::shared_ptr<nanogui::Widget> mStatusBar;
+	
+	std::shared_ptr<nanogui::ToolButton> mResourcesButton;
+
 };
