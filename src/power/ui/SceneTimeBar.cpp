@@ -331,7 +331,7 @@ mNormalButtonColor(theme()->m_text_color) // Initialize normal button color
 		}
 	});
 	
-	mKeyBtn = sts::make_shared<nanogui::Button>(mKeyBtnWrapper, "", FA_KEY);
+	mKeyBtn = std::make_shared<nanogui::Button>(mKeyBtnWrapper, "", FA_KEY);
 	mKeyBtn->set_fixed_width(keyBtnWidth);
 	mKeyBtn->set_fixed_height(keyBtnHeight);
 	mKeyBtn->set_tooltip("Keyframe Tool");

@@ -9,7 +9,7 @@
 #include <cassert>
 #include <cstring>
 
-SelfContainedMeshBatch::SelfContainedMeshBatch(nanogui::RenderPass& renderPass, ShaderWrapper& shader)
+SelfContainedMeshBatch::SelfContainedMeshBatch(std::shared_ptr<nanogui::RenderPass> renderPass, ShaderWrapper& shader)
 : mRenderPass(renderPass), mShader(shader) {
 }
 
@@ -237,7 +237,7 @@ void SelfContainedMeshBatch::remove(std::reference_wrapper<Mesh> meshRef) {
 
 void SelfContainedMeshBatch::draw_content(const nanogui::Matrix4f& view,
 										  const nanogui::Matrix4f& projection) {
-	mRenderPass.pop_depth_test_state(mShader.identifier());
+	mRenderPass->pop_depth_test_state(mShader.identifier());
 	
 	for (size_t i = 0; i < mMeshes.size(); ++i) {
 		auto& mesh = mMeshes[i].get();

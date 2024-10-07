@@ -114,7 +114,7 @@ void MeshPicker::refresh_file_list() {
 		itemContainer->set_layout(std::make_shared<nanogui::BoxLayout>(
 														 nanogui::Orientation::Vertical, nanogui::Alignment::Middle, 0, 5));
 		
-		auto icon = new nanogui::Button(itemContainer, "");
+		auto icon = std::make_shared<nanogui::Button>(itemContainer, "");
 		
 		icon->set_fixed_size(nanogui::Vector2i(128, 128));
 		

@@ -43,10 +43,10 @@ mUpdate(true) {
 	mModelMatrix = glm::identity<glm::mat4>();
 
 	// Initialize MeshBatch with its shader
-	mMeshBatch = std::make_unique<SelfContainedMeshBatch>(*render_pass(), mMeshPreviewShader);
+	mMeshBatch = std::make_unique<SelfContainedMeshBatch>(render_pass(), mMeshPreviewShader);
 	
 	// Initialize SkinnedMeshBatch with its shader
-	mSkinnedMeshBatch = std::make_unique<SelfContainedSkinnedMeshBatch>(*render_pass(), mSkinnedMeshPreviewShader);
+	mSkinnedMeshBatch = std::make_unique<SelfContainedSkinnedMeshBatch>(render_pass(), mSkinnedMeshPreviewShader);
 }
 void SelfContainedMeshCanvas::set_active_actor(std::optional<std::reference_wrapper<Actor>> actor) {
 	clear();
