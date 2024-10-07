@@ -61,9 +61,9 @@ void Application::initialize() {
 	
 	mRenderCommon = std::make_shared<RenderCommon>(mUiCommon->scene_panel(), *mEntityRegistry, *mActorManager, *mCameraManager);
 	
-	mMeshBatch = std::make_unique<MeshBatch>(*mRenderCommon->canvas()->render_pass());
+	mMeshBatch = std::make_unique<MeshBatch>(mRenderCommon->canvas()->render_pass());
 	
-	mSkinnedMeshBatch = std::make_unique<SkinnedMeshBatch>(*mRenderCommon->canvas()->render_pass());
+	mSkinnedMeshBatch = std::make_unique<SkinnedMeshBatch>(mRenderCommon->canvas()->render_pass());
 	
 	mBatchUnit = std::make_unique<BatchUnit>(*mMeshBatch, *mSkinnedMeshBatch);
 	

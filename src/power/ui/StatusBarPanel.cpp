@@ -45,8 +45,8 @@ mApplicationClickRegistrator(applicationClickRegistrator) {
 	// Initial positioning
 	mResourcesPanel->set_position(nanogui::Vector2i(0, 0));
 	
-	mResourcesPanel->set_fixed_width(parent().parent().fixed_width());
-	mResourcesPanel->set_fixed_height(parent().parent().fixed_height() * 0.5f);
+	mResourcesPanel->set_fixed_width(parent.parent().fixed_width());
+	mResourcesPanel->set_fixed_height(parent.parent().fixed_height() * 0.5f);
 	
 	mApplicationClickRegistrator([this](int x, int y){
 		if (!mResourcesPanel->contains(nanogui::Vector2i(x, y))){

@@ -225,9 +225,9 @@ void TransformPanel::set_active_actor(std::optional<std::reference_wrapper<Actor
 		update_values_from(transformComponent);
 		
 		set_visible(true);
-		parent()->perform_layout(screen()->nvg_context());
+		parent().perform_layout(screen().nvg_context());
 	} else {
 		set_visible(false);
-		parent()->perform_layout(screen()->nvg_context());
+		parent().perform_layout(screen().nvg_context());
 	}
 }
