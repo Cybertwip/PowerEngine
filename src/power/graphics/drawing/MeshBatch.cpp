@@ -34,7 +34,7 @@ void MeshBatch::upload_material_data(ShaderWrapper& shader, const std::vector<st
 		// Set the diffuse texture (if it exists) or a dummy texture
 		std::string textureBaseName = "textures";
 		if (material.mHasDiffuseTexture) {
-			shader.set_texture(textureBaseName, *material.mTextureDiffuse, i);
+			shader.set_texture(textureBaseName, material.mTextureDiffuse, i);
 			textureSetCount++;
 		}
 	}
