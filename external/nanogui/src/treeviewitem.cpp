@@ -40,7 +40,7 @@ bool TreeViewItem::mouse_button_event(const Vector2i &p, int button, bool down, 
 }
 
 std::shared_ptr<TreeViewItem> TreeViewItem::add_node(const std::string &caption, std::function<void()> callback) {
-	auto child = std::make_shared<TreeViewItem>(*this, screen(), theme(), m_tree, caption, callback);
+	auto child = std::make_shared<TreeViewItem>(*this, screen(), m_tree, caption, callback);
     m_children.push_back(child);
     return child;
 }
