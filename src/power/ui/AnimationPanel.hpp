@@ -14,10 +14,8 @@ class TransformComponent;
 
 class AnimationPanel : public Panel {
 public:
-	AnimationPanel(nanogui::Widget&);
+	AnimationPanel(nanogui::Widget& parent, nanogui::Screen& screen);
 	~AnimationPanel();
-	
-	void initialize() override;
 
     void set_active_actor(std::optional<std::reference_wrapper<Actor>> actor);
 	

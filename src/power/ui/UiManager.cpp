@@ -262,7 +262,7 @@ UiManager::UiManager(std::shared_ptr<IActorSelectedRegistry> registry,
 	});
 	
 	// Initialize StatusBarPanel
-	mStatusBarPanel = std::make_shared<StatusBarPanel>(statusBar, mActorVisualManager, mSceneTimeBar,
+	mStatusBarPanel = std::make_shared<StatusBarPanel>(statusBar, screen, mActorVisualManager, mSceneTimeBar,
 										 mMeshActorLoader, mShaderManager, deepMotionApiClient,
 										 *this, applicationClickRegistrator);
 	

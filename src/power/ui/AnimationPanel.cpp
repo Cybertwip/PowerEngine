@@ -34,18 +34,10 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/quaternion.hpp>
 
-AnimationPanel::AnimationPanel(nanogui::Widget&)
-: Panel(parent, "Animation"), mActiveActor(std::nullopt), mCurrentTime(0) {
+AnimationPanel::AnimationPanel(nanogui::Widget& parent, nanogui::Screen& screen)
+: Panel(parent, screen, "Animation"), mActiveActor(std::nullopt), mCurrentTime(0) {
 	set_position(nanogui::Vector2i(0, 0));
 	set_layout(std::make_unique<nanogui::BoxLayout>(nanogui::Orientation::Vertical, nanogui::Alignment::Fill, 10, 10));
-}
-
-AnimationPanel::~AnimationPanel() {
-	
-}
-
-void AnimationPanel::initialize() {
-	Panel::initialize();
 	
 	
 	auto playbackLayout = std::make_shared<nanogui::GridLayout>(nanogui::Orientation::Horizontal, 2,
@@ -86,6 +78,10 @@ void AnimationPanel::initialize() {
 	mPreviewCanvas = std::make_shared<SelfContainedMeshCanvas>(mCanvasPanel);
 	
 	set_active_actor(std::nullopt);
+}
+
+AnimationPanel::~AnimationPanel() {
+	
 }
 
 void AnimationPanel::parse_file(const std::string& path) {
