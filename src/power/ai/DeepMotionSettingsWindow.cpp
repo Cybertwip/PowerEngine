@@ -69,7 +69,7 @@ mDeepMotionApiClient(deepMotionApiClient)
 	});
 	
 	// Client Secret Input
-	mClientSecretLabel = nanogui::Label(shared_from_this(), "Client Secret:", "sans-bold");
+	mClientSecretLabel = std::make_shared<nanogui::Label>(shared_from_this(), "Client Secret:", "sans-bold");
 	client_secret_box_ = std::make_shared<nanogui::TextBox>(shared_from_this(), "");
 	client_secret_box_->set_placeholder("Enter Client Secret");
 	client_secret_box_->set_editable(true);
