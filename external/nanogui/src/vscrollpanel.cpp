@@ -16,7 +16,7 @@
 
 NAMESPACE_BEGIN(nanogui)
 
-VScrollPanel::VScrollPanel(Widget *parent)
+VScrollPanel::VScrollPanel(std::shared_ptr<Widget> parent)
     : Widget(parent), m_child_preferred_height(0),
       m_scroll(0.f), m_update_layout(false) { }
 
@@ -28,7 +28,7 @@ void VScrollPanel::perform_layout(NVGcontext *ctx) {
     if (m_children.size() > 1)
         throw std::runtime_error("VScrollPanel should have one child.");
 
-    Widget *child = m_children[0];
+    std::shared_ptr<Widget> child = m_children[0];
     m_child_preferred_height = child->preferred_size(ctx).y();
 
     if (m_child_preferred_height > m_size.y()) {
@@ -117,7 +117,7 @@ bool VScrollPanel::scroll_event(const Vector2i &p, const Vector2f &rel) {
 void VScrollPanel::draw(NVGcontext *ctx) {
     if (m_children.empty())
         return;
-    Widget *child = m_children[0];
+    std::shared_ptr<Widget> child = m_children[0];
     int yoffset = 0;
     if (m_child_preferred_height > m_size.y())
         yoffset = -m_scroll*(m_child_preferred_height - m_size.y());

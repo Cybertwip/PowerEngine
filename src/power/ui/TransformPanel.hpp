@@ -26,13 +26,13 @@ private:
     nanogui::IntBox<int> *mYawRotate;
     nanogui::IntBox<int> *mRollRotate;
 
-    nanogui::FloatBox<float> *mXScale;
-    nanogui::FloatBox<float> *mYScale;
-    nanogui::FloatBox<float> *mZScale;
+	std::shared_ptr<nanogui::FloatBox<float>> mXScale;
+	std::shared_ptr<nanogui::FloatBox<float>> mYScale;
+	std::shared_ptr<nanogui::FloatBox<float>> mZScale;
 	
-	nanogui::Widget *mTranslateWidget;
-	nanogui::Widget *mRotateWidget;
-	nanogui::Widget *mScaleWidget;
+	std::shared_ptr<nanogui::Widget> mTranslateWidget;
+	std::shared_ptr<nanogui::Widget> mRotateWidget;
+	std::shared_ptr<nanogui::Widget> mScaleWidget;
     
     std::optional<std::reference_wrapper<Actor>> mActiveActor;
 	

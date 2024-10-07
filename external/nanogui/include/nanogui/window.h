@@ -24,7 +24,7 @@ NAMESPACE_BEGIN(nanogui)
 class NANOGUI_EXPORT Window : public Widget {
     friend class Popup;
 public:
-    Window(Widget *parent, const std::string &title = "Untitled");
+    Window(std::shared_ptr<Widget> parent, const std::string &title = "Untitled");
 
     /// Return the window title
     const std::string &title() const { return m_title; }
@@ -37,7 +37,7 @@ public:
 	void set_modal(bool modal);
 
     /// Return the panel used to house window buttons
-    Widget *button_panel();
+    std::shared_ptr<Widget> button_panel();
 
     /// Dispose the window
     void dispose();
@@ -56,7 +56,7 @@ public:
     /// Accept scroll events and propagate them to the widget under the mouse cursor
     virtual bool scroll_event(const Vector2i &p, const Vector2f &rel) override;
     /// Compute the preferred size of the widget
-    virtual Vector2i preferred_size(NVGcontext *ctx) const override;
+    virtual Vector2i preferred_size(NVGcontext *ctx) override;
     /// Invoke the associated layout generator to properly place child widgets, if any
     virtual void perform_layout(NVGcontext *ctx) override;
 protected:
@@ -64,7 +64,7 @@ protected:
     virtual void refresh_relative_placement();
 protected:
     std::string m_title;
-    Widget *m_button_panel;
+    std::shared_ptr<Widget> m_button_panel;
     bool m_modal;
     bool m_drag;
 };

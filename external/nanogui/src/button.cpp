@@ -16,13 +16,13 @@
 
 NAMESPACE_BEGIN(nanogui)
 
-Button::Button(Widget *parent, const std::string &caption, int icon)
+Button::Button(std::shared_ptr<Widget> parent, const std::string &caption, int icon)
     : Widget(parent), m_caption(caption), m_icon(icon),
       m_icon_position(IconPosition::LeftCentered), m_pushed(false),
       m_flags(NormalButton), m_background_color(Color(0, 0)),
       m_text_color(Color(0, 0)) { }
 
-Vector2i Button::preferred_size(NVGcontext *ctx) const {
+Vector2i Button::preferred_size(NVGcontext *ctx) {
     int font_size = m_font_size == -1 ? m_theme->m_button_font_size : m_font_size;
     nvgFontSize(ctx, font_size);
     nvgFontFace(ctx, "sans-bold");
@@ -55,7 +55,7 @@ bool Button::mouse_button_event(const Vector2i &p, int button, bool down, int mo
     Widget::mouse_button_event(p, button, down, modifiers);
     /* Temporarily increase the reference count of the button in case the
        button causes the parent window to be destructed */
-    ref<Button> self = this;
+    std::shared_ptr<Button> self = std::dynamic_pointer_cast<Button>(shared_from_this());
 
     if (m_enabled == 1 &&
         ((button == GLFW_MOUSE_BUTTON_1 && !(m_flags & MenuButton)) ||
@@ -65,8 +65,8 @@ bool Button::mouse_button_event(const Vector2i &p, int button, bool down, int mo
             if (m_flags & RadioButton) {
                 if (m_button_group.empty()) {
                     for (auto widget : parent()->children()) {
-                        Button *b = dynamic_cast<Button *>(widget);
-                        if (b != this && b && (b->flags() & RadioButton) && b->m_pushed) {
+                        auto b = std::dynamic_pointer_cast<Button>(widget);
+                        if (b != shared_from_this() && b && (b->flags() & RadioButton) && b->m_pushed) {
                             b->m_pushed = false;
                             if (b->m_change_callback)
                                 b->m_change_callback(false);
@@ -84,8 +84,8 @@ bool Button::mouse_button_event(const Vector2i &p, int button, bool down, int mo
             }
             if (m_flags & PopupButton) {
                 for (auto widget : parent()->children()) {
-                    Button *b = dynamic_cast<Button *>(widget);
-                    if (b != this && b && (b->flags() & PopupButton) && b->m_pushed) {
+                    auto b = std::dynamic_pointer_cast<Button>(widget);
+                    if (b != shared_from_this() && b && (b->flags() & PopupButton) && b->m_pushed) {
                         b->m_pushed = false;
                         if (b->m_change_callback)
                             b->m_change_callback(false);

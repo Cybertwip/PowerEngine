@@ -13,7 +13,9 @@ int main(int /* argc */, char ** /* argv */) {
 	nanogui::init();
 	
 	{
-		nanogui::ref<Application> app = new Application();
+		std::shared_ptr<Application> app = std::make_shared<Application>();
+		
+		app->initialize();
 		app->draw_all();
 		app->set_visible(true);
 		nanogui::mainloop();

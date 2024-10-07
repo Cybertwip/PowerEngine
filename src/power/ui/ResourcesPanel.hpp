@@ -11,6 +11,7 @@
 
 class IActorVisualManager;
 class DeepMotionApiClient;
+class DeepMotionSettingsWindow;
 class ImportWindow;
 class MeshActorImporter;
 class MeshActorExporter;
@@ -49,15 +50,15 @@ private:
 	DirectoryNode& mRootDirectoryNode;
 	std::string mSelectedDirectoryPath;
 	
-	nanogui::Widget *mFileView;
+	std::shared_ptr<Widget> mFileView;
 	
 	// New UI elements
-	nanogui::Widget *mToolbar;
-	nanogui::PopupButton *mAddButton;
-	nanogui::Button *mImportButton;
-	nanogui::Button *mExportButton; // New Export button
+	std::shared_ptr<Widget> mToolbar;
+	std::shared_ptr<nanogui::PopupButton> mAddButton;
+	std::shared_ptr<nanogui::Button> mImportButton;
+	std::shared_ptr<nanogui::Button> mExportButton; // New Export button
 	
-	nanogui::TextBox *mFilterBox; // New filter input box
+	std::shared_ptr<nanogui::TextBox> mFilterBox; // New filter input box
 	
 	// New member variable
 	std::string mFilterText;
@@ -72,19 +73,24 @@ private:
 	std::unique_ptr<ShaderWrapper> mMeshShader;
 	std::unique_ptr<ShaderWrapper> mSkinnedShader;
 	
-	std::vector<nanogui::Button*> mFileButtons;
+	std::vector<std::shared_ptr<nanogui::Button>> mFileButtons;
 	nanogui::Button* mSelectedButton;
 	std::shared_ptr<DirectoryNode> mSelectedNode;
 	nanogui::Color mNormalButtonColor;
 	nanogui::Color mSelectedButtonColor;
 	
-	ImportWindow* mImportWindow;
-	MeshPicker* mMeshPicker;
+	std::shared_ptr<ImportWindow> mImportWindow;
+	std::shared_ptr<MeshPicker> mMeshPicker;
 	
+	std::shared_ptr<DeepMotionSettingsWindow> mDeepMotionSettings;
+	
+	std::shared_ptr<nanogui::Button> mAnimationButton;
+	std::shared_ptr<nanogui::Button> mSceneButton;
+
 	std::unique_ptr<MeshActorImporter> mMeshActorImporter;
 	std::unique_ptr<MeshActorExporter> mMeshActorExporter;
 	
-	PromptWindow* mPromptWindow;
+	std::shared_ptr<PromptWindow> mPromptWindow;
 	SceneTimeBar& mSceneTimeBar;
 	
 	UiManager& mUiManager;

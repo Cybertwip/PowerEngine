@@ -14,7 +14,7 @@
 
 #include <iostream>
 
-Canvas::Canvas(Widget* parent, nanogui::Color backgroundColor) : nanogui::Canvas(parent, 1, true, true) {
+Canvas::Canvas(std::shared_ptr<Widget> parent, nanogui::Color backgroundColor) : nanogui::Canvas(parent, 1, true, true) {
     set_background_color(backgroundColor);
     set_fixed_size(parent->fixed_size());
 }
@@ -37,7 +37,7 @@ void Canvas::process_events() {
 	
 	// schedule here
 	if (mSnapshotCallback) {
-		nanogui::Screen *scr = screen();
+		auto scr = screen();
 		if (scr == nullptr)
 			throw std::runtime_error("Canvas::draw(): could not find parent screen!");
 		

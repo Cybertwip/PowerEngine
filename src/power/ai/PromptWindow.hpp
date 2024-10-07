@@ -37,7 +37,7 @@ class TextBox;
 
 class PromptWindow : public nanogui::Window {
 public:
-	PromptWindow(nanogui::Widget* parent, ResourcesPanel& resourcesPanel, DeepMotionApiClient& deepMotionApiClient, nanogui::RenderPass& renderpass, ShaderManager& shaderManager);
+	PromptWindow(std::shared_ptr<Widget> parent, std::shared_ptr<ResourcesPanel> resourcesPanel, DeepMotionApiClient& deepMotionApiClient, std::shared_ptr<nanogui::RenderPass> renderpass, ShaderManager& shaderManager);
 	
 	void Preview(const std::string& path, const std::string& directory);
 	

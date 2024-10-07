@@ -26,7 +26,7 @@ class NANOGUI_EXPORT ImagePanel : public Widget {
 public:
     typedef std::vector<std::pair<int, std::string>> Images;
 public:
-    ImagePanel(Widget *parent);
+    ImagePanel(std::shared_ptr<Widget> parent);
 
     void set_images(const Images &data) { m_images = data; }
     const Images& images() const { return m_images; }
@@ -38,7 +38,7 @@ public:
                                     int modifiers) override;
     virtual bool mouse_button_event(const Vector2i &p, int button, bool down,
                                     int modifiers) override;
-    virtual Vector2i preferred_size(NVGcontext *ctx) const override;
+    virtual Vector2i preferred_size(NVGcontext *ctx) override;
     virtual void draw(NVGcontext *ctx) override;
 
 protected:

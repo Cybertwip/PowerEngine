@@ -52,7 +52,7 @@ public:
      * \param widget
      *     The Widget whose child widgets will be positioned by the layout class..
      */
-    virtual void perform_layout(NVGcontext *ctx, Widget *widget) const = 0;
+    virtual void perform_layout(NVGcontext *ctx, std::shared_ptr<Widget> widget) = 0;
 
     /**
      * Compute the preferred size for a given layout and widget
@@ -67,7 +67,7 @@ public:
      *     The preferred size, accounting for things such as spacing, padding
      *     for icons, etc.
      */
-    virtual Vector2i preferred_size(NVGcontext *ctx, const Widget *widget) const = 0;
+    virtual Vector2i preferred_size(NVGcontext *ctx, std::shared_ptr<Widget> widget) = 0;
 };
 
 /**
@@ -126,10 +126,10 @@ public:
     /* Implementation of the layout interface */
 
     /// See \ref Layout::preferred_size.
-    virtual Vector2i preferred_size(NVGcontext *ctx, const Widget *widget) const override;
+    virtual Vector2i preferred_size(NVGcontext *ctx, std::shared_ptr<Widget> widget) override;
 
     /// See \ref Layout::perform_layout.
-    virtual void perform_layout(NVGcontext *ctx, Widget *widget) const override;
+    virtual void perform_layout(NVGcontext *ctx, std::shared_ptr<Widget> widget) override;
 
 protected:
     /// The Orientation of this BoxLayout.
@@ -206,10 +206,10 @@ public:
     /* Implementation of the layout interface */
 
     /// See \ref Layout::preferred_size.
-    virtual Vector2i preferred_size(NVGcontext *ctx, const Widget *widget) const override;
+    virtual Vector2i preferred_size(NVGcontext *ctx, std::shared_ptr<Widget> widget) override;
 
     /// See \ref Layout::perform_layout.
-    virtual void perform_layout(NVGcontext *ctx, Widget *widget) const override;
+    virtual void perform_layout(NVGcontext *ctx, std::shared_ptr<Widget> widget) override;
 
 protected:
     /// The margin of this GroupLayout.
@@ -314,14 +314,14 @@ public:
 
     /* Implementation of the layout interface */
     /// See \ref Layout::preferred_size.
-    virtual Vector2i preferred_size(NVGcontext *ctx, const Widget *widget) const override;
+    virtual Vector2i preferred_size(NVGcontext *ctx, std::shared_ptr<Widget> widget) override;
 
     /// See \ref Layout::perform_layout.
-    virtual void perform_layout(NVGcontext *ctx, Widget *widget) const override;
+    virtual void perform_layout(NVGcontext *ctx, std::shared_ptr<Widget> widget) override;
 
 protected:
     // Compute the maximum row and column sizes
-    void compute_layout(NVGcontext *ctx, const Widget *widget,
+    void compute_layout(NVGcontext *ctx, const std::shared_ptr<Widget> widget,
                         std::vector<int> *grid) const;
 
 protected:
@@ -448,12 +448,12 @@ public:
     void set_col_stretch(int index, float stretch) { m_col_stretch.at(index) = stretch; }
 
     /// Specify the anchor data structure for a given widget
-	void set_anchor(const Widget *widget, const Anchor &anchor) { m_anchor[widget] = anchor; }
+	void set_anchor(const std::shared_ptr<Widget> widget, const Anchor &anchor) { m_anchor[widget] = anchor; }
 
 	void shed_anchor() { m_anchor.clear(); }
 
     /// Retrieve the anchor data structure for a given widget
-    Anchor anchor(const Widget *widget) const {
+    Anchor anchor(const std::shared_ptr<Widget> widget) const {
         auto it = m_anchor.find(widget);
         if (it == m_anchor.end())
             throw std::runtime_error("Widget was not registered with the grid layout!");
@@ -463,14 +463,14 @@ public:
     /* Implementation of the layout interface */
 
     /// See \ref Layout::preferred_size.
-    virtual Vector2i preferred_size(NVGcontext *ctx, const Widget *widget) const override;
+    virtual Vector2i preferred_size(NVGcontext *ctx, std::shared_ptr<Widget> widget) override;
 
     /// See \ref Layout::perform_layout.
-    virtual void perform_layout(NVGcontext *ctx, Widget *widget) const override;
+    virtual void perform_layout(NVGcontext *ctx, std::shared_ptr<Widget> widget) override;
 
 protected:
     // Compute the maximum row and column sizes
-    void compute_layout(NVGcontext *ctx, const Widget *widget,
+    void compute_layout(NVGcontext *ctx, const std::shared_ptr<Widget> widget,
                         std::vector<int> *grid) const;
 
 protected:
@@ -487,7 +487,7 @@ protected:
     std::vector<float> m_row_stretch;
 
     /// The mapping of widgets to their specified anchor points.
-    std::unordered_map<const Widget *, Anchor> m_anchor;
+    std::unordered_map<std::shared_ptr<Widget>, Anchor> m_anchor;
 
     /// The margin around this AdvancedGridLayout.
     int m_margin;

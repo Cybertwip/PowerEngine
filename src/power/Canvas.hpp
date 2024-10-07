@@ -10,7 +10,7 @@ class ActorManager;
 class Canvas : public nanogui::Canvas
 {
    public:
-    Canvas(Widget* parent, nanogui::Color backgroundColor);
+    Canvas(std::shared_ptr<Widget> parent, nanogui::Color backgroundColor);
 
     virtual void draw_contents() override;
     

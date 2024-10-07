@@ -470,7 +470,7 @@ void UiManager::process_events() {
 	mCanvas.process_events();
 }
 
-StatusBarPanel& UiManager::status_bar_panel() {
-	return *mStatusBarPanel;
+std::shared_ptr<StatusBarPanel> UiManager::status_bar_panel() {
+	return mStatusBarPanel;
 }
 

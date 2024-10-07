@@ -8,11 +8,11 @@
 
 NAMESPACE_BEGIN(nanogui)
 
-RenderPass::RenderPass(const std::vector<Object *> &color_targets,
-					   Object *depth_target,
-					   Object *stencil_target,
-					   Object *blit_target)
-: m_targets(color_targets.size() + 2), m_targets_ref(color_targets.size() + 2),
+RenderPass::RenderPass(const std::vector<std::shared_ptr<Object>> &color_targets,
+					   std::shared_ptr<Object> depth_target,
+					   std::shared_ptr<Object> stencil_target,
+					   std::shared_ptr<Object> blit_target)
+: m_targets(color_targets.size() + 2),
 m_clear_color(color_targets.size()), m_clear_stencil(0),
 m_clear_depth(1.f), m_viewport_offset(0), m_viewport_size(0),
 m_framebuffer_size(0), m_depth_test(DepthTest::Less),
@@ -26,17 +26,7 @@ m_command_encoder(nullptr) {
 		m_targets[i + 2] = color_targets[i];
 		m_clear_color[i] = Color(0.f, 0.f, 0.f, 1.f);
 	}
-	
-	// Avoid a potential reference cycle involving 'RenderPass' and 'Screen'
-	for (size_t i = 0; i < m_targets.size(); ++i) {
-		Object *o = m_targets[i];
 		
-		bool inc_ref = o && dynamic_cast<Screen *>(o) == nullptr;
-		m_targets_ref[i] = inc_ref;
-		if (inc_ref)
-			o->inc_ref();
-	}
-	
 	if (!m_targets[0]) {
 		m_depth_write = false;
 		m_depth_test = DepthTest::Always;
@@ -46,8 +36,8 @@ m_command_encoder(nullptr) {
 	[MTLRenderPassDescriptor renderPassDescriptor];
 	
 	for (size_t i = 0; i < m_targets.size(); ++i) {
-		Texture *texture = dynamic_cast<Texture *>(m_targets[i]);
-		Screen *screen   = dynamic_cast<Screen *>(m_targets[i]);
+		auto texture = std::dynamic_pointer_cast<Texture>(m_targets[i]);
+		auto screen   = std::dynamic_pointer_cast<Screen>(m_targets[i]);
 		
 		if (texture) {
 			if (!(texture->flags() & Texture::TextureFlags::RenderTarget))
@@ -70,12 +60,7 @@ m_command_encoder(nullptr) {
 	set_clear_stencil(m_clear_stencil);
 }
 
-RenderPass::~RenderPass() {
-	for (size_t i = 0; i < m_targets.size(); ++i) {
-		if (m_targets_ref[i])
-			m_targets[i]->dec_ref();
-	}
-	
+RenderPass::~RenderPass() {	
 	(void) (__bridge_transfer MTLRenderPassDescriptor *) m_pass_descriptor;
 }
 void RenderPass::begin() {
@@ -87,8 +72,8 @@ void RenderPass::begin() {
 	MTLRenderPassDescriptor *pass_descriptor = (__bridge MTLRenderPassDescriptor *) m_pass_descriptor;
 	
 	for (size_t i = 0; i < m_targets.size(); ++i) {
-		Texture *texture = dynamic_cast<Texture *>(m_targets[i]);
-		Screen *screen = dynamic_cast<Screen *>(m_targets[i]);
+		auto texture = std::dynamic_pointer_cast<Texture>(m_targets[i]);
+		auto screen = std::dynamic_pointer_cast<Screen>(m_targets[i]);
 		
 		id<MTLTexture> texture_handle = nil;
 		
@@ -96,7 +81,7 @@ void RenderPass::begin() {
 			texture_handle = (__bridge id<MTLTexture>) texture->texture_handle();
 		} else if (screen) {
 			if (i < 2) {
-				Texture *screen_tex = screen->depth_stencil_texture();
+				auto screen_tex = screen->depth_stencil_texture();
 				if (screen_tex && (i == 0 ||
 								   (i == 1 && (screen_tex->pixel_format() ==
 											   Texture::PixelFormat::DepthStencil)))) {
@@ -149,11 +134,11 @@ void RenderPass::begin() {
 			
 			// **Begin Integration of Blit Target Handling**
 			// Check if blit_target is present and corresponds to the current color attachment
-			RenderPass *blit_rp = dynamic_cast<RenderPass *>(m_blit_target.get());
+			auto blit_rp = std::dynamic_pointer_cast<RenderPass> (m_blit_target);
 
 			if (blit_rp && i < blit_rp->targets().size()) {
 				if (blit_rp) {
-					const Texture *resolve_texture = dynamic_cast<Texture *>(blit_rp->targets()[i]);
+					auto resolve_texture = std::dynamic_pointer_cast<Texture>(blit_rp->targets()[i]);
 					if (resolve_texture) {
 						id<MTLTexture> resolve_texture_handle = (__bridge id<MTLTexture>) resolve_texture->texture_handle();
 						
@@ -217,7 +202,7 @@ void RenderPass::end() {
 
 void RenderPass::resize(const Vector2i &size) {
 	for (size_t i = 0; i < m_targets.size(); ++i) {
-		Texture *texture = dynamic_cast<Texture *>(m_targets[i]);
+		auto texture = std::dynamic_pointer_cast<Texture>(m_targets[i]);
 		if (texture)
 			texture->resize(size);
 	}
@@ -253,8 +238,8 @@ void RenderPass::clear_color(size_t index, const Color &color) {
 			[command_encoder setDepthStencilState: depth_state];
 			
 			if (!m_clear_shader) {
-				m_clear_shader = new Shader(
-											this,
+				m_clear_shader = std::make_shared<Shader>(
+											std::dynamic_pointer_cast<RenderPass>(shared_from_this()),
 											
 											"clear_shader",
 											
@@ -485,7 +470,7 @@ void RenderPass::blit_to(const Vector2i &src_offset,
 	}
 	
 	// Iterate over the source and destination textures
-	Screen *src_texture_obj = dynamic_cast<Screen *>(m_targets[2]);
+	auto src_texture_obj = std::dynamic_pointer_cast<Screen>(m_targets[2]);
 	
 	id<MTLTexture> src_texture = (__bridge id<MTLTexture>)src_texture_obj->metal_texture();
 	id<MTLTexture> current_dst_texture = (__bridge id<MTLTexture>)dst->texture_handle();
@@ -524,16 +509,16 @@ void RenderPass::blit_to(const Vector2i &src_offset,
 
 void RenderPass::blit_to(const Vector2i &src_offset,
 						 const Vector2i &src_size,
-						 Object *dst,
+						 std::shared_ptr<Object> dst,
 						 const Vector2i &dst_offset) {
 	
-	Screen *screen = dynamic_cast<Screen *>(dst);
-	RenderPass *rp = dynamic_cast<RenderPass *>(dst);
+	auto screen = std::dynamic_pointer_cast<Screen>(dst);
+	std::shared_ptr<RenderPass> rp = std::dynamic_pointer_cast<RenderPass>(dst);
 	std::vector<void *> dst_textures;
 	dst_textures.reserve(3);
 	
 	if (screen) {
-		Texture *depth_stencil_texture = screen->depth_stencil_texture();
+		auto depth_stencil_texture = screen->depth_stencil_texture();
 		if (depth_stencil_texture) {
 			dst_textures.push_back(depth_stencil_texture->texture_handle());
 		}
@@ -547,9 +532,9 @@ void RenderPass::blit_to(const Vector2i &src_offset,
 		}
 		dst_textures.push_back(screen->metal_texture());
 	} else if (rp) {
-		std::vector<Object *>& targets = rp->targets();
+		auto & targets = rp->targets();
 		for (size_t i = 0; i < targets.size(); ++i) {
-			Texture *texture = dynamic_cast<Texture *>(targets[i]);
+			auto texture = std::dynamic_pointer_cast<Texture>(targets[i]);
 			if (texture)
 				dst_textures.push_back(texture->texture_handle());
 			else
@@ -567,7 +552,7 @@ void RenderPass::blit_to(const Vector2i &src_offset,
 	[command_buffer blitCommandEncoder];
 	
 	for (size_t i = 0; i < std::min(dst_textures.size(), m_targets.size()); ++i) {
-		Texture *texture = dynamic_cast<Texture *>(m_targets[i]);
+		auto texture = std::dynamic_pointer_cast<Texture>(m_targets[i]);
 		id<MTLTexture> src_texture =
 		(__bridge id<MTLTexture>) (texture ? texture->texture_handle()
 								   : nullptr);

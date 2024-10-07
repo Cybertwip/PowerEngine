@@ -4,7 +4,7 @@
 
 class SharedSelfContainedMeshCanvas : public SelfContainedMeshCanvas {
 public:
-	SharedSelfContainedMeshCanvas(Widget* parent);
+	SharedSelfContainedMeshCanvas(std::shared_ptr<Widget> parent);
 	
 	void set_active_actor(std::shared_ptr<Actor> actor);
 

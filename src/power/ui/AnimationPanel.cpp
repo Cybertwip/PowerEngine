@@ -41,14 +41,14 @@ AnimationPanel::AnimationPanel(nanogui::Widget &parent)
 	auto *playbackLayout = new nanogui::GridLayout(nanogui::Orientation::Horizontal, 2,
 												   nanogui::Alignment::Middle, 0, 0);
 	
-	Widget *playbackPanel = new Widget(this);
+	std::shared_ptr<Widget> playbackPanel = new Widget(this);
 	
 	
 	playbackLayout->set_row_alignment(nanogui::Alignment::Fill);
 	
 	playbackPanel->set_layout(playbackLayout);
 	
-	Widget *canvasPanel = new Widget(this);
+	std::shared_ptr<Widget> canvasPanel = new Widget(this);
 	canvasPanel->set_layout(new nanogui::BoxLayout(nanogui::Orientation::Vertical, nanogui::Alignment::Middle, 0, 0));
 	
 	mReversePlayButton = new nanogui::ToolButton(playbackPanel, FA_BACKWARD);

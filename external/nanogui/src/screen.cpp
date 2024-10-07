@@ -383,7 +383,7 @@ m_stencil_buffer(stencil_buffer), m_float_buffer(float_buffer), m_redraw(false) 
 	
 #if defined(NANOGUI_USE_METAL)
 	if (depth_buffer) {
-		m_depth_texture = new Texture(
+		m_depth_texture = std::make_shared<Texture>(
 									m_stencil_buffer ? Texture::PixelFormat::DepthStencil
 									: Texture::PixelFormat::DepthStencil,
 									Texture::ComponentFormat::Float32,
@@ -467,7 +467,7 @@ void Screen::initialize(GLFWwindow *window, bool shutdown_glfw) {
 		throw std::runtime_error("Could not initialize NanoVG!");
 	
 	m_visible = glfwGetWindowAttrib(window, GLFW_VISIBLE) != 0;
-	set_theme(new Theme(m_nvg_context));
+	set_theme(std::make_shared<Theme>(m_nvg_context));
 	m_mouse_pos = Vector2i(0);
 	m_mouse_state = m_modifiers = 0;
 	m_drag_active = false;
@@ -479,7 +479,8 @@ void Screen::initialize(GLFWwindow *window, bool shutdown_glfw) {
 	for (size_t i = 0; i < (size_t) Cursor::CursorCount; ++i)
 		m_cursors[i] = glfwCreateStandardCursor(GLFW_ARROW_CURSOR + (int) i);
 		
-	set_screen(this);
+	throw "";
+	set_screen(std::dynamic_pointer_cast<Screen>(shared_from_this()));
 }
 
 Screen::~Screen() {
@@ -628,7 +629,7 @@ void Screen::draw_widgets() {
 	
 	if (elapsed > 0.5f) {
 		/* Draw tooltips */
-		const Widget *widget = find_widget(m_mouse_pos);
+		const std::shared_ptr<Widget> widget = find_widget(m_mouse_pos);
 		if (widget && !widget->tooltip().empty()) {
 			int tooltip_width = 150;
 			
@@ -738,7 +739,7 @@ void Screen::cursor_pos_callback_event(double x, double y) {
 		
 		bool ret = false;
 		if (!m_drag_active) {
-			Widget *widget = find_widget(p);
+			std::shared_ptr<Widget> widget = find_widget(p);
 			if (widget != nullptr && widget->cursor() != m_cursor) {
 				m_cursor = widget->cursor();
 				glfwSetCursor(m_glfw_window, m_cursors[(int) m_cursor]);
@@ -770,8 +771,8 @@ void Screen::mouse_button_callback_event(int button, int action, int modifiers) 
 	
 	try {
 		if (m_focus_path.size() > 1) {
-			const Window *window =
-			dynamic_cast<Window *>(m_focus_path[m_focus_path.size() - 2]);
+			auto window =
+			std::dynamic_pointer_cast<Window>(m_focus_path[m_focus_path.size() - 2]);
 			if (window && window->modal()) {
 				if (!window->contains(m_mouse_pos))
 					return;
@@ -800,7 +801,7 @@ void Screen::mouse_button_callback_event(int button, int action, int modifiers) 
 		
 		if (!m_drag_active && action == GLFW_PRESS && btn12) {
 			m_drag_widget = find_widget(m_mouse_pos);
-			if (m_drag_widget == this)
+			if (m_drag_widget == shared_from_this())
 				m_drag_widget = nullptr;
 			m_drag_active = m_drag_widget != nullptr;
 			if (!m_drag_active)
@@ -839,15 +840,15 @@ void Screen::drop_callback_event(int count, const char **filenames) {
 	std::vector<std::string> arg(count);
 	for (int i = 0; i < count; ++i)
 		arg[i] = filenames[i];
-	m_redraw |= drop_event(this, arg);
+	m_redraw |= drop_event(shared_from_this(), arg);
 }
 
 void Screen::scroll_callback_event(double x, double y) {
 	m_last_interaction = glfwGetTime();
 	try {
 		if (m_focus_path.size() > 1) {
-			const Window *window =
-			dynamic_cast<Window *>(m_focus_path[m_focus_path.size() - 2]);
+			auto window =
+			std::dynamic_pointer_cast<Window>(m_focus_path[m_focus_path.size() - 2]);
 			if (window && window->modal()) {
 				if (!window->contains(m_mouse_pos))
 					return;
@@ -891,7 +892,7 @@ void Screen::resize_callback_event(int, int) {
 }
 // src/screen.cpp
 
-void Screen::remove_from_focus(Widget *widget) {
+void Screen::remove_from_focus(std::shared_ptr<Widget> widget) {
 	if (widget == nullptr) {
 		// Optionally, log a warning instead of throwing
 		std::cerr << "Warning: Attempted to remove a nullptr from focus path.\n";
@@ -912,17 +913,17 @@ void Screen::remove_from_focus(Widget *widget) {
 	}
 }
 
-void Screen::update_focus(Widget *widget) {
+void Screen::update_focus(std::shared_ptr<Widget> widget) {
 	for (auto w: m_focus_path) {
 		if (!w->focused())
 			continue;
 		w->focus_event(false);
 	}
 	m_focus_path.clear();
-	Widget *window = nullptr;
+	std::shared_ptr<Widget> window = nullptr;
 	while (widget) {
 		m_focus_path.push_back(widget);
-		if (dynamic_cast<Window *>(widget))
+		if (std::dynamic_pointer_cast<Window>(widget))
 			window = widget;
 		widget = widget->parent();
 	}
@@ -930,10 +931,10 @@ void Screen::update_focus(Widget *widget) {
 		(*it)->focus_event(true);
 	
 	if (window)
-		move_window_to_front((Window *) window);
+		move_window_to_front(std::dynamic_pointer_cast<Window>(window));
 }
 
-void Screen::dispose_window(Window *window) {
+void Screen::dispose_window(std::shared_ptr<Window> window) {
 	if (std::find(m_focus_path.begin(), m_focus_path.end(), window) != m_focus_path.end())
 		m_focus_path.clear();
 	if (m_drag_widget == window)
@@ -941,7 +942,7 @@ void Screen::dispose_window(Window *window) {
 	remove_child(window);
 }
 
-void Screen::center_window(Window *window) {
+void Screen::center_window(std::shared_ptr<Window> window) {
 	if (window->size() == 0) {
 		window->set_size(window->preferred_size(m_nvg_context));
 		window->perform_layout(m_nvg_context);
@@ -949,7 +950,7 @@ void Screen::center_window(Window *window) {
 	window->set_position((m_size - window->size()) / 2);
 }
 
-void Screen::move_window_to_front(Window *window) {
+void Screen::move_window_to_front(std::shared_ptr<Window> window) {
 	m_children.erase(std::remove(m_children.begin(), m_children.end(), window), m_children.end());
 	m_children.push_back(window);
 	/* Brute force topological sort (no problem for a few windows..) */
@@ -961,7 +962,7 @@ void Screen::move_window_to_front(Window *window) {
 				base_index = index;
 		changed = false;
 		for (size_t index = 0; index < m_children.size(); ++index) {
-			Popup *pw = dynamic_cast<Popup *>(m_children[index]);
+			auto pw = std::dynamic_pointer_cast<Popup>(m_children[index]);
 			if (pw && pw->parent_window() == window && index < base_index) {
 				move_window_to_front(pw);
 				changed = true;
@@ -976,7 +977,7 @@ bool Screen::tooltip_fade_in_progress() {
 	if (elapsed < 0.25f || elapsed > 1.25f)
 		return false;
 	/* Temporarily increase the frame rate to fade in the tooltip */
-	Widget *widget = find_widget(m_mouse_pos);
+	std::shared_ptr<Widget> widget = find_widget(m_mouse_pos);
 	return widget && !widget->tooltip().empty();
 }
 

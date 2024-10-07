@@ -21,32 +21,36 @@
 
 #include <sstream>
 
-ImportWindow::ImportWindow(nanogui::Widget* parent, ResourcesPanel& resourcesPanel, nanogui::RenderPass& renderpass, ShaderManager& shaderManager) : nanogui::Window(parent->screen()), mResourcesPanel(resourcesPanel), mDummyAnimationTimeProvider(60 * 30) {
+ImportWindow::ImportWindow(std::shared_ptr<Widget> parent, std::shared_ptr<ResourcesPanel> resourcesPanel, std::shared_ptr<nanogui::RenderPass> renderpass, ShaderManager& shaderManager) : nanogui::Window(parent->screen()), mResourcesPanel(resourcesPanel), mDummyAnimationTimeProvider(60 * 30), mRenderPass(renderpass) {
 	
 	set_fixed_size(nanogui::Vector2i(400, 320));
-	set_layout(new nanogui::GroupLayout());
+	set_layout(std::make_shared<nanogui::GroupLayout>());
 	set_title("Import Asset");
 	
+}
+
+void ImportWindow::Initialize() {
+	
 	// Close Button
-	auto close_button = new nanogui::Button(button_panel(), "X");
-	close_button->set_fixed_size(nanogui::Vector2i(20, 20));
-	close_button->set_callback([this]() {
+	mCloseButton = std::make_shared<nanogui::Button>(button_panel(), "X");
+	mCloseButton->set_fixed_size(nanogui::Vector2i(20, 20));
+	mCloseButton->set_callback([this]() {
 		mPreviewCanvas->set_update(false);
 		
 		mPreviewCanvas->set_active_actor(nullptr);
-
+		
 		this->set_visible(false);
 		this->set_modal(false);
 	});
 	
-	mPreviewCanvas = new SharedSelfContainedMeshCanvas(this);
-
-	mMeshBatch = std::make_unique<SelfContainedMeshBatch>(renderpass, mPreviewCanvas->get_mesh_shader());
+	mPreviewCanvas = new SharedSelfContainedMeshCanvas(shared_from_this());
 	
-	mSkinnedMeshBatch = std::make_unique<SelfContainedSkinnedMeshBatch>(renderpass, mPreviewCanvas->get_skinned_mesh_shader());
+	mMeshBatch = std::make_unique<SelfContainedMeshBatch>(mRenderPass, mPreviewCanvas->get_mesh_shader());
+	
+	mSkinnedMeshBatch = std::make_unique<SelfContainedSkinnedMeshBatch>(mRenderPass, mPreviewCanvas->get_skinned_mesh_shader());
 	
 	mBatchUnit = std::make_unique<BatchUnit>(*mMeshBatch, *mSkinnedMeshBatch);
-
+	
 	mMeshActorBuilder = std::make_unique<MeshActorBuilder>(*mBatchUnit);
 	
 	
@@ -57,33 +61,33 @@ ImportWindow::ImportWindow(nanogui::Widget* parent, ResourcesPanel& resourcesPan
 	mMeshActorImporter = std::make_unique<MeshActorImporter>();
 	
 	// Create a panel or container for checkboxes using GridLayout
-	auto checkbox_panel = new nanogui::Widget(this);
-	checkbox_panel->set_layout(new nanogui::GridLayout(
-													   nanogui::Orientation::Horizontal, // Layout orientation
-													   2,                               // Number of columns
-													   nanogui::Alignment::Minimum,      // Alignment within cells
-													   0,                              // Column padding
-													   0                               // Row padding
-													   ));
+	mCheckboxPanel = std::make_shared<nanogui::Widget>(shared_from_this());
+	mCheckboxPanel->set_layout(std::make_shared<nanogui::GridLayout>(
+																	 nanogui::Orientation::Horizontal, // Layout orientation
+																	 2,                               // Number of columns
+																	 nanogui::Alignment::Minimum,      // Alignment within cells
+																	 0,                              // Column padding
+																	 0                               // Row padding
+																	 ));
 	
-
+	
 	// Create "Mesh" checkbox
-	mMeshCheckbox = new nanogui::CheckBox(checkbox_panel, "Mesh");
+	mMeshCheckbox = std::make_shared<nanogui::CheckBox>(mCheckboxPanel, "Mesh");
 	mMeshCheckbox->set_checked(true); // Default state as needed
 	
 	// Create "Animations" checkbox
-	mAnimationsCheckbox = new nanogui::CheckBox(checkbox_panel, "Animations");
+	mAnimationsCheckbox = std::make_shared<nanogui::CheckBox>(mCheckboxPanel, "Animations");
 	mAnimationsCheckbox->set_checked(true); // Default state as needed
-
+	
 	
 	// Create "Import" button
-	auto importButton = new nanogui::Button(this, "Import");
-	importButton->set_callback([this]() {
+	mImportButton = std::make_shared<nanogui::Button>(shared_from_this(), "Import");
+	mImportButton->set_callback([this]() {
 		nanogui::async([this](){this->ImportIntoProject();});
 	});
-	importButton->set_tooltip("Import the selected asset with the chosen options");
+	mImportButton->set_tooltip("Import the selected asset with the chosen options");
 	
-	importButton->set_fixed_width(256);
+	mImportButton->set_fixed_width(256);
 }
 
 void ImportWindow::Preview(const std::string& path, const std::string& directory) {
@@ -152,7 +156,7 @@ void ImportWindow::ImportIntoProject() {
 		}
 
 		nanogui::async([this](){
-			mResourcesPanel.refresh_file_view();
+			mResourcesPanel->refresh_file_view();
 		});
 		
 		mPreviewCanvas->set_update(false);

@@ -31,7 +31,7 @@ public:
      *     The color initially selected by this ColorPicker (default: Red).
      */
 
-    ColorPicker(Widget *parent, const Color& color = Color(1.f, 0.f, 0.f, 1.f));
+    ColorPicker(std::shared_ptr<Widget> parent, const Color& color = Color(1.f, 0.f, 0.f, 1.f));
 
     /// The callback executed when the ColorWheel changes.
     const std::function<void(const Color &)> &callback() const { return m_callback; }
@@ -89,7 +89,7 @@ protected:
     std::function<void(const Color &)> m_final_callback;
 
     /// The ColorWheel for this ColorPicker (the actual widget allowing selection).
-    ColorWheel *m_color_wheel;
+	std::shared_ptr<ColorWheel> m_color_wheel;
 
     /**
      * The Button used to signal that the current value on the ColorWheel is the
@@ -102,7 +102,7 @@ protected:
      * Similarly, the \ref nanogui::ColorPicker::m_callback function is only
      * called when a user selects a new Color using by clicking this Button.
      */
-    Button *m_pick_button;
+    std::shared_ptr<Button> m_pick_button;
 
     /**
      * Remains the Color of the active color selection, until the user picks a
@@ -111,7 +111,7 @@ protected:
      * caption of this Button is ``"Reset"``.  You can change it using
      * \ref nanogui::ColorPicker::set_reset_button_caption if you need.
      */
-    Button *m_reset_button;
+	std::shared_ptr<Button> m_reset_button;
 };
 
 NAMESPACE_END(nanogui)

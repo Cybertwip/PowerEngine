@@ -45,7 +45,7 @@ glm::vec3 ScreenToWorld(glm::vec2 screenPos, float depth, glm::mat4 projectionMa
 } // namespace
 
 // Constructor Implementation
-SceneTimeBar::SceneTimeBar(nanogui::Widget* parent, ActorManager& actorManager, AnimationTimeProvider& animationTimeProvider, IActorSelectedRegistry& registry, int width, int height)
+SceneTimeBar::SceneTimeBar(nanogui::std::shared_ptr<Widget> parent, ActorManager& actorManager, AnimationTimeProvider& animationTimeProvider, IActorSelectedRegistry& registry, int width, int height)
 : nanogui::Widget(parent),
 mActorManager(actorManager),
 mAnimationTimeProvider(animationTimeProvider),
@@ -78,7 +78,7 @@ mNormalButtonColor(theme()->m_text_color) // Initialize normal button color
 	set_layout(new nanogui::BoxLayout(nanogui::Orientation::Vertical, nanogui::Alignment::Maximum, 1, 1));
 	
 	// Slider Wrapper
-	nanogui::Widget* sliderWrapper = new nanogui::Widget(this);
+	nanogui::std::shared_ptr<Widget> sliderWrapper = new nanogui::Widget(this);
 	sliderWrapper->set_layout(new nanogui::BoxLayout(nanogui::Orientation::Horizontal, nanogui::Alignment::Fill, 1, 1));
 	
 	auto normalButtonColor = theme()->m_text_color;
@@ -109,7 +109,7 @@ mNormalButtonColor(theme()->m_text_color) // Initialize normal button color
 	});
 	
 	// Buttons Wrapper
-	nanogui::Widget* buttonWrapperWrapper = new nanogui::Widget(this);
+	nanogui::std::shared_ptr<Widget> buttonWrapperWrapper = new nanogui::Widget(this);
 	buttonWrapperWrapper->set_layout(new nanogui::BoxLayout(nanogui::Orientation::Vertical, nanogui::Alignment::Middle, 1, 1));
 	
 	// Time Counter Display
@@ -121,7 +121,7 @@ mNormalButtonColor(theme()->m_text_color) // Initialize normal button color
 	mTimeLabel->set_value("00:00:00:00");
 	
 	// Buttons Horizontal Layout
-	nanogui::Widget* buttonWrapper = new nanogui::Widget(buttonWrapperWrapper);
+	nanogui::std::shared_ptr<Widget> buttonWrapper = new nanogui::Widget(buttonWrapperWrapper);
 	buttonWrapper->set_layout(new nanogui::BoxLayout(nanogui::Orientation::Horizontal, nanogui::Alignment::Middle, 10, 5));
 	
 	// Rewind Button
@@ -295,7 +295,7 @@ mNormalButtonColor(theme()->m_text_color) // Initialize normal button color
 	});
 	
 	// Keyframe Buttons Wrapper
-	nanogui::Widget* keyBtnWrapper = new nanogui::Widget(this);
+	nanogui::std::shared_ptr<Widget> keyBtnWrapper = new nanogui::Widget(this);
 	keyBtnWrapper->set_layout(new nanogui::BoxLayout(nanogui::Orientation::Horizontal, nanogui::Alignment::Middle, 1, 1));
 	
 	mPrevKeyBtn = new nanogui::Button(keyBtnWrapper, "", FA_STEP_BACKWARD);

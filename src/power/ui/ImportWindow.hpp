@@ -27,7 +27,9 @@ class RenderPass;
 
 class ImportWindow : public nanogui::Window {
 public:
-	ImportWindow(nanogui::Widget* parent, ResourcesPanel& resourcesPanel, nanogui::RenderPass& renderpass, ShaderManager& shaderManager);
+	ImportWindow(std::shared_ptr<Widget> parent, std::shared_ptr<ResourcesPanel> resourcesPanel, std::shared_ptr<nanogui::RenderPass> renderpass, ShaderManager& shaderManager);
+	
+	void Initialize();
 	
 	void Preview(const std::string& path, const std::string& directory);
 
@@ -36,7 +38,7 @@ public:
 private:
 	void ImportIntoProject();
 	
-	ResourcesPanel& mResourcesPanel;
+	std::shared_ptr<ResourcesPanel> mResourcesPanel;
 	
 	std::unique_ptr<IMeshBatch> mMeshBatch;
 	std::unique_ptr<ISkinnedMeshBatch> mSkinnedMeshBatch;
@@ -45,11 +47,17 @@ private:
 
 	std::unique_ptr<MeshActorBuilder> mMeshActorBuilder;
 
-	SharedSelfContainedMeshCanvas* mPreviewCanvas;
+	std::shared_ptr<SharedSelfContainedMeshCanvas> mPreviewCanvas;
 
-	nanogui::CheckBox* mMeshCheckbox;
-	nanogui::CheckBox* mAnimationsCheckbox;
+	std::shared_ptr<nanogui::CheckBox> mMeshCheckbox;
+	std::shared_ptr<nanogui::CheckBox> mAnimationsCheckbox;
+	
+	std::shared_ptr<nanogui::Button> mCloseButton;
+	std::shared_ptr<nanogui::Button> mImportButton;
+	std::shared_ptr<nanogui::Widget> mCheckboxPanel;
 
+	std::shared_ptr<nanogui::RenderPass> mRenderPass;
+	
 	entt::registry mDummyRegistry;
 	AnimationTimeProvider mDummyAnimationTimeProvider;
 	

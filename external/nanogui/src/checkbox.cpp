@@ -15,7 +15,7 @@
 
 NAMESPACE_BEGIN(nanogui)
 
-CheckBox::CheckBox(Widget *parent, const std::string &caption,
+CheckBox::CheckBox(std::shared_ptr<Widget> parent, const std::string &caption,
                    const std::function<void(bool) > &callback)
     : Widget(parent), m_caption(caption), m_pushed(false), m_checked(false),
       m_callback(callback) {
@@ -44,7 +44,7 @@ bool CheckBox::mouse_button_event(const Vector2i &p, int button, bool down,
     return false;
 }
 
-Vector2i CheckBox::preferred_size(NVGcontext *ctx) const {
+Vector2i CheckBox::preferred_size(NVGcontext *ctx) {
     if (m_fixed_size != Vector2i(0))
         return m_fixed_size;
     nvgFontSize(ctx, font_size());

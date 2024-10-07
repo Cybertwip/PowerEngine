@@ -27,14 +27,14 @@ public:
     using PixelCallback = std::function<void(const Vector2i &, char **, size_t)>;
 
     /// Initialize the widget
-    ImageView(Widget *parent);
+    ImageView(std::shared_ptr<Widget> parent);
 
     /// Return the currently active image
-    Texture *image() { return m_image; }
+    std::shared_ptr<Texture> image() { return m_image; }
     /// Return the currently active image (const version)
-    const Texture *image() const { return m_image.get(); }
+    const std::shared_ptr<Texture> image() const { return m_image; }
     /// Set the currently active image
-    void set_image(Texture *image);
+    void set_image(std::shared_ptr<Texture> image);
 
     /// Center the image on the screen
     void center();
@@ -60,9 +60,9 @@ public:
     void set_scale(float scale);
 
     /// Convert a position within the widget to a pixel position in the image
-    Vector2f pos_to_pixel(const Vector2f &p) const;
+    Vector2f pos_to_pixel(const Vector2f &p);
     /// Convert a pixel position in the image to a position within the widget
-    Vector2f pixel_to_pos(const Vector2f &p) const;
+    Vector2f pixel_to_pos(const Vector2f &p);
 
     // Widget implementation
     virtual bool keyboard_event(int key, int scancode, int action, int modifiers) override;
@@ -71,8 +71,8 @@ public:
     virtual void draw_contents() override;
 
 protected:
-    nanogui::ref<Shader> m_image_shader;
-    nanogui::ref<Texture> m_image;
+    std::shared_ptr<Shader> m_image_shader;
+    std::shared_ptr<Texture> m_image;
     float m_scale = 0;
     Vector2f m_offset = 0;
     bool m_draw_image_border;

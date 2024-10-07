@@ -22,7 +22,7 @@
 
 NAMESPACE_BEGIN(nanogui)
 
-TextBox::TextBox(Widget *parent, const std::string &value)
+TextBox::TextBox(std::shared_ptr<Widget> parent, const std::string &value)
 : Widget(parent),
 m_editable(false),
 m_spinnable(false),
@@ -57,12 +57,12 @@ void TextBox::set_editable(bool editable) {
 	set_cursor(editable ? Cursor::IBeam : Cursor::Arrow);
 }
 
-void TextBox::set_theme(Theme *theme) {
+void TextBox::set_theme(std::shared_ptr<Theme> theme) {
 	Widget::set_theme(theme);
 	if (m_theme)
 		m_font_size = m_theme->m_text_box_font_size;
 }
-Vector2i TextBox::preferred_size(NVGcontext *ctx) const {
+Vector2i TextBox::preferred_size(NVGcontext *ctx) {
 	Vector2i size(0, font_size() * 1.4f);
 	
 	float uw = 0;
@@ -518,7 +518,7 @@ bool TextBox::check_format(const std::string &input, const std::string &format) 
 
 bool TextBox::copy_selection() {
 	if (m_selection_pos > -1) {
-		Screen *sc = screen();
+		auto sc = screen();
 		if (!sc)
 			return false;
 		
@@ -537,7 +537,7 @@ bool TextBox::copy_selection() {
 }
 
 void TextBox::paste_from_clipboard() {
-	Screen *sc = screen();
+	auto sc = screen();
 	if (!sc)
 		return;
 	const char* cbstr = glfwGetClipboardString(sc->glfw_window());

@@ -25,7 +25,7 @@ NAMESPACE_BEGIN(nanogui)
  */
 class NANOGUI_EXPORT VScrollPanel : public Widget {
 public:
-    VScrollPanel(Widget *parent);
+    VScrollPanel(std::shared_ptr<Widget> parent);
 
     /**
      * Return the current scroll amount as a value between 0 and 1. 0 means
@@ -40,7 +40,7 @@ public:
     void set_scroll(float scroll) { m_scroll = scroll; }
 
     virtual void perform_layout(NVGcontext *ctx) override;
-    virtual Vector2i preferred_size(NVGcontext *ctx) const override;
+    virtual Vector2i preferred_size(NVGcontext *ctx) override;
     virtual bool mouse_button_event(const Vector2i &p, int button, bool down,
                                     int modifiers) override;
     virtual bool mouse_drag_event(const Vector2i &p, const Vector2i &rel,

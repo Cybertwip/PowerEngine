@@ -130,16 +130,16 @@ mUiManager(uiManager)
 	mSelectedButtonColor = mNormalButtonColor + nanogui::Color(0.25f, 0.25f, 0.32f, 1.0f);
 	
 	// Set the layout
-	set_layout(new nanogui::BoxLayout(nanogui::Orientation::Vertical, nanogui::Alignment::Fill, 0, 10));
+	set_layout(std::make_shared<nanogui::BoxLayout>(nanogui::Orientation::Vertical, nanogui::Alignment::Fill, 0, 10));
 	
 	// Create the toolbar at the top
-	mToolbar = new nanogui::Widget(this);
-	mToolbar->set_layout(new nanogui::BoxLayout(
+	mToolbar = std::make_shared<nanogui::Widget>(shared_from_this());
+	mToolbar->set_layout(std::make_shared<nanogui::BoxLayout>(
 												nanogui::Orientation::Horizontal, nanogui::Alignment::Middle, 10, 10));
 	
-	mPromptWindow = new PromptWindow(parent.window(), *this, deepMotionApiClient, shaderManager.render_pass(), shaderManager);
+	mPromptWindow = std::make_shared<PromptWindow>(parent.window(), shared_from_this(), deepMotionApiClient, shaderManager.render_pass(), shaderManager);
 	
-	mMeshPicker = new MeshPicker(parent.window(), mRootDirectoryNode, [this](const std::string& modelPath){
+	mMeshPicker = std::make_shared<MeshPicker>(parent.window(), mRootDirectoryNode, [this](const std::string& modelPath){
 		mMeshPicker->set_visible(false);
 		mMeshPicker->set_modal(false);
 		
@@ -152,48 +152,48 @@ mUiManager(uiManager)
 	mMeshPicker->set_modal(false);
 	
 	/* Create the DeepMotion Settings Window (initially hidden) */
-	auto deepmotion_settings = new DeepMotionSettingsWindow(parent.window(), deepMotionApiClient, [this](){
+	mDeepMotionSettings = std::make_shared<DeepMotionSettingsWindow>(parent.window(), deepMotionApiClient, [this](){
 		mMeshPicker->set_visible(true);
 		mMeshPicker->set_modal(true);
 	});
-	deepmotion_settings->set_visible(false);
-	deepmotion_settings->set_modal(false);
+	mDeepMotionSettings->set_visible(false);
+	mDeepMotionSettings->set_modal(false);
 	
-	mImportWindow = new ImportWindow(parent.window(), *this, shaderManager.render_pass(), shaderManager);
+	mImportWindow = new ImportWindow(parent.window(), shared_from_this(), shaderManager.render_pass(), shaderManager);
 	
 	mImportWindow->set_visible(false);
 	mImportWindow->set_modal(false);
 	
 	// Add the Add Asset button with a "+" icon
-	mAddButton = new nanogui::PopupButton(mToolbar, "Add");
+	mAddButton = std::make_shared<nanogui::PopupButton>(mToolbar, "Add");
 	mAddButton->set_icon(FA_PLUS);
 	mAddButton->set_chevron_icon(0);
 	mAddButton->set_tooltip("Add Asset");
 	
-	auto sceneButton = new nanogui::Button(mAddButton->popup(), "Scene");
+	mSceneButton = std::make_shared<nanogui::Button>(mAddButton->popup(), "Scene");
 	
-	sceneButton->set_icon(FA_HAND_PAPER);
+	mSceneButton->set_icon(FA_HAND_PAPER);
 	
-	auto animationButton = new nanogui::Button(mAddButton->popup(), "Animation");
+	mAnimationButton = std::make_shared<nanogui::Button>(mAddButton->popup(), "Animation");
 	
-	animationButton->set_icon(FA_RUNNING);
+	mAnimationButton->set_icon(FA_RUNNING);
 	
-	animationButton->set_callback([deepmotion_settings, this](){
+	mAnimationButton->set_callback([deepmotion_settings, this](){
 		//		if (deepmotion_settings->session_cookie().empty()) {
-		deepmotion_settings->set_visible(true);
-		deepmotion_settings->set_modal(true);
+		mDeepMotionSettings->set_visible(true);
+		mDeepMotionSettings->set_modal(true);
 		
-		mAddButton->set_pushed(false);
-		mAddButton->popup()->set_visible(false);
+		mDeepMotionSettings->set_pushed(false);
+		mDeepMotionSettings->popup()->set_visible(false);
 		//		}
 	});
 	
 	mAddButton->popup()->perform_layout(screen()->nvg_context());
 	
-	deepmotion_settings->perform_layout(screen()->nvg_context());
+	mDeepMotionSettings->perform_layout(screen()->nvg_context());
 	
 	// Add the Import Assets button with a "+" icon
-	mImportButton = new nanogui::Button(mToolbar, "Import");
+	mImportButton = std::make_shared<nanogui::Button>(mToolbar, "Import");
 	mImportButton->set_icon(FA_UPLOAD);
 	mImportButton->set_tooltip("Import Assets");
 	mImportButton->set_callback([this]() {
@@ -201,18 +201,15 @@ mUiManager(uiManager)
 	});
 	
 	// Add the Export Assets button
-	mExportButton = new nanogui::Button(mToolbar, "Export");
+	mExportButton = std::make_shared<nanogui::Button>(mToolbar, "Export");
 	mExportButton->set_icon(FA_DOWNLOAD);
 	mExportButton->set_tooltip("Export Assets");
 	mExportButton->set_callback([this]() {
 		export_assets();
 	});
-	
-	// Add a spacer
-	new nanogui::Widget(mToolbar); // Acts as a spacer to push the filter box to the right
-	
+		
 	// Add the Filter input box
-	mFilterBox = new nanogui::TextBox(mToolbar, "");
+	mFilterBox = std::make_shared<nanogui::TextBox>(mToolbar, "");
 	mFilterBox->set_placeholder("Filter");
 	mFilterBox->set_editable(true);
 	mFilterBox->set_fixed_size(nanogui::Vector2i(150, 25));
@@ -229,8 +226,8 @@ mUiManager(uiManager)
 	});
 	
 	// Create the file view below the toolbar
-	mFileView = new nanogui::Widget(this);
-	auto gridLayout = new nanogui::AdvancedGridLayout(
+	mFileView = std::make_shared<nanogui::Widget>(shared_from_this());
+	auto gridLayout = std::make_shared<nanogui::AdvancedGridLayout>(
 													  /* columns */ {144, 144, 144, 144, 144, 144, 144, 144}, // Initial column widths (can be adjusted)
 													  /* rows */ {},                // Start with no predefined rows
 													  /* margin */ 8
@@ -311,7 +308,7 @@ void ResourcesPanel::refresh_file_view() {
 				}
 				
 				// Create a container widget for the file item
-				nanogui::Widget* itemContainer = new nanogui::Widget(mFileView);
+				nanogui::std::shared_ptr<Widget> itemContainer = new nanogui::Widget(mFileView);
 				itemContainer->set_fixed_size(nanogui::Vector2i(150, 150)); // Set desired size for each item
 				
 				// Calculate grid position based on current index and number of columns
@@ -532,7 +529,7 @@ int ResourcesPanel::get_icon_for_file(const DirectoryNode& node) {
 
 bool ResourcesPanel::mouse_button_event(const nanogui::Vector2i &p, int button, bool down, int modifiers) {
 	if (down && button == GLFW_MOUSE_BUTTON_1) {
-		nanogui::Widget* widget = find_widget(p);
+		nanogui::std::shared_ptr<Widget> widget = find_widget(p);
 		bool clickOnButton = false;
 		for (auto fileButton : mFileButtons) {
 			if (widget == fileButton) {

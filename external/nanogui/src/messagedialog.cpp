@@ -16,16 +16,16 @@
 
 NAMESPACE_BEGIN(nanogui)
 
-MessageDialog::MessageDialog(Widget *parent, Type type, const std::string &title,
+MessageDialog::MessageDialog(std::shared_ptr<Widget> parent, Type type, const std::string &title,
               const std::string &message,
               const std::string &button_text,
               const std::string &alt_button_text, bool alt_button) : Window(parent, title) {
-    set_layout(new BoxLayout(Orientation::Vertical,
+    set_layout(std::make_shared<BoxLayout>(Orientation::Vertical,
                             Alignment::Middle, 10, 10));
     set_modal(true);
 
-    Widget *panel1 = new Widget(this);
-    panel1->set_layout(new BoxLayout(Orientation::Horizontal,
+    std::shared_ptr<Widget> panel1 = std::make_shared<Widget>(shared_from_this());
+    panel1->set_layout(std::make_shared<BoxLayout>(Orientation::Horizontal,
                                      Alignment::Middle, 10, 15));
     int icon = 0;
     switch (type) {
@@ -35,10 +35,10 @@ MessageDialog::MessageDialog(Widget *parent, Type type, const std::string &title
     }
     Label *icon_label = new Label(panel1, std::string(utf8(icon).data()), "icons");
     icon_label->set_font_size(50);
-    m_message_label = new Label(panel1, message);
+    m_message_label = std::make_shared<Label>(panel1, message);
     m_message_label->set_fixed_width(200);
-    Widget *panel2 = new Widget(this);
-    panel2->set_layout(new BoxLayout(Orientation::Horizontal,
+    std::shared_ptr<Widget> panel2 = std::make_shared<Widget>(shared_from_this());
+    panel2->set_layout(std::make_shared<BoxLayout>(Orientation::Horizontal,
                                      Alignment::Middle, 0, 15));
 
     if (alt_button) {

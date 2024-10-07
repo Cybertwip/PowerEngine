@@ -46,7 +46,7 @@ public:
 	 * \param fragment_shader
 	 *     The source of the fragment shader as a string.
 	 */
-	Shader(RenderPass *render_pass,
+	Shader(std::shared_ptr<RenderPass> render_pass,
 		   const std::string &name,
 		   const std::string &vertex_shader,
 		   const std::string &fragment_shader,
@@ -56,7 +56,7 @@ public:
 	virtual ~Shader();
 	
 	/// Return the render pass associated with this shader
-	RenderPass *render_pass() { return m_render_pass; }
+	std::shared_ptr<RenderPass> render_pass() { return m_render_pass; }
 	
 	/// Return the name of this shader
 	const std::string &name() const { return m_name; }
@@ -139,7 +139,7 @@ public:
 	 *
 	 * The association will be replaced if it is already present.
 	 */
-	void set_texture(const std::string &name, Texture *texture, int index = 0);
+	void set_texture(const std::string &name, std::shared_ptr<Texture> texture, int index = 0);
 	
 	/**
 	 * \brief Begin drawing using this shader
@@ -224,7 +224,7 @@ protected:
 		size_t size = 0;
 	};
 	
-	RenderPass* m_render_pass;
+	std::shared_ptr<RenderPass> m_render_pass;
 	std::string m_name;
 	
 	/// Map of buffer definitions, storing their types and indices

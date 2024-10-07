@@ -36,7 +36,7 @@ public:
 		Right
 	};
 	
-	Label(Widget *parent, const std::string &caption,
+	Label(std::shared_ptr<Widget> parent, const std::string &caption,
 		  const std::string &font = "sans", int font_size = -1,
 		  Alignment alignment = Alignment::Left);
 	
@@ -61,10 +61,10 @@ public:
 	Alignment alignment() const { return m_alignment; }
 	
 	/// Set the \ref Theme used to draw this widget
-	virtual void set_theme(Theme *theme) override;
+	virtual void set_theme(std::shared_ptr<Theme> theme) override;
 	
 	/// Compute the size needed to fully display the label
-	virtual Vector2i preferred_size(NVGcontext *ctx) const override;
+	virtual Vector2i preferred_size(NVGcontext *ctx) override;
 	
 	/// Draw the label
 	virtual void draw(NVGcontext *ctx) override;

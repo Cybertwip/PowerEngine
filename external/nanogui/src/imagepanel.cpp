@@ -15,7 +15,7 @@
 
 NAMESPACE_BEGIN(nanogui)
 
-ImagePanel::ImagePanel(Widget *parent)
+ImagePanel::ImagePanel(std::shared_ptr<Widget> parent)
     : Widget(parent), m_thumb_size(64), m_spacing(10), m_margin(10),
       m_mouse_index(-1) {}
 

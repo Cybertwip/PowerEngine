@@ -36,7 +36,7 @@ public:
      * \param color
      *     The initial color of the ColorWheel (default: Red).
      */
-    ColorWheel(Widget *parent, const Color& color = Color(1.0f, 0.0f, 0.0f, 1.0f));
+    ColorWheel(std::shared_ptr<Widget> parent, const Color& color = Color(1.0f, 0.0f, 0.0f, 1.0f));
 
     /// The callback to execute when a user changes the ColorWheel value.
     const std::function<void(const Color &)> &callback() const { return m_callback; }
@@ -51,7 +51,7 @@ public:
     void set_color(const Color& color);
 
     /// The preferred size of this ColorWheel.
-    virtual Vector2i preferred_size(NVGcontext *ctx) const override;
+    virtual Vector2i preferred_size(NVGcontext *ctx) override;
 
     /// Draws the ColorWheel.
     virtual void draw(NVGcontext *ctx) override;

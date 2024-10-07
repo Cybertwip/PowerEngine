@@ -53,7 +53,7 @@ public:
      * \param icon
      *     The icon to display with this Button.  See \ref nanogui::Button::mIcon.
      */
-    Button(Widget *parent, const std::string &caption = "Untitled", int icon = 0);
+    Button(std::shared_ptr<Widget> parent, const std::string &caption = "Untitled", int icon = 0);
 
     /// Returns the caption of this Button.
     const std::string &caption() const { return m_caption; }
@@ -112,7 +112,7 @@ public:
     void set_button_group(const std::vector<Button *> &button_group) { m_button_group = button_group; }
 
     /// The preferred size of this Button.
-    virtual Vector2i preferred_size(NVGcontext *ctx) const override;
+    virtual Vector2i preferred_size(NVGcontext *ctx) override;
     /// The callback that is called when any type of mouse button event is issued to this Button.
     virtual bool mouse_enter_event(const Vector2i &p, bool enter) override;
     virtual bool mouse_button_event(const Vector2i &p, int button, bool down, int modifiers) override;

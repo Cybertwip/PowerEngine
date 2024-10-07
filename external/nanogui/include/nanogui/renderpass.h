@@ -19,12 +19,14 @@
 #include <nanogui/object.h>
 #include <nanogui/vector.h>
 #include <unordered_map>
+#include <memory>
 #include <map>
 #include <deque>
 
+
 NAMESPACE_BEGIN(nanogui)
 
-class NANOGUI_EXPORT RenderPass : public Object {
+class NANOGUI_EXPORT RenderPass : std::enable_shared_from_this<RenderPass>, public Object {
 public:
     /// Depth test
     enum class DepthTest {
@@ -74,10 +76,10 @@ public:
      * \param clear
      *     Should \ref enter() begin by clearing all buffers?
      */
-    RenderPass(const std::vector<Object *> &color_targets,
-               Object *depth_target = nullptr,
-               Object *stencil_target = nullptr,
-               Object *blit_target = nullptr);
+    RenderPass(const std::vector<std::shared_ptr<Object>> &color_targets,
+			   std::shared_ptr<Object> depth_target = nullptr,
+			   std::shared_ptr<Object> stencil_target = nullptr,
+			   std::shared_ptr<Object> blit_target = nullptr);
 
     // Polymorphic destructor
     virtual ~RenderPass();
@@ -149,7 +151,7 @@ public:
      * \brief Return the set of all render targets (including depth + stencil)
      * associated with this render pass
      */
-    std::vector<Object*> &targets() { return m_targets; }
+    std::vector<std::shared_ptr<Object>> &targets() { return m_targets; }
 
     /// Resize all texture targets attached to the render pass
     void resize(const Vector2i &size);
@@ -161,7 +163,7 @@ public:
     void blit_to(
         const Vector2i &src_offset,
         const Vector2i &src_size,
-        Object *dst,
+        std::shared_ptr<Object> dst,
         const Vector2i &dst_offset
     );
 	
@@ -180,8 +182,7 @@ public:
 #endif
 
 protected:
-    std::vector<Object *> m_targets;
-    std::vector<bool> m_targets_ref;
+    std::vector<std::shared_ptr<Object>> m_targets;
     std::vector<Color> m_clear_color;
     bool m_clear;
     uint8_t m_clear_stencil;
@@ -192,7 +193,7 @@ protected:
     DepthTest m_depth_test;
     bool m_depth_write;
     CullMode m_cull_mode;
-    ref<Object> m_blit_target;
+    std::shared_ptr<Object> m_blit_target;
     bool m_active;
 #if defined(NANOGUI_USE_OPENGL) || defined(NANOGUI_USE_GLES)
     uint32_t m_framebuffer_handle;
@@ -206,7 +207,7 @@ protected:
     void *m_command_buffer;
     void *m_command_encoder;
     void *m_pass_descriptor;
-    ref<Shader> m_clear_shader;
+    std::shared_ptr<Shader> m_clear_shader;
 #endif
 	
 	std::map<int, std::deque<std::function<void()>>> mDepthTestStates;

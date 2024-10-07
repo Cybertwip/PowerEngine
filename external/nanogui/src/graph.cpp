@@ -15,7 +15,7 @@
 
 NAMESPACE_BEGIN(nanogui)
 
-Graph::Graph(Widget *parent, const std::string &caption)
+Graph::Graph(std::shared_ptr<Widget> parent, const std::string &caption)
     : Widget(parent), m_caption(caption) {
     m_background_color = Color(20, 128);
     m_fill_color = Color(255, 192, 0, 128);
@@ -23,7 +23,7 @@ Graph::Graph(Widget *parent, const std::string &caption)
     m_text_color = Color(240, 192);
 }
 
-Vector2i Graph::preferred_size(NVGcontext *) const {
+Vector2i Graph::preferred_size(NVGcontext *) {
     return Vector2i(180, 45);
 }
 

@@ -30,19 +30,19 @@ public:
         Warning
     };
 
-    MessageDialog(Widget *parent, Type type, const std::string &title = "Untitled",
+    MessageDialog(std::shared_ptr<Widget> parent, Type type, const std::string &title = "Untitled",
                   const std::string &message = "Message",
                   const std::string &button_text = "OK",
                   const std::string &alt_button_text = "Cancel", bool alt_button = false);
 
-    Label *message_label() { return m_message_label; }
-    const Label *message_label() const { return m_message_label; }
+	std::shared_ptr<Label> message_label() { return m_message_label; }
+    const std::shared_ptr<Label> message_label() const { return m_message_label; }
 
     const std::function<void(int)> &callback() const { return m_callback; }
     void set_callback(const std::function<void(int)> &callback) { m_callback = callback; }
 protected:
     std::function<void(int)> m_callback;
-    Label *m_message_label;
+    std::shared_ptr<Label> m_message_label;
 };
 
 NAMESPACE_END(nanogui)

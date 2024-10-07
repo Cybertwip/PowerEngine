@@ -23,18 +23,16 @@
 
 NAMESPACE_BEGIN(nanogui)
 
-Widget::Widget(Widget *parent)
+Widget::Widget(std::shared_ptr<Widget> parent)
 : m_parent(nullptr), m_theme(nullptr), m_layout(nullptr),
 m_pos(0), m_size(0), m_fixed_size(0), m_visible(true), m_enabled(true),
 m_focused(false), m_mouse_focus(false), m_tooltip(""), m_font_size(-1.f),
 m_icon_extra_scale(1.f), m_cursor(Cursor::Arrow), m_screen(nullptr) {
-	if (parent)
-		parent->add_child(this);
 }
 
 Widget::~Widget() {
 	if (m_screen) {
-		m_screen->remove_from_focus(this);
+		m_screen->remove_from_focus(shared_from_this());
 	}
 
 	if (std::uncaught_exceptions() > 0) {
@@ -44,14 +42,10 @@ Widget::~Widget() {
 		 exceptions. */
 		return;
 	}
-	for (auto child : m_children) {
-		if (child)
-			child->dec_ref();
-	}
 }
 
-void Widget::set_theme(Theme *theme) {
-	if (m_theme.get() == theme)
+void Widget::set_theme(std::shared_ptr<Theme> theme) {
+	if (m_theme == theme)
 		return;
 	m_theme = theme;
 	for (auto child : m_children)
@@ -62,16 +56,16 @@ int Widget::font_size() const {
 	return (m_font_size < 0 && m_theme) ? m_theme->m_standard_font_size : m_font_size;
 }
 
-Vector2i Widget::preferred_size(NVGcontext *ctx) const {
+Vector2i Widget::preferred_size(NVGcontext *ctx) {
 	if (m_layout)
-		return m_layout->preferred_size(ctx, this);
+		return m_layout->preferred_size(ctx, shared_from_this());
 	else
 		return m_size;
 }
 
 void Widget::perform_layout(NVGcontext *ctx) {
 	if (m_layout) {
-		m_layout->perform_layout(ctx, this);
+		m_layout->perform_layout(ctx, shared_from_this());
 	} else {
 		for (auto c : m_children) {
 			const Vector2i &pref = c->preferred_size(ctx);
@@ -85,23 +79,23 @@ void Widget::perform_layout(NVGcontext *ctx) {
 	}
 }
 
-Widget *Widget::find_widget(const Vector2i &p, bool absolute) {
+std::shared_ptr<Widget> Widget::find_widget(const Vector2i &p, bool absolute) {
 	auto pos = m_pos;
 	
 	if (absolute) {
 		pos = absolute_position();
 	}
 	for (auto it = m_children.rbegin(); it != m_children.rend(); ++it) {
-		Widget *child = *it;
+		std::shared_ptr<Widget> child = *it;
 		if (child->visible() && child->contains(p - pos, absolute))
 			return child->find_widget(p - pos);
 	}
-	return contains(p, absolute) ? this : nullptr;
+	return contains(p, absolute) ? shared_from_this() : nullptr;
 }
 
 bool Widget::mouse_button_event(const Vector2i &p, int button, bool down, int modifiers) {
 	for (auto it = m_children.rbegin(); it != m_children.rend(); ++it) {
-		Widget *child = *it;
+		std::shared_ptr<Widget> child = *it;
 		if (child->visible() && child->contains(p - m_pos) &&
 			child->mouse_button_event(p - m_pos, button, down, modifiers))
 			return true;
@@ -115,7 +109,7 @@ bool Widget::mouse_motion_event(const Vector2i &p, const Vector2i &rel, int butt
 	bool handled = false;
 	
 	for (auto it = m_children.rbegin(); it != m_children.rend(); ++it) {
-		Widget *child = *it;
+		std::shared_ptr<Widget> child = *it;
 		if (!child->visible())
 			continue;
 		
@@ -134,7 +128,7 @@ bool Widget::mouse_motion_event(const Vector2i &p, const Vector2i &rel, int butt
 
 bool Widget::scroll_event(const Vector2i &p, const Vector2f &rel) {
 	for (auto it = m_children.rbegin(); it != m_children.rend(); ++it) {
-		Widget *child = *it;
+		std::shared_ptr<Widget> child = *it;
 		if (!child->visible())
 			continue;
 		if (child->contains(p - m_pos) && child->scroll_event(p - m_pos, rel))
@@ -165,20 +159,19 @@ bool Widget::keyboard_character_event(unsigned int) {
 	return false;
 }
 
-void Widget::add_child(int index, Widget *widget) {
+void Widget::add_child(int index, std::shared_ptr<Widget> widget) {
 	assert(index <= child_count());
 	m_children.insert(m_children.begin() + index, widget);
-	widget->inc_ref();
-	widget->set_parent(this);
+	widget->set_parent(shared_from_this());
 	widget->set_theme(m_theme);
 	widget->set_screen(m_screen); // Update screen pointer
 }
 
-void Widget::add_child(Widget *widget) {
+void Widget::add_child(std::shared_ptr<Widget> widget) {
 	add_child(child_count(), widget);
 }
 
-void Widget::remove_child(Widget *widget) {
+void Widget::remove_child(std::shared_ptr<Widget> widget) {
 	size_t child_count = m_children.size();
 	m_children.erase(std::remove(m_children.begin(), m_children.end(), widget),
 					 m_children.end());
@@ -187,25 +180,23 @@ void Widget::remove_child(Widget *widget) {
 	if (m_screen)
 		m_screen->remove_from_focus(widget);
 	widget->set_parent(nullptr);
-	widget->dec_ref();
 }
 
 void Widget::remove_child_at(int index) {
 	if (index < 0 || index >= (int) m_children.size())
 		throw std::runtime_error("Widget::remove_child_at(): out of bounds!");
-	Widget *widget = m_children[index];
+	std::shared_ptr<Widget> widget = m_children[index];
 	m_children.erase(m_children.begin() + index);
 	
 	if (m_screen)
 		m_screen->remove_from_focus(widget);
 	widget->set_parent(nullptr);
-	widget->dec_ref();
 }
 void Widget::shed_children() {
 	// Continue removing children until m_children is empty
 	while (!m_children.empty()) {
 		// Get the last child
-		Widget* child = m_children.back();
+		std::shared_ptr<Widget> child = m_children.back();
 		
 		// Remove the child from m_children
 		m_children.pop_back();
@@ -220,21 +211,20 @@ void Widget::shed_children() {
 		
 		// Detach the child from its parent and decrement its reference count
 		child->set_parent(nullptr);
-		child->dec_ref();
 	}
 }
 
-int Widget::child_index(Widget *widget) const {
+int Widget::child_index(std::shared_ptr<Widget> widget) const {
 	auto it = std::find(m_children.begin(), m_children.end(), widget);
 	if (it == m_children.end())
 		return -1;
 	return (int)(it - m_children.begin());
 }
 
-Window *Widget::window() {
-	Widget *widget = this;
+std::shared_ptr<Window> Widget::window() {
+	std::shared_ptr<Widget> widget = shared_from_this();
 	while (widget) {
-		Window *win = dynamic_cast<Window *>(widget);
+		auto win = std::dynamic_pointer_cast<Window>(widget);
 		if (win)
 			return win;
 		widget = widget->parent();
@@ -242,16 +232,13 @@ Window *Widget::window() {
 	return nullptr;
 }
 
-Screen *Widget::screen() {
+std::shared_ptr<Screen> Widget::screen() {
 	return m_screen; // Directly return the cached screen pointer
 }
 
-const Screen *Widget::screen() const { return m_screen; }
-const Window *Widget::window() const { return const_cast<Widget *>(this)->window(); }
-
 void Widget::request_focus() {
 	if (m_screen)
-		m_screen->update_focus(this);
+		m_screen->update_focus(shared_from_this());
 }
 
 void Widget::draw(NVGcontext *ctx) {
@@ -286,15 +273,15 @@ void Widget::draw(NVGcontext *ctx) {
 	nvgTranslate(ctx, -m_pos.x(), -m_pos.y());
 }
 
-void Widget::set_parent(Widget *parent) {
+void Widget::set_parent(std::shared_ptr<Widget> parent) {
 	m_parent = parent;
 	m_screen = parent ? parent->screen() : nullptr; // Update screen pointer
 	
 	if (m_screen)
-		m_screen->remove_from_focus(this);
+		m_screen->remove_from_focus(shared_from_this());
 }
 
-void Widget::set_screen(Screen *screen) {
+void Widget::set_screen(std::shared_ptr<Screen> screen) {
 	m_screen = screen;
 	// Propagate to children
 	for (auto child : m_children) {

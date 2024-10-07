@@ -17,11 +17,11 @@
 
 NAMESPACE_BEGIN(nanogui)
 
-Window::Window(Widget *parent, const std::string &title)
+Window::Window(std::shared_ptr<Widget> parent, const std::string &title)
     : Widget(parent), m_title(title), m_button_panel(nullptr), m_modal(false),
       m_drag(false) { }
 
-Vector2i Window::preferred_size(NVGcontext *ctx) const {
+Vector2i Window::preferred_size(NVGcontext *ctx) {
 	// Start with the preferred size from the base Widget
 	Vector2i result = Widget::preferred_size(ctx);
 	
@@ -46,10 +46,10 @@ Vector2i Window::preferred_size(NVGcontext *ctx) const {
 					);
 }
 
-Widget *Window::button_panel() {
+std::shared_ptr<Widget> Window::button_panel() {
     if (!m_button_panel) {
-        m_button_panel = new Widget(this);
-        m_button_panel->set_layout(new BoxLayout(Orientation::Horizontal, Alignment::Middle, 0, 4));
+        m_button_panel = std::make_shared<Widget>(shared_from_this());
+        m_button_panel->set_layout(std::make_shared< BoxLayout>(Orientation::Horizontal, Alignment::Middle, 0, 4));
     }
     return m_button_panel;
 }
@@ -81,13 +81,10 @@ void Window::set_modal(bool modal) {
 
 		if (parent_ptr) {
 			
-			inc_ref();
 			// Remove the window from its current position
-			parent_ptr->remove_child(this);
+			parent_ptr->remove_child(shared_from_this());
 			// Add it back to the end, which typically renders it on top
-			parent_ptr->add_child(this);
-			
-			dec_ref();
+			parent_ptr->add_child(shared_from_this());
 			
 			set_focused(true);
 			
@@ -176,17 +173,17 @@ void Window::draw(NVGcontext *ctx) {
 }
 
 void Window::dispose() {
-    Widget *widget = this;
+    std::shared_ptr<Widget> widget = shared_from_this();
     while (widget->parent())
         widget = widget->parent();
-    ((Screen *) widget)->dispose_window(this);
+    std::dynamic_pointer_cast<Screen>(widget)->dispose_window(std::dynamic_pointer_cast<Window>(shared_from_this()));
 }
 
 void Window::center() {
-    Widget *widget = this;
+    std::shared_ptr<Widget> widget = shared_from_this();
     while (widget->parent())
         widget = widget->parent();
-    ((Screen *) widget)->center_window(this);
+    std::dynamic_pointer_cast<Screen>(widget)->center_window(std::dynamic_pointer_cast<Window>(shared_from_this()));
 }
 
 bool Window::mouse_enter_event(const Vector2i &p, bool enter) {

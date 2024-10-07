@@ -39,7 +39,7 @@ class SceneTimeBar : public nanogui::Widget, public IActorSelectedCallback {
 	};
 	
 public:
-	SceneTimeBar(nanogui::Widget* parent, ActorManager& actorManager, AnimationTimeProvider& animationTimeProvider, IActorSelectedRegistry& registry, int width, int height);
+	SceneTimeBar(std::shared_ptr<Widget> parent, ActorManager& actorManager, AnimationTimeProvider& animationTimeProvider, IActorSelectedRegistry& registry, int width, int height);
 	~SceneTimeBar();
 	
 	// Override OnActorSelected from IActorSelectedCallback

@@ -54,7 +54,7 @@ id<MTLFunction> compile_metal_shader(id<MTLDevice> device,
 	return function;
 }
 
-Shader::Shader(RenderPass *render_pass,
+Shader::Shader(std::shared_ptr<RenderPass> render_pass,
 			   const std::string &name,
 			   const std::string &vertex_shader,
 			   const std::string &fragment_shader,
@@ -69,19 +69,19 @@ Shader::Shader(RenderPass *render_pass,
 	pipeline_desc.vertexFunction = vertex_func;
 	pipeline_desc.fragmentFunction = fragment_func;
 	
-	std::vector<Object*> &targets = render_pass->targets();
+	auto& targets = render_pass->targets();
 	int sample_count = 1;
 	
 	for (size_t i = 0; i < targets.size(); ++i) {
-		Texture *texture = dynamic_cast<Texture *>(targets[i]);
-		Screen *screen = dynamic_cast<Screen *>(targets[i]);
+		auto texture = std::dynamic_pointer_cast<Texture>(targets[i]);
+		auto screen = std::dynamic_pointer_cast<Screen>(targets[i]);
 		
 		MTLPixelFormat pixel_format;
 		if (targets[i] == nullptr) {
 			continue;
 		} else if (screen) {
 			if (i == 0 || i == 1) {
-				Texture *depth_stencil_texture = screen->depth_stencil_texture();
+				auto depth_stencil_texture = screen->depth_stencil_texture();
 				if (!depth_stencil_texture ||
 					(i == 1 && depth_stencil_texture->pixel_format() !=
 					 Texture::PixelFormat::DepthStencil))
@@ -308,7 +308,7 @@ size_t Shader::get_buffer_size(const std::string &name) {
 	throw std::runtime_error("Shader::get_buffer_size(): buffer \"" + name + "\" not found");
 }
 
-void Shader::set_texture(const std::string &name, Texture *texture, int index) {
+void Shader::set_texture(const std::string &name, std::shared_ptr<Texture> texture, int index) {
 	auto it = m_buffer_definitions.find(name);
 	if (it == m_buffer_definitions.end())
 		throw std::runtime_error(

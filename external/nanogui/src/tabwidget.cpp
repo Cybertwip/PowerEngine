@@ -21,7 +21,7 @@
 
 NAMESPACE_BEGIN(nanogui)
 
-TabWidgetBase::TabWidgetBase(Widget *parent, const std::string &font)
+TabWidgetBase::TabWidgetBase(std::shared_ptr<Widget> parent, const std::string &font)
     : Widget(parent), m_font(font), m_background_color(Color(0.f, 0.f)) {
     m_tab_offsets.push_back(0);
 }
@@ -94,7 +94,7 @@ void TabWidgetBase::perform_layout(NVGcontext* ctx) {
         nvgTextBounds(ctx, 0, 0, utf8(FA_TIMES_CIRCLE).data(), nullptr, unused);
 }
 
-Vector2i TabWidgetBase::preferred_size(NVGcontext* ctx) const {
+Vector2i TabWidgetBase::preferred_size(NVGcontext* ctx) {
     nvgFontFace(ctx, m_font.c_str());
     nvgFontSize(ctx, font_size());
     nvgTextAlign(ctx, NVG_ALIGN_LEFT | NVG_ALIGN_TOP);
@@ -248,13 +248,13 @@ bool TabWidgetBase::mouse_button_event(const Vector2i &p, int button, bool down,
     std::tie(index, close) = tab_at_position(p);
     bool handled = false;
 
-    Screen *screen = this->screen();
+    auto screen = this->screen();
     if (m_popup) {
         m_popup->mouse_button_event(
             p - m_pos + absolute_position() - m_popup->absolute_position() + m_popup->position(),
             button, down, modifiers
         );
-        screen->update_focus(this);
+        screen->update_focus(shared_from_this());
         screen->remove_child(m_popup);
         m_popup = nullptr;
         handled = true;
@@ -268,9 +268,9 @@ bool TabWidgetBase::mouse_button_event(const Vector2i &p, int button, bool down,
         m_popup->set_anchor_offset(8);
         m_popup->set_anchor_size(8);
         if (m_popup->layout() == nullptr)
-            m_popup->set_layout(new GroupLayout(5, 3));
-        for (Widget *w : m_popup->children()) {
-            Button *b = dynamic_cast<Button *>(w);
+            m_popup->set_layout(std::make_shared<GroupLayout>(5, 3));
+        for (std::shared_ptr<Widget> w : m_popup->children()) {
+            auto b = std::dynamic_pointer_cast<Button>(w);
             if (!b)
                 continue;
             b->set_icon_position(Button::IconPosition::Right);
@@ -369,7 +369,7 @@ bool TabWidgetBase::mouse_motion_event(const Vector2i &p, const Vector2i &rel,
     return Widget::mouse_motion_event(p, rel, button, modifiers);
 }
 
-TabWidget::TabWidget(Widget *parent, const std::string &font)
+TabWidget::TabWidget(std::shared_ptr<Widget> parent, const std::string &font)
     : TabWidgetBase(parent, font) { }
 
 void TabWidget::perform_layout(NVGcontext* ctx) {
@@ -377,7 +377,7 @@ void TabWidget::perform_layout(NVGcontext* ctx) {
 
     int tab_height = font_size() + 2 * m_theme->m_tab_button_vertical_padding;
 
-    for (Widget *child : m_children) {
+    for (std::shared_ptr<Widget> child : m_children) {
         child->set_position(Vector2i(m_padding, m_padding + tab_height + 1));
         child->set_size(m_size - Vector2i(2*m_padding, 2*m_padding + tab_height + 1));
         child->perform_layout(ctx);
@@ -387,17 +387,17 @@ void TabWidget::perform_layout(NVGcontext* ctx) {
 void TabWidget::update_visibility() {
     if (tab_count() == 0)
         return;
-    for (Widget *child : m_children)
+    for (std::shared_ptr<Widget> child : m_children)
         child->set_visible(false);
     auto it = m_widgets.find(selected_id());
     if (it != m_widgets.end())
         it->second->set_visible(true);
 }
 
-Vector2i TabWidget::preferred_size(NVGcontext* ctx) const {
+Vector2i TabWidget::preferred_size(NVGcontext* ctx) {
     Vector2i base_size = TabWidgetBase::preferred_size(ctx),
              content_size = Vector2i(0);
-    for (Widget *child : m_children)
+    for (std::shared_ptr<Widget> child : m_children)
         content_size = max(content_size, child->preferred_size(ctx));
 
     return Vector2i(
@@ -406,14 +406,14 @@ Vector2i TabWidget::preferred_size(NVGcontext* ctx) const {
     );
 }
 
-int TabWidget::insert_tab(int index, const std::string &caption, Widget *widget) {
+int TabWidget::insert_tab(int index, const std::string &caption, std::shared_ptr<Widget> widget) {
     int id = TabWidgetBase::insert_tab(index, caption);
     m_widgets[id] = widget;
     update_visibility();
     return id;
 }
 
-int TabWidget::append_tab(const std::string &caption, Widget *widget) {
+int TabWidget::append_tab(const std::string &caption, std::shared_ptr<Widget> widget) {
     widget->set_visible(false);
     int id = TabWidgetBase::append_tab(caption);
     m_widgets[id] = widget;
@@ -423,7 +423,7 @@ int TabWidget::append_tab(const std::string &caption, Widget *widget) {
 
 void TabWidget::remove_tab(int id) {
     TabWidgetBase::remove_tab(id);
-    Widget *widget = m_widgets[id];
+    std::shared_ptr<Widget> widget = m_widgets[id];
     m_widgets.erase(id);
     if (m_remove_children)
         remove_child(widget);

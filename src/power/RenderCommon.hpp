@@ -29,9 +29,9 @@ public:
 
 class RenderCommon {
 public:
-    RenderCommon(nanogui::Widget& parent, entt::registry& registry, ActorManager& actorManager, CameraManager& cameraManager);
-    Canvas& canvas() {
-        return *mCanvas;
+    RenderCommon(std::shared_ptr<nanogui::Widget> parent, entt::registry& registry, ActorManager& actorManager, CameraManager& cameraManager);
+	std::shared_ptr<Canvas> canvas() {
+        return mCanvas;
     }
 
     ShaderManager& shader_manager() {
@@ -44,7 +44,7 @@ public:
 
 
 private:
-	Canvas* mCanvas;
+	std::shared_ptr<Canvas> mCanvas;
     std::unique_ptr<ShaderManager> mShaderManager;
 	std::unique_ptr<CameraActorLoader> mCameraActorLoader;
 };

@@ -16,16 +16,16 @@
 
 NAMESPACE_BEGIN(nanogui)
 
-ComboBox::ComboBox(Widget *parent)
+ComboBox::ComboBox(std::shared_ptr<Widget> parent)
     : PopupButton(parent), m_container(popup()), m_selected_index(0) {
 }
 
-ComboBox::ComboBox(Widget *parent, const std::vector<std::string> &items)
+ComboBox::ComboBox(std::shared_ptr<Widget> parent, const std::vector<std::string> &items)
     : PopupButton(parent), m_container(popup()), m_selected_index(0) {
     set_items(items);
 }
 
-ComboBox::ComboBox(Widget *parent, const std::vector<std::string> &items, const std::vector<std::string> &items_short)
+ComboBox::ComboBox(std::shared_ptr<Widget> parent, const std::vector<std::string> &items, const std::vector<std::string> &items_short)
     : PopupButton(parent), m_container(popup()), m_selected_index(0) {
     set_items(items, items_short);
 }
@@ -33,9 +33,9 @@ ComboBox::ComboBox(Widget *parent, const std::vector<std::string> &items, const 
 void ComboBox::set_selected_index(int idx) {
     if (m_items_short.empty())
         return;
-    const std::vector<Widget *> &children = m_container->children();
-    ((Button *) children[m_selected_index])->set_pushed(false);
-    ((Button *) children[idx])->set_pushed(true);
+    const std::vector<std::shared_ptr<Widget> > &children = m_container->children();
+    std::dynamic_pointer_cast<Button>( children[m_selected_index])->set_pushed(false);
+	std::dynamic_pointer_cast<Button>( children[idx])->set_pushed(true);
     m_selected_index = idx;
     set_caption(m_items_short[idx]);
 }
@@ -51,13 +51,13 @@ void ComboBox::set_items(const std::vector<std::string> &items, const std::vecto
         m_container->remove_child_at(m_container->child_count()-1);
 
     if (m_scroll == nullptr && items.size() > 8) {
-        m_scroll = new VScrollPanel(m_popup);
+        m_scroll = std::make_shared<VScrollPanel>(m_popup);
         m_scroll->set_fixed_height(300);
-        m_container = new Widget(m_scroll);
-        m_popup->set_layout(new BoxLayout(Orientation::Horizontal, Alignment::Middle));
+        m_container = std::make_shared<Widget>(m_scroll);
+        m_popup->set_layout(std::make_shared< BoxLayout>(Orientation::Horizontal, Alignment::Middle));
     }
 
-    m_container->set_layout(new GroupLayout(10));
+    m_container->set_layout(std::make_shared<GroupLayout>(10));
 
     int index = 0;
     for (const auto &str: items) {

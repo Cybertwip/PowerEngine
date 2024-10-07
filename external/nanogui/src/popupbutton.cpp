@@ -16,21 +16,21 @@
 
 NAMESPACE_BEGIN(nanogui)
 
-PopupButton::PopupButton(Widget *parent, const std::string &caption, int button_icon)
+PopupButton::PopupButton(std::shared_ptr<Widget> parent, const std::string &caption, int button_icon)
     : Button(parent, caption, button_icon) {
 
     m_chevron_icon = m_theme->m_popup_chevron_right_icon;
 
     set_flags(Flags::ToggleButton | Flags::PopupButton);
 
-    m_popup = new Popup(screen(), window());
+    m_popup = std::make_shared<Popup>(screen(), window());
     m_popup->set_size(Vector2i(320, 250));
     m_popup->set_visible(false);
 
     m_icon_extra_scale = 0.8f; // widget override
 }
 
-Vector2i PopupButton::preferred_size(NVGcontext *ctx) const {
+Vector2i PopupButton::preferred_size(NVGcontext *ctx) {
     return Button::preferred_size(ctx) + Vector2i(15, 0);
 }
 
@@ -66,7 +66,7 @@ void PopupButton::draw(NVGcontext* ctx) {
 void PopupButton::perform_layout(NVGcontext *ctx) {
     Widget::perform_layout(ctx);
 
-    const Window *parent_window = window();
+    auto parent_window = window();
 
     int anchor_size = m_popup->anchor_size();
 

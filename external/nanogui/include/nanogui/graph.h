@@ -23,7 +23,7 @@ NAMESPACE_BEGIN(nanogui)
  */
 class NANOGUI_EXPORT Graph : public Widget {
 public:
-    Graph(Widget *parent, const std::string &caption = "Untitled");
+    Graph(std::shared_ptr<Widget> parent, const std::string &caption = "Untitled");
 
     const std::string &caption() const { return m_caption; }
     void set_caption(const std::string &caption) { m_caption = caption; }
@@ -50,7 +50,7 @@ public:
     std::vector<float> &values() { return m_values; }
     void set_values(const std::vector<float> &values) { m_values = values; }
 
-    virtual Vector2i preferred_size(NVGcontext *ctx) const override;
+    virtual Vector2i preferred_size(NVGcontext *ctx) override;
     virtual void draw(NVGcontext *ctx) override;
 protected:
     std::string m_caption, m_header, m_footer;

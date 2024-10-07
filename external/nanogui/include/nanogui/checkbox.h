@@ -45,7 +45,7 @@ public:
      *     \ref nanogui::CheckBox::mPushed for the difference between "pushed"
      *     and "checked".
      */
-    CheckBox(Widget *parent, const std::string &caption = "Untitled",
+    CheckBox(std::shared_ptr<Widget> parent, const std::string &caption = "Untitled",
              const std::function<void(bool)> &callback = std::function<void(bool)>());
 
     /// The caption of this CheckBox.
@@ -74,7 +74,7 @@ public:
     virtual bool mouse_button_event(const Vector2i &p, int button, bool down, int modifiers) override;
 
     /// The preferred size of this CheckBox.
-    virtual Vector2i preferred_size(NVGcontext *ctx) const override;
+    virtual Vector2i preferred_size(NVGcontext *ctx) override;
 
     /// Draws this CheckBox.
     virtual void draw(NVGcontext *ctx) override;

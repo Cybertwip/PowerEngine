@@ -35,7 +35,6 @@
 #include <nanogui/vscrollpanel.h>
 #include <nanogui/colorwheel.h>
 #include <nanogui/graph.h>
-#include <nanogui/formhelper.h>
 #include <nanogui/tabwidget.h>
 #include <nanogui/texture.h>
 #include <nanogui/shader.h>

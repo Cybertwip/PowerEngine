@@ -18,7 +18,7 @@ StatusBarPanel::StatusBarPanel(nanogui::Widget &parent, IActorVisualManager& act
 	set_layout(new nanogui::GroupLayout());
 	
 	// Status bar setup
-	nanogui::Widget *statusBar = new nanogui::Widget(this);
+	nanogui::std::shared_ptr<Widget> statusBar = new nanogui::Widget(this);
 	statusBar->set_layout(new nanogui::BoxLayout(nanogui::Orientation::Horizontal,
 												 nanogui::Alignment::Minimum, 0, 0));
 	

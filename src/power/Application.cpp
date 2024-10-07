@@ -54,50 +54,54 @@ mGlobalAnimationTimeProvider(60 * 30)
 	
 	mDeepMotionApiClient = std::make_unique<DeepMotionApiClient>();
 	
-	mUiCommon = std::make_unique<UiCommon>(*this, *mActorManager, mGlobalAnimationTimeProvider);
+}
 
+void Application::initialize() {
+	
+	mUiCommon = std::make_unique<UiCommon>(shared_from_this(), *mActorManager, mGlobalAnimationTimeProvider);
+	
 	mRenderCommon = std::make_unique<RenderCommon>(mUiCommon->scene_panel(), *mEntityRegistry, *mActorManager, *mCameraManager);
 	
-	mMeshBatch = std::make_unique<MeshBatch>(*mRenderCommon->canvas().render_pass());
+	mMeshBatch = std::make_unique<MeshBatch>(*mRenderCommon->canvas()->render_pass());
 	
-	mSkinnedMeshBatch = std::make_unique<SkinnedMeshBatch>(*mRenderCommon->canvas().render_pass());
+	mSkinnedMeshBatch = std::make_unique<SkinnedMeshBatch>(*mRenderCommon->canvas()->render_pass());
 	
 	mBatchUnit = std::make_unique<BatchUnit>(*mMeshBatch, *mSkinnedMeshBatch);
 	
 	mMeshShader = std::make_unique<ShaderWrapper>(*mRenderCommon->shader_manager().get_shader("mesh"));
-
+	
 	mSkinnedShader = std::make_unique<ShaderWrapper>(*mRenderCommon->shader_manager().get_shader("skinned_mesh"));
 	
 	mMeshActorLoader = std::make_unique<MeshActorLoader>(*mActorManager, mRenderCommon->shader_manager(), *mBatchUnit);
 	
 	mGizmoManager = std::make_unique<GizmoManager>(mUiCommon->toolbox(), mRenderCommon->shader_manager(), *mActorManager, *mMeshActorLoader);
-
+	
 	mUiManager = std::make_unique<UiManager>(
-										   mUiCommon->hierarchy_panel(),
-										   mUiCommon->hierarchy_panel(),
-										   *mActorManager,
-										   *mMeshActorLoader,
-										   mRenderCommon->shader_manager(),
-										   mUiCommon->scene_panel(),
-										   mRenderCommon->canvas(),
-										   mUiCommon->toolbox(),
-										   mUiCommon->status_bar(),
-										   mUiCommon->animation_panel(),
-										   mUiCommon->scene_time_bar(),
-										   *mCameraManager,
-										   *mDeepMotionApiClient,
-										   *mGizmoManager,
-										   [this](std::function<void(int, int)> callback){
-											   auto callbackWrapee = [this, callback](bool down, int width, int height, int x, int y){
-												   callback(x, y);
-											   };
-											   register_click_callback(callbackWrapee);
-										   }
+											 mUiCommon->hierarchy_panel(),
+											 mUiCommon->hierarchy_panel(),
+											 *mActorManager,
+											 *mMeshActorLoader,
+											 mRenderCommon->shader_manager(),
+											 mUiCommon->scene_panel(),
+											 mRenderCommon->canvas(),
+											 mUiCommon->toolbox(),
+											 mUiCommon->status_bar(),
+											 mUiCommon->animation_panel(),
+											 mUiCommon->scene_time_bar(),
+											 *mCameraManager,
+											 *mDeepMotionApiClient,
+											 *mGizmoManager,
+											 [this](std::function<void(int, int)> callback){
+												 auto callbackWrapee = [this, callback](bool down, int width, int height, int x, int y){
+													 callback(x, y);
+												 };
+												 register_click_callback(callbackWrapee);
+											 }
 											 );
 	
 	theme()->m_window_drop_shadow_size = 0;
 	
-	set_layout(new nanogui::GroupLayout(0, 0, 0, 0));
+	set_layout(std::make_shared<nanogui::GroupLayout>(0, 0, 0, 0));
 	
 	std::vector<std::reference_wrapper<Actor>> actors;
 	
@@ -106,17 +110,17 @@ mGlobalAnimationTimeProvider(60 * 30)
 	} else {
 		actors.push_back(mRenderCommon->camera_actor_loader().create_actor(mGlobalAnimationTimeProvider,
 																		   45.0f, 0.01f, 5e3f,
-																		   mRenderCommon->canvas().fixed_size().x() /
-																		   static_cast<float>(mRenderCommon->canvas().fixed_size().y())));
+																		   mRenderCommon->canvas()->fixed_size().x() /
+																		   static_cast<float>(mRenderCommon->canvas()->fixed_size().y())));
 	}
 	
 	if (mCameraManager->active_camera().has_value()) {
 		mCameraManager->active_camera()->get().get_component<TransformComponent>().set_translation(glm::vec3(0, -250, 100));
 	}
 	
-	mUiCommon->hierarchy_panel().add_actors(std::move(actors));
+	mUiCommon->hierarchy_panel()->add_actors(std::move(actors));
 	
-	set_background(mRenderCommon->canvas().background_color());
+	set_background(mRenderCommon->canvas()->background_color());
 	
 	perform_layout();
 }
@@ -151,8 +155,8 @@ void Application::process_events() {
 		}
 	}
 
-	mUiCommon->scene_panel().process_events();
-	mUiManager->status_bar_panel().resources_panel().process_events();
+	mUiCommon->scene_panel()->process_events();
+	mUiManager->status_bar_panel()->resources_panel()->process_events();
 	
 	mUiManager->process_events();
 }
@@ -175,20 +179,20 @@ void Application::register_click_callback(std::function<void(bool, int, int, int
 	mClickCallbacks.push_back(callback);
 }
 
-bool Application::drop_event(nanogui::Widget* sender, const std::vector<std::string> & filenames) {
-	if (sender == &mUiManager->status_bar_panel().resources_panel()) {
+bool Application::drop_event(std::shared_ptr<Widget> sender, const std::vector<std::string> & filenames) {
+	if (sender == mUiManager->status_bar_panel()->resources_panel()) {
 
-		if (mUiCommon->animation_panel().contains(m_mouse_pos, true, true)) {
+		if (mUiCommon->animation_panel()->contains(m_mouse_pos, true, true)) {
 			if (filenames[0].find(".pan") != std::string::npos){
-				mUiCommon->animation_panel().parse_file(filenames[0]);
+				mUiCommon->animation_panel()->parse_file(filenames[0]);
 			}
 		}
 
-		if (mRenderCommon->canvas().contains(m_mouse_pos, true, true) && !mUiManager->status_bar_panel().resources_panel().contains(m_mouse_pos, true, true)) {
+		if (mRenderCommon->canvas()->contains(m_mouse_pos, true, true) && !mUiManager->status_bar_panel()->resources_panel()->contains(m_mouse_pos, true, true)) {
 			if (filenames[0].find(".psk") != std::string::npos || filenames[0].find(".pma") != std::string::npos){
-				mUiCommon->hierarchy_panel().add_actor(mMeshActorLoader->create_actor(filenames[0], mGlobalAnimationTimeProvider, *mMeshShader, *mSkinnedShader));
+				mUiCommon->hierarchy_panel()->add_actor(mMeshActorLoader->create_actor(filenames[0], mGlobalAnimationTimeProvider, *mMeshShader, *mSkinnedShader));
 				
-				mUiCommon->scene_time_bar().refresh_actors();
+				mUiCommon->scene_time_bar()->refresh_actors();
 			}
 		}
 	}

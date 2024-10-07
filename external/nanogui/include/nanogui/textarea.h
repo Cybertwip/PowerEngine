@@ -29,7 +29,7 @@ NAMESPACE_BEGIN(nanogui)
  */
 class NANOGUI_EXPORT TextArea : public Widget {
 public:
-    TextArea(Widget *parent);
+    TextArea(std::shared_ptr<Widget> parent);
 
     /// Set the used font
     void set_font(const std::string &font) { m_font = font; }
@@ -92,7 +92,7 @@ public:
 
     /* Widget implementation */
     virtual void draw(NVGcontext *ctx) override;
-    virtual Vector2i preferred_size(NVGcontext *ctx) const override;
+    virtual Vector2i preferred_size(NVGcontext *ctx) override;
     virtual bool mouse_button_event(const Vector2i &p, int button, bool down,
                                     int modifiers) override;
     virtual bool mouse_drag_event(const Vector2i &p, const Vector2i &rel, int button,
@@ -100,8 +100,8 @@ public:
     virtual bool keyboard_event(int key, int scancode, int action, int modifiers) override;
 
 protected:
-    Vector2i position_to_block(const Vector2i &pos) const;
-    Vector2i block_to_position(const Vector2i &pos) const;
+    Vector2i position_to_block(const Vector2i &pos);
+    Vector2i block_to_position(const Vector2i &pos);
 
 protected:
     struct Block {

@@ -10,13 +10,13 @@ class TreeView;
 
 class TreeViewItem : public Widget {
 public:
-    TreeViewItem(Widget *parent, TreeView* tree, const std::string &caption, std::function<void()> callback);
+    TreeViewItem(std::shared_ptr<Widget> parent, std::shared_ptr<TreeView> tree, const std::string &caption, std::function<void()> callback);
 
     virtual void draw(NVGcontext *ctx) override;
-    virtual Vector2i preferred_size(NVGcontext *ctx) const override;
+    virtual Vector2i preferred_size(NVGcontext *ctx) override;
     virtual bool mouse_button_event(const Vector2i &p, int button, bool down, int modifiers) override;
 
-    TreeViewItem* add_node(const std::string &caption, std::function<void()> callback);
+	std::shared_ptr<TreeViewItem> add_node(const std::string &caption, std::function<void()> callback);
 
 	void set_selected(bool selected) {
 		m_selected = selected;
@@ -29,11 +29,11 @@ public:
     bool expanded() const { return m_expanded; }
 
 private:
-    TreeView* m_tree;
+	std::shared_ptr<TreeView> m_tree;
     std::string m_caption;
     bool m_selected;
     bool m_expanded;
-    std::vector<TreeViewItem *> m_children;
+    std::vector<std::shared_ptr<TreeViewItem>> m_children;
     
     std::function<void()> m_selection_callback;
 };

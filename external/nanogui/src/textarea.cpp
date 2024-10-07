@@ -17,7 +17,7 @@
 
 NAMESPACE_BEGIN(nanogui)
 
-TextArea::TextArea(Widget *parent) : Widget(parent),
+TextArea::TextArea(std::shared_ptr<Widget> parent) : Widget(parent),
   m_foreground_color(Color(0, 0)), m_background_color(Color(0, 0)),
   m_selection_color(.5f, 1.f), m_font("sans"), m_offset(0),
   m_max_size(0), m_padding(0), m_selectable(true),
@@ -50,7 +50,7 @@ void TextArea::append(const std::string &text) {
         }
     } while (*str++ != 0);
 
-    VScrollPanel *vscroll = dynamic_cast<VScrollPanel *>(m_parent);
+    auto vscroll = std::dynamic_pointer_cast<VScrollPanel>(m_parent);
     if (vscroll)
         vscroll->perform_layout(ctx);
 }
@@ -98,12 +98,12 @@ bool TextArea::keyboard_event(int key, int /* scancode */, int action, int modif
     return false;
 }
 
-Vector2i TextArea::preferred_size(NVGcontext *) const {
+Vector2i TextArea::preferred_size(NVGcontext *) {
     return m_max_size + m_padding * 2;
 }
 
 void TextArea::draw(NVGcontext *ctx) {
-    VScrollPanel *vscroll = dynamic_cast<VScrollPanel *>(m_parent);
+    auto vscroll = std::dynamic_pointer_cast<VScrollPanel>(m_parent);
 
     std::vector<Block>::iterator start_it = m_blocks.begin(),
                                  end_it = m_blocks.end();
@@ -222,7 +222,7 @@ bool TextArea::mouse_drag_event(const Vector2i &p, const Vector2i &/* rel */,
     return false;
 }
 
-Vector2i TextArea::position_to_block(const Vector2i &pos) const {
+Vector2i TextArea::position_to_block(const Vector2i &pos) {
     NVGcontext *ctx = screen()->nvg_context();
     auto it = std::lower_bound(
         m_blocks.begin(),
@@ -266,7 +266,7 @@ Vector2i TextArea::position_to_block(const Vector2i &pos) const {
     );
 }
 
-Vector2i TextArea::block_to_position(const Vector2i &pos) const {
+Vector2i TextArea::block_to_position(const Vector2i &pos) {
     if (pos.x() < 0 || pos.x() >= (int) m_blocks.size())
         return Vector2i(-1, -1);
     NVGcontext *ctx = screen()->nvg_context();

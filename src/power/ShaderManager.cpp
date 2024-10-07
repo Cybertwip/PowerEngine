@@ -16,10 +16,10 @@ std::string ShaderManager::read_file(const std::string &file_path) {
     return buffer.str();
 }
 
-ShaderManager::ShaderManager(nanogui::Canvas &canvas) : mRenderPass(*canvas.render_pass()) {
+ShaderManager::ShaderManager(std::shared_ptr<nanogui::Canvas> canvas) : mRenderPass(canvas->render_pass()) {
 }
 
-nanogui::ref<nanogui::Shader> ShaderManager::load_shader(const std::string &name,
+std::shared_ptr<nanogui::Shader> ShaderManager::load_shader(const std::string &name,
 														 const std::string &vertex_path,
 														const std::string &fragment_path, nanogui::Shader::BlendMode blendMode) {
 	if (mShaderCache.find(name) != mShaderCache.end()) {
@@ -28,13 +28,13 @@ nanogui::ref<nanogui::Shader> ShaderManager::load_shader(const std::string &name
 	
 	std::string vertex_code = read_file(vertex_path);
 	std::string fragment_code = read_file(fragment_path);
-	nanogui::ref<nanogui::Shader> shader =
-	new nanogui::Shader(&mRenderPass, name, vertex_code, fragment_code, blendMode);
+	std::shared_ptr<nanogui::Shader> shader =
+	std::make_shared<nanogui::Shader>(mRenderPass, name, vertex_code, fragment_code, blendMode);
 	mShaderCache[name] = shader;
 	return shader;
 }
 
-nanogui::ref<nanogui::Shader> ShaderManager::get_shader(const std::string &name) {
+std::shared_ptr<nanogui::Shader> ShaderManager::get_shader(const std::string &name) {
     if (mShaderCache.find(name) != mShaderCache.end()) {
         return mShaderCache[name];
     }

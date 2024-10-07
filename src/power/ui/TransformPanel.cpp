@@ -26,7 +26,7 @@ TransformPanel::TransformPanel(nanogui::Widget &parent)
 	// Translation section
 	new nanogui::Label(this, "Translation", "sans-bold");
 	
-	Widget *translatePanel = new Widget(this);
+	std::shared_ptr<Widget> translatePanel = new Widget(this);
 	
 	auto *translateLayout = new nanogui::GridLayout(nanogui::Orientation::Vertical, 2,
 												 nanogui::Alignment::Middle, 0, 0);
@@ -71,7 +71,7 @@ TransformPanel::TransformPanel(nanogui::Widget &parent)
 	// Rotation section
 	new nanogui::Label(this, "Rotation", "sans-bold");
 	
-	Widget *rotatePanel = new Widget(this);
+	std::shared_ptr<Widget> rotatePanel = new Widget(this);
 	
 	auto *rotateLayout = new nanogui::GridLayout(nanogui::Orientation::Vertical, 2,
 		 nanogui::Alignment::Middle, 0, 0);
@@ -115,7 +115,7 @@ TransformPanel::TransformPanel(nanogui::Widget &parent)
 	// Scale section
 	new nanogui::Label(this, "Scale", "sans-bold");
 	
-	Widget *scalePanel = new Widget(this);
+	std::shared_ptr<Widget> scalePanel = new Widget(this);
 	auto *scaleLayout = new nanogui::GridLayout(nanogui::Orientation::Vertical, 2,
 												nanogui::Alignment::Middle, 0, 0);
 	

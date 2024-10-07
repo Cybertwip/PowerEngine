@@ -22,7 +22,7 @@
 
 NAMESPACE_BEGIN(nanogui)
 
-Canvas::Canvas(Widget *parent, uint8_t samples,
+Canvas::Canvas(std::shared_ptr<Widget> parent, uint8_t samples,
 			   bool has_depth_buffer, bool has_stencil_buffer)
 : Widget(parent), m_draw_border(true) {
 	m_size = Vector2i(192, 128);
@@ -32,7 +32,7 @@ Canvas::Canvas(Widget *parent, uint8_t samples,
 	samples = 1;
 #endif
 	
-	Screen *scr = screen();
+	auto scr = screen();
 	if (scr == nullptr)
 		throw std::runtime_error("Canvas::Canvas(): could not find parent screen!");
 	
@@ -40,9 +40,9 @@ Canvas::Canvas(Widget *parent, uint8_t samples,
 	|| (has_depth_buffer && !scr->has_depth_buffer())
 	|| (has_stencil_buffer && !scr->has_stencil_buffer());
 
-	Object 	*color_texture = nullptr,
-	*attachment_texture = nullptr,
-	*depth_texture = nullptr;
+	std::shared_ptr<Object> color_texture = nullptr,
+	attachment_texture = nullptr,
+	depth_texture = nullptr;
 	
 	if (has_stencil_buffer && !has_depth_buffer)
 		throw std::runtime_error("Canvas::Canvas(): has_stencil implies has_depth!");
@@ -54,7 +54,7 @@ Canvas::Canvas(Widget *parent, uint8_t samples,
 			depth_texture = scr;
 		}
 		
-		attachment_texture = new Texture(
+		attachment_texture = std::shared_ptr<Texture>( new Texture(
 										 Texture::PixelFormat::R,
 										 Texture::ComponentFormat::Int32,
 										 m_size,
@@ -62,9 +62,9 @@ Canvas::Canvas(Widget *parent, uint8_t samples,
 										 Texture::InterpolationMode::Bilinear,
 										 Texture::WrapMode::Repeat,
 										 samples, 					 Texture::TextureFlags::RenderTarget
-										 );
+										 ));
 	} else {
-		color_texture = new Texture(
+		color_texture = std::shared_ptr<Texture>(new Texture(
 									scr->pixel_format(),
 									scr->component_format(),
 									m_size,
@@ -73,13 +73,13 @@ Canvas::Canvas(Widget *parent, uint8_t samples,
 									Texture::WrapMode::Repeat,
 									samples,
 									Texture::TextureFlags::RenderTarget
-									);
+									));
 		
 #if defined(NANOGUI_USE_METAL)
-		Texture *color_texture_resolved = nullptr;
+		std::shared_ptr<Texture> color_texture_resolved = nullptr;
 		
 		if (samples > 1) {
-			color_texture_resolved = new Texture(
+			color_texture_resolved = std::shared_ptr<Texture>(new Texture(
 												 scr->pixel_format(),
 												 scr->component_format(),
 												 m_size,
@@ -88,16 +88,16 @@ Canvas::Canvas(Widget *parent, uint8_t samples,
 												 Texture::WrapMode::Repeat,
 												 1,
 												 Texture::TextureFlags::RenderTarget
-												 );
+												 ));
 			
-			m_render_pass_resolved = new RenderPass(
+			m_render_pass_resolved = std::shared_ptr<RenderPass>(new RenderPass(
 													{ color_texture_resolved }
-													);
+													));
 		}
 #endif
 
 		
-		depth_texture = new Texture(
+		depth_texture = std::shared_ptr<Texture>(new Texture(
 									has_stencil_buffer ? Texture::PixelFormat::DepthStencil
 									: Texture::PixelFormat::DepthStencil,
 									Texture::ComponentFormat::Float32,
@@ -107,10 +107,10 @@ Canvas::Canvas(Widget *parent, uint8_t samples,
 									Texture::WrapMode::Repeat,
 									samples,
 									Texture::TextureFlags::RenderTarget
-									);
+									));
 	}
 	
-	m_render_pass = new RenderPass(
+	m_render_pass = std::shared_ptr<RenderPass>(new RenderPass(
 								   { color_texture, attachment_texture},
 								   depth_texture,
 								   has_stencil_buffer ? depth_texture : nullptr,
@@ -119,7 +119,7 @@ Canvas::Canvas(Widget *parent, uint8_t samples,
 #else
 								   nullptr
 #endif
-								   );
+								   ));
 }
 
 void Canvas::set_background_color(const Color &background_color) {
@@ -133,7 +133,7 @@ const Color& Canvas::background_color() const {
 void Canvas::draw_contents() { /* No-op. */ }
 
 void Canvas::draw(NVGcontext *ctx) {
-	Screen *scr = screen();
+	auto scr = screen();
 	if (scr == nullptr)
 		throw std::runtime_error("Canvas::draw(): could not find parent screen!");
 	
@@ -182,7 +182,7 @@ void Canvas::draw(NVGcontext *ctx) {
 	}
 	
 	if (m_render_to_texture) {
-		RenderPass *rp = m_render_pass;
+		std::shared_ptr<RenderPass> rp = m_render_pass;
 #if defined(NANOGUI_USE_METAL)
 		if (m_render_pass_resolved)
 			rp = m_render_pass_resolved;

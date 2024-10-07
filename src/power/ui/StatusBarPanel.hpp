@@ -23,19 +23,19 @@ class UiManager;
 
 class StatusBarPanel : public Panel {
 public:
-	StatusBarPanel(nanogui::Widget &parent, IActorVisualManager& actorVisualManager, SceneTimeBar& sceneTimeBar, MeshActorLoader& meshActorLoader, ShaderManager& shaderManager, DeepMotionApiClient& deepMotionApiClient, UiManager& uiManager, std::function<void(std::function<void(int, int)>)> applicationClickRegistrator);
+	StatusBarPanel(nanogui::Widget &parent, IActorVisualManager& actorVisualManager, std::shared_ptr<SceneTimeBar> sceneTimeBar, MeshActorLoader& meshActorLoader, ShaderManager& shaderManager, DeepMotionApiClient& deepMotionApiClient, UiManager& uiManager, std::function<void(std::function<void(int, int)>)> applicationClickRegistrator);
 	
-	ResourcesPanel& resources_panel() {
-		return *mResourcesPanel;
+	std::shared_ptr<ResourcesPanel> resources_panel() {
+		return mResourcesPanel;
 	}
 	
 private:
-	ResourcesPanel *mResourcesPanel;
+	std::shared_ptr<ResourcesPanel> mResourcesPanel;
 	bool mIsPanelVisible = false;
 	std::future<void> mAnimationFuture;
 
 	void toggle_resources_panel(bool active);
 	void animate_panel_position(const nanogui::Vector2i &targetPosition);
 	
-	SceneTimeBar& mSceneTimeBar;
+	std::shared_ptr<SceneTimeBar> mSceneTimeBar;
 };

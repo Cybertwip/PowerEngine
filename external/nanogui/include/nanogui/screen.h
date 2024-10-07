@@ -17,9 +17,12 @@
 #include <nanogui/widget.h>
 #include <nanogui/texture.h>
 
+#include <memory>
+
 NAMESPACE_BEGIN(nanogui)
 
 class Texture;
+class Window;
 
 /**
  * \class Screen screen.h nanogui/screen.h
@@ -163,7 +166,7 @@ public:
     float pixel_ratio() const { return m_pixel_ratio; }
 
     /// Handle a file drop event
-    virtual bool drop_event(Widget*, const std::vector<std::string> & /* filenames */) {
+    virtual bool drop_event(std::shared_ptr<Widget>, const std::vector<std::string> & /* filenames */) {
         return false; /* To be overridden */
     }
 
@@ -218,7 +221,7 @@ public:
     void *metal_texture() const { return m_metal_texture; }
 	
 	/// Return the associated depth/stencil texture
-	Texture *depth_stencil_texture() { return m_depth_texture; }
+	std::shared_ptr<Texture> depth_stencil_texture() { return m_depth_texture; }
 #endif
 
     /// Flush all queued up NanoVG rendering commands
@@ -253,11 +256,11 @@ public:
     void resize_callback_event(int width, int height);
 
     /* Internal helper functions */
-	void remove_from_focus(Widget *widget);
-    void update_focus(Widget *widget);
-    void dispose_window(Window *window);
-    void center_window(Window *window);
-    void move_window_to_front(Window *window);
+	void remove_from_focus(std::shared_ptr<Widget> widget);
+    void update_focus(std::shared_ptr<Widget> widget);
+    void dispose_window(std::shared_ptr<Window> window);
+    void center_window(std::shared_ptr<Window> window);
+    void move_window_to_front(std::shared_ptr<Window> window);
     void draw_widgets();
 	virtual void process_events() {}
 	
@@ -265,12 +268,12 @@ public:
 	void * nswin() { return m_nswin; }
 #endif
 	
-	virtual void set_drag_widget(Widget* widget, std::function<void()> drag_callback) {
+	virtual void set_drag_widget(std::shared_ptr<Widget> widget, std::function<void()> drag_callback) {
 		m_drag_widget = widget;
 		m_drag_callback = drag_callback;
 	}
 
-	virtual Widget* drag_widget() const { return m_drag_widget; }
+	virtual std::shared_ptr<Widget> drag_widget() const { return m_drag_widget; }
 	
 	bool drag_active() const {
 		return m_drag_active;
@@ -281,14 +284,14 @@ protected:
     NVGcontext *m_nvg_context = nullptr;
     GLFWcursor *m_cursors[(size_t) Cursor::CursorCount];
     Cursor m_cursor;
-    std::vector<Widget *> m_focus_path;
+    std::vector<std::shared_ptr<Widget> > m_focus_path;
     Vector2i m_fbsize;
     float m_pixel_ratio;
     int m_mouse_state, m_modifiers;
     Vector2i m_mouse_pos;
     bool m_drag_active;
 	std::function<void()> m_drag_callback;
-    Widget *m_drag_widget = nullptr;
+    std::shared_ptr<Widget> m_drag_widget = nullptr;
     double m_last_interaction;
     bool m_process_events = true;
     Color m_background;
@@ -304,7 +307,7 @@ protected:
     void *m_metal_texture = nullptr;
     void *m_metal_drawable = nullptr;
 	void *m_nswin = nullptr;
-	ref<Texture> m_depth_texture;
+	std::shared_ptr<Texture> m_depth_texture;
 #endif
 };
 

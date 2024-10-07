@@ -19,17 +19,17 @@
 
 NAMESPACE_BEGIN(nanogui)
 
-ImageView::ImageView(Widget *parent) : Canvas(parent, 1, true, true) {
+ImageView::ImageView(std::shared_ptr<Widget> parent) : Canvas(parent, 1, true, true) {
     render_pass()->set_clear_color(0, Color(0.3f, 0.3f, 0.32f, 1.f));
 
-    m_image_shader = new Shader(
+    m_image_shader = std::shared_ptr<Shader>(new Shader(
         render_pass(),
         /* An identifying name */
         "a_simple_shader",
         NANOGUI_SHADER(imageview_vertex),
         NANOGUI_SHADER(imageview_fragment),
         Shader::BlendMode::AlphaBlend
-    );
+    ));
 
 	const float positions[] = {
 		// Vertex 0
@@ -62,7 +62,7 @@ ImageView::ImageView(Widget *parent) : Canvas(parent, 1, true, true) {
     m_image_background_color = Color(0.f, 0.f, 0.f, 0.f);
 }
 
-void ImageView::set_image(Texture *image) {
+void ImageView::set_image(std::shared_ptr<Texture> image) {
     if (image->mag_interpolation_mode() != Texture::InterpolationMode::Nearest)
         throw std::runtime_error(
             "ImageView::set_image(): interpolation mode must be set to 'Nearest'!");
@@ -89,14 +89,14 @@ void ImageView::reset() {
     center();
 }
 
-Vector2f ImageView::pos_to_pixel(const Vector2f &p) const {
+Vector2f ImageView::pos_to_pixel(const Vector2f &p) {
     Vector2f p2 = p;
     if (m_draw_border)
         p2 -= 1.f;
     return (p2 * screen()->pixel_ratio() - m_offset) / scale();
 }
 
-Vector2f ImageView::pixel_to_pos(const Vector2f &p) const {
+Vector2f ImageView::pixel_to_pos(const Vector2f &p) {
     Vector2i pos = (p * scale() + m_offset) / screen()->pixel_ratio();
     if (m_draw_border)
         pos += 1.f;

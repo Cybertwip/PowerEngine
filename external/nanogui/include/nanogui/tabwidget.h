@@ -29,7 +29,7 @@ NAMESPACE_BEGIN(nanogui)
 class NANOGUI_EXPORT TabWidgetBase : public Widget {
 public:
     /// Construct a new tab widget
-    TabWidgetBase(Widget *parent, const std::string &font = "sans-bold");
+    TabWidgetBase(std::shared_ptr<Widget> parent, const std::string &font = "sans-bold");
 
     /// Return the total number of tabs
     int tab_count() const { return (int) m_tab_captions.size(); };
@@ -97,13 +97,13 @@ public:
     void set_close_callback(const std::function<void(int)> &close_callback) { m_close_callback = close_callback; }
 
     /// Callback that is used to notify a listener about popup events (will be called with the tab ID)
-    const std::function<Popup *(int, Screen*)> &popup_callback() const { return m_popup_callback; }
+    const std::function<std::shared_ptr<Popup> (int, std::shared_ptr<Screen>)> &popup_callback() const { return m_popup_callback; }
     /// Set a callback that is used to notify a listener about popup events (will be called with the tab ID)
-    void set_popup_callback(const std::function<Popup *(int, Screen*)> &popup_callback) { m_popup_callback = popup_callback; }
+    void set_popup_callback(const std::function<std::shared_ptr<Popup> (int, std::shared_ptr<Screen>)> &popup_callback) { m_popup_callback = popup_callback; }
 
     // Widget implementation
     virtual void perform_layout(NVGcontext* ctx) override;
-    virtual Vector2i preferred_size(NVGcontext* ctx) const override;
+    virtual Vector2i preferred_size(NVGcontext* ctx) override;
     virtual void draw(NVGcontext* ctx) override;
     virtual bool mouse_button_event(const Vector2i &p, int button, bool down,
                                     int modifiers) override;
@@ -129,12 +129,12 @@ protected:
     int m_close_index = -1, m_close_index_pushed = -1;
     bool m_tabs_draggable = false;
     bool m_tabs_closeable = false;
-    Popup *m_popup = nullptr;
+    std::shared_ptr<Popup> m_popup = nullptr;
     int m_tab_counter = 0;
     int m_padding = 3;
     std::function<void(int)> m_callback;
     std::function<void(int)> m_close_callback;
-    std::function<Popup*(int, Screen*)> m_popup_callback;
+    std::function<std::shared_ptr<Popup>(int, std::shared_ptr<Screen>)> m_popup_callback;
     Color m_background_color;
 };
 
@@ -155,7 +155,7 @@ protected:
  *
  *       // `this` might be say a nanogui::Screen instance
  *       Window *window = new Window(this, "Window Title");
- *       TabWidget *tab_widget = window->add<TabWidget>();
+ *       Tabstd::shared_ptr<Widget> tab_widget = window->add<TabWidget>();
  *       // this label would be a direct child of tabWidget,
  *       // which is forbidden, so an exception will be raised
  *       new Label(tab_widget, "Some Label");
@@ -166,9 +166,9 @@ protected:
  *
  *       // `this` might e.g. be a nanogui::Screen instance
  *       Window *window = new Window(this, "Window Title");
- *       TabWidget *tab_widget = window->add<TabWidget>();
+ *       Tabstd::shared_ptr<Widget> tab_widget = window->add<TabWidget>();
  *       // Create a tab first
- *       Widget *tab = new Widget(tab_widget);
+ *       std::shared_ptr<Widget> tab = new Widget(tab_widget);
  *       int tab_id = tab_widget->append_tab("Tab Name", tab);
  *       // Add children to the created tabs
  *       tab->set_layout(new GroupLayout());
@@ -182,13 +182,13 @@ protected:
 class NANOGUI_EXPORT TabWidget : public TabWidgetBase {
 public:
     /// Construct a new tab widget
-    TabWidget(Widget *parent, const std::string &font = "sans-bold");
+    TabWidget(std::shared_ptr<Widget> parent, const std::string &font = "sans-bold");
 
     /// Inserts a new tab at the specified position and returns its ID.
-    int insert_tab(int index, const std::string &caption, Widget *widget);
+    int insert_tab(int index, const std::string &caption, std::shared_ptr<Widget> widget);
 
     /// Appends a new tab and returns its ID.
-    int append_tab(const std::string &caption, Widget *widget);
+    int append_tab(const std::string &caption, std::shared_ptr<Widget> widget);
 
     /// Removes a tab with the specified ID
     virtual void remove_tab(int id) override;
@@ -200,11 +200,11 @@ public:
     void set_remove_children(bool value) { m_remove_children = value; }
 
     virtual void perform_layout(NVGcontext* ctx) override;
-    virtual Vector2i preferred_size(NVGcontext* ctx) const override;
+    virtual Vector2i preferred_size(NVGcontext* ctx) override;
 protected:
     virtual void update_visibility() override;
 protected:
-    std::unordered_map<int, Widget *> m_widgets;
+    std::unordered_map<int, std::shared_ptr<Widget> > m_widgets;
     bool m_remove_children = true;
 };
 

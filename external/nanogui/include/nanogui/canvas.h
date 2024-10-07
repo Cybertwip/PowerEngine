@@ -59,14 +59,14 @@ public:
      *     Should the widget clear its color/depth/stencil buffer?
      */
     Canvas(
-        Widget *parent,
+        std::shared_ptr<Widget> parent,
         uint8_t samples = 4,
         bool has_depth_buffer = true,
         bool has_stencil_buffer = true
     );
 
     /// Return the render pass associated with the canvas object
-    RenderPass *render_pass() { return m_render_pass; }
+    std::shared_ptr<RenderPass> render_pass() { return m_render_pass; }
 
     /// Specify whether to draw the widget border
     void set_draw_border(const bool draw_border) {
@@ -97,9 +97,9 @@ public:
     virtual void draw(NVGcontext *ctx) override;
 
 protected:
-    ref<RenderPass> m_render_pass;
+    std::shared_ptr<RenderPass> m_render_pass;
 #if defined(NANOGUI_USE_METAL)
-	ref<RenderPass> m_render_pass_resolved;
+	std::shared_ptr<RenderPass> m_render_pass_resolved;
 #endif
     bool m_draw_border;
     Color m_border_color;

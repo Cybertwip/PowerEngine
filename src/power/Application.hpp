@@ -14,10 +14,10 @@
 
 class DraggableWindow : public nanogui::Window {
 public:
-	DraggableWindow(nanogui::Widget *parent, const std::string &title = "Drag Me") : nanogui::Window(parent, title) {
+	DraggableWindow(std::shared_ptr<Widget> parent, const std::string &title = "Drag Me") : nanogui::Window(parent, title) {
 		set_modal(false);   // We want it to be freely interactive
 		
-		set_layout(new nanogui::BoxLayout(nanogui::Orientation::Horizontal,
+		set_layout(std::make_shared< nanogui::BoxLayout>(nanogui::Orientation::Horizontal,
 													   nanogui::Alignment::Fill, 10, 10));
 
 	}
@@ -61,7 +61,7 @@ public:
 					unsigned int gl_major = 3,
 					unsigned int gl_minor = 2)
 	: Screen(caption, fullscreen, depth_buffer, stencil_buffer, float_buffer, gl_major, gl_minor){
-		m_draggable_window = new DraggableWindow(this, "");
+		m_draggable_window = std::make_shared<DraggableWindow>(shared_from_this(), "");
 		
 		m_draggable_window->set_fixed_width(0);
 		m_draggable_window->set_fixed_height(0);
@@ -114,8 +114,8 @@ protected:
 		
 		try {
 			if (m_focus_path.size() > 1) {
-				const Window *window =
-				dynamic_cast<Window *>(m_focus_path[m_focus_path.size() - 2]);
+				auto window =
+				std::dynamic_pointer_cast<Window>(m_focus_path[m_focus_path.size() - 2]);
 				if (window && window->modal()) {
 					if (!window->contains(m_mouse_pos))
 						return;
@@ -150,7 +150,7 @@ protected:
 	}
 	
 private:
-	void set_drag_widget(Widget *widget, std::function<void()> drag_callback) override {
+	void set_drag_widget(std::shared_ptr<Widget> widget, std::function<void()> drag_callback) override {
 		if(widget == nullptr){
 			m_draggable_window->set_visible(false);
 			m_draggable_window->set_drag_callback(nullptr);
@@ -165,11 +165,11 @@ private:
 			m_drag_callback = nullptr;
 		}
 	}
-	Widget* drag_widget() const override { return m_draggable_window; }
+	std::shared_ptr<Widget> drag_widget() const override { return m_draggable_window; }
 
-	void move_widget_to_top(Widget *widget) {
+	void move_widget_to_top(std::shared_ptr<Widget> widget) {
 		if (!widget || !widget->parent()) return;
-		auto &children = const_cast<std::vector<Widget *> &>(widget->parent()->children());
+		auto &children = const_cast<std::vector<std::shared_ptr<Widget> > &>(widget->parent()->children());
 		auto it = std::find(children.begin(), children.end(), widget);
 		if (it != children.end()) {
 			// Move the widget to the end of the list to make it topmost
@@ -179,7 +179,7 @@ private:
 	}
 	
 private:
-	DraggableWindow* m_draggable_window;
+	std::shared_ptr<DraggableWindow> m_draggable_window;
 
 };
 
@@ -207,6 +207,8 @@ class Application : public nanogui::DraggableScreen
 {
    public:
     Application();
+	
+	void initialize();
 
     virtual bool keyboard_event(int key, int scancode, int action, int modifiers) override;
 	virtual void draw(NVGcontext *ctx) override;
@@ -215,7 +217,7 @@ class Application : public nanogui::DraggableScreen
 	void register_click_callback(std::function<void(bool, int, int, int, int)> callback);
 
    private:
-	bool drop_event(Widget* sender, const std::vector<std::string> & filenames) override;
+	bool drop_event(std::shared_ptr<Widget> sender, const std::vector<std::string> & filenames) override;
 
 	bool mouse_button_event(const nanogui::Vector2i &p, int button, bool down, int modifiers) override;
 	

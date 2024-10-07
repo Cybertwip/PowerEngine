@@ -58,17 +58,17 @@ class StatusBarPanel;
 // ==============================
 class UiManager : public IActorSelectedCallback, public Drawable {
 public:
-	UiManager(IActorSelectedRegistry& registry,
-			  IActorVisualManager& actorVisualManager,
+	UiManager(std::shared_ptr<IActorSelectedRegistry> registry,
+			  std::shared_ptr<IActorVisualManager> actorVisualManager,
 			  ActorManager& actorManager,
 			  MeshActorLoader& meshActorLoader,
 			  ShaderManager& shaderManager,
-			  ScenePanel& scenePanel,
-			  Canvas& canvas,
-			  nanogui::Widget& toolbox,
-			  nanogui::Widget& statusBar,
-			  AnimationPanel& animationPanel,
-			  SceneTimeBar& sceneTimeBar,
+			  std::shared_ptr<ScenePanel> scenePanel,
+			  std::shared_ptr<Canvas> canvas,
+			  std::shared_ptr<nanogui::Widget> toolbox,
+			  std::shared_ptr<nanogui::Widget> statusBar,
+			  std::shared_ptr<AnimationPanel> animationPanel,
+			  std::shared_ptr<SceneTimeBar> sceneTimeBar,
 			  CameraManager& cameraManager,
 			  DeepMotionApiClient& deepMotionApiClient,
 			  GizmoManager& gizmoManager,
@@ -84,7 +84,7 @@ public:
 					  const nanogui::Matrix4f& projection) override;
 	
 	// Public Interface
-	StatusBarPanel& status_bar_panel();
+	std::shared_ptr<StatusBarPanel> status_bar_panel();
 	void export_movie(const std::string& path);
 	bool is_movie_exporting() const;
 	void remove_active_actor();
@@ -107,7 +107,7 @@ private:
 	nanogui::RenderPass* mRenderPass;
 	SceneTimeBar& mSceneTimeBar;
 	glm::vec4 mSelectionColor;
-	StatusBarPanel* mStatusBarPanel;
+	std::shared_ptr<StatusBarPanel> mStatusBarPanel;
 	bool mIsMovieExporting;
 	std::string mMovieExportFile;
 	std::string mMovieExportDirectory;

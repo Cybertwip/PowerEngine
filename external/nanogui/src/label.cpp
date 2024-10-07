@@ -15,7 +15,7 @@
 
 NAMESPACE_BEGIN(nanogui)
 
-Label::Label(Widget *parent, const std::string &caption, const std::string &font, int font_size, Alignment alignment)
+Label::Label(std::shared_ptr<Widget> parent, const std::string &caption, const std::string &font, int font_size, Alignment alignment)
 : Widget(parent), m_caption(caption), m_font(font), m_alignment(alignment) {
 	if (m_theme) {
 		m_font_size = m_theme->m_standard_font_size;
@@ -24,7 +24,7 @@ Label::Label(Widget *parent, const std::string &caption, const std::string &font
 	if (font_size >= 0) m_font_size = font_size;
 }
 
-void Label::set_theme(Theme *theme) {
+void Label::set_theme(std::shared_ptr<Theme> theme) {
 	Widget::set_theme(theme);
 	if (m_theme) {
 		m_font_size = m_theme->m_standard_font_size;
@@ -32,7 +32,7 @@ void Label::set_theme(Theme *theme) {
 	}
 }
 
-Vector2i Label::preferred_size(NVGcontext *ctx) const {
+Vector2i Label::preferred_size(NVGcontext *ctx) {
 	if (m_caption.empty())
 		return Vector2i(0);
 	nvgFontFace(ctx, m_font.c_str());

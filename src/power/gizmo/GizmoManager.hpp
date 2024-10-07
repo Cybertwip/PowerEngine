@@ -32,7 +32,7 @@ public:
 		Z = -3
 	};
 	
-    GizmoManager(nanogui::Widget& parent, ShaderManager& shaderManager, ActorManager& actorManager, MeshActorLoader& meshActorLoader);
+    GizmoManager(std::shared_ptr<nanogui::Widget> parent, ShaderManager& shaderManager, ActorManager& actorManager, MeshActorLoader& meshActorLoader);
 	~GizmoManager() = default;
 	
 	void select(GizmoAxis gizmoId);

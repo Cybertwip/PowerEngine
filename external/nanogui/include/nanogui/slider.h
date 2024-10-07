@@ -23,7 +23,7 @@ NAMESPACE_BEGIN(nanogui)
  */
 class NANOGUI_EXPORT Slider : public Widget {
 public:
-    Slider(Widget *parent);
+    Slider(std::shared_ptr<Widget> parent);
 
     float value() const { return m_value; }
     void set_value(float value) { m_value = value; }
@@ -43,7 +43,7 @@ public:
     const std::function<void(float)> &final_callback() const { return m_final_callback; }
     void set_final_callback(const std::function<void(float)> &callback) { m_final_callback = callback; }
 
-    virtual Vector2i preferred_size(NVGcontext *ctx) const override;
+    virtual Vector2i preferred_size(NVGcontext *ctx) override;
     virtual bool mouse_motion_event(const Vector2i &p, const Vector2i &rel, int button, int modifiers) override;
     virtual bool mouse_button_event(const Vector2i &p, int button, bool down, int modifiers) override;
     virtual void draw(NVGcontext* ctx) override;

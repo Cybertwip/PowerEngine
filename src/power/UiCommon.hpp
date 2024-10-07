@@ -22,42 +22,42 @@ class UiManager;
 
 class UiCommon {
 public:
-    UiCommon(nanogui::Widget& parent, ActorManager& actorManager, AnimationTimeProvider& animationTimeProvider);
+    UiCommon(std::shared_ptr<nanogui::Widget> parent, ActorManager& actorManager, AnimationTimeProvider& animationTimeProvider);
         
-    HierarchyPanel& hierarchy_panel() {
-        return *mHierarchyPanel;
+	std::shared_ptr<HierarchyPanel> hierarchy_panel() {
+        return mHierarchyPanel;
     }
 
-    ScenePanel& scene_panel() {
-        return *mScenePanel;
+    std::shared_ptr<ScenePanel> scene_panel() {
+        return mScenePanel;
     }
 
-    nanogui::Widget& status_bar() {
-        return *mStatusBar;
+	std::shared_ptr<nanogui::Widget> status_bar() {
+        return mStatusBar;
     }
 
-	TransformPanel& transform_panel() {
-		return *mTransformPanel;
+	std::shared_ptr<TransformPanel> transform_panel() {
+		return mTransformPanel;
 	}
 
-	AnimationPanel& animation_panel() {
-		return *mAnimationPanel;
+	std::shared_ptr<AnimationPanel> animation_panel() {
+		return mAnimationPanel;
 	}
 	
-	SceneTimeBar& scene_time_bar() {
-		return *mSceneTimeBar;
+	std::shared_ptr<SceneTimeBar> scene_time_bar() {
+		return mSceneTimeBar;
 	}
 
-	nanogui::Widget& toolbox() {
-		return *mToolbox;
+	std::shared_ptr<nanogui::Widget> toolbox() {
+		return mToolbox;
 	}
 	    
 private:
-    ScenePanel* mScenePanel;
-	TransformPanel* mTransformPanel;
-	AnimationPanel* mAnimationPanel;
-    HierarchyPanel* mHierarchyPanel;
-	nanogui::Widget* mStatusBar;
-	nanogui::Widget* mToolbox;
-	SceneTimeBar* mSceneTimeBar;
+    std::shared_ptr<ScenePanel> mScenePanel;
+	std::shared_ptr<TransformPanel> mTransformPanel;
+	std::shared_ptr<AnimationPanel> mAnimationPanel;
+	std::shared_ptr<HierarchyPanel> mHierarchyPanel;
+	std::shared_ptr<nanogui::Widget> mStatusBar;
+	std::shared_ptr<nanogui::Widget> mToolbox;
+	std::shared_ptr<SceneTimeBar> mSceneTimeBar;
 };

@@ -17,12 +17,12 @@
 
 NAMESPACE_BEGIN(nanogui)
 
-ColorWheel::ColorWheel(Widget *parent, const Color& rgb)
+ColorWheel::ColorWheel(std::shared_ptr<Widget> parent, const Color& rgb)
     : Widget(parent), m_drag_region(None) {
     set_color(rgb);
 }
 
-Vector2i ColorWheel::preferred_size(NVGcontext *) const {
+Vector2i ColorWheel::preferred_size(NVGcontext *) {
     return { 100, 100 };
 }
 
