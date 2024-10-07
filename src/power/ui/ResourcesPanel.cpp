@@ -343,7 +343,7 @@ void ResourcesPanel::refresh_file_view() {
 				
 				// Handle thumbnail deserialization for specific file types
 				
-				std::shared_ptr<std::vector<uint8_t>> thumbnailPixels;
+				auto thumbnailPixels = std::make_shared<std::vector<uint8_t>>();
 
 				if (file_icon == FA_WALKING || file_icon == FA_OBJECT_GROUP) {
 					// deserialize thumbnail here
