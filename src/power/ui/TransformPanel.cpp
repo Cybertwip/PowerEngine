@@ -24,7 +24,7 @@ TransformPanel::TransformPanel(std::shared_ptr<nanogui::Widget> parent)
 	};
 	
 	// Translation section
-	mTranlsationLabel = std::make_shared<nanogui::Label>(shared_from_this(), "Translation", "sans-bold");
+	mTranslationLabel = std::make_shared<nanogui::Label>(shared_from_this(), "Translation", "sans-bold");
 	
 	mTranslatePanel = std::make_shared<nanogui::Widget>(shared_from_this());
 	

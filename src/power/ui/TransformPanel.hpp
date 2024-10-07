@@ -26,6 +26,7 @@ private:
 	std::shared_ptr<nanogui::IntBox<int>> mYawRotate;
     std::shared_ptr<nanogui::IntBox<int>> mRollRotate;
 
+	std::shared_ptr<nanogui::Label> mScaleLabel;
 	std::shared_ptr<nanogui::FloatBox<float>> mXScale;
 	std::shared_ptr<nanogui::FloatBox<float>> mYScale;
 	std::shared_ptr<nanogui::FloatBox<float>> mZScale;
@@ -39,12 +40,15 @@ private:
 	std::shared_ptr<nanogui::Label> mYLabel;
 	std::shared_ptr<nanogui::Label> mZLabel;
 
+	std::shared_ptr<nanogui::Label> mRotationLabel;
 	std::shared_ptr<nanogui::Label> mYawLabel;
 	std::shared_ptr<nanogui::Label> mPitchLabel;
 	std::shared_ptr<nanogui::Label> mRollLabel;
 
 	std::shared_ptr<nanogui::Widget> mTranslatePanel;
-	
+	std::shared_ptr<nanogui::Widget> mRotatePanel;
+	std::shared_ptr<nanogui::Widget> mScalePanel;
+
 
     std::optional<std::reference_wrapper<Actor>> mActiveActor;
 	
