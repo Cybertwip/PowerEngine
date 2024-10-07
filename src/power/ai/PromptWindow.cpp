@@ -53,16 +53,21 @@ static std::string GenerateUniqueFilename(const std::string& baseDir, const std:
 }
 
 PromptWindow::PromptWindow(std::weak_ptr<nanogui::Screen> screen, std::shared_ptr<ResourcesPanel> resourcesPanel, DeepMotionApiClient& deepMotionApiClient, std::shared_ptr<nanogui::RenderPass> renderpass, ShaderManager& shaderManager)
-: nanogui::Window(screen), mResourcesPanel(resourcesPanel), mDeepMotionApiClient(deepMotionApiClient), mDummyAnimationTimeProvider(60 * 30) { // update with proper duration, dynamically after loading the animation
+: nanogui::Window(screen), mResourcesPanel(resourcesPanel), mDeepMotionApiClient(deepMotionApiClient), mDummyAnimationTimeProvider(60 * 30),
+	mRenderpass(renderpass) { // update with proper duration, dynamically after loading the animation
 	
 	set_fixed_size(nanogui::Vector2i(400, 512)); // Adjusted height for additional UI elements
 	set_layout(std::make_shared<nanogui::BoxLayout>(nanogui::Orientation::Vertical, nanogui::Alignment::Middle));
 	set_title("Animation Prompt");
+}
+
+void PromptWindow::initialize() {
+	nanogui::Window::initialize();
 	
 	// Close Button
-	auto close_button = new nanogui::Button(button_panel(), "X");
-	close_button->set_fixed_size(nanogui::Vector2i(20, 20));
-	close_button->set_callback([this]() {
+	mCloseButton = new nanogui::Button(button_panel(), "X");
+	mCloseButton->set_fixed_size(nanogui::Vector2i(20, 20));
+	mCloseButton->set_callback([this]() {
 		this->set_visible(false);
 		this->set_modal(false);
 		mPreviewCanvas->set_update(false);
@@ -71,7 +76,7 @@ PromptWindow::PromptWindow(std::weak_ptr<nanogui::Screen> screen, std::shared_pt
 		nanogui::async([this]() {
 			mImportButton->set_enabled(false);
 		});
-
+		
 	});
 	
 	// Preview Canvas
@@ -80,8 +85,8 @@ PromptWindow::PromptWindow(std::weak_ptr<nanogui::Screen> screen, std::shared_pt
 	mPreviewCanvas->set_aspect_ratio(1.0f);
 	
 	// Mesh and Skinned Mesh Batches
-	mMeshBatch = std::make_unique<SelfContainedMeshBatch>(renderpass, mPreviewCanvas->get_mesh_shader());
-	mSkinnedMeshBatch = std::make_unique<SelfContainedSkinnedMeshBatch>(renderpass, mPreviewCanvas->get_skinned_mesh_shader());
+	mMeshBatch = std::make_unique<SelfContainedMeshBatch>(mRenderPass, mPreviewCanvas->get_mesh_shader());
+	mSkinnedMeshBatch = std::make_unique<SelfContainedSkinnedMeshBatch>(mRenderPass, mPreviewCanvas->get_skinned_mesh_shader());
 	mBatchUnit = std::make_unique<BatchUnit>(*mMeshBatch, *mSkinnedMeshBatch);
 	mMeshActorBuilder = std::make_unique<MeshActorBuilder>(*mBatchUnit);
 	mMeshActorImporter = std::make_unique<MeshActorImporter>();
@@ -102,7 +107,7 @@ PromptWindow::PromptWindow(std::weak_ptr<nanogui::Screen> screen, std::shared_pt
 	
 	mImportPanel = std::make_shared<nanogui::Widget>(shared_from_this());
 	mImportPanel->set_layout(std::make_shared<nanogui::BoxLayout>(nanogui::Orientation::Horizontal, nanogui::Alignment::Minimum, 0, 4));
-
+	
 	// Add Submit Button
 	mSubmitButton = std::make_shared<nanogui::Button>(mImportPanel, "Submit");
 	mSubmitButton->set_callback([this]() {
@@ -110,7 +115,7 @@ PromptWindow::PromptWindow(std::weak_ptr<nanogui::Screen> screen, std::shared_pt
 	});
 	mSubmitButton->set_tooltip("Submit the animation import");
 	mSubmitButton->set_fixed_width(208);
-
+	
 	mImportButton = std::make_shared<nanogui::Button>(mImportPanel, "");
 	mImportButton->set_icon(FA_SAVE);
 	mImportButton->set_enabled(false);

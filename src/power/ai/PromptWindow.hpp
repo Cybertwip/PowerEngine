@@ -82,6 +82,7 @@ private:
 	
 	std::shared_ptr<nanogui::Label> mInputLabel;
 	std::shared_ptr<nanogui::TextBox> mInputTextBox;
+	std::shared_ptr<nanogui::Button> mCloseButton;
 	std::shared_ptr<nanogui::Button> mSubmitButton;
 	std::shared_ptr<nanogui::Button> mImportButton; // New Import button member
 
@@ -101,4 +102,6 @@ private:
 	std::unique_ptr<MeshActorExporter> mMeshActorExporter;
 	
 	std::optional<std::unique_ptr<CompressedSerialization::Serializer>> mSerializedPrompt;
+	
+	std::shared_ptr<nanogui::RenderPass> mRenderPass;
 };
