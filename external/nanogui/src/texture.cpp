@@ -164,10 +164,14 @@ m_samples(1),
 m_flags(TextureFlags::ShaderRead),
 m_mipmap_manual(false) {
 	int n = 0;
-	using Holder = std::unique_ptr<uint8_t[], void(*)(void*)>;
-	Holder texture_data(stbi_load(filename.c_str(), &m_size.x(), &m_size.y(), &n, 0),
-						stbi_image_free);
-	if (!texture_data)
+	unsigned char* image_data = stbi_load(filename.c_str(), &m_size.x(), &m_size.y(), &n, 4);
+		
+	std::unique_ptr<uint8_t[], void(*)(void*)> texture_data_holder(image_data, stbi_image_free);
+
+	
+	n = 4;
+	
+	if (!texture_data_holder)
 		throw std::runtime_error("Could not load texture data from file \"" + filename + "\".");
 	
 	switch (n) {
@@ -182,7 +186,7 @@ m_mipmap_manual(false) {
 	init();
 	if (m_pixel_format != pixel_format)
 		throw std::runtime_error("Texture::Texture(): pixel format not supported by the hardware!");
-	upload((const uint8_t *) texture_data.get());
+	upload((const uint8_t *) texture_data_holder.get());
 }
 
 size_t Texture::bytes_per_pixel() const {

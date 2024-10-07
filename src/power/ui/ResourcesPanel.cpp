@@ -271,20 +271,18 @@ void ResourcesPanel::refresh_file_view() {
 	mSelectedButton = nullptr;
 	mSelectedNode = nullptr;
 	
+	
+	auto gridLayout = dynamic_cast<nanogui::AdvancedGridLayout*>(mFileView->layout());
+	
+	gridLayout->shed_anchor();
+
 	// Refresh the root directory node to get the latest contents
 	mRootDirectoryNode.refresh();
 	
 
-	// Clear existing items
-	auto fileview_children = mFileView->children();
-	
-	for (auto& file_view_child : fileview_children) {
-		auto child_children = file_view_child->children();
-		for (auto& child_child : child_children) {
-			file_view_child->remove_child(child_child);
-		}
-		mFileView->remove_child(file_view_child);
-	}
+	// Clear existing items	
+	mFileView->shed_children();
+
 	
 	if (!mSelectedDirectoryPath.empty()) {
 		// Find the currently selected directory node
@@ -410,13 +408,26 @@ void ResourcesPanel::refresh_file_view() {
 						
 						content->set_fixed_size(iconButton->fixed_size());
 						
-						content->set_image(new nanogui::Texture(
-																  thumbnailPixels->data(),
-																  thumbnailPixels->size(),
-																  512, 512,		  nanogui::Texture::InterpolationMode::Nearest,
-																  nanogui::Texture::InterpolationMode::Nearest,
-																  nanogui::Texture::WrapMode::ClampToEdge));
-												
+						
+						if (file_icon == FA_PERSON_BOOTH) {
+							// using a simple image icon for now
+							content->set_image(new nanogui::Texture("internal/ui/animation.png",	 nanogui::Texture::InterpolationMode::Nearest,						nanogui::Texture::InterpolationMode::Nearest,
+																	nanogui::Texture::WrapMode::ClampToEdge));
+							
+							
+						} else {
+							content->set_image(new nanogui::Texture(
+																	thumbnailPixels->data(),
+																	thumbnailPixels->size(),
+																	512, 512,		  nanogui::Texture::InterpolationMode::Nearest,
+																	nanogui::Texture::InterpolationMode::Nearest,
+																	nanogui::Texture::WrapMode::ClampToEdge));
+							
+							
+						}
+
+						content->image()->resize(nanogui::Vector2i(288, 288));
+
 						content->set_visible(true);
 
 						drag_widget->set_size(iconButton->fixed_size());

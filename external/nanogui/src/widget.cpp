@@ -202,6 +202,24 @@ void Widget::remove_child_at(int index) {
 	widget->dec_ref();
 }
 
+void Widget::shed_children() {
+	
+	for (auto child : m_children) {
+		shed_children();
+		
+		
+		size_t child_count = m_children.size();
+		m_children.erase(std::remove(m_children.begin(), m_children.end(), child),
+						 m_children.end());
+		if (m_children.size() == child_count)
+			throw std::runtime_error("Widget::remove_child(): widget not found!");
+		if (m_screen)
+			m_screen->remove_from_focus(child);
+		child->set_parent(nullptr);
+		child->dec_ref();
+	}
+}
+
 int Widget::child_index(Widget *widget) const {
 	auto it = std::find(m_children.begin(), m_children.end(), widget);
 	if (it == m_children.end())

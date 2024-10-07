@@ -151,6 +151,8 @@ public:
 
     /// Remove a child widget by value
     void remove_child(Widget *widget);
+	
+	void shed_children();
 
     /// Retrieves the child at the specific position
     const Widget* child_at(int index) const { return m_children[(size_t) index]; }

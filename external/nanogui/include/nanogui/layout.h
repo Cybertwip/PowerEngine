@@ -448,7 +448,9 @@ public:
     void set_col_stretch(int index, float stretch) { m_col_stretch.at(index) = stretch; }
 
     /// Specify the anchor data structure for a given widget
-    void set_anchor(const Widget *widget, const Anchor &anchor) { m_anchor[widget] = anchor; }
+	void set_anchor(const Widget *widget, const Anchor &anchor) { m_anchor[widget] = anchor; }
+
+	void shed_anchor() { m_anchor.clear(); }
 
     /// Retrieve the anchor data structure for a given widget
     Anchor anchor(const Widget *widget) const {
