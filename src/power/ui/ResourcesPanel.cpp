@@ -137,7 +137,7 @@ mUiManager(uiManager)
 	mToolbar->set_layout(std::make_shared<nanogui::BoxLayout>(
 												nanogui::Orientation::Horizontal, nanogui::Alignment::Middle, 10, 10));
 	
-	mPromptWindow = std::make_shared<PromptWindow>(parent->window(), shared_from_this(), deepMotionApiClient, shaderManager.render_pass(), shaderManager);
+	mPromptWindow = std::make_shared<PromptWindow>(parent->window(), std::dynamic_pointer_cast<ResourcesPanel>(shared_from_this()), deepMotionApiClient, shaderManager.render_pass(), shaderManager);
 	
 	mMeshPicker = std::make_shared<MeshPicker>(parent->window(), mRootDirectoryNode, [this](const std::string& modelPath){
 		mMeshPicker->set_visible(false);
