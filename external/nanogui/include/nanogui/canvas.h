@@ -97,6 +97,8 @@ public:
     virtual void draw(NVGcontext *ctx) override;
 
 protected:
+	void initialize() override;
+	
     std::shared_ptr<RenderPass> m_render_pass;
 #if defined(NANOGUI_USE_METAL)
 	std::shared_ptr<RenderPass> m_render_pass_resolved;

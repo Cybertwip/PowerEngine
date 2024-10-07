@@ -26,7 +26,6 @@ Canvas::Canvas(std::weak_ptr<Widget> parent, uint8_t samples,
 			   bool has_depth_buffer, bool has_stencil_buffer)
 : Widget(parent), m_draw_border(true) {
 	m_size = Vector2i(192, 128);
-	m_border_color = m_theme->m_border_light;
 	
 #if defined(NANOGUI_USE_GLES)
 	samples = 1;
@@ -120,6 +119,12 @@ Canvas::Canvas(std::weak_ptr<Widget> parent, uint8_t samples,
 								   nullptr
 #endif
 								   ));
+}
+
+void Canvas::initialize() {
+	Widget::initialize();
+	
+	m_border_color = m_theme->m_border_light;
 }
 
 void Canvas::set_background_color(const Color &background_color) {
