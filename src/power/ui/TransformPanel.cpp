@@ -16,6 +16,11 @@ TransformPanel::TransformPanel(std::weak_ptr<nanogui::Widget> parent)
 	set_position(nanogui::Vector2i(0, 0));
 	set_layout(std::make_shared<nanogui::GroupLayout>());
 	
+}
+
+void TransformPanel::initialize() {
+	Panel::initialize();
+	
 	auto gatherValuesCallback = [this](int){
 		if (mActiveActor.has_value()) {
 			auto &transform = mActiveActor->get().get_component<TransformComponent>();

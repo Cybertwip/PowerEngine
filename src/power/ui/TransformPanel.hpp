@@ -18,6 +18,8 @@ public:
     void set_active_actor(std::optional<std::reference_wrapper<Actor>> actor);
     
 private:
+	void initialize() override;
+	
 	std::shared_ptr<nanogui::IntBox<int>> mXTranslate;
 	std::shared_ptr<nanogui::IntBox<int>> mYTranslate;
 	std::shared_ptr<nanogui::IntBox<int>> mZTranslate;
