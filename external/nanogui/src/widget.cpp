@@ -23,16 +23,21 @@
 
 NAMESPACE_BEGIN(nanogui)
 
-Widget::Widget(std::shared_ptr<Widget> parent)
-: m_parent(nullptr), m_theme(nullptr), m_layout(nullptr),
+Widget::Widget(std::weak_ptr<Widget> parent)
+: m_parent(parent), m_theme(nullptr), m_layout(nullptr),
 m_pos(0), m_size(0), m_fixed_size(0), m_visible(true), m_enabled(true),
 m_focused(false), m_mouse_focus(false), m_tooltip(""), m_font_size(-1.f),
-m_icon_extra_scale(1.f), m_cursor(Cursor::Arrow), m_screen(nullptr) {
+m_icon_extra_scale(1.f), m_cursor(Cursor::Arrow), m_screen(std::weak_ptr<Screen>()) {
+}
+
+void Widget::initialize() {
+	if (m_parent.lock())
+		m_parent.lock()->add_child(shared_from_this());
 }
 
 Widget::~Widget() {
-	if (m_screen) {
-		m_screen->remove_from_focus(shared_from_this());
+	if (screen()) {
+		screen()->remove_from_focus(shared_from_this());
 	}
 
 	if (std::uncaught_exceptions() > 0) {
@@ -177,9 +182,9 @@ void Widget::remove_child(std::shared_ptr<Widget> widget) {
 					 m_children.end());
 	if (m_children.size() == child_count)
 		throw std::runtime_error("Widget::remove_child(): widget not found!");
-	if (m_screen)
-		m_screen->remove_from_focus(widget);
-	widget->set_parent(nullptr);
+	if (screen())
+		screen()->remove_from_focus(widget);
+	widget->set_parent(std::weak_ptr<Widget>());
 }
 
 void Widget::remove_child_at(int index) {
@@ -188,9 +193,9 @@ void Widget::remove_child_at(int index) {
 	std::shared_ptr<Widget> widget = m_children[index];
 	m_children.erase(m_children.begin() + index);
 	
-	if (m_screen)
-		m_screen->remove_from_focus(widget);
-	widget->set_parent(nullptr);
+	if (screen())
+		screen()->remove_from_focus(widget);
+	widget->set_parent(std::weak_ptr<Widget>());
 }
 void Widget::shed_children() {
 	// Continue removing children until m_children is empty
@@ -205,12 +210,12 @@ void Widget::shed_children() {
 		child->shed_children();
 		
 		// If the widget is part of a screen, remove it from focus
-		if (m_screen) {
-			m_screen->remove_from_focus(child);
+		if (screen()) {
+			screen()->remove_from_focus(child);
 		}
 		
 		// Detach the child from its parent and decrement its reference count
-		child->set_parent(nullptr);
+		child->set_parent(std::weak_ptr<Widget>());
 	}
 }
 
@@ -233,12 +238,12 @@ std::shared_ptr<Window> Widget::window() {
 }
 
 std::shared_ptr<Screen> Widget::screen() {
-	return m_screen; // Directly return the cached screen pointer
+	return m_screen.lock(); // Directly return the cached screen pointer
 }
 
 void Widget::request_focus() {
-	if (m_screen)
-		m_screen->update_focus(shared_from_this());
+	if (screen())
+		screen()->update_focus(shared_from_this());
 }
 
 void Widget::draw(NVGcontext *ctx) {
@@ -273,15 +278,15 @@ void Widget::draw(NVGcontext *ctx) {
 	nvgTranslate(ctx, -m_pos.x(), -m_pos.y());
 }
 
-void Widget::set_parent(std::shared_ptr<Widget> parent) {
+void Widget::set_parent(std::weak_ptr<Widget> parent) {
 	m_parent = parent;
-	m_screen = parent ? parent->screen() : nullptr; // Update screen pointer
+	m_screen = this->parent() ? this->parent()->screen() : nullptr; // Update screen pointer
 	
-	if (m_screen)
-		m_screen->remove_from_focus(shared_from_this());
+	if (screen())
+		screen()->remove_from_focus(shared_from_this());
 }
 
-void Widget::set_screen(std::shared_ptr<Screen> screen) {
+void Widget::set_screen(std::weak_ptr<Screen> screen) {
 	m_screen = screen;
 	// Propagate to children
 	for (auto child : m_children) {

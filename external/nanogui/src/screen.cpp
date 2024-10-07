@@ -113,7 +113,7 @@ Screen::Screen(const std::string &caption,
 			   bool fullscreen,
 			   bool depth_buffer, bool stencil_buffer,
 			   bool float_buffer, unsigned int gl_major, unsigned int gl_minor)
-: Widget(nullptr), m_glfw_window(nullptr), m_nvg_context(nullptr),
+: Widget(std::weak_ptr<Widget>()), m_glfw_window(nullptr), m_nvg_context(nullptr),
 m_cursor(Cursor::Arrow), m_background(0.3f, 0.3f, 0.32f, 1.f), m_caption(caption),
 m_shutdown_glfw(false), m_fullscreen(fullscreen), m_depth_buffer(depth_buffer),
 m_stencil_buffer(stencil_buffer), m_float_buffer(float_buffer), m_redraw(false) {
@@ -397,7 +397,6 @@ m_stencil_buffer(stencil_buffer), m_float_buffer(float_buffer), m_redraw(false) 
 	}
 
 #endif
-
 }
 
 void Screen::initialize(GLFWwindow *window, bool shutdown_glfw) {
@@ -479,7 +478,6 @@ void Screen::initialize(GLFWwindow *window, bool shutdown_glfw) {
 	for (size_t i = 0; i < (size_t) Cursor::CursorCount; ++i)
 		m_cursors[i] = glfwCreateStandardCursor(GLFW_ARROW_CURSOR + (int) i);
 		
-	throw "";
 	set_screen(std::dynamic_pointer_cast<Screen>(shared_from_this()));
 }
 

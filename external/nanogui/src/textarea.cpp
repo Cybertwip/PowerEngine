@@ -50,7 +50,7 @@ void TextArea::append(const std::string &text) {
         }
     } while (*str++ != 0);
 
-    auto vscroll = std::dynamic_pointer_cast<VScrollPanel>(m_parent);
+    auto vscroll = std::dynamic_pointer_cast<VScrollPanel>(parent());
     if (vscroll)
         vscroll->perform_layout(ctx);
 }
@@ -103,7 +103,7 @@ Vector2i TextArea::preferred_size(NVGcontext *) {
 }
 
 void TextArea::draw(NVGcontext *ctx) {
-    auto vscroll = std::dynamic_pointer_cast<VScrollPanel>(m_parent);
+    auto vscroll = std::dynamic_pointer_cast<VScrollPanel>(parent());
 
     std::vector<Block>::iterator start_it = m_blocks.begin(),
                                  end_it = m_blocks.end();

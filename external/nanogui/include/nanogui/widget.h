@@ -34,20 +34,22 @@ enum class Cursor; // do not put a docstring, this is already documented
 class NANOGUI_EXPORT Widget : public std::enable_shared_from_this<Widget>, public Object {
 public:
     /// Construct a new widget with the given parent widget
-    Widget(std::shared_ptr<Widget> parent);
+    Widget(std::weak_ptr<Widget> parent);
 
     /// Free all resources used by the widget and any children
     virtual ~Widget();
+	
+	void initialize();
 
     /// Return the parent widget
-    std::shared_ptr<Widget> parent() { return m_parent; }
+    std::shared_ptr<Widget> parent() { return m_parent.lock(); }
     /// Return the parent widget
-    const std::shared_ptr<Widget> parent() const { return m_parent; }
+    const std::shared_ptr<Widget> parent() const { return m_parent.lock(); }
     /// Set the parent widget
-	void set_parent(std::shared_ptr<Widget> parent);
+	void set_parent(std::weak_ptr<Widget> parent);
 	
 	/// Set the widget screen
-	void set_screen(std::shared_ptr<Screen> screen);
+	void set_screen(std::weak_ptr<Screen> screen);
 
     /// Return the used \ref Layout generator
 	std::shared_ptr<Layout> layout() { return m_layout; }
@@ -70,7 +72,7 @@ public:
 
     /// Return the absolute position on screen
     Vector2i absolute_position() const {
-        return m_parent ?
+        return m_parent.lock() ?
             (parent()->absolute_position() + m_pos) : m_pos;
     }
 
@@ -294,7 +296,7 @@ protected:
     float icon_scale() const { return m_theme->m_icon_scale * m_icon_extra_scale; }
 
 protected:
-	std::shared_ptr<Widget> m_parent;
+	std::weak_ptr<Widget> m_parent;
     std::shared_ptr<Theme> m_theme;
 	std::shared_ptr<Layout> m_layout;
     Vector2i m_pos, m_size, m_fixed_size;
@@ -354,7 +356,7 @@ protected:
     float m_icon_extra_scale;
     Cursor m_cursor;
 	
-	std::shared_ptr<Screen> m_screen;
+	std::weak_ptr<Screen> m_screen;
 };
 
 NAMESPACE_END(nanogui)
