@@ -342,6 +342,9 @@ void ResourcesPanel::refresh_file_view() {
 				iconButton->set_background_color(mNormalButtonColor); // Set default background color
 				
 				// Handle thumbnail deserialization for specific file types
+				
+				nanogui::ImageView* imageView = nullptr;
+				
 				if (file_icon == FA_WALKING || file_icon == FA_OBJECT_GROUP) {
 					// deserialize thumbnail here
 					CompressedSerialization::Deserializer deserializer;
@@ -362,7 +365,7 @@ void ResourcesPanel::refresh_file_view() {
 					if (thumbnail_size != 0) {
 						deserializer.read_header_raw(pixels.data(), thumbnail_size);
 						
-						auto imageView = new nanogui::ImageView(iconButton);
+						imageView = new nanogui::ImageView(iconButton);
 						imageView->set_size(iconButton->fixed_size());
 						
 						imageView->set_fixed_size(iconButton->fixed_size());
@@ -396,20 +399,22 @@ void ResourcesPanel::refresh_file_view() {
 				
 				// Set the callback for the icon button to handle interactions
 				
-				iconButton->set_callback([this, iconButton, child]() {
+				iconButton->set_callback([this, iconButton, imageView, child]() {
 					int file_icon = get_icon_for_file(*child);
 					
 					if (file_icon  == FA_WALKING || file_icon == FA_PERSON_BOOTH || file_icon == FA_OBJECT_GROUP) {
 						
 						auto drag_widget = screen()->drag_widget();
+
+						auto content = new nanogui::ImageView(drag_widget);
+						content->set_size(iconButton->fixed_size());
 						
-						auto content = new nanogui::Button(drag_widget, "", file_icon);
+						content->set_fixed_size(iconButton->fixed_size());
 						
-						content->set_font_size(16);
-						content->set_background_color(mNormalButtonColor);
+						content->set_image(imageView->image());
 						
-						content->set_fixed_size(iconButton->fixed_size() - 20);
-						
+						content->set_visible(true);
+
 						drag_widget->set_size(iconButton->fixed_size());
 						
 						auto dragStartPosition = iconButton->absolute_position();
