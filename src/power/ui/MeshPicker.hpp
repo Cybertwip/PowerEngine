@@ -26,7 +26,7 @@ private:
 	std::function<void(const std::string&)> on_model_selected_;
 	
 	std::shared_ptr<nanogui::TextBox> filter_box_;
-	std::shared_ptr<Widget> file_list_widget_;
+	std::shared_ptr<nanogui::Widget> file_list_widget_;
 	
 	std::vector<std::string> model_files_;
 	
@@ -55,4 +55,8 @@ private:
 	void handle_double_click(const std::string& model_path);
 	
 	std::string mFilterValue;
+	
+	std::shared_ptr<nanogui::VScrollPanel> mScrollPanel;
+	
+	std::shared_ptr<nanogui::Button> mCloseButton;
 };

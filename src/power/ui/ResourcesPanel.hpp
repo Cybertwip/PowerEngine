@@ -27,9 +27,9 @@ class UiManager;
 
 class ResourcesPanel : public Panel {
 public:
-	ResourcesPanel(nanogui::Widget &parent,
-				   DirectoryNode& root_directory_node, IActorVisualManager& actorVisualManager,
-					   SceneTimeBar& sceneTimeBar, MeshActorLoader& meshActorLoader, ShaderManager& shaderManager, DeepMotionApiClient& deepMotionApiClient, UiManager& uiManager);
+	ResourcesPanel(std::shared_ptr<nanogui::Widget> parent,
+				   DirectoryNode& root_directory_node, std::shared_ptr<IActorVisualManager> actorVisualManager,
+				   std::shared_ptr<SceneTimeBar> sceneTimeBar, MeshActorLoader& meshActorLoader, ShaderManager& shaderManager, DeepMotionApiClient& deepMotionApiClient, UiManager& uiManager);
 	
 	~ResourcesPanel();
 	
@@ -68,13 +68,13 @@ private:
 	void export_assets();
 	void navigate_up_to_cwd();
 	
-	IActorVisualManager& mActorVisualManager;
+	std::shared_ptr<IActorVisualManager> mActorVisualManager;
 	MeshActorLoader& mMeshActorLoader;
 	std::unique_ptr<ShaderWrapper> mMeshShader;
 	std::unique_ptr<ShaderWrapper> mSkinnedShader;
 	
 	std::vector<std::shared_ptr<nanogui::Button>> mFileButtons;
-	nanogui::Button* mSelectedButton;
+	std::shared_ptr<nanogui::Button> mSelectedButton;
 	std::shared_ptr<DirectoryNode> mSelectedNode;
 	nanogui::Color mNormalButtonColor;
 	nanogui::Color mSelectedButtonColor;
@@ -91,7 +91,7 @@ private:
 	std::unique_ptr<MeshActorExporter> mMeshActorExporter;
 	
 	std::shared_ptr<PromptWindow> mPromptWindow;
-	SceneTimeBar& mSceneTimeBar;
+	std::shared_ptr<SceneTimeBar> mSceneTimeBar;
 	
 	UiManager& mUiManager;
 };

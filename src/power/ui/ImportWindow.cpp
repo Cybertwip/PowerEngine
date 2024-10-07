@@ -43,7 +43,7 @@ void ImportWindow::Initialize() {
 		this->set_modal(false);
 	});
 	
-	mPreviewCanvas = new SharedSelfContainedMeshCanvas(shared_from_this());
+	mPreviewCanvas = std::make_shared<SharedSelfContainedMeshCanvas>(shared_from_this());
 	
 	mMeshBatch = std::make_unique<SelfContainedMeshBatch>(mRenderPass, mPreviewCanvas->get_mesh_shader());
 	

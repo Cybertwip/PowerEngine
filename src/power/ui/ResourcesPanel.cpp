@@ -110,7 +110,7 @@ const DirectoryNode* FindNodeByPath(const DirectoryNode& currentNode, const std:
 }
 
 
-ResourcesPanel::ResourcesPanel(nanogui::Widget& parent, DirectoryNode& root_directory_node, IActorVisualManager& actorVisualManager, SceneTimeBar& sceneTimeBar,  MeshActorLoader& meshActorLoader, ShaderManager& shaderManager, DeepMotionApiClient& deepMotionApiClient, UiManager& uiManager)
+ResourcesPanel::ResourcesPanel(std::shared_ptr<nanogui::Widget> parent, DirectoryNode& root_directory_node, std::shared_ptr<IActorVisualManager> actorVisualManager, std::shared_ptr<SceneTimeBar> sceneTimeBar,  MeshActorLoader& meshActorLoader, ShaderManager& shaderManager, DeepMotionApiClient& deepMotionApiClient, UiManager& uiManager)
 : Panel(parent, "Resources"),
 mDummyAnimationTimeProvider(60 * 30),
 mRootDirectoryNode(root_directory_node),
@@ -137,9 +137,9 @@ mUiManager(uiManager)
 	mToolbar->set_layout(std::make_shared<nanogui::BoxLayout>(
 												nanogui::Orientation::Horizontal, nanogui::Alignment::Middle, 10, 10));
 	
-	mPromptWindow = std::make_shared<PromptWindow>(parent.window(), shared_from_this(), deepMotionApiClient, shaderManager.render_pass(), shaderManager);
+	mPromptWindow = std::make_shared<PromptWindow>(parent->window(), shared_from_this(), deepMotionApiClient, shaderManager.render_pass(), shaderManager);
 	
-	mMeshPicker = std::make_shared<MeshPicker>(parent.window(), mRootDirectoryNode, [this](const std::string& modelPath){
+	mMeshPicker = std::make_shared<MeshPicker>(parent->window(), mRootDirectoryNode, [this](const std::string& modelPath){
 		mMeshPicker->set_visible(false);
 		mMeshPicker->set_modal(false);
 		
@@ -152,14 +152,14 @@ mUiManager(uiManager)
 	mMeshPicker->set_modal(false);
 	
 	/* Create the DeepMotion Settings Window (initially hidden) */
-	mDeepMotionSettings = std::make_shared<DeepMotionSettingsWindow>(parent.window(), deepMotionApiClient, [this](){
+	mDeepMotionSettings = std::make_shared<DeepMotionSettingsWindow>(parent->window(), deepMotionApiClient, [this](){
 		mMeshPicker->set_visible(true);
 		mMeshPicker->set_modal(true);
 	});
 	mDeepMotionSettings->set_visible(false);
 	mDeepMotionSettings->set_modal(false);
 	
-	mImportWindow = new ImportWindow(parent.window(), shared_from_this(), shaderManager.render_pass(), shaderManager);
+	mImportWindow = std::make_shared<ImportWindow>(parent->window(), shared_from_this(), shaderManager.render_pass(), shaderManager);
 	
 	mImportWindow->set_visible(false);
 	mImportWindow->set_modal(false);
@@ -178,13 +178,13 @@ mUiManager(uiManager)
 	
 	mAnimationButton->set_icon(FA_RUNNING);
 	
-	mAnimationButton->set_callback([deepmotion_settings, this](){
+	mAnimationButton->set_callback([this](){
 		//		if (deepmotion_settings->session_cookie().empty()) {
 		mDeepMotionSettings->set_visible(true);
 		mDeepMotionSettings->set_modal(true);
 		
-		mDeepMotionSettings->set_pushed(false);
-		mDeepMotionSettings->popup()->set_visible(false);
+		mAddButton->set_pushed(false);
+		mAddButton->popup()->set_visible(false);
 		//		}
 	});
 	
@@ -269,7 +269,7 @@ void ResourcesPanel::refresh_file_view() {
 	mSelectedNode = nullptr;
 	
 	
-	auto gridLayout = dynamic_cast<nanogui::AdvancedGridLayout*>(mFileView->layout());
+	auto gridLayout = std::dynamic_pointer_cast<nanogui::AdvancedGridLayout>(mFileView->layout());
 	
 	gridLayout->shed_anchor();
 
@@ -308,7 +308,7 @@ void ResourcesPanel::refresh_file_view() {
 				}
 				
 				// Create a container widget for the file item
-				nanogui::std::shared_ptr<Widget> itemContainer = new nanogui::Widget(mFileView);
+				std::shared_ptr<Widget> itemContainer = std::make_shared<nanogui::Widget>(mFileView);
 				itemContainer->set_fixed_size(nanogui::Vector2i(150, 150)); // Set desired size for each item
 				
 				// Calculate grid position based on current index and number of columns
@@ -322,7 +322,7 @@ void ResourcesPanel::refresh_file_view() {
 														   );
 				
 				// Retrieve the grid layout from mFileView
-				auto gridLayout = dynamic_cast<nanogui::AdvancedGridLayout*>(mFileView->layout());
+				auto gridLayout = std::dynamic_pointer_cast<nanogui::AdvancedGridLayout>(mFileView->layout());
 				if (gridLayout) {
 					// Register the anchor with the grid layout
 					gridLayout->set_anchor(itemContainer, anchor);
@@ -332,7 +332,7 @@ void ResourcesPanel::refresh_file_view() {
 				int file_icon = get_icon_for_file(*child);
 				
 				// Create the icon button within the item container
-				auto iconButton = new nanogui::Button(itemContainer, "", file_icon);
+				auto iconButton = std::make_shared<nanogui::Button>(itemContainer, "", file_icon);
 				iconButton->set_fixed_size(nanogui::Vector2i(128, 128)); // Adjust icon size as needed
 				iconButton->set_background_color(mNormalButtonColor); // Set default background color
 				
@@ -359,12 +359,12 @@ void ResourcesPanel::refresh_file_view() {
 					if (thumbnail_size != 0) {
 						deserializer.read_header_raw(thumbnailPixels->data(), thumbnail_size);
 						
-						auto imageView = new nanogui::ImageView(iconButton);
+						auto imageView = std::make_shared<nanogui::ImageView>(iconButton);
 						imageView->set_size(iconButton->fixed_size());
 						
 						imageView->set_fixed_size(iconButton->fixed_size());
 						
-						imageView->set_image(new nanogui::Texture(
+						imageView->set_image(std::make_shared<nanogui::Texture>(
 																  thumbnailPixels->data(),
 																  thumbnailPixels->size(),
 																  512, 512,		  nanogui::Texture::InterpolationMode::Nearest,
@@ -381,7 +381,7 @@ void ResourcesPanel::refresh_file_view() {
 				
 				
 				// Add a label below the icon to display the file name
-				auto nameLabel = new nanogui::Label(itemContainer, child->FileName);
+				auto nameLabel = std::make_shared<nanogui::Label>(itemContainer, child->FileName);
 				
 				nameLabel->set_fixed_width(128); // Adjust label width as needed
 				nameLabel->set_position(nanogui::Vector2i(0, 110)); // Position the label within the container
@@ -400,7 +400,7 @@ void ResourcesPanel::refresh_file_view() {
 						
 						auto drag_widget = screen()->drag_widget();
 
-						auto content = new nanogui::ImageView(drag_widget);
+						auto content = std::make_shared<nanogui::ImageView>(drag_widget);
 						content->set_size(iconButton->fixed_size());
 						
 						content->set_fixed_size(iconButton->fixed_size());
@@ -408,12 +408,12 @@ void ResourcesPanel::refresh_file_view() {
 						
 						if (file_icon == FA_PERSON_BOOTH) {
 							// using a simple image icon for now
-							content->set_image(new nanogui::Texture("internal/ui/animation.png",	 nanogui::Texture::InterpolationMode::Nearest,						nanogui::Texture::InterpolationMode::Nearest,
+							content->set_image(std::make_shared<nanogui::Texture>("internal/ui/animation.png",	 nanogui::Texture::InterpolationMode::Nearest,						nanogui::Texture::InterpolationMode::Nearest,
 																	nanogui::Texture::WrapMode::ClampToEdge));
 							
 							
 						} else {
-							content->set_image(new nanogui::Texture(
+							content->set_image(std::make_shared<nanogui::Texture>(
 																	thumbnailPixels->data(),
 																	thumbnailPixels->size(),
 																	512, 512,		  nanogui::Texture::InterpolationMode::Nearest,
@@ -445,7 +445,7 @@ void ResourcesPanel::refresh_file_view() {
 							
 							std::vector<std::string> path_vector = { path };
 							
-							screen()->drop_event(this, path_vector);
+							screen()->drop_event(shared_from_this(), path_vector);
 						});
 					}
 					// Handle selection
@@ -494,7 +494,7 @@ void ResourcesPanel::refresh_file_view() {
 			}
 			
 			// After adding all items, adjust the grid layout rows based on the number of items
-			auto gridLayout = dynamic_cast<nanogui::AdvancedGridLayout*>(mFileView->layout());
+			auto gridLayout = std::dynamic_pointer_cast<nanogui::AdvancedGridLayout>(mFileView->layout());
 			if (gridLayout) {
 				int totalItems = mFileButtons.size();
 				int requiredRows = (totalItems + columns - 1) / columns; // Ceiling division
@@ -529,7 +529,7 @@ int ResourcesPanel::get_icon_for_file(const DirectoryNode& node) {
 
 bool ResourcesPanel::mouse_button_event(const nanogui::Vector2i &p, int button, bool down, int modifiers) {
 	if (down && button == GLFW_MOUSE_BUTTON_1) {
-		nanogui::std::shared_ptr<Widget> widget = find_widget(p);
+		std::shared_ptr<Widget> widget = find_widget(p);
 		bool clickOnButton = false;
 		for (auto fileButton : mFileButtons) {
 			if (widget == fileButton) {

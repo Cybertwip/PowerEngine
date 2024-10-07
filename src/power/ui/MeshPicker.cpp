@@ -32,9 +32,9 @@ void MeshPicker::setup_ui() {
 	set_title("Select Mesh");
 	
 	// Close Button
-	auto close_button = new nanogui::Button(button_panel(), "X");
-	close_button->set_fixed_size(nanogui::Vector2i(20, 20));
-	close_button->set_callback([this]() {
+	mCloseButton = std::make_shared<nanogui::Button>(button_panel(), "X");
+	mCloseButton->set_fixed_size(nanogui::Vector2i(20, 20));
+	mCloseButton->set_callback([this]() {
 		set_visible(false);
 		set_modal(false);
 	});
@@ -63,7 +63,7 @@ void MeshPicker::setup_ui() {
 	mScrollPanel->set_fixed_size(nanogui::Vector2i(380, 270)); // Adjust size as needed
 
 	// Set layout for the scroll panel
-	file_list_widget_ = new nanogui::Widget(mScrollPanel);
+	file_list_widget_ = std::make_shared<nanogui::Widget>(mScrollPanel);
 	file_list_widget_->set_layout(std::make_shared<nanogui::BoxLayout>(nanogui::Orientation::Horizontal, nanogui::Alignment::Minimum));
 }
 
@@ -110,8 +110,8 @@ void MeshPicker::refresh_file_list() {
 		}
 		
 		// Create a button for each model file
-		nanogui::std::shared_ptr<Widget> itemContainer = new nanogui::Widget(file_list_widget_);
-		itemContainer->set_layout(new nanogui::BoxLayout(
+		std::shared_ptr<Widget> itemContainer = std::make_shared<nanogui::Widget>(file_list_widget_);
+		itemContainer->set_layout(std::make_shared<nanogui::BoxLayout>(
 														 nanogui::Orientation::Vertical, nanogui::Alignment::Middle, 0, 5));
 		
 		auto icon = new nanogui::Button(itemContainer, "");
@@ -138,12 +138,12 @@ void MeshPicker::refresh_file_list() {
 		if (thumbnail_size != 0) {
 			deserializer.read_header_raw(pixels.data(), thumbnail_size);
 			
-			auto imageView = new nanogui::ImageView(icon);
+			auto imageView = std::make_shared<nanogui::ImageView>(icon);
 			imageView->set_size(icon->fixed_size());
 			
 			imageView->set_fixed_size(icon->fixed_size());
 			
-			imageView->set_image(new nanogui::Texture(
+			imageView->set_image(std::make_shared<nanogui::Texture>(
 													  pixels.data(),
 													  pixels.size(),
 								 512, 512,			  nanogui::Texture::InterpolationMode::Nearest,
