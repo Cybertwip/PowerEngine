@@ -56,7 +56,7 @@ private:
 	void ImportIntoProject(); // May be removed if entirely replaced by ImportIntoProjectAsync
 	std::string GenerateUniqueModelName(const std::string& hash_id0, const std::string& hash_id1);
 	
-	ResourcesPanel& mResourcesPanel;
+	std::shared_ptr<ResourcesPanel> mResourcesPanel;
 	
 	std::unique_ptr<IMeshBatch> mMeshBatch;
 	std::unique_ptr<ISkinnedMeshBatch> mSkinnedMeshBatch;
@@ -65,10 +65,10 @@ private:
 	
 	std::unique_ptr<MeshActorBuilder> mMeshActorBuilder;
 	
-	SharedSelfContainedMeshCanvas* mPreviewCanvas;
+	std::shared_ptr<SharedSelfContainedMeshCanvas> mPreviewCanvas;
 	
-	nanogui::CheckBox* mMeshCheckbox;
-	nanogui::CheckBox* mAnimationsCheckbox;
+	std::shared_ptr<nanogui::CheckBox> mMeshCheckbox;
+	std::shared_ptr<nanogui::CheckBox> mAnimationsCheckbox;
 	
 	entt::registry mDummyRegistry;
 	
@@ -78,14 +78,17 @@ private:
 	
 	std::unique_ptr<MeshActorImporter::CompressedMeshActor> mCompressedMeshData;
 	
-	nanogui::TextBox* mInputTextBox;
-	nanogui::Button* mSubmitButton;
-	nanogui::Button* mImportButton; // New Import button member
+	std::shared_ptr<nanogui::TextBox> mInputTextBox;
+	std::shared_ptr<nanogui::Button> mSubmitButton;
+	std::shared_ptr<nanogui::Button> mImportButton; // New Import button member
+
+	std::shared_ptr<nanogui::Widget> mInputPanel; // New Import button member
+	std::shared_ptr<nanogui::Button> mImportPanel; // New Import button member
 
 	DeepMotionApiClient& mDeepMotionApiClient;
 	
 	// Status Label
-	nanogui::Label* mStatusLabel;
+	std::shared_ptr<nanogui::Label> mStatusLabel;
 	std::mutex mStatusMutex;
 	
 	std::string mActorPath;

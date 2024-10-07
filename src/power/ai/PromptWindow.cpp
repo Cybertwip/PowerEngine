@@ -52,11 +52,11 @@ static std::string GenerateUniqueFilename(const std::string& baseDir, const std:
 
 }
 
-PromptWindow::PromptWindow(nanogui::std::shared_ptr<Widget> parent, std::shared_ptr<ResourcesPanel> resourcesPanel, DeepMotionApiClient& deepMotionApiClient, std::shared_ptr<nanogui::RenderPass> renderpass, ShaderManager& shaderManager)
+PromptWindow::PromptWindow(std::shared_ptr<Widget> parent, std::shared_ptr<ResourcesPanel> resourcesPanel, DeepMotionApiClient& deepMotionApiClient, std::shared_ptr<nanogui::RenderPass> renderpass, ShaderManager& shaderManager)
 : nanogui::Window(parent->screen()), mResourcesPanel(resourcesPanel), mDeepMotionApiClient(deepMotionApiClient), mDummyAnimationTimeProvider(60 * 30) { // update with proper duration, dynamically after loading the animation
 	
 	set_fixed_size(nanogui::Vector2i(400, 512)); // Adjusted height for additional UI elements
-	set_layout(new nanogui::BoxLayout(nanogui::Orientation::Vertical, nanogui::Alignment::Middle));
+	set_layout(std::make_shared<nanogui::BoxLayout>(nanogui::Orientation::Vertical, nanogui::Alignment::Middle));
 	set_title("Animation Prompt");
 	
 	// Close Button
@@ -75,7 +75,7 @@ PromptWindow::PromptWindow(nanogui::std::shared_ptr<Widget> parent, std::shared_
 	});
 	
 	// Preview Canvas
-	mPreviewCanvas = new SharedSelfContainedMeshCanvas(this);
+	mPreviewCanvas = std::make_shared<SharedSelfContainedMeshCanvas(shared_from_this());
 	mPreviewCanvas->set_fixed_size(nanogui::Vector2i(256, 256));
 	mPreviewCanvas->set_aspect_ratio(1.0f);
 	
@@ -87,11 +87,11 @@ PromptWindow::PromptWindow(nanogui::std::shared_ptr<Widget> parent, std::shared_
 	mMeshActorImporter = std::make_unique<MeshActorImporter>();
 	
 	// Add Text Box for User Input (e.g., Animation Name)
-	auto input_panel = new nanogui::Widget(this);
-	input_panel->set_layout(new nanogui::BoxLayout(nanogui::Orientation::Vertical, nanogui::Alignment::Middle, 10, 10));
+	mInputPanel = std::make_shared<nanogui::Widget>(shared_from_this());
+	mInputPanel->set_layout(std::make_shared<nanogui::BoxLayout>(nanogui::Orientation::Vertical, nanogui::Alignment::Middle, 10, 10));
 	
-	auto label = new nanogui::Label(input_panel, "Preview", "sans-bold");
-	mInputTextBox = new nanogui::TextBox(input_panel, "");
+	mInputLabel = new nanogui::Label(mInputPanel, "Preview", "sans-bold");
+	mInputTextBox = std::make_shared<nanogui::TextBox>(mInputPanel, "");
 	mInputTextBox->set_fixed_size(nanogui::Vector2i(256, 96));
 	
 	mInputTextBox->set_alignment(nanogui::TextBox::Alignment::Left);
@@ -100,18 +100,18 @@ PromptWindow::PromptWindow(nanogui::std::shared_ptr<Widget> parent, std::shared_
 	mInputTextBox->set_font_size(14);
 	mInputTextBox->set_editable(true);
 	
-	auto import_panel = new nanogui::Widget(this);
-	import_panel->set_layout(new nanogui::BoxLayout(nanogui::Orientation::Horizontal, nanogui::Alignment::Minimum, 0, 4));
+	mImportPanel = std::make_shared<nanogui::Widget>(shared_from_this());
+	mImportPanel->set_layout(std::make_shared<nanogui::BoxLayout>(nanogui::Orientation::Horizontal, nanogui::Alignment::Minimum, 0, 4));
 
 	// Add Submit Button
-	mSubmitButton = new nanogui::Button(import_panel, "Submit");
+	mSubmitButton = std::make_shared<nanogui::Button>(mImportPanel, "Submit");
 	mSubmitButton->set_callback([this]() {
 		nanogui::async([this]() { this->SubmitPromptAsync(); });
 	});
 	mSubmitButton->set_tooltip("Submit the animation import");
 	mSubmitButton->set_fixed_width(208);
 
-	mImportButton = new nanogui::Button(import_panel, "");
+	mImportButton = std::make_shared<nanogui::Button>(mImportPanel, "");
 	mImportButton->set_icon(FA_SAVE);
 	mImportButton->set_enabled(false);
 	mImportButton->set_callback([this]() {
@@ -124,7 +124,7 @@ PromptWindow::PromptWindow(nanogui::std::shared_ptr<Widget> parent, std::shared_
 	mMeshActorExporter = std::make_unique<MeshActorExporter>();
 	
 	// Initialize Status Label
-	mStatusLabel = new nanogui::Label(this, "Status: Idle", "sans-bold");
+	mStatusLabel = std::make_shared<nanogui::Label>(shared_from_this(), "Status: Idle", "sans-bold");
 	mStatusLabel->set_fixed_size(nanogui::Vector2i(300, 20));
 }
 
