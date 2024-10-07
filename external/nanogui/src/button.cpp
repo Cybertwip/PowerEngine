@@ -16,7 +16,7 @@
 
 NAMESPACE_BEGIN(nanogui)
 
-Button::ButtonWidget& parent, Screen& screen, Theme& theme,  const std::string &caption, int icon)
+Button::Button(Widget& parent, Screen& screen, Theme& theme,  const std::string &caption, int icon)
     : Widget(parent, screen, theme), m_caption(caption), m_icon(icon),
       m_icon_position(IconPosition::LeftCentered), m_pushed(false),
       m_flags(NormalButton), m_background_color(Color(0, 0)),
@@ -65,8 +65,8 @@ bool Button::mouse_button_event(const Vector2i &p, int button, bool down, int mo
             if (m_flags & RadioButton) {
                 if (m_button_group.empty()) {
                     for (auto widget : parent().children()) {
-                        auto b = dynamic_cast<Button*>(widget.get());
-                        if (b != *this && b && (b->flags() & RadioButton) && b->m_pushed) {
+                        auto b = dynamic_cast<Button*>(&widget.get());
+                        if (b != this && b && (b->flags() & RadioButton) && b->m_pushed) {
                             b->m_pushed = false;
                             if (b->m_change_callback)
                                 b->m_change_callback(false);
@@ -85,13 +85,13 @@ bool Button::mouse_button_event(const Vector2i &p, int button, bool down, int mo
             if (m_flags & PopupButton) {
                 for (auto widget : parent().children()) {
                     auto b = dynamic_cast<Button*>(&widget.get());
-                    if (b != *this && b && (b->flags() & PopupButton) && b->m_pushed) {
+                    if (b != this && b && (b->flags() & PopupButton) && b->m_pushed) {
                         b->m_pushed = false;
                         if (b->m_change_callback)
                             b->m_change_callback(false);
                     }
                 }
-                dynamic_cast<nanogui::PopupButton*>(this)->popup()->request_focus();
+                dynamic_cast<nanogui::PopupButton*>(this)->popup().request_focus();
             }
             if (m_flags & ToggleButton)
                 m_pushed = !m_pushed;

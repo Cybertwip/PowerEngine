@@ -30,7 +30,7 @@ public:
         Warning
     };
 
-    MessageDialogWidget& parent, Screen& screen, Theme& theme,  Type type, const std::string &title = "Untitled",
+    MessageDialog(Widget& parent, Screen& screen, Theme& theme,  Type type, const std::string &title = "Untitled",
                   const std::string &message = "Message",
                   const std::string &button_text = "OK",
                   const std::string &alt_button_text = "Cancel", bool alt_button = false);

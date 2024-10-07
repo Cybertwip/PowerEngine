@@ -29,7 +29,7 @@ NAMESPACE_BEGIN(nanogui)
 class NANOGUI_EXPORT TabWidgetBase : public Widget {
 public:
     /// Construct a new tab widget
-    TabWidgetBaseWidget& parent, Screen& screen, Theme& theme,  const std::string &font = "sans-bold");
+    TabWidgetBase(Widget& parent, Screen& screen, Theme& theme,  const std::string &font = "sans-bold");
 
     /// Return the total number of tabs
     int tab_count() const { return (int) m_tab_captions.size(); };
