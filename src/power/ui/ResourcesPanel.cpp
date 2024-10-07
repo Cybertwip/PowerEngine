@@ -230,9 +230,26 @@ mUiManager(uiManager)
 	
 	// Create the file view below the toolbar
 	mFileView = new nanogui::Widget(this);
-	mFileView->set_layout(new nanogui::BoxLayout(
-												 nanogui::Orientation::Horizontal, nanogui::Alignment::Minimum, 10, 10));
+	auto gridLayout = new nanogui::AdvancedGridLayout(
+													  /* columns */ {144, 144, 144, 144, 144, 144, 144, 144}, // Initial column widths (can be adjusted)
+													  /* rows */ {},                // Start with no predefined rows
+													  /* margin */ 8
+													  );
 	
+	// Optionally, set stretch factors for columns and rows
+	gridLayout->set_col_stretch(0, 1.0f);
+	gridLayout->set_col_stretch(1, 1.0f);
+	gridLayout->set_col_stretch(2, 1.0f);
+	gridLayout->set_col_stretch(3, 1.0f);
+	gridLayout->set_col_stretch(4, 1.0f);
+	gridLayout->set_col_stretch(5, 1.0f);
+	gridLayout->set_col_stretch(6, 1.0f);
+	gridLayout->set_col_stretch(7, 1.0f);
+
+	
+	mFileView->set_layout(gridLayout);
+
+
 	mSelectedDirectoryPath = fs::current_path().string();
 	mFilterText = "";
 	
@@ -249,12 +266,15 @@ ResourcesPanel::~ResourcesPanel() {
 }
 
 void ResourcesPanel::refresh_file_view() {
-	// Clear the buttons vector
+	// Clear the buttons vector and reset selection
 	mFileButtons.clear();
 	mSelectedButton = nullptr;
+	mSelectedNode = nullptr;
 	
+	// Refresh the root directory node to get the latest contents
 	mRootDirectoryNode.refresh();
 	
+
 	// Clear existing items
 	auto fileview_children = mFileView->children();
 	
@@ -266,162 +286,179 @@ void ResourcesPanel::refresh_file_view() {
 		mFileView->remove_child(file_view_child);
 	}
 	
-	
 	if (!mSelectedDirectoryPath.empty()) {
+		// Find the currently selected directory node
 		const DirectoryNode* selected_node = FindNodeByPath(mRootDirectoryNode, mSelectedDirectoryPath);
 		
 		if (selected_node) {
+			// Define the number of columns in the grid layout
+			const int columns = 8; // Adjust as needed for your UI
+			int currentIndex = 0;
+			
+			// Iterate through each child (file or directory) in the selected directory
 			for (const auto& child : selected_node->Children) {
-				// Apply filter
+				// Apply filter if any
 				if (!mFilterText.empty()) {
 					std::string filename = child->FileName;
-					// Case-insensitive comparison
 					std::string filter = mFilterText;
+					
+					// Convert both filename and filter to lowercase for case-insensitive comparison
 					std::transform(filename.begin(), filename.end(), filename.begin(), ::tolower);
 					std::transform(filter.begin(), filter.end(), filter.begin(), ::tolower);
 					
+					// Skip files that do not match the filter
 					if (filename.find(filter) == std::string::npos) {
-						continue; // Skip files that don't match the filter
+						continue;
 					}
 				}
 				
-				// Create a new widget for each file/directory
-				nanogui::Widget *itemContainer = new nanogui::Widget(mFileView);
-				itemContainer->set_layout(new nanogui::BoxLayout(
-																 nanogui::Orientation::Vertical, nanogui::Alignment::Middle, 0, 5));
-				auto file_icon = get_icon_for_file(*child);
+				// Create a container widget for the file item
+				nanogui::Widget* itemContainer = new nanogui::Widget(mFileView);
+				itemContainer->set_fixed_size(nanogui::Vector2i(150, 150)); // Set desired size for each item
 				
-				auto icon = new nanogui::Button(itemContainer, "", get_icon_for_file(*child));
+				// Calculate grid position based on current index and number of columns
+				int col = currentIndex % columns;
+				int row = currentIndex / columns;
 				
-				icon->set_icon(get_icon_for_file(*child));
-				icon->set_fixed_size(nanogui::Vector2i(128, 128));
+				// Define the anchor for this item in the grid
+				nanogui::AdvancedGridLayout::Anchor anchor(
+														   col, row, 1, 1, // Position (col, row) and size (1x1)
+														   nanogui::Alignment::Middle, nanogui::Alignment::Middle // Horizontal and Vertical alignment
+														   );
 				
+				// Retrieve the grid layout from mFileView
+				auto gridLayout = dynamic_cast<nanogui::AdvancedGridLayout*>(mFileView->layout());
+				if (gridLayout) {
+					// Register the anchor with the grid layout
+					gridLayout->set_anchor(itemContainer, anchor);
+				}
+				
+				// Determine the appropriate icon for the file type
+				int file_icon = get_icon_for_file(*child);
+				
+				// Create the icon button within the item container
+				auto iconButton = new nanogui::Button(itemContainer, "", file_icon);
+				iconButton->set_fixed_size(nanogui::Vector2i(128, 128)); // Adjust icon size as needed
+				iconButton->set_background_color(mNormalButtonColor); // Set default background color
+				
+				// Handle thumbnail deserialization for specific file types
 				if (file_icon == FA_WALKING || file_icon == FA_OBJECT_GROUP) {
-					// deserialize thumbnail here
-					CompressedSerialization::Deserializer deserializer;
-					
-					deserializer.load_from_file(child->FullPath);
-					
-					std::vector<uint8_t> pixels;
-					pixels.resize(512 * 512 * 4);
-					
-					uint64_t thumbnail_size = 0;
-					
-					uint64_t hash_id[] = { 0, 0 };
-
-					deserializer.read_header_raw(hash_id, sizeof(hash_id)); // To increase the offset and read the thumbnail size
-					
-					deserializer.read_header_uint64(thumbnail_size);
-					
-					if (thumbnail_size != 0) {
-						deserializer.read_header_raw(pixels.data(), thumbnail_size);
+					try {
+						// Initialize the deserializer and load the file
+						CompressedSerialization::Deserializer deserializer;
+						deserializer.load_from_file(child->FullPath);
 						
-						auto imageView = new nanogui::ImageView(icon);
-						imageView->set_size(icon->fixed_size());
+						// Prepare a buffer to hold the thumbnail pixels
+						std::vector<uint8_t> pixels(512 * 512 * 4, 0); // Example size (512x512 RGBA)
+						uint64_t thumbnail_size = 0;
 						
-						imageView->set_fixed_size(icon->fixed_size());
+						// Read header data (adjust based on actual file format)
+						uint64_t hash_id[] = {0, 0};
+						deserializer.read_header_raw(hash_id, sizeof(hash_id)); // Read hash or identifier
+						deserializer.read_header_uint64(thumbnail_size); // Read thumbnail size
 						
-						imageView->set_image(new nanogui::Texture(
-																  pixels.data(),
-																  pixels.size(),
-																  512, 512,		  nanogui::Texture::InterpolationMode::Nearest,
-																  nanogui::Texture::InterpolationMode::Nearest,
-																  nanogui::Texture::WrapMode::ClampToEdge));
-						
-						imageView->image()->resize(nanogui::Vector2i(256, 256));
-						
-						
-						imageView->set_visible(true);
+						// Ensure thumbnail size is valid before reading
+						if (thumbnail_size > 0 && thumbnail_size <= pixels.size()) {
+							deserializer.read_header_raw(pixels.data(), thumbnail_size); // Read thumbnail data
+							
+							// Create an ImageView to display the thumbnail
+							auto imageView = new nanogui::ImageView(iconButton);
+							imageView->set_size(iconButton->size()); // Match ImageView size to icon button
+							
+							// Create a texture from the pixel data
+							imageView->set_image(new nanogui::Texture(
+																	  pixels.data(),
+																	  thumbnail_size,
+																	  512, 512, // Thumbnail dimensions
+																	  nanogui::Texture::InterpolationMode::Nearest,
+																	  nanogui::Texture::InterpolationMode::Nearest,
+																	  nanogui::Texture::WrapMode::ClampToEdge
+																	  ));
+							imageView->set_visible(true); // Make the ImageView visible
+						}
+					} catch (const std::exception& e) {
+						std::cerr << "Thumbnail deserialization failed for " << child->FullPath
+						<< ": " << e.what() << std::endl;
+						// Optionally, set a default icon or handle the error as needed
 					}
-					
 				}
 				
+				// Add a label below the icon to display the file name
+				auto nameLabel = new nanogui::Label(itemContainer, child->FileName);
 				
-				icon->set_background_color(mNormalButtonColor);
+				nameLabel->set_fixed_width(144); // Adjust label width as needed
+				nameLabel->set_position(nanogui::Vector2i(5, 110)); // Position the label within the container
 				
-				auto name = new nanogui::Label(itemContainer, child->FileName);
-				name->set_fixed_width(120);
+				nameLabel->set_alignment(nanogui::Label::Alignment::Center);
 				
-				mFileButtons.push_back(icon);
+				// Add the icon button to the list of file buttons for future reference
+				mFileButtons.push_back(iconButton);
 				
-				icon->set_callback([this, icon, child]() {
-					int file_icon = get_icon_for_file(*child);
-					
-					if (file_icon  == FA_WALKING || file_icon == FA_PERSON_BOOTH || file_icon == FA_OBJECT_GROUP) {
-						
-						auto drag_widget = screen()->drag_widget();
-						
-						auto content = new nanogui::Button(drag_widget, "", file_icon);
-						
-						content->set_font_size(16);
-						content->set_background_color(mNormalButtonColor);
-						
-						content->set_fixed_size(icon->fixed_size() - 20);
-						
-						drag_widget->set_size(icon->fixed_size());
-						
-						auto dragStartPosition = icon->absolute_position();
-						
-						drag_widget->set_position(dragStartPosition);
-						drag_widget->perform_layout(screen()->nvg_context());
-						
-						screen()->set_drag_widget(drag_widget, [this, content, drag_widget, child](){
-							
-							auto path = child->FullPath;
-							
-							// Remove drag widget
-							drag_widget->remove_child(content);
-							
-							screen()->set_drag_widget(nullptr, nullptr);
-							
-							std::vector<std::string> path_vector = { path };
-							
-							screen()->drop_event(this, path_vector);
-						});
-					}
-					// Handle selection
-					if (mSelectedButton && mSelectedButton != icon) {
+				// Set the callback for the icon button to handle interactions
+				iconButton->set_callback([this, iconButton, child]() {
+					// Handle selection highlighting
+					if (mSelectedButton && mSelectedButton != iconButton) {
 						mSelectedButton->set_background_color(mNormalButtonColor);
 					}
-					mSelectedButton = icon;
-					icon->set_background_color(mSelectedButtonColor);
+					mSelectedButton = iconButton;
+					mSelectedButton->set_background_color(mSelectedButtonColor);
 					
-					// Store the selected node for later use
+					// Store the selected node for further actions
 					mSelectedNode = child;
 					
-					// Handle double-click for action
-					// Handle double-click for action
-					static std::chrono::time_point<std::chrono::high_resolution_clock> lastClickTime = std::chrono::time_point<std::chrono::high_resolution_clock>::min();
+					// Handle double-click detection for opening files or directories
+					static std::chrono::time_point<std::chrono::high_resolution_clock> lastClickTime =
+					std::chrono::time_point<std::chrono::high_resolution_clock>::min();
 					auto currentClickTime = std::chrono::high_resolution_clock::now();
 					
-					// Check if lastClickTime is valid before computing duration
 					if (lastClickTime != std::chrono::time_point<std::chrono::high_resolution_clock>::min()) {
-						auto clickDuration = std::chrono::duration_cast<std::chrono::milliseconds>(currentClickTime - lastClickTime).count();
-						
+						auto clickDuration = std::chrono::duration_cast<std::chrono::milliseconds>(
+																								   currentClickTime - lastClickTime).count();
 						if (clickDuration < 400) { // 400 ms threshold for double-click
-							// Double-click detected
 							nanogui::async([this]() {
 								handle_file_interaction(*mSelectedNode);
 							});
-							
-							// Reset the double-click state
+							// Reset the last click time after a double-click
 							lastClickTime = std::chrono::time_point<std::chrono::high_resolution_clock>::min();
 						} else {
-							// Update lastClickTime for the next click
+							// Update the last click time for the next potential double-click
 							lastClickTime = currentClickTime;
 						}
 					} else {
-						// First click: update lastClickTime
+						// First click: record the time
 						lastClickTime = currentClickTime;
 					}
 				});
+				
+				// Optionally, set up drag-and-drop or other interactions here
+				// For example, initiating a drag widget when dragging the iconButton
+				
+				// Increment the index for the next item
+				currentIndex++;
+			}
+			
+			// After adding all items, adjust the grid layout rows based on the number of items
+			auto gridLayout = dynamic_cast<nanogui::AdvancedGridLayout*>(mFileView->layout());
+			if (gridLayout) {
+				int totalItems = mFileButtons.size();
+				int requiredRows = (totalItems + columns - 1) / columns; // Ceiling division
+				
+				// Append rows if the current number of rows is less than required
+				while (gridLayout->row_count() < requiredRows) {
+					gridLayout->append_row(150, 1.0f); // Example row height and stretch factor
+				}
+				
+				// Optionally, remove excess rows if there are fewer items
+				while (gridLayout->row_count() > requiredRows) {
+					gridLayout->shed_row();
+				}
 			}
 		}
 	}
 	
+	// Perform layout to apply all changes
 	perform_layout(screen()->nvg_context());
 }
-
 
 int ResourcesPanel::get_icon_for_file(const DirectoryNode& node) {
 	if (node.IsDirectory) return FA_FOLDER;

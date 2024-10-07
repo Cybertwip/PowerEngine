@@ -431,6 +431,13 @@ public:
     /// Append a row of the given size (and stretch factor)
     void append_row(int size, float stretch = 0.f) { m_rows.push_back(size); m_row_stretch.push_back(stretch); };
 
+	void shed_row() {
+		if (!m_rows.empty()) {
+			m_rows.pop_back();
+			m_row_stretch.pop_back();
+		}
+	}
+	
     /// Append a column of the given size (and stretch factor)
     void append_col(int size, float stretch = 0.f) { m_cols.push_back(size); m_col_stretch.push_back(stretch); };
 
