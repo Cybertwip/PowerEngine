@@ -35,7 +35,7 @@ void SelfContainedMeshBatch::upload_material_data(const std::vector<std::shared_
 		// Set the diffuse texture (if it exists)
 		std::string textureBaseName = "textures";
 		if (material.mHasDiffuseTexture) {
-			mShader.set_texture(textureBaseName, *material.mTextureDiffuse, i);
+			mShader.set_texture(textureBaseName, material.mTextureDiffuse, i);
 			textureSetCount++;
 		}
 	}

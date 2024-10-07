@@ -35,7 +35,7 @@ void SharedSelfContainedMeshCanvas::process_events() {
 	
 	// schedule here
 	if (mSnapshotCallback) {
-		nanogui::Screen *scr = screen();
+		auto scr = screen();
 		if (scr == nullptr)
 			throw std::runtime_error("Canvas::draw(): could not find parent screen!");
 		
