@@ -1,5 +1,7 @@
 #pragma once
 
+#include <nanogui/widget.h>
+
 #include <functional>
 #include <vector>
 #include <memory>
@@ -21,7 +23,7 @@ class StatusBarPanel;
 class TransformPanel;
 class UiManager;
 
-class UiCommon {
+class UiCommon : public nanogui::Widget {
 public:
     UiCommon(std::weak_ptr<nanogui::Widget> parent, ActorManager& actorManager, AnimationTimeProvider& animationTimeProvider);
         
@@ -54,6 +56,8 @@ public:
 	}
 	    
 private:
+	void initialize() override;
+	
 	std::shared_ptr<nanogui::Window> mMainWrapper;
 	std::shared_ptr<nanogui::Window> mSceneWrapper;
 	std::shared_ptr<nanogui::Window> mLeftWrapper;
@@ -65,4 +69,7 @@ private:
 	std::shared_ptr<nanogui::Widget> mStatusBar;
 	std::shared_ptr<nanogui::Widget> mToolbox;
 	std::shared_ptr<SceneTimeBar> mSceneTimeBar;
+	
+	ActorManager& mActorManager;
+	AnimationTimeProvider& mAnimationTimeProvider;
 };
