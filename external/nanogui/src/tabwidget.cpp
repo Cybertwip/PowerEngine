@@ -21,7 +21,7 @@
 
 NAMESPACE_BEGIN(nanogui)
 
-TabWidgetBase::TabWidgetBaseWidget& parent, Screen& screen, Theme& theme,  const std::string &font)
+TabWidgetBase::TabWidgetBase(Widget& parent, Screen& screen, Theme& theme,  const std::string &font)
     : Widget(parent, screen, theme), m_font(font), m_background_color(Color(0.f, 0.f)) {
     m_tab_offsets.push_back(0);
 }

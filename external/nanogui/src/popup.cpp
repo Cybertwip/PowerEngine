@@ -16,7 +16,7 @@
 
 NAMESPACE_BEGIN(nanogui)
 
-Popup::Popup(Widget& parent, Screen& screen, Theme& theme,  std::shared_ptr<Window> parent_window)
+Popup::Popup(Widget& parent, Screen& screen, Theme& theme,  Window* parent_window)
 : Window(parent, screen, theme, ""), m_parent_window(parent_window), m_anchor_pos(Vector2i(0)),
 m_anchor_offset(30), m_anchor_size(15), m_side(Side::Right) { }
 

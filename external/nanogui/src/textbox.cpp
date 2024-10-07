@@ -22,7 +22,7 @@
 
 NAMESPACE_BEGIN(nanogui)
 
-TextBox::TextBoxWidget& parent, Screen& screen, Theme& theme,  const std::string &value)
+TextBox::TextBox(Widget& parent, Screen& screen, Theme& theme,  const std::string &value)
 : Widget(parent, screen, theme),
 m_editable(false),
 m_spinnable(false),
@@ -59,8 +59,7 @@ void TextBox::set_editable(bool editable) {
 
 void TextBox::set_theme(Theme& theme) {
 	Widget::set_theme(theme);
-	if (m_theme)
-		m_font_size = m_theme.m_text_box_font_size;
+	m_font_size = m_theme.m_text_box_font_size;
 }
 Vector2i TextBox::preferred_size(NVGcontext *ctx) {
 	Vector2i size(0, font_size() * 1.4f);

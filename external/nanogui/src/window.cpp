@@ -17,7 +17,7 @@
 
 NAMESPACE_BEGIN(nanogui)
 
-Window::WindowWidget& parent, Screen& screen, Theme& theme,  const std::string &title)
+Window::Window(Widget& parent, Screen& screen, Theme& theme,  const std::string &title)
     : Widget(parent, screen, theme), m_title(title), m_button_panel(nullptr), m_modal(false),
       m_drag(false) { }
 
@@ -48,7 +48,7 @@ Vector2i Window::preferred_size(NVGcontext *ctx) {
 
 Widget& Window::button_panel() {
     if (!m_button_panel) {
-        m_button_panel = std::make_unique<Widget>(*this);
+        m_button_panel = std::make_unique<Widget>(*this, screen(), theme());
         m_button_panel->set_layout(std::make_unique< BoxLayout>(Orientation::Horizontal, Alignment::Middle, 0, 4));
     }
     return *m_button_panel;

@@ -23,7 +23,7 @@
 
 NAMESPACE_BEGIN(nanogui)
 
-Widget::WidgetWidget& parent, Screen& screen, Theme& theme,  Theme& theme, Screen& screen)
+Widget::Widget(Widget& parent, Screen& screen, Theme& theme)
 : m_parent(parent), m_theme(theme), m_layout(nullptr),
 m_pos(0), m_size(0), m_fixed_size(0), m_visible(true), m_enabled(true),
 m_focused(false), m_mouse_focus(false), m_tooltip(""), m_font_size(-1.f),
@@ -170,7 +170,7 @@ void Widget::add_child(Widget& widget) {
 
 void Widget::remove_child(Widget& widget) {
 	size_t child_count = m_children.size();
-	m_children.erase(std::remove_if(m_children.begin(), m_children.end(), [widget](std::reference_wrapper<Widget> item){
+	m_children.erase(std::remove_if(m_children.begin(), m_children.end(), [&widget](std::reference_wrapper<Widget> item){
 		return &item.get() == &widget;
 	}),
 					 m_children.end());
@@ -227,8 +227,7 @@ Screen& Widget::screen() {
 }
 
 void Widget::request_focus() {
-	if (screen())
-		screen().update_focus(*this);
+	screen().update_focus(*this);
 }
 
 void Widget::draw(NVGcontext *ctx) {
@@ -263,7 +262,7 @@ void Widget::draw(NVGcontext *ctx) {
 	nvgTranslate(ctx, -m_pos.x(), -m_pos.y());
 }
 
-void Widget::set_parent(Widget&& parent) {
+void Widget::set_parent(Widget& parent) {
 	m_parent = parent;
 	m_screen = parent.screen(); // Update screen pointer
 	

@@ -45,7 +45,7 @@ public:
      *     \ref nanogui::CheckBox::mPushed for the difference between "pushed"
      *     and "checked".
      */
-    CheckBoxWidget& parent, Screen& screen, Theme& theme,  const std::string &caption = "Untitled",
+    CheckBox(Widget& parent, Screen& screen, Theme& theme,  const std::string &caption = "Untitled",
              const std::function<void(bool)> &callback = std::function<void(bool)>());
 
     /// The caption of this CheckBox.
