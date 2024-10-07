@@ -103,7 +103,7 @@ mDeepMotionApiClient(deepMotionApiClient)
 	mStatusLabel->set_color(nanogui::Color(255, 255, 255, 255)); // White color
 	
 	// DeepMotion Button with Image
-	mDeepMotionButton = std::make_shared<nanogui::Button>(mStatuSpanel, "");
+	mDeepMotionButton = std::make_shared<nanogui::Button>(mStatusPanel, "");
 	mDeepMotionButton->set_fixed_size(nanogui::Vector2i(48, 48));
 	mDeepMotionButton->set_callback([this]() {
 		UrlOpener::openUrl("https://deepmotion.com/");

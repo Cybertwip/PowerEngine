@@ -78,6 +78,7 @@ private:
 	
 	std::unique_ptr<MeshActorImporter::CompressedMeshActor> mCompressedMeshData;
 	
+	std::shared_ptr<nanogui::Label> mInputLabel;
 	std::shared_ptr<nanogui::TextBox> mInputTextBox;
 	std::shared_ptr<nanogui::Button> mSubmitButton;
 	std::shared_ptr<nanogui::Button> mImportButton; // New Import button member

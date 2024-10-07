@@ -90,7 +90,7 @@ PromptWindow::PromptWindow(std::shared_ptr<Widget> parent, std::shared_ptr<Resou
 	mInputPanel = std::make_shared<nanogui::Widget>(shared_from_this());
 	mInputPanel->set_layout(std::make_shared<nanogui::BoxLayout>(nanogui::Orientation::Vertical, nanogui::Alignment::Middle, 10, 10));
 	
-	mInputLabel = new nanogui::Label(mInputPanel, "Preview", "sans-bold");
+	mInputLabel = std::make_shared<nanogui::Label>(mInputPanel, "Preview", "sans-bold");
 	mInputTextBox = std::make_shared<nanogui::TextBox>(mInputPanel, "");
 	mInputTextBox->set_fixed_size(nanogui::Vector2i(256, 96));
 	
