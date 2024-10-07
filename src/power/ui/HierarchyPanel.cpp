@@ -19,6 +19,11 @@ HierarchyPanel::HierarchyPanel(std::shared_ptr<ScenePanel> scenePanel, std::shar
 	set_position(nanogui::Vector2i(0, 0));
 	set_layout(std::make_shared<nanogui::GroupLayout>());
 	
+}
+
+void HierarchyPanel::initialize() {
+	Panel::initialize();
+	
 	mScrollPanel = std::make_shared<nanogui::VScrollPanel>(shared_from_this());
 	
 	mScrollPanel->set_fixed_size({0, 12 * 25});

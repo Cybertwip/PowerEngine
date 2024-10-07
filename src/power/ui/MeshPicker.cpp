@@ -20,6 +20,12 @@ MeshPicker::MeshPicker(std::weak_ptr<nanogui::Screen> screen, DirectoryNode& roo
 root_directory_node_(root_directory_node),
 on_model_selected_(on_model_selected)
 {
+	
+}
+
+void MeshPicker::initialize() {
+	nanogui::Window::initialize();
+	
 	setup_ui();
 	search_model_files(root_directory_node_);
 	refresh_file_list();

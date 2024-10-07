@@ -38,9 +38,18 @@ AnimationPanel::AnimationPanel(std::weak_ptr<nanogui::Widget> parent)
 : Panel(parent, "Animation"), mActiveActor(std::nullopt), mCurrentTime(0) {
 	set_position(nanogui::Vector2i(0, 0));
 	set_layout(std::make_shared<nanogui::BoxLayout>(nanogui::Orientation::Vertical, nanogui::Alignment::Fill, 10, 10));
+}
+
+AnimationPanel::~AnimationPanel() {
+	
+}
+
+void AnimationPanel::initialize() {
+	Panel::initialize();
+	
 	
 	auto playbackLayout = std::make_shared<nanogui::GridLayout>(nanogui::Orientation::Horizontal, 2,
-												   nanogui::Alignment::Middle, 0, 0);
+																nanogui::Alignment::Middle, 0, 0);
 	
 	mPlaybackPanel = std::make_shared<Widget>(shared_from_this());
 	
@@ -62,7 +71,7 @@ AnimationPanel::AnimationPanel(std::weak_ptr<nanogui::Widget> parent)
 			playback.update_state(active ? PlaybackState::Play : PlaybackState::Pause, PlaybackModifier::Reverse, PlaybackTrigger::None, playback.getPlaybackData());
 		}
 	});
-
+	
 	mPlayPauseButton = std::make_shared<nanogui::ToolButton>(mPlaybackPanel, FA_FORWARD);
 	mPlayPauseButton->set_tooltip("Play");
 	
@@ -77,10 +86,6 @@ AnimationPanel::AnimationPanel(std::weak_ptr<nanogui::Widget> parent)
 	mPreviewCanvas = std::make_shared<SelfContainedMeshCanvas>(mCanvasPanel);
 	
 	set_active_actor(std::nullopt);
-}
-
-AnimationPanel::~AnimationPanel() {
-	
 }
 
 void AnimationPanel::parse_file(const std::string& path) {

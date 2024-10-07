@@ -35,6 +35,8 @@ public:
 	void UnregisterOnActorSelectedCallback(IActorSelectedCallback& callback) override;
 	
 private:
+	void initialize() override;
+	
 	std::vector<std::reference_wrapper<IActorSelectedCallback>> mActorSelectedCallbacks;
 
 private:

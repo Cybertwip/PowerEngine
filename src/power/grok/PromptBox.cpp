@@ -5,6 +5,11 @@ PromptBox::PromptBox(std::weak_ptr<nanogui::Widget> parent)
 	// Create a vertical layout for the chatbox
 	set_layout(std::make_shared<nanogui::GroupLayout>());
 	
+}
+
+void PromptBox::initialize() {
+	nanogui::Window::initialize();
+	
 	// Create an input box for typing new messages
 	mInputBox = std::make_shared<nanogui::TextBox>(shared_from_this(), "");
 	mInputBox->set_editable(true);

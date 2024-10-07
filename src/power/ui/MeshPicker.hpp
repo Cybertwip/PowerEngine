@@ -22,6 +22,8 @@ public:
 			   std::function<void(const std::string&)> on_model_selected);
 	
 private:
+	void initialize() override;
+	
 	DirectoryNode& root_directory_node_;
 	std::function<void(const std::string&)> on_model_selected_;
 	

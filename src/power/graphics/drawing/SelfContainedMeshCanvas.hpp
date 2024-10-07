@@ -42,10 +42,10 @@ public:
 	void set_aspect_ratio(float ratio);
 	
 	ShaderWrapper& get_mesh_shader() {
-		return mMeshPreviewShader;
+		return *mMeshPreviewShader;
 	}
 	ShaderWrapper& get_skinned_mesh_shader() {
-		return mSkinnedMeshPreviewShader;
+		return *mSkinnedMeshPreviewShader;
 	}
 	
 protected:
@@ -54,6 +54,8 @@ protected:
 	void draw_contents() override;
 
 private:
+	void initialize() override;
+	
 	void update_camera_view();
 	
 	void draw_content(const nanogui::Matrix4f& view, const nanogui::Matrix4f& projection);
@@ -62,9 +64,9 @@ private:
 	entt::registry mRegistry;
 	int mCurrentTime;
 	Actor mCamera;
-	ShaderManager mShaderManager;
-	ShaderWrapper mMeshPreviewShader;
-	ShaderWrapper mSkinnedMeshPreviewShader;
+	std::optional<ShaderManager> mShaderManager;
+	std::optional<ShaderWrapper> mMeshPreviewShader;
+	std::optional<ShaderWrapper> mSkinnedMeshPreviewShader;
 
 	std::vector<float> mBatchPositions;
 

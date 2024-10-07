@@ -46,6 +46,8 @@ public:
 	void ProcessEvents();
 	
 private:
+	void initialize() override;
+	
 	// Asynchronous Methods
 	void SubmitPromptAsync();
 	void ImportIntoProjectAsync();

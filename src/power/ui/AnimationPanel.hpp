@@ -16,6 +16,8 @@ class AnimationPanel : public Panel {
 public:
 	AnimationPanel(std::weak_ptr<nanogui::Widget> parent);
 	~AnimationPanel();
+	
+	void initialize() override;
 
     void set_active_actor(std::optional<std::reference_wrapper<Actor>> actor);
 	

@@ -15,7 +15,6 @@ TransformPanel::TransformPanel(std::weak_ptr<nanogui::Widget> parent)
 : Panel(parent, "Transform"), mActiveActor(std::nullopt), mTransformRegistrationId(-1) {
 	set_position(nanogui::Vector2i(0, 0));
 	set_layout(std::make_shared<nanogui::GroupLayout>());
-	
 }
 
 void TransformPanel::initialize() {
