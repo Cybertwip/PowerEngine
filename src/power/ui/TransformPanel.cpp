@@ -32,12 +32,12 @@ void TransformPanel::initialize() {
 	
 	mTranslatePanel = std::make_shared<nanogui::Widget>(*this);
 	
-	auto translateLayout = std::make_shared<nanogui::GridLayout>(nanogui::Orientation::Vertical, 2,
+	auto translateLayout = std::make_unique<nanogui::GridLayout>(nanogui::Orientation::Vertical, 2,
 																 nanogui::Alignment::Middle, 0, 0);
 	
 	translateLayout->set_col_alignment(nanogui::Alignment::Fill);
 	
-	mTranslatePanel->set_layout(translateLayout);
+	mTranslatePanel->set_layout(std::move(translateLayout));
 	
 	mXLabel = std::make_shared<nanogui::Label>(mTranslatePanel, "X", "sans-bold");
 	mXTranslate = std::make_shared<nanogui::IntBox<int>>(mTranslatePanel);
@@ -77,11 +77,11 @@ void TransformPanel::initialize() {
 	
 	mRotatePanel = std::make_shared<nanogui::Widget>(*this);
 	
-	auto rotateLayout = std::make_shared<nanogui::GridLayout>(nanogui::Orientation::Vertical, 2,
+	auto rotateLayout = std::make_unique<nanogui::GridLayout>(nanogui::Orientation::Vertical, 2,
 															  nanogui::Alignment::Middle, 0, 0);
 	rotateLayout->set_col_alignment(nanogui::Alignment::Fill);
 	
-	mRotatePanel->set_layout(rotateLayout);
+	mRotatePanel->set_layout(std::move(rotateLayout));
 	
 	mPitchLabel = std::make_shared<nanogui::Label>(mRotatePanel, "Pitch", "sans-bold");
 	mPitchRotate = std::make_shared<nanogui::IntBox<int>>(mRotatePanel);
@@ -120,11 +120,11 @@ void TransformPanel::initialize() {
 	mScaleLabel = std::make_shared<nanogui::Label>(*this, "Scale", "sans-bold");
 	
 	mScalePanel = std::make_shared<nanogui::Widget>(*this);
-	auto scaleLayout = std::make_shared<nanogui::GridLayout>(nanogui::Orientation::Vertical, 2,
+	auto scaleLayout = std::make_unique<nanogui::GridLayout>(nanogui::Orientation::Vertical, 2,
 															 nanogui::Alignment::Middle, 0, 0);
 	scaleLayout->set_col_alignment(nanogui::Alignment::Fill);
 	
-	mScalePanel->set_layout(scaleLayout);
+	mScalePanel->set_layout(std::move(scaleLayout));
 	
 	mXScaleLabel = std::make_shared<nanogui::Label>(mScalePanel, "X", "sans-bold");
 	mXScale = std::make_shared<nanogui::FloatBox<float>>(mScalePanel);

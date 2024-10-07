@@ -187,11 +187,11 @@ mShaderManager(shaderManager)
 		mDeepMotionSettings->set_modal(true);
 		
 		mAddButton->set_pushed(false);
-		mAddButton->popup()->set_visible(false);
+		mAddButton->popup().set_visible(false);
 		//		}
 	});
 	
-	mAddButton->popup()->perform_layout(screen.nvg_context());
+	mAddButton->popup().perform_layout(screen.nvg_context());
 	
 	mDeepMotionSettings->perform_layout(screen.nvg_context());
 	
@@ -325,7 +325,7 @@ void ResourcesPanel::refresh_file_view() {
 														   );
 				
 				// Retrieve the grid layout from mFileView
-				auto gridLayout = std::dynamic_pointer_cast<nanogui::AdvancedGridLayout>(mFileView->layout());
+				auto gridLayout = dynamic_cast<nanogui::AdvancedGridLayout*>(&mFileView->layout());
 				if (gridLayout) {
 					// Register the anchor with the grid layout
 					gridLayout->set_anchor(itemContainer, anchor);
@@ -437,7 +437,7 @@ void ResourcesPanel::refresh_file_view() {
 						drag_widget->set_position(dragStartPosition);
 						drag_widget->perform_layout(screen().nvg_context());
 						
-						screen()->set_drag_widget(drag_widget, [this, content, drag_widget, child](){
+						screen().set_drag_widget(drag_widget, [this, content, drag_widget, child](){
 							
 							auto path = child->FullPath;
 							
@@ -448,7 +448,7 @@ void ResourcesPanel::refresh_file_view() {
 							
 							std::vector<std::string> path_vector = { path };
 							
-							screen()->drop_event(*this, path_vector);
+							screen().drop_event(*this, path_vector);
 						});
 					}
 					// Handle selection
@@ -497,7 +497,7 @@ void ResourcesPanel::refresh_file_view() {
 			}
 			
 			// After adding all items, adjust the grid layout rows based on the number of items
-			auto gridLayout = std::dynamic_pointer_cast<nanogui::AdvancedGridLayout>(mFileView->layout());
+			auto gridLayout = dynamic_cast<nanogui::AdvancedGridLayout*>(&mFileView->layout());
 			if (gridLayout) {
 				int totalItems = mFileButtons.size();
 				int requiredRows = (totalItems + columns - 1) / columns; // Ceiling division
@@ -516,7 +516,7 @@ void ResourcesPanel::refresh_file_view() {
 	}
 	
 	// Perform layout to apply all changes
-	perform_layout(screen()->nvg_context());
+	perform_layout(screen().nvg_context());
 }
 
 int ResourcesPanel::get_icon_for_file(const DirectoryNode& node) {

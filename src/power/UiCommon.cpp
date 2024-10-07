@@ -17,7 +17,7 @@ void UiCommon::initialize() {
 	mMainWrapper = std::make_shared<nanogui::Window>(*this, "");
 		
 	mMainWrapper->set_layout(
-							 std::make_shared<nanogui::GridLayout>(nanogui::Orientation::Vertical, 2, nanogui::Alignment::Fill, 0, 0));
+							 std::make_unique<nanogui::GridLayout>(nanogui::Orientation::Vertical, 2, nanogui::Alignment::Fill, 0, 0));
 	mSceneWrapper = std::make_shared<nanogui::Window>(mMainWrapper, "");
 	
 	mSceneWrapper->set_layout(std::make_unique<nanogui::GridLayout>(nanogui::Orientation::Horizontal, 2,
@@ -74,14 +74,14 @@ void UiCommon::initialize() {
 	//	auto promptbox = new PromptBox(*rightWrapper);
 	//	promptbox->inc_ref();
 	
-	mRightWrapper->remove_child(mHierarchyPanel);
-	mRightWrapper->remove_child(mTransformPanel);
-	mRightWrapper->remove_child(mAnimationPanel);
+	mRightWrapper->remove_child(*mHierarchyPanel);
+	mRightWrapper->remove_child(*mTransformPanel);
+	mRightWrapper->remove_child(*mAnimationPanel);
 	//	rightWrapper->remove_child(promptbox);
 	
-	mRightWrapper->add_child(mHierarchyPanel); // Add HierarchyPanel first
-	mRightWrapper->add_child(mTransformPanel); // Add TransformPanel second
-	mRightWrapper->add_child(mAnimationPanel); // Add AnimationPanel third
+	mRightWrapper->add_child(*mHierarchyPanel); // Add HierarchyPanel first
+	mRightWrapper->add_child(*mTransformPanel); // Add TransformPanel second
+	mRightWrapper->add_child(*mAnimationPanel); // Add AnimationPanel third
 	//	rightWrapper->add_child(promptbox); // Add Grok third
 	
 	// Initialize the scene time bar

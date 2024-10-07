@@ -23,10 +23,7 @@ mDeepMotionApiClient(deepMotionApiClient),
 mUiManager(uiManager),
 mApplicationClickRegistrator(applicationClickRegistrator) {
 	set_layout(std::make_unique<nanogui::GroupLayout>());
-}
-
-void StatusBarPanel::initialize() {
-	Panel::initialize();
+	
 	
 	// Status bar setup
 	mStatusBar = std::make_shared<nanogui::Widget>(*this);
@@ -81,7 +78,7 @@ void StatusBarPanel::toggle_resources_panel(bool active) {
 		});
 	} else {
 		mAnimationFuture = std::async(std::launch::async, [this]() {
-			auto target = nanogui::Vector2i(0, parent()->parent()->fixed_height());
+			auto target = nanogui::Vector2i(0, parent().parent().fixed_height());
 			animate_panel_position(target);
 		});
 	}
