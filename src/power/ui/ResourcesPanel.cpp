@@ -343,51 +343,51 @@ void ResourcesPanel::refresh_file_view() {
 				
 				// Handle thumbnail deserialization for specific file types
 				if (file_icon == FA_WALKING || file_icon == FA_OBJECT_GROUP) {
-					try {
-						// Initialize the deserializer and load the file
-						CompressedSerialization::Deserializer deserializer;
-						deserializer.load_from_file(child->FullPath);
+					// deserialize thumbnail here
+					CompressedSerialization::Deserializer deserializer;
+					
+					deserializer.load_from_file(child->FullPath);
+					
+					std::vector<uint8_t> pixels;
+					pixels.resize(512 * 512 * 4);
+					
+					uint64_t thumbnail_size = 0;
+					
+					uint64_t hash_id[] = { 0, 0 };
+					
+					deserializer.read_header_raw(hash_id, sizeof(hash_id)); // To increase the offset and read the thumbnail size
+					
+					deserializer.read_header_uint64(thumbnail_size);
+					
+					if (thumbnail_size != 0) {
+						deserializer.read_header_raw(pixels.data(), thumbnail_size);
 						
-						// Prepare a buffer to hold the thumbnail pixels
-						std::vector<uint8_t> pixels(512 * 512 * 4, 0); // Example size (512x512 RGBA)
-						uint64_t thumbnail_size = 0;
+						auto imageView = new nanogui::ImageView(iconButton);
+						imageView->set_size(iconButton->fixed_size());
 						
-						// Read header data (adjust based on actual file format)
-						uint64_t hash_id[] = {0, 0};
-						deserializer.read_header_raw(hash_id, sizeof(hash_id)); // Read hash or identifier
-						deserializer.read_header_uint64(thumbnail_size); // Read thumbnail size
+						imageView->set_fixed_size(iconButton->fixed_size());
 						
-						// Ensure thumbnail size is valid before reading
-						if (thumbnail_size > 0 && thumbnail_size <= pixels.size()) {
-							deserializer.read_header_raw(pixels.data(), thumbnail_size); // Read thumbnail data
-							
-							// Create an ImageView to display the thumbnail
-							auto imageView = new nanogui::ImageView(iconButton);
-							imageView->set_size(iconButton->size()); // Match ImageView size to icon button
-							
-							// Create a texture from the pixel data
-							imageView->set_image(new nanogui::Texture(
-																	  pixels.data(),
-																	  thumbnail_size,
-																	  512, 512, // Thumbnail dimensions
-																	  nanogui::Texture::InterpolationMode::Nearest,
-																	  nanogui::Texture::InterpolationMode::Nearest,
-																	  nanogui::Texture::WrapMode::ClampToEdge
-																	  ));
-							imageView->set_visible(true); // Make the ImageView visible
-						}
-					} catch (const std::exception& e) {
-						std::cerr << "Thumbnail deserialization failed for " << child->FullPath
-						<< ": " << e.what() << std::endl;
-						// Optionally, set a default icon or handle the error as needed
+						imageView->set_image(new nanogui::Texture(
+																  pixels.data(),
+																  pixels.size(),
+																  512, 512,		  nanogui::Texture::InterpolationMode::Nearest,
+																  nanogui::Texture::InterpolationMode::Nearest,
+																  nanogui::Texture::WrapMode::ClampToEdge));
+						
+						imageView->image()->resize(nanogui::Vector2i(288, 288));
+						
+						
+						imageView->set_visible(true);
 					}
+					
 				}
+				
 				
 				// Add a label below the icon to display the file name
 				auto nameLabel = new nanogui::Label(itemContainer, child->FileName);
 				
-				nameLabel->set_fixed_width(144); // Adjust label width as needed
-				nameLabel->set_position(nanogui::Vector2i(5, 110)); // Position the label within the container
+				nameLabel->set_fixed_width(128); // Adjust label width as needed
+				nameLabel->set_position(nanogui::Vector2i(0, 110)); // Position the label within the container
 				
 				nameLabel->set_alignment(nanogui::Label::Alignment::Center);
 				
@@ -395,40 +395,79 @@ void ResourcesPanel::refresh_file_view() {
 				mFileButtons.push_back(iconButton);
 				
 				// Set the callback for the icon button to handle interactions
+				
 				iconButton->set_callback([this, iconButton, child]() {
-					// Handle selection highlighting
-					if (mSelectedButton && mSelectedButton != iconButton) {
+					int file_icon = get_icon_for_file(*child);
+					
+					if (file_icon  == FA_WALKING || file_icon == FA_PERSON_BOOTH || file_icon == FA_OBJECT_GROUP) {
+						
+						auto drag_widget = screen()->drag_widget();
+						
+						auto content = new nanogui::Button(drag_widget, "", file_icon);
+						
+						content->set_font_size(16);
+						content->set_background_color(mNormalButtonColor);
+						
+						content->set_fixed_size(icon->fixed_size() - 20);
+						
+						drag_widget->set_size(icon->fixed_size());
+						
+						auto dragStartPosition = icon->absolute_position();
+						
+						drag_widget->set_position(dragStartPosition);
+						drag_widget->perform_layout(screen()->nvg_context());
+						
+						screen()->set_drag_widget(drag_widget, [this, content, drag_widget, child](){
+							
+							auto path = child->FullPath;
+							
+							// Remove drag widget
+							drag_widget->remove_child(content);
+							
+							screen()->set_drag_widget(nullptr, nullptr);
+							
+							std::vector<std::string> path_vector = { path };
+							
+							screen()->drop_event(this, path_vector);
+						});
+					}
+					// Handle selection
+					if (mSelectedButton && mSelectedButton != icon) {
 						mSelectedButton->set_background_color(mNormalButtonColor);
 					}
-					mSelectedButton = iconButton;
-					mSelectedButton->set_background_color(mSelectedButtonColor);
+					mSelectedButton = icon;
+					icon->set_background_color(mSelectedButtonColor);
 					
-					// Store the selected node for further actions
+					// Store the selected node for later use
 					mSelectedNode = child;
 					
-					// Handle double-click detection for opening files or directories
-					static std::chrono::time_point<std::chrono::high_resolution_clock> lastClickTime =
-					std::chrono::time_point<std::chrono::high_resolution_clock>::min();
+					// Handle double-click for action
+					// Handle double-click for action
+					static std::chrono::time_point<std::chrono::high_resolution_clock> lastClickTime = std::chrono::time_point<std::chrono::high_resolution_clock>::min();
 					auto currentClickTime = std::chrono::high_resolution_clock::now();
 					
+					// Check if lastClickTime is valid before computing duration
 					if (lastClickTime != std::chrono::time_point<std::chrono::high_resolution_clock>::min()) {
-						auto clickDuration = std::chrono::duration_cast<std::chrono::milliseconds>(
-																								   currentClickTime - lastClickTime).count();
+						auto clickDuration = std::chrono::duration_cast<std::chrono::milliseconds>(currentClickTime - lastClickTime).count();
+						
 						if (clickDuration < 400) { // 400 ms threshold for double-click
+							// Double-click detected
 							nanogui::async([this]() {
 								handle_file_interaction(*mSelectedNode);
 							});
-							// Reset the last click time after a double-click
+							
+							// Reset the double-click state
 							lastClickTime = std::chrono::time_point<std::chrono::high_resolution_clock>::min();
 						} else {
-							// Update the last click time for the next potential double-click
+							// Update lastClickTime for the next click
 							lastClickTime = currentClickTime;
 						}
 					} else {
-						// First click: record the time
+						// First click: update lastClickTime
 						lastClickTime = currentClickTime;
 					}
 				});
+							
 				
 				// Optionally, set up drag-and-drop or other interactions here
 				// For example, initiating a drag widget when dragging the iconButton
