@@ -84,7 +84,7 @@ private:
 	std::shared_ptr<nanogui::Button> mImportButton; // New Import button member
 
 	std::shared_ptr<nanogui::Widget> mInputPanel; // New Import button member
-	std::shared_ptr<nanogui::Button> mImportPanel; // New Import button member
+	std::shared_ptr<nanogui::Widget> mImportPanel; // New Import button member
 
 	DeepMotionApiClient& mDeepMotionApiClient;
 	

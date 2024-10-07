@@ -75,7 +75,7 @@ PromptWindow::PromptWindow(std::shared_ptr<Widget> parent, std::shared_ptr<Resou
 	});
 	
 	// Preview Canvas
-	mPreviewCanvas = std::make_shared<SharedSelfContainedMeshCanvas(shared_from_this());
+	mPreviewCanvas = std::make_shared<SharedSelfContainedMeshCanvas>(shared_from_this());
 	mPreviewCanvas->set_fixed_size(nanogui::Vector2i(256, 256));
 	mPreviewCanvas->set_aspect_ratio(1.0f);
 	
