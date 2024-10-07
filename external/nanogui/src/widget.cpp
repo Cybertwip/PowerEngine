@@ -205,7 +205,7 @@ void Widget::remove_child_at(int index) {
 void Widget::shed_children() {
 	
 	for (auto child : m_children) {
-		shed_children();
+		child->shed_children();
 		
 		
 		size_t child_count = m_children.size();
