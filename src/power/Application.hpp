@@ -17,7 +17,7 @@ public:
 	DraggableWindow(Widget& parent, const std::string &title = "Drag Me") : nanogui::Window(parent, title) {
 		set_modal(false);   // We want it to be freely interactive
 		
-		set_layout(std::make_shared< nanogui::BoxLayout>(nanogui::Orientation::Horizontal,
+		set_layout(std::make_unique< nanogui::BoxLayout>(nanogui::Orientation::Horizontal,
 													   nanogui::Alignment::Fill, 10, 10));
 
 	}

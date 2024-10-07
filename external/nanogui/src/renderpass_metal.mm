@@ -8,16 +8,15 @@
 
 NAMESPACE_BEGIN(nanogui)
 
-RenderPass::RenderPass(const std::vector<std::reference_wrapper<<Object>>>> &color_targets,
-					   std::optional<std::reference_wrapper<<Object>>> depth_target,
-					   std::optional<std::reference_wrapper<<Object>>> stencil_target,
-					   std::optional<std::reference_wrapper<<Object>>> blit_target)
+RenderPass::RenderPass(const std::vector<std::reference_wrapper<Object>> &color_targets,
+					   std::optional<std::reference_wrapper<Object>> depth_target,
+					   std::optional<std::reference_wrapper<Object>> stencil_target)
 : m_targets(color_targets.size() + 2),
 m_clear_color(color_targets.size()), m_clear_stencil(0),
 m_clear_depth(1.f), m_viewport_offset(0), m_viewport_size(0),
 m_framebuffer_size(0), m_depth_test(DepthTest::Less),
 m_depth_write(true), m_cull_mode(CullMode::Back),
-m_blit_target(blit_target), m_active(false), m_command_buffer(nullptr),
+m_active(false), m_command_buffer(nullptr),
 m_command_encoder(nullptr) {
 	
 	m_targets[0] = depth_target;
@@ -72,8 +71,8 @@ void RenderPass::begin() {
 	MTLRenderPassDescriptor *pass_descriptor = (__bridge MTLRenderPassDescriptor *) m_pass_descriptor;
 	
 	for (size_t i = 0; i < m_targets.size(); ++i) {
-		auto texture = dynamic_cast<Texture>(m_targets[i]);
-		auto screen = dynamic_cast<Screen>(m_targets[i]);
+		auto* texture = dynamic_cast<Texture*>(&m_targets[i]->get());
+		auto* screen = dynamic_cast<Screen*>(&m_targets[i]->get());
 		
 		id<MTLTexture> texture_handle = nil;
 		
@@ -132,34 +131,6 @@ void RenderPass::begin() {
 			// Set the texture
 			att.texture = texture_handle;
 			
-			// **Begin Integration of Blit Target Handling**
-			// Check if blit_target is present and corresponds to the current color attachment
-			auto blit_rp = dynamic_cast<RenderPass> (m_blit_target);
-
-			if (blit_rp && i < blit_rp->targets().size()) {
-				if (blit_rp) {
-					auto resolve_texture = dynamic_cast<Texture>(blit_rp->targets()[i]);
-					if (resolve_texture) {
-						id<MTLTexture> resolve_texture_handle = (__bridge id<MTLTexture>) resolve_texture->texture_handle();
-						
-						// Verify pixel format match
-						if (resolve_texture_handle.pixelFormat != texture_handle.pixelFormat) {
-							throw std::runtime_error("RenderPass::begin(): 'blit_target' pixel format mismatch!");
-						}
-						// Verify size match
-						else if (resolve_texture_handle.width != texture_handle.width ||
-								 resolve_texture_handle.height != texture_handle.height) {
-							throw std::runtime_error("RenderPass::begin(): 'blit_target' size mismatch!");
-						}
-						
-						// Set store action and resolve texture for multisample resolve
-						att.storeAction = MTLStoreActionMultisampleResolve;
-						att.resolveTexture = resolve_texture_handle;
-					}
-				}
-			}
-			// **End Integration of Blit Target Handling**
-			
 			// Re-apply the settings
 			att.loadAction = loadAction;
 			att.storeAction = storeAction;
@@ -202,7 +173,7 @@ void RenderPass::end() {
 
 void RenderPass::resize(const Vector2i &size) {
 	for (size_t i = 0; i < m_targets.size(); ++i) {
-		auto texture = dynamic_cast<Texture>(m_targets[i]);
+		auto texture = dynamic_cast<Texture*>(&m_targets[i]->get());
 		if (texture)
 			texture->resize(size);
 	}
@@ -231,7 +202,7 @@ void RenderPass::clear_color(size_t index, const Color &color) {
 			
 			MTLDepthStencilDescriptor *depth_desc = [MTLDepthStencilDescriptor new];
 			depth_desc.depthCompareFunction = MTLCompareFunctionAlways;
-			depth_desc.depthWriteEnabled = m_targets[0] != nullptr;
+			depth_desc.depthWriteEnabled = m_targets[0] != std::nullopt;
 			id<MTLDevice> device = (__bridge id<MTLDevice>) metal_device();
 			id<MTLDepthStencilState> depth_state =
 			[device newDepthStencilStateWithDescriptor: depth_desc];
@@ -239,7 +210,7 @@ void RenderPass::clear_color(size_t index, const Color &color) {
 			
 			if (!m_clear_shader) {
 				m_clear_shader = std::make_shared<Shader>(
-											dynamic_cast<RenderPass>(*this),
+											*this,
 											
 											"clear_shader",
 											

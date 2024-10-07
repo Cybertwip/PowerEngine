@@ -54,7 +54,7 @@ id<MTLFunction> compile_metal_shader(id<MTLDevice> device,
 	return function;
 }
 
-Shader::Shader(std::shared_ptr<RenderPass> render_pass,
+Shader::Shader(RenderPass& render_pass,
 			   const std::string &name,
 			   const std::string &vertex_shader,
 			   const std::string &fragment_shader,
@@ -69,15 +69,15 @@ Shader::Shader(std::shared_ptr<RenderPass> render_pass,
 	pipeline_desc.vertexFunction = vertex_func;
 	pipeline_desc.fragmentFunction = fragment_func;
 	
-	auto& targets = render_pass->targets();
+	auto& targets = render_pass.targets();
 	int sample_count = 1;
 	
 	for (size_t i = 0; i < targets.size(); ++i) {
-		auto texture = dynamic_cast<Texture>(targets[i]);
-		auto screen = dynamic_cast<Screen>(targets[i]);
+		auto texture = dynamic_cast<Texture*>(&targets[i]->get());
+		auto screen = dynamic_cast<Screen*>(&targets[i]->get());
 		
 		MTLPixelFormat pixel_format;
-		if (targets[i] == nullptr) {
+		if (targets[i] == std::nullopt) {
 			continue;
 		} else if (screen) {
 			if (i == 0 || i == 1) {
@@ -349,7 +349,7 @@ void Shader::begin() {
 	m_persisted_buffers["indices"][m_buffer_definitions["indices"].index] = m_persisted_buffers["indices"][m_buffer_definitions["indices"].index];
 	
 	id<MTLRenderPipelineState> pipeline_state = (__bridge id<MTLRenderPipelineState>)m_pipeline_state;
-	id<MTLRenderCommandEncoder> command_enc = (__bridge id<MTLRenderCommandEncoder>)m_render_pass->command_encoder();
+	id<MTLRenderCommandEncoder> command_enc = (__bridge id<MTLRenderCommandEncoder>)render_pass().command_encoder();
 	
 	[command_enc setRenderPipelineState: pipeline_state];
 	
@@ -504,7 +504,7 @@ void Shader::draw_array(PrimitiveType primitive_type,
 	}
 	
 	id<MTLRenderCommandEncoder> command_enc =
-	(__bridge id<MTLRenderCommandEncoder>) m_render_pass->command_encoder();
+	(__bridge id<MTLRenderCommandEncoder>) render_pass().command_encoder();
 	
 	if (!indexed) {
 		[command_enc drawPrimitives: primitive_type_mtl

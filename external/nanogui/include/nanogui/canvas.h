@@ -66,7 +66,7 @@ public:
     );
 
     /// Return the render pass associated with the canvas object
-    std::shared_ptr<RenderPass> render_pass() { return m_render_pass; }
+	RenderPass& render_pass() { return m_render_pass; }
 
     /// Specify whether to draw the widget border
     void set_draw_border(const bool draw_border) {

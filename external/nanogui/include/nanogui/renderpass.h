@@ -78,8 +78,7 @@ public:
      */
     RenderPass(const std::vector<std::reference_wrapper<Object>> &color_targets,
 			   std::optional<std::reference_wrapper<Object>> depth_target = std::nullopt,
-			   std::optional<std::reference_wrapper<Object>> stencil_target = std::nullopt,
-			   std::optional<std::reference_wrapper<Object>> blit_target = std::nullopt);
+			   std::optional<std::reference_wrapper<Object>> stencil_target = std::nullopt);
 
     // Polymorphic destructor
     virtual ~RenderPass();
@@ -176,7 +175,6 @@ protected:
     DepthTest m_depth_test;
     bool m_depth_write;
     CullMode m_cull_mode;
-    std::shared_ptr<Object> m_blit_target;
     bool m_active;
 #if defined(NANOGUI_USE_OPENGL) || defined(NANOGUI_USE_GLES)
     uint32_t m_framebuffer_handle;
