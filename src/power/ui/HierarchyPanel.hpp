@@ -19,7 +19,7 @@ class TransformPanel;
 
 class HierarchyPanel : public IActorSelectedRegistry, public IActorVisualManager, public Panel {
 public:
-	HierarchyPanel(ScenePanel& scenePanel, TransformPanel& transformPanel, AnimationPanel& animationPanel, ActorManager& actorManager, std::shared_ptr<nanogui::Widget> parent);
+	HierarchyPanel(std::shared_ptr<ScenePanel> scenePanel, std::shared_ptr<TransformPanel> transformPanel, std::shared_ptr<AnimationPanel> animationPanel, ActorManager& actorManager, std::shared_ptr<nanogui::Widget> parent);
 	
 	~HierarchyPanel() = default;
 
@@ -44,11 +44,11 @@ private:
 	void OnActorSelected(std::optional<std::reference_wrapper<Actor>> actor);
 
 private:
-	TransformPanel& mTransformPanel;
-	AnimationPanel& mAnimationPanel;
-    nanogui::VScrollPanel *mScrollPanel;
+	std::shared_ptr<TransformPanel> mTransformPanel;
+	std::shared_ptr<AnimationPanel> mAnimationPanel;
+	std::shared_ptr<nanogui::VScrollPanel> mScrollPanel;
 	ActorManager& mActorManager;
 	
-    nanogui::TreeView *mTreeView;
-    void populate_tree(Actor& actor, nanogui::TreeViewItem *parentNode = nullptr);
+	std::shared_ptr<nanogui::TreeView> mTreeView;
+    void populate_tree(Actor& actor, std::shared_ptr<nanogui::TreeViewItem> parentNode = nullptr);
 };

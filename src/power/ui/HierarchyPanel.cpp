@@ -15,17 +15,17 @@
 #include "components/MetadataComponent.hpp"
 #include "components/UiComponent.hpp"
 
-HierarchyPanel::HierarchyPanel(ScenePanel& scenePanel, TransformPanel& transformPanel, AnimationPanel& animationPanel, ActorManager& actorManager, std::shared_ptr<nanogui::Widget> parent) : Panel(parent, "Scene"), mTransformPanel(transformPanel), mAnimationPanel(animationPanel), mActorManager(actorManager) {
+HierarchyPanel::HierarchyPanel(std::shared_ptr<ScenePanel> scenePanel, std::shared_ptr<TransformPanel> transformPanel, std::shared_ptr<AnimationPanel> animationPanel, ActorManager& actorManager, std::shared_ptr<nanogui::Widget> parent) : Panel(parent, "Scene"), mTransformPanel(transformPanel), mAnimationPanel(animationPanel), mActorManager(actorManager) {
 	set_position(nanogui::Vector2i(0, 0));
-	set_layout(new nanogui::GroupLayout());
+	set_layout(std::make_shared<nanogui::GroupLayout>());
 	
-	mScrollPanel = new nanogui::VScrollPanel(this);
+	mScrollPanel = std::make_shared<nanogui::VScrollPanel>(shared_from_this());
 	
 	mScrollPanel->set_fixed_size({0, 12 * 25});
 	
-	mTreeView = new nanogui::TreeView(mScrollPanel);
+	mTreeView = std::make_shared<nanogui::TreeView>(mScrollPanel);
 	mTreeView->set_layout(
-						  new nanogui::BoxLayout(nanogui::Orientation::Vertical, nanogui::Alignment::Fill));
+						  std::make_shared<nanogui::BoxLayout>(nanogui::Orientation::Vertical, nanogui::Alignment::Fill));
 }
 
 bool HierarchyPanel::mouse_drag_event(const nanogui::Vector2i &p, const nanogui::Vector2i &rel,
@@ -59,9 +59,9 @@ void HierarchyPanel::remove_actor(std::reference_wrapper<Actor> actor) {
 	fire_actor_selected_event(std::nullopt);
 }
 
-void HierarchyPanel::populate_tree(Actor &actor, nanogui::TreeViewItem *parent_node) {
+void HierarchyPanel::populate_tree(Actor &actor, std::shared_ptr<nanogui::TreeViewItem> parent_node) {
 	// Correctly reference the actor's name
-	nanogui::TreeViewItem *node =
+	std::shared_ptr<nanogui::TreeViewItem> node =
 	parent_node
 	? parent_node->add_node(
 							std::string{actor.get_component<MetadataComponent>().name()},
@@ -101,24 +101,24 @@ void HierarchyPanel::UnregisterOnActorSelectedCallback(IActorSelectedCallback& c
 void HierarchyPanel::OnActorSelected(std::optional<std::reference_wrapper<Actor>> actor) {
 	
 	if (actor.has_value()) {
-		mTransformPanel.set_active_actor(actor);
-		mAnimationPanel.set_active_actor(actor);
+		mTransformPanel->set_active_actor(actor);
+		mAnimationPanel->set_active_actor(actor);
 		for (auto& callbackRef : mActorSelectedCallbacks) {
 			callbackRef.get().OnActorSelected(actor);
 		}
 
 	} else {
 		mTreeView->set_selected(nullptr);
-		mTransformPanel.set_active_actor(actor);
-		mAnimationPanel.set_active_actor(actor);
+		mTransformPanel->set_active_actor(actor);
+		mAnimationPanel->set_active_actor(actor);
 	}
 	
 }
 
 void HierarchyPanel::fire_actor_selected_event(std::optional<std::reference_wrapper<Actor>> actor) {
 	
-	mTransformPanel.set_active_actor(actor);
-	mAnimationPanel.set_active_actor(actor);
+	mTransformPanel->set_active_actor(actor);
+	mAnimationPanel->set_active_actor(actor);
 	
 	for (auto& callbackRef : mActorSelectedCallbacks) {
 		callbackRef.get().OnActorSelected(actor);

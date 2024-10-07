@@ -33,25 +33,25 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/quaternion.hpp>
 
-AnimationPanel::AnimationPanel(nanogui::Widget &parent)
+AnimationPanel::AnimationPanel(std::shared_ptr<nanogui::Widget> parent)
 : Panel(parent, "Animation"), mActiveActor(std::nullopt), mCurrentTime(0) {
 	set_position(nanogui::Vector2i(0, 0));
-	set_layout(new nanogui::BoxLayout(nanogui::Orientation::Vertical, nanogui::Alignment::Fill, 10, 10));
+	set_layout(std::make_shared<nanogui::BoxLayout>(nanogui::Orientation::Vertical, nanogui::Alignment::Fill, 10, 10));
 	
-	auto *playbackLayout = new nanogui::GridLayout(nanogui::Orientation::Horizontal, 2,
+	auto playbackLayout = std::make_shared<nanogui::GridLayout>(nanogui::Orientation::Horizontal, 2,
 												   nanogui::Alignment::Middle, 0, 0);
 	
-	std::shared_ptr<Widget> playbackPanel = new Widget(this);
+	mPlaybackPanel = std::make_shared<Widget>(shared_from_this());
 	
 	
 	playbackLayout->set_row_alignment(nanogui::Alignment::Fill);
 	
-	playbackPanel->set_layout(playbackLayout);
+	mPlaybackPanel->set_layout(playbackLayout);
 	
-	std::shared_ptr<Widget> canvasPanel = new Widget(this);
-	canvasPanel->set_layout(new nanogui::BoxLayout(nanogui::Orientation::Vertical, nanogui::Alignment::Middle, 0, 0));
+	mCanvasPanel = std::make_shared<Widget>(shared_from_this());
+	mCanvasPanel->set_layout(std::make_shared<nanogui::BoxLayout>(nanogui::Orientation::Vertical, nanogui::Alignment::Middle, 0, 0));
 	
-	mReversePlayButton = new nanogui::ToolButton(playbackPanel, FA_BACKWARD);
+	mReversePlayButton = std::make_shared<nanogui::ToolButton>(mPlaybackPanel, FA_BACKWARD);
 	mReversePlayButton->set_tooltip("Reverse");
 	
 	mReversePlayButton->set_change_callback([this](bool active){
@@ -62,7 +62,7 @@ AnimationPanel::AnimationPanel(nanogui::Widget &parent)
 		}
 	});
 
-	mPlayPauseButton = new nanogui::ToolButton(playbackPanel, FA_FORWARD);
+	mPlayPauseButton = std::make_shared<nanogui::ToolButton>(mPlaybackPanel, FA_FORWARD);
 	mPlayPauseButton->set_tooltip("Play");
 	
 	mPlayPauseButton->set_change_callback([this](bool active){
@@ -73,7 +73,7 @@ AnimationPanel::AnimationPanel(nanogui::Widget &parent)
 		}
 	});
 	
-	mPreviewCanvas = new SelfContainedMeshCanvas(canvasPanel);
+	mPreviewCanvas = std::make_shared<SelfContainedMeshCanvas>(mCanvasPanel);
 	
 	set_active_actor(std::nullopt);
 }

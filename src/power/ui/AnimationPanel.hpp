@@ -14,7 +14,7 @@ class TransformComponent;
 
 class AnimationPanel : public Panel {
 public:
-	AnimationPanel(nanogui::Widget& parent);
+	AnimationPanel(std::shared_ptr<nanogui::Widget> parent);
 	~AnimationPanel();
 
     void set_active_actor(std::optional<std::reference_wrapper<Actor>> actor);
@@ -28,10 +28,14 @@ public:
 private:
     std::optional<std::reference_wrapper<Actor>> mActiveActor;
 	
-	nanogui::ToolButton* mReversePlayButton; // New reverse play button
-	nanogui::ToolButton* mPlayPauseButton;
-	
-	SelfContainedMeshCanvas* mPreviewCanvas;
+	std::shared_ptr<nanogui::ToolButton> mReversePlayButton; // New reverse play button
+	std::shared_ptr<nanogui::ToolButton> mPlayPauseButton;
+
+	std::shared_ptr<nanogui::Widget> mCanvasPanel;
+
+	std::shared_ptr<nanogui::Widget> mPlaybackPanel;
+
+	std::shared_ptr<SelfContainedMeshCanvas> mPreviewCanvas;
 	
 	int mCurrentTime;
 
