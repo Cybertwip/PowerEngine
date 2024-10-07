@@ -432,7 +432,7 @@ void ResourcesPanel::refresh_file_view() {
 						});
 					}
 					// Handle selection
-					if (mSelectedButton && mSelectedButton != icon) {
+					if (mSelectedButton && mSelectedButton != iconButton) {
 						mSelectedButton->set_background_color(mNormalButtonColor);
 					}
 					mSelectedButton = iconButton;
