@@ -17,7 +17,7 @@
 
 NAMESPACE_BEGIN(nanogui)
 
-ColorWheel::ColorWheel(std::shared_ptr<Widget> parent, const Color& rgb)
+ColorWheel::ColorWheel(std::weak_ptr<Widget> parent, const Color& rgb)
     : Widget(parent), m_drag_region(None) {
     set_color(rgb);
 }

@@ -40,7 +40,7 @@ public:
         Right
     };
 
-    TextBox(std::shared_ptr<Widget> parent, const std::string &value = "Untitled");
+    TextBox(std::weak_ptr<Widget> parent, const std::string &value = "Untitled");
 
     bool editable() const { return m_editable; }
     void set_editable(bool editable);
@@ -179,7 +179,7 @@ protected:
  */
 template <typename Scalar> class IntBox : public TextBox {
 public:
-    IntBox(std::shared_ptr<Widget> parent, Scalar value = (Scalar) 0) : TextBox(parent) {
+    IntBox(std::weak_ptr<Widget> parent, Scalar value = (Scalar) 0) : TextBox(parent) {
         set_default_value("0");
         set_format(std::is_signed<Scalar>::value ? "[-]?[0-9]*" : "[0-9]*");
         set_value_increment(1);
@@ -297,7 +297,7 @@ private:
  */
 template <typename Scalar> class FloatBox : public TextBox {
 public:
-    FloatBox(std::shared_ptr<Widget> parent, Scalar value = (Scalar) 0.f) : TextBox(parent) {
+    FloatBox(std::weak_ptr<Widget> parent, Scalar value = (Scalar) 0.f) : TextBox(parent) {
         m_number_format = sizeof(Scalar) == sizeof(float) ? "%.4g" : "%.7g";
         set_default_value("0");
         set_format("[-+]?[0-9]*\\.?[0-9]+([e_e][-+]?[0-9]+)?");

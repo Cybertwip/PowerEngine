@@ -15,7 +15,7 @@
 
 NAMESPACE_BEGIN(nanogui)
 
-Graph::Graph(std::shared_ptr<Widget> parent, const std::string &caption)
+Graph::Graph(std::weak_ptr<Widget> parent, const std::string &caption)
     : Widget(parent), m_caption(caption) {
     m_background_color = Color(20, 128);
     m_fill_color = Color(255, 192, 0, 128);

@@ -24,7 +24,7 @@ NAMESPACE_BEGIN(nanogui)
 class NANOGUI_EXPORT Window : public Widget {
     friend class Popup;
 public:
-    Window(std::shared_ptr<Widget> parent, const std::string &title = "Untitled");
+    Window(std::weak_ptr<Widget> parent, const std::string &title = "Untitled");
 
     /// Return the window title
     const std::string &title() const { return m_title; }

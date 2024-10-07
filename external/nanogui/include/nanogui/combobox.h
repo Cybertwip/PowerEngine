@@ -26,16 +26,16 @@ NAMESPACE_BEGIN(nanogui)
 class NANOGUI_EXPORT ComboBox : public PopupButton {
 public:
     /// Create an empty combo box
-    ComboBox(std::shared_ptr<Widget> parent);
+    ComboBox(std::weak_ptr<Widget> parent);
 
     /// Create a new combo box with the given items
-    ComboBox(std::shared_ptr<Widget> parent, const std::vector<std::string> &items);
+    ComboBox(std::weak_ptr<Widget> parent, const std::vector<std::string> &items);
 
     /**
      * \brief Create a new combo box with the given items, providing both short and
      * long descriptive labels for each item
      */
-    ComboBox(std::shared_ptr<Widget> parent, const std::vector<std::string> &items,
+    ComboBox(std::weak_ptr<Widget> parent, const std::vector<std::string> &items,
              const std::vector<std::string> &items_short);
 
     /// The current index this ComboBox has selected.

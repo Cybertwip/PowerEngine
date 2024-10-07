@@ -16,16 +16,16 @@
 
 NAMESPACE_BEGIN(nanogui)
 
-ComboBox::ComboBox(std::shared_ptr<Widget> parent)
+ComboBox::ComboBox(std::weak_ptr<Widget> parent)
     : PopupButton(parent), m_container(popup()), m_selected_index(0) {
 }
 
-ComboBox::ComboBox(std::shared_ptr<Widget> parent, const std::vector<std::string> &items)
+ComboBox::ComboBox(std::weak_ptr<Widget> parent, const std::vector<std::string> &items)
     : PopupButton(parent), m_container(popup()), m_selected_index(0) {
     set_items(items);
 }
 
-ComboBox::ComboBox(std::shared_ptr<Widget> parent, const std::vector<std::string> &items, const std::vector<std::string> &items_short)
+ComboBox::ComboBox(std::weak_ptr<Widget> parent, const std::vector<std::string> &items, const std::vector<std::string> &items_short)
     : PopupButton(parent), m_container(popup()), m_selected_index(0) {
     set_items(items, items_short);
 }

@@ -17,7 +17,7 @@
 
 NAMESPACE_BEGIN(nanogui)
 
-ColorPicker::ColorPicker(std::shared_ptr<Widget> parent, const Color& color) : PopupButton(parent, "") {
+ColorPicker::ColorPicker(std::weak_ptr<Widget> parent, const Color& color) : PopupButton(parent, "") {
     set_background_color(color);
     auto popup = this->popup();
     popup->set_layout(std::make_shared<GroupLayout>());

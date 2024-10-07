@@ -15,7 +15,7 @@
 
 NAMESPACE_BEGIN(nanogui)
 
-Label::Label(std::shared_ptr<Widget> parent, const std::string &caption, const std::string &font, int font_size, Alignment alignment)
+Label::Label(std::weak_ptr<Widget> parent, const std::string &caption, const std::string &font, int font_size, Alignment alignment)
 : Widget(parent), m_caption(caption), m_font(font), m_alignment(alignment) {
 	if (m_theme) {
 		m_font_size = m_theme->m_standard_font_size;

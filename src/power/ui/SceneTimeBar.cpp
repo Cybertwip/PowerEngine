@@ -45,7 +45,7 @@ glm::vec3 ScreenToWorld(glm::vec2 screenPos, float depth, glm::mat4 projectionMa
 } // namespace
 
 // Constructor Implementation
-SceneTimeBar::SceneTimeBar(std::shared_ptr<Widget> parent, ActorManager& actorManager, AnimationTimeProvider& animationTimeProvider, std::shared_ptr<IActorSelectedRegistry> registry, int width, int height)
+SceneTimeBar::SceneTimeBar(std::weak_ptr<Widget> parent, ActorManager& actorManager, AnimationTimeProvider& animationTimeProvider, std::shared_ptr<IActorSelectedRegistry> registry, int width, int height)
 : nanogui::Widget(parent),
 mActorManager(actorManager),
 mAnimationTimeProvider(animationTimeProvider),

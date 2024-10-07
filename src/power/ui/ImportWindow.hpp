@@ -27,7 +27,7 @@ class RenderPass;
 
 class ImportWindow : public nanogui::Window {
 public:
-	ImportWindow(std::shared_ptr<Widget> parent, std::shared_ptr<ResourcesPanel> resourcesPanel, std::shared_ptr<nanogui::RenderPass> renderpass, ShaderManager& shaderManager);
+	ImportWindow(std::weak_ptr<Widget> parent, std::shared_ptr<ResourcesPanel> resourcesPanel, std::shared_ptr<nanogui::RenderPass> renderpass, ShaderManager& shaderManager);
 	
 	void Initialize();
 	

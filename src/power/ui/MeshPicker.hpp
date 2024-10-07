@@ -18,7 +18,7 @@ public:
 	 * @param root_directory_node Reference to the root DirectoryNode.
 	 * @param on_model_selected Callback function triggered on model selection.
 	 */
-	MeshPicker(std::shared_ptr<Widget> parent, DirectoryNode& root_directory_node,
+	MeshPicker(std::weak_ptr<Widget> parent, DirectoryNode& root_directory_node,
 			   std::function<void(const std::string&)> on_model_selected);
 	
 private:

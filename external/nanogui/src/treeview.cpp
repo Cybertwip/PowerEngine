@@ -4,7 +4,7 @@
 
 NAMESPACE_BEGIN(nanogui)
 
-TreeView::TreeView(std::shared_ptr<Widget> parent)
+TreeView::TreeView(std::weak_ptr<Widget> parent)
     : Widget(parent), m_selected_item(nullptr) {
 }
 

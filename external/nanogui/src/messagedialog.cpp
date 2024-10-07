@@ -16,7 +16,7 @@
 
 NAMESPACE_BEGIN(nanogui)
 
-MessageDialog::MessageDialog(std::shared_ptr<Widget> parent, Type type, const std::string &title,
+MessageDialog::MessageDialog(std::weak_ptr<Widget> parent, Type type, const std::string &title,
               const std::string &message,
               const std::string &button_text,
               const std::string &alt_button_text, bool alt_button) : Window(parent, title) {

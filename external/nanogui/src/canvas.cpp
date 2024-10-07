@@ -22,7 +22,7 @@
 
 NAMESPACE_BEGIN(nanogui)
 
-Canvas::Canvas(std::shared_ptr<Widget> parent, uint8_t samples,
+Canvas::Canvas(std::weak_ptr<Widget> parent, uint8_t samples,
 			   bool has_depth_buffer, bool has_stencil_buffer)
 : Widget(parent), m_draw_border(true) {
 	m_size = Vector2i(192, 128);

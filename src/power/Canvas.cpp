@@ -14,7 +14,7 @@
 
 #include <iostream>
 
-Canvas::Canvas(std::shared_ptr<Widget> parent, nanogui::Color backgroundColor) : nanogui::Canvas(parent, 1, true, true) {
+Canvas::Canvas(std::weak_ptr<Widget> parent, nanogui::Color backgroundColor) : nanogui::Canvas(parent, 1, true, true) {
     set_background_color(backgroundColor);
     set_fixed_size(parent->fixed_size());
 }

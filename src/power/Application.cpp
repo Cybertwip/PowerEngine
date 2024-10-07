@@ -57,6 +57,7 @@ mGlobalAnimationTimeProvider(60 * 30)
 }
 
 void Application::initialize() {
+	Screen::initialize();
 	
 	mUiCommon = std::make_unique<UiCommon>(shared_from_this(), *mActorManager, mGlobalAnimationTimeProvider);
 	

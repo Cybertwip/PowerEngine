@@ -53,7 +53,7 @@ public:
      * \param icon
      *     The icon to display with this Button.  See \ref nanogui::Button::mIcon.
      */
-    Button(std::shared_ptr<Widget> parent, const std::string &caption = "Untitled", int icon = 0);
+    Button(std::weak_ptr<Widget> parent, const std::string &caption = "Untitled", int icon = 0);
 
     /// Returns the caption of this Button.
     const std::string &caption() const { return m_caption; }

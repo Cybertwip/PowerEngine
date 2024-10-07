@@ -36,7 +36,7 @@ public:
 		Right
 	};
 	
-	Label(std::shared_ptr<Widget> parent, const std::string &caption,
+	Label(std::weak_ptr<Widget> parent, const std::string &caption,
 		  const std::string &font = "sans", int font_size = -1,
 		  Alignment alignment = Alignment::Left);
 	

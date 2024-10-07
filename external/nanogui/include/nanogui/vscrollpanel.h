@@ -25,7 +25,7 @@ NAMESPACE_BEGIN(nanogui)
  */
 class NANOGUI_EXPORT VScrollPanel : public Widget {
 public:
-    VScrollPanel(std::shared_ptr<Widget> parent);
+    VScrollPanel(std::weak_ptr<Widget> parent);
 
     /**
      * Return the current scroll amount as a value between 0 and 1. 0 means

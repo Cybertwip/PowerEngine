@@ -477,8 +477,6 @@ void Screen::initialize(GLFWwindow *window, bool shutdown_glfw) {
 	
 	for (size_t i = 0; i < (size_t) Cursor::CursorCount; ++i)
 		m_cursors[i] = glfwCreateStandardCursor(GLFW_ARROW_CURSOR + (int) i);
-		
-	set_screen(std::dynamic_pointer_cast<Screen>(shared_from_this()));
 }
 
 Screen::~Screen() {
@@ -500,6 +498,10 @@ Screen::~Screen() {
 	
 	if (m_glfw_window && m_shutdown_glfw)
 		glfwDestroyWindow(m_glfw_window);
+}
+
+void Screen::initialize() {
+	set_screen(std::weak_ptr<Screen>(std::dynamic_pointer_cast<Screen>(shared_from_this())));
 }
 
 void Screen::set_visible(bool visible) {

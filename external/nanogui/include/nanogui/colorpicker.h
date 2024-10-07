@@ -31,7 +31,7 @@ public:
      *     The color initially selected by this ColorPicker (default: Red).
      */
 
-    ColorPicker(std::shared_ptr<Widget> parent, const Color& color = Color(1.f, 0.f, 0.f, 1.f));
+    ColorPicker(std::weak_ptr<Widget> parent, const Color& color = Color(1.f, 0.f, 0.f, 1.f));
 
     /// The callback executed when the ColorWheel changes.
     const std::function<void(const Color &)> &callback() const { return m_callback; }

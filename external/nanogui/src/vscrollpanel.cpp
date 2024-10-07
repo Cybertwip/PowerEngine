@@ -16,7 +16,7 @@
 
 NAMESPACE_BEGIN(nanogui)
 
-VScrollPanel::VScrollPanel(std::shared_ptr<Widget> parent)
+VScrollPanel::VScrollPanel(std::weak_ptr<Widget> parent)
     : Widget(parent), m_child_preferred_height(0),
       m_scroll(0.f), m_update_layout(false) { }
 

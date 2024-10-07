@@ -19,7 +19,7 @@
 #include <cctype>
 #include <regex>
 
-DeepMotionSettingsWindow::DeepMotionSettingsWindow(std::shared_ptr<Widget> parent, DeepMotionApiClient& deepMotionApiClient, std::function<void()> successCallback)
+DeepMotionSettingsWindow::DeepMotionSettingsWindow(std::weak_ptr<Widget> parent, DeepMotionApiClient& deepMotionApiClient, std::function<void()> successCallback)
 : nanogui::Window(parent->screen()),
 data_saved_(false),
 mSuccessCallback(successCallback),

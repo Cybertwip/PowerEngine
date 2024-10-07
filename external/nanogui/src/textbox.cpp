@@ -22,7 +22,7 @@
 
 NAMESPACE_BEGIN(nanogui)
 
-TextBox::TextBox(std::shared_ptr<Widget> parent, const std::string &value)
+TextBox::TextBox(std::weak_ptr<Widget> parent, const std::string &value)
 : Widget(parent),
 m_editable(false),
 m_spinnable(false),

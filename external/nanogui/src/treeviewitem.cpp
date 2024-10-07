@@ -4,7 +4,7 @@
 
 NAMESPACE_BEGIN(nanogui)
 
-TreeViewItem::TreeViewItem(std::shared_ptr<Widget> parent, std::shared_ptr<TreeView> tree, const std::string &caption, std::function<void()> callback)
+TreeViewItem::TreeViewItem(std::weak_ptr<Widget> parent, std::shared_ptr<TreeView> tree, const std::string &caption, std::function<void()> callback)
 : Widget(parent), m_tree(tree), m_caption(caption), m_selected(false), m_expanded(false),  m_selection_callback(callback) {}
 
 void TreeViewItem::draw(NVGcontext *ctx) {

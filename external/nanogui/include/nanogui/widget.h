@@ -42,9 +42,9 @@ public:
 	void initialize();
 
     /// Return the parent widget
-    std::shared_ptr<Widget> parent() { return m_parent.lock(); }
+    std::weak_ptr<Widget> parent() { return m_parent.lock(); }
     /// Return the parent widget
-    const std::shared_ptr<Widget> parent() const { return m_parent.lock(); }
+    const std::weak_ptr<Widget> parent() const { return m_parent.lock(); }
     /// Set the parent widget
 	void set_parent(std::weak_ptr<Widget> parent);
 	

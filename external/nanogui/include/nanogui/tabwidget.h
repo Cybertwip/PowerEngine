@@ -29,7 +29,7 @@ NAMESPACE_BEGIN(nanogui)
 class NANOGUI_EXPORT TabWidgetBase : public Widget {
 public:
     /// Construct a new tab widget
-    TabWidgetBase(std::shared_ptr<Widget> parent, const std::string &font = "sans-bold");
+    TabWidgetBase(std::weak_ptr<Widget> parent, const std::string &font = "sans-bold");
 
     /// Return the total number of tabs
     int tab_count() const { return (int) m_tab_captions.size(); };
@@ -182,7 +182,7 @@ protected:
 class NANOGUI_EXPORT TabWidget : public TabWidgetBase {
 public:
     /// Construct a new tab widget
-    TabWidget(std::shared_ptr<Widget> parent, const std::string &font = "sans-bold");
+    TabWidget(std::weak_ptr<Widget> parent, const std::string &font = "sans-bold");
 
     /// Inserts a new tab at the specified position and returns its ID.
     int insert_tab(int index, const std::string &caption, std::shared_ptr<Widget> widget);

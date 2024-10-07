@@ -21,7 +21,7 @@
 
 #include <sstream>
 
-ImportWindow::ImportWindow(std::shared_ptr<Widget> parent, std::shared_ptr<ResourcesPanel> resourcesPanel, std::shared_ptr<nanogui::RenderPass> renderpass, ShaderManager& shaderManager) : nanogui::Window(parent->screen()), mResourcesPanel(resourcesPanel), mDummyAnimationTimeProvider(60 * 30), mRenderPass(renderpass) {
+ImportWindow::ImportWindow(std::weak_ptr<Widget> parent, std::shared_ptr<ResourcesPanel> resourcesPanel, std::shared_ptr<nanogui::RenderPass> renderpass, ShaderManager& shaderManager) : nanogui::Window(parent->screen()), mResourcesPanel(resourcesPanel), mDummyAnimationTimeProvider(60 * 30), mRenderPass(renderpass) {
 	
 	set_fixed_size(nanogui::Vector2i(400, 320));
 	set_layout(std::make_shared<nanogui::GroupLayout>());

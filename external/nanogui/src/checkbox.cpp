@@ -15,7 +15,7 @@
 
 NAMESPACE_BEGIN(nanogui)
 
-CheckBox::CheckBox(std::shared_ptr<Widget> parent, const std::string &caption,
+CheckBox::CheckBox(std::weak_ptr<Widget> parent, const std::string &caption,
                    const std::function<void(bool) > &callback)
     : Widget(parent), m_caption(caption), m_pushed(false), m_checked(false),
       m_callback(callback) {

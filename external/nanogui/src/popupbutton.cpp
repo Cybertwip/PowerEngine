@@ -16,7 +16,7 @@
 
 NAMESPACE_BEGIN(nanogui)
 
-PopupButton::PopupButton(std::shared_ptr<Widget> parent, const std::string &caption, int button_icon)
+PopupButton::PopupButton(std::weak_ptr<Widget> parent, const std::string &caption, int button_icon)
     : Button(parent, caption, button_icon) {
 
     m_chevron_icon = m_theme->m_popup_chevron_right_icon;

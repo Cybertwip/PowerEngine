@@ -32,7 +32,7 @@ private:
 	};
 
 public:
-	SelfContainedMeshCanvas(std::shared_ptr<Widget> parent);
+	SelfContainedMeshCanvas(std::weak_ptr<Widget> parent);
 	void set_active_actor(std::optional<std::reference_wrapper<Actor>> actor);
 	
 	void set_update(bool update) {
