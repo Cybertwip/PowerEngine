@@ -19,7 +19,7 @@
 
 NAMESPACE_BEGIN(nanogui)
 
-ImageView::ImageView(std::weak_ptr<Widget> parent) : Canvas(parent, 1, true, true) {
+ImageView::ImageView(Widget& parent, Screen& screen, Theme& theme) : Canvas(parent, 1, true, true) {
     render_pass()->set_clear_color(0, Color(0.3f, 0.3f, 0.32f, 1.f));
 
     m_image_shader = std::shared_ptr<Shader>(new Shader(
@@ -57,7 +57,7 @@ ImageView::ImageView(std::weak_ptr<Widget> parent) : Canvas(parent, 1, true, tru
 							   -1,
 							   true);
 
-    m_image_border_color = m_theme->m_border_dark;
+    m_image_border_color = m_theme.m_border_dark;
     m_draw_image_border = true;
     m_image_background_color = Color(0.f, 0.f, 0.f, 0.f);
 }
@@ -81,7 +81,7 @@ void ImageView::set_scale(float scale) {
 void ImageView::center() {
     if (!m_image)
         return;
-    m_offset = Vector2i(.5f * (Vector2f(m_size) * screen()->pixel_ratio() - Vector2f(m_image->size()) * scale()));
+    m_offset = Vector2i(.5f * (Vector2f(m_size) * screen().pixel_ratio() - Vector2f(m_image->size()) * scale()));
 }
 
 void ImageView::reset() {
@@ -93,11 +93,11 @@ Vector2f ImageView::pos_to_pixel(const Vector2f &p) {
     Vector2f p2 = p;
     if (m_draw_border)
         p2 -= 1.f;
-    return (p2 * screen()->pixel_ratio() - m_offset) / scale();
+    return (p2 * screen().pixel_ratio() - m_offset) / scale();
 }
 
 Vector2f ImageView::pixel_to_pos(const Vector2f &p) {
-    Vector2i pos = (p * scale() + m_offset) / screen()->pixel_ratio();
+    Vector2i pos = (p * scale() + m_offset) / screen().pixel_ratio();
     if (m_draw_border)
         pos += 1.f;
     return pos;
@@ -121,7 +121,7 @@ bool ImageView::mouse_drag_event(const Vector2i & /* p */, const Vector2i &rel,
     if (!m_enabled || !m_image)
         return false;
 
-    m_offset += rel * screen()->pixel_ratio();
+    m_offset += rel * screen().pixel_ratio();
 
     return true;
 }
@@ -195,7 +195,7 @@ void ImageView::draw_contents() {
         return;
 
     /* Ensure that 'offset' is a multiple of the pixel ratio */
-    float pixel_ratio = screen()->pixel_ratio();
+    float pixel_ratio = screen().pixel_ratio();
     m_offset = (Vector2f(Vector2i(m_offset / pixel_ratio)) * pixel_ratio);
 
     Vector2f bound1 = Vector2f(m_size) * pixel_ratio,

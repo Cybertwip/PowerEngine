@@ -25,7 +25,7 @@ class UiManager;
 
 class UiCommon : public nanogui::Widget {
 public:
-    UiCommon(std::weak_ptr<nanogui::Widget> parent, ActorManager& actorManager, AnimationTimeProvider& animationTimeProvider);
+    UiCommon(std::shared_ptr<nanogui::Widget> parent, ActorManager& actorManager, AnimationTimeProvider& animationTimeProvider);
         
 	std::shared_ptr<HierarchyPanel> hierarchy_panel() {
         return mHierarchyPanel;
@@ -54,10 +54,10 @@ public:
 	std::shared_ptr<nanogui::Widget> toolbox() {
 		return mToolbox;
 	}
-	    
-private:
+
 	void initialize() override;
-	
+
+private:
 	std::shared_ptr<nanogui::Window> mMainWrapper;
 	std::shared_ptr<nanogui::Window> mSceneWrapper;
 	std::shared_ptr<nanogui::Window> mLeftWrapper;

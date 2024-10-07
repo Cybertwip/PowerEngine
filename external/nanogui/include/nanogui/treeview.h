@@ -10,7 +10,7 @@ class TreeViewItem;
 
 class TreeView : public Widget {
 public:
-    TreeView(std::weak_ptr<Widget> parent);
+    TreeView(Widget& parent, Screen& screen, Theme& theme);
 
     virtual void draw(NVGcontext *ctx) override;
 

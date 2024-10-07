@@ -22,29 +22,22 @@
 
 NAMESPACE_BEGIN(nanogui)
 
-Canvas::Canvas(std::weak_ptr<Widget> parent, uint8_t samples,
+Canvas::CanvasWidget& parent, Screen& screen, Theme& theme, uint8_t samples,
 			   bool has_depth_buffer, bool has_stencil_buffer)
-: Widget(parent), m_draw_border(true), m_samples(samples), m_has_depth_buffer(has_depth_buffer), m_has_stencil_buffer(has_stencil_buffer) {
+: Widget(parent, screen, theme), m_draw_border(true), m_samples(samples), m_has_depth_buffer(has_depth_buffer), m_has_stencil_buffer(has_stencil_buffer) {
 	m_size = Vector2i(192, 128);
 	
 #if defined(NANOGUI_USE_GLES)
 	m_samples = 1;
 #endif
-	
-}
 
-void Canvas::initialize() {
-	Widget::initialize();
+	m_border_color = m_theme.m_border_light;
 	
-	m_border_color = m_theme->m_border_light;
-	
-	auto scr = screen();
-	if (scr == nullptr)
-		throw std::runtime_error("Canvas::Canvas(): could not find parent screen!");
+	auto& scr = screen();
 	
 	m_render_to_texture = m_samples != 1
-	|| (m_has_depth_buffer && !scr->has_depth_buffer())
-	|| (m_has_stencil_buffer && !scr->has_stencil_buffer());
+	|| (m_has_depth_buffer && !scr.has_depth_buffer())
+	|| (m_has_stencil_buffer && !scr.has_stencil_buffer());
 	
 	std::shared_ptr<Object> color_texture = nullptr,
 	attachment_texture = nullptr,
@@ -71,8 +64,8 @@ void Canvas::initialize() {
 																   ));
 	} else {
 		color_texture = std::shared_ptr<Texture>(new Texture(
-															 scr->pixel_format(),
-															 scr->component_format(),
+															 scr.pixel_format(),
+															 scr.component_format(),
 															 m_size,
 															 Texture::InterpolationMode::Bilinear,
 															 Texture::InterpolationMode::Bilinear,
@@ -86,8 +79,8 @@ void Canvas::initialize() {
 		
 		if (m_samples > 1) {
 			color_texture_resolved = std::shared_ptr<Texture>(new Texture(
-																		  scr->pixel_format(),
-																		  scr->component_format(),
+																		  scr.pixel_format(),
+																		  scr.component_format(),
 																		  m_size,
 																		  Texture::InterpolationMode::Bilinear,
 																		  Texture::InterpolationMode::Bilinear,
@@ -126,6 +119,11 @@ void Canvas::initialize() {
 															   nullptr
 #endif
 															   ));
+	
+}
+
+void Canvas::initialize() {
+
 }
 
 void Canvas::set_background_color(const Color &background_color) {
@@ -139,15 +137,13 @@ const Color& Canvas::background_color() const {
 void Canvas::draw_contents() { /* No-op. */ }
 
 void Canvas::draw(NVGcontext *ctx) {
-	auto scr = screen();
-	if (scr == nullptr)
-		throw std::runtime_error("Canvas::draw(): could not find parent screen!");
+	auto& scr = screen();
 	
-	float pixel_ratio = scr->pixel_ratio();
+	float pixel_ratio = scr.pixel_ratio();
 	
 	Widget::draw(ctx);
 	
-	scr->nvg_flush();
+	scr.nvg_flush();
 	
 	Vector2i fbsize = m_size;
 	Vector2i offset = absolute_position();
@@ -168,7 +164,7 @@ void Canvas::draw(NVGcontext *ctx) {
 #endif
 
 	} else {
-		m_render_pass->resize(scr->framebuffer_size());
+		m_render_pass->resize(scr.framebuffer_size());
 	}
 	
 	m_render_pass->set_viewport(offset, fbsize);
@@ -183,7 +179,7 @@ void Canvas::draw(NVGcontext *ctx) {
 		nvgStrokeColor(ctx, m_border_color);
 		nvgRoundedRect(ctx, m_pos.x() + .5f, m_pos.y() + .5f,
 					   m_size.x() - 1.f, m_size.y() - 1.f,
-					   m_theme->m_window_corner_radius);
+					   m_theme.m_window_corner_radius);
 		nvgStroke(ctx);
 	}
 	

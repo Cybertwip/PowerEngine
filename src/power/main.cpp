@@ -14,7 +14,6 @@ int main(int /* argc */, char ** /* argv */) {
 	
 	{
 		std::shared_ptr<Application> app = std::make_shared<Application>();
-		
 		app->initialize();
 		app->draw_all();
 		app->set_visible(true);

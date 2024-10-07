@@ -113,7 +113,7 @@ Screen::Screen(const std::string &caption,
 			   bool fullscreen,
 			   bool depth_buffer, bool stencil_buffer,
 			   bool float_buffer, unsigned int gl_major, unsigned int gl_minor)
-: Widget(std::weak_ptr<Widget>()), m_glfw_window(nullptr), m_nvg_context(nullptr),
+: Widget(*this), m_glfw_window(nullptr), m_nvg_context(nullptr),
 m_cursor(Cursor::Arrow), m_background(0.3f, 0.3f, 0.32f, 1.f), m_caption(caption),
 m_shutdown_glfw(false), m_fullscreen(fullscreen), m_depth_buffer(depth_buffer),
 m_stencil_buffer(stencil_buffer), m_float_buffer(float_buffer), m_redraw(false) {
@@ -500,12 +500,6 @@ Screen::~Screen() {
 		glfwDestroyWindow(m_glfw_window);
 }
 
-void Screen::initialize() {
-	set_screen(std::weak_ptr<Screen>(std::dynamic_pointer_cast<Screen>(shared_from_this())));
-	
-	Widget::initialize();
-}
-
 void Screen::set_visible(bool visible) {
 	if (m_visible != visible) {
 		m_visible = visible;
@@ -631,8 +625,8 @@ void Screen::draw_widgets() {
 	
 	if (elapsed > 0.5f) {
 		/* Draw tooltips */
-		const std::shared_ptr<Widget> widget = find_widget(m_mouse_pos);
-		if (widget && !widget->tooltip().empty()) {
+		const Widget& widget = find_widget(m_mouse_pos);
+		if (widget && !widget.get().tooltip().empty()) {
 			int tooltip_width = 150;
 			
 			float bounds[4];
@@ -640,17 +634,17 @@ void Screen::draw_widgets() {
 			nvgFontSize(m_nvg_context, 15.0f);
 			nvgTextAlign(m_nvg_context, NVG_ALIGN_LEFT | NVG_ALIGN_TOP);
 			nvgTextLineHeight(m_nvg_context, 1.1f);
-			Vector2i pos = widget->absolute_position() +
-			Vector2i(widget->width() / 2, widget->height() + 10);
+			Vector2i pos = widget.get().absolute_position() +
+			Vector2i(widget.get().width() / 2, widget.get().height() + 10);
 			
 			nvgTextBounds(m_nvg_context, pos.x(), pos.y(),
-						  widget->tooltip().c_str(), nullptr, bounds);
+						  widget.get().tooltip().c_str(), nullptr, bounds);
 			
 			int h = (bounds[2] - bounds[0]) / 2;
 			if (h > tooltip_width / 2) {
 				nvgTextAlign(m_nvg_context, NVG_ALIGN_CENTER | NVG_ALIGN_TOP);
 				nvgTextBoxBounds(m_nvg_context, pos.x(), pos.y(), tooltip_width,
-								 widget->tooltip().c_str(), nullptr, bounds);
+								 widget.get().tooltip().c_str(), nullptr, bounds);
 				
 				h = (bounds[2] - bounds[0]) / 2;
 			}
@@ -682,7 +676,7 @@ void Screen::draw_widgets() {
 			nvgFillColor(m_nvg_context, Color(255, 255));
 			nvgFontBlur(m_nvg_context, 0.0f);
 			nvgTextBox(m_nvg_context, pos.x() - h, pos.y(), tooltip_width,
-					   widget->tooltip().c_str(), nullptr);
+					   widget.get().tooltip().c_str(), nullptr);
 		}
 	}
 	
@@ -741,14 +735,14 @@ void Screen::cursor_pos_callback_event(double x, double y) {
 		
 		bool ret = false;
 		if (!m_drag_active) {
-			std::shared_ptr<Widget> widget = find_widget(p);
-			if (widget != nullptr && widget->cursor() != m_cursor) {
-				m_cursor = widget->cursor();
+			Widget& widget = find_widget(p);
+			if (widget != nullptr && widget.get().cursor() != m_cursor) {
+				m_cursor = widget.get().cursor();
 				glfwSetCursor(m_glfw_window, m_cursors[(int) m_cursor]);
 			}
 		} else {
 			ret = m_drag_widget->mouse_drag_event(
-												  p - m_drag_widget->parent()->absolute_position(), p - m_mouse_pos,
+												  p - m_drag_widget->parent().absolute_position(), p - m_mouse_pos,
 												  m_mouse_state, m_modifiers);
 		}
 		
@@ -774,7 +768,7 @@ void Screen::mouse_button_callback_event(int button, int action, int modifiers) 
 	try {
 		if (m_focus_path.size() > 1) {
 			auto window =
-			std::dynamic_pointer_cast<Window>(m_focus_path[m_focus_path.size() - 2]);
+			dynamic_cast<Window>(m_focus_path[m_focus_path.size() - 2]);
 			if (window && window->modal()) {
 				if (!window->contains(m_mouse_pos))
 					return;
@@ -790,7 +784,7 @@ void Screen::mouse_button_callback_event(int button, int action, int modifiers) 
 		if (m_drag_active && action == GLFW_RELEASE && m_drag_widget &&
 			drop_widget != m_drag_widget && m_drag_widget->parent()) {
 			m_redraw |= m_drag_widget->mouse_button_event(
-														  m_mouse_pos - m_drag_widget->parent()->absolute_position(), button,
+														  m_mouse_pos - m_drag_widget->parent().absolute_position(), button,
 														  false, m_modifiers);
 		}
 		
@@ -803,7 +797,7 @@ void Screen::mouse_button_callback_event(int button, int action, int modifiers) 
 		
 		if (!m_drag_active && action == GLFW_PRESS && btn12) {
 			m_drag_widget = find_widget(m_mouse_pos);
-			if (m_drag_widget == shared_from_this())
+			if (m_drag_widget == *this)
 				m_drag_widget = nullptr;
 			m_drag_active = m_drag_widget != nullptr;
 			if (!m_drag_active)
@@ -842,7 +836,7 @@ void Screen::drop_callback_event(int count, const char **filenames) {
 	std::vector<std::string> arg(count);
 	for (int i = 0; i < count; ++i)
 		arg[i] = filenames[i];
-	m_redraw |= drop_event(shared_from_this(), arg);
+	m_redraw |= drop_event(*this, arg);
 }
 
 void Screen::scroll_callback_event(double x, double y) {
@@ -850,7 +844,7 @@ void Screen::scroll_callback_event(double x, double y) {
 	try {
 		if (m_focus_path.size() > 1) {
 			auto window =
-			std::dynamic_pointer_cast<Window>(m_focus_path[m_focus_path.size() - 2]);
+			dynamic_cast<Window>(m_focus_path[m_focus_path.size() - 2]);
 			if (window && window->modal()) {
 				if (!window->contains(m_mouse_pos))
 					return;
@@ -894,7 +888,7 @@ void Screen::resize_callback_event(int, int) {
 }
 // src/screen.cpp
 
-void Screen::remove_from_focus(std::shared_ptr<Widget> widget) {
+void Screen::remove_from_focus(Widget& widget) {
 	if (widget == nullptr) {
 		// Optionally, log a warning instead of throwing
 		std::cerr << "Warning: Attempted to remove a nullptr from focus path.\n";
@@ -915,36 +909,28 @@ void Screen::remove_from_focus(std::shared_ptr<Widget> widget) {
 	}
 }
 
-void Screen::update_focus(std::shared_ptr<Widget> widget) {
+void Screen::update_focus(Widget& widget) {
 	for (auto w: m_focus_path) {
-		if (!w->focused())
+		if (!w.get().focused())
 			continue;
-		w->focus_event(false);
+		w.get().focus_event(false);
 	}
 	m_focus_path.clear();
-	std::shared_ptr<Widget> window = nullptr;
+	Widget& window = nullptr;
 	while (widget) {
 		m_focus_path.push_back(widget);
-		if (std::dynamic_pointer_cast<Window>(widget))
+		if (dynamic_cast<Window>(widget))
 			window = widget;
-		widget = widget->parent();
+		widget = widget.get().parent();
 	}
 	for (auto it = m_focus_path.rbegin(); it != m_focus_path.rend(); ++it)
 		(*it)->focus_event(true);
 	
 	if (window)
-		move_window_to_front(std::dynamic_pointer_cast<Window>(window));
+		move_window_to_front(dynamic_cast<Window>(window));
 }
 
-void Screen::dispose_window(std::shared_ptr<Window> window) {
-	if (std::find(m_focus_path.begin(), m_focus_path.end(), window) != m_focus_path.end())
-		m_focus_path.clear();
-	if (m_drag_widget == window)
-		m_drag_widget = nullptr;
-	remove_child(window);
-}
-
-void Screen::center_window(std::shared_ptr<Window> window) {
+void Screen::center_window(Window& window) {
 	if (window->size() == 0) {
 		window->set_size(window->preferred_size(m_nvg_context));
 		window->perform_layout(m_nvg_context);
@@ -964,7 +950,7 @@ void Screen::move_window_to_front(std::shared_ptr<Window> window) {
 				base_index = index;
 		changed = false;
 		for (size_t index = 0; index < m_children.size(); ++index) {
-			auto pw = std::dynamic_pointer_cast<Popup>(m_children[index]);
+			auto pw = dynamic_cast<Popup>(m_children[index]);
 			if (pw && pw->parent_window() == window && index < base_index) {
 				move_window_to_front(pw);
 				changed = true;
@@ -979,8 +965,8 @@ bool Screen::tooltip_fade_in_progress() {
 	if (elapsed < 0.25f || elapsed > 1.25f)
 		return false;
 	/* Temporarily increase the frame rate to fade in the tooltip */
-	std::shared_ptr<Widget> widget = find_widget(m_mouse_pos);
-	return widget && !widget->tooltip().empty();
+	Widget& widget = find_widget(m_mouse_pos);
+	return widget && !widget.get().tooltip().empty();
 }
 
 Texture::PixelFormat Screen::pixel_format() const {

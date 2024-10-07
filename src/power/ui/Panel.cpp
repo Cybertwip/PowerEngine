@@ -2,7 +2,7 @@
 
 #include <GLFW/glfw3.h>
 
-Panel::Panel(std::weak_ptr<nanogui::Widget> parent, const std::string &title) : nanogui::Window(parent, title) {
+Panel::Panel(std::shared_ptr<nanogui::Widget> parent, const std::string &title) : nanogui::Window(parent, title) {
 }
 
 void Panel::initialize() {

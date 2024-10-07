@@ -27,7 +27,7 @@ class UiManager;
 
 class ResourcesPanel : public Panel {
 public:
-	ResourcesPanel(std::weak_ptr<nanogui::Widget> parent,
+	ResourcesPanel(std::shared_ptr<nanogui::Widget> parent,
 				   DirectoryNode& root_directory_node, std::shared_ptr<IActorVisualManager> actorVisualManager,
 				   std::shared_ptr<SceneTimeBar> sceneTimeBar, MeshActorLoader& meshActorLoader, ShaderManager& shaderManager, DeepMotionApiClient& deepMotionApiClient, UiManager& uiManager);
 	
@@ -52,10 +52,10 @@ private:
 	DirectoryNode& mRootDirectoryNode;
 	std::string mSelectedDirectoryPath;
 	
-	std::shared_ptr<Widget> mFileView;
+	Widget& mFileView;
 	
 	// New UI elements
-	std::shared_ptr<Widget> mToolbar;
+	Widget& mToolbar;
 	std::shared_ptr<nanogui::PopupButton> mAddButton;
 	std::shared_ptr<nanogui::Button> mImportButton;
 	std::shared_ptr<nanogui::Button> mExportButton; // New Export button

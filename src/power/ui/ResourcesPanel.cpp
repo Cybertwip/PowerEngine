@@ -110,7 +110,7 @@ const DirectoryNode* FindNodeByPath(const DirectoryNode& currentNode, const std:
 }
 
 
-ResourcesPanel::ResourcesPanel(std::weak_ptr<nanogui::Widget> parent, DirectoryNode& root_directory_node, std::shared_ptr<IActorVisualManager> actorVisualManager, std::shared_ptr<SceneTimeBar> sceneTimeBar,  MeshActorLoader& meshActorLoader, ShaderManager& shaderManager, DeepMotionApiClient& deepMotionApiClient, UiManager& uiManager)
+ResourcesPanel::ResourcesPanel(std::shared_ptr<nanogui::Widget> parent, DirectoryNode& root_directory_node, std::shared_ptr<IActorVisualManager> actorVisualManager, std::shared_ptr<SceneTimeBar> sceneTimeBar,  MeshActorLoader& meshActorLoader, ShaderManager& shaderManager, DeepMotionApiClient& deepMotionApiClient, UiManager& uiManager)
 : Panel(parent, "Resources"),
 mDummyAnimationTimeProvider(60 * 30),
 mRootDirectoryNode(root_directory_node),
@@ -315,7 +315,7 @@ void ResourcesPanel::refresh_file_view() {
 				}
 				
 				// Create a container widget for the file item
-				std::shared_ptr<Widget> itemContainer = std::make_shared<nanogui::Widget>(mFileView);
+				Widget& itemContainer = std::make_shared<nanogui::Widget>(mFileView);
 				itemContainer->set_fixed_size(nanogui::Vector2i(150, 150)); // Set desired size for each item
 				
 				// Calculate grid position based on current index and number of columns
@@ -536,7 +536,7 @@ int ResourcesPanel::get_icon_for_file(const DirectoryNode& node) {
 
 bool ResourcesPanel::mouse_button_event(const nanogui::Vector2i &p, int button, bool down, int modifiers) {
 	if (down && button == GLFW_MOUSE_BUTTON_1) {
-		std::shared_ptr<Widget> widget = find_widget(p);
+		Widget& widget = find_widget(p);
 		bool clickOnButton = false;
 		for (auto fileButton : mFileButtons) {
 			if (widget == fileButton) {

@@ -29,7 +29,7 @@ NAMESPACE_BEGIN(nanogui)
  */
 class NANOGUI_EXPORT TextArea : public Widget {
 public:
-    TextArea(std::weak_ptr<Widget> parent);
+    TextArea(Widget& parent, Screen& screen, Theme& theme);
 
     /// Set the used font
     void set_font(const std::string &font) { m_font = font; }

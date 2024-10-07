@@ -73,8 +73,8 @@ Shader::Shader(std::shared_ptr<RenderPass> render_pass,
 	int sample_count = 1;
 	
 	for (size_t i = 0; i < targets.size(); ++i) {
-		auto texture = std::dynamic_pointer_cast<Texture>(targets[i]);
-		auto screen = std::dynamic_pointer_cast<Screen>(targets[i]);
+		auto texture = dynamic_cast<Texture>(targets[i]);
+		auto screen = dynamic_cast<Screen>(targets[i]);
 		
 		MTLPixelFormat pixel_format;
 		if (targets[i] == nullptr) {

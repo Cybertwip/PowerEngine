@@ -12,11 +12,13 @@
 
 #pragma once
 
+#include <nanogui/layout.h>
 #include <nanogui/object.h>
 #include <nanogui/theme.h>
 #include <vector>
 #include <algorithm>
 #include <memory>
+#include <utility> // For std::forward
 
 NAMESPACE_BEGIN(nanogui)
 
@@ -31,39 +33,34 @@ enum class Cursor; // do not put a docstring, this is already documented
  * also be used as an panel to arrange an arbitrary number of child
  * widgets using a layout generator (see \ref Layout).
  */
-class NANOGUI_EXPORT Widget : public std::enable_shared_from_this<Widget>, public Object {
+class NANOGUI_EXPORT Widget : public Object {
 public:
-    /// Construct a new widget with the given parent widget
-    Widget(std::weak_ptr<Widget> parent);
+	
+	/// Construct a new widget with the given parent widget
+	Widget(Widget& parent, Screen& screen, Theme& theme);
 
     /// Free all resources used by the widget and any children
     virtual ~Widget();
-	
-	virtual void initialize();
 
     /// Return the parent widget
-    std::shared_ptr<Widget> parent() { return m_parent.lock(); }
-    /// Return the parent widget
-    const std::shared_ptr<Widget> parent() const { return m_parent.lock(); }
+    Widget& parent() { return m_parent; }
     /// Set the parent widget
-	void set_parent(std::weak_ptr<Widget> parent);
+	void set_parent(Widget& parent, Screen& screen, Theme& theme);
 	
 	/// Set the widget screen
-	void set_screen(std::weak_ptr<Screen> screen);
+	void set_screen(Screen& screen);
 
     /// Return the used \ref Layout generator
-	std::shared_ptr<Layout> layout() { return m_layout; }
+	Layout& layout() { return *m_layout; }
     /// Return the used \ref Layout generator
-    const std::shared_ptr<Layout> layout() const { return m_layout; }
     /// Set the used \ref Layout generator
-    void set_layout(std::shared_ptr<Layout> layout) { m_layout = layout; }
+    void set_layout(std::unique_ptr<Layout> layout) { m_layout = std::move(layout); }
 
     /// Return the \ref Theme used to draw this widget
-	std::shared_ptr<Theme> theme() { return m_theme; }
+	Theme& theme() { return m_theme; }
+	
     /// Return the \ref Theme used to draw this widget
-    const std::shared_ptr<Theme> theme() const { return m_theme; }
-    /// Set the \ref Theme used to draw this widget
-    virtual void set_theme(std::shared_ptr<Theme> theme);
+    virtual void set_theme(Theme& theme);
 
     /// Return the position relative to the parent widget
     const Vector2i &position() const { return m_pos; }
@@ -71,9 +68,8 @@ public:
     void set_position(const Vector2i &pos) { m_pos = pos; }
 
     /// Return the absolute position on screen
-    Vector2i absolute_position() const {
-        return m_parent.lock() ?
-            (parent()->absolute_position() + m_pos) : m_pos;
+    Vector2i absolute_position() {
+		return parent().absolute_position() + m_pos;
     }
 
     /// Return the size of the widget
@@ -122,11 +118,12 @@ public:
     /// Check if this widget is currently visible, taking parent widgets into account
     bool visible_recursive() {
         bool visible = true;
-        std::shared_ptr<Widget> widget = shared_from_this();
-        while (widget) {
+        Widget* widget = this;
+        do {
             visible &= widget->visible();
-            widget = widget->parent();
-        }
+            widget = &widget->parent();
+		} while(visible && widget != this);
+		
         return visible;
     }
 
@@ -134,7 +131,7 @@ public:
     int child_count() const { return (int) m_children.size(); }
 
     /// Return the list of child widgets of the current widget
-    const std::vector<std::shared_ptr<Widget> > &children() const { return m_children; }
+    const std::vector<std::reference_wrapper<Widget>> &children() const { return m_children; }
 
     /**
      * \brief Add a child widget to the current widget at
@@ -144,27 +141,27 @@ public:
      * since the constructor of \ref Widget automatically
      * adds the current widget to its parent
      */
-    virtual void add_child(int index, std::shared_ptr<Widget> widget);
+    virtual void add_child(int index, Widget& widget);
 
     /// Convenience function which appends a widget at the end
-    void add_child(std::shared_ptr<Widget> widget);
+    void add_child(Widget& widget);
 
     /// Remove a child widget by index
     void remove_child_at(int index);
 
     /// Remove a child widget by value
-    void remove_child(std::shared_ptr<Widget> widget);
+    void remove_child(Widget& widget);
 	
 	void shed_children();
 
     /// Retrieves the child at the specific position
-    const std::shared_ptr<Widget> child_at(int index) const { return m_children[(size_t) index]; }
+    const Widget& child_at(int index) const { return m_children[(size_t) index]; }
 
     /// Retrieves the child at the specific position
-    std::shared_ptr<Widget> child_at(int index) { return m_children[(size_t) index]; }
+    Widget& child_at(int index) { return m_children[(size_t) index]; }
 
     /// Returns the index of a specific child or -1 if not found
-    int child_index(std::shared_ptr<Widget> widget) const;
+    int child_index(Widget& widget) const;
 
     /// Variadic shorthand notation to construct and add a child widget
     template<typename WidgetClass, typename... Args>
@@ -173,10 +170,10 @@ public:
     }
 
     /// Walk up the hierarchy and return the parent window
-	std::shared_ptr<Window> window();
+	Window* window();
 
     /// Walk up the hierarchy and return the parent screen
-	std::shared_ptr<Screen> screen();
+	Screen& screen();
 
     /// Return whether or not this widget is currently enabled
     bool enabled() const { return m_enabled; }
@@ -218,7 +215,7 @@ public:
     void set_cursor(Cursor cursor) { m_cursor = cursor; }
 
     /// Check if the widget contains a certain position
-	bool contains(const Vector2i &p, bool absolute = false, bool recursive = false) const {
+	bool contains(const Vector2i &p, bool absolute = false, bool recursive = false) {
 		// Check current widget
 		if (absolute) {
 			auto pos = absolute_position();
@@ -236,7 +233,7 @@ public:
 		if (recursive) {
 			// Check children widgets
 			for (const auto& child : m_children) {
-				if (child->contains(p, absolute, recursive)) {
+				if (child.get().contains(p, absolute, recursive)) {
 					return true;
 				}
 			}
@@ -247,7 +244,7 @@ public:
 	}
 
     /// Determine the widget located at the given position value (recursive)
-    std::shared_ptr<Widget> find_widget(const Vector2i &p, bool absolute = false);
+    Widget* find_widget(const Vector2i &p, bool absolute = false);
 
     /// Handle a mouse button event (default implementation: propagate to children)
     virtual bool mouse_button_event(const Vector2i &p, int button, bool down, int modifiers);
@@ -286,21 +283,21 @@ protected:
     /**
      * Convenience definition for subclasses to get the full icon scale for this
      * class of Widget.  It simple returns the value
-     * ``m_theme->m_icon_scale * this->m_icon_extra_scale``.
+     * ``m_theme.m_icon_scale * this->m_icon_extra_scale``.
      *
      * \remark
      *     See also: \ref nanogui::Theme::m_icon_scale and
      *     \ref nanogui::Widget::m_icon_extra_scale.  This tiered scaling
      *     strategy may not be appropriate with fonts other than ``entypo.ttf``.
      */
-    float icon_scale() const { return m_theme->m_icon_scale * m_icon_extra_scale; }
+    float icon_scale() const { return m_theme.m_icon_scale * m_icon_extra_scale; }
 
 protected:
-	std::weak_ptr<Widget> m_parent;
-    std::shared_ptr<Theme> m_theme;
-	std::shared_ptr<Layout> m_layout;
+	Widget& m_parent;
+    Theme& m_theme;
+	std::unique_ptr<Layout> m_layout;
     Vector2i m_pos, m_size, m_fixed_size;
-    std::vector<std::shared_ptr<Widget> > m_children;
+    std::vector<std::reference_wrapper<Widget>> m_children;
 
     /**
      * Whether or not this Widget is currently visible.  When a Widget is not
@@ -356,9 +353,10 @@ protected:
     float m_icon_extra_scale;
     Cursor m_cursor;
 	
-	std::weak_ptr<Screen> m_screen;
+	Screen& m_screen;
 	
 	bool m_initialized;
+	
 };
 
 NAMESPACE_END(nanogui)

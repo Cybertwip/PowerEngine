@@ -27,7 +27,7 @@ public:
     using PixelCallback = std::function<void(const Vector2i &, char **, size_t)>;
 
     /// Initialize the widget
-    ImageView(std::weak_ptr<Widget> parent);
+    ImageView(Widget& parent, Screen& screen, Theme& theme);
 
     /// Return the currently active image
     std::shared_ptr<Texture> image() { return m_image; }

@@ -14,7 +14,7 @@
 #include <iostream>
 #include <chrono> // For double-click detection
 
-MeshPicker::MeshPicker(std::weak_ptr<nanogui::Screen> screen, DirectoryNode& root_directory_node,
+MeshPicker::MeshPicker(std::shared_ptr<nanogui::Screen> screen, DirectoryNode& root_directory_node,
 					   std::function<void(const std::string&)> on_model_selected)
 : nanogui::Window(screen),
 root_directory_node_(root_directory_node),
@@ -116,7 +116,7 @@ void MeshPicker::refresh_file_list() {
 		}
 		
 		// Create a button for each model file
-		std::shared_ptr<Widget> itemContainer = std::make_shared<nanogui::Widget>(file_list_widget_);
+		Widget& itemContainer = std::make_shared<nanogui::Widget>(file_list_widget_);
 		itemContainer->set_layout(std::make_shared<nanogui::BoxLayout>(
 														 nanogui::Orientation::Vertical, nanogui::Alignment::Middle, 0, 5));
 		

@@ -17,8 +17,8 @@
 
 NAMESPACE_BEGIN(nanogui)
 
-Window::Window(std::weak_ptr<Widget> parent, const std::string &title)
-    : Widget(parent), m_title(title), m_button_panel(nullptr), m_modal(false),
+Window::WindowWidget& parent, Screen& screen, Theme& theme,  const std::string &title)
+    : Widget(parent, screen, theme), m_title(title), m_button_panel(nullptr), m_modal(false),
       m_drag(false) { }
 
 Vector2i Window::preferred_size(NVGcontext *ctx) {
@@ -46,12 +46,12 @@ Vector2i Window::preferred_size(NVGcontext *ctx) {
 					);
 }
 
-std::shared_ptr<Widget> Window::button_panel() {
+Widget& Window::button_panel() {
     if (!m_button_panel) {
-        m_button_panel = std::make_shared<Widget>(shared_from_this());
-        m_button_panel->set_layout(std::make_shared< BoxLayout>(Orientation::Horizontal, Alignment::Middle, 0, 4));
+        m_button_panel = std::make_unique<Widget>(*this);
+        m_button_panel->set_layout(std::make_unique< BoxLayout>(Orientation::Horizontal, Alignment::Middle, 0, 4));
     }
-    return m_button_panel;
+    return *m_button_panel;
 }
 void Window::perform_layout(NVGcontext *ctx) {
 	if (m_modal) {
@@ -62,8 +62,8 @@ void Window::perform_layout(NVGcontext *ctx) {
 	
 	if (m_button_panel) {
 		for (auto &w : m_button_panel->children()) {
-			w->set_fixed_size(Vector2i(22, 22));
-			w->set_font_size(15);
+			w.get().set_fixed_size(Vector2i(22, 22));
+			w.get().set_font_size(15);
 		}
 		m_button_panel->set_size(Vector2i(width(), 22));
 		m_button_panel->set_position(Vector2i(
@@ -77,41 +77,38 @@ void Window::set_modal(bool modal) {
 	if (m_modal) {
 		center();
 		// Bring to front by moving to the end of the parent's children list
-		auto parent_ptr = parent();
-
-		if (parent_ptr) {
-			
-			// Remove the window from its current position
-			parent_ptr->remove_child(shared_from_this());
-			// Add it back to the end, which typically renders it on top
-			parent_ptr->add_child(shared_from_this());
-			
-			set_focused(true);
-			
-			request_focus();
-		}
+		auto& p = parent();
+		
+		// Remove the window from its current position
+		p.remove_child(*this);
+		// Add it back to the end, which typically renders it on top
+		p.add_child(*this);
+		
+		set_focused(true);
+		
+		request_focus();
 	}
 }
 
 
 void Window::draw(NVGcontext *ctx) {
-    int ds = m_theme->m_window_drop_shadow_size, cr = m_theme->m_window_corner_radius;
-    int hh = m_theme->m_window_header_height;
+    int ds = m_theme.m_window_drop_shadow_size, cr = m_theme.m_window_corner_radius;
+    int hh = m_theme.m_window_header_height;
 
     /* Draw window */
     nvgSave(ctx);
     nvgBeginPath(ctx);
     nvgRoundedRect(ctx, m_pos.x(), m_pos.y(), m_size.x(), m_size.y(), cr);
 
-    nvgFillColor(ctx, m_mouse_focus ? m_theme->m_window_fill_focused
-                                    : m_theme->m_window_fill_unfocused);
+    nvgFillColor(ctx, m_mouse_focus ? m_theme.m_window_fill_focused
+                                    : m_theme.m_window_fill_unfocused);
     nvgFill(ctx);
 
 
     /* Draw a drop shadow */
     NVGpaint shadow_paint = nvgBoxGradient(
         ctx, m_pos.x(), m_pos.y(), m_size.x(), m_size.y(), cr*2, ds*2,
-        m_theme->m_drop_shadow, m_theme->m_transparent);
+        m_theme.m_drop_shadow, m_theme.m_transparent);
 
     nvgSave(ctx);
     nvgResetScissor(ctx);
@@ -128,8 +125,8 @@ void Window::draw(NVGcontext *ctx) {
         NVGpaint header_paint = nvgLinearGradient(
             ctx, m_pos.x(), m_pos.y(), m_pos.x(),
             m_pos.y() + hh,
-            m_theme->m_window_header_gradient_top,
-            m_theme->m_window_header_gradient_bot);
+            m_theme.m_window_header_gradient_top,
+            m_theme.m_window_header_gradient_bot);
 
         nvgBeginPath(ctx);
         nvgRoundedRect(ctx, m_pos.x(), m_pos.y(), m_size.x(), hh, cr);
@@ -139,7 +136,7 @@ void Window::draw(NVGcontext *ctx) {
 
         nvgBeginPath(ctx);
         nvgRoundedRect(ctx, m_pos.x(), m_pos.y(), m_size.x(), hh, cr);
-        nvgStrokeColor(ctx, m_theme->m_window_header_sep_top);
+        nvgStrokeColor(ctx, m_theme.m_window_header_sep_top);
 
         nvgSave(ctx);
         nvgIntersectScissor(ctx, m_pos.x(), m_pos.y(), m_size.x(), 0.5f);
@@ -149,7 +146,7 @@ void Window::draw(NVGcontext *ctx) {
         nvgBeginPath(ctx);
         nvgMoveTo(ctx, m_pos.x() + 0.5f, m_pos.y() + hh - 1.5f);
         nvgLineTo(ctx, m_pos.x() + m_size.x() - 0.5f, m_pos.y() + hh - 1.5);
-        nvgStrokeColor(ctx, m_theme->m_window_header_sep_bot);
+        nvgStrokeColor(ctx, m_theme.m_window_header_sep_bot);
         nvgStroke(ctx);
 
         nvgFontSize(ctx, 18.0f);
@@ -157,13 +154,13 @@ void Window::draw(NVGcontext *ctx) {
         nvgTextAlign(ctx, NVG_ALIGN_CENTER | NVG_ALIGN_MIDDLE);
 
         nvgFontBlur(ctx, 2);
-        nvgFillColor(ctx, m_theme->m_drop_shadow);
+        nvgFillColor(ctx, m_theme.m_drop_shadow);
         nvgText(ctx, m_pos.x() + m_size.x() / 2,
                 m_pos.y() + hh / 2, m_title.c_str(), nullptr);
 
         nvgFontBlur(ctx, 0);
-        nvgFillColor(ctx, m_focused ? m_theme->m_window_title_focused
-                                    : m_theme->m_window_title_unfocused);
+        nvgFillColor(ctx, m_focused ? m_theme.m_window_title_focused
+                                    : m_theme.m_window_title_unfocused);
         nvgText(ctx, m_pos.x() + m_size.x() / 2, m_pos.y() + hh / 2 - 1,
                 m_title.c_str(), nullptr);
     }
@@ -172,18 +169,11 @@ void Window::draw(NVGcontext *ctx) {
     Widget::draw(ctx);
 }
 
-void Window::dispose() {
-    std::shared_ptr<Widget> widget = shared_from_this();
-    while (widget->parent())
-        widget = widget->parent();
-    std::dynamic_pointer_cast<Screen>(widget)->dispose_window(std::dynamic_pointer_cast<Window>(shared_from_this()));
-}
-
 void Window::center() {
-    std::shared_ptr<Widget> widget = shared_from_this();
-    while (widget->parent())
-        widget = widget->parent();
-    std::dynamic_pointer_cast<Screen>(widget)->center_window(std::dynamic_pointer_cast<Window>(shared_from_this()));
+    Widget* widget = this;
+    while (&widget->parent() != this)
+        widget = &widget->parent();
+    dynamic_cast<Screen*>(widget)->center_window(*dynamic_cast<Window*>(this));
 }
 
 bool Window::mouse_enter_event(const Vector2i &p, bool enter) {
@@ -196,7 +186,7 @@ bool Window::mouse_drag_event(const Vector2i &, const Vector2i &rel,
     if (m_drag && (button & (1 << GLFW_MOUSE_BUTTON_1)) != 0) {
         m_pos += rel;
         m_pos = max(m_pos, Vector2i(0));
-        m_pos = min(m_pos, parent()->size() - m_size);
+        m_pos = min(m_pos, parent().size() - m_size);
         return true;
     }
     return false;
@@ -216,7 +206,7 @@ bool Window::mouse_button_event(const Vector2i &p, int button, bool down, int mo
 	if (Widget::mouse_button_event(p, button, down, modifiers))
 		return true;
 	if (button == GLFW_MOUSE_BUTTON_1) {
-		m_drag = down && (p.y() - m_pos.y()) < m_theme->m_window_header_height;
+		m_drag = down && (p.y() - m_pos.y()) < m_theme.m_window_header_height;
 		return true;
 	}
 	return false;

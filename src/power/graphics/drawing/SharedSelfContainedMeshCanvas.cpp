@@ -7,7 +7,7 @@
 #include "MetalHelper.hpp"
 #endif
 
-SharedSelfContainedMeshCanvas::SharedSelfContainedMeshCanvas(std::weak_ptr<Widget> parent)
+SharedSelfContainedMeshCanvas::SharedSelfContainedMeshCanvas(Widget& parent)
 : SelfContainedMeshCanvas(parent) {
 }
 

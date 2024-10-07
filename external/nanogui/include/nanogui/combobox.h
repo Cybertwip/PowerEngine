@@ -26,16 +26,16 @@ NAMESPACE_BEGIN(nanogui)
 class NANOGUI_EXPORT ComboBox : public PopupButton {
 public:
     /// Create an empty combo box
-    ComboBox(std::weak_ptr<Widget> parent);
+    ComboBox(Widget& parent, Screen& screen, Theme& theme);
 
     /// Create a new combo box with the given items
-    ComboBox(std::weak_ptr<Widget> parent, const std::vector<std::string> &items);
+    ComboBox(Widget& parent, Screen& screen, Theme& theme,  const std::vector<std::string> &items);
 
     /**
      * \brief Create a new combo box with the given items, providing both short and
      * long descriptive labels for each item
      */
-    ComboBox(std::weak_ptr<Widget> parent, const std::vector<std::string> &items,
+    ComboBox(Widget& parent, Screen& screen, Theme& theme,  const std::vector<std::string> &items,
              const std::vector<std::string> &items_short);
 
     /// The current index this ComboBox has selected.
@@ -63,10 +63,10 @@ public:
     virtual bool scroll_event(const Vector2i &p, const Vector2f &rel) override;
 protected:
     /// Scroll panel used to store the combo box contents
-	std::shared_ptr<VScrollPanel> m_scroll = nullptr;
+	std::unique_ptr<VScrollPanel> m_scroll = nullptr;
 
     /// Container containing the buttons
-    std::shared_ptr<Widget> m_container = nullptr;
+	std::unique_ptr<Widget> m_container;
 
     /// The items associated with this ComboBox.
     std::vector<std::string> m_items;

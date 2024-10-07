@@ -24,7 +24,7 @@ NAMESPACE_BEGIN(nanogui)
 class NANOGUI_EXPORT Window : public Widget {
     friend class Popup;
 public:
-    Window(std::weak_ptr<Widget> parent, const std::string &title = "Untitled");
+    Window(Widget& parent, Screen& screen, Theme& theme,  const std::string &title = "Untitled");
 
     /// Return the window title
     const std::string &title() const { return m_title; }
@@ -37,10 +37,7 @@ public:
 	void set_modal(bool modal);
 
     /// Return the panel used to house window buttons
-    std::shared_ptr<Widget> button_panel();
-
-    /// Dispose the window
-    void dispose();
+    Widget& button_panel();
 
     /// Center the window in the current \ref Screen
     void center();
@@ -64,7 +61,7 @@ protected:
     virtual void refresh_relative_placement();
 protected:
     std::string m_title;
-    std::shared_ptr<Widget> m_button_panel;
+    std::unique_ptr<Widget> m_button_panel;
     bool m_modal;
     bool m_drag;
 };

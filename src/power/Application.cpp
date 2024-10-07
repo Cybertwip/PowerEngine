@@ -56,12 +56,10 @@ mGlobalAnimationTimeProvider(60 * 30)
 	
 }
 
-void Application::initialize() {
-	Screen::initialize();
+void Application::initialize() {	
+	mUiCommon = std::make_shared<UiCommon>(shared_from_this(), *mActorManager, mGlobalAnimationTimeProvider);
 	
-	mUiCommon = std::make_unique<UiCommon>(weak_from_this(), *mActorManager, mGlobalAnimationTimeProvider);
-	
-	mRenderCommon = std::make_unique<RenderCommon>(mUiCommon->scene_panel(), *mEntityRegistry, *mActorManager, *mCameraManager);
+	mRenderCommon = std::make_shared<RenderCommon>(mUiCommon->scene_panel(), *mEntityRegistry, *mActorManager, *mCameraManager);
 	
 	mMeshBatch = std::make_unique<MeshBatch>(*mRenderCommon->canvas()->render_pass());
 	
@@ -123,6 +121,8 @@ void Application::initialize() {
 	
 	set_background(mRenderCommon->canvas()->background_color());
 	
+	DraggableScreen::initialize();
+
 	perform_layout();
 }
 
@@ -180,7 +180,7 @@ void Application::register_click_callback(std::function<void(bool, int, int, int
 	mClickCallbacks.push_back(callback);
 }
 
-bool Application::drop_event(std::shared_ptr<Widget> sender, const std::vector<std::string> & filenames) {
+bool Application::drop_event(Widget& sender, const std::vector<std::string> & filenames) {
 	if (sender == mUiManager->status_bar_panel()->resources_panel()) {
 
 		if (mUiCommon->animation_panel()->contains(m_mouse_pos, true, true)) {

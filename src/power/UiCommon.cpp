@@ -10,16 +10,16 @@
 #include "ui/TransformPanel.hpp"
 #include "ui/UiManager.hpp"
 
-UiCommon::UiCommon(std::weak_ptr<nanogui::Widget> parent, ActorManager& actorManager, AnimationTimeProvider& animationTimeProvider) : nanogui::Widget(parent), mActorManager(actorManager), mAnimationTimeProvider(animationTimeProvider) {
-	mMainWrapper = std::make_shared<nanogui::Window>(weak_from_this(), "");
+UiCommon::UiCommon(std::shared_ptr<nanogui::Widget> parent, ActorManager& actorManager, AnimationTimeProvider& animationTimeProvider) : nanogui::Widget(parent), mActorManager(actorManager), mAnimationTimeProvider(animationTimeProvider) {
 }
 
 void UiCommon::initialize() {
-	nanogui::Widget::initialize();
+	mMainWrapper = std::make_shared<nanogui::Window>(shared_from_this(), "");
 		
 	mMainWrapper->set_layout(
 							 std::make_shared<nanogui::GridLayout>(nanogui::Orientation::Vertical, 2, nanogui::Alignment::Fill, 0, 0));
 	mSceneWrapper = std::make_shared<nanogui::Window>(mMainWrapper, "");
+	
 	mSceneWrapper->set_layout(std::make_shared<nanogui::GridLayout>(nanogui::Orientation::Horizontal, 2,
 																	nanogui::Alignment::Fill, 0, 0));
 	
@@ -36,6 +36,7 @@ void UiCommon::initialize() {
 	mSceneWrapper->set_fixed_height(totalHeight);
 	
 	mLeftWrapper = std::make_shared<nanogui::Window>(mSceneWrapper, "");
+		
 	mLeftWrapper->set_layout(
 							 std::make_shared<nanogui::GridLayout>(nanogui::Orientation::Horizontal, 1, nanogui::Alignment::Minimum));
 	
@@ -59,6 +60,7 @@ void UiCommon::initialize() {
 	mStatusBar->set_fixed_height(statusHeight);
 	
 	mRightWrapper = std::make_shared<nanogui::Window>(mSceneWrapper, "");
+	
 	mRightWrapper->set_layout(
 							  std::make_shared<nanogui::BoxLayout>(nanogui::Orientation::Vertical, nanogui::Alignment::Fill));
 	mRightWrapper->set_fixed_width(rightWidth);

@@ -17,14 +17,14 @@
 
 NAMESPACE_BEGIN(nanogui)
 
-TextArea::TextArea(std::weak_ptr<Widget> parent) : Widget(parent),
+TextArea::TextArea(Widget& parent, Screen& screen, Theme& theme) : Widget(parent, screen, theme),
   m_foreground_color(Color(0, 0)), m_background_color(Color(0, 0)),
   m_selection_color(.5f, 1.f), m_font("sans"), m_offset(0),
   m_max_size(0), m_padding(0), m_selectable(true),
   m_selection_start(-1), m_selection_end(-1) { }
 
 void TextArea::append(const std::string &text) {
-    NVGcontext *ctx = screen()->nvg_context();
+    NVGcontext *ctx = screen().nvg_context();
 
     nvgFontSize(ctx, font_size());
     nvgFontFace(ctx, m_font.c_str());
@@ -50,7 +50,7 @@ void TextArea::append(const std::string &text) {
         }
     } while (*str++ != 0);
 
-    auto vscroll = std::dynamic_pointer_cast<VScrollPanel>(parent());
+    auto vscroll = dynamic_cast<VScrollPanel>(parent());
     if (vscroll)
         vscroll->perform_layout(ctx);
 }
@@ -77,7 +77,7 @@ bool TextArea::keyboard_event(int key, int /* scancode */, int action, int modif
                     str += '\n';
 
                 const Block &block = m_blocks[i];
-                NVGcontext *ctx = screen()->nvg_context();
+                NVGcontext *ctx = screen().nvg_context();
                 int nglyphs = nvgTextGlyphPositions(ctx, block.offset.x(), block.offset.y(),
                                                     block.text.c_str(), nullptr, glyphs, max_glyphs);
                 glyphs[nglyphs].str = block.text.c_str() + block.text.length();
@@ -91,7 +91,7 @@ bool TextArea::keyboard_event(int key, int /* scancode */, int action, int modif
                 else
                     str += m_blocks[i].text;
             }
-            glfwSetClipboardString(screen()->glfw_window(), str.c_str());
+            glfwSetClipboardString(screen().glfw_window(), str.c_str());
             return true;
         }
     }
@@ -103,7 +103,7 @@ Vector2i TextArea::preferred_size(NVGcontext *) {
 }
 
 void TextArea::draw(NVGcontext *ctx) {
-    auto vscroll = std::dynamic_pointer_cast<VScrollPanel>(parent());
+    auto vscroll = dynamic_cast<VScrollPanel>(parent());
 
     std::vector<Block>::iterator start_it = m_blocks.begin(),
                                  end_it = m_blocks.end();
@@ -182,7 +182,7 @@ void TextArea::draw(NVGcontext *ctx) {
         const Block &block = *it;
         Color color = block.color;
         if (color == Color(0, 0))
-            color = m_theme->m_text_color;
+            color = m_theme.m_text_color;
 
         Vector2i offset = block.offset + m_pos + m_padding;
 
@@ -223,7 +223,7 @@ bool TextArea::mouse_drag_event(const Vector2i &p, const Vector2i &/* rel */,
 }
 
 Vector2i TextArea::position_to_block(const Vector2i &pos) {
-    NVGcontext *ctx = screen()->nvg_context();
+    NVGcontext *ctx = screen().nvg_context();
     auto it = std::lower_bound(
         m_blocks.begin(),
         m_blocks.end(),
@@ -269,7 +269,7 @@ Vector2i TextArea::position_to_block(const Vector2i &pos) {
 Vector2i TextArea::block_to_position(const Vector2i &pos) {
     if (pos.x() < 0 || pos.x() >= (int) m_blocks.size())
         return Vector2i(-1, -1);
-    NVGcontext *ctx = screen()->nvg_context();
+    NVGcontext *ctx = screen().nvg_context();
     const Block &block = m_blocks[pos.x()];
     const int max_glyphs = 1024;
     NVGglyphPosition glyphs[max_glyphs];

@@ -20,7 +20,7 @@
 #include "components/DrawableComponent.hpp"
 #include "components/TransformComponent.hpp"
 
-GizmoManager::GizmoManager(std::weak_ptr<nanogui::Widget> parent, ShaderManager& shaderManager, ActorManager& actorManager, MeshActorLoader& meshActorLoader)
+GizmoManager::GizmoManager(std::shared_ptr<nanogui::Widget> parent, ShaderManager& shaderManager, ActorManager& actorManager, MeshActorLoader& meshActorLoader)
 : mDummyAnimationTimeProvider(60 * 30), mShaderManager(shaderManager), mActorManager(actorManager),
 mMeshActorLoader(meshActorLoader),
 mMeshShader(std::make_unique<ShaderWrapper>(shaderManager.get_shader("gizmo"))),

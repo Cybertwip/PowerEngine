@@ -45,7 +45,7 @@ glm::vec3 ScreenToWorld(glm::vec2 screenPos, float depth, glm::mat4 projectionMa
 } // namespace
 
 // Constructor Implementation
-SceneTimeBar::SceneTimeBar(std::weak_ptr<Widget> parent, ActorManager& actorManager, AnimationTimeProvider& animationTimeProvider, std::shared_ptr<IActorSelectedRegistry> registry, int width, int height)
+SceneTimeBar::SceneTimeBar(Widget& parent, ActorManager& actorManager, AnimationTimeProvider& animationTimeProvider, std::shared_ptr<IActorSelectedRegistry> registry, int width, int height)
 : nanogui::Widget(parent),
 mActorManager(actorManager),
 mAnimationTimeProvider(animationTimeProvider),
@@ -78,7 +78,7 @@ mNormalButtonColor(theme()->m_text_color) // Initialize normal button color
 	set_layout(std::make_shared<nanogui::BoxLayout>(nanogui::Orientation::Vertical, nanogui::Alignment::Maximum, 1, 1));
 	
 	// Slider Wrapper
-	std::shared_ptr<Widget> sliderWrapper = std::make_shared<nanogui::Widget>(shared_from_this());
+	Widget& sliderWrapper = std::make_shared<nanogui::Widget>(shared_from_this());
 	sliderWrapper->set_layout(std::make_shared<nanogui::BoxLayout>(nanogui::Orientation::Horizontal, nanogui::Alignment::Fill, 1, 1));
 	
 	auto normalButtonColor = theme()->m_text_color;

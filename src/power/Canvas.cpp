@@ -14,13 +14,13 @@
 
 #include <iostream>
 
-Canvas::Canvas(std::weak_ptr<Widget> parent, nanogui::Color backgroundColor) : nanogui::Canvas(parent, 1, true, true) {
-    set_background_color(backgroundColor);
+Canvas::Canvas(Widget& parent, nanogui::Color backgroundColor) : nanogui::Canvas(parent, 1, true, true), mBackgroundColor(backgroundColor) {
 }
 
 void Canvas::initialize() {
 	nanogui::Canvas::initialize();
 	
+	set_background_color(mBackgroundColor);
 	set_fixed_size(parent()->fixed_size());
 }
 

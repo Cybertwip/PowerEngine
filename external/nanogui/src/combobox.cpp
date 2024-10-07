@@ -11,31 +11,32 @@
 
 #include <nanogui/combobox.h>
 #include <nanogui/layout.h>
+#include <nanogui/popup.h>
 #include <nanogui/vscrollpanel.h>
 #include <cassert>
 
 NAMESPACE_BEGIN(nanogui)
 
-ComboBox::ComboBox(std::weak_ptr<Widget> parent)
-    : PopupButton(parent), m_container(popup()), m_selected_index(0) {
+ComboBox::ComboBox(Widget& parent, Screen& screen, Theme& theme)
+    : PopupButton(parent, screen, theme), m_container(std::make_unique<Widget>(popup())), m_selected_index(0) {
 }
 
-ComboBox::ComboBox(std::weak_ptr<Widget> parent, const std::vector<std::string> &items)
-    : PopupButton(parent), m_container(popup()), m_selected_index(0) {
+ComboBox::ComboBox(Widget& parent, Screen& screen, Theme& theme, const std::vector<std::string> &items)
+    : PopupButton(parent), m_container(std::make_unique<Widget>(popup())), m_selected_index(0) {
     set_items(items);
 }
 
-ComboBox::ComboBox(std::weak_ptr<Widget> parent, const std::vector<std::string> &items, const std::vector<std::string> &items_short)
-    : PopupButton(parent), m_container(popup()), m_selected_index(0) {
+ComboBox::ComboBox(Widget& parent, Screen& screen, Theme& theme, const std::vector<std::string> &items, const std::vector<std::string> &items_short)
+    : PopupButton(parent), m_container(std::make_unique<Widget>(popup())), m_selected_index(0) {
     set_items(items, items_short);
 }
 
 void ComboBox::set_selected_index(int idx) {
     if (m_items_short.empty())
         return;
-    const std::vector<std::shared_ptr<Widget> > &children = m_container->children();
-    std::dynamic_pointer_cast<Button>( children[m_selected_index])->set_pushed(false);
-	std::dynamic_pointer_cast<Button>( children[idx])->set_pushed(true);
+    const auto &children = m_container->children();
+    dynamic_cast<Button*>( &children[m_selected_index].get())->set_pushed(false);
+	dynamic_cast<Button*>( &children[idx].get())->set_pushed(true);
     m_selected_index = idx;
     set_caption(m_items_short[idx]);
 }
@@ -47,38 +48,39 @@ void ComboBox::set_items(const std::vector<std::string> &items, const std::vecto
 
     if (m_selected_index < 0 || m_selected_index >= (int) items.size())
         m_selected_index = 0;
-    while (m_container->child_count() != 0)
-        m_container->remove_child_at(m_container->child_count()-1);
+	
+	m_container->shed_children();
 
     if (m_scroll == nullptr && items.size() > 8) {
-        m_scroll = std::make_shared<VScrollPanel>(m_popup);
+        m_scroll = std::make_unique<VScrollPanel>(popup());
         m_scroll->set_fixed_height(300);
-        m_container = std::make_shared<Widget>(m_scroll);
-        m_popup->set_layout(std::make_shared< BoxLayout>(Orientation::Horizontal, Alignment::Middle));
+        m_container = std::make_unique<Widget>(*m_scroll);
+        m_popup->set_layout(std::make_unique< BoxLayout>(Orientation::Horizontal, Alignment::Middle));
     }
 
-    m_container->set_layout(std::make_shared<GroupLayout>(10));
+    m_container->set_layout(std::make_unique<GroupLayout>(10));
 
-    int index = 0;
-    for (const auto &str: items) {
-        Button *button = new Button(m_container, str);
-        button->set_flags(Button::RadioButton);
-        button->set_callback([&, index] {
-            m_selected_index = index;
-            set_caption(m_items_short[index]);
-            set_pushed(false);
-            popup()->set_visible(false);
-            if (m_callback)
-                m_callback(index);
-        });
-        index++;
-    }
+	throw ""; // make the container something with unique ptrs or something, then uncomment this
+//    int index = 0;
+//    for (const auto &str: items) {
+//        Button *button = new Button(*m_container, str);
+//        button->set_flags(Button::RadioButton);
+//        button->set_callback([&, index] {
+//            m_selected_index = index;
+//            set_caption(m_items_short[index]);
+//            set_pushed(false);
+//            popup().set_visible(false);
+//            if (m_callback)
+//                m_callback(index);
+//        });
+//        index++;
+//    }
     set_selected_index(m_selected_index);
 }
 
 bool ComboBox::scroll_event(const Vector2i &p, const Vector2f &rel) {
     set_pushed(false);
-    popup()->set_visible(false);
+    popup().set_visible(false);
     if (rel.y() < 0) {
         set_selected_index(std::min(m_selected_index+1, (int)(items().size()-1)));
         if (m_callback)

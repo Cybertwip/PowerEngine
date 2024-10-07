@@ -15,9 +15,9 @@
 
 NAMESPACE_BEGIN(nanogui)
 
-CheckBox::CheckBox(std::weak_ptr<Widget> parent, const std::string &caption,
+CheckBox::CheckBoxWidget& parent, Screen& screen, Theme& theme,  const std::string &caption,
                    const std::function<void(bool) > &callback)
-    : Widget(parent), m_caption(caption), m_pushed(false), m_checked(false),
+    : Widget(parent, screen, theme), m_caption(caption), m_pushed(false), m_checked(false),
       m_callback(callback) {
     m_icon_extra_scale = 1.2f; // widget override
 }
@@ -61,7 +61,7 @@ void CheckBox::draw(NVGcontext *ctx) {
     nvgFontSize(ctx, font_size());
     nvgFontFace(ctx, "sans");
     nvgFillColor(ctx,
-                 m_enabled ? m_theme->m_text_color : m_theme->m_disabled_text_color);
+                 m_enabled ? m_theme.m_text_color : m_theme.m_disabled_text_color);
     nvgTextAlign(ctx, NVG_ALIGN_LEFT | NVG_ALIGN_MIDDLE);
     nvgText(ctx, m_pos.x() + 1.6f * font_size(), m_pos.y() + m_size.y() * 0.5f,
             m_caption.c_str(), nullptr);
@@ -80,11 +80,11 @@ void CheckBox::draw(NVGcontext *ctx) {
     if (m_checked) {
         nvgFontSize(ctx, icon_scale() * m_size.y());
         nvgFontFace(ctx, "icons");
-        nvgFillColor(ctx, m_enabled ? m_theme->m_icon_color
-                                   : m_theme->m_disabled_text_color);
+        nvgFillColor(ctx, m_enabled ? m_theme.m_icon_color
+                                   : m_theme.m_disabled_text_color);
         nvgTextAlign(ctx, NVG_ALIGN_CENTER | NVG_ALIGN_MIDDLE);
         nvgText(ctx, m_pos.x() + m_size.y() * 0.5f + 1,
-                m_pos.y() + m_size.y() * 0.5f, utf8(m_theme->m_check_box_icon).data(),
+                m_pos.y() + m_size.y() * 0.5f, utf8(m_theme.m_check_box_icon).data(),
                 nullptr);
     }
 }

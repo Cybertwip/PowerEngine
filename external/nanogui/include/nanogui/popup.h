@@ -30,7 +30,7 @@ public:
     enum Side { Left = 0, Right };
 
     /// Create a new popup parented to a screen (first argument) and a parent window (if applicable)
-    Popup(std::weak_ptr<Widget> parent, std::shared_ptr<Window> parent_window = nullptr);
+    Popup(Widget& parent, Screen& screen, Theme& theme,  Window* parent_window = nullptr);
 
     /// Return the anchor position in the parent window; the placement of the popup is relative to it
     void set_anchor_pos(const Vector2i &anchor_pos) { m_anchor_pos = anchor_pos; }

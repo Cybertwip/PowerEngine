@@ -34,7 +34,7 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/quaternion.hpp>
 
-AnimationPanel::AnimationPanel(std::weak_ptr<nanogui::Widget> parent)
+AnimationPanel::AnimationPanel(std::shared_ptr<nanogui::Widget> parent)
 : Panel(parent, "Animation"), mActiveActor(std::nullopt), mCurrentTime(0) {
 	set_position(nanogui::Vector2i(0, 0));
 	set_layout(std::make_shared<nanogui::BoxLayout>(nanogui::Orientation::Vertical, nanogui::Alignment::Fill, 10, 10));

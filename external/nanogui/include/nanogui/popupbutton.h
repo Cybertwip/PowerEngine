@@ -29,7 +29,7 @@ NAMESPACE_BEGIN(nanogui)
  */
 class NANOGUI_EXPORT PopupButton : public Button {
 public:
-    PopupButton(std::weak_ptr<Widget> parent, const std::string &caption = "Untitled",
+    PopupButton(Widget& parent, Screen& screen, Theme& theme,  const std::string &caption = "Untitled",
                 int button_icon = 0);
 
     void set_chevron_icon(int icon) { m_chevron_icon = icon; }
@@ -38,13 +38,13 @@ public:
     void set_side(Popup::Side popup_side);
     Popup::Side side() const { return m_popup->side(); }
 
-    std::shared_ptr<Popup> popup() { return m_popup; }
+    Popup& popup() { return *m_popup; }
 
     virtual void draw(NVGcontext* ctx) override;
     virtual Vector2i preferred_size(NVGcontext *ctx) override;
     virtual void perform_layout(NVGcontext *ctx) override;
 protected:
-    std::shared_ptr<Popup> m_popup;
+    std::unique_ptr<Popup> m_popup;
     int m_chevron_icon;
 };
 

@@ -16,8 +16,8 @@
 
 NAMESPACE_BEGIN(nanogui)
 
-Popup::Popup(std::weak_ptr<Widget> parent, std::shared_ptr<Window> parent_window)
-: Window(parent, ""), m_parent_window(parent_window), m_anchor_pos(Vector2i(0)),
+Popup::Popup(Widget& parent, Screen& screen, Theme& theme,  std::shared_ptr<Window> parent_window)
+: Window(parent, screen, theme, ""), m_parent_window(parent_window), m_anchor_pos(Vector2i(0)),
 m_anchor_offset(30), m_anchor_size(15), m_side(Side::Right) { }
 
 void Popup::perform_layout(NVGcontext *ctx) {
@@ -32,10 +32,10 @@ void Popup::perform_layout(NVGcontext *ctx) {
 	
 	// First pass: Calculate total height and maximum width
 	for (auto &child : m_children) {
-		m_size.y() += child->height() * 1.125f;
+		m_size.y() += child.get().height() * 1.125f;
 		
-		if (child->width() > max_width) {
-			max_width = child->width();
+		if (child.get().width() > max_width) {
+			max_width = child.get().width();
 		}
 	}
 	
@@ -47,11 +47,11 @@ void Popup::perform_layout(NVGcontext *ctx) {
 	// Second pass: Adjust positions of child widgets
 	for (auto &child : m_children) {
 		// Ensure the offset is an integer value
-		child->set_width(max_width * 0.95f);
+		child.get().set_width(max_width * 0.95f);
 		
-		child->set_position(child->position() + Vector2i(m_size.x() * 0.5f - child->width() * 0.5f, offset + m_size.y() * 0.5f - child->height()));
+		child.get().set_position(child.get().position() + Vector2i(m_size.x() * 0.5f - child.get().width() * 0.5f, offset + m_size.y() * 0.5f - child.get().height()));
 
-		offset += static_cast<int>(child->height());
+		offset += static_cast<int>(child.get().height());
 	}
 	
 }
@@ -70,8 +70,8 @@ void Popup::draw(NVGcontext* ctx) {
 	if (!m_visible)
 		return;
 	
-	int ds = m_theme->m_window_drop_shadow_size,
-	cr = m_theme->m_window_corner_radius;
+	int ds = m_theme.m_window_drop_shadow_size,
+	cr = m_theme.m_window_corner_radius;
 	
 	nvgSave(ctx);
 	nvgResetScissor(ctx);
@@ -79,7 +79,7 @@ void Popup::draw(NVGcontext* ctx) {
 	/* Draw a drop shadow */
 	NVGpaint shadow_paint = nvgBoxGradient(
 										   ctx, m_pos.x(), m_pos.y(), m_size.x(), m_size.y(), cr * 2, ds * 2,
-										   m_theme->m_drop_shadow, m_theme->m_transparent);
+										   m_theme.m_drop_shadow, m_theme.m_transparent);
 	
 	nvgBeginPath(ctx);
 	nvgRect(ctx, m_pos.x() - ds, m_pos.y() - ds, m_size.x() + 2 * ds, m_size.y() + 2 * ds);
@@ -103,7 +103,7 @@ void Popup::draw(NVGcontext* ctx) {
 	nvgLineTo(ctx, base.x() - 1 * sign, base.y() - m_anchor_size);
 	nvgLineTo(ctx, base.x() - 1 * sign, base.y() + m_anchor_size);
 	
-	nvgFillColor(ctx, m_theme->m_window_popup);
+	nvgFillColor(ctx, m_theme.m_window_popup);
 	nvgFill(ctx);
 	nvgRestore(ctx);
 	

@@ -31,7 +31,7 @@ public:
      *     The color initially selected by this ColorPicker (default: Red).
      */
 
-    ColorPicker(std::weak_ptr<Widget> parent, const Color& color = Color(1.f, 0.f, 0.f, 1.f));
+    ColorPicker(Widget& parent, Screen& screen, Theme& theme,  const Color& color = Color(1.f, 0.f, 0.f, 1.f));
 
     /// The callback executed when the ColorWheel changes.
     const std::function<void(const Color &)> &callback() const { return m_callback; }
@@ -50,14 +50,14 @@ public:
     /**
      * The callback to execute when a new Color is selected on the ColorWheel
      * **and** the user clicks the \ref nanogui::ColorPicker::m_pick_button or
-     * \ref nanogui::ColorPicker::m_reset_button.
+     * \ref nanogui::ColorPicker::m_reset_button->
      */
     const std::function<void(const Color &)> &final_callback() const { return m_final_callback; }
 
     /**
      * The callback to execute when a new Color is selected on the ColorWheel
      * **and** the user clicks the \ref nanogui::ColorPicker::m_pick_button or
-     * \ref nanogui::ColorPicker::m_reset_button.
+     * \ref nanogui::ColorPicker::m_reset_button->
      */
     void set_final_callback(const std::function<void(const Color &)> &callback) { m_final_callback = callback; }
 
@@ -66,16 +66,16 @@ public:
     /// Set the current color
     void set_color(const Color& color);
 
-    /// The current caption of the \ref nanogui::ColorPicker::m_pick_button.
+    /// The current caption of the \ref nanogui::ColorPicker::m_pick_button->
     const std::string &pick_button_caption() { return m_pick_button->caption(); }
 
-    /// Sets the current caption of the \ref nanogui::ColorPicker::m_pick_button.
+    /// Sets the current caption of the \ref nanogui::ColorPicker::m_pick_button->
     void set_pick_button_caption(const std::string &caption) { m_pick_button->set_caption(caption); }
 
-    /// The current caption of the \ref nanogui::ColorPicker::m_reset_button.
+    /// The current caption of the \ref nanogui::ColorPicker::m_reset_button->
     const std::string &reset_button_caption() { return m_reset_button->caption(); }
 
-    /// Sets the current caption of the \ref nanogui::ColorPicker::m_reset_button.
+    /// Sets the current caption of the \ref nanogui::ColorPicker::m_reset_button->
     void set_reset_button_caption(const std::string &caption) { m_reset_button->set_caption(caption); }
 protected:
     /// The "fast" callback executed when the ColorWheel has changed.
@@ -84,12 +84,12 @@ protected:
     /**
      * The callback to execute when a new Color is selected on the ColorWheel
      * **and** the user clicks the \ref nanogui::ColorPicker::m_pick_button or
-     * \ref nanogui::ColorPicker::m_reset_button.
+     * \ref nanogui::ColorPicker::m_reset_button->
      */
     std::function<void(const Color &)> m_final_callback;
 
     /// The ColorWheel for this ColorPicker (the actual widget allowing selection).
-	std::shared_ptr<ColorWheel> m_color_wheel;
+	std::unique_ptr<ColorWheel> m_color_wheel;
 
     /**
      * The Button used to signal that the current value on the ColorWheel is the
@@ -102,16 +102,16 @@ protected:
      * Similarly, the \ref nanogui::ColorPicker::m_callback function is only
      * called when a user selects a new Color using by clicking this Button.
      */
-    std::shared_ptr<Button> m_pick_button;
+	std::unique_ptr<Button> m_pick_button;
 
     /**
      * Remains the Color of the active color selection, until the user picks a
      * new Color on the ColorWheel **and** selects the
-     * \ref nanogui::ColorPicker::m_pick_button.  The default value for the
+     * \ref nanogui::ColorPicker::m_pick_button->  The default value for the
      * caption of this Button is ``"Reset"``.  You can change it using
      * \ref nanogui::ColorPicker::set_reset_button_caption if you need.
      */
-	std::shared_ptr<Button> m_reset_button;
+	std::unique_ptr<Button> m_reset_button;
 };
 
 NAMESPACE_END(nanogui)

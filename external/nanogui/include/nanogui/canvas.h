@@ -59,7 +59,7 @@ public:
      *     Should the widget clear its color/depth/stencil buffer?
      */
     Canvas(
-        std::weak_ptr<Widget> parent,
+        Widget& parent,
         uint8_t samples = 4,
         bool has_depth_buffer = true,
         bool has_stencil_buffer = true

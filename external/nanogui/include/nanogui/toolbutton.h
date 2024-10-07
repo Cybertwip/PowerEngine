@@ -23,7 +23,7 @@ NAMESPACE_BEGIN(nanogui)
  */
 class ToolButton : public Button {
 public:
-    ToolButton(std::weak_ptr<Widget> parent, int icon,
+    ToolButtonWidget& parent, Screen& screen, Theme& theme,  int icon,
            const std::string &caption = "")
         : Button(parent, caption, icon) {
         set_flags(Flags::RadioButton | Flags::ToggleButton);

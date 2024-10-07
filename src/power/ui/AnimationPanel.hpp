@@ -14,7 +14,7 @@ class TransformComponent;
 
 class AnimationPanel : public Panel {
 public:
-	AnimationPanel(std::weak_ptr<nanogui::Widget> parent);
+	AnimationPanel(std::shared_ptr<nanogui::Widget> parent);
 	~AnimationPanel();
 	
 	void initialize() override;

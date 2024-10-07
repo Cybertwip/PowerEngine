@@ -265,6 +265,7 @@ UiManager::UiManager(std::shared_ptr<IActorSelectedRegistry> registry,
 	mStatusBarPanel = std::make_shared<StatusBarPanel>(statusBar, mActorVisualManager, mSceneTimeBar,
 										 mMeshActorLoader, mShaderManager, deepMotionApiClient,
 										 *this, applicationClickRegistrator);
+	
 	mStatusBarPanel->set_fixed_width(statusBar->fixed_height());
 	mStatusBarPanel->set_fixed_height(statusBar->fixed_height());
 	mStatusBarPanel->set_layout(std::make_shared<nanogui::BoxLayout>(nanogui::Orientation::Horizontal,
@@ -272,7 +273,6 @@ UiManager::UiManager(std::shared_ptr<IActorSelectedRegistry> registry,
 	
 	// Initialize selection color
 	mSelectionColor = glm::normalize(glm::vec4(0.83f, 0.68f, 0.21f, 1.0f)); // A gold-ish color
-	
 	
 	scenePanel->register_motion_callback(GLFW_MOUSE_BUTTON_RIGHT, [this](int width, int height, int x, int y, int dx, int dy, int button, bool down){
 		if (down) {

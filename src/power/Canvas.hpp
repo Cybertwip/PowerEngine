@@ -10,7 +10,7 @@ class ActorManager;
 class Canvas : public nanogui::Canvas
 {
    public:
-    Canvas(std::weak_ptr<Widget> parent, nanogui::Color backgroundColor);
+    Canvas(Widget& parent, nanogui::Color backgroundColor);
 	
     virtual void draw_contents() override;
     
@@ -20,11 +20,12 @@ class Canvas : public nanogui::Canvas
 	
 	void process_events();
 
-
-   private:
 	void initialize() override;
 
+   private:
     std::vector<std::function<void()>> mDrawCallbacks;
 	
 	std::function<void(std::vector<uint8_t>&)> mSnapshotCallback;
+	
+	nanogui::Color mBackgroundColor;
 };

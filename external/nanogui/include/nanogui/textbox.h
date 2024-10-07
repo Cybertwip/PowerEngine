@@ -40,7 +40,7 @@ public:
         Right
     };
 
-    TextBox(std::weak_ptr<Widget> parent, const std::string &value = "Untitled");
+    TextBoxWidget& parent, Screen& screen, Theme& theme,  const std::string &value = "Untitled");
 
     bool editable() const { return m_editable; }
     void set_editable(bool editable);
@@ -74,7 +74,7 @@ public:
     void set_placeholder(const std::string &placeholder) { m_placeholder = placeholder; }
 
     /// Set the \ref Theme used to draw this widget
-    virtual void set_theme(std::shared_ptr<Theme> theme) override;
+    virtual void set_theme(Theme& theme) override;
 
     /// The callback to execute when the value of this TextBox has changed.
     const std::function<bool(const std::string& str)> &callback() const { return m_callback; }
@@ -179,7 +179,7 @@ protected:
  */
 template <typename Scalar> class IntBox : public TextBox {
 public:
-    IntBox(std::weak_ptr<Widget> parent, Scalar value = (Scalar) 0) : TextBox(parent) {
+    IntBoxWidget& parent, Screen& screen, Theme& theme,  Scalar value = (Scalar) 0) : TextBox(parent) {
         set_default_value("0");
         set_format(std::is_signed<Scalar>::value ? "[-]?[0-9]*" : "[0-9]*");
         set_value_increment(1);
@@ -297,7 +297,7 @@ private:
  */
 template <typename Scalar> class FloatBox : public TextBox {
 public:
-    FloatBox(std::weak_ptr<Widget> parent, Scalar value = (Scalar) 0.f) : TextBox(parent) {
+    FloatBoxWidget& parent, Screen& screen, Theme& theme,  Scalar value = (Scalar) 0.f) : TextBox(parent) {
         m_number_format = sizeof(Scalar) == sizeof(float) ? "%.4g" : "%.7g";
         set_default_value("0");
         set_format("[-+]?[0-9]*\\.?[0-9]+([e_e][-+]?[0-9]+)?");

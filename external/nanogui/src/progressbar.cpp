@@ -14,8 +14,8 @@
 
 NAMESPACE_BEGIN(nanogui)
 
-ProgressBar::ProgressBar(std::weak_ptr<Widget> parent)
-    : Widget(parent), m_value(0.0f) {}
+ProgressBar::ProgressBar(Widget& parent, Screen& screen, Theme& theme)
+    : Widget(parent, screen, theme), m_value(0.0f) {}
 
 Vector2i ProgressBar::preferred_size(NVGcontext *) {
     return Vector2i(70, 12);

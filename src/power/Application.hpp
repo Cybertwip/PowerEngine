@@ -14,7 +14,7 @@
 
 class DraggableWindow : public nanogui::Window {
 public:
-	DraggableWindow(std::weak_ptr<Widget> parent, const std::string &title = "Drag Me") : nanogui::Window(parent, title) {
+	DraggableWindow(Widget& parent, const std::string &title = "Drag Me") : nanogui::Window(parent, title) {
 		set_modal(false);   // We want it to be freely interactive
 		
 		set_layout(std::make_shared< nanogui::BoxLayout>(nanogui::Orientation::Horizontal,
@@ -61,12 +61,6 @@ public:
 					unsigned int gl_major = 3,
 					unsigned int gl_minor = 2)
 	: Screen(caption, fullscreen, depth_buffer, stencil_buffer, float_buffer, gl_major, gl_minor){
-		m_draggable_window = std::make_shared<DraggableWindow>(weak_from_this(), "");
-		
-		m_draggable_window->set_fixed_width(0);
-		m_draggable_window->set_fixed_height(0);
-				
-		set_drag_widget(nullptr, nullptr);
 	}
 	
 protected:
@@ -149,8 +143,21 @@ protected:
 		}
 	}
 	
+	void initialize() override {
+		m_draggable_window = std::make_shared<DraggableWindow>(shared_from_this(), "");
+		
+		m_draggable_window->set_fixed_width(0);
+		m_draggable_window->set_fixed_height(0);
+		
+		set_drag_widget(nullptr, nullptr);
+		
+		Screen::initialize();
+	}
+	
 private:
-	void set_drag_widget(std::shared_ptr<Widget> widget, std::function<void()> drag_callback) override {
+	
+	
+	void set_drag_widget(Widget& widget, std::function<void()> drag_callback) override {
 		if(widget == nullptr){
 			m_draggable_window->set_visible(false);
 			m_draggable_window->set_drag_callback(nullptr);
@@ -165,11 +172,11 @@ private:
 			m_drag_callback = nullptr;
 		}
 	}
-	std::shared_ptr<Widget> drag_widget() const override { return m_draggable_window; }
+	Widget& drag_widget() const override { return m_draggable_window; }
 
-	void move_widget_to_top(std::shared_ptr<Widget> widget) {
+	void move_widget_to_top(Widget& widget) {
 		if (!widget || !widget->parent()) return;
-		auto &children = const_cast<std::vector<std::shared_ptr<Widget> > &>(widget->parent()->children());
+		auto &children = const_cast<std::vector<Widget& > &>(widget->parent()->children());
 		auto it = std::find(children.begin(), children.end(), widget);
 		if (it != children.end()) {
 			// Move the widget to the end of the list to make it topmost
@@ -217,7 +224,7 @@ class Application : public nanogui::DraggableScreen
 	void register_click_callback(std::function<void(bool, int, int, int, int)> callback);
 
    private:
-	bool drop_event(std::shared_ptr<Widget> sender, const std::vector<std::string> & filenames) override;
+	bool drop_event(Widget& sender, const std::vector<std::string> & filenames) override;
 
 	bool mouse_button_event(const nanogui::Vector2i &p, int button, bool down, int modifiers) override;
 	
@@ -234,8 +241,8 @@ class Application : public nanogui::DraggableScreen
 	std::unique_ptr<BatchUnit> mBatchUnit;
 	std::unique_ptr<SkinnedMeshBatch> mSkinnedMeshBatch;
 	std::unique_ptr<MeshBatch> mMeshBatch;
-	std::unique_ptr<RenderCommon> mRenderCommon;
-	std::unique_ptr<UiCommon> mUiCommon;
+	std::shared_ptr<RenderCommon> mRenderCommon;
+	std::shared_ptr<UiCommon> mUiCommon;
 	std::unique_ptr<DeepMotionApiClient> mDeepMotionApiClient;
 	std::unique_ptr<ActorManager> mActorManager;
 	std::unique_ptr<CameraManager> mCameraManager;

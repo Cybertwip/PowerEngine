@@ -345,7 +345,6 @@ add_library(nanogui ${NANOGUI_LIBRARY_TYPE}
   include/nanogui/imageview.h src/imageview.cpp
   include/nanogui/traits.h src/traits.cpp
   include/nanogui/renderpass.h
-  include/nanogui/formhelper.h
   include/nanogui/icons.h
   include/nanogui/toolbutton.h
   include/nanogui/opengl.h

@@ -1,5 +1,7 @@
 #pragma once
 
+#include <nanogui/widget.h>
+
 #include <entt/entt.hpp>
 
 #include <memory>
@@ -27,9 +29,10 @@ public:
     int mCanvasHeight;
 };
 
-class RenderCommon {
+class RenderCommon : public nanogui::Widget {
 public:
-    RenderCommon(std::weak_ptr<nanogui::Widget> parent, entt::registry& registry, ActorManager& actorManager, CameraManager& cameraManager);
+    RenderCommon(std::shared_ptr<nanogui::Widget> parent, entt::registry& registry, ActorManager& actorManager, CameraManager& cameraManager);
+	
 	std::shared_ptr<Canvas> canvas() {
         return mCanvas;
     }
@@ -41,11 +44,16 @@ public:
 	CameraActorLoader& camera_actor_loader() {
 		return *mCameraActorLoader;
 	}
-
+	
+	void initialize() override;
 
 private:
+	
 	std::shared_ptr<Canvas> mCanvas;
     std::unique_ptr<ShaderManager> mShaderManager;
 	std::unique_ptr<CameraActorLoader> mCameraActorLoader;
+	
+	ActorManager& mActorManager;
+	CameraManager& mCameraManager;
 };
 

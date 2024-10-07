@@ -22,7 +22,7 @@ nanogui::Matrix4f glm_to_nanogui(glm::mat4 glmMatrix) {
 }
 }
 // In SelfContainedMeshCanvas.cpp, modify the constructor to load and assign the mesh shader
-SelfContainedMeshCanvas::SelfContainedMeshCanvas(std::weak_ptr<Widget> parent)
+SelfContainedMeshCanvas::SelfContainedMeshCanvas(Widget& parent)
 : nanogui::Canvas(parent, 1, true, true), mCurrentTime(0), mCamera(mRegistry), mUpdate(true) {
 	
 	set_background_color(nanogui::Color{70, 130, 180, 255});

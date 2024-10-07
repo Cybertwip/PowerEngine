@@ -16,8 +16,8 @@
 
 NAMESPACE_BEGIN(nanogui)
 
-VScrollPanel::VScrollPanel(std::weak_ptr<Widget> parent)
-    : Widget(parent), m_child_preferred_height(0),
+VScrollPanel::VScrollPanel(Widget& parent, Screen& screen, Theme& theme)
+    : Widget(parent, screen, theme), m_child_preferred_height(0),
       m_scroll(0.f), m_update_layout(false) { }
 
 void VScrollPanel::perform_layout(NVGcontext *ctx) {
@@ -28,24 +28,24 @@ void VScrollPanel::perform_layout(NVGcontext *ctx) {
     if (m_children.size() > 1)
         throw std::runtime_error("VScrollPanel should have one child.");
 
-    std::shared_ptr<Widget> child = m_children[0];
-    m_child_preferred_height = child->preferred_size(ctx).y();
+    Widget& child = m_children[0];
+    m_child_preferred_height = child.preferred_size(ctx).y();
 
     if (m_child_preferred_height > m_size.y()) {
-        child->set_position(Vector2i(0, -m_scroll * (m_child_preferred_height - m_size.y())));
-        child->set_size(Vector2i(m_size.x() - 12, m_child_preferred_height));
+        child.set_position(Vector2i(0, -m_scroll * (m_child_preferred_height - m_size.y())));
+        child.set_size(Vector2i(m_size.x() - 12, m_child_preferred_height));
     } else {
-        child->set_position(Vector2i(0));
-        child->set_size(m_size);
+        child.set_position(Vector2i(0));
+        child.set_size(m_size);
         m_scroll = 0;
     }
-    child->perform_layout(ctx);
+    child.perform_layout(ctx);
 }
 
 Vector2i VScrollPanel::preferred_size(NVGcontext *ctx) {
     if (m_children.empty())
         return Vector2i(0);
-    return m_children[0]->preferred_size(ctx) + Vector2i(12, 0);
+    return m_children[0].get().preferred_size(ctx) + Vector2i(12, 0);
 }
 
 bool VScrollPanel::mouse_drag_event(const Vector2i &p, const Vector2i &rel,
@@ -86,7 +86,7 @@ bool VScrollPanel::mouse_button_event(const Vector2i &p, int button, bool down,
 
         m_scroll = std::max(0.f, std::min(1.f, m_scroll + delta*0.98f));
 
-        m_children[0]->set_position(
+        m_children[0].get().set_position(
             Vector2i(0, -m_scroll * (m_child_preferred_height - m_size.y())));
         m_update_layout = true;
         return true;
@@ -102,11 +102,11 @@ bool VScrollPanel::scroll_event(const Vector2i &p, const Vector2f &rel) {
         m_scroll = std::max(0.f, std::min(1.f,
                 m_scroll - scroll_amount / m_child_preferred_height));
 
-        Vector2i old_pos = child->position();
-        child->set_position(Vector2i(0, -m_scroll*(m_child_preferred_height - m_size.y())));
-        Vector2i new_pos = child->position();
+        Vector2i old_pos = child.get().position();
+        child.get().set_position(Vector2i(0, -m_scroll*(m_child_preferred_height - m_size.y())));
+        Vector2i new_pos = child.get().position();
         m_update_layout = true;
-        child->mouse_motion_event(p-m_pos, old_pos - new_pos, 0, 0);
+        child.get().mouse_motion_event(p-m_pos, old_pos - new_pos, 0, 0);
 
         return true;
     } else {
@@ -117,25 +117,25 @@ bool VScrollPanel::scroll_event(const Vector2i &p, const Vector2f &rel) {
 void VScrollPanel::draw(NVGcontext *ctx) {
     if (m_children.empty())
         return;
-    std::shared_ptr<Widget> child = m_children[0];
+    Widget& child = m_children[0];
     int yoffset = 0;
     if (m_child_preferred_height > m_size.y())
         yoffset = -m_scroll*(m_child_preferred_height - m_size.y());
-    child->set_position(Vector2i(0, yoffset));
-    m_child_preferred_height = child->preferred_size(ctx).y();
+    child.set_position(Vector2i(0, yoffset));
+    m_child_preferred_height = child.preferred_size(ctx).y();
     float scrollh = height() *
         std::min(1.f, height() / (float) m_child_preferred_height);
 
     if (m_update_layout) {
         m_update_layout = false;
-        child->perform_layout(ctx);
+        child.perform_layout(ctx);
     }
 
     nvgSave(ctx);
     nvgTranslate(ctx, m_pos.x(), m_pos.y());
     nvgIntersectScissor(ctx, 0, 0, m_size.x(), m_size.y());
-    if (child->visible())
-        child->draw(ctx);
+    if (child.visible())
+        child.draw(ctx);
     nvgRestore(ctx);
 
     if (m_child_preferred_height <= m_size.y())
