@@ -343,16 +343,15 @@ void ResourcesPanel::refresh_file_view() {
 				
 				// Handle thumbnail deserialization for specific file types
 				
-				nanogui::ImageView* imageView = nullptr;
-				
+				std::shared_ptr<std::vector<uint8_t>> thumbnailPixels;
+
 				if (file_icon == FA_WALKING || file_icon == FA_OBJECT_GROUP) {
 					// deserialize thumbnail here
 					CompressedSerialization::Deserializer deserializer;
 					
 					deserializer.load_from_file(child->FullPath);
 					
-					std::vector<uint8_t> pixels;
-					pixels.resize(512 * 512 * 4);
+					thumbnailPixels->resize(512 * 512 * 4);
 					
 					uint64_t thumbnail_size = 0;
 					
@@ -363,16 +362,16 @@ void ResourcesPanel::refresh_file_view() {
 					deserializer.read_header_uint64(thumbnail_size);
 					
 					if (thumbnail_size != 0) {
-						deserializer.read_header_raw(pixels.data(), thumbnail_size);
+						deserializer.read_header_raw(thumbnailPixels->data(), thumbnail_size);
 						
-						imageView = new nanogui::ImageView(iconButton);
+						auto imageView = new nanogui::ImageView(iconButton);
 						imageView->set_size(iconButton->fixed_size());
 						
 						imageView->set_fixed_size(iconButton->fixed_size());
 						
 						imageView->set_image(new nanogui::Texture(
-																  pixels.data(),
-																  pixels.size(),
+																  thumbnailPixels->data(),
+																  thumbnailPixels->size(),
 																  512, 512,		  nanogui::Texture::InterpolationMode::Nearest,
 																  nanogui::Texture::InterpolationMode::Nearest,
 																  nanogui::Texture::WrapMode::ClampToEdge));
@@ -399,7 +398,7 @@ void ResourcesPanel::refresh_file_view() {
 				
 				// Set the callback for the icon button to handle interactions
 				
-				iconButton->set_callback([this, iconButton, imageView, child]() {
+				iconButton->set_callback([this, iconButton, child]() {
 					int file_icon = get_icon_for_file(*child);
 					
 					if (file_icon  == FA_WALKING || file_icon == FA_PERSON_BOOTH || file_icon == FA_OBJECT_GROUP) {
@@ -411,8 +410,13 @@ void ResourcesPanel::refresh_file_view() {
 						
 						content->set_fixed_size(iconButton->fixed_size());
 						
-						content->set_image(imageView->image());
-						
+						content->set_image(new nanogui::Texture(
+																  thumbnailPixels->data(),
+																  thumbnailPixels->size(),
+																  512, 512,		  nanogui::Texture::InterpolationMode::Nearest,
+																  nanogui::Texture::InterpolationMode::Nearest,
+																  nanogui::Texture::WrapMode::ClampToEdge));
+												
 						content->set_visible(true);
 
 						drag_widget->set_size(iconButton->fixed_size());
