@@ -88,17 +88,17 @@ glm::vec3 ScreenToWorld(glm::vec2 screenPos, float depth, glm::mat4 projectionMa
 // ==============================
 // UiManager Constructor
 // ==============================
-UiManager::UiManager(IActorSelectedRegistry& registry,
-					 IActorVisualManager& actorVisualManager,
+UiManager::UiManager(std::shared_ptr<IActorSelectedRegistry> registry,
+					 std::shared_ptr<IActorVisualManager> actorVisualManager,
 					 ActorManager& actorManager,
 					 MeshActorLoader& meshActorLoader,
 					 ShaderManager& shaderManager,
-					 ScenePanel& scenePanel,
-					 Canvas& canvas,
-					 nanogui::Widget& toolbox,
-					 nanogui::Widget& statusBar,
-					 AnimationPanel& animationPanel,
-					 SceneTimeBar& sceneTimeBar,
+					 std::shared_ptr<ScenePanel> scenePanel,
+					 std::shared_ptr<Canvas> canvas,
+					 std::shared_ptr<nanogui::Widget> toolbox,
+					 std::shared_ptr<nanogui::Widget> statusBar,
+					 std::shared_ptr<AnimationPanel> animationPanel,
+					 std::shared_ptr<SceneTimeBar> sceneTimeBar,
 					 CameraManager& cameraManager,
 					 DeepMotionApiClient& deepMotionApiClient,
 					 GizmoManager& gizmoManager,
@@ -123,13 +123,13 @@ UiManager::UiManager(IActorSelectedRegistry& registry,
 	mRegistry.RegisterOnActorSelectedCallback(mCameraManager);
 	
 	// Register draw callback with Canvas
-	canvas.register_draw_callback([this]() {
+	canvas->register_draw_callback([this]() {
 		draw();
 	});
 	
 	// Lambda to read from framebuffer
 	auto readFromFramebuffer = [&canvas](int width, int height, int x, int y) -> int {
-		auto viewport = canvas.render_pass()->viewport();
+		auto viewport = canvas->render_pass()->viewport();
 		float scaleX = viewport.second[0] / static_cast<float>(width);
 		float scaleY = viewport.second[1] / static_cast<float>(height);
 		
@@ -154,8 +154,8 @@ UiManager::UiManager(IActorSelectedRegistry& registry,
 		glReadBuffer(GL_COLOR_ATTACHMENT0);
 		glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
 #elif defined(NANOGUI_USE_METAL)
-		nanogui::Texture* attachment_texture = dynamic_cast<nanogui::Texture*>(canvas.render_pass()->targets()[3]);
-		MetalHelper::readPixelsFromMetal(canvas.screen()->nswin(), attachment_texture->texture_handle(),
+		auto attachment_texture = std::dynamic_pointer_cast<nanogui::Texture>(canvas->render_pass()->targets()[3]);
+		MetalHelper::readPixelsFromMetal(canvas->screen()->nswin(), attachment_texture->texture_handle(),
 										 adjusted_x, adjusted_y, image_width, image_height, pixels);
 #endif
 		// Find the first non-zero pixel value
@@ -168,8 +168,8 @@ UiManager::UiManager(IActorSelectedRegistry& registry,
 	};
 	
 	// Register click callback with ScenePanel
-	scenePanel.register_click_callback(GLFW_MOUSE_BUTTON_1, [this, &canvas, &toolbox, readFromFramebuffer](bool down, int width, int height, int x, int y) {
-		if (toolbox.contains(nanogui::Vector2f(x, y))) {
+	scenePanel->register_click_callback(GLFW_MOUSE_BUTTON_1, [this, &canvas, &toolbox, readFromFramebuffer](bool down, int width, int height, int x, int y) {
+		if (toolbox->contains(nanogui::Vector2f(x, y))) {
 			return;
 		}
 		
@@ -207,10 +207,10 @@ UiManager::UiManager(IActorSelectedRegistry& registry,
 	});
 	
 	// Register motion callback with ScenePanel
-	scenePanel.register_motion_callback(GLFW_MOUSE_BUTTON_RIGHT, [this, &canvas, &toolbox, &cameraManager, readFromFramebuffer](int width, int height, int x, int y, int dx, int dy, int button, bool down) {
+	scenePanel->register_motion_callback(GLFW_MOUSE_BUTTON_RIGHT, [this, &canvas, &toolbox, &cameraManager, readFromFramebuffer](int width, int height, int x, int y, int dx, int dy, int button, bool down) {
 		
 		
-		if (toolbox.contains(nanogui::Vector2f(x, y)) || !canvas.contains(nanogui::Vector2f(x, y))) {
+		if (toolbox->contains(nanogui::Vector2f(x, y)) || !canvas->contains(nanogui::Vector2f(x, y))) {
 			return;
 		}
 		
@@ -229,11 +229,11 @@ UiManager::UiManager(IActorSelectedRegistry& registry,
 			float scaleY = viewport.second[1] / float(height);
 			
 			
-			int adjusted_y = height - y + canvas.parent()->position().y();
-			int adjusted_x = x + canvas.parent()->position().x();
+			int adjusted_y = height - y + canvas->parent()->position().y();
+			int adjusted_x = x + canvas->parent()->position().x();
 			
-			int adjusted_dx = x + canvas.parent()->position().x() + dx;
-			int adjusted_dy = height - y + canvas.parent()->position().y() + dy;
+			int adjusted_dx = x + canvas->parent()->position().x() + dx;
+			int adjusted_dy = height - y + canvas->parent()->position().y() + dy;
 			
 			// Scale x and y accordingly
 			adjusted_x *= scaleX;
@@ -262,12 +262,12 @@ UiManager::UiManager(IActorSelectedRegistry& registry,
 	});
 	
 	// Initialize StatusBarPanel
-	mStatusBarPanel = new StatusBarPanel(statusBar, mActorVisualManager, mSceneTimeBar,
+	mStatusBarPanel = std::make_shared<StatusBarPanel>(statusBar, mActorVisualManager, mSceneTimeBar,
 										 mMeshActorLoader, mShaderManager, deepMotionApiClient,
 										 *this, applicationClickRegistrator);
-	mStatusBarPanel->set_fixed_width(statusBar.fixed_height());
-	mStatusBarPanel->set_fixed_height(statusBar.fixed_height());
-	mStatusBarPanel->set_layout(new nanogui::BoxLayout(nanogui::Orientation::Horizontal,
+	mStatusBarPanel->set_fixed_width(statusBar->fixed_height());
+	mStatusBarPanel->set_fixed_height(statusBar->fixed_height());
+	mStatusBarPanel->set_layout(std::make_shared<nanogui::BoxLayout>(nanogui::Orientation::Horizontal,
 													   nanogui::Alignment::Minimum, 4, 2));
 	
 	// Initialize selection color
@@ -284,7 +284,7 @@ UiManager::UiManager(IActorSelectedRegistry& registry,
 		mCameraManager.pan_camera(dx, dy);
 	});
 	
-	scenePanel.register_scroll_callback([this](int width, int height, int x, int y, int dx, int dy){
+	scenePanel->register_scroll_callback([this](int width, int height, int x, int y, int dx, int dy){
 		mCameraManager.zoom_camera(-dy);
 	});
 
@@ -308,7 +308,7 @@ void UiManager::OnActorSelected(std::optional<std::reference_wrapper<Actor>> act
 }
 
 void UiManager::export_movie(const std::string& path) {
-	mStatusBarPanel->resources_panel().set_visible(false);
+	mStatusBarPanel->resources_panel()->set_visible(false);
 	
 	mActiveActor = std::nullopt;
 	

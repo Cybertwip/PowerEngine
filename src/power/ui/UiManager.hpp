@@ -95,17 +95,17 @@ private:
 	// Member Variables (Ordered by Dependencies)
 	// ==============================
 	IActorSelectedRegistry& mRegistry;
-	IActorVisualManager& mActorVisualManager;
+	std::shared_ptr<IActorVisualManager> mActorVisualManager;
 	ActorManager& mActorManager;
 	ShaderManager& mShaderManager;
 	std::unique_ptr<Grid> mGrid;
 	MeshActorLoader& mMeshActorLoader;
 	GizmoManager& mGizmoManager;
 	CameraManager& mCameraManager;
-	Canvas& mCanvas;
-	AnimationPanel& mAnimationPanel;
-	nanogui::RenderPass* mRenderPass;
-	SceneTimeBar& mSceneTimeBar;
+	std::shared_ptr<Canvas> mCanvas;
+	std::shared_ptr<AnimationPanel> mAnimationPanel;
+	std::shared_ptr<nanogui::RenderPass> mRenderPass;
+	std::shared_ptr<SceneTimeBar> mSceneTimeBar;
 	glm::vec4 mSelectionColor;
 	std::shared_ptr<StatusBarPanel> mStatusBarPanel;
 	bool mIsMovieExporting;
