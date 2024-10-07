@@ -408,11 +408,11 @@ void ResourcesPanel::refresh_file_view() {
 						content->set_font_size(16);
 						content->set_background_color(mNormalButtonColor);
 						
-						content->set_fixed_size(icon->fixed_size() - 20);
+						content->set_fixed_size(iconButton->fixed_size() - 20);
 						
-						drag_widget->set_size(icon->fixed_size());
+						drag_widget->set_size(iconButton->fixed_size());
 						
-						auto dragStartPosition = icon->absolute_position();
+						auto dragStartPosition = iconButton->absolute_position();
 						
 						drag_widget->set_position(dragStartPosition);
 						drag_widget->perform_layout(screen()->nvg_context());
