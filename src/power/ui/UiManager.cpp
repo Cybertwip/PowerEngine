@@ -88,7 +88,7 @@ glm::vec3 ScreenToWorld(glm::vec2 screenPos, float depth, glm::mat4 projectionMa
 // ==============================
 // UiManager Constructor
 // ==============================
-UiManager::UiManager(std::shared_ptr<IActorSelectedRegistry> registry,
+UiManager::UiManager(nanogui::Screen& screen, std::shared_ptr<IActorSelectedRegistry> registry,
 					 std::shared_ptr<IActorVisualManager> actorVisualManager,
 					 ActorManager& actorManager,
 					 MeshActorLoader& meshActorLoader,

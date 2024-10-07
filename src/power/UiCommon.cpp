@@ -38,7 +38,7 @@ void UiCommon::initialize() {
 	mLeftWrapper = std::make_shared<nanogui::Window>(mSceneWrapper, "");
 		
 	mLeftWrapper->set_layout(
-							 std::make_shared<nanogui::GridLayout>(nanogui::Orientation::Horizontal, 1, nanogui::Alignment::Minimum));
+							 std::make_unique<nanogui::GridLayout>(nanogui::Orientation::Horizontal, 1, nanogui::Alignment::Minimum));
 	
 	mLeftWrapper->set_fixed_width(sceneWidth);
 	mLeftWrapper->set_fixed_height(totalHeight);
@@ -62,7 +62,7 @@ void UiCommon::initialize() {
 	mRightWrapper = std::make_shared<nanogui::Window>(mSceneWrapper, "");
 	
 	mRightWrapper->set_layout(
-							  std::make_shared<nanogui::BoxLayout>(nanogui::Orientation::Vertical, nanogui::Alignment::Fill));
+							  std::make_unique<nanogui::BoxLayout>(nanogui::Orientation::Vertical, nanogui::Alignment::Fill));
 	mRightWrapper->set_fixed_width(rightWidth);
 	
 	mTransformPanel = std::make_shared<TransformPanel>(mRightWrapper);

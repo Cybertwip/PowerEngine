@@ -35,6 +35,7 @@
 // ==============================
 namespace nanogui {
 class RenderPass;
+class Screen;
 }
 
 class IActorSelectedRegistry;
@@ -58,7 +59,7 @@ class StatusBarPanel;
 // ==============================
 class UiManager : public IActorSelectedCallback, public Drawable {
 public:
-	UiManager(std::shared_ptr<IActorSelectedRegistry> registry,
+	UiManager(nanogui::Screen& screen, std::shared_ptr<IActorSelectedRegistry> registry,
 			  std::shared_ptr<IActorVisualManager> actorVisualManager,
 			  ActorManager& actorManager,
 			  MeshActorLoader& meshActorLoader,
