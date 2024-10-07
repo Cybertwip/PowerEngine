@@ -481,7 +481,7 @@ void PromptWindow::PollJobStatusAsync(const std::string& request_id) {
 														mStatusLabel->set_caption("Status: Unable to deserialize model.");
 														
 														nanogui::async([this]() {
-															mResourcesPanel.refresh_file_view();
+															mResourcesPanel->refresh_file_view();
 														});
 														
 														return;
@@ -624,7 +624,7 @@ void PromptWindow::ImportIntoProjectAsync() {
 			mSerializedPrompt.value()->save_to_file(animationName);
 			
 			nanogui::async([this]() {
-				mResourcesPanel.refresh_file_view();
+				mResourcesPanel->refresh_file_view();
 			});
 			
 			mPreviewCanvas->set_active_actor(nullptr);
