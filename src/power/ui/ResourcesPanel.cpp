@@ -147,9 +147,9 @@ void ResourcesPanel::initialize() {
 	mToolbar->set_layout(std::make_shared<nanogui::BoxLayout>(
 															  nanogui::Orientation::Horizontal, nanogui::Alignment::Middle, 10, 10));
 	
-	mPromptWindow = std::make_shared<PromptWindow>(parent()->window(), std::dynamic_pointer_cast<ResourcesPanel>(shared_from_this()), mDeepMotionApiClient, mShaderManager.render_pass(), mShaderManager);
+	mPromptWindow = std::make_shared<PromptWindow>(screen(), std::dynamic_pointer_cast<ResourcesPanel>(shared_from_this()), mDeepMotionApiClient, mShaderManager.render_pass(), mShaderManager);
 	
-	mMeshPicker = std::make_shared<MeshPicker>(parent()->screen(), mRootDirectoryNode, [this](const std::string& modelPath){
+	mMeshPicker = std::make_shared<MeshPicker>(screen(), mRootDirectoryNode, [this](const std::string& modelPath){
 		mMeshPicker->set_visible(false);
 		mMeshPicker->set_modal(false);
 		
@@ -169,7 +169,7 @@ void ResourcesPanel::initialize() {
 	mDeepMotionSettings->set_visible(false);
 	mDeepMotionSettings->set_modal(false);
 	
-	mImportWindow = std::make_shared<ImportWindow>(parent()->screen(), std::dynamic_pointer_cast<ResourcesPanel>(shared_from_this()), mShaderManager.render_pass(), mShaderManager);
+	mImportWindow = std::make_shared<ImportWindow>(screen(), std::dynamic_pointer_cast<ResourcesPanel>(shared_from_this()), mShaderManager.render_pass(), mShaderManager);
 	
 	mImportWindow->set_visible(false);
 	mImportWindow->set_modal(false);
