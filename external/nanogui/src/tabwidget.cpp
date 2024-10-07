@@ -248,15 +248,15 @@ bool TabWidgetBase::mouse_button_event(const Vector2i &p, int button, bool down,
     std::tie(index, close) = tab_at_position(p);
     bool handled = false;
 
-    auto screen = this->screen();
+    auto& screen = this->screen();
     if (m_popup) {
-        m_popup->mouse_button_event(
-            p - m_pos + absolute_position() - m_popup->absolute_position() + m_popup->position(),
+        m_popup->get().mouse_button_event(
+            p - m_pos + absolute_position() - m_popup->get().absolute_position() + m_popup->get().position(),
             button, down, modifiers
         );
-        screen->update_focus(*this);
-        screen->remove_child(m_popup);
-        m_popup = nullptr;
+        screen.update_focus(*this);
+        screen.remove_child(m_popup->get());
+        m_popup = std::nullopt;
         handled = true;
     }
 
@@ -264,25 +264,23 @@ bool TabWidgetBase::mouse_button_event(const Vector2i &p, int button, bool down,
     if (m_popup_callback && button == GLFW_MOUSE_BUTTON_2 && down && index != -1 &&
         !drag_in_progress) {
         m_popup = m_popup_callback(tab_id(index), screen);
-        m_popup->set_position(p + Vector2i(8, -6));
-        m_popup->set_anchor_offset(8);
-        m_popup->set_anchor_size(8);
-        if (m_popup->layout() == nullptr)
-            m_popup->set_layout(std::make_unique<GroupLayout>(5, 3));
-        for (Widget& w : m_popup->children()) {
-            auto b = dynamic_cast<Button>(w);
+        m_popup->get().set_position(p + Vector2i(8, -6));
+        m_popup->get().set_anchor_offset(8);
+        m_popup->get().set_anchor_size(8);
+        for (Widget& w : m_popup->get().children()) {
+            auto b = dynamic_cast<Button*>(&w);
             if (!b)
                 continue;
             b->set_icon_position(Button::IconPosition::Right);
             b->set_flags(Button::MenuButton);
         }
-        NVGcontext *ctx = screen->nvg_context();
-        m_popup->set_size(m_popup->preferred_size(ctx) + Vector2i(40, 0));
-        m_popup->perform_layout(ctx);
+        NVGcontext *ctx = screen.nvg_context();
+        m_popup->get().set_size(m_popup->get().preferred_size(ctx) + Vector2i(40, 0));
+        m_popup->get().perform_layout(ctx);
         handled = true;
     }
 
-    if (button == GLFW_MOUSE_BUTTON_1 && m_popup == nullptr) {
+    if (button == GLFW_MOUSE_BUTTON_1 && m_popup == std::nullopt) {
         if (index >= 0) {
             if (close && m_tab_drag_index == -1) {
                 if (down) {
@@ -369,8 +367,8 @@ bool TabWidgetBase::mouse_motion_event(const Vector2i &p, const Vector2i &rel,
     return Widget::mouse_motion_event(p, rel, button, modifiers);
 }
 
-TabWidget::TabWidgetWidget& parent, Screen& screen, Theme& theme,  const std::string &font)
-    : TabWidgetBase(parent, font) { }
+TabWidget::TabWidget(Widget& parent, Screen& screen, Theme& theme,  const std::string &font)
+    : TabWidgetBase(parent, screen, theme, font) { }
 
 void TabWidget::perform_layout(NVGcontext* ctx) {
     TabWidgetBase::perform_layout(ctx);
@@ -378,9 +376,9 @@ void TabWidget::perform_layout(NVGcontext* ctx) {
     int tab_height = font_size() + 2 * m_theme.m_tab_button_vertical_padding;
 
     for (Widget& child : m_children) {
-        child.get().set_position(Vector2i(m_padding, m_padding + tab_height + 1));
-        child.get().set_size(m_size - Vector2i(2*m_padding, 2*m_padding + tab_height + 1));
-        child.get().perform_layout(ctx);
+        child.set_position(Vector2i(m_padding, m_padding + tab_height + 1));
+        child.set_size(m_size - Vector2i(2*m_padding, 2*m_padding + tab_height + 1));
+        child.perform_layout(ctx);
     }
 }
 
@@ -388,17 +386,17 @@ void TabWidget::update_visibility() {
     if (tab_count() == 0)
         return;
     for (Widget& child : m_children)
-        child.get().set_visible(false);
+        child.set_visible(false);
     auto it = m_widgets.find(selected_id());
     if (it != m_widgets.end())
-        it->second->set_visible(true);
+        it->second->get().set_visible(true);
 }
 
 Vector2i TabWidget::preferred_size(NVGcontext* ctx) {
     Vector2i base_size = TabWidgetBase::preferred_size(ctx),
              content_size = Vector2i(0);
     for (Widget& child : m_children)
-        content_size = max(content_size, child.get().preferred_size(ctx));
+        content_size = max(content_size, child.preferred_size(ctx));
 
     return Vector2i(
         std::max(base_size.x(), content_size.x() + 2 * m_padding),
@@ -414,7 +412,7 @@ int TabWidget::insert_tab(int index, const std::string &caption, Widget& widget)
 }
 
 int TabWidget::append_tab(const std::string &caption, Widget& widget) {
-    widget.get().set_visible(false);
+    widget.set_visible(false);
     int id = TabWidgetBase::append_tab(caption);
     m_widgets[id] = widget;
     update_visibility();
@@ -423,7 +421,7 @@ int TabWidget::append_tab(const std::string &caption, Widget& widget) {
 
 void TabWidget::remove_tab(int id) {
     TabWidgetBase::remove_tab(id);
-    Widget& widget = m_widgets[id];
+    Widget& widget = m_widgets[id]->get();
     m_widgets.erase(id);
     if (m_remove_children)
         remove_child(widget);

@@ -19,8 +19,8 @@ NAMESPACE_BEGIN(nanogui)
 
 ColorPicker::ColorPicker(Widget& parent, Screen& screen, Theme& theme,  const Color& color) : PopupButton(parent, screen, theme, "") {
     set_background_color(color);
-    auto popup = this->popup();
-    popup->set_layout(std::make_unique<GroupLayout>());
+    auto& popup = this->popup();
+    popup.set_layout(std::make_unique<GroupLayout>());
 
     // initialize callback to do nothing; this is for users to hook into
     // receiving a new color value
@@ -28,10 +28,10 @@ ColorPicker::ColorPicker(Widget& parent, Screen& screen, Theme& theme,  const Co
     m_final_callback = [](const Color &) {};
 
     // set the color wheel to the specified color
-    m_color_wheel = std::make_unique<ColorWheel>(popup, color);
+    m_color_wheel = std::make_unique<ColorWheel>(popup, screen, theme, color);
 
     // set the pick button to the specified color
-    m_pick_button = std::make_shared<Button>(popup, "Pick");
+    m_pick_button = std::make_unique<Button>(popup, screen, theme, "Pick");
     m_pick_button->set_background_color(color);
     m_pick_button->set_text_color(color.contrasting_color());
     m_pick_button->set_fixed_size(Vector2i(100, 20));

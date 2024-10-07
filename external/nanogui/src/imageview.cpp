@@ -19,7 +19,7 @@
 
 NAMESPACE_BEGIN(nanogui)
 
-ImageView::ImageView(Widget& parent, Screen& screen, Theme& theme) : Canvas(parent, 1, true, true) {
+ImageView::ImageView(Widget& parent, Screen& screen, Theme& theme) : Canvas(parent, screen, theme, 1, true, true) {
     render_pass()->set_clear_color(0, Color(0.3f, 0.3f, 0.32f, 1.f));
 
     m_image_shader = std::shared_ptr<Shader>(new Shader(

@@ -59,7 +59,7 @@ public:
      *     Should the widget clear its color/depth/stencil buffer?
      */
     Canvas(
-        Widget& parent,
+		   Widget& parent, Screen&, Theme& theme,
         uint8_t samples = 4,
         bool has_depth_buffer = true,
         bool has_stencil_buffer = true
@@ -103,10 +103,11 @@ protected:
 #endif
     bool m_draw_border;
     Color m_border_color;
-    bool m_render_to_texture;
 	uint8_t	m_samples;
 	bool m_has_depth_buffer;
 	bool m_has_stencil_buffer;
+	
+	std::shared_ptr<Texture> m_attachment_texture;
 };
 
 NAMESPACE_END(nanogui)

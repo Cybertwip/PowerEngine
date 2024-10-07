@@ -26,7 +26,7 @@
 
 NAMESPACE_BEGIN(nanogui)
 
-class NANOGUI_EXPORT RenderPass : std::enable_shared_from_this<RenderPass>, public Object {
+class NANOGUI_EXPORT RenderPass : public Object {
 public:
     /// Depth test
     enum class DepthTest {
@@ -76,10 +76,10 @@ public:
      * \param clear
      *     Should \ref enter() begin by clearing all buffers?
      */
-    RenderPass(const std::vector<std::shared_ptr<Object>> &color_targets,
-			   std::shared_ptr<Object> depth_target = nullptr,
-			   std::shared_ptr<Object> stencil_target = nullptr,
-			   std::shared_ptr<Object> blit_target = nullptr);
+    RenderPass(const std::vector<std::reference_wrapper<Object>> &color_targets,
+			   std::optional<std::reference_wrapper<Object>> depth_target = std::nullopt,
+			   std::optional<std::reference_wrapper<Object>> stencil_target = std::nullopt,
+			   std::optional<std::reference_wrapper<Object>> blit_target = std::nullopt);
 
     // Polymorphic destructor
     virtual ~RenderPass();

@@ -43,7 +43,7 @@ public:
     virtual ~Widget();
 
     /// Return the parent widget
-    Widget& parent() { return m_parent; }
+    Widget& parent() { return m_parent.get(); }
     /// Set the parent widget
 	void set_parent(Widget& parent);
 	
@@ -293,7 +293,7 @@ protected:
     float icon_scale() const { return m_theme.m_icon_scale * m_icon_extra_scale; }
 
 protected:
-	Widget& m_parent;
+	std::reference_wrapper<Widget> m_parent;
     Theme& m_theme;
 	std::unique_ptr<Layout> m_layout;
     Vector2i m_pos, m_size, m_fixed_size;
@@ -353,7 +353,7 @@ protected:
     float m_icon_extra_scale;
     Cursor m_cursor;
 	
-	Screen& m_screen;
+	std::reference_wrapper<Screen> m_screen;
 	
 	bool m_initialized;
 	

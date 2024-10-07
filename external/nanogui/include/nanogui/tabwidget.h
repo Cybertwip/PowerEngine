@@ -129,7 +129,7 @@ protected:
     int m_close_index = -1, m_close_index_pushed = -1;
     bool m_tabs_draggable = false;
     bool m_tabs_closeable = false;
-    Popup& m_popup = nullptr;
+    std::optional<std::reference_wrapper<Popup>> m_popup;
     int m_tab_counter = 0;
     int m_padding = 3;
     std::function<void(int)> m_callback;
@@ -204,7 +204,7 @@ public:
 protected:
     virtual void update_visibility() override;
 protected:
-    std::unordered_map<int, Widget& > m_widgets;
+    std::unordered_map<int, std::optional<std::reference_wrapper<Widget>>> m_widgets;
     bool m_remove_children = true;
 };
 

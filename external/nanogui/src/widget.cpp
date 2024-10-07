@@ -28,7 +28,7 @@ Widget::Widget(Widget& parent, Screen& screen, Theme& theme)
 m_pos(0), m_size(0), m_fixed_size(0), m_visible(true), m_enabled(true),
 m_focused(false), m_mouse_focus(false), m_tooltip(""), m_font_size(-1.f),
 m_icon_extra_scale(1.f), m_cursor(Cursor::Arrow), m_screen(screen), m_initialized(false) {
-	m_parent.add_child(*this);
+	m_parent.get().add_child(*this);
 }
 
 
@@ -205,7 +205,9 @@ void Widget::shed_children() {
 }
 
 int Widget::child_index(Widget& widget) const {
-	auto it = std::find(m_children.begin(), m_children.end(), widget);
+	auto it = std::find_if(m_children.begin(), m_children.end(), [&widget](std::reference_wrapper<Widget> item){
+		return &item.get() == &widget;
+	});
 	if (it == m_children.end())
 		return -1;
 	return (int)(it - m_children.begin());
@@ -223,7 +225,7 @@ Window* Widget::window() {
 }
 
 Screen& Widget::screen() {
-	return m_screen; // Directly return the cached screen pointer
+	return m_screen.get(); // Directly return the cached screen pointer
 }
 
 void Widget::request_focus() {

@@ -32,98 +32,36 @@ Canvas::Canvas(Widget& parent, Screen& screen, Theme& theme, uint8_t samples,
 #endif
 
 	m_border_color = m_theme.m_border_light;
-	
-	auto& scr = screen();
-	
-	m_render_to_texture = m_samples != 1
-	|| (m_has_depth_buffer && !scr.has_depth_buffer())
-	|| (m_has_stencil_buffer && !scr.has_stencil_buffer());
-	
-	std::shared_ptr<Object> color_texture = nullptr,
-	attachment_texture = nullptr,
-	depth_texture = nullptr;
+			
+	std::optional<std::reference_wrapper<Object>> color_texture = std::nullopt,
+	depth_texture = std::nullopt;
 	
 	if (m_has_stencil_buffer && !m_has_depth_buffer)
 		throw std::runtime_error("Canvas::Canvas(): has_stencil implies has_depth!");
 	
-	if (!m_render_to_texture) {
-		color_texture = scr;
-		
-		if (m_has_depth_buffer) {
-			depth_texture = scr;
-		}
-		
-		attachment_texture = std::shared_ptr<Texture>( new Texture(
-																   Texture::PixelFormat::R,
-																   Texture::ComponentFormat::Int32,
-																   m_size,
-																   Texture::InterpolationMode::Bilinear,
-																   Texture::InterpolationMode::Bilinear,
-																   Texture::WrapMode::Repeat,
-																   m_samples, 					 Texture::TextureFlags::RenderTarget
-																   ));
-	} else {
-		color_texture = std::shared_ptr<Texture>(new Texture(
-															 scr.pixel_format(),
-															 scr.component_format(),
-															 m_size,
-															 Texture::InterpolationMode::Bilinear,
-															 Texture::InterpolationMode::Bilinear,
-															 Texture::WrapMode::Repeat,
-															 m_samples,
-															 Texture::TextureFlags::RenderTarget
-															 ));
-		
-#if defined(NANOGUI_USE_METAL)
-		std::shared_ptr<Texture> color_texture_resolved = nullptr;
-		
-		if (m_samples > 1) {
-			color_texture_resolved = std::shared_ptr<Texture>(new Texture(
-																		  scr.pixel_format(),
-																		  scr.component_format(),
-																		  m_size,
-																		  Texture::InterpolationMode::Bilinear,
-																		  Texture::InterpolationMode::Bilinear,
-																		  Texture::WrapMode::Repeat,
-																		  1,
-																		  Texture::TextureFlags::RenderTarget
-																		  ));
-			
-			m_render_pass_resolved = std::shared_ptr<RenderPass>(new RenderPass(
-																				{ color_texture_resolved }
-																				));
-		}
-#endif
-		
-		
-		depth_texture = std::shared_ptr<Texture>(new Texture(
-															 m_has_stencil_buffer ? Texture::PixelFormat::DepthStencil
-															 : Texture::PixelFormat::DepthStencil,
-															 Texture::ComponentFormat::Float32,
-															 m_size,
-															 Texture::InterpolationMode::Bilinear,
-															 Texture::InterpolationMode::Bilinear,
-															 Texture::WrapMode::Repeat,
-															 m_samples,
-															 Texture::TextureFlags::RenderTarget
-															 ));
+	color_texture = screen;
+	
+	if (m_has_depth_buffer) {
+		depth_texture = screen;
 	}
 	
+	m_attachment_texture = std::shared_ptr<Texture>( new Texture(
+																 Texture::PixelFormat::R,
+																 Texture::ComponentFormat::Int32,
+																 m_size,
+																 Texture::InterpolationMode::Bilinear,
+																 Texture::InterpolationMode::Bilinear,
+																 Texture::WrapMode::Repeat,
+																 m_samples, 					 Texture::TextureFlags::RenderTarget
+																 ));
+	
 	m_render_pass = std::shared_ptr<RenderPass>(new RenderPass(
-															   { color_texture, attachment_texture},
+															   { color_texture->get(), *m_attachment_texture},
 															   depth_texture,
-															   m_has_stencil_buffer ? depth_texture : nullptr,
-#if defined(NANOGUI_USE_METAL)
-															   m_render_pass_resolved
-#else
-															   nullptr
-#endif
+															   m_has_stencil_buffer ? depth_texture : std::nullopt,
+															   std::nullopt
 															   ));
 	
-}
-
-void Canvas::initialize() {
-
 }
 
 void Canvas::set_background_color(const Color &background_color) {
@@ -156,17 +94,8 @@ void Canvas::draw(NVGcontext *ctx) {
 	fbsize = Vector2i(Vector2f(fbsize) * pixel_ratio);
 	offset = Vector2i(Vector2f(offset) * pixel_ratio);
 	
-	if (m_render_to_texture) {
-		m_render_pass->resize(fbsize);
-#if defined(NANOGUI_USE_METAL)
-		if (m_render_pass_resolved)
-			m_render_pass_resolved->resize(fbsize);
-#endif
+	m_render_pass->resize(scr.framebuffer_size());
 
-	} else {
-		m_render_pass->resize(scr.framebuffer_size());
-	}
-	
 	m_render_pass->set_viewport(offset, fbsize);
 
 	m_render_pass->begin();
@@ -183,14 +112,6 @@ void Canvas::draw(NVGcontext *ctx) {
 		nvgStroke(ctx);
 	}
 	
-	if (m_render_to_texture) {
-		std::shared_ptr<RenderPass> rp = m_render_pass;
-#if defined(NANOGUI_USE_METAL)
-		if (m_render_pass_resolved)
-			rp = m_render_pass_resolved;
-#endif
-		rp->blit_to(Vector2i(0, 0), fbsize, scr, offset);
-	}
 }
 
 NAMESPACE_END(nanogui)
