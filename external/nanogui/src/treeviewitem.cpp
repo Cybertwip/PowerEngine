@@ -4,8 +4,8 @@
 
 NAMESPACE_BEGIN(nanogui)
 
-TreeViewItem::TreeViewItemWidget& parent, Screen& screen, Theme& theme,  std::shared_ptr<TreeView> tree, const std::string &caption, std::function<void()> callback)
-: Widget(parent, screen, theme), m_tree(tree), m_caption(caption), m_selected(false), m_expanded(false),  m_selection_callback(callback) {}
+TreeViewItem::TreeViewItem(Widget& parent, Screen& screen,  TreeView& tree, const std::string &caption, std::function<void()> callback)
+: Widget(parent, screen), m_tree(tree), m_caption(caption), m_selected(false), m_expanded(false),  m_selection_callback(callback) {}
 
 void TreeViewItem::draw(NVGcontext *ctx) {
     Widget::draw(ctx);
@@ -19,7 +19,7 @@ void TreeViewItem::draw(NVGcontext *ctx) {
     nvgText(ctx, m_pos.x() + 10, m_pos.y() + m_size.y() / 2, m_caption.c_str(), nullptr);
     if (m_expanded) {
         for (auto child : m_children) {
-            child.get().draw(ctx);
+			child.get()->draw(ctx);
         }
     }
 }
@@ -32,7 +32,7 @@ bool TreeViewItem::mouse_button_event(const Vector2i &p, int button, bool down, 
     if (button == GLFW_MOUSE_BUTTON_1 && down) {
         m_expanded = !m_expanded;
         
-		m_tree->set_selected(dynamic_cast<TreeViewItem>(*this));
+		m_tree.set_selected(this);
         
         return true;
     }
@@ -40,7 +40,7 @@ bool TreeViewItem::mouse_button_event(const Vector2i &p, int button, bool down, 
 }
 
 std::shared_ptr<TreeViewItem> TreeViewItem::add_node(const std::string &caption, std::function<void()> callback) {
-	auto child = std::make_shared<TreeViewItem>(*this, m_tree, caption, callback);
+	auto child = std::make_shared<TreeViewItem>(*this, screen(), theme(), m_tree, caption, callback);
     m_children.push_back(child);
     return child;
 }

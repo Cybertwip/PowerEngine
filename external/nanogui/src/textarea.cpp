@@ -17,7 +17,7 @@
 
 NAMESPACE_BEGIN(nanogui)
 
-TextArea::TextArea(Widget& parent, Screen& screen, Theme& theme) : Widget(parent, screen, theme),
+TextArea::TextArea(Widget& parent, Screen& screen) : Widget(parent, screen),
   m_foreground_color(Color(0, 0)), m_background_color(Color(0, 0)),
   m_selection_color(.5f, 1.f), m_font("sans"), m_offset(0),
   m_max_size(0), m_padding(0), m_selectable(true),
@@ -182,7 +182,7 @@ void TextArea::draw(NVGcontext *ctx) {
         const Block &block = *it;
         Color color = block.color;
         if (color == Color(0, 0))
-            color = m_theme.m_text_color;
+            color = theme().m_text_color;
 
         Vector2i offset = block.offset + m_pos + m_padding;
 

@@ -36,7 +36,7 @@ public:
 		Right
 	};
 	
-	Label(Widget& parent, Screen& screen, Theme& theme,  const std::string &caption,
+	Label(Widget& parent, Screen& screen,  const std::string &caption,
 		  const std::string &font = "sans", int font_size = -1,
 		  Alignment alignment = Alignment::Left);
 	
@@ -59,9 +59,6 @@ public:
 	void set_alignment(Alignment alignment) { m_alignment = alignment; }
 	/// Get the text alignment
 	Alignment alignment() const { return m_alignment; }
-	
-	/// Set the \ref Theme used to draw this widget
-	virtual void set_theme(Theme& theme) override;
 	
 	/// Compute the size needed to fully display the label
 	virtual Vector2i preferred_size(NVGcontext *ctx) override;

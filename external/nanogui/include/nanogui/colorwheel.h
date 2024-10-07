@@ -36,7 +36,7 @@ public:
      * \param color
      *     The initial color of the ColorWheel (default: Red).
      */
-    ColorWheel(Widget& parent, Screen& screen, Theme& theme,  const Color& color = Color(1.0f, 0.0f, 0.0f, 1.0f));
+    ColorWheel(Widget& parent, Screen& screen,  const Color& color = Color(1.0f, 0.0f, 0.0f, 1.0f));
 
     /// The callback to execute when a user changes the ColorWheel value.
     const std::function<void(const Color &)> &callback() const { return m_callback; }

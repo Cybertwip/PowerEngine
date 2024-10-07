@@ -16,14 +16,14 @@
 
 NAMESPACE_BEGIN(nanogui)
 
-Button::Button(Widget& parent, Screen& screen, Theme& theme,  const std::string &caption, int icon)
-    : Widget(parent, screen, theme), m_caption(caption), m_icon(icon),
+Button::Button(Widget& parent, Screen& screen,  const std::string &caption, int icon)
+    : Widget(parent, screen), m_caption(caption), m_icon(icon),
       m_icon_position(IconPosition::LeftCentered), m_pushed(false),
       m_flags(NormalButton), m_background_color(Color(0, 0)),
       m_text_color(Color(0, 0)) { }
 
 Vector2i Button::preferred_size(NVGcontext *ctx) {
-    int font_size = m_font_size == -1 ? m_theme.m_button_font_size : m_font_size;
+    int font_size = m_font_size == -1 ? theme().m_button_font_size : m_font_size;
     nvgFontSize(ctx, font_size);
     nvgFontFace(ctx, "sans-bold");
     float tw = nvgTextBounds(ctx, 0,0, m_caption.c_str(), nullptr, nullptr);
@@ -116,21 +116,21 @@ bool Button::mouse_button_event(const Vector2i &p, int button, bool down, int mo
 }
 
 void Button::draw(NVGcontext *ctx) {
-    NVGcolor grad_top = m_theme.m_button_gradient_top_unfocused;
-    NVGcolor grad_bot = m_theme.m_button_gradient_bot_unfocused;
+    NVGcolor grad_top = theme().m_button_gradient_top_unfocused;
+    NVGcolor grad_bot = theme().m_button_gradient_bot_unfocused;
 
     if (m_pushed || (m_mouse_focus && (m_flags & MenuButton))) {
-        grad_top = m_theme.m_button_gradient_top_pushed;
-        grad_bot = m_theme.m_button_gradient_bot_pushed;
+        grad_top = theme().m_button_gradient_top_pushed;
+        grad_bot = theme().m_button_gradient_bot_pushed;
     } else if (m_mouse_focus && m_enabled) {
-        grad_top = m_theme.m_button_gradient_top_focused;
-        grad_bot = m_theme.m_button_gradient_bot_focused;
+        grad_top = theme().m_button_gradient_top_focused;
+        grad_bot = theme().m_button_gradient_bot_focused;
     }
 
     nvgBeginPath(ctx);
 
     nvgRoundedRect(ctx, m_pos.x() + 1, m_pos.y() + 1.0f, m_size.x() - 2,
-                   m_size.y() - 2, m_theme.m_button_corner_radius - 1);
+                   m_size.y() - 2, theme().m_button_corner_radius - 1);
 
     if (m_background_color.w() != 0) {
         nvgFillColor(ctx, Color(m_background_color[0], m_background_color[1],
@@ -153,17 +153,17 @@ void Button::draw(NVGcontext *ctx) {
     nvgBeginPath(ctx);
     nvgStrokeWidth(ctx, 1.0f);
     nvgRoundedRect(ctx, m_pos.x() + 0.5f, m_pos.y() + (m_pushed ? 0.5f : 1.5f), m_size.x() - 1,
-                   m_size.y() - 1 - (m_pushed ? 0.0f : 1.0f), m_theme.m_button_corner_radius);
-    nvgStrokeColor(ctx, m_theme.m_border_light);
+                   m_size.y() - 1 - (m_pushed ? 0.0f : 1.0f), theme().m_button_corner_radius);
+    nvgStrokeColor(ctx, theme().m_border_light);
     nvgStroke(ctx);
 
     nvgBeginPath(ctx);
     nvgRoundedRect(ctx, m_pos.x() + 0.5f, m_pos.y() + 0.5f, m_size.x() - 1,
-                   m_size.y() - 2, m_theme.m_button_corner_radius);
-    nvgStrokeColor(ctx, m_theme.m_border_dark);
+                   m_size.y() - 2, theme().m_button_corner_radius);
+    nvgStrokeColor(ctx, theme().m_border_dark);
     nvgStroke(ctx);
 
-    int font_size = m_font_size == -1 ? m_theme.m_button_font_size : m_font_size;
+    int font_size = m_font_size == -1 ? theme().m_button_font_size : m_font_size;
     nvgFontSize(ctx, font_size);
     nvgFontFace(ctx, "sans-bold");
     float tw = nvgTextBounds(ctx, 0,0, m_caption.c_str(), nullptr, nullptr);
@@ -171,9 +171,9 @@ void Button::draw(NVGcontext *ctx) {
     Vector2f center = Vector2f(m_pos) + Vector2f(m_size) * 0.5f;
     Vector2f text_pos(center.x() - tw * 0.5f, center.y() - 1);
     NVGcolor text_color =
-        m_text_color.w() == 0 ? m_theme.m_text_color : m_text_color;
+        m_text_color.w() == 0 ? theme().m_text_color : m_text_color;
     if (!m_enabled)
-        text_color = m_theme.m_disabled_text_color;
+        text_color = theme().m_disabled_text_color;
 
     if (m_icon) {
         auto icon = utf8(m_icon);
@@ -223,7 +223,7 @@ void Button::draw(NVGcontext *ctx) {
     nvgFontSize(ctx, font_size);
     nvgFontFace(ctx, "sans-bold");
     nvgTextAlign(ctx, NVG_ALIGN_LEFT | NVG_ALIGN_MIDDLE);
-    nvgFillColor(ctx, m_theme.m_text_color_shadow);
+    nvgFillColor(ctx, theme().m_text_color_shadow);
     nvgText(ctx, text_pos.x(), text_pos.y(), m_caption.c_str(), nullptr);
     nvgFillColor(ctx, text_color);
     nvgText(ctx, text_pos.x(), text_pos.y() + 1, m_caption.c_str(), nullptr);

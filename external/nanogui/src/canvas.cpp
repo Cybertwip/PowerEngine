@@ -22,16 +22,16 @@
 
 NAMESPACE_BEGIN(nanogui)
 
-Canvas::Canvas(Widget& parent, Screen& screen, Theme& theme, uint8_t samples,
+Canvas::Canvas(Widget& parent, Screen& screen, uint8_t samples,
 			   bool has_depth_buffer, bool has_stencil_buffer)
-: Widget(parent, screen, theme), m_draw_border(true), m_samples(samples), m_has_depth_buffer(has_depth_buffer), m_has_stencil_buffer(has_stencil_buffer) {
+: Widget(parent, screen), m_draw_border(true), m_samples(samples), m_has_depth_buffer(has_depth_buffer), m_has_stencil_buffer(has_stencil_buffer) {
 	m_size = Vector2i(192, 128);
 	
 #if defined(NANOGUI_USE_GLES)
 	m_samples = 1;
 #endif
 
-	m_border_color = m_theme.m_border_light;
+	m_border_color = theme().m_border_light;
 			
 	std::optional<std::reference_wrapper<Object>> color_texture = std::nullopt,
 	depth_texture = std::nullopt;
@@ -108,7 +108,7 @@ void Canvas::draw(NVGcontext *ctx) {
 		nvgStrokeColor(ctx, m_border_color);
 		nvgRoundedRect(ctx, m_pos.x() + .5f, m_pos.y() + .5f,
 					   m_size.x() - 1.f, m_size.y() - 1.f,
-					   m_theme.m_window_corner_radius);
+					   theme().m_window_corner_radius);
 		nvgStroke(ctx);
 	}
 	

@@ -17,17 +17,17 @@
 
 NAMESPACE_BEGIN(nanogui)
 
-ComboBox::ComboBox(Widget& parent, Screen& screen, Theme& theme)
-    : PopupButton(parent, screen, theme), m_container(std::make_unique<Widget>(popup(), screen, theme)), m_selected_index(0) {
+ComboBox::ComboBox(Widget& parent, Screen& screen)
+    : PopupButton(parent, screen), m_container(std::make_unique<Widget>(popup(), screen)), m_selected_index(0) {
 }
 
-ComboBox::ComboBox(Widget& parent, Screen& screen, Theme& theme, const std::vector<std::string> &items)
-    : PopupButton(parent, screen, theme), m_container(std::make_unique<Widget>(popup(), screen, theme)), m_selected_index(0) {
+ComboBox::ComboBox(Widget& parent, Screen& screen, const std::vector<std::string> &items)
+    : PopupButton(parent, screen), m_container(std::make_unique<Widget>(popup(), screen)), m_selected_index(0) {
     set_items(items);
 }
 
-ComboBox::ComboBox(Widget& parent, Screen& screen, Theme& theme, const std::vector<std::string> &items, const std::vector<std::string> &items_short)
-    : PopupButton(parent, screen, theme), m_container(std::make_unique<Widget>(popup(), screen, theme)), m_selected_index(0) {
+ComboBox::ComboBox(Widget& parent, Screen& screen, const std::vector<std::string> &items, const std::vector<std::string> &items_short)
+    : PopupButton(parent, screen), m_container(std::make_unique<Widget>(popup(), screen)), m_selected_index(0) {
     set_items(items, items_short);
 }
 
@@ -52,9 +52,9 @@ void ComboBox::set_items(const std::vector<std::string> &items, const std::vecto
 	m_container->shed_children();
 
     if (m_scroll == nullptr && items.size() > 8) {
-        m_scroll = std::make_unique<VScrollPanel>(popup(), screen(), theme());
+        m_scroll = std::make_unique<VScrollPanel>(popup(), screen());
         m_scroll->set_fixed_height(300);
-        m_container = std::make_unique<Widget>(*m_scroll, screen(), theme());
+        m_container = std::make_unique<Widget>(*m_scroll, screen());
         m_popup->set_layout(std::make_unique< BoxLayout>(Orientation::Horizontal, Alignment::Middle));
     }
 

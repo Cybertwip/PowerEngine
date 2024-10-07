@@ -15,18 +15,12 @@
 
 NAMESPACE_BEGIN(nanogui)
 
-Label::Label(Widget& parent, Screen& screen, Theme& theme,  const std::string &caption, const std::string &font, int font_size, Alignment alignment)
-: Widget(parent, screen, theme), m_caption(caption), m_font(font), m_alignment(alignment) {
-	m_font_size = m_theme.m_standard_font_size;
-	m_color = m_theme.m_text_color;
+Label::Label(Widget& parent, Screen& screen,  const std::string &caption, const std::string &font, int font_size, Alignment alignment)
+: Widget(parent, screen), m_caption(caption), m_font(font), m_alignment(alignment) {
+	m_font_size = theme().m_standard_font_size;
+	m_color = theme().m_text_color;
 
 	if (font_size >= 0) m_font_size = font_size;
-}
-
-void Label::set_theme(Theme& theme) {
-	Widget::set_theme(theme);
-	m_font_size = m_theme.m_standard_font_size;
-	m_color = m_theme.m_text_color;
 }
 
 Vector2i Label::preferred_size(NVGcontext *ctx) {

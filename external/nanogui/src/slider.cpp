@@ -15,8 +15,8 @@
 
 NAMESPACE_BEGIN(nanogui)
 
-Slider::Slider(Widget& parent, Screen& screen, Theme& theme)
-    : Widget(parent, screen, theme), m_value(0.0f), m_range(0.f, 1.f),
+Slider::Slider(Widget& parent, Screen& screen)
+    : Widget(parent, screen), m_value(0.0f), m_range(0.f, 1.f),
       m_highlighted_range(0.f, 0.f), m_dragging(false) {
     m_highlight_color = Color(255, 80, 80, 70);
 }
@@ -98,7 +98,7 @@ void Slider::draw(NVGcontext* ctx) {
 
     NVGpaint knob_shadow =
         nvgRadialGradient(ctx, knob_pos.x(), knob_pos.y(), kr - kshadow,
-                          kr + kshadow, Color(0, 64), m_theme.m_transparent);
+                          kr + kshadow, Color(0, 64), theme().m_transparent);
 
     nvgBeginPath(ctx);
     nvgRect(ctx, knob_pos.x() - kr - 5, knob_pos.y() - kr - 5, kr * 2 + 10,
@@ -110,15 +110,15 @@ void Slider::draw(NVGcontext* ctx) {
 
     NVGpaint knob = nvgLinearGradient(ctx,
         m_pos.x(), center.y() - kr, m_pos.x(), center.y() + kr,
-        m_theme.m_border_light, m_theme.m_border_medium);
+        theme().m_border_light, theme().m_border_medium);
     NVGpaint knob_reverse = nvgLinearGradient(ctx,
         m_pos.x(), center.y() - kr, m_pos.x(), center.y() + kr,
-        m_theme.m_border_medium,
-        m_theme.m_border_light);
+        theme().m_border_medium,
+        theme().m_border_light);
 
     nvgBeginPath(ctx);
     nvgCircle(ctx, knob_pos.x(), knob_pos.y(), kr);
-    nvgStrokeColor(ctx, m_theme.m_border_dark);
+    nvgStrokeColor(ctx, theme().m_border_dark);
     nvgFillPaint(ctx, knob);
     nvgStroke(ctx);
     nvgFill(ctx);

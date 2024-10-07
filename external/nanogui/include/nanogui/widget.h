@@ -37,7 +37,7 @@ class NANOGUI_EXPORT Widget : public Object {
 public:
 	
 	/// Construct a new widget with the given parent widget
-	Widget(Widget& parent, Screen& screen, Theme& theme);
+	Widget(Widget& parent, Screen& screen);
 
     /// Free all resources used by the widget and any children
     virtual ~Widget();
@@ -57,10 +57,10 @@ public:
     void set_layout(std::unique_ptr<Layout> layout) { m_layout = std::move(layout); }
 
     /// Return the \ref Theme used to draw this widget
-	Theme& theme() { return m_theme; }
+	Theme& theme() { return *m_theme; }
 	
     /// Return the \ref Theme used to draw this widget
-    virtual void set_theme(Theme& theme);
+    virtual void set_theme(std::shared_ptr<Theme> theme);
 
     /// Return the position relative to the parent widget
     const Vector2i &position() const { return m_pos; }
@@ -191,7 +191,7 @@ public:
     void set_tooltip(const std::string &tooltip) { m_tooltip = tooltip; }
 
     /// Return current font size. If not set the default of the current theme will be returned
-    int font_size() const;
+    int font_size();
     /// Set the font size of this widget
     void set_font_size(int font_size) { m_font_size = font_size; }
     /// Return whether the font size is explicitly specified for this widget
@@ -283,18 +283,18 @@ protected:
     /**
      * Convenience definition for subclasses to get the full icon scale for this
      * class of Widget.  It simple returns the value
-     * ``m_theme.m_icon_scale * this->m_icon_extra_scale``.
+     * ``theme().m_icon_scale * this->m_icon_extra_scale``.
      *
      * \remark
      *     See also: \ref nanogui::Theme::m_icon_scale and
      *     \ref nanogui::Widget::m_icon_extra_scale.  This tiered scaling
      *     strategy may not be appropriate with fonts other than ``entypo.ttf``.
      */
-    float icon_scale() const { return m_theme.m_icon_scale * m_icon_extra_scale; }
+    float icon_scale() const { return m_theme->m_icon_scale * m_icon_extra_scale; }
 
 protected:
 	std::reference_wrapper<Widget> m_parent;
-    Theme& m_theme;
+    std::shared_ptr<Theme> m_theme;
 	std::unique_ptr<Layout> m_layout;
     Vector2i m_pos, m_size, m_fixed_size;
     std::vector<std::reference_wrapper<Widget>> m_children;

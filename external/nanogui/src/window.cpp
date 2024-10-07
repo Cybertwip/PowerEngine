@@ -17,8 +17,8 @@
 
 NAMESPACE_BEGIN(nanogui)
 
-Window::Window(Widget& parent, Screen& screen, Theme& theme,  const std::string &title)
-    : Widget(parent, screen, theme), m_title(title), m_button_panel(nullptr), m_modal(false),
+Window::Window(Widget& parent, Screen& screen,  const std::string &title)
+    : Widget(parent, screen), m_title(title), m_button_panel(nullptr), m_modal(false),
       m_drag(false) { }
 
 Vector2i Window::preferred_size(NVGcontext *ctx) {
@@ -48,7 +48,7 @@ Vector2i Window::preferred_size(NVGcontext *ctx) {
 
 Widget& Window::button_panel() {
     if (!m_button_panel) {
-        m_button_panel = std::make_unique<Widget>(*this, screen(), theme());
+        m_button_panel = std::make_unique<Widget>(*this, screen());
         m_button_panel->set_layout(std::make_unique< BoxLayout>(Orientation::Horizontal, Alignment::Middle, 0, 4));
     }
     return *m_button_panel;
@@ -92,23 +92,23 @@ void Window::set_modal(bool modal) {
 
 
 void Window::draw(NVGcontext *ctx) {
-    int ds = m_theme.m_window_drop_shadow_size, cr = m_theme.m_window_corner_radius;
-    int hh = m_theme.m_window_header_height;
+    int ds = theme().m_window_drop_shadow_size, cr = theme().m_window_corner_radius;
+    int hh = theme().m_window_header_height;
 
     /* Draw window */
     nvgSave(ctx);
     nvgBeginPath(ctx);
     nvgRoundedRect(ctx, m_pos.x(), m_pos.y(), m_size.x(), m_size.y(), cr);
 
-    nvgFillColor(ctx, m_mouse_focus ? m_theme.m_window_fill_focused
-                                    : m_theme.m_window_fill_unfocused);
+    nvgFillColor(ctx, m_mouse_focus ? theme().m_window_fill_focused
+                                    : theme().m_window_fill_unfocused);
     nvgFill(ctx);
 
 
     /* Draw a drop shadow */
     NVGpaint shadow_paint = nvgBoxGradient(
         ctx, m_pos.x(), m_pos.y(), m_size.x(), m_size.y(), cr*2, ds*2,
-        m_theme.m_drop_shadow, m_theme.m_transparent);
+        theme().m_drop_shadow, theme().m_transparent);
 
     nvgSave(ctx);
     nvgResetScissor(ctx);
@@ -125,8 +125,8 @@ void Window::draw(NVGcontext *ctx) {
         NVGpaint header_paint = nvgLinearGradient(
             ctx, m_pos.x(), m_pos.y(), m_pos.x(),
             m_pos.y() + hh,
-            m_theme.m_window_header_gradient_top,
-            m_theme.m_window_header_gradient_bot);
+            theme().m_window_header_gradient_top,
+            theme().m_window_header_gradient_bot);
 
         nvgBeginPath(ctx);
         nvgRoundedRect(ctx, m_pos.x(), m_pos.y(), m_size.x(), hh, cr);
@@ -136,7 +136,7 @@ void Window::draw(NVGcontext *ctx) {
 
         nvgBeginPath(ctx);
         nvgRoundedRect(ctx, m_pos.x(), m_pos.y(), m_size.x(), hh, cr);
-        nvgStrokeColor(ctx, m_theme.m_window_header_sep_top);
+        nvgStrokeColor(ctx, theme().m_window_header_sep_top);
 
         nvgSave(ctx);
         nvgIntersectScissor(ctx, m_pos.x(), m_pos.y(), m_size.x(), 0.5f);
@@ -146,7 +146,7 @@ void Window::draw(NVGcontext *ctx) {
         nvgBeginPath(ctx);
         nvgMoveTo(ctx, m_pos.x() + 0.5f, m_pos.y() + hh - 1.5f);
         nvgLineTo(ctx, m_pos.x() + m_size.x() - 0.5f, m_pos.y() + hh - 1.5);
-        nvgStrokeColor(ctx, m_theme.m_window_header_sep_bot);
+        nvgStrokeColor(ctx, theme().m_window_header_sep_bot);
         nvgStroke(ctx);
 
         nvgFontSize(ctx, 18.0f);
@@ -154,13 +154,13 @@ void Window::draw(NVGcontext *ctx) {
         nvgTextAlign(ctx, NVG_ALIGN_CENTER | NVG_ALIGN_MIDDLE);
 
         nvgFontBlur(ctx, 2);
-        nvgFillColor(ctx, m_theme.m_drop_shadow);
+        nvgFillColor(ctx, theme().m_drop_shadow);
         nvgText(ctx, m_pos.x() + m_size.x() / 2,
                 m_pos.y() + hh / 2, m_title.c_str(), nullptr);
 
         nvgFontBlur(ctx, 0);
-        nvgFillColor(ctx, m_focused ? m_theme.m_window_title_focused
-                                    : m_theme.m_window_title_unfocused);
+        nvgFillColor(ctx, m_focused ? theme().m_window_title_focused
+                                    : theme().m_window_title_unfocused);
         nvgText(ctx, m_pos.x() + m_size.x() / 2, m_pos.y() + hh / 2 - 1,
                 m_title.c_str(), nullptr);
     }
@@ -206,7 +206,7 @@ bool Window::mouse_button_event(const Vector2i &p, int button, bool down, int mo
 	if (Widget::mouse_button_event(p, button, down, modifiers))
 		return true;
 	if (button == GLFW_MOUSE_BUTTON_1) {
-		m_drag = down && (p.y() - m_pos.y()) < m_theme.m_window_header_height;
+		m_drag = down && (p.y() - m_pos.y()) < theme().m_window_header_height;
 		return true;
 	}
 	return false;

@@ -17,7 +17,7 @@
 
 NAMESPACE_BEGIN(nanogui)
 
-ColorPicker::ColorPicker(Widget& parent, Screen& screen, Theme& theme,  const Color& color) : PopupButton(parent, screen, theme, "") {
+ColorPicker::ColorPicker(Widget& parent, Screen& screen,  const Color& color) : PopupButton(parent, screen, "") {
     set_background_color(color);
     auto& popup = this->popup();
     popup.set_layout(std::make_unique<GroupLayout>());
@@ -28,16 +28,16 @@ ColorPicker::ColorPicker(Widget& parent, Screen& screen, Theme& theme,  const Co
     m_final_callback = [](const Color &) {};
 
     // set the color wheel to the specified color
-    m_color_wheel = std::make_unique<ColorWheel>(popup, screen, theme, color);
+    m_color_wheel = std::make_unique<ColorWheel>(popup, screen, color);
 
     // set the pick button to the specified color
-    m_pick_button = std::make_unique<Button>(popup, screen, theme, "Pick");
+    m_pick_button = std::make_unique<Button>(popup, screen, "Pick");
     m_pick_button->set_background_color(color);
     m_pick_button->set_text_color(color.contrasting_color());
     m_pick_button->set_fixed_size(Vector2i(100, 20));
 
     // set the reset button to the specified color
-    m_reset_button = std::make_unique<Button>(popup, "Reset");
+    m_reset_button = std::make_unique<Button>(popup, screen, "Reset");
     m_reset_button->set_background_color(color);
     m_reset_button->set_text_color(color.contrasting_color());
     m_reset_button->set_fixed_size(Vector2i(100, 20));

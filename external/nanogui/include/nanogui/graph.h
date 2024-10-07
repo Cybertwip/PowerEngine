@@ -23,7 +23,7 @@ NAMESPACE_BEGIN(nanogui)
  */
 class NANOGUI_EXPORT Graph : public Widget {
 public:
-    Graph(Widget& parent, Screen& screen, Theme& theme,  const std::string &caption = "Untitled");
+    Graph(Widget& parent, Screen& screen,  const std::string &caption = "Untitled");
 
     const std::string &caption() const { return m_caption; }
     void set_caption(const std::string &caption) { m_caption = caption; }

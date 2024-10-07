@@ -23,9 +23,9 @@ NAMESPACE_BEGIN(nanogui)
  */
 class ToolButton : public Button {
 public:
-    ToolButtonWidget& parent, Screen& screen, Theme& theme,  int icon,
+    ToolButton(Widget& parent, Screen& screen,  int icon,
            const std::string &caption = "")
-        : Button(parent, caption, icon) {
+        : Button(parent, screen, caption, icon) {
         set_flags(Flags::RadioButton | Flags::ToggleButton);
         set_fixed_size(Vector2i(25, 25));
     }

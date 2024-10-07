@@ -10,7 +10,7 @@ class TreeView;
 
 class TreeViewItem : public Widget {
 public:
-    TreeViewItemWidget& parent, Screen& screen, Theme& theme,  std::shared_ptr<TreeView> tree, const std::string &caption, std::function<void()> callback);
+    TreeViewItem(Widget& parent, Screen& screen, TreeView& tree, const std::string &caption, std::function<void()> callback);
 
     virtual void draw(NVGcontext *ctx) override;
     virtual Vector2i preferred_size(NVGcontext *ctx) override;
@@ -29,7 +29,7 @@ public:
     bool expanded() const { return m_expanded; }
 
 private:
-	std::shared_ptr<TreeView> m_tree;
+	TreeView& m_tree;
     std::string m_caption;
     bool m_selected;
     bool m_expanded;

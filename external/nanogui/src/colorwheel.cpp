@@ -17,8 +17,8 @@
 
 NAMESPACE_BEGIN(nanogui)
 
-ColorWheel::ColorWheel(Widget& parent, Screen& screen, Theme& theme,  const Color& rgb)
-    : Widget(parent, screen, theme), m_drag_region(None) {
+ColorWheel::ColorWheel(Widget& parent, Screen& screen,  const Color& rgb)
+    : Widget(parent, screen), m_drag_region(None) {
     set_color(rgb);
 }
 

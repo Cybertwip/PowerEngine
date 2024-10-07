@@ -10,7 +10,7 @@ class TreeViewItem;
 
 class TreeView : public Widget {
 public:
-    TreeView(Widget& parent, Screen& screen, Theme& theme);
+    TreeView(Widget& parent, Screen& screen);
 
     virtual void draw(NVGcontext *ctx) override;
 
@@ -18,11 +18,11 @@ public:
 	std::shared_ptr<TreeViewItem> add_node(const std::string &caption, std::function<void()> callback);
     void clear();
     
-    void set_selected(std::shared_ptr<TreeViewItem> item);
+    void set_selected(TreeViewItem* item);
 
 private:
     std::vector<std::shared_ptr<TreeViewItem>> m_items;
-	std::shared_ptr<TreeViewItem> m_selected_item;
+	TreeViewItem* m_selected_item;
 };
 
 NAMESPACE_END(nanogui)

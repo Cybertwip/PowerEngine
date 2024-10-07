@@ -23,7 +23,7 @@ NAMESPACE_BEGIN(nanogui)
  */
 class NANOGUI_EXPORT Slider : public Widget {
 public:
-    Slider(Widget& parent, Screen& screen, Theme& theme);
+    Slider(Widget& parent, Screen& screen);
 
     float value() const { return m_value; }
     void set_value(float value) { m_value = value; }
