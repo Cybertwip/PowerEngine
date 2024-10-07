@@ -162,7 +162,7 @@ void ResourcesPanel::initialize() {
 	mMeshPicker->set_modal(false);
 	
 	/* Create the DeepMotion Settings Window (initially hidden) */
-	mDeepMotionSettings = std::make_shared<DeepMotionSettingsWindow>(parent()->window(), mDeepMotionApiClient, [this](){
+	mDeepMotionSettings = std::make_shared<DeepMotionSettingsWindow>(screen(), mDeepMotionApiClient, [this](){
 		mMeshPicker->set_visible(true);
 		mMeshPicker->set_modal(true);
 	});

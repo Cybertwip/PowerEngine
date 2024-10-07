@@ -31,6 +31,10 @@ mDeepMotionApiClient(deepMotionApiClient)
 	set_fixed_size(nanogui::Vector2i(400, 320));
 	set_layout(std::make_shared<nanogui::GroupLayout>());
 	set_title("Sync With DeepMotion");
+}
+
+void DeepMotionSettingsWindow::initialize() {
+	nanogui::Window::initialize();
 	
 	// Close Button
 	mCloseButton = std::make_shared<nanogui::Button>(button_panel(), "X");
@@ -44,7 +48,7 @@ mDeepMotionApiClient(deepMotionApiClient)
 	// Using a horizontal BoxLayout with a spacer
 	mTopPanel = std::make_shared<nanogui::Widget>(weak_from_this());
 	mTopPanel->set_layout(std::make_shared<nanogui::BoxLayout>(nanogui::Orientation::Horizontal,
-												 nanogui::Alignment::Middle, 0, 0));
+															   nanogui::Alignment::Middle, 0, 0));
 	// API Base URL Input
 	mApiBaseLabel = std::make_shared<nanogui::Label>(shared_from_this(), "API Base URL:", "sans-bold");
 	api_base_url_box_ = std::make_shared<nanogui::TextBox>(shared_from_this(), "");
@@ -55,7 +59,7 @@ mDeepMotionApiClient(deepMotionApiClient)
 		// Basic validation can be added here if necessary
 		return true;
 	});
-		
+	
 	// Client ID Input
 	mClientIdLabel = std::make_shared<nanogui::Label>(shared_from_this(), "Client ID:", "sans-bold");
 	client_id_box_ = std::make_shared<nanogui::TextBox>(shared_from_this(), "");
@@ -86,17 +90,17 @@ mDeepMotionApiClient(deepMotionApiClient)
 	mSyncButton->set_callback([this]() {
 		this->on_sync();
 	});
-		
+	
 	// Status Panel
 	mStatusPanel = std::make_shared<nanogui::Widget>(shared_from_this());
 	mStatusPanel->set_layout(std::make_shared<nanogui::GridLayout>(
-													 nanogui::Orientation::Horizontal, // Layout orientation
-													 2,                               // Number of columns
-													 nanogui::Alignment::Maximum,     // Alignment within cells
-													 0,                               // Column padding
-													 0                                // Row padding
-													 ));
-		
+																   nanogui::Orientation::Horizontal, // Layout orientation
+																   2,                               // Number of columns
+																   nanogui::Alignment::Maximum,     // Alignment within cells
+																   0,                               // Column padding
+																   0                                // Row padding
+																   ));
+	
 	// Status Label
 	mStatusLabel = std::make_shared<nanogui::Label>(mStatusPanel, "", "sans");
 	mStatusLabel->set_fixed_size(nanogui::Vector2i(175, 20));
@@ -115,9 +119,9 @@ mDeepMotionApiClient(deepMotionApiClient)
 	mImageView->set_fixed_size(mImageView->size());
 	
 	mImageView->set_image(std::make_shared<nanogui::Texture>("internal/ui/poweredby.png",
-											  nanogui::Texture::InterpolationMode::Bilinear,
-											  nanogui::Texture::InterpolationMode::Nearest,
-											  nanogui::Texture::WrapMode::Repeat));
+															 nanogui::Texture::InterpolationMode::Bilinear,
+															 nanogui::Texture::InterpolationMode::Nearest,
+															 nanogui::Texture::WrapMode::Repeat));
 	
 	mImageView->set_visible(true);
 	

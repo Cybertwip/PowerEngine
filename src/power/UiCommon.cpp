@@ -20,11 +20,11 @@ UiCommon::UiCommon(std::weak_ptr<nanogui::Widget> parent, ActorManager& actorMan
 	mSceneWrapper->set_layout(std::make_shared<nanogui::GridLayout>(nanogui::Orientation::Horizontal, 2,
                                                      nanogui::Alignment::Fill, 0, 0));
 
-    int totalWidth = parent->size().x();
+    int totalWidth = parent.lock()->size().x();
     int sceneWidth = static_cast<int>(totalWidth * 0.80f);
     int rightWidth = totalWidth - sceneWidth;
 
-    int totalHeight = parent->size().y();
+    int totalHeight = parent.lock()->size().y();
 	int sceneHeight = static_cast<int>(totalHeight * 0.90);
 	int statusHeight = static_cast<int>(totalHeight * 0.05);
 	int toolboxHeight = static_cast<int>(totalHeight * 0.05);
