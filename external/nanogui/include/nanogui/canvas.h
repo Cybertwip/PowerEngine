@@ -106,6 +106,9 @@ protected:
     bool m_draw_border;
     Color m_border_color;
     bool m_render_to_texture;
+	uint8_t	m_samples;
+	bool m_has_depth_buffer;
+	bool m_has_stencil_buffer;
 };
 
 NAMESPACE_END(nanogui)
