@@ -262,7 +262,7 @@ UiManager::UiManager(nanogui::Screen& screen, std::shared_ptr<IActorSelectedRegi
 	});
 	
 	// Initialize StatusBarPanel
-	mStatusBarPanel = std::make_shared<StatusBarPanel>(statusBar, screen, mActorVisualManager, mSceneTimeBar,
+	mStatusBarPanel = std::make_shared<StatusBarPanel>(*statusBar, screen, mActorVisualManager, mSceneTimeBar,
 										 mMeshActorLoader, mShaderManager, deepMotionApiClient,
 										 *this, applicationClickRegistrator);
 	
