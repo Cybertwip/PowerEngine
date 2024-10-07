@@ -298,7 +298,7 @@ mNormalButtonColor(theme()->m_text_color) // Initialize normal button color
 	mKeyBtnWrapper = std::make_shared<nanogui::Widget>(shared_from_this());
 	mKeyBtnWrapper->set_layout(std::make_shared<nanogui::BoxLayout>(nanogui::Orientation::Horizontal, nanogui::Alignment::Middle, 1, 1));
 	
-	mPrevKeyBtn = new nanogui::Button(mKeyBtnWrapper, "", FA_STEP_BACKWARD);
+	mPrevKeyBtn = std::make_shared<nanogui::Button>(mKeyBtnWrapper, "", FA_STEP_BACKWARD);
 	mPrevKeyBtn->set_enabled(false);
 	mPrevKeyBtn->set_fixed_width(keyBtnWidth);
 	mPrevKeyBtn->set_fixed_height(keyBtnHeight);
@@ -331,7 +331,7 @@ mNormalButtonColor(theme()->m_text_color) // Initialize normal button color
 		}
 	});
 	
-	mKeyBtn = new nanogui::Button(mKeyBtnWrapper, "", FA_KEY);
+	mKeyBtn = sts::make_shared<nanogui::Button>(mKeyBtnWrapper, "", FA_KEY);
 	mKeyBtn->set_fixed_width(keyBtnWidth);
 	mKeyBtn->set_fixed_height(keyBtnHeight);
 	mKeyBtn->set_tooltip("Keyframe Tool");

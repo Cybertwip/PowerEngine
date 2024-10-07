@@ -32,7 +32,7 @@ void SelfContainedSkinnedMeshBatch::upload_material_data(ShaderWrapper& shader, 
 		// Set the diffuse texture (if it exists)
 		std::string textureBaseName = "textures";
 		if (material.mHasDiffuseTexture) {
-			shader.set_texture(textureBaseName, *material.mTextureDiffuse, i);
+			shader.set_texture(textureBaseName, material.mTextureDiffuse, i);
 			textureSetCount++;
 		}
 	}

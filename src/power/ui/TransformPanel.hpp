@@ -40,6 +40,10 @@ private:
 	std::shared_ptr<nanogui::Label> mYLabel;
 	std::shared_ptr<nanogui::Label> mZLabel;
 
+	std::shared_ptr<nanogui::Label> mXScaleLabel;
+	std::shared_ptr<nanogui::Label> mYScaleLabel;
+	std::shared_ptr<nanogui::Label> mZScaleLabel;
+
 	std::shared_ptr<nanogui::Label> mRotationLabel;
 	std::shared_ptr<nanogui::Label> mYawLabel;
 	std::shared_ptr<nanogui::Label> mPitchLabel;
