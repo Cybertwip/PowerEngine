@@ -159,7 +159,7 @@ mUiManager(uiManager)
 	mDeepMotionSettings->set_visible(false);
 	mDeepMotionSettings->set_modal(false);
 	
-	mImportWindow = std::make_shared<ImportWindow>(parent->window(), shared_from_this(), shaderManager.render_pass(), shaderManager);
+	mImportWindow = std::make_shared<ImportWindow>(parent->window(), std::dynamic_pointer_cast<ResourcesPanel>(shared_from_this()), shaderManager.render_pass(), shaderManager);
 	
 	mImportWindow->set_visible(false);
 	mImportWindow->set_modal(false);
@@ -227,11 +227,11 @@ mUiManager(uiManager)
 	
 	// Create the file view below the toolbar
 	mFileView = std::make_shared<nanogui::Widget>(shared_from_this());
-	auto gridLayout = std::make_shared<nanogui::AdvancedGridLayout>(
+	auto gridLayout = std::shared_ptr<nanogui::AdvancedGridLayout>(new nanogui::AdvancedGridLayout(
 													  /* columns */ {144, 144, 144, 144, 144, 144, 144, 144}, // Initial column widths (can be adjusted)
 													  /* rows */ {},                // Start with no predefined rows
 													  /* margin */ 8
-													  );
+													  ));
 	
 	// Optionally, set stretch factors for columns and rows
 	gridLayout->set_col_stretch(0, 1.0f);

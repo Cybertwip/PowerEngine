@@ -21,6 +21,7 @@
 #include "filesystem/CompressedSerialization.hpp"
 
 #include "graphics/drawing/Batch.hpp"
+#include "graphics/drawing/SelfContainedMeshBatch.hpp"
 #include "graphics/drawing/SelfContainedMeshCanvas.hpp"
 #include "graphics/drawing/SkinnedMesh.hpp"
 
