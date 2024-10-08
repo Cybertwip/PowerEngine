@@ -45,7 +45,9 @@ Widget::~Widget() {
 void Widget::set_theme(std::shared_ptr<Theme> theme) {
 	m_theme = theme;
 	for (auto child : m_children)
-		child.get().set_theme(theme);
+		if (&child.get() != this){ // this means root
+			child.get().set_theme(theme);
+		}
 }
 
 int Widget::font_size() {

@@ -152,9 +152,7 @@ protected:
 		set_drag_widget(nullptr, nullptr);
 	}
 	
-private:
-	
-	
+private:	
 	void set_drag_widget(Widget* widget, std::function<void()> drag_callback) override {
 		if(widget == nullptr){
 			m_draggable_window->set_visible(false);
