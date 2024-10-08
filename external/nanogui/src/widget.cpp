@@ -30,7 +30,7 @@ m_focused(false), m_mouse_focus(false), m_tooltip(""), m_font_size(-1.f),
 m_icon_extra_scale(1.f), m_cursor(Cursor::Arrow), m_screen(screen), m_initialized(false) {
 	
 	if (m_parent.has_value()){
-		m_parent->get().add_child(*this);
+		m_parent->get().add_child(std::ref(*this));
 	}
 }
 

@@ -195,6 +195,15 @@ public:
 
     /// Release all resources
     virtual ~Texture();
+	
+	// Prevent copying
+	Texture(const Texture&) = delete;
+	Texture& operator=(const Texture&) = delete;
+	
+	// Allow moving if necessary
+	Texture(Texture&&) noexcept = default;
+	Texture& operator=(Texture&&) noexcept = default;
+
 
 protected:
     /// Initialize the texture handle

@@ -207,18 +207,17 @@ UiManager::UiManager(nanogui::Screen& screen, std::shared_ptr<IActorSelectedRegi
 	});
 	
 	// Register motion callback with ScenePanel
-	scenePanel->register_motion_callback(GLFW_MOUSE_BUTTON_RIGHT, [this, &canvas, &toolbox, &cameraManager, readFromFramebuffer](int width, int height, int x, int y, int dx, int dy, int button, bool down) {
+	scenePanel->register_motion_callback(GLFW_MOUSE_BUTTON_RIGHT, [this, toolbox, readFromFramebuffer](int width, int height, int x, int y, int dx, int dy, int button, bool down) {
 		
-		
-		if (toolbox->contains(nanogui::Vector2f(x, y)) || !canvas->contains(nanogui::Vector2f(x, y))) {
+		if (toolbox->contains(nanogui::Vector2f(x, y)) || !mCanvas->contains(nanogui::Vector2f(x, y))) {
 			return;
 		}
 		
 		if (mActiveActor.has_value()) {
-			glm::mat4 viewMatrix = TransformComponent::nanogui_to_glm(cameraManager.get_view());
-			glm::mat4 projMatrix = TransformComponent::nanogui_to_glm(cameraManager.get_projection());
+			glm::mat4 viewMatrix = TransformComponent::nanogui_to_glm(mCameraManager.get_view());
+			glm::mat4 projMatrix = TransformComponent::nanogui_to_glm(mCameraManager.get_projection());
 			
-			auto viewport = canvas->render_pass().viewport();
+			auto viewport = mCanvas->render_pass().viewport();
 			auto glmViewport = glm::vec4(viewport.first[0], viewport.first[1], viewport.second[0], viewport.second[1]);
 			
 			auto viewInverse = glm::inverse(viewMatrix);
@@ -229,11 +228,11 @@ UiManager::UiManager(nanogui::Screen& screen, std::shared_ptr<IActorSelectedRegi
 			float scaleY = viewport.second[1] / float(height);
 			
 			
-			int adjusted_y = height - y + canvas->parent()->get().position().y();
-			int adjusted_x = x + canvas->parent()->get().position().x();
+			int adjusted_y = height - y + mCanvas->parent()->get().position().y();
+			int adjusted_x = x + mCanvas->parent()->get().position().x();
 			
-			int adjusted_dx = x + canvas->parent()->get().position().x() + dx;
-			int adjusted_dy = height - y + canvas->parent()->get().position().y() + dy;
+			int adjusted_dx = x + mCanvas->parent()->get().position().x() + dx;
+			int adjusted_dy = height - y + mCanvas->parent()->get().position().y() + dy;
 			
 			// Scale x and y accordingly
 			adjusted_x *= scaleX;

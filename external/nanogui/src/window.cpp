@@ -80,9 +80,9 @@ void Window::set_modal(bool modal) {
 		auto& p = parent()->get();
 		
 		// Remove the window from its current position
-		p.remove_child(*this);
+		p.remove_child(std::ref(*this));
 		// Add it back to the end, which typically renders it on top
-		p.add_child(*this);
+		p.add_child(std::ref(*this));
 		
 		set_focused(true);
 		

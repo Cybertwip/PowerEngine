@@ -125,7 +125,7 @@ void FileView::populate_file_view() {
 		}
 		
 		// Create a container widget for the file item
-		auto item_container = std::make_shared<nanogui::Widget>(*this, screen());
+		auto item_container = std::make_shared<nanogui::Widget>(std::nullopt, screen());
 		item_container->set_fixed_size(nanogui::Vector2i(150, 150));
 		m_item_containers.push_back(item_container); // Store the reference
 		
@@ -283,10 +283,15 @@ void FileView::populate_file_view() {
 				last_click_time = current_click_time;
 			}
 		});
-				
+	
+		// Add the item container as a child widget
+		this->add_child(*item_container.get());
+
 		// Increment the index for the next item
 		current_index++;
 	}
+	
+	
 	
 	// After adding all items, adjust the grid layout rows based on the number of items
 	if (auto grid_layout = dynamic_cast<nanogui::AdvancedGridLayout*>(&this->layout())) {
