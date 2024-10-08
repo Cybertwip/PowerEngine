@@ -229,11 +229,11 @@ UiManager::UiManager(nanogui::Screen& screen, std::shared_ptr<IActorSelectedRegi
 			float scaleY = viewport.second[1] / float(height);
 			
 			
-			int adjusted_y = height - y + canvas->parent().position().y();
-			int adjusted_x = x + canvas->parent().position().x();
+			int adjusted_y = height - y + canvas->parent()->get().position().y();
+			int adjusted_x = x + canvas->parent()->get().position().x();
 			
-			int adjusted_dx = x + canvas->parent().position().x() + dx;
-			int adjusted_dy = height - y + canvas->parent().position().y() + dy;
+			int adjusted_dx = x + canvas->parent()->get().position().x() + dx;
+			int adjusted_dy = height - y + canvas->parent()->get().position().y() + dy;
 			
 			// Scale x and y accordingly
 			adjusted_x *= scaleX;
