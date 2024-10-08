@@ -27,7 +27,7 @@ class RenderPass;
 
 class ImportWindow : public nanogui::Window {
 public:
-	ImportWindow(nanogui::Screen& parent, nanogui::Screen& screen, std::shared_ptr<ResourcesPanel> resourcesPanel, std::shared_ptr<nanogui::RenderPass> renderpass, ShaderManager& shaderManager);
+	ImportWindow(nanogui::Screen& parent, nanogui::Screen& screen, std::shared_ptr<ResourcesPanel> resourcesPanel, nanogui::RenderPass& renderpass, ShaderManager& shaderManager);
 		
 	void Preview(const std::string& path, const std::string& directory);
 
@@ -54,7 +54,7 @@ private:
 	std::shared_ptr<nanogui::Button> mImportButton;
 	std::shared_ptr<nanogui::Widget> mCheckboxPanel;
 
-	std::shared_ptr<nanogui::RenderPass> mRenderPass;
+	nanogui::RenderPass& mRenderPass;
 	
 	entt::registry mDummyRegistry;
 	AnimationTimeProvider mDummyAnimationTimeProvider;
