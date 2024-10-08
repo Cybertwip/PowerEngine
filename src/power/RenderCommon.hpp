@@ -44,8 +44,6 @@ public:
 	CameraActorLoader& camera_actor_loader() {
 		return *mCameraActorLoader;
 	}
-	
-	void initialize() override;
 
 private:
 	

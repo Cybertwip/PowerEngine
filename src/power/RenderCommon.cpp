@@ -14,9 +14,9 @@ RenderCommon::RenderCommon(nanogui::Widget& parent, nanogui::Screen& screen, ent
 	
 	mCanvas = std::make_shared<Canvas>(*this, screen, nanogui::Color{70, 130, 180, 255});
 	
-	mCanvas->set_fixed_size(parent()->fixed_size());
+	mCanvas->set_fixed_size(parent.fixed_size());
 	
-	mShaderManager = std::make_unique<ShaderManager>(mCanvas);
+	mShaderManager = std::make_unique<ShaderManager>(*mCanvas);
 	
 	mShaderManager->load_default_shaders();
 	

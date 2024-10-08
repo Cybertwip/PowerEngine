@@ -57,9 +57,9 @@ mGlobalAnimationTimeProvider(60 * 30)
 }
 
 void Application::initialize() {	
-	mUiCommon = std::make_shared<UiCommon>(*this, *mActorManager, mGlobalAnimationTimeProvider);
+	mUiCommon = std::make_shared<UiCommon>(*this, *this, *mActorManager, mGlobalAnimationTimeProvider);
 	
-	mRenderCommon = std::make_shared<RenderCommon>(mUiCommon->scene_panel(), *mEntityRegistry, *mActorManager, *mCameraManager);
+	mRenderCommon = std::make_shared<RenderCommon>(*mUiCommon->scene_panel(), *this, *mEntityRegistry, *mActorManager, *mCameraManager);
 	
 	mMeshBatch = std::make_unique<MeshBatch>(mRenderCommon->canvas()->render_pass());
 	
@@ -73,9 +73,9 @@ void Application::initialize() {
 	
 	mMeshActorLoader = std::make_unique<MeshActorLoader>(*mActorManager, mRenderCommon->shader_manager(), *mBatchUnit);
 	
-	mGizmoManager = std::make_unique<GizmoManager>(mUiCommon->toolbox(), mRenderCommon->shader_manager(), *mActorManager, *mMeshActorLoader);
+	mGizmoManager = std::make_unique<GizmoManager>(*mUiCommon->toolbox(), *this, mRenderCommon->shader_manager(), *mActorManager, *mMeshActorLoader);
 	
-	mUiManager = std::make_unique<UiManager>(
+	mUiManager = std::make_unique<UiManager>(*this,
 											 mUiCommon->hierarchy_panel(),
 											 mUiCommon->hierarchy_panel(),
 											 *mActorManager,
@@ -98,7 +98,7 @@ void Application::initialize() {
 											 }
 											 );
 	
-	theme()->m_window_drop_shadow_size = 0;
+	theme().m_window_drop_shadow_size = 0;
 	
 	set_layout(std::make_unique<nanogui::GroupLayout>(0, 0, 0, 0));
 	
@@ -181,7 +181,7 @@ void Application::register_click_callback(std::function<void(bool, int, int, int
 }
 
 bool Application::drop_event(Widget& sender, const std::vector<std::string> & filenames) {
-	if (sender == mUiManager->status_bar_panel()->resources_panel()) {
+	if (&sender == mUiManager->status_bar_panel()->resources_panel().get()) {
 
 		if (mUiCommon->animation_panel()->contains(m_mouse_pos, true, true)) {
 			if (filenames[0].find(".pan") != std::string::npos){

@@ -131,7 +131,9 @@ public:
     int child_count() const { return (int) m_children.size(); }
 
     /// Return the list of child widgets of the current widget
-    const std::vector<std::reference_wrapper<Widget>> &children() const { return m_children; }
+	std::vector<std::reference_wrapper<Widget>> &children() {
+		return m_children;
+	}
 
     /**
      * \brief Add a child widget to the current widget at

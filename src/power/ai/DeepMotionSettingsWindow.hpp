@@ -24,7 +24,7 @@ public:
 	 * @param parent Pointer to the parent widget.
 	 * @param api_base_url The base URL for the API endpoints.
 	 */
-	DeepMotionSettingsWindow(nanogui::Screen& parent, DeepMotionApiClient& deepMotionApiClient, std::function<void()> successCallback);
+	DeepMotionSettingsWindow(nanogui::Screen& parent, nanogui::Screen& screen, DeepMotionApiClient& deepMotionApiClient, std::function<void()> successCallback);
 	
 private:	
 	// UI Components

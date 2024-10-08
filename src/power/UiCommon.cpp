@@ -10,7 +10,7 @@
 #include "ui/TransformPanel.hpp"
 #include "ui/UiManager.hpp"
 
-UiCommon::UiCommon(nanogui::Widget& parent, nanogui::Screen& screen, ActorManager& actorManager, AnimationTimeProvider& animationTimeProvider) : nanogui::Widget(parent), mActorManager(actorManager), mAnimationTimeProvider(animationTimeProvider) {
+UiCommon::UiCommon(nanogui::Widget& parent, nanogui::Screen& screen, ActorManager& actorManager, AnimationTimeProvider& animationTimeProvider) : nanogui::Widget(parent, screen), mActorManager(actorManager), mAnimationTimeProvider(animationTimeProvider) {
 	
 	mMainWrapper = std::make_shared<nanogui::Window>(*this, screen, "");
 	
@@ -21,11 +21,11 @@ UiCommon::UiCommon(nanogui::Widget& parent, nanogui::Screen& screen, ActorManage
 	mSceneWrapper->set_layout(std::make_unique<nanogui::GridLayout>(nanogui::Orientation::Horizontal, 2,
 																	nanogui::Alignment::Fill, 0, 0));
 	
-	int totalWidth = parent().size().x();
+	int totalWidth = parent.size().x();
 	int sceneWidth = static_cast<int>(totalWidth * 0.80f);
 	int rightWidth = totalWidth - sceneWidth;
 	
-	int totalHeight = parent().size().y();
+	int totalHeight = parent.size().y();
 	int sceneHeight = static_cast<int>(totalHeight * 0.90);
 	int statusHeight = static_cast<int>(totalHeight * 0.05);
 	int toolboxHeight = static_cast<int>(totalHeight * 0.05);

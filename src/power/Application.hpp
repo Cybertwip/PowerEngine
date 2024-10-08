@@ -14,7 +14,7 @@
 
 class DraggableWindow : public nanogui::Window {
 public:
-	DraggableWindow(Widget& parent, const std::string &title = "Drag Me") : nanogui::Window(parent, title) {
+	DraggableWindow(nanogui::Widget& parent, nanogui::Screen& screen, const std::string &title = "Drag Me") : nanogui::Window(parent, screen) {
 		set_modal(false);   // We want it to be freely interactive
 		
 		set_layout(std::make_unique< nanogui::BoxLayout>(nanogui::Orientation::Horizontal,
@@ -87,7 +87,7 @@ protected:
 			} else {
 				ret = m_drag_widget->mouse_drag_event(p - m_drag_widget->parent().absolute_position(), p - m_mouse_pos, m_mouse_state, m_modifiers);
 				// Ensure the dragged widget stays on top during the drag
-				move_widget_to_top(m_drag_widget);
+				move_widget_to_top(*m_drag_widget);
 			}
 			
 			if (!ret) {
@@ -144,14 +144,12 @@ protected:
 	}
 	
 	void initialize() override {
-		m_draggable_window = std::make_shared<DraggableWindow>(*this, "");
+		m_draggable_window = std::make_shared<DraggableWindow>(*this, *this, "");
 		
 		m_draggable_window->set_fixed_width(0);
 		m_draggable_window->set_fixed_height(0);
 		
 		set_drag_widget(nullptr, nullptr);
-		
-		Screen::initialize();
 	}
 	
 private:
@@ -172,7 +170,7 @@ private:
 			m_drag_callback = nullptr;
 		}
 	}
-	Widget* drag_widget() const override { return m_draggable_window; }
+	Widget* drag_widget() const override { return m_draggable_window.get(); }
 
 	void move_widget_to_top(Widget& widget) {
 		auto &children = widget.parent().children();
@@ -216,7 +214,7 @@ class Application : public nanogui::DraggableScreen
    public:
     Application();
 	
-	void initialize() override; 
+	void initialize();
 
     virtual bool keyboard_event(int key, int scancode, int action, int modifiers) override;
 	virtual void draw(NVGcontext *ctx) override;
