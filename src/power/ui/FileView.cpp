@@ -30,14 +30,14 @@ m_allowed_extensions(allowed_extensions) {
 													  ));
 	
 	// Optionally, set stretch factors for columns and rows
-	gridLayout->set_col_stretch(0, 1.0f);
-	gridLayout->set_col_stretch(1, 1.0f);
-	gridLayout->set_col_stretch(2, 1.0f);
-	gridLayout->set_col_stretch(3, 1.0f);
-	gridLayout->set_col_stretch(4, 1.0f);
-	gridLayout->set_col_stretch(5, 1.0f);
-	gridLayout->set_col_stretch(6, 1.0f);
-	gridLayout->set_col_stretch(7, 1.0f);
+	grid_layout->set_col_stretch(0, 1.0f);
+	grid_layout->set_col_stretch(1, 1.0f);
+	grid_layout->set_col_stretch(2, 1.0f);
+	grid_layout->set_col_stretch(3, 1.0f);
+	grid_layout->set_col_stretch(4, 1.0f);
+	grid_layout->set_col_stretch(5, 1.0f);
+	grid_layout->set_col_stretch(6, 1.0f);
+	grid_layout->set_col_stretch(7, 1.0f);
 
 	set_layout(std::move(grid_layout));
 	
