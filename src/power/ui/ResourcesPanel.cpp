@@ -278,7 +278,6 @@ void ResourcesPanel::refresh_file_view() {
 
 	// Refresh the root directory node to get the latest contents
 	mRootDirectoryNode.refresh();
-	
 
 	// Clear existing items	
 	mFileView->shed_children();
