@@ -85,7 +85,7 @@ protected:
 					}
 				}
 			} else {
-				ret = m_drag_widget->mouse_drag_event(p - m_drag_widget->parent().absolute_position(), p - m_mouse_pos, m_mouse_state, m_modifiers);
+				ret = m_drag_widget->mouse_drag_event(p - m_drag_widget->parent()->get().absolute_position(), p - m_mouse_pos, m_mouse_state, m_modifiers);
 				// Ensure the dragged widget stays on top during the drag
 				move_widget_to_top(*m_drag_widget);
 			}
@@ -171,7 +171,7 @@ private:
 	Widget* drag_widget() const override { return m_draggable_window.get(); }
 
 	void move_widget_to_top(Widget& widget) {
-		auto &children = widget.parent().children();
+		auto &children = widget.parent()->get().children();
 		auto it = std::find_if(children.begin(), children.end(), [&widget](std::reference_wrapper<Widget> item){
 			return &item.get() == &widget;
 		});
