@@ -23,12 +23,15 @@
 
 NAMESPACE_BEGIN(nanogui)
 
-Widget::Widget(Widget& parent, Screen& screen)
+Widget::Widget(std::optional<std::reference_wrapper<Widget>> parent, Screen& screen)
 : m_parent(parent), m_layout(nullptr),
 m_pos(0), m_size(0), m_fixed_size(0), m_visible(true), m_enabled(true),
 m_focused(false), m_mouse_focus(false), m_tooltip(""), m_font_size(-1.f),
 m_icon_extra_scale(1.f), m_cursor(Cursor::Arrow), m_screen(screen), m_initialized(false) {
-	m_parent.get().add_child(*this);
+	
+	if (m_parent.has_value()){
+		m_parent->get().add_child(*this);
+	}
 }
 
 
@@ -45,9 +48,7 @@ Widget::~Widget() {
 void Widget::set_theme(std::shared_ptr<Theme> theme) {
 	m_theme = theme;
 	for (auto child : m_children)
-		if (&child.get() != this){ // this means root
-			child.get().set_theme(theme);
-		}
+		child.get().set_theme(theme);
 }
 
 int Widget::font_size() {
@@ -218,13 +219,14 @@ int Widget::child_index(Widget& widget) const {
 }
 
 Window* Widget::window() {
-	Widget* widget = this;
-	do {
-		auto win = dynamic_cast<Window*>(widget);
+	std::optional<std::reference_wrapper<Widget>> widget = *this;
+	
+	while (widget != std::nullopt) {
+		auto win = dynamic_cast<Window*>(&widget->get());
 		if (win)
 			return win;
-		widget = &widget->parent();
-	} while (widget != this);
+		widget = widget->get().parent();
+	}
 	return nullptr;
 }
 

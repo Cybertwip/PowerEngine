@@ -37,13 +37,13 @@ class NANOGUI_EXPORT Widget : public Object {
 public:
 	
 	/// Construct a new widget with the given parent widget
-	Widget(Widget& parent, Screen& screen);
+	Widget(std::optional<std::reference_wrapper<Widget>> parent, Screen& screen);
 
     /// Free all resources used by the widget and any children
     virtual ~Widget();
 
     /// Return the parent widget
-    Widget& parent() { return m_parent.get(); }
+    std::optional<std::reference_wrapper<Widget>> parent() { return m_parent; }
     /// Set the parent widget
 	void set_parent(Widget& parent);
 	
@@ -69,7 +69,7 @@ public:
 
     /// Return the absolute position on screen
     Vector2i absolute_position() {
-		return parent().absolute_position() + m_pos;
+		return parent().has_value() ? parent()->get().absolute_position() + m_pos : m_pos;
     }
 
     /// Return the size of the widget
@@ -118,11 +118,11 @@ public:
     /// Check if this widget is currently visible, taking parent widgets into account
     bool visible_recursive() {
         bool visible = true;
-        Widget* widget = this;
-        do {
-            visible &= widget->visible();
-            widget = &widget->parent();
-		} while(visible && widget != this);
+        std::optional<std::reference_wrapper<Widget>> widget = *this;
+		while(widget != std::nullopt) {
+            visible &= widget->get().visible();
+            widget = widget->get().parent();
+		}
 		
         return visible;
     }
@@ -297,7 +297,7 @@ protected:
     float icon_scale() const { return m_theme->m_icon_scale * m_icon_extra_scale; }
 
 protected:
-	std::reference_wrapper<Widget> m_parent;
+	std::optional<std::reference_wrapper<Widget>> m_parent;
     std::shared_ptr<Theme> m_theme;
 	std::unique_ptr<Layout> m_layout;
     Vector2i m_pos, m_size, m_fixed_size;

@@ -64,7 +64,7 @@ bool Button::mouse_button_event(const Vector2i &p, int button, bool down, int mo
         if (down) {
             if (m_flags & RadioButton) {
                 if (m_button_group.empty()) {
-                    for (auto widget : parent().children()) {
+                    for (auto widget : parent()->get().children()) {
                         auto b = dynamic_cast<Button*>(&widget.get());
                         if (b != this && b && (b->flags() & RadioButton) && b->m_pushed) {
                             b->m_pushed = false;
@@ -83,7 +83,7 @@ bool Button::mouse_button_event(const Vector2i &p, int button, bool down, int mo
                 }
             }
             if (m_flags & PopupButton) {
-                for (auto widget : parent().children()) {
+                for (auto widget : parent()->get().children()) {
                     auto b = dynamic_cast<Button*>(&widget.get());
                     if (b != this && b && (b->flags() & PopupButton) && b->m_pushed) {
                         b->m_pushed = false;

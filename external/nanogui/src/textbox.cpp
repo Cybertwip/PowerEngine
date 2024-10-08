@@ -630,13 +630,13 @@ void TextBox::set_password_character(char c) {
 	m_password_mode = true;
 	m_password_char = c;
 	// Trigger a redraw to update the display
-	parent().perform_layout(screen().nvg_context());
+	parent()->get().perform_layout(screen().nvg_context());
 }
 
 void TextBox::disable_password_mode() {
 	m_password_mode = false;
 	// Trigger a redraw to update the display
-	parent().perform_layout(screen().nvg_context());
+	parent()->get().perform_layout(screen().nvg_context());
 }
 
 

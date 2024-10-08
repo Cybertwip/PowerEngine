@@ -113,7 +113,7 @@ Screen::Screen(const std::string &caption,
 			   bool fullscreen,
 			   bool depth_buffer, bool stencil_buffer,
 			   bool float_buffer, unsigned int gl_major, unsigned int gl_minor)
-: Widget(*this, *this), m_glfw_window(nullptr), m_nvg_context(nullptr),
+: Widget(std::nullopt, *this), m_glfw_window(nullptr), m_nvg_context(nullptr),
 m_cursor(Cursor::Arrow), m_background(0.3f, 0.3f, 0.32f, 1.f), m_caption(caption),
 m_shutdown_glfw(false), m_fullscreen(fullscreen), m_depth_buffer(depth_buffer),
 m_stencil_buffer(stencil_buffer), m_float_buffer(float_buffer), m_redraw(false) {
@@ -742,7 +742,7 @@ void Screen::cursor_pos_callback_event(double x, double y) {
 			}
 		} else {
 			ret = m_drag_widget->mouse_drag_event(
-												  p - m_drag_widget->parent().absolute_position(), p - m_mouse_pos,
+												  p - m_drag_widget->parent()->get().absolute_position(), p - m_mouse_pos,
 												  m_mouse_state, m_modifiers);
 		}
 		
@@ -784,7 +784,7 @@ void Screen::mouse_button_callback_event(int button, int action, int modifiers) 
 		if (m_drag_active && action == GLFW_RELEASE && m_drag_widget &&
 			drop_widget != m_drag_widget) {
 			m_redraw |= m_drag_widget->mouse_button_event(
-														  m_mouse_pos - m_drag_widget->parent().absolute_position(), button,
+														  m_mouse_pos - m_drag_widget->parent()->get().absolute_position(), button,
 														  false, m_modifiers);
 		}
 		

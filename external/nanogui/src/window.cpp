@@ -77,7 +77,7 @@ void Window::set_modal(bool modal) {
 	if (m_modal) {
 		center();
 		// Bring to front by moving to the end of the parent's children list
-		auto& p = parent();
+		auto& p = parent()->get();
 		
 		// Remove the window from its current position
 		p.remove_child(*this);
@@ -170,10 +170,7 @@ void Window::draw(NVGcontext *ctx) {
 }
 
 void Window::center() {
-    Widget* widget = this;
-    while (&widget->parent() != this)
-        widget = &widget->parent();
-    dynamic_cast<Screen*>(widget)->center_window(*dynamic_cast<Window*>(this));
+	screen().center_window(*this);
 }
 
 bool Window::mouse_enter_event(const Vector2i &p, bool enter) {
@@ -186,7 +183,7 @@ bool Window::mouse_drag_event(const Vector2i &, const Vector2i &rel,
     if (m_drag && (button & (1 << GLFW_MOUSE_BUTTON_1)) != 0) {
         m_pos += rel;
         m_pos = max(m_pos, Vector2i(0));
-        m_pos = min(m_pos, parent().size() - m_size);
+        m_pos = min(m_pos, parent()->get().size() - m_size);
         return true;
     }
     return false;
