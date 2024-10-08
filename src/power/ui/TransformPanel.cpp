@@ -11,14 +11,11 @@
 #include "actors/Actor.hpp"
 #include "components/TransformComponent.hpp"
 
-TransformPanel::TransformPanel(nanogui::Widget&)
-: Panel(parent, "Transform"), mActiveActor(std::nullopt), mTransformRegistrationId(-1) {
+TransformPanel::TransformPanel(nanogui::Widget& parent, nanogui::Screen& screen)
+: Panel(parent, screen, "Transform"), mActiveActor(std::nullopt), mTransformRegistrationId(-1) {
 	set_position(nanogui::Vector2i(0, 0));
 	set_layout(std::make_unique<nanogui::GroupLayout>());
-}
-
-void TransformPanel::initialize() {
-	Panel::initialize();
+	
 	
 	auto gatherValuesCallback = [this](int){
 		if (mActiveActor.has_value()) {
@@ -161,6 +158,7 @@ void TransformPanel::initialize() {
 	
 	set_active_actor(std::nullopt);
 }
+
 TransformPanel::~TransformPanel() {
 	if (mActiveActor.has_value()) {
 		auto& transformComponent = mActiveActor->get().get_component<TransformComponent>();

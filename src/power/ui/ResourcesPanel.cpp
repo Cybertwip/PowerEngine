@@ -230,7 +230,7 @@ mShaderManager(shaderManager)
 	
 	// Create the file view below the toolbar
 	mFileView = std::make_shared<nanogui::Widget>(*this);
-	auto gridLayout = std::shared_ptr<nanogui::AdvancedGridLayout>(new nanogui::AdvancedGridLayout(
+	auto gridLayout = std::unique_ptr<nanogui::AdvancedGridLayout>(new nanogui::AdvancedGridLayout(
 																								   /* columns */ {144, 144, 144, 144, 144, 144, 144, 144}, // Initial column widths (can be adjusted)
 																								   /* rows */ {},                // Start with no predefined rows
 																								   /* margin */ 8
@@ -247,7 +247,7 @@ mShaderManager(shaderManager)
 	gridLayout->set_col_stretch(7, 1.0f);
 	
 	
-	mFileView->set_layout(gridLayout);
+	mFileView->set_layout(std::move(gridLayout));
 	
 	
 	mSelectedDirectoryPath = fs::current_path().string();

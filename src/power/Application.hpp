@@ -78,14 +78,14 @@ protected:
 				if (m_drag_widget != nullptr) {
 					if (m_drag_widget->contains(p)){
 						// Move the drag widget to the front of the hierarchy to ensure it is topmost
-						move_widget_to_top(m_drag_widget);
+						move_widget_to_top(*m_drag_widget);
 						m_drag_active = true;
 						m_mouse_pos = p;
 
 					}
 				}
 			} else {
-				ret = m_drag_widget->mouse_drag_event(p - m_drag_widget->parent()->absolute_position(), p - m_mouse_pos, m_mouse_state, m_modifiers);
+				ret = m_drag_widget->mouse_drag_event(p - m_drag_widget->parent().absolute_position(), p - m_mouse_pos, m_mouse_state, m_modifiers);
 				// Ensure the dragged widget stays on top during the drag
 				move_widget_to_top(m_drag_widget);
 			}
@@ -107,9 +107,9 @@ protected:
 		m_last_interaction = glfwGetTime();
 		
 		try {
-			if (m_focus_path.size() > 1) {
+			if (m_focused_widget) {
 				auto window =
-				std::dynamic_pointer_cast<Window>(m_focus_path[m_focus_path.size() - 2]);
+				dynamic_cast<Window*>(m_focused_widget);
 				if (window && window->modal()) {
 					if (!window->contains(m_mouse_pos))
 						return;
@@ -167,7 +167,7 @@ private:
 		} else {
 			m_draggable_window->set_visible(false);
 			m_draggable_window->set_drag_callback(drag_callback);
-			m_drag_widget = m_draggable_window;
+			m_drag_widget = m_draggable_window.get();
 			m_drag_active = false;
 			m_drag_callback = nullptr;
 		}
@@ -175,7 +175,7 @@ private:
 	Widget* drag_widget() const override { return m_draggable_window; }
 
 	void move_widget_to_top(Widget& widget) {
-		auto &children = widget->parent()->children();
+		auto &children = widget.parent().children();
 		auto it = std::find_if(children.begin(), children.end(), [&widget](std::reference_wrapper<Widget> item){
 			return &item.get() == &widget;
 		});

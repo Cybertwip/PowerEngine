@@ -14,14 +14,11 @@
 
 #include <iostream>
 
-Canvas::Canvas(Widget& parent, nanogui::Color backgroundColor) : nanogui::Canvas(parent, 1, true, true), mBackgroundColor(backgroundColor) {
-}
-
-void Canvas::initialize() {
-	nanogui::Canvas::initialize();
+Canvas::Canvas(nanogui::Widget& parent, nanogui::Screen& screen, nanogui::Color backgroundColor) : nanogui::Canvas(parent, screen, 1, true, true), mBackgroundColor(backgroundColor) {
 	
 	set_background_color(mBackgroundColor);
-	set_fixed_size(parent()->fixed_size());
+	set_fixed_size(parent.fixed_size());
+
 }
 
 void Canvas::draw_contents() {
@@ -42,15 +39,13 @@ void Canvas::process_events() {
 	
 	// schedule here
 	if (mSnapshotCallback) {
-		auto scr = screen();
-		if (scr == nullptr)
-			throw std::runtime_error("Canvas::draw(): could not find parent screen!");
+		auto& scr = screen();
 		
 		void *texture =
-		scr->metal_texture();
+		scr.metal_texture();
 		
 		
-		float pixel_ratio = scr->pixel_ratio();
+		float pixel_ratio = scr.pixel_ratio();
 		
 		nanogui::Vector2i fbsize = m_size;
 		nanogui::Vector2i offset = absolute_position();
@@ -59,7 +54,7 @@ void Canvas::process_events() {
 		
 		std::vector<uint8_t> pixels (fbsize.x() * fbsize.y() * 4);
 		
-		MetalHelper::readPixelsFromMetal(scr->nswin(), texture, offset.x(), offset.y(), fbsize.x(), fbsize.y(), pixels);
+		MetalHelper::readPixelsFromMetal(scr.nswin(), texture, offset.x(), offset.y(), fbsize.x(), fbsize.y(), pixels);
 		
 		std::vector<uint8_t> png_data;
 		
