@@ -44,7 +44,7 @@ Widget::~Widget() {
 		return;
 	}
 	
-	screen()->remove_from_focus(*this);
+	screen().remove_from_focus(*this);
 }
 
 void Widget::set_theme(std::shared_ptr<Theme> theme) {
