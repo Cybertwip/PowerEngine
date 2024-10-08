@@ -48,7 +48,7 @@ TransformPanel::TransformPanel(nanogui::Widget& parent, nanogui::Screen& screen)
 	mXTranslate->set_callback(gatherValuesCallback);
 	
 	mYLabel = std::make_shared<nanogui::Label>(*mTranslatePanel, screen, "Y", "sans-bold");
-	mYTranslate = std::make_shared<nanogui::IntBox<int>>(mTranslatePanel, screen);
+	mYTranslate = std::make_shared<nanogui::IntBox<int>>(*mTranslatePanel, screen);
 	mYTranslate->set_editable(true);
 	mYTranslate->set_value(0);
 	mYTranslate->set_default_value("0");
