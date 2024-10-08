@@ -47,7 +47,7 @@ Widget::~Widget() {
 	screen().remove_from_focus(*this);
 }
 
-void Widget::set_theme(std::shared_ptr<Theme> theme) {
+void Widget::set_theme(std::optional<std::reference_wrapper<Theme>> theme) {
 	m_theme = theme;
 	for (auto child : m_children)
 		child.get().set_theme(theme);

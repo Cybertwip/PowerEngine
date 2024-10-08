@@ -126,6 +126,9 @@ void FileView::populate_file_view() {
 		
 		// Create a container widget for the file item
 		auto item_container = std::make_shared<nanogui::Widget>(std::nullopt, screen());
+		
+		item_container->set_theme(theme());
+		
 		item_container->set_fixed_size(nanogui::Vector2i(150, 150));
 		m_item_containers.push_back(item_container); // Store the reference
 		

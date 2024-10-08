@@ -307,6 +307,8 @@ protected:
 	void *m_nswin = nullptr;
 	std::shared_ptr<Texture> m_depth_texture;
 #endif
+	
+	std::unique_ptr<Theme> m_default_theme;
 };
 
 NAMESPACE_END(nanogui)

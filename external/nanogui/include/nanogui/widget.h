@@ -57,10 +57,10 @@ public:
     void set_layout(std::unique_ptr<Layout> layout) { m_layout = std::move(layout); }
 
     /// Return the \ref Theme used to draw this widget
-	Theme& theme() { return *m_theme; }
+	Theme& theme() { return m_theme->get(); }
 	
     /// Return the \ref Theme used to draw this widget
-    virtual void set_theme(std::shared_ptr<Theme> theme);
+    virtual void set_theme(std::optional<std::reference_wrapper<Theme>> theme);
 
     /// Return the position relative to the parent widget
     const Vector2i &position() const { return m_pos; }
@@ -292,11 +292,11 @@ protected:
      *     \ref nanogui::Widget::m_icon_extra_scale.  This tiered scaling
      *     strategy may not be appropriate with fonts other than ``entypo.ttf``.
      */
-    float icon_scale() const { return m_theme->m_icon_scale * m_icon_extra_scale; }
+    float icon_scale() const { return m_theme->get().m_icon_scale * m_icon_extra_scale; }
 
 protected:
 	std::optional<std::reference_wrapper<Widget>> m_parent;
-    std::shared_ptr<Theme> m_theme;
+    std::optional<std::reference_wrapper<Theme>> m_theme;
 	std::unique_ptr<Layout> m_layout;
     Vector2i m_pos, m_size, m_fixed_size;
     std::vector<std::reference_wrapper<Widget>> m_children;
