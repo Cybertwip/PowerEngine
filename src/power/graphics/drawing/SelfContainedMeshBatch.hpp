@@ -31,7 +31,7 @@ public:
 		size_t mIndexOffset = 0;
 	};
 	
-	SelfContainedMeshBatch(std::shared_ptr<nanogui::RenderPass> renderPass, ShaderWrapper& shader);
+	SelfContainedMeshBatch(nanogui::RenderPass& renderPass, ShaderWrapper& shader);
 	
 	void add_mesh(std::reference_wrapper<Mesh> mesh) override;
 	void clear() override;
@@ -48,7 +48,7 @@ private:
 	void upload_material_data(const std::vector<std::shared_ptr<MaterialProperties>>& materialData);
 	void upload_vertex_data();
 	
-	std::shared_ptr<nanogui::RenderPass> mRenderPass;
+	nanogui::RenderPass& mRenderPass;
 	ShaderWrapper& mShader;
 	
 	std::vector<std::reference_wrapper<Mesh>> mMeshes;

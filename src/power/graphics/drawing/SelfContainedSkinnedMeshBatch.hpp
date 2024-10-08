@@ -30,7 +30,7 @@ public:
 		size_t mIndexOffset = 0;
 	};
 	
-	SelfContainedSkinnedMeshBatch(std::shared_ptr<nanogui::RenderPass> renderPass, ShaderWrapper& shader);
+	SelfContainedSkinnedMeshBatch(nanogui::RenderPass& renderPass, ShaderWrapper& shader);
 	
 	void add_mesh(std::reference_wrapper<SkinnedMesh> mesh);
 	void remove(std::reference_wrapper<SkinnedMesh> mesh);
@@ -46,7 +46,7 @@ private:
 	void append(std::reference_wrapper<SkinnedMesh> meshRef);
 	void upload_vertex_data();
 	
-	std::shared_ptr<nanogui::RenderPass> mRenderPass;
+	nanogui::RenderPass& mRenderPass;
 	ShaderWrapper& mShader;
 	
 	std::vector<std::reference_wrapper<SkinnedMesh>> mMeshes;

@@ -15,7 +15,7 @@ class ShaderManager
 
     std::shared_ptr<nanogui::Shader> get_shader(const std::string &name);
 
-	std::shared_ptr<nanogui::RenderPass> render_pass() const {
+	nanogui::RenderPass& render_pass() const {
 		return mRenderPass;
 	}
 	
