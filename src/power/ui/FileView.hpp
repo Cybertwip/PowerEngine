@@ -4,6 +4,7 @@
 
 #include <chrono>
 #include <memory>
+#include <mutex>
 #include <set>
 #include <string>
 #include <vector>
@@ -34,6 +35,7 @@ private:
 	int get_icon_for_file(const DirectoryNode& node) const;
 	DirectoryNode* find_node_by_path(DirectoryNode& root, const std::string& path) const;
 	void handle_file_interaction(DirectoryNode& node);
+	void safe_refresh(const std::string& filter_text = ""); // Thread-safe refresh helper
 	
 	// Member variables
 	DirectoryNode& m_root_directory_node;
@@ -52,9 +54,10 @@ private:
 	
 	nanogui::Color m_normal_button_color;
 	nanogui::Color m_selected_button_color;
-		
+	
 	// Disable copy and assign
 	FileView(const FileView&) = delete;
 	FileView& operator=(const FileView&) = delete;
+	
+	mutable std::mutex m_mutex; // Mutex to protect shared resources
 };
-

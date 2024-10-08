@@ -6,7 +6,6 @@
 #include <chrono>
 #include <memory>
 
-
 FileView::FileView(nanogui::Widget& parent,
 				   nanogui::Screen& screen,
 				   DirectoryNode& root_directory_node,
@@ -22,23 +21,20 @@ m_normal_button_color(nanogui::Color(200, 200, 200, 255)),
 m_selected_button_color(nanogui::Color(100, 100, 255, 255)),
 m_allowed_extensions(allowed_extensions) {
 	
+	std::lock_guard<std::mutex> lock(m_mutex); // Lock during initialization
+	
 	// Initialize layout
 	auto grid_layout = std::unique_ptr<nanogui::AdvancedGridLayout>(new nanogui::AdvancedGridLayout(
-													  /* columns */ {144, 144, 144, 144, 144, 144, 144, 144}, // Initial column widths (can be adjusted)
-													  /* rows */ {},                // Start with no predefined rows
-													  /* margin */ 8
-													  ));
+																									/* columns */ {144, 144, 144, 144, 144, 144, 144, 144}, // Initial column widths (can be adjusted)
+																									/* rows */ {},                // Start with no predefined rows
+																									/* margin */ 8
+																									));
 	
 	// Optionally, set stretch factors for columns and rows
-	grid_layout->set_col_stretch(0, 1.0f);
-	grid_layout->set_col_stretch(1, 1.0f);
-	grid_layout->set_col_stretch(2, 1.0f);
-	grid_layout->set_col_stretch(3, 1.0f);
-	grid_layout->set_col_stretch(4, 1.0f);
-	grid_layout->set_col_stretch(5, 1.0f);
-	grid_layout->set_col_stretch(6, 1.0f);
-	grid_layout->set_col_stretch(7, 1.0f);
-
+	for (int i = 0; i < 8; ++i) {
+		grid_layout->set_col_stretch(i, 1.0f);
+	}
+	
 	set_layout(std::move(grid_layout));
 	
 	// Initial population
@@ -46,6 +42,7 @@ m_allowed_extensions(allowed_extensions) {
 }
 
 void FileView::refresh(const std::string& filter_text) {
+	std::lock_guard<std::mutex> lock(m_mutex);
 	m_filter_text = filter_text;
 	
 	// Clear existing buttons and selection
@@ -63,7 +60,6 @@ void FileView::refresh(const std::string& filter_text) {
 	if (grid_layout) {
 		grid_layout->shed_anchor();
 	}
-
 	
 	// Clear stored references to previously allocated objects
 	m_item_containers.clear();
@@ -78,20 +74,36 @@ void FileView::refresh(const std::string& filter_text) {
 }
 
 void FileView::set_selected_directory_path(const std::string& path) {
-	m_selected_directory_path = path;
-	refresh();
+	{
+		std::lock_guard<std::mutex> lock(m_mutex);
+		m_selected_directory_path = path;
+	}
+	safe_refresh(); // Use thread-safe refresh
 }
 
 void FileView::set_filter_text(const std::string& filter) {
-	m_filter_text = filter;
-	refresh();
+	{
+		std::lock_guard<std::mutex> lock(m_mutex);
+		m_filter_text = filter;
+	}
+	safe_refresh(); // Use thread-safe refresh
+}
+
+void FileView::safe_refresh(const std::string& filter_text) {
+	// Ensure that refresh is called on the main thread
+	nanogui::async([this, filter_text]() {
+		std::lock_guard<std::mutex> lock(m_mutex);
+		this->refresh(filter_text);
+	});
 }
 
 void FileView::clear_file_buttons() {
+	std::lock_guard<std::mutex> lock(m_mutex);
 	m_file_buttons.clear();
 }
 
 void FileView::populate_file_view() {
+	std::lock_guard<std::mutex> lock(m_mutex);
 	if (m_selected_directory_path.empty()) {
 		return;
 	}
@@ -99,11 +111,11 @@ void FileView::populate_file_view() {
 	// Find the currently selected directory node
 	DirectoryNode* selected_node = find_node_by_path(m_root_directory_node, m_selected_directory_path);
 	
-	selected_node->refresh(m_allowed_extensions);
-	
 	if (!selected_node) {
 		return;
 	}
+	
+	selected_node->refresh(m_allowed_extensions);
 	
 	const int columns = 8; // Adjust as needed for your UI
 	int current_index = 0;
@@ -128,7 +140,6 @@ void FileView::populate_file_view() {
 		auto item_container = std::make_shared<nanogui::Widget>(std::nullopt, screen());
 		
 		item_container->set_theme(theme());
-		
 		item_container->set_fixed_size(nanogui::Vector2i(150, 150));
 		m_item_containers.push_back(item_container); // Store the reference
 		
@@ -204,6 +215,7 @@ void FileView::populate_file_view() {
 		
 		// Set the callback for the icon button to handle interactions
 		icon_button->set_callback([this, icon_button, thumbnail_pixels, child]() {
+			std::lock_guard<std::mutex> lock(m_mutex);
 			int file_icon = get_icon_for_file(*child);
 			
 			if (file_icon == FA_WALKING || file_icon == FA_PERSON_BOOTH || file_icon == FA_OBJECT_GROUP) {
@@ -241,6 +253,7 @@ void FileView::populate_file_view() {
 				drag_widget->perform_layout(screen().nvg_context());
 				
 				screen().set_drag_widget(drag_widget, [this, content, drag_widget, child]() {
+					std::lock_guard<std::mutex> lock(m_mutex);
 					auto path = child->FullPath;
 					
 					// Remove drag widget
@@ -272,6 +285,7 @@ void FileView::populate_file_view() {
 				if (click_duration < 400) { // 400 ms threshold for double-click
 					// Double-click detected
 					nanogui::async([this]() {
+						std::lock_guard<std::mutex> lock(m_mutex);
 						handle_file_interaction(*m_selected_node);
 					});
 					
@@ -286,15 +300,13 @@ void FileView::populate_file_view() {
 				last_click_time = current_click_time;
 			}
 		});
-	
+		
 		// Add the item container as a child widget
 		this->add_child(*item_container.get());
-
+		
 		// Increment the index for the next item
 		current_index++;
 	}
-	
-	
 	
 	// After adding all items, adjust the grid layout rows based on the number of items
 	if (auto grid_layout = dynamic_cast<nanogui::AdvancedGridLayout*>(&this->layout())) {
@@ -314,6 +326,7 @@ void FileView::populate_file_view() {
 }
 
 int FileView::get_icon_for_file(const DirectoryNode& node) const {
+	// No shared resources accessed here; mutex not required
 	if (node.IsDirectory) return FA_FOLDER;
 	if (node.FileName.find(".psk") != std::string::npos) return FA_WALKING;
 	if (node.FileName.find(".pma") != std::string::npos)
@@ -325,6 +338,9 @@ int FileView::get_icon_for_file(const DirectoryNode& node) const {
 }
 
 DirectoryNode* FileView::find_node_by_path(DirectoryNode& root, const std::string& path) const {
+	// Recursive function; protect with mutex if called from multiple threads
+	std::lock_guard<std::mutex> lock(m_mutex);
+	
 	if (root.FullPath == path) {
 		return &root;
 	}
@@ -343,6 +359,8 @@ DirectoryNode* FileView::find_node_by_path(DirectoryNode& root, const std::strin
 }
 
 void FileView::handle_file_interaction(DirectoryNode& node) {
+	std::lock_guard<std::mutex> lock(m_mutex);
+	
 	if (node.IsDirectory) {
 		node.refresh(m_allowed_extensions);
 		m_selected_directory_path = node.FullPath;
@@ -350,20 +368,19 @@ void FileView::handle_file_interaction(DirectoryNode& node) {
 		if (node.FileName.find(".seq") != std::string::npos || node.FileName.find(".cmp") != std::string::npos) {
 			// Logic for opening sequence or composition
 		} else if (node.FileName.find(".fbx") != std::string::npos) {
-			//mActorVisualManager.add_actor(mMeshActorLoader.create_actor(node.FullPath, mDummyAnimationTimeProvider, *mMeshShader, *mSkinnedShader));
+			// mActorVisualManager.add_actor(mMeshActorLoader.create_actor(node.FullPath, mDummyAnimationTimeProvider, *mMeshShader, *mSkinnedShader));
 		}
 		// Handle other file type interactions...
 	}
 	
-//	
-//	// Reset the selection
-//	if (mSelectedButton) {
-//		mSelectedButton->set_background_color(mNormalButtonColor);
-//		mSelectedButton = nullptr;
-//		mSelectedNode = nullptr;
-//	}
+	// Reset the selection
+	if (m_selected_button) {
+		m_selected_button->set_background_color(m_normal_button_color);
+		m_selected_button = nullptr;
+		m_selected_node = nullptr;
+	}
 	
-	nanogui::async([this](){
-		refresh();
+	nanogui::async([this]() {
+		this->safe_refresh();
 	});
 }

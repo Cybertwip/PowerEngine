@@ -5,6 +5,11 @@
 NAMESPACE_BEGIN(nanogui)
 
 void Texture::init() {
+	if (m_sampler_state_handle) {
+		(void)(__bridge_transfer id<MTLSamplerState>)m_sampler_state_handle;
+		m_sampler_state_handle = nullptr;
+	}
+
     Vector2i size = m_size;
     m_size = 0;
     resize(size);
@@ -43,8 +48,14 @@ void Texture::init() {
 }
 
 Texture::~Texture() {
-    (void) (__bridge_transfer id<MTLTexture>) m_texture_handle;
-    (void) (__bridge_transfer id<MTLSamplerState>) m_sampler_state_handle;
+	if (m_texture_handle) {
+		(void)(__bridge_transfer id<MTLTexture>)m_texture_handle;
+		m_texture_handle = nullptr;
+	}
+	if (m_sampler_state_handle) {
+		(void)(__bridge_transfer id<MTLSamplerState>)m_sampler_state_handle;
+		m_sampler_state_handle = nullptr;
+	}
 }
 
 void Texture::upload(const uint8_t *data) {

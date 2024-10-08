@@ -248,7 +248,9 @@ ResourcesPanel::~ResourcesPanel() {
 }
 
 void ResourcesPanel::refresh_file_view() {
-	mFileView->refresh(mFilterText);
+	nanogui::async([this](){
+		mFileView->refresh(mFilterText);
+	});
 }
 
 int ResourcesPanel::get_icon_for_file(const DirectoryNode& node) {
