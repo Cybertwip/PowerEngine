@@ -9,12 +9,10 @@
 #include "actors/Actor.hpp"
 #include "actors/ActorManager.hpp"
 
-RenderCommon::RenderCommon(nanogui::Widget&, entt::registry& registry,
-						   ActorManager& actorManager, CameraManager& cameraManager) : nanogui::Widget(parent), mActorManager(actorManager), mCameraManager(cameraManager) {
-}
-
-void RenderCommon::initialize() {
-	mCanvas = std::make_shared<Canvas>(*this, nanogui::Color{70, 130, 180, 255});
+RenderCommon::RenderCommon(nanogui::Widget& parent, nanogui::Screen& screen, entt::registry& registry,
+						   ActorManager& actorManager, CameraManager& cameraManager) : nanogui::Widget(parent, screen), mActorManager(actorManager), mCameraManager(cameraManager) {
+	
+	mCanvas = std::make_shared<Canvas>(*this, screen, nanogui::Color{70, 130, 180, 255});
 	
 	mCanvas->set_fixed_size(parent()->fixed_size());
 	
