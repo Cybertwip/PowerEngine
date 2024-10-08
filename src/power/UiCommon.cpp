@@ -67,7 +67,7 @@ UiCommon::UiCommon(nanogui::Widget& parent, nanogui::Screen& screen, ActorManage
 	
 	mAnimationPanel = std::make_shared<AnimationPanel>(*mRightWrapper, screen);
 	
-	mHierarchyPanel = std::make_shared<HierarchyPanel>(*mRightWrapper, screen, mTransformPanel, mAnimationPanel, mActorManager);
+	mHierarchyPanel = std::make_shared<HierarchyPanel>(*mRightWrapper, screen, mScenePanel, mTransformPanel, mAnimationPanel, mActorManager);
 	
 	//	auto promptbox = new PromptBox(*rightWrapper);
 	//	promptbox->inc_ref();
