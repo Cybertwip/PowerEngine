@@ -54,79 +54,79 @@ static std::string GenerateUniqueFilename(const std::string& baseDir, const std:
 
 PromptWindow::PromptWindow(nanogui::Screen& parent, nanogui::Screen& screen, ResourcesPanel& resourcesPanel, DeepMotionApiClient& deepMotionApiClient, nanogui::RenderPass& renderpass, ShaderManager& shaderManager)
 : nanogui::Window(parent, screen), mResourcesPanel(resourcesPanel), mDeepMotionApiClient(deepMotionApiClient), mDummyAnimationTimeProvider(60 * 30),
-	mRenderPass(renderpass) { // update with proper duration, dynamically after loading the animation
+mRenderPass(renderpass) { // update with proper duration, dynamically after loading the animation
 	
 	set_fixed_size(nanogui::Vector2i(400, 512)); // Adjusted height for additional UI elements
 	set_layout(std::make_unique<nanogui::BoxLayout>(nanogui::Orientation::Vertical, nanogui::Alignment::Middle));
 	set_title("Animation Prompt");
+	
+	// Close Button
+	mCloseButton = std::make_shared<nanogui::Button>(button_panel(), screen, "X");
+	mCloseButton->set_fixed_size(nanogui::Vector2i(20, 20));
+	mCloseButton->set_callback([this]() {
+		this->set_visible(false);
+		this->set_modal(false);
+		mPreviewCanvas->set_update(false);
 		
-		// Close Button
-		mCloseButton = std::make_shared<nanogui::Button>(button_panel(), "X");
-		mCloseButton->set_fixed_size(nanogui::Vector2i(20, 20));
-		mCloseButton->set_callback([this]() {
-			this->set_visible(false);
-			this->set_modal(false);
-			mPreviewCanvas->set_update(false);
-			
-			// Disable Import Button when closing the window
-			nanogui::async([this]() {
-				mImportButton->set_enabled(false);
-			});
-			
+		// Disable Import Button when closing the window
+		nanogui::async([this]() {
+			mImportButton->set_enabled(false);
 		});
 		
-		// Preview Canvas
-		mPreviewCanvas = std::make_shared<SharedSelfContainedMeshCanvas>(*this);
-		mPreviewCanvas->set_fixed_size(nanogui::Vector2i(256, 256));
-		mPreviewCanvas->set_aspect_ratio(1.0f);
-		
-		// Mesh and Skinned Mesh Batches
-		mMeshBatch = std::make_unique<SelfContainedMeshBatch>(mRenderPass, mPreviewCanvas->get_mesh_shader());
-		mSkinnedMeshBatch = std::make_unique<SelfContainedSkinnedMeshBatch>(mRenderPass, mPreviewCanvas->get_skinned_mesh_shader());
-		mBatchUnit = std::make_unique<BatchUnit>(*mMeshBatch, *mSkinnedMeshBatch);
-		mMeshActorBuilder = std::make_unique<MeshActorBuilder>(*mBatchUnit);
-		mMeshActorImporter = std::make_unique<MeshActorImporter>();
-		
-		// Add Text Box for User Input (e.g., Animation Name)
-		mInputPanel = std::make_shared<nanogui::Widget>(*this, screen);
-		mInputPanel->set_layout(std::make_unique<nanogui::BoxLayout>(nanogui::Orientation::Vertical, nanogui::Alignment::Middle, 10, 10));
-		
-		mInputLabel = std::make_shared<nanogui::Label>(*mInputPanel, screen, "Preview", "sans-bold");
-		mInputTextBox = std::make_shared<nanogui::TextBox>(*mInputPanel, screen, "");
-		mInputTextBox->set_fixed_size(nanogui::Vector2i(256, 96));
-		
-		mInputTextBox->set_alignment(nanogui::TextBox::Alignment::Left);
-		
-		mInputTextBox->set_placeholder("Enter the animation generation prompt");
-		mInputTextBox->set_font_size(14);
-		mInputTextBox->set_editable(true);
-		
-		mImportPanel = std::make_shared<nanogui::Widget>(*this, screen);
-		mImportPanel->set_layout(std::make_unique<nanogui::BoxLayout>(nanogui::Orientation::Horizontal, nanogui::Alignment::Minimum, 0, 4));
-		
-		// Add Submit Button
-		mSubmitButton = std::make_shared<nanogui::Button>(*mImportPanel, screen, "Submit");
-		mSubmitButton->set_callback([this]() {
-			nanogui::async([this]() { this->SubmitPromptAsync(); });
+	});
+	
+	// Preview Canvas
+	mPreviewCanvas = std::make_shared<SharedSelfContainedMeshCanvas>(*this, screen);
+	mPreviewCanvas->set_fixed_size(nanogui::Vector2i(256, 256));
+	mPreviewCanvas->set_aspect_ratio(1.0f);
+	
+	// Mesh and Skinned Mesh Batches
+	mMeshBatch = std::make_unique<SelfContainedMeshBatch>(mRenderPass, mPreviewCanvas->get_mesh_shader());
+	mSkinnedMeshBatch = std::make_unique<SelfContainedSkinnedMeshBatch>(mRenderPass, mPreviewCanvas->get_skinned_mesh_shader());
+	mBatchUnit = std::make_unique<BatchUnit>(*mMeshBatch, *mSkinnedMeshBatch);
+	mMeshActorBuilder = std::make_unique<MeshActorBuilder>(*mBatchUnit);
+	mMeshActorImporter = std::make_unique<MeshActorImporter>();
+	
+	// Add Text Box for User Input (e.g., Animation Name)
+	mInputPanel = std::make_shared<nanogui::Widget>(*this, screen);
+	mInputPanel->set_layout(std::make_unique<nanogui::BoxLayout>(nanogui::Orientation::Vertical, nanogui::Alignment::Middle, 10, 10));
+	
+	mInputLabel = std::make_shared<nanogui::Label>(*mInputPanel, screen, "Preview", "sans-bold");
+	mInputTextBox = std::make_shared<nanogui::TextBox>(*mInputPanel, screen, "");
+	mInputTextBox->set_fixed_size(nanogui::Vector2i(256, 96));
+	
+	mInputTextBox->set_alignment(nanogui::TextBox::Alignment::Left);
+	
+	mInputTextBox->set_placeholder("Enter the animation generation prompt");
+	mInputTextBox->set_font_size(14);
+	mInputTextBox->set_editable(true);
+	
+	mImportPanel = std::make_shared<nanogui::Widget>(*this, screen);
+	mImportPanel->set_layout(std::make_unique<nanogui::BoxLayout>(nanogui::Orientation::Horizontal, nanogui::Alignment::Minimum, 0, 4));
+	
+	// Add Submit Button
+	mSubmitButton = std::make_shared<nanogui::Button>(*mImportPanel, screen, "Submit");
+	mSubmitButton->set_callback([this]() {
+		nanogui::async([this]() { this->SubmitPromptAsync(); });
+	});
+	mSubmitButton->set_tooltip("Submit the animation import");
+	mSubmitButton->set_fixed_width(208);
+	
+	mImportButton = std::make_shared<nanogui::Button>(*mImportPanel, screen, "");
+	mImportButton->set_icon(FA_SAVE);
+	mImportButton->set_enabled(false);
+	mImportButton->set_callback([this]() {
+		nanogui::async([this]() { this->ImportIntoProjectAsync();
 		});
-		mSubmitButton->set_tooltip("Submit the animation import");
-		mSubmitButton->set_fixed_width(208);
-		
-		mImportButton = std::make_shared<nanogui::Button>(*mImportPanel, screen, "");
-		mImportButton->set_icon(FA_SAVE);
-		mImportButton->set_enabled(false);
-		mImportButton->set_callback([this]() {
-			nanogui::async([this]() { this->ImportIntoProjectAsync();
-			});
-		});
-		mImportButton->set_tooltip("Import the generated animation");
-		mImportButton->set_fixed_width(44);
-		
-		mMeshActorExporter = std::make_unique<MeshActorExporter>();
-		
-		// Initialize Status Label
-		mStatusLabel = std::make_shared<nanogui::Label>(*this, screen, "Status: Idle", "sans-bold");
-		mStatusLabel->set_fixed_size(nanogui::Vector2i(300, 20));
+	});
+	mImportButton->set_tooltip("Import the generated animation");
+	mImportButton->set_fixed_width(44);
+	
+	mMeshActorExporter = std::make_unique<MeshActorExporter>();
+	
+	// Initialize Status Label
+	mStatusLabel = std::make_shared<nanogui::Label>(*this, screen, "Status: Idle", "sans-bold");
+	mStatusLabel->set_fixed_size(nanogui::Vector2i(300, 20));
 }
 
 void PromptWindow::Preview(const std::string& path, const std::string& directory) {
@@ -137,7 +137,7 @@ void PromptWindow::Preview(const std::string& path, const std::string& directory
 	mOutputDirectory = directory;
 	
 	mImportButton->set_enabled(false);
-
+	
 	std::filesystem::path filePath(mActorPath);
 	std::string extension = filePath.extension().string();
 	
@@ -162,7 +162,7 @@ void PromptWindow::Preview(const std::string& path, const std::string& directory
 	mOutputDirectory = directory;
 	
 	mImportButton->set_enabled(false);
-
+	
 	std::filesystem::path filePath(mActorPath);
 	std::string extension = filePath.extension().string();
 	
@@ -209,7 +209,7 @@ void PromptWindow::SubmitPromptAsync() {
 	
 	// Disable Import Button since a new submission is starting
 	mImportButton->set_enabled(false);
-
+	
 	// Update Status
 	{
 		std::lock_guard<std::mutex> lock(mStatusMutex);
@@ -497,14 +497,14 @@ void PromptWindow::PollJobStatusAsync(const std::string& request_id) {
 													CompressedSerialization::Deserializer animationDeserializer;
 													
 													animationDeserializer.initialize(animationCompressedData);
-								
-								auto animation = std::make_unique<Animation>();
 													
-								animation->deserialize(animationDeserializer);
+													auto animation = std::make_unique<Animation>();
 													
-									auto playbackData = std::make_shared<PlaybackData>(std::make_shared<Skeleton>(), std::move(animation));
+													animation->deserialize(animationDeserializer);
 													
-																										Preview(mActorPath, mOutputDirectory, deserializer, playbackData);
+													auto playbackData = std::make_shared<PlaybackData>(std::make_shared<Skeleton>(), std::move(animation));
+													
+													Preview(mActorPath, mOutputDirectory, deserializer, playbackData);
 													
 													break;
 												}
@@ -519,7 +519,7 @@ void PromptWindow::PollJobStatusAsync(const std::string& request_id) {
 													mImportButton->set_enabled(true);
 													mSubmitButton->set_enabled(true); // Re-enable Submit button
 												});
-
+												
 											} else {
 												std::cerr << "Failed to download animations. HTTP Status: " << (res_download ? std::to_string(res_download->status) : "No Response") << std::endl;
 												{
@@ -584,17 +584,17 @@ void PromptWindow::PollJobStatusAsync(const std::string& request_id) {
 }
 
 void PromptWindow::ImportIntoProjectAsync() {
-//	std::string animationName = mInputTextBox->value();
-//	if (animationName.empty()) {
-//		// Optionally show an error message to the user
-//		std::cerr << "Animation name is empty." << std::endl;
-//		{
-//			std::lock_guard<std::mutex> lock(mStatusMutex);
-//			mStatusLabel->set_caption("Status: Animation name is empty.");
-//		}
-//		return;
-//	} // maybe a save dialog
-	 
+	//	std::string animationName = mInputTextBox->value();
+	//	if (animationName.empty()) {
+	//		// Optionally show an error message to the user
+	//		std::cerr << "Animation name is empty." << std::endl;
+	//		{
+	//			std::lock_guard<std::mutex> lock(mStatusMutex);
+	//			mStatusLabel->set_caption("Status: Animation name is empty.");
+	//		}
+	//		return;
+	//	} // maybe a save dialog
+	
 	mPreviewCanvas->take_snapshot([this](std::vector<uint8_t>& pixels) {
 		
 		if (mSerializedPrompt.has_value()) {
@@ -613,7 +613,7 @@ void PromptWindow::ImportIntoProjectAsync() {
 			mSerializedPrompt.value()->write_header_uint64(pixels.size());
 			
 			mSerializedPrompt.value()->write_header_raw(pixels.data(), pixels.size());
-
+			
 			// Proceed with serialization
 			mSerializedPrompt.value()->write_header_uint64(pixels.size());
 			mSerializedPrompt.value()->write_header_raw(pixels.data(), pixels.size()); // Corrected variable name
