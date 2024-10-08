@@ -128,8 +128,8 @@ UiManager::UiManager(nanogui::Screen& screen, std::shared_ptr<IActorSelectedRegi
 	});
 	
 	// Lambda to read from framebuffer
-	auto readFromFramebuffer = [&canvas](int width, int height, int x, int y) -> int {
-		auto viewport = canvas->render_pass().viewport();
+	auto readFromFramebuffer = [this](int width, int height, int x, int y) -> int {
+		auto viewport = mCanvas->render_pass().viewport();
 		float scaleX = viewport.second[0] / static_cast<float>(width);
 		float scaleY = viewport.second[1] / static_cast<float>(height);
 		
@@ -154,8 +154,8 @@ UiManager::UiManager(nanogui::Screen& screen, std::shared_ptr<IActorSelectedRegi
 		glReadBuffer(GL_COLOR_ATTACHMENT0);
 		glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
 #elif defined(NANOGUI_USE_METAL)
-		auto* attachment_texture = dynamic_cast<nanogui::Texture*>(&canvas->render_pass().targets()[3]->get());
-		MetalHelper::readPixelsFromMetal(canvas->screen().nswin(), attachment_texture->texture_handle(),
+		auto* attachment_texture = dynamic_cast<nanogui::Texture*>(&mCanvas->render_pass().targets()[3]->get());
+		MetalHelper::readPixelsFromMetal(mCanvas->screen().nswin(), attachment_texture->texture_handle(),
 										 adjusted_x, adjusted_y, image_width, image_height, pixels);
 #endif
 		// Find the first non-zero pixel value
@@ -168,7 +168,7 @@ UiManager::UiManager(nanogui::Screen& screen, std::shared_ptr<IActorSelectedRegi
 	};
 	
 	// Register click callback with ScenePanel
-	scenePanel->register_click_callback(GLFW_MOUSE_BUTTON_1, [this, &canvas, &toolbox, readFromFramebuffer](bool down, int width, int height, int x, int y) {
+	scenePanel->register_click_callback(GLFW_MOUSE_BUTTON_1, [this, toolbox, readFromFramebuffer](bool down, int width, int height, int x, int y) {
 		if (toolbox->contains(nanogui::Vector2f(x, y))) {
 			return;
 		}
