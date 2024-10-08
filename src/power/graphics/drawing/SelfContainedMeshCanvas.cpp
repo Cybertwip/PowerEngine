@@ -23,11 +23,11 @@ nanogui::Matrix4f glm_to_nanogui(glm::mat4 glmMatrix) {
 }
 // In SelfContainedMeshCanvas.cpp, modify the constructor to load and assign the mesh shader
 SelfContainedMeshCanvas::SelfContainedMeshCanvas(nanogui::Widget& parent, nanogui::Screen& screen)
-: nanogui::Canvas(parent, screen, 1, true, true), mCurrentTime(0), mCamera(mRegistry), mUpdate(true) {
+: nanogui::Canvas(parent, screen, 1, true, true), mCurrentTime(0), mCamera(mRegistry), mUpdate(true), mShaderManager(ShaderManager(*this)) {
 	
 	set_background_color(nanogui::Color{70, 130, 180, 255});
 	
-	mShaderManager = ShaderManager(*this);
+	
 	
 	mSkinnedMeshPreviewShader = ShaderWrapper(mShaderManager->load_shader("skinned_mesh_preview",
 																		  "internal/shaders/metal/preview_diffuse_skinned_vs.metal",
