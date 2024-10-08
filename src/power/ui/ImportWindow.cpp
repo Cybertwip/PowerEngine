@@ -21,7 +21,7 @@
 
 #include <sstream>
 
-ImportWindow::ImportWindow(nanogui::Screen& parent, nanogui::Screen& screen, std::shared_ptr<ResourcesPanel> resourcesPanel, nanogui::RenderPass& renderpass, ShaderManager& shaderManager) : nanogui::Window(parent, screen), mResourcesPanel(resourcesPanel), mDummyAnimationTimeProvider(60 * 30), mRenderPass(renderpass) {
+ImportWindow::ImportWindow(nanogui::Screen& parent, nanogui::Screen& screen, ResourcesPanel& resourcesPanel, nanogui::RenderPass& renderpass, ShaderManager& shaderManager) : nanogui::Window(parent, screen), mResourcesPanel(resourcesPanel), mDummyAnimationTimeProvider(60 * 30), mRenderPass(renderpass) {
 	
 	set_fixed_size(nanogui::Vector2i(400, 320));
 	set_layout(std::make_unique<nanogui::GroupLayout>());
@@ -151,7 +151,7 @@ void ImportWindow::ImportIntoProject() {
 		}
 
 		nanogui::async([this](){
-			mResourcesPanel->refresh_file_view();
+			mResourcesPanel.refresh_file_view();
 		});
 		
 		mPreviewCanvas->set_update(false);

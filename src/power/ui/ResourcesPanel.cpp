@@ -212,7 +212,7 @@ mShaderManager(shaderManager)
 	});
 	
 	// Add the Filter input box
-	mFilterBox = std::make_shared<nanogui::TextBox>(*mToolbar, "");
+	mFilterBox = std::make_shared<nanogui::TextBox>(*mToolbar, screen, "");
 	mFilterBox->set_placeholder("Filter");
 	mFilterBox->set_editable(true);
 	mFilterBox->set_fixed_size(nanogui::Vector2i(150, 25));
