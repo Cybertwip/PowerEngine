@@ -383,7 +383,7 @@ void AdvancedGridLayout::perform_layout(NVGcontext *ctx, Widget& widget) {
         for (auto& w : widget.children()) {
             if (!w.get().visible() || dynamic_cast<Window*>(&w.get()) != nullptr)
                 continue;
-            Anchor anchor = this->anchor(w);
+            Anchor anchor = this->anchor(w.get());
 
             int item_pos = grid[axis][anchor.pos[axis]];
             int cell_size  = grid[axis][anchor.pos[axis] + anchor.size[axis]] - item_pos;

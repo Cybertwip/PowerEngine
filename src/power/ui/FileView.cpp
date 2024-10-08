@@ -137,7 +137,7 @@ void FileView::populate_file_view() {
 		// Retrieve the grid layout from this widget
 		auto grid_layout = dynamic_cast<nanogui::AdvancedGridLayout*>(&this->layout());
 		if (grid_layout) {
-			grid_layout->set_anchor(*item_container, anchor);
+			grid_layout->set_anchor(*item_container, std::move(anchor));
 		}
 		
 		// Determine the appropriate icon for the file type
@@ -277,10 +277,7 @@ void FileView::populate_file_view() {
 				last_click_time = current_click_time;
 			}
 		});
-		
-		// Add the item container as a child widget
-		this->add_child(*item_container.get());
-		
+				
 		// Increment the index for the next item
 		current_index++;
 	}

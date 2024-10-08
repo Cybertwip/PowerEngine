@@ -230,26 +230,7 @@ mShaderManager(shaderManager)
 	});
 	
 	// Create the file view below the toolbar
-	mFileView = std::make_shared<FileView>(*this, screen, mRootDirectoryNode);
-	auto gridLayout = std::unique_ptr<nanogui::AdvancedGridLayout>(new nanogui::AdvancedGridLayout(
-																								   /* columns */ {144, 144, 144, 144, 144, 144, 144, 144}, // Initial column widths (can be adjusted)
-																								   /* rows */ {},                // Start with no predefined rows
-																								   /* margin */ 8
-																								   ));
-	
-	// Optionally, set stretch factors for columns and rows
-	gridLayout->set_col_stretch(0, 1.0f);
-	gridLayout->set_col_stretch(1, 1.0f);
-	gridLayout->set_col_stretch(2, 1.0f);
-	gridLayout->set_col_stretch(3, 1.0f);
-	gridLayout->set_col_stretch(4, 1.0f);
-	gridLayout->set_col_stretch(5, 1.0f);
-	gridLayout->set_col_stretch(6, 1.0f);
-	gridLayout->set_col_stretch(7, 1.0f);
-	
-	
-	mFileView->set_layout(std::move(gridLayout));
-	
+	mFileView = std::make_shared<FileView>(*this, screen, mRootDirectoryNode);	
 	
 	mSelectedDirectoryPath = fs::current_path().string();
 	mFilterText = "";
