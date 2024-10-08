@@ -1,10 +1,12 @@
 #pragma once
 
 #include <nanogui/nanogui.h>
-#include <vector>
-#include <string>
-#include <memory>
+
 #include <chrono>
+#include <memory>
+#include <set>
+#include <string>
+#include <vector>
 
 // Forward declarations
 struct DirectoryNode;
@@ -15,11 +17,11 @@ public:
 	FileView(nanogui::Widget& parent,
 			 nanogui::Screen& screen,
 			 DirectoryNode& root_directory_node,
-			 const std::string& selected_directory_path,
-			 const std::string& filter_text = "");
+			 const std::string& filter_text = "",
+			 const std::set<std::string>& allowed_extensions = {".psk", ".pma", ".pan", ".psq", ".psn"});
 	
 	// Refresh the file view to display the latest contents
-	void refresh();
+	void refresh(const std::string& filter_text = "");
 	
 	// Setters for dynamic properties
 	void set_selected_directory_path(const std::string& path);
@@ -30,13 +32,14 @@ private:
 	void clear_file_buttons();
 	void populate_file_view();
 	int get_icon_for_file(const DirectoryNode& node) const;
-	const DirectoryNode* find_node_by_path(const DirectoryNode& root, const std::string& path) const;
-	void handle_file_interaction(const DirectoryNode& node);
+	DirectoryNode* find_node_by_path(DirectoryNode& root, const std::string& path) const;
+	void handle_file_interaction(DirectoryNode& node);
 	
 	// Member variables
 	DirectoryNode& m_root_directory_node;
 	std::string m_selected_directory_path;
 	std::string m_filter_text;
+	std::set<std::string> m_allowed_extensions;
 	
 	// Containers to hold shared_ptr references
 	std::vector<std::shared_ptr<nanogui::Button>> m_file_buttons;

@@ -10,33 +10,51 @@
 FileView::FileView(nanogui::Widget& parent,
 				   nanogui::Screen& screen,
 				   DirectoryNode& root_directory_node,
-				   const std::string& selected_directory_path,
-				   const std::string& filter_text)
+				   const std::string& filter_text,
+				   const std::set<std::string>& allowed_extensions)
 : nanogui::Widget(parent, screen),
 m_root_directory_node(root_directory_node),
-m_selected_directory_path(selected_directory_path),
+m_selected_directory_path(m_root_directory_node.FullPath),
 m_filter_text(filter_text),
 m_selected_button(nullptr),
 m_selected_node(nullptr),
 m_normal_button_color(nanogui::Color(200, 200, 200, 255)),
-m_selected_button_color(nanogui::Color(100, 100, 255, 255)) {
+m_selected_button_color(nanogui::Color(100, 100, 255, 255)),
+m_allowed_extensions(allowed_extensions) {
 	
 	// Initialize layout
-	auto grid_layout = std::make_unique<nanogui::AdvancedGridLayout>();
+	auto grid_layout = std::unique_ptr<nanogui::AdvancedGridLayout>(new nanogui::AdvancedGridLayout(
+													  /* columns */ {144, 144, 144, 144, 144, 144, 144, 144}, // Initial column widths (can be adjusted)
+													  /* rows */ {},                // Start with no predefined rows
+													  /* margin */ 8
+													  ));
+	
+	// Optionally, set stretch factors for columns and rows
+	gridLayout->set_col_stretch(0, 1.0f);
+	gridLayout->set_col_stretch(1, 1.0f);
+	gridLayout->set_col_stretch(2, 1.0f);
+	gridLayout->set_col_stretch(3, 1.0f);
+	gridLayout->set_col_stretch(4, 1.0f);
+	gridLayout->set_col_stretch(5, 1.0f);
+	gridLayout->set_col_stretch(6, 1.0f);
+	gridLayout->set_col_stretch(7, 1.0f);
+
 	set_layout(std::move(grid_layout));
 	
 	// Initial population
 	refresh();
 }
 
-void FileView::refresh() {
+void FileView::refresh(const std::string& filter_text) {
+	m_filter_text = filter_text;
+	
 	// Clear existing buttons and selection
 	clear_file_buttons();
 	m_selected_button = nullptr;
 	m_selected_node = nullptr;
 	
 	// Refresh the root directory node to get the latest contents
-	m_root_directory_node.refresh();
+	m_root_directory_node.refresh(m_allowed_extensions);
 	
 	// Clear existing child widgets
 	shed_children();
@@ -73,7 +91,10 @@ void FileView::populate_file_view() {
 	}
 	
 	// Find the currently selected directory node
-	const DirectoryNode* selected_node = find_node_by_path(m_root_directory_node, m_selected_directory_path);
+	DirectoryNode* selected_node = find_node_by_path(m_root_directory_node, m_selected_directory_path);
+	
+	selected_node->refresh(m_allowed_extensions);
+	
 	if (!selected_node) {
 		return;
 	}
@@ -235,26 +256,26 @@ void FileView::populate_file_view() {
 			// Handle double-click for action
 			static std::chrono::time_point<std::chrono::high_resolution_clock> last_click_time = std::chrono::time_point<std::chrono::high_resolution_clock>::min();
 			auto current_click_time = std::chrono::high_resolution_clock::now();
-//			
-//			if (last_click_time != std::chrono::high_resolution_clock::min()) {
-//				auto click_duration = std::chrono::duration_cast<std::chrono::milliseconds>(current_click_time - last_click_time).count();
-//				
-//				if (click_duration < 400) { // 400 ms threshold for double-click
-//					// Double-click detected
-//					nanogui::async([this]() {
-//						handle_file_interaction(*m_selected_node);
-//					});
-//					
-//					// Reset the double-click state
-//					last_click_time = std::chrono::time_point<std::chrono::high_resolution_clock>::min();
-//				} else {
-//					// Update last_click_time for the next click
-//					last_click_time = current_click_time;
-//				}
-//			} else {
-//				// First click: update last_click_time
-//				last_click_time = current_click_time;
-//			}
+			
+			if (last_click_time != std::chrono::time_point<std::chrono::high_resolution_clock>::min()) {
+				auto click_duration = std::chrono::duration_cast<std::chrono::milliseconds>(current_click_time - last_click_time).count();
+				
+				if (click_duration < 400) { // 400 ms threshold for double-click
+					// Double-click detected
+					nanogui::async([this]() {
+						handle_file_interaction(*m_selected_node);
+					});
+					
+					// Reset the double-click state
+					last_click_time = std::chrono::time_point<std::chrono::high_resolution_clock>::min();
+				} else {
+					// Update last_click_time for the next click
+					last_click_time = current_click_time;
+				}
+			} else {
+				// First click: update last_click_time
+				last_click_time = current_click_time;
+			}
 		});
 		
 		// Add the item container as a child widget
@@ -282,16 +303,17 @@ void FileView::populate_file_view() {
 }
 
 int FileView::get_icon_for_file(const DirectoryNode& node) const {
-	// Implement your logic to determine the icon based on the file type
-	// For example:
-	if (node.IsDirectory) {
-		return FA_FOLDER; // Replace with actual icon constant
-	} 
-	// Add more conditions as needed
+	if (node.IsDirectory) return FA_FOLDER;
+	if (node.FileName.find(".psk") != std::string::npos) return FA_WALKING;
+	if (node.FileName.find(".pma") != std::string::npos)
+		return FA_OBJECT_GROUP;
+	if (node.FileName.find(".pan") != std::string::npos) return FA_PERSON_BOOTH;
+	
+	// More conditions for other file types...
 	return FA_FILE; // Default icon
 }
 
-const DirectoryNode* FileView::find_node_by_path(const DirectoryNode& root, const std::string& path) const {
+DirectoryNode* FileView::find_node_by_path(DirectoryNode& root, const std::string& path) const {
 	if (root.FullPath == path) {
 		return &root;
 	}
@@ -300,7 +322,7 @@ const DirectoryNode* FileView::find_node_by_path(const DirectoryNode& root, cons
 			return child.get();
 		}
 		if (child->IsDirectory) {
-			const DirectoryNode* found = find_node_by_path(*child, path);
+			DirectoryNode* found = find_node_by_path(*child, path);
 			if (found) {
 				return found;
 			}
@@ -309,7 +331,28 @@ const DirectoryNode* FileView::find_node_by_path(const DirectoryNode& root, cons
 	return nullptr;
 }
 
-void FileView::handle_file_interaction(const DirectoryNode& node) {
-	// Implement the action to perform on double-click
-	// For example, opening a file or navigating into a directory
+void FileView::handle_file_interaction(DirectoryNode& node) {
+	if (node.IsDirectory) {
+		node.refresh(m_allowed_extensions);
+		m_selected_directory_path = node.FullPath;
+	} else {
+		if (node.FileName.find(".seq") != std::string::npos || node.FileName.find(".cmp") != std::string::npos) {
+			// Logic for opening sequence or composition
+		} else if (node.FileName.find(".fbx") != std::string::npos) {
+			//mActorVisualManager.add_actor(mMeshActorLoader.create_actor(node.FullPath, mDummyAnimationTimeProvider, *mMeshShader, *mSkinnedShader));
+		}
+		// Handle other file type interactions...
+	}
+	
+//	
+//	// Reset the selection
+//	if (mSelectedButton) {
+//		mSelectedButton->set_background_color(mNormalButtonColor);
+//		mSelectedButton = nullptr;
+//		mSelectedNode = nullptr;
+//	}
+	
+	nanogui::async([this](){
+		refresh();
+	});
 }

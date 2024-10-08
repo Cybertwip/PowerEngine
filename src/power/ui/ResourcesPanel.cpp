@@ -5,6 +5,7 @@
 #include "actors/IActorSelectedRegistry.hpp"
 #include "filesystem/MeshActorImporter.hpp"
 #include "filesystem/MeshActorExporter.hpp"
+#include "ui/FileView.hpp"
 #include "ui/ImportWindow.hpp"
 #include "ui/MeshPicker.hpp"
 #include "ui/UiManager.hpp"
@@ -229,7 +230,7 @@ mShaderManager(shaderManager)
 	});
 	
 	// Create the file view below the toolbar
-	mFileView = std::make_shared<nanogui::Widget>(*this, screen);
+	mFileView = std::make_shared<FileView>(*this, screen, mRootDirectoryNode);
 	auto gridLayout = std::unique_ptr<nanogui::AdvancedGridLayout>(new nanogui::AdvancedGridLayout(
 																								   /* columns */ {144, 144, 144, 144, 144, 144, 144, 144}, // Initial column widths (can be adjusted)
 																								   /* rows */ {},                // Start with no predefined rows
@@ -266,8 +267,7 @@ ResourcesPanel::~ResourcesPanel() {
 }
 
 void ResourcesPanel::refresh_file_view() {
-	
-	
+	mFileView->refresh(mFilterText);
 }
 
 int ResourcesPanel::get_icon_for_file(const DirectoryNode& node) {

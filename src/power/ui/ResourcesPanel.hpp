@@ -12,6 +12,7 @@
 class IActorVisualManager;
 class DeepMotionApiClient;
 class DeepMotionSettingsWindow;
+class FileView;
 class ImportWindow;
 class MeshActorImporter;
 class MeshActorExporter;
@@ -50,7 +51,7 @@ private:
 	DirectoryNode& mRootDirectoryNode;
 	std::string mSelectedDirectoryPath;
 	
-	std::shared_ptr<Widget> mFileView;
+	std::shared_ptr<FileView> mFileView;
 	
 	// New UI elements
 	std::shared_ptr<Widget> mToolbar;
