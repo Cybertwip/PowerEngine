@@ -204,7 +204,7 @@ mShaderManager(shaderManager)
 	});
 	
 	// Add the Export Assets button
-	mExportButton = std::make_shared<nanogui::Button>(mToolbar, "Export");
+	mExportButton = std::make_shared<nanogui::Button>(*mToolbar, screen, "Export");
 	mExportButton->set_icon(FA_DOWNLOAD);
 	mExportButton->set_tooltip("Export Assets");
 	mExportButton->set_callback([this]() {
