@@ -88,11 +88,11 @@ PromptWindow::PromptWindow(nanogui::Screen& parent, nanogui::Screen& screen, Res
 		mMeshActorImporter = std::make_unique<MeshActorImporter>();
 		
 		// Add Text Box for User Input (e.g., Animation Name)
-		mInputPanel = std::make_shared<nanogui::Widget>(*this);
+		mInputPanel = std::make_shared<nanogui::Widget>(*this, screen);
 		mInputPanel->set_layout(std::make_unique<nanogui::BoxLayout>(nanogui::Orientation::Vertical, nanogui::Alignment::Middle, 10, 10));
 		
-		mInputLabel = std::make_shared<nanogui::Label>(mInputPanel, "Preview", "sans-bold");
-		mInputTextBox = std::make_shared<nanogui::TextBox>(mInputPanel, "");
+		mInputLabel = std::make_shared<nanogui::Label>(*mInputPanel, screen, "Preview", "sans-bold");
+		mInputTextBox = std::make_shared<nanogui::TextBox>(*mInputPanel, screen, "");
 		mInputTextBox->set_fixed_size(nanogui::Vector2i(256, 96));
 		
 		mInputTextBox->set_alignment(nanogui::TextBox::Alignment::Left);
@@ -101,18 +101,18 @@ PromptWindow::PromptWindow(nanogui::Screen& parent, nanogui::Screen& screen, Res
 		mInputTextBox->set_font_size(14);
 		mInputTextBox->set_editable(true);
 		
-		mImportPanel = std::make_shared<nanogui::Widget>(*this);
+		mImportPanel = std::make_shared<nanogui::Widget>(*this, screen);
 		mImportPanel->set_layout(std::make_unique<nanogui::BoxLayout>(nanogui::Orientation::Horizontal, nanogui::Alignment::Minimum, 0, 4));
 		
 		// Add Submit Button
-		mSubmitButton = std::make_shared<nanogui::Button>(mImportPanel, "Submit");
+		mSubmitButton = std::make_shared<nanogui::Button>(*mImportPanel, screen, "Submit");
 		mSubmitButton->set_callback([this]() {
 			nanogui::async([this]() { this->SubmitPromptAsync(); });
 		});
 		mSubmitButton->set_tooltip("Submit the animation import");
 		mSubmitButton->set_fixed_width(208);
 		
-		mImportButton = std::make_shared<nanogui::Button>(mImportPanel, "");
+		mImportButton = std::make_shared<nanogui::Button>(*mImportPanel, screen, "");
 		mImportButton->set_icon(FA_SAVE);
 		mImportButton->set_enabled(false);
 		mImportButton->set_callback([this]() {
@@ -125,7 +125,7 @@ PromptWindow::PromptWindow(nanogui::Screen& parent, nanogui::Screen& screen, Res
 		mMeshActorExporter = std::make_unique<MeshActorExporter>();
 		
 		// Initialize Status Label
-		mStatusLabel = std::make_shared<nanogui::Label>(*this, "Status: Idle", "sans-bold");
+		mStatusLabel = std::make_shared<nanogui::Label>(*this, screen, "Status: Idle", "sans-bold");
 		mStatusLabel->set_fixed_size(nanogui::Vector2i(300, 20));
 }
 
