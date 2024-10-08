@@ -357,13 +357,13 @@ m_stencil_buffer(stencil_buffer), m_float_buffer(float_buffer), m_redraw(false) 
 	// notify when the screen has lost focus (e.g. application switch)
 	glfwSetWindowFocusCallback(m_glfw_window,
 							   [](GLFWwindow *w, int focused) {
-		auto it = __nanogui_screens.find(w);
-		if (it == __nanogui_screens.end())
-			return;
+//		auto it = __nanogui_screens.find(w);
+//		if (it == __nanogui_screens.end())
+//			return;
 		
-		Screen *s = it->second;
+//		Screen *s = it->second;
 		// focus_event: 0 when false, 1 when true
-		s->focus_event(focused != 0);
+		///s->focus_event(focused != 0);
 	}
 							   );
 	
@@ -801,7 +801,7 @@ void Screen::mouse_button_callback_event(int button, int action, int modifiers) 
 				m_drag_widget = nullptr;
 			m_drag_active = m_drag_widget != nullptr;
 			if (!m_drag_active)
-				unfocus();
+				focus_event(false);
 		} else if (m_drag_active && action == GLFW_RELEASE && btn12) {
 			m_drag_active = false;
 			m_drag_widget = nullptr;
@@ -889,9 +889,12 @@ void Screen::resize_callback_event(int, int) {
 // src/screen.cpp
 
 void Screen::update_focus(Widget& widget) {
+	if (&widget == this){
+		return;
+	}
 	
 	if (m_focused_widget) {
-		m_focused_widget->unfocus();
+		m_focused_widget->focus_event(false);
 	}
 	
 	widget.focus_event(true);

@@ -29,7 +29,7 @@ public:
     int mCanvasHeight;
 };
 
-class RenderCommon : public nanogui::Widget {
+class RenderCommon {
 public:
     RenderCommon(nanogui::Widget& parent, nanogui::Screen& screen, entt::registry& registry, ActorManager& actorManager, CameraManager& cameraManager);
 	

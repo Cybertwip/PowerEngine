@@ -12,7 +12,7 @@
 
 UiCommon::UiCommon(nanogui::Widget& parent, nanogui::Screen& screen, ActorManager& actorManager, AnimationTimeProvider& animationTimeProvider) : nanogui::Widget(parent, screen), mActorManager(actorManager), mAnimationTimeProvider(animationTimeProvider) {
 	
-	mMainWrapper = std::make_shared<nanogui::Window>(*this, screen, "");
+	mMainWrapper = std::make_shared<nanogui::Window>(parent, screen, "");
 	
 	mMainWrapper->set_layout(
 							 std::make_unique<nanogui::GridLayout>(nanogui::Orientation::Vertical, 2, nanogui::Alignment::Fill, 0, 0));

@@ -150,14 +150,6 @@ bool Widget::focus_event(bool focused) {
 	return false;
 }
 
-void Widget::unfocus() {
-	for (auto& child : m_children){
-		child.get().unfocus();
-	}
-	
-	m_focused = false;
-}
-
 bool Widget::keyboard_event(int, int, int, int) {
 	return false;
 }

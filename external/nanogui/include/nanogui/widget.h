@@ -189,8 +189,6 @@ public:
     /// Request the focus to be moved to this widget
     void request_focus();
 	
-	void unfocus();
-
     const std::string &tooltip() const { return m_tooltip; }
     void set_tooltip(const std::string &tooltip) { m_tooltip = tooltip; }
 

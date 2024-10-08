@@ -23,7 +23,7 @@ class StatusBarPanel;
 class TransformPanel;
 class UiManager;
 
-class UiCommon : public nanogui::Widget {
+class UiCommon {
 public:
     UiCommon(nanogui::Widget& parent, nanogui::Screen& screen, ActorManager& actorManager, AnimationTimeProvider& animationTimeProvider);
         
