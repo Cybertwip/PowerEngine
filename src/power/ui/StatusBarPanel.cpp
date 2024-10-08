@@ -26,7 +26,7 @@ mApplicationClickRegistrator(applicationClickRegistrator) {
 	set_layout(std::make_unique<nanogui::GroupLayout>());
 	
 	// Status bar setup
-	mStatusBar = std::make_shared<nanogui::Widget>(*this);
+	mStatusBar = std::make_shared<nanogui::Widget>(*this, screen);
 	mStatusBar->set_layout(std::make_unique<nanogui::BoxLayout>(nanogui::Orientation::Horizontal,
 																nanogui::Alignment::Minimum, 0, 0));
 	

@@ -37,7 +37,7 @@ class TextBox;
 
 class PromptWindow : public nanogui::Window {
 public:
-	PromptWindow(nanogui::Screen& parent, nanogui::Screen& screen, std::shared_ptr<ResourcesPanel> resourcesPanel, DeepMotionApiClient& deepMotionApiClient, std::shared_ptr<nanogui::RenderPass> renderpass, ShaderManager& shaderManager);
+	PromptWindow(nanogui::Screen& parent, nanogui::Screen& screen, ResourcesPanel& resourcesPanel, DeepMotionApiClient& deepMotionApiClient, std::shared_ptr<nanogui::RenderPass> renderpass, ShaderManager& shaderManager);
 	
 	void Preview(const std::string& path, const std::string& directory);
 	
@@ -56,7 +56,7 @@ private:
 	void ImportIntoProject(); // May be removed if entirely replaced by ImportIntoProjectAsync
 	std::string GenerateUniqueModelName(const std::string& hash_id0, const std::string& hash_id1);
 	
-	std::shared_ptr<ResourcesPanel> mResourcesPanel;
+	ResourcesPanel& mResourcesPanel;
 	
 	std::unique_ptr<IMeshBatch> mMeshBatch;
 	std::unique_ptr<ISkinnedMeshBatch> mSkinnedMeshBatch;
