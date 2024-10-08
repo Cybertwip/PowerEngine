@@ -168,7 +168,7 @@ mShaderManager(shaderManager)
 	mImportWindow->set_modal(false);
 	
 	// Add the Add Asset button with a "+" icon
-	mAddButton = std::make_shared<nanogui::PopupButton>(mToolbar, "Add");
+	mAddButton = std::make_shared<nanogui::PopupButton>(*mToolbar, screen, "Add");
 	mAddButton->set_icon(FA_PLUS);
 	mAddButton->set_chevron_icon(0);
 	mAddButton->set_tooltip("Add Asset");
@@ -177,7 +177,7 @@ mShaderManager(shaderManager)
 	
 	mSceneButton->set_icon(FA_HAND_PAPER);
 	
-	mAnimationButton = std::make_shared<nanogui::Button>(mAddButton->popup(), "Animation");
+	mAnimationButton = std::make_shared<nanogui::Button>(mAddButton->popup(), screen, "Animation");
 	
 	mAnimationButton->set_icon(FA_RUNNING);
 	
@@ -196,7 +196,7 @@ mShaderManager(shaderManager)
 	mDeepMotionSettings->perform_layout(screen.nvg_context());
 	
 	// Add the Import Assets button with a "+" icon
-	mImportButton = std::make_shared<nanogui::Button>(mToolbar, "Import");
+	mImportButton = std::make_shared<nanogui::Button>(*mToolbar, screen, "Import");
 	mImportButton->set_icon(FA_UPLOAD);
 	mImportButton->set_tooltip("Import Assets");
 	mImportButton->set_callback([this]() {
@@ -212,7 +212,7 @@ mShaderManager(shaderManager)
 	});
 	
 	// Add the Filter input box
-	mFilterBox = std::make_shared<nanogui::TextBox>(mToolbar, "");
+	mFilterBox = std::make_shared<nanogui::TextBox>(*mToolbar, "");
 	mFilterBox->set_placeholder("Filter");
 	mFilterBox->set_editable(true);
 	mFilterBox->set_fixed_size(nanogui::Vector2i(150, 25));
@@ -229,7 +229,7 @@ mShaderManager(shaderManager)
 	});
 	
 	// Create the file view below the toolbar
-	mFileView = std::make_shared<nanogui::Widget>(*this);
+	mFileView = std::make_shared<nanogui::Widget>(*this, screen);
 	auto gridLayout = std::unique_ptr<nanogui::AdvancedGridLayout>(new nanogui::AdvancedGridLayout(
 																								   /* columns */ {144, 144, 144, 144, 144, 144, 144, 144}, // Initial column widths (can be adjusted)
 																								   /* rows */ {},                // Start with no predefined rows

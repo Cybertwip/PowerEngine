@@ -40,20 +40,20 @@ AnimationPanel::AnimationPanel(nanogui::Widget& parent, nanogui::Screen& screen)
 	set_layout(std::make_unique<nanogui::BoxLayout>(nanogui::Orientation::Vertical, nanogui::Alignment::Fill, 10, 10));
 	
 	
-	auto playbackLayout = std::make_shared<nanogui::GridLayout>(nanogui::Orientation::Horizontal, 2,
+	auto playbackLayout = std::make_unique<nanogui::GridLayout>(nanogui::Orientation::Horizontal, 2,
 																nanogui::Alignment::Middle, 0, 0);
 	
-	mPlaybackPanel = std::make_shared<Widget>(*this);
+	mPlaybackPanel = std::make_shared<Widget>(*this, screen);
 	
 	
 	playbackLayout->set_row_alignment(nanogui::Alignment::Fill);
 	
-	mPlaybackPanel->set_layout(playbackLayout);
+	mPlaybackPanel->set_layout(std::move(playbackLayout));
 	
-	mCanvasPanel = std::make_shared<Widget>(*this);
+	mCanvasPanel = std::make_shared<Widget>(*this, screen);
 	mCanvasPanel->set_layout(std::make_unique<nanogui::BoxLayout>(nanogui::Orientation::Vertical, nanogui::Alignment::Middle, 0, 0));
 	
-	mReversePlayButton = std::make_shared<nanogui::ToolButton>(mPlaybackPanel, FA_BACKWARD);
+	mReversePlayButton = std::make_shared<nanogui::ToolButton>(*mPlaybackPanel, screen, FA_BACKWARD);
 	mReversePlayButton->set_tooltip("Reverse");
 	
 	mReversePlayButton->set_change_callback([this](bool active){
@@ -64,7 +64,7 @@ AnimationPanel::AnimationPanel(nanogui::Widget& parent, nanogui::Screen& screen)
 		}
 	});
 	
-	mPlayPauseButton = std::make_shared<nanogui::ToolButton>(mPlaybackPanel, FA_FORWARD);
+	mPlayPauseButton = std::make_shared<nanogui::ToolButton>(*mPlaybackPanel, screen, FA_FORWARD);
 	mPlayPauseButton->set_tooltip("Play");
 	
 	mPlayPauseButton->set_change_callback([this](bool active){
@@ -75,7 +75,7 @@ AnimationPanel::AnimationPanel(nanogui::Widget& parent, nanogui::Screen& screen)
 		}
 	});
 	
-	mPreviewCanvas = std::make_shared<SelfContainedMeshCanvas>(mCanvasPanel);
+	mPreviewCanvas = std::make_shared<SelfContainedMeshCanvas>(*mCanvasPanel, screen);
 	
 	set_active_actor(std::nullopt);
 }

@@ -33,7 +33,7 @@ void MeshPicker::setup_ui() {
 	set_title("Select Mesh");
 	
 	// Close Button
-	mCloseButton = std::make_shared<nanogui::Button>(button_panel(), "X");
+	mCloseButton = std::make_shared<nanogui::Button>(button_panel(), screen, "X");
 	mCloseButton->set_fixed_size(nanogui::Vector2i(20, 20));
 	mCloseButton->set_callback([this]() {
 		set_visible(false);
@@ -41,7 +41,7 @@ void MeshPicker::setup_ui() {
 	});
 	
 	// Filter Box
-	filter_box_ = std::make_shared<nanogui::TextBox>(*this, "");
+	filter_box_ = std::make_shared<nanogui::TextBox>(*this, screen, "");
 	filter_box_->set_placeholder("Filter by name...");
 	filter_box_->set_fixed_height(25);
 	filter_box_->set_alignment(nanogui::TextBox::Alignment::Left);
@@ -60,11 +60,11 @@ void MeshPicker::setup_ui() {
 		
 	// Scrollable File List
 	// Create a ScrollPanel to make the file list scrollable
-	mScrollPanel = std::make_shared<nanogui::VScrollPanel>(*this);
+	mScrollPanel = std::make_shared<nanogui::VScrollPanel>(*this, screen);
 	mScrollPanel->set_fixed_size(nanogui::Vector2i(380, 270)); // Adjust size as needed
 
 	// Set layout for the scroll panel
-	file_list_widget_ = std::make_shared<nanogui::Widget>(mScrollPanel);
+	file_list_widget_ = std::make_shared<nanogui::Widget>(*mScrollPanel, screen);
 	file_list_widget_->set_layout(std::make_unique<nanogui::BoxLayout>(nanogui::Orientation::Horizontal, nanogui::Alignment::Minimum));
 }
 
