@@ -10,7 +10,7 @@
 #include "ui/TransformPanel.hpp"
 #include "ui/UiManager.hpp"
 
-UiCommon::UiCommon(nanogui::Widget& parent, nanogui::Screen& screen, ActorManager& actorManager, AnimationTimeProvider& animationTimeProvider) : nanogui::Widget(parent, screen), mActorManager(actorManager), mAnimationTimeProvider(animationTimeProvider) {
+UiCommon::UiCommon(nanogui::Widget& parent, nanogui::Screen& screen, ActorManager& actorManager, AnimationTimeProvider& animationTimeProvider) :  mActorManager(actorManager), mAnimationTimeProvider(animationTimeProvider) {
 	
 	mMainWrapper = std::make_shared<nanogui::Window>(parent, screen, "");
 	
