@@ -68,11 +68,11 @@ ImportWindow::ImportWindow(nanogui::Screen& parent, nanogui::Screen& screen, Res
 	
 	
 	// Create "Mesh" checkbox
-	mMeshCheckbox = std::make_shared<nanogui::CheckBox>(mCheckboxPanel, screen, "Mesh");
+	mMeshCheckbox = std::make_shared<nanogui::CheckBox>(*mCheckboxPanel, screen, "Mesh");
 	mMeshCheckbox->set_checked(true); // Default state as needed
 	
 	// Create "Animations" checkbox
-	mAnimationsCheckbox = std::make_shared<nanogui::CheckBox>(mCheckboxPanel, screen, "Animations");
+	mAnimationsCheckbox = std::make_shared<nanogui::CheckBox>(*mCheckboxPanel, screen, "Animations");
 	mAnimationsCheckbox->set_checked(true); // Default state as needed
 	
 	// Create "Import" button

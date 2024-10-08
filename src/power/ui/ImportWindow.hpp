@@ -36,7 +36,7 @@ public:
 private:
 	void ImportIntoProject();
 	
-	std::shared_ptr<ResourcesPanel> mResourcesPanel;
+	ResourcesPanel& mResourcesPanel;
 	
 	std::unique_ptr<IMeshBatch> mMeshBatch;
 	std::unique_ptr<ISkinnedMeshBatch> mSkinnedMeshBatch;
