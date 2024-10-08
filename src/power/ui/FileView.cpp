@@ -21,8 +21,6 @@ m_normal_button_color(nanogui::Color(200, 200, 200, 255)),
 m_selected_button_color(nanogui::Color(100, 100, 255, 255)),
 m_allowed_extensions(allowed_extensions) {
 	
-	std::lock_guard<std::mutex> lock(m_mutex); // Lock during initialization
-	
 	// Initialize layout
 	auto grid_layout = std::unique_ptr<nanogui::AdvancedGridLayout>(new nanogui::AdvancedGridLayout(
 																									/* columns */ {144, 144, 144, 144, 144, 144, 144, 144}, // Initial column widths (can be adjusted)
@@ -92,18 +90,15 @@ void FileView::set_filter_text(const std::string& filter) {
 void FileView::safe_refresh(const std::string& filter_text) {
 	// Ensure that refresh is called on the main thread
 	nanogui::async([this, filter_text]() {
-		std::lock_guard<std::mutex> lock(m_mutex);
 		this->refresh(filter_text);
 	});
 }
 
 void FileView::clear_file_buttons() {
-	std::lock_guard<std::mutex> lock(m_mutex);
 	m_file_buttons.clear();
 }
 
 void FileView::populate_file_view() {
-	std::lock_guard<std::mutex> lock(m_mutex);
 	if (m_selected_directory_path.empty()) {
 		return;
 	}
@@ -339,7 +334,6 @@ int FileView::get_icon_for_file(const DirectoryNode& node) const {
 
 DirectoryNode* FileView::find_node_by_path(DirectoryNode& root, const std::string& path) const {
 	// Recursive function; protect with mutex if called from multiple threads
-	std::lock_guard<std::mutex> lock(m_mutex);
 	
 	if (root.FullPath == path) {
 		return &root;
@@ -359,7 +353,6 @@ DirectoryNode* FileView::find_node_by_path(DirectoryNode& root, const std::strin
 }
 
 void FileView::handle_file_interaction(DirectoryNode& node) {
-	std::lock_guard<std::mutex> lock(m_mutex);
 	
 	if (node.IsDirectory) {
 		node.refresh(m_allowed_extensions);
