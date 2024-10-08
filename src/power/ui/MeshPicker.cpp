@@ -20,13 +20,6 @@ MeshPicker::MeshPicker(nanogui::Screen& parent, nanogui::Screen& screen, Directo
 root_directory_node_(root_directory_node),
 on_model_selected_(on_model_selected)
 {
-	setup_ui();
-	search_model_files(root_directory_node_);
-	refresh_file_list();
-
-}
-
-void MeshPicker::setup_ui() {
 	set_fixed_size(nanogui::Vector2i(400, 320));
 	set_layout(std::make_unique<nanogui::GroupLayout>());
 	
@@ -57,15 +50,19 @@ void MeshPicker::setup_ui() {
 		
 		return true;
 	});
-		
+	
 	// Scrollable File List
 	// Create a ScrollPanel to make the file list scrollable
 	mScrollPanel = std::make_shared<nanogui::VScrollPanel>(*this, screen);
 	mScrollPanel->set_fixed_size(nanogui::Vector2i(380, 270)); // Adjust size as needed
-
+	
 	// Set layout for the scroll panel
 	file_list_widget_ = std::make_shared<nanogui::Widget>(*mScrollPanel, screen);
 	file_list_widget_->set_layout(std::make_unique<nanogui::BoxLayout>(nanogui::Orientation::Horizontal, nanogui::Alignment::Minimum));
+	
+	search_model_files(root_directory_node_);
+	refresh_file_list();
+
 }
 
 void MeshPicker::search_model_files(const DirectoryNode& node) {

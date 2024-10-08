@@ -22,8 +22,8 @@ mShaderManager(shaderManager),
 mDeepMotionApiClient(deepMotionApiClient),
 mUiManager(uiManager),
 mApplicationClickRegistrator(applicationClickRegistrator) {
-	set_layout(std::make_unique<nanogui::GroupLayout>());
 	
+	set_layout(std::make_unique<nanogui::GroupLayout>());
 	
 	// Status bar setup
 	mStatusBar = std::make_shared<nanogui::Widget>(*this);
@@ -31,7 +31,7 @@ mApplicationClickRegistrator(applicationClickRegistrator) {
 																nanogui::Alignment::Minimum, 0, 0));
 	
 	// Button to toggle the resources panel
-	mResourcesButton = std::make_shared<nanogui::ToolButton>(mStatusBar, FA_FOLDER);
+	mResourcesButton = std::make_shared<nanogui::ToolButton>(*mStatusBar, screen, FA_FOLDER);
 	
 	mResourcesButton->set_tooltip("Toggle Resources Panel");
 	

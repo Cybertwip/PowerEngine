@@ -31,11 +31,6 @@ private:
 	std::vector<std::string> model_files_;
 	
 	/**
-	 * @brief Sets up the UI components of the MeshPicker.
-	 */
-	void setup_ui();
-	
-	/**
 	 * @brief Recursively searches for model files in the directory tree.
 	 *
 	 * @param node Current DirectoryNode.

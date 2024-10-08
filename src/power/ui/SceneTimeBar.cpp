@@ -84,7 +84,7 @@ mNormalButtonColor(theme().m_text_color) // Initialize normal button color
 	auto normalButtonColor = theme().m_text_color;
 	
 	// Timeline Slider
-	mTimelineSlider = std::make_shared<nanogui::Slider>(mSliderWrapper);
+	mTimelineSlider = std::make_shared<nanogui::Slider>(*mSliderWrapper, screen);
 	mTimelineSlider->set_value(0.0f);  // Start at 0%
 	mTimelineSlider->set_fixed_width(fixedWidth * 0.985f);
 	mTimelineSlider->set_range(std::make_pair(0.0f, 1.0f));  // Normalized range
@@ -109,11 +109,11 @@ mNormalButtonColor(theme().m_text_color) // Initialize normal button color
 	});
 	
 	// Buttons Wrapper
-	mButtonWrapperWrapper = std::make_shared<nanogui::Widget>(*this);
+	mButtonWrapperWrapper = std::make_shared<nanogui::Widget>(*this, screen);
 	mButtonWrapperWrapper->set_layout(std::make_unique<nanogui::BoxLayout>(nanogui::Orientation::Vertical, nanogui::Alignment::Middle, 1, 1));
 	
 	// Time Counter Display
-	mTimeLabel = std::make_shared<nanogui::TextBox>(mButtonWrapperWrapper);
+	mTimeLabel = std::make_shared<nanogui::TextBox>(*mButtonWrapperWrapper, screen);
 	mTimeLabel->set_fixed_width(fixedWidth);
 	mTimeLabel->set_font_size(36);
 	mTimeLabel->set_alignment(nanogui::TextBox::Alignment::Center);
