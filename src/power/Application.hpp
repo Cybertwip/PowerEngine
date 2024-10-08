@@ -143,7 +143,7 @@ protected:
 		}
 	}
 	
-	void initialize() override {
+	void initialize() {
 		m_draggable_window = std::make_shared<DraggableWindow>(*this, *this, "");
 		
 		m_draggable_window->set_fixed_width(0);

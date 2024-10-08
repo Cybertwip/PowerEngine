@@ -242,7 +242,6 @@ public:
     }
 
 public:
-	
     /// Initialize the \ref Screen
     void initialize(GLFWwindow *window, bool shutdown_glfw);
 
