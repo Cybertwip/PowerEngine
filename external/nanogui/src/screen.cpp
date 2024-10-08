@@ -116,7 +116,7 @@ Screen::Screen(const std::string &caption,
 : Widget(std::nullopt, *this), m_glfw_window(nullptr), m_nvg_context(nullptr),
 m_cursor(Cursor::Arrow), m_background(0.3f, 0.3f, 0.32f, 1.f), m_caption(caption),
 m_shutdown_glfw(false), m_fullscreen(fullscreen), m_depth_buffer(depth_buffer),
-m_stencil_buffer(stencil_buffer), m_float_buffer(float_buffer), m_redraw(false) {
+m_stencil_buffer(stencil_buffer), m_float_buffer(float_buffer), m_redraw(false), m_focused_widget(nullptr) {
 	memset(m_cursors, 0, sizeof(GLFWcursor *) * (int) Cursor::CursorCount);
 	
 	// Framebuffer configuration for performance
@@ -903,6 +903,13 @@ void Screen::update_focus(Widget& widget) {
 	
 	if (auto* window = dynamic_cast<Window*>(&widget); window) {
 		move_window_to_front(*window);
+	}
+}
+
+
+void Screen::remove_from_focus(Widget& widget) {
+	if (&widget == m_focused_widget){
+		m_focused_widget = nullptr;
 	}
 }
 

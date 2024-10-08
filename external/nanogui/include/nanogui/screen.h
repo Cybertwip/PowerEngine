@@ -255,7 +255,8 @@ public:
     void resize_callback_event(int width, int height);
 
     /* Internal helper functions */
-    void update_focus(Widget& widget);
+	void update_focus(Widget& widget);
+	void remove_from_focus(Widget& widget);
     void center_window(Window& window);
     void move_window_to_front(Window& window);
     void draw_widgets();

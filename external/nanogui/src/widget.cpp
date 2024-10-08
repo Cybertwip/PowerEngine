@@ -43,6 +43,8 @@ Widget::~Widget() {
 		 exceptions. */
 		return;
 	}
+	
+	screen()->remove_from_focus(*this);
 }
 
 void Widget::set_theme(std::shared_ptr<Theme> theme) {

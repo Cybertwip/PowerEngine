@@ -59,6 +59,12 @@ void FileView::refresh(const std::string& filter_text) {
 	// Clear existing child widgets
 	shed_children();
 	
+	auto grid_layout = dynamic_cast<nanogui::AdvancedGridLayout*>(&this->layout());
+	if (grid_layout) {
+		grid_layout->shed_anchor();
+	}
+
+	
 	// Clear stored references to previously allocated objects
 	m_item_containers.clear();
 	m_image_views.clear();
