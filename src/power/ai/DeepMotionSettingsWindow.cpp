@@ -31,9 +31,7 @@ mDeepMotionApiClient(deepMotionApiClient)
 	set_fixed_size(nanogui::Vector2i(400, 320));
 	set_layout(std::make_unique<nanogui::GroupLayout>());
 	set_title("Sync With DeepMotion");
-}
-
-void DeepMotionSettingsWindow::initialize() {
+	
 	// Close Button
 	mCloseButton = std::make_shared<nanogui::Button>(button_panel(), "X");
 	mCloseButton->set_fixed_size(nanogui::Vector2i(20, 20));
@@ -140,8 +138,6 @@ void DeepMotionSettingsWindow::initialize() {
 		// Perform synchronization
 		on_sync();
 	}
-	
-	nanogui::Window::initialize();
 
 }
 

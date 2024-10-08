@@ -10,24 +10,22 @@
 #include "ui/TransformPanel.hpp"
 #include "ui/UiManager.hpp"
 
-UiCommon::UiCommon(nanogui::Widget&, ActorManager& actorManager, AnimationTimeProvider& animationTimeProvider) : nanogui::Widget(parent), mActorManager(actorManager), mAnimationTimeProvider(animationTimeProvider) {
-}
-
-void UiCommon::initialize() {
-	mMainWrapper = std::make_shared<nanogui::Window>(*this, "");
-		
+UiCommon::UiCommon(nanogui::Widget& parent, nanogui::Screen& screen, ActorManager& actorManager, AnimationTimeProvider& animationTimeProvider) : nanogui::Widget(parent), mActorManager(actorManager), mAnimationTimeProvider(animationTimeProvider) {
+	
+	mMainWrapper = std::make_shared<nanogui::Window>(*this, screen, "");
+	
 	mMainWrapper->set_layout(
 							 std::make_unique<nanogui::GridLayout>(nanogui::Orientation::Vertical, 2, nanogui::Alignment::Fill, 0, 0));
-	mSceneWrapper = std::make_shared<nanogui::Window>(mMainWrapper, "");
+	mSceneWrapper = std::make_shared<nanogui::Window>(*mMainWrapper, screen, "");
 	
 	mSceneWrapper->set_layout(std::make_unique<nanogui::GridLayout>(nanogui::Orientation::Horizontal, 2,
 																	nanogui::Alignment::Fill, 0, 0));
 	
-	int totalWidth = parent()->size().x();
+	int totalWidth = parent().size().x();
 	int sceneWidth = static_cast<int>(totalWidth * 0.80f);
 	int rightWidth = totalWidth - sceneWidth;
 	
-	int totalHeight = parent()->size().y();
+	int totalHeight = parent().size().y();
 	int sceneHeight = static_cast<int>(totalHeight * 0.90);
 	int statusHeight = static_cast<int>(totalHeight * 0.05);
 	int toolboxHeight = static_cast<int>(totalHeight * 0.05);
@@ -35,41 +33,41 @@ void UiCommon::initialize() {
 	mSceneWrapper->set_fixed_width(totalWidth);
 	mSceneWrapper->set_fixed_height(totalHeight);
 	
-	mLeftWrapper = std::make_shared<nanogui::Window>(mSceneWrapper, "");
-		
+	mLeftWrapper = std::make_shared<nanogui::Window>(*mSceneWrapper, screen, "");
+	
 	mLeftWrapper->set_layout(
 							 std::make_unique<nanogui::GridLayout>(nanogui::Orientation::Horizontal, 1, nanogui::Alignment::Minimum));
 	
 	mLeftWrapper->set_fixed_width(sceneWidth);
 	mLeftWrapper->set_fixed_height(totalHeight);
 	
-	mToolbox = std::make_shared<Panel>(mLeftWrapper, "");
+	mToolbox = std::make_shared<Panel>(*mLeftWrapper, screen, "");
 	
 	mToolbox->set_layout(std::make_unique<nanogui::BoxLayout>(nanogui::Orientation::Horizontal,
 															  nanogui::Alignment::Minimum, 4, 2));
 	mToolbox->set_fixed_height(toolboxHeight);
 	
-	mScenePanel = std::make_shared<ScenePanel>(mLeftWrapper);
+	mScenePanel = std::make_shared<ScenePanel>(*mLeftWrapper, screen);
 	
 	mScenePanel->set_fixed_width(sceneWidth);
 	mScenePanel->set_fixed_height(sceneHeight);
 	
-	mStatusBar = std::make_shared<nanogui::Widget>(mLeftWrapper);
+	mStatusBar = std::make_shared<nanogui::Widget>(*mLeftWrapper, screen);
 	
 	mStatusBar->set_fixed_width(mLeftWrapper->fixed_width());
 	mStatusBar->set_fixed_height(statusHeight);
 	
-	mRightWrapper = std::make_shared<nanogui::Window>(mSceneWrapper, "");
+	mRightWrapper = std::make_shared<nanogui::Window>(*mSceneWrapper, screen, "");
 	
 	mRightWrapper->set_layout(
 							  std::make_unique<nanogui::BoxLayout>(nanogui::Orientation::Vertical, nanogui::Alignment::Fill));
 	mRightWrapper->set_fixed_width(rightWidth);
 	
-	mTransformPanel = std::make_shared<TransformPanel>(mRightWrapper);
+	mTransformPanel = std::make_shared<TransformPanel>(*mRightWrapper, screen);
 	
-	mAnimationPanel = std::make_shared<AnimationPanel>(mRightWrapper);
+	mAnimationPanel = std::make_shared<AnimationPanel>(*mRightWrapper, screen);
 	
-	mHierarchyPanel = std::make_shared<HierarchyPanel>(mScenePanel, mTransformPanel, mAnimationPanel, mActorManager, mRightWrapper);
+	mHierarchyPanel = std::make_shared<HierarchyPanel>(*mScenePanel, screen, mTransformPanel, mAnimationPanel, mActorManager, mRightWrapper);
 	
 	//	auto promptbox = new PromptBox(*rightWrapper);
 	//	promptbox->inc_ref();
@@ -87,4 +85,3 @@ void UiCommon::initialize() {
 	// Initialize the scene time bar
 	mSceneTimeBar = std::make_shared<SceneTimeBar>(mScenePanel, mActorManager, mAnimationTimeProvider, mHierarchyPanel,  mScenePanel->fixed_width(), mScenePanel->fixed_height() * 0.25f);
 }
-

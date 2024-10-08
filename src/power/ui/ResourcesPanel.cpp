@@ -173,7 +173,7 @@ mShaderManager(shaderManager)
 	mAddButton->set_chevron_icon(0);
 	mAddButton->set_tooltip("Add Asset");
 	
-	mSceneButton = std::make_shared<nanogui::Button>(mAddButton->popup(), "Scene");
+	mSceneButton = std::make_shared<nanogui::Button>(mAddButton->popup(), screen, "Scene");
 	
 	mSceneButton->set_icon(FA_HAND_PAPER);
 	

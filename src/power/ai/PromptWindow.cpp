@@ -52,7 +52,7 @@ static std::string GenerateUniqueFilename(const std::string& baseDir, const std:
 
 }
 
-PromptWindow::PromptWindow(nanogui::Screen& parent, nanogui::Screen& screen, ResourcesPanel& resourcesPanel, DeepMotionApiClient& deepMotionApiClient, std::shared_ptr<nanogui::RenderPass> renderpass, ShaderManager& shaderManager)
+PromptWindow::PromptWindow(nanogui::Screen& parent, nanogui::Screen& screen, ResourcesPanel& resourcesPanel, DeepMotionApiClient& deepMotionApiClient, nanogui::RenderPass& renderpass, ShaderManager& shaderManager)
 : nanogui::Window(parent, screen), mResourcesPanel(resourcesPanel), mDeepMotionApiClient(deepMotionApiClient), mDummyAnimationTimeProvider(60 * 30),
 	mRenderPass(renderpass) { // update with proper duration, dynamically after loading the animation
 	
