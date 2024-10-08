@@ -11,7 +11,7 @@ class Canvas;
 class ShaderManager
 {
    public:
-    ShaderManager(std::shared_ptr<nanogui::Canvas> canvas);
+    ShaderManager(nanogui::Canvas& canvas);
 
     std::shared_ptr<nanogui::Shader> get_shader(const std::string &name);
 
@@ -26,7 +26,7 @@ class ShaderManager
 											  const std::string &fragment_path, nanogui::Shader::BlendMode blendMode = nanogui::Shader::BlendMode::None);
    private:
     std::unordered_map<std::string, std::shared_ptr<nanogui::Shader>> mShaderCache;
-	std::shared_ptr<nanogui::RenderPass> mRenderPass;
+	nanogui::RenderPass& mRenderPass;
 
     std::string read_file(const std::string &file_path);
 };

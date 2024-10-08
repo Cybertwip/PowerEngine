@@ -27,7 +27,7 @@ SelfContainedMeshCanvas::SelfContainedMeshCanvas(nanogui::Widget& parent, nanogu
 	
 	set_background_color(nanogui::Color{70, 130, 180, 255});
 	
-	mShaderManager = ShaderManager(std::dynamic_pointer_cast<nanogui::Canvas>(*this));
+	mShaderManager = ShaderManager(*this);
 	
 	mSkinnedMeshPreviewShader = ShaderWrapper(mShaderManager->load_shader("skinned_mesh_preview",
 																		  "internal/shaders/metal/preview_diffuse_skinned_vs.metal",

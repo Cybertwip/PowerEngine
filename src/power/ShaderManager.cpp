@@ -16,7 +16,7 @@ std::string ShaderManager::read_file(const std::string &file_path) {
     return buffer.str();
 }
 
-ShaderManager::ShaderManager(std::shared_ptr<nanogui::Canvas> canvas) : mRenderPass(canvas->render_pass()) {
+ShaderManager::ShaderManager(nanogui::Canvas& canvas) : mRenderPass(canvas.render_pass()) {
 }
 
 std::shared_ptr<nanogui::Shader> ShaderManager::load_shader(const std::string &name,
