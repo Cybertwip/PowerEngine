@@ -22,25 +22,22 @@ nanogui::Matrix4f glm_to_nanogui(glm::mat4 glmMatrix) {
 }
 }
 // In SelfContainedMeshCanvas.cpp, modify the constructor to load and assign the mesh shader
-SelfContainedMeshCanvas::SelfContainedMeshCanvas(Widget& parent)
-: nanogui::Canvas(parent, 1, true, true), mCurrentTime(0), mCamera(mRegistry), mUpdate(true) {
+SelfContainedMeshCanvas::SelfContainedMeshCanvas(nanogui::Widget& parent, nanogui::Screen& screen)
+: nanogui::Canvas(parent, screen, 1, true, true), mCurrentTime(0), mCamera(mRegistry), mUpdate(true) {
 	
 	set_background_color(nanogui::Color{70, 130, 180, 255});
-}
-
-void SelfContainedMeshCanvas::initialize() {
-	nanogui::Canvas::initialize();
+	
 	mShaderManager = ShaderManager(std::dynamic_pointer_cast<nanogui::Canvas>(*this));
 	
 	mSkinnedMeshPreviewShader = ShaderWrapper(mShaderManager->load_shader("skinned_mesh_preview",
-														   "internal/shaders/metal/preview_diffuse_skinned_vs.metal",
-														   "internal/shaders/metal/preview_diffuse_fs.metal",
-																		 nanogui::Shader::BlendMode::AlphaBlend));
+																		  "internal/shaders/metal/preview_diffuse_skinned_vs.metal",
+																		  "internal/shaders/metal/preview_diffuse_fs.metal",
+																		  nanogui::Shader::BlendMode::AlphaBlend));
 	
 	mMeshPreviewShader = ShaderWrapper(mShaderManager->load_shader("mesh_preview",
-													"internal/shaders/metal/preview_diffuse_vs.metal",
-													"internal/shaders/metal/preview_diffuse_fs.metal",
-													nanogui::Shader::BlendMode::AlphaBlend));
+																   "internal/shaders/metal/preview_diffuse_vs.metal",
+																   "internal/shaders/metal/preview_diffuse_fs.metal",
+																   nanogui::Shader::BlendMode::AlphaBlend));
 	
 	mCamera.add_component<TransformComponent>();
 	mCamera.add_component<CameraComponent>(mCamera.get_component<TransformComponent>(),
@@ -53,6 +50,7 @@ void SelfContainedMeshCanvas::initialize() {
 	
 	// Initialize SkinnedMeshBatch with its shader
 	mSkinnedMeshBatch = std::make_unique<SelfContainedSkinnedMeshBatch>(render_pass(), *mSkinnedMeshPreviewShader);
+
 }
 
 void SelfContainedMeshCanvas::set_active_actor(std::optional<std::reference_wrapper<Actor>> actor) {

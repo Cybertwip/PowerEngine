@@ -32,7 +32,7 @@ private:
 	};
 
 public:
-	SelfContainedMeshCanvas(Widget& parent);
+	SelfContainedMeshCanvas(nanogui::Widget& parent, nanogui::Screen& screen);
 	void set_active_actor(std::optional<std::reference_wrapper<Actor>> actor);
 	
 	void set_update(bool update) {

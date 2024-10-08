@@ -15,22 +15,18 @@
 #include "components/MetadataComponent.hpp"
 #include "components/UiComponent.hpp"
 
-HierarchyPanel::HierarchyPanel(std::shared_ptr<ScenePanel> scenePanel, std::shared_ptr<TransformPanel> transformPanel, std::shared_ptr<AnimationPanel> animationPanel, ActorManager& actorManager, nanogui::Widget&) : Panel(parent, "Scene"), mTransformPanel(transformPanel), mAnimationPanel(animationPanel), mActorManager(actorManager) {
+HierarchyPanel::HierarchyPanel(nanogui::Widget& parent, nanogui::Screen& screen, std::shared_ptr<ScenePanel> scenePanel, std::shared_ptr<TransformPanel> transformPanel, std::shared_ptr<AnimationPanel> animationPanel, ActorManager& actorManager) : Panel(parent, screen, "Scene"), mTransformPanel(transformPanel), mAnimationPanel(animationPanel), mActorManager(actorManager) {
 	set_position(nanogui::Vector2i(0, 0));
 	set_layout(std::make_unique<nanogui::GroupLayout>());
 	
-}
-
-void HierarchyPanel::initialize() {
-	Panel::initialize();
-	
-	mScrollPanel = std::make_shared<nanogui::VScrollPanel>(*this);
+	mScrollPanel = std::make_shared<nanogui::VScrollPanel>(*this, screen);
 	
 	mScrollPanel->set_fixed_size({0, 12 * 25});
 	
-	mTreeView = std::make_shared<nanogui::TreeView>(mScrollPanel);
+	mTreeView = std::make_shared<nanogui::TreeView>(*mScrollPanel, screen);
 	mTreeView->set_layout(
-						  std::make_shared<nanogui::BoxLayout>(nanogui::Orientation::Vertical, nanogui::Alignment::Fill));
+						  std::make_unique<nanogui::BoxLayout>(nanogui::Orientation::Vertical, nanogui::Alignment::Fill));
+	
 }
 
 bool HierarchyPanel::mouse_drag_event(const nanogui::Vector2i &p, const nanogui::Vector2i &rel,
@@ -83,10 +79,10 @@ void HierarchyPanel::populate_tree(Actor &actor, std::shared_ptr<nanogui::TreeVi
 	}
 	
 	actor.add_component<UiComponent>([this, &actor, node]() {
-		mTreeView->set_selected(node);
+		mTreeView->set_selected(node.get());
 	});
 	
-	perform_layout(screen()->nvg_context());
+	perform_layout(screen().nvg_context());
 }
 
 void HierarchyPanel::RegisterOnActorSelectedCallback(IActorSelectedCallback& callback) {

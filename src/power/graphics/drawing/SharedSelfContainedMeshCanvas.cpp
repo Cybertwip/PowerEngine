@@ -7,8 +7,8 @@
 #include "MetalHelper.hpp"
 #endif
 
-SharedSelfContainedMeshCanvas::SharedSelfContainedMeshCanvas(Widget& parent)
-: SelfContainedMeshCanvas(parent) {
+SharedSelfContainedMeshCanvas::SharedSelfContainedMeshCanvas(nanogui::Widget& parent, nanogui::Screen& screen)
+: SelfContainedMeshCanvas(parent, screen) {
 }
 
 void SharedSelfContainedMeshCanvas::set_active_actor(std::shared_ptr<Actor> actor) {
@@ -35,15 +35,13 @@ void SharedSelfContainedMeshCanvas::process_events() {
 	
 	// schedule here
 	if (mSnapshotCallback) {
-		auto scr = screen();
-		if (scr == nullptr)
-			throw std::runtime_error("Canvas::draw(): could not find parent screen!");
+		auto& scr = screen();
 		
 		void *texture =
-		scr->metal_texture();
+		scr.metal_texture();
 		
 		
-		float pixel_ratio = scr->pixel_ratio();
+		float pixel_ratio = scr.pixel_ratio();
 		
 		nanogui::Vector2i fbsize = m_size;
 		nanogui::Vector2i offset = absolute_position();
@@ -52,7 +50,7 @@ void SharedSelfContainedMeshCanvas::process_events() {
 		
 		std::vector<uint8_t> pixels (fbsize.x() * fbsize.y() * 4);
 		
-		MetalHelper::readPixelsFromMetal(scr->nswin(), texture, offset.x(), offset.y(), fbsize.x(), fbsize.y(), pixels);
+		MetalHelper::readPixelsFromMetal(scr.nswin(), texture, offset.x(), offset.y(), fbsize.x(), fbsize.y(), pixels);
 		
 		
 		std::vector<uint8_t> png_data;
