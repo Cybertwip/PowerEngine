@@ -80,7 +80,7 @@ private:
 	void initialize_disk();
 	
 	// Erases/ejects the current disk
-	void erase_disk();
+	void erase_disk(bool force = false);
 	
 private:
 	// Callback function invoked when a cartridge is inserted
