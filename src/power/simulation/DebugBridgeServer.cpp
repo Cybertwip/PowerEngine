@@ -323,7 +323,7 @@ void CartridgeBridge::execute_shared_object(const std::vector<uint8_t>& data) {
 	
 	// Call the say_hello function
 	try {
-		mLoadedCartridge = std::unique_ptr<ICartridgeLoader>(load_cartridge(mCartridge));
+		mLoadedCartridge = std::unique_ptr<ILoadedCartridge>(load_cartridge(mCartridge));
 		
 		mOnCartridgeInsertedCallback(*mLoadedCartridge);
 		
