@@ -6,6 +6,8 @@
 #include "simulation/CartridgeActorLoader.hpp"
 #include "simulation/ILoadedCartridge.hpp"
 
+#include <nanogui/common.h>
+
 #include <iostream>
 #include <stdexcept>
 #include <fstream>
@@ -387,28 +389,35 @@ void CartridgeBridge::execute_shared_object(const std::vector<uint8_t>& data) {
 	}
 	
 	// Call the load_cartridge function
-	try {
-		mActorLoader.cleanup();
-		mLoadedCartridge = std::unique_ptr<ILoadedCartridge>(load_cartridge(mCartridge));
-		mOnCartridgeInsertedCallback(*mLoadedCartridge);
-	} catch (...) {
-		std::cerr << "Exception occurred while executing load_cartridge." << std::endl;
+	// move the loading to the main thread
+	nanogui::async([this, load_cartridge](){
+		try {
+			mActorLoader.cleanup();
+			
+			mLoadedCartridge = std::unique_ptr<ILoadedCartridge>(load_cartridge(mCartridge));
+			mOnCartridgeInsertedCallback(*mLoadedCartridge);
+			
+
+		} catch (...) {
+			std::cerr << "Exception occurred while executing load_cartridge." << std::endl;
 #ifdef _WIN32
-		FreeLibrary(mSharedObjectHandle);
+			FreeLibrary(mSharedObjectHandle);
 #else
-		dlclose(mSharedObjectHandle);
+			dlclose(mSharedObjectHandle);
 #endif
-		mSharedObjectHandle = nullptr;
-		
+			mSharedObjectHandle = nullptr;
+			
 #ifdef __linux__
-		close(m_mem_fd);
-		m_mem_fd = -1;
+			close(m_mem_fd);
+			m_mem_fd = -1;
 #elif defined(__APPLE__)
-		std::string detach_cmd = "hdiutil detach " + m_ram_disk_path;
-		system(detach_cmd.c_str());
-		m_ram_disk_path = "";
+			std::string detach_cmd = "hdiutil detach " + m_ram_disk_path;
+			system(detach_cmd.c_str());
+			m_ram_disk_path = "";
 #endif
-	}
+		}
+	});
+
 	
 	// Do not close the shared object here. It will remain loaded until a new cartridge is loaded or the server stops.
 }

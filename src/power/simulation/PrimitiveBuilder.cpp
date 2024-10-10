@@ -160,7 +160,7 @@ std::unique_ptr<MeshData> create_sphere_mesh_data() {
 	
 	// Assign material properties
 	auto material = std::make_shared<MaterialProperties>();
-	material->mDiffuse = glm::vec4(0.0f, 0.5f, 1.0f, 1.0f); // Example color
+	material->mDiffuse = glm::vec4(1.0f, 0.5f, 1.0f, 1.0f); // Example color
 	meshData->get_material_properties().push_back(material);
 	
 	return meshData;

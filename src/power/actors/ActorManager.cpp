@@ -68,7 +68,6 @@ void ActorManager::remove_actors(std::vector<std::reference_wrapper<Actor>> acto
 				  );
 }
 
-
 void ActorManager::draw() {
     mCameraManager.update_view();
 
