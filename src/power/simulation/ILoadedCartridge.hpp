@@ -6,7 +6,7 @@ public:
 		
 	}
 	
-	virtual ~ICartridge() = default;
+	virtual ~ILoadedCartridge() = default;
 	
 	virtual void update() = 0;
 };

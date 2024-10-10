@@ -308,7 +308,7 @@ void CartridgeBridge::execute_shared_object(const std::vector<uint8_t>& data) {
 	
 	// Get the say_hello function
 	typedef ILoadedCartridge* (*GetLoadedCartridgeFunc)(ICartridge& cartridge);
-	GetLoadedCartridgeFunc load_cartridge = (GetRootActorFunc)dlsym(handle, "load_cartridge");
+	GetLoadedCartridgeFunc load_cartridge = (GetLoadedCartridgeFunc)dlsym(handle, "load_cartridge");
 	
 	const char* dlsym_error = dlerror();
 	if (dlsym_error) {
