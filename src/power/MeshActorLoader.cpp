@@ -15,9 +15,10 @@ MeshActorLoader::MeshActorLoader(ActorManager& actorManager, ShaderManager& shad
     
 : mActorManager(actorManager),
 mMeshActorBuilder(std::make_unique<MeshActorBuilder>(batchUnit)),
+mPrimitiveBuilder(std::make_unique<PrimitiveBuilder>(batchUnit)),
 mBatchUnit(batchUnit) {
 		  
-	  }
+}
 
 MeshActorLoader::~MeshActorLoader() {
 }
@@ -31,7 +32,7 @@ Actor& MeshActorLoader::create_actor(const std::string& path, AnimationTimeProvi
 }
 
 Actor& MeshActorLoader::create_actor(PrimitiveShape primitiveShape, ShaderWrapper& meshShader) {
-	return PrimitiveBuilder::build(mActorManager.create_actor(), primitiveShape, meshShader);
+	return mPrimitiveBuilder.build(mActorManager.create_actor(), primitiveShape, meshShader);
 }
 
 

@@ -34,6 +34,7 @@ class MeshActorLoader
 	ActorManager& mActorManager;
 	
 	std::unique_ptr<MeshActorBuilder> mMeshActorBuilder;
-	
+	std::unique_ptr<PrimitiveBuilder> mPrimitiveBuilder;
+
 	BatchUnit& mBatchUnit;
 };
