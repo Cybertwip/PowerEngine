@@ -12,6 +12,7 @@ class ActorManager;
 class AnimationTimeProvider;
 class BatchUnit;
 class MeshActorBuilder;
+class PrimitiveBuilder;
 class ShaderManager;
 class ShaderWrapper;
 
