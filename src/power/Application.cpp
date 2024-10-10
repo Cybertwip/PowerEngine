@@ -133,7 +133,7 @@ void Application::initialize() {
 	mCartridge = std::make_unique<Cartridge>(*mCartridgeActorLoader, *mCameraManager);
 
 	mCartridgeBridge = std::make_unique<CartridgeBridge>(9003, *mCartridge, *mCartridgeActorLoader, [this](std::optional<std::reference_wrapper<ILoadedCartridge>> cartridge) {
-		mLoadedCartridge = std::ref(cartridge);
+		mLoadedCartridge = cartridge;
 	});
 	
 	mCartridgeBridge->run();

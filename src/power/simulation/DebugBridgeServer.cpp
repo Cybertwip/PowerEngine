@@ -392,9 +392,6 @@ void CartridgeBridge::execute_shared_object(const std::vector<uint8_t>& data) {
 	// move the loading to the main thread
 	nanogui::async([this, load_cartridge](){
 		try {
-			mActorLoader.cleanup();
-			
-			mOnCartridgeInsertedCallback(std::nullopt); // eject cartridge
 			mLoadedCartridge = std::unique_ptr<ILoadedCartridge>(load_cartridge(mCartridge)); // load new cartridge
 			
 			mOnCartridgeInsertedCallback(*mLoadedCartridge); // insert cartridge
@@ -502,7 +499,12 @@ void CartridgeBridge::erase_disk() {
 	
 	// If a cartridge was loaded, reset it
 	if (mLoadedCartridge) {
-		mLoadedCartridge.reset();
+		
+		mActorLoader.cleanup();
+		
+		mOnCartridgeInsertedCallback(std::nullopt); // eject cartridge
+
+		mLoadedCartridge.reset(); // release cartridge memory
 		std::cout << "Loaded cartridge has been ejected." << std::endl;
 	}
 }
