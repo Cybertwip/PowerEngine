@@ -1,7 +1,7 @@
 #include "MeshVertex.hpp"
 
 MeshVertex::MeshVertex() {}
-MeshVertex(const glm::vec3 &pos) : mPosition(pos) {
+MeshVertex::MeshVertex(const glm::vec3 &pos) : mPosition(pos) {
 	
 }
 MeshVertex::MeshVertex(const glm::vec3& pos, const glm::vec2& tex)
