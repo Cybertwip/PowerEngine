@@ -23,6 +23,7 @@
 #include "graphics/drawing/Batch.hpp"
 #include "graphics/drawing/SelfContainedMeshBatch.hpp"
 #include "graphics/drawing/SelfContainedMeshCanvas.hpp"
+#include "graphics/drawing/SelfContainedSkinnedMeshBatch.hpp"
 #include "graphics/drawing/SkinnedMesh.hpp"
 
 #include "graphics/shading/MeshData.hpp"
