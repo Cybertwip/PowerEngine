@@ -6,6 +6,7 @@
 #include <mutex>
 #include <queue>
 #include <functional>
+#include <mutex>   // For std::thread
 #include <thread>   // For std::thread
 #include <atomic>   // For std::atomic<bool>
 #include "DebugBridgeCommon.hpp"
