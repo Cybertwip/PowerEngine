@@ -21,6 +21,7 @@
 #include "graphics/drawing/SkinnedMesh.hpp"
 #include "graphics/drawing/SkinnedMeshBatch.hpp"
 #include "import/Fbx.hpp"
+#include "simulation/CartridgeActorLoader.hpp"
 #include "simulation/DebugBridgeServer.hpp"
 #include "ui/AnimationPanel.hpp"
 #include "ui/HierarchyPanel.hpp"

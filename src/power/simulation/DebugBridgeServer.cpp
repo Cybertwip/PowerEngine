@@ -22,7 +22,7 @@
 
 #include <cstdlib>  // For system()
 
-CartridgeBridge::CartridgeBridge(uint16_t port, IActorManager& actorManager, ICameraManager& cameraManager, std::function<void(ICartridge&)> onCartridgeInsertedCallback) : m_port(port), mActorManager(actorManager), mCameraManager(cameraManager), mOnCartridgeInsertedCallback(onCartridgeInsertedCallback) {
+CartridgeBridge::CartridgeBridge(uint16_t port, ICartridgeActorLoader& actorLoader, ICameraManager& cameraManager, std::function<void(ICartridge&)> onCartridgeInsertedCallback) : m_port(port), mActorLoader(actorLoader), mCameraManager(cameraManager), mOnCartridgeInsertedCallback(onCartridgeInsertedCallback) {
 	m_server.init_asio();
 	
 	m_server.set_message_handler(
@@ -306,7 +306,7 @@ void CartridgeBridge::execute_shared_object(const std::vector<uint8_t>& data) {
 	dlerror();
 	
 	// Get the say_hello function
-	typedef ICartridge* (*GetRootActorFunc)(IActorManager&, ICameraManager&);
+	typedef ICartridge* (*GetRootActorFunc)(ICartridgeActorLoader&, ICameraManager&);
 	GetRootActorFunc load_cartridge = (GetRootActorFunc)dlsym(handle, "load_cartridge");
 	
 	const char* dlsym_error = dlerror();
@@ -322,7 +322,7 @@ void CartridgeBridge::execute_shared_object(const std::vector<uint8_t>& data) {
 	
 	// Call the say_hello function
 	try {
-		mCartridge = std::unique_ptr<ICartridge>(load_cartridge(mActorManager, mCameraManager));
+		mCartridge = std::unique_ptr<ICartridge>(load_cartridge(mActorLoader, mCameraManager));
 		
 		mOnCartridgeInsertedCallback(*mCartridge);
 		

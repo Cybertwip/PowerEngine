@@ -14,10 +14,11 @@ typedef websocketpp::server<websocketpp::config::asio> server;
 class IActorManager;
 class ICameraManager;
 class ICartridge;
+class ICartridgeActorLoader;
 
 class CartridgeBridge {
 public:
-	CartridgeBridge(uint16_t port, IActorManager& actorManager, ICameraManager& cameraManager, std::function<void(ICartridge&)> onCartridgeInsertedCallback);
+	CartridgeBridge(uint16_t port, ICartridgeActorLoader& actorLoader, ICameraManager& cameraManager, std::function<void(ICartridge&)> onCartridgeInsertedCallback);
 	void run();
 	void stop();
 	
@@ -37,7 +38,7 @@ private:
 	
 	std::unique_ptr<ICartridge> mCartridge;
 	
-	IActorManager& mActorManager;
+	ICartridgeActorLoader& mActorLoader;
 	ICameraManager& mCameraManager;
 };
 
