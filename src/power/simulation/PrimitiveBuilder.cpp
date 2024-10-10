@@ -1,5 +1,7 @@
 #include "simulation/PrimitiveBuilder.hpp"
 
+#include "actors/Actor.hpp"
+
 #include "components/ColorComponent.hpp"
 #include "components/TransformComponent.hpp"
 #include "components/DrawableComponent.hpp"
@@ -34,8 +36,8 @@ std::unique_ptr<MeshData> create_cube_mesh_data() {
 	// For simplicity, setting default normals and tex coords
 	for (auto& vertex : vertices) {
 		vertex->set_normal(glm::vec3(0.0f, 0.0f, 1.0f));
-		vertex->set_tex_coords1(glm::vec2(0.0f, 0.0f));
-		vertex->set_tex_coords2(glm::vec2(0.0f, 0.0f));
+		vertex->set_texture_coords1(glm::vec2(0.0f, 0.0f));
+		vertex->set_texture_coords2(glm::vec2(0.0f, 0.0f));
 		vertex->set_material_id(0); // Default material ID
 		vertex->set_color(glm::vec4(1.0f)); // White color
 	}
@@ -68,7 +70,7 @@ std::unique_ptr<MeshData> create_cube_mesh_data() {
 	
 	// Assign material properties
 	auto material = std::make_shared<MaterialProperties>();
-	material->set_diffuse_color(glm::vec4(1.0f, 0.5f, 0.31f, 1.0f)); // Example color
+	material->mDiffuse = glm::vec4(1.0f, 0.5f, 0.31f, 1.0f); // Example color
 	meshData->get_material_properties().push_back(material);
 	
 	return meshData;
@@ -156,7 +158,7 @@ std::unique_ptr<MeshData> create_sphere_mesh_data() {
 	
 	// Assign material properties
 	auto material = std::make_shared<MaterialProperties>();
-	material->set_diffuse_color(glm::vec4(0.0f, 0.5f, 1.0f, 1.0f)); // Example color
+	material->mDiffuse = glm::vec4(0.0f, 0.5f, 1.0f, 1.0f); // Example color
 	meshData->get_material_properties().push_back(material);
 	
 	return meshData;
@@ -182,8 +184,8 @@ std::unique_ptr<MeshData> create_cuboid_mesh_data(float width, float height, flo
 	// For simplicity, setting default normals and tex coords
 	for (auto& vertex : vertices) {
 		vertex->set_normal(glm::vec3(0.0f, 0.0f, 1.0f));
-		vertex->set_tex_coords1(glm::vec2(0.0f, 0.0f));
-		vertex->set_tex_coords2(glm::vec2(0.0f, 0.0f));
+		vertex->set_texture_coords1(glm::vec2(0.0f, 0.0f));
+		vertex->set_texture_coords2(glm::vec2(0.0f, 0.0f));
 		vertex->set_material_id(0); // Default material ID
 		vertex->set_color(glm::vec4(1.0f)); // White color
 	}
@@ -216,7 +218,7 @@ std::unique_ptr<MeshData> create_cuboid_mesh_data(float width, float height, flo
 	
 	// Assign material properties
 	auto material = std::make_shared<MaterialProperties>();
-	material->set_diffuse_color(glm::vec4(0.5f, 1.0f, 0.5f, 1.0f)); // Example color
+	material->mDiffuse = glm::vec4(0.5f, 1.0f, 0.5f, 1.0f); // Example color
 	meshData->get_material_properties().push_back(material);
 	
 	return meshData;
