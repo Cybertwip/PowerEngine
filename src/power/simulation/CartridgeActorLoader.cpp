@@ -15,7 +15,7 @@ mMeshActorLoader(meshActorLoader)
 Actor& CartridgeActorLoader::create_actor(const std::string& actorName, PrimitiveShape primitiveShape) {
 	Actor& actor = mMeshActorLoader.create_actor(actorName, primitiveShape, mMeshShader);
 	
-	mActorVisualManager.add_actor(actor)
+	mActorVisualManager.add_actor(actor);
 	
 	return actor;
 }
