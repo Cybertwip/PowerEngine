@@ -3,6 +3,7 @@
 // Include necessary headers
 #include "actors/ActorManager.hpp"
 #include "actors/Actor.hpp"
+#include "actors/IActorSelectedRegistry.hpp"
 #include "components/TimelineComponent.hpp"
 
 #include <nanogui/button.h>

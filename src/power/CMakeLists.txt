@@ -79,6 +79,8 @@ ${CMAKE_CURRENT_LIST_DIR}/actors/IActorManager.hpp
     ${CMAKE_CURRENT_LIST_DIR}/animation/Transform.hpp
 
     ${CMAKE_CURRENT_LIST_DIR}/components/AnimationComponent.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/components/PrimitiveComponent.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/components/PrimitiveComponent.cpp
     ${CMAKE_CURRENT_LIST_DIR}/components/SkinnedAnimationComponent.hpp
     ${CMAKE_CURRENT_LIST_DIR}/components/TransformAnimationComponent.hpp
     ${CMAKE_CURRENT_LIST_DIR}/components/TimelineComponent.hpp
@@ -186,6 +188,13 @@ ${CMAKE_CURRENT_LIST_DIR}/actors/IActorManager.hpp
     ${CMAKE_CURRENT_LIST_DIR}/simulation/DebugBridgeCommon.hpp
     ${CMAKE_CURRENT_LIST_DIR}/simulation/DebugBridgeServer.cpp
     ${CMAKE_CURRENT_LIST_DIR}/simulation/Cartridge.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/simulation/ICartridgeActorLoader.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/simulation/CartridgeActorLoader.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/simulation/CartridgeActorLoader.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/simulation/PrimitiveBuilder.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/simulation/PrimitiveBuilder.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/simulation/PrimitiveShape.hpp
+    
 
     ${CMAKE_CURRENT_LIST_DIR}/ui/AnimationPanel.hpp
     ${CMAKE_CURRENT_LIST_DIR}/ui/AnimationPanel.cpp

@@ -1,28 +1,44 @@
 #pragma once
 
 #include "graphics/drawing/Drawable.hpp"
+#include "graphics/drawing/Mesh.hpp"
 
-#include <functional>
 #include <memory>
-#include <vector>
 
-class CameraManager;
-class Mesh;
-class Fbx;
-
-class MeshComponent : public Drawable {
+class PrimitiveComponent : public Drawable {
 public:
-    MeshComponent(std::vector<std::unique_ptr<Mesh>>&& meshes, std::unique_ptr<Fbx> model);
-
-	virtual ~MeshComponent() = default;
-
-	void draw_content(const nanogui::Matrix4f& model, const nanogui::Matrix4f& view, const nanogui::Matrix4f& projection) override;
+	/**
+	 * @brief Constructs a PrimitiveComponent with a single Mesh.
+	 *
+	 * @param mesh A unique pointer to the Mesh to be managed by this component.
+	 */
+	explicit PrimitiveComponent(std::unique_ptr<Mesh> mesh);
 	
-	const std::vector<std::unique_ptr<Mesh>>& get_mesh_data() const {
-		return mMeshes;
+	/**
+	 * @brief Destructor for PrimitiveComponent.
+	 */
+	virtual ~PrimitiveComponent() = default;
+	
+	/**
+	 * @brief Draws the content of the mesh with the given transformation matrices.
+	 *
+	 * @param model The model matrix.
+	 * @param view The view matrix.
+	 * @param projection The projection matrix.
+	 */
+	void draw_content(const nanogui::Matrix4f& model,
+					  const nanogui::Matrix4f& view,
+					  const nanogui::Matrix4f& projection) override;
+	
+	/**
+	 * @brief Retrieves the managed Mesh.
+	 *
+	 * @return A constant reference to the Mesh.
+	 */
+	const Mesh& get_mesh() const {
+		return *mMesh;
 	}
-    
+	
 private:
-    std::vector<std::unique_ptr<Mesh>> mMeshes;
-	std::unique_ptr<Fbx> mModel;
+	std::unique_ptr<Mesh> mMesh;
 };

@@ -1,19 +1,20 @@
-#include "MeshComponent.hpp"
+#include "PrimitiveComponent.hpp"
 
-#include "animation/Animation.hpp"
-#include "animation/Skeleton.hpp"
-#include "graphics/drawing/Mesh.hpp"
-#include "import/Fbx.hpp"
-
-MeshComponent::MeshComponent(std::vector<std::unique_ptr<Mesh>>&& meshes, std::unique_ptr<Fbx> model) : mModel(std::move(model)) {
-	mMeshes = std::move(meshes);
-}
-
-void MeshComponent::draw_content(const nanogui::Matrix4f& model, const nanogui::Matrix4f& view,
-                                 const nanogui::Matrix4f& projection) {
+PrimitiveComponent::PrimitiveComponent(std::unique_ptr<Mesh> mesh)
+: mMesh(std::move(mesh)) {
+	if (!mMesh) {
+		throw std::invalid_argument("Mesh cannot be null.");
+	}
 	
-    for (auto& mesh : mMeshes) {
-        mesh->draw_content(model, view, projection);
-    }
+	// Optionally, you can initialize or configure the mesh here if needed.
 }
 
+void PrimitiveComponent::draw_content(const nanogui::Matrix4f& model,
+									  const nanogui::Matrix4f& view,
+									  const nanogui::Matrix4f& projection) {
+	// Ensure the mesh exists before attempting to draw.
+	if (mMesh) {
+		// You can apply additional transformations or settings here if necessary.
+		mMesh->draw_content(model, view, projection);
+	}
+}

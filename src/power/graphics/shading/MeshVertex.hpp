@@ -9,8 +9,9 @@
 class MeshVertex {
 public:
 	MeshVertex();
+	MeshVertex(const glm::vec3 &pos);
 	MeshVertex(const glm::vec3 &pos, const glm::vec2 &tex);
-	
+
 	MeshVertex(const MeshVertex& other)
 	: mPosition(other.mPosition),   // Copy position
 	mNormal(other.mNormal),       // Copy normal

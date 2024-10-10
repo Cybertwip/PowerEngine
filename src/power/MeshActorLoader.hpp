@@ -1,5 +1,7 @@
 #pragma once
 
+#include "simulation/PrimitiveShape.hpp"
+
 #include <memory>
 #include <string>
 #include <vector>
@@ -22,7 +24,9 @@ class MeshActorLoader
 
 	~MeshActorLoader();
 	
-    Actor& create_actor(const std::string& path, AnimationTimeProvider& timeProvider,  ShaderWrapper& meshShader, ShaderWrapper& skinnedShader);
+	Actor& create_actor(const std::string& path, AnimationTimeProvider& timeProvider,  ShaderWrapper& meshShader, ShaderWrapper& skinnedShader);
+
+	Actor& create_actor(PrimitiveShape primitiveShape, ShaderWrapper& meshShader);
 	
 	const BatchUnit& get_batch_unit();
 

@@ -9,6 +9,8 @@
 #include "graphics/drawing/MeshActorBuilder.hpp"
 #include "import/SkinnedFbx.hpp"
 
+#include "simulation/PrimitiveBuilder.hpp"
+
 MeshActorLoader::MeshActorLoader(ActorManager& actorManager, ShaderManager& shaderManager, BatchUnit& batchUnit)
     
 : mActorManager(actorManager),
@@ -27,4 +29,9 @@ const BatchUnit& MeshActorLoader::get_batch_unit() {
 Actor& MeshActorLoader::create_actor(const std::string& path, AnimationTimeProvider& timeProvider, ShaderWrapper& meshShader, ShaderWrapper& skinnedShader) {
 	return mMeshActorBuilder->build(mActorManager.create_actor(), timeProvider, path, meshShader, skinnedShader);
 }
+
+Actor& MeshActorLoader::create_actor(PrimitiveShape primitiveShape, ShaderWrapper& meshShader) {
+	return PrimitiveBuilder::build(mActorManager.create_actor(), primitiveShape, meshShader);
+}
+
 
