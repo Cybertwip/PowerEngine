@@ -26,7 +26,7 @@
 
 #include <cstdlib>  // For system()
 
-CartridgeBridge::CartridgeBridge(uint16_t port, ICartridge& cartridge, CartridgeActorLoader& actorLoader, std::function<void(ILoadedCartridge&)> onCartridgeInsertedCallback)
+CartridgeBridge::CartridgeBridge(uint16_t port, ICartridge& cartridge, CartridgeActorLoader& actorLoader, std::function<void(std::optional<std::reference_wrapper<ILoadedCartridge>>)> onCartridgeInsertedCallback)
 : m_port(port), mCartridge(cartridge), mActorLoader(actorLoader), mOnCartridgeInsertedCallback(onCartridgeInsertedCallback),
 #ifdef __linux__
 m_mem_fd(-1),
@@ -394,8 +394,10 @@ void CartridgeBridge::execute_shared_object(const std::vector<uint8_t>& data) {
 		try {
 			mActorLoader.cleanup();
 			
-			mLoadedCartridge = std::unique_ptr<ILoadedCartridge>(load_cartridge(mCartridge));
-			mOnCartridgeInsertedCallback(*mLoadedCartridge);
+			mOnCartridgeInsertedCallback(std::nullopt); // eject cartridge
+			mLoadedCartridge = std::unique_ptr<ILoadedCartridge>(load_cartridge(mCartridge)); // load new cartridge
+			
+			mOnCartridgeInsertedCallback(*mLoadedCartridge); // insert cartridge
 			
 
 		} catch (...) {

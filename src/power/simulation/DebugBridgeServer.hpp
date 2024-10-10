@@ -40,7 +40,7 @@ public:
 	CartridgeBridge(uint16_t port,
 					ICartridge& cartridge,
 					CartridgeActorLoader& actorLoader,
-					std::function<void(ILoadedCartridge&)> onCartridgeInsertedCallback);
+					std::function<void(std::optional<std::reference_wrapper<ILoadedCartridge>>)> onCartridgeInsertedCallback);
 	
 	/**
 	 * @brief Destructor. Ensures the server is stopped and resources are cleaned up.
@@ -84,7 +84,7 @@ private:
 	
 private:
 	// Callback function invoked when a cartridge is inserted
-	std::function<void(ILoadedCartridge&)>  mOnCartridgeInsertedCallback;
+	std::function<void(std::optional<std::reference_wrapper<ILoadedCartridge>>)>  mOnCartridgeInsertedCallback;
 	
 	// Pointer to the currently loaded cartridge
 	std::unique_ptr<ILoadedCartridge> mLoadedCartridge;
