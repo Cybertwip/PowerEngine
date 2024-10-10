@@ -31,8 +31,8 @@ Actor& MeshActorLoader::create_actor(const std::string& path, AnimationTimeProvi
 	return mMeshActorBuilder->build(mActorManager.create_actor(), timeProvider, path, meshShader, skinnedShader);
 }
 
-Actor& MeshActorLoader::create_actor(PrimitiveShape primitiveShape, ShaderWrapper& meshShader) {
-	return mPrimitiveBuilder.build(mActorManager.create_actor(), primitiveShape, meshShader);
+Actor& MeshActorLoader::create_actor(const std::string& actorName, PrimitiveShape primitiveShape, ShaderWrapper& meshShader) {
+	return mPrimitiveBuilder->build(mActorManager.create_actor(), actorName, primitiveShape, meshShader);
 }
 
 

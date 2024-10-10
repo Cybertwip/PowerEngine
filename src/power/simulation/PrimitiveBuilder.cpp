@@ -120,8 +120,8 @@ std::unique_ptr<MeshData> create_sphere_mesh_data() {
 			
 			auto vertex = std::make_unique<MeshVertex>(glm::vec3(x, y, z));
 			vertex->set_normal(glm::vec3(nx, ny, nz));
-			vertex->set_tex_coords1(glm::vec2(s, t));
-			vertex->set_tex_coords2(glm::vec2(0.0f, 0.0f));
+			vertex->set_texture_coords1(glm::vec2(s, t));
+			vertex->set_texture_coords2(glm::vec2(0.0f, 0.0f));
 			vertex->set_material_id(0); // Default material ID
 			vertex->set_color(glm::vec4(1.0f)); // White color
 			vertices.emplace_back(std::move(vertex));
@@ -242,16 +242,18 @@ PrimitiveBuilder::PrimitiveBuilder(IMeshBatch& meshBatch)
 : mMeshBatch(meshBatch) {
 }
 
-Actor& PrimitiveBuilder::build(Actor& actor, PrimitiveShape primitiveShape, ShaderWrapper& meshShader) {
+Actor& PrimitiveBuilder::build(Actor& actor, std::string& actorName, PrimitiveShape primitiveShape, ShaderWrapper& meshShader) {
 	// Create MeshData for the specified primitive shape
 	std::unique_ptr<MeshData> meshData = create_mesh_data(primitiveShape);
 	if (!meshData) {
 		throw std::runtime_error("Failed to create MeshData for the specified PrimitiveShape.");
 	}
 	
+	auto& metadataComponent = 	actor.add_component<MetadataComponent>(actor.identifier(), actorName);
+
 	// Retrieve or create ColorComponent
 	// Assuming the Actor does not already have a ColorComponent
-	auto& colorComponent = actor.add_component<ColorComponent>();
+	auto& colorComponent = actor.add_component<ColorComponent>(metadataComponent);
 	// Optionally, set color based on the MeshData or other criteria
 	
 	// Create Mesh

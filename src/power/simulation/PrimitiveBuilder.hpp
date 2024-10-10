@@ -3,6 +3,7 @@
 #include "simulation/PrimitiveShape.hpp"
 
 #include <memory>
+#include <string>
 
 class IMeshBatch;
 class Actor;
@@ -26,7 +27,7 @@ public:
 	 * @param meshShader The ShaderWrapper to be used for the Mesh.
 	 * @return Reference to the modified Actor.
 	 */
-	Actor& build(Actor& actor, PrimitiveShape primitiveShape, ShaderWrapper& meshShader);
+	Actor& build(Actor& actor, const std::string& actorName, PrimitiveShape primitiveShape, ShaderWrapper& meshShader);
 	
 private:
 	/**
