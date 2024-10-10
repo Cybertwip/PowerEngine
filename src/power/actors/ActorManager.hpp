@@ -23,7 +23,7 @@ public:
     ActorManager(entt::registry& registry, CameraManager& cameraManager);
 	Actor& create_actor() override;
 	void remove_actor(Actor& actor) override;
-	void remove_actors(std::vector<std::reference_wrapper<Actor>> actors) override;
+	void remove_actors(const std::vector<std::reference_wrapper<Actor>>& actors) override;
 
 	template<typename T>
 	const std::vector<std::reference_wrapper<Actor>> get_actors_with_component() const {
