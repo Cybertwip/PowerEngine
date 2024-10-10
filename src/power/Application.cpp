@@ -21,6 +21,7 @@
 #include "graphics/drawing/SkinnedMesh.hpp"
 #include "graphics/drawing/SkinnedMeshBatch.hpp"
 #include "import/Fbx.hpp"
+#include "simulation/Cartridge.hpp"
 #include "simulation/CartridgeActorLoader.hpp"
 #include "simulation/DebugBridgeServer.hpp"
 #include "ui/AnimationPanel.hpp"
@@ -126,8 +127,11 @@ void Application::initialize() {
 	DraggableScreen::initialize();
 	
 	mCartridgeActorLoader = std::make_unique<CartridgeActorLoader>(*mMeshActorLoader, *mMeshShader);
+	
+	mCartridge = std::make_unique<Cartridge>(*mCartridgeActorLoader, *mMmCameraManagereshShader);
 
-	mCartridgeBridge = std::make_unique<CartridgeBridge>(9003, *mCartridgeActorLoader, *mCameraManager, [this](ICartridge& cartridge) {
+
+	mCartridgeBridge = std::make_unique<CartridgeBridge>(9003, *mCartridge, [this](ILoadedCartridge& cartridge) {
 		
 	});
 

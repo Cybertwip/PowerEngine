@@ -3,6 +3,7 @@
 #include "DebugBridgeServer.hpp"
 
 #include "simulation/Cartridge.hpp"
+#include "simulation/ILoadedCartridge.hpp"
 
 #include <iostream>
 #include <stdexcept>
@@ -22,7 +23,7 @@
 
 #include <cstdlib>  // For system()
 
-CartridgeBridge::CartridgeBridge(uint16_t port, ICartridgeActorLoader& actorLoader, ICameraManager& cameraManager, std::function<void(ICartridge&)> onCartridgeInsertedCallback) : m_port(port), mActorLoader(actorLoader), mCameraManager(cameraManager), mOnCartridgeInsertedCallback(onCartridgeInsertedCallback) {
+CartridgeBridge::CartridgeBridge(uint16_t port, ICartridge& cartridge, std::function<void(ILoadedCartridge&)> onCartridgeInsertedCallback) : m_port(port), mCartridge(cartridge), mOnCartridgeInsertedCallback(onCartridgeInsertedCallback) {
 	m_server.init_asio();
 	
 	m_server.set_message_handler(
@@ -306,8 +307,8 @@ void CartridgeBridge::execute_shared_object(const std::vector<uint8_t>& data) {
 	dlerror();
 	
 	// Get the say_hello function
-	typedef ICartridge* (*GetRootActorFunc)(ICartridgeActorLoader&, ICameraManager&);
-	GetRootActorFunc load_cartridge = (GetRootActorFunc)dlsym(handle, "load_cartridge");
+	typedef ILoadedCartridge* (*GetLoadedCartridgeFunc)(ICartridge& cartridge);
+	GetLoadedCartridgeFunc load_cartridge = (GetRootActorFunc)dlsym(handle, "load_cartridge");
 	
 	const char* dlsym_error = dlerror();
 	if (dlsym_error) {
@@ -322,9 +323,9 @@ void CartridgeBridge::execute_shared_object(const std::vector<uint8_t>& data) {
 	
 	// Call the say_hello function
 	try {
-		mCartridge = std::unique_ptr<ICartridge>(load_cartridge(mActorLoader, mCameraManager));
+		mLoadedCartridge = std::unique_ptr<ICartridgeLoader>(load_cartridge(mCartridge));
 		
-		mOnCartridgeInsertedCallback(*mCartridge);
+		mOnCartridgeInsertedCallback(*mLoadedCartridge);
 		
 	} catch (...) {
 		std::cerr << "Exception occurred while executing say_hello." << std::endl;
