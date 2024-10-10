@@ -174,7 +174,7 @@ DebugCommand CartridgeBridge::process_command(const DebugCommand& cmd) {
 	return DebugCommand(DebugCommand::CommandType::RESPONSE, "Unknown command type.");
 }
 
-void CartridgeBridge::execute_shared_object(const std::vector<uint8_t>& data) {	
+void CartridgeBridge::execute_shared_object(const std::vector<uint8_t>& data) {
 	// Do not erase the disk here. The disk remains persistent.
 	// erase_disk(); // Remove or comment out this line
 	
