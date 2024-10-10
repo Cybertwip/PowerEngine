@@ -39,29 +39,39 @@ void CameraComponent::look_at(Actor& actor)
 
 void CameraComponent::look_at(const glm::vec3& targetPosition) {
 	auto& cameraTransform = mTransformComponent;
+	glm::vec3 target = targetPosition;
+	glm::vec3 position = cameraTransform.get_translation();
 	
-	glm::vec3 cameraPosition = cameraTransform.get_translation();
-
-	// Direction vector towards the target
-	glm::vec3 direction = glm::normalize(targetPosition - cameraPosition);
+	// Define the world up vector (y-up)
+	glm::vec3 worldUp(0.0f, -1.0f, 0.0f);
 	
-	// Here we adjust for Z-up. Assuming forward in this context means looking along Y:
-	glm::vec3 forward = glm::vec3(0.0f, 1.0f, 0.0f);
-	glm::vec3 right = glm::normalize(glm::cross(forward, glm::vec3(0.0f, 0.0f, 1.0f)));
-	glm::vec3 up = glm::cross(right, direction); // Adjust up to be perpendicular to new forward and right
 	
-	// Build rotation matrix from these vectors
-	glm::mat4 lookAtMatrix = glm::mat4(
-									   glm::vec4(right, 0),
-									   glm::vec4(-glm::normalize(direction), 0), // Note the negative for correct orientation
-									   glm::vec4(up, 0),
-									   glm::vec4(0, 0, 0, 1)
-									   );
-	lookAtMatrix = glm::translate(lookAtMatrix, -cameraPosition);
+	float tZ = target.z;
+	float oZ = position.z;
 	
-	glm::quat orientation = glm::quat_cast(lookAtMatrix);
+	target.z = target.y;
+	position.z = position.y;
+	
+	target.y = tZ;
+	position.y = oZ;
+	
+	// Compute the direction vector
+	glm::vec3 direction = glm::normalize(target - position);
+	
+	// Create the view matrix using glm::lookAt
+	glm::mat4 viewMatrix = glm::lookAt(position, target, worldUp);
+	
+	// Extract the rotation part of the view matrix
+	// Note: The view matrix is the inverse of the camera's transform
+	glm::mat4 cameraRotationMatrix = glm::transpose(glm::mat4(glm::mat3(viewMatrix)));
+	
+	// Convert the rotation matrix to a quaternion
+	glm::quat orientation = glm::quat_cast(cameraRotationMatrix);
+	
+	// Set the camera's rotation
 	cameraTransform.set_rotation(orientation);
 }
+
 
 void CameraComponent::set_aspect_ratio(float ratio) {
 	mAspect = ratio;
