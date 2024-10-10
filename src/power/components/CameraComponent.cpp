@@ -43,7 +43,7 @@ void CameraComponent::look_at(const glm::vec3& targetPosition) {
 	glm::vec3 position = cameraTransform.get_translation();
 	
 	// Define the world up vector (y-up)
-	glm::vec3 worldUp(0.0f, -1.0f, 0.0f);
+	glm::vec3 worldUp(0.0f, 1.0f, 0.0f);
 	
 	
 	float tZ = target.z;
@@ -55,11 +55,17 @@ void CameraComponent::look_at(const glm::vec3& targetPosition) {
 	target.y = tZ;
 	position.y = oZ;
 	
+	
 	// Compute the direction vector
 	glm::vec3 direction = glm::normalize(target - position);
 	
+	if (glm::abs(glm::dot(direction, worldUp)) > 0.999f) {
+		// Adjust the up vector slightly
+		worldUp = glm::vec3(0.0f, 0.0f, -1.0f);
+	}
+
 	// Create the view matrix using glm::lookAt
-	glm::mat4 viewMatrix = glm::lookAt(position, target, worldUp);
+	glm::mat4 viewMatrix = glm::lookAt(position, position + direction, worldUp);
 	
 	// Extract the rotation part of the view matrix
 	// Note: The view matrix is the inverse of the camera's transform
