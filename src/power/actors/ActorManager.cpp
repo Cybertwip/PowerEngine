@@ -40,6 +40,34 @@ void ActorManager::remove_actor(Actor& actor) {
 	}
 }
 
+void ActorManager::remove_actors(std::vector<std::reference_wrapper<Actor>> actors) {
+	// Step 1: Collect pointers to actors to remove
+	std::unordered_set<Actor*> actors_to_remove;
+	for (const auto& actor_ref : actors) {
+		actors_to_remove.insert(&actor_ref.get());
+	}
+	
+	// Step 2: Verify that all actors exist in mActors
+	for (Actor* actor_ptr : actors_to_remove) {
+		auto it = std::find_if(mActors.begin(), mActors.end(),
+							   [actor_ptr](const std::unique_ptr<Actor>& ptr) {
+			return ptr.get() == actor_ptr;
+		});
+		if (it == mActors.end()) {
+			throw std::runtime_error("Attempted to remove an actor that does not exist.");
+		}
+	}
+	
+	// Step 3: Remove the actors from mActors
+	mActors.erase(
+				  std::remove_if(mActors.begin(), mActors.end(),
+								 [&actors_to_remove](const std::unique_ptr<Actor>& ptr) {
+									 return actors_to_remove.find(ptr.get()) != actors_to_remove.end();
+								 }),
+				  mActors.end()
+				  );
+}
+
 
 void ActorManager::draw() {
     mCameraManager.update_view();

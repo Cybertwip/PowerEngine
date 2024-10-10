@@ -192,12 +192,12 @@ private:
 }  // namespace nanogui
 
 class ICartridge;
-class ICartridgeActorLoader;
 class ILoadedCartridge;
 
 class Actor;
 class ActorManager;
 class Canvas;
+class CartridgeActorLoader;
 class CartridgeBridge;
 class CameraManager;
 class DeepMotionApiClient;
@@ -238,7 +238,7 @@ class Application : public nanogui::DraggableScreen
 	
 	// Reversed unique_ptr declarations
 	std::unique_ptr<ICartridge> mCartridge;
-	std::unique_ptr<ICartridgeActorLoader> mCartridgeActorLoader;
+	std::unique_ptr<CartridgeActorLoader> mCartridgeActorLoader;
 	std::unique_ptr<CartridgeBridge> mCartridgeBridge;
 	std::unique_ptr<Canvas> mCanvas; // Place appropriately based on actual dependencies
 	std::unique_ptr<UiManager> mUiManager;

@@ -3,6 +3,7 @@
 #include "DebugBridgeServer.hpp"
 
 #include "simulation/Cartridge.hpp"
+#include "simulation/CartridgeActorLoader.hpp"
 #include "simulation/ILoadedCartridge.hpp"
 
 #include <iostream>
@@ -23,8 +24,8 @@
 
 #include <cstdlib>  // For system()
 
-CartridgeBridge::CartridgeBridge(uint16_t port, ICartridge& cartridge, std::function<void(ILoadedCartridge&)> onCartridgeInsertedCallback)
-: m_port(port), mCartridge(cartridge), mOnCartridgeInsertedCallback(onCartridgeInsertedCallback),
+CartridgeBridge::CartridgeBridge(uint16_t port, ICartridge& cartridge, CartridgeActorLoader& actorLoader, std::function<void(ILoadedCartridge&)> onCartridgeInsertedCallback)
+: m_port(port), mCartridge(cartridge), mActorLoader(actorLoader), mOnCartridgeInsertedCallback(onCartridgeInsertedCallback),
 #ifdef __linux__
 m_mem_fd(-1),
 #elif defined(__APPLE__)
@@ -387,6 +388,7 @@ void CartridgeBridge::execute_shared_object(const std::vector<uint8_t>& data) {
 	
 	// Call the load_cartridge function
 	try {
+		mActorLoader.cleanup();
 		mLoadedCartridge = std::unique_ptr<ILoadedCartridge>(load_cartridge(mCartridge));
 		mOnCartridgeInsertedCallback(*mLoadedCartridge);
 	} catch (...) {

@@ -25,7 +25,8 @@ class IActorManager;
 class ICameraManager;
 class ICartridge;
 class ILoadedCartridge;
-class ICartridgeActorLoader;
+
+class CartridgeActorLoader;
 
 class CartridgeBridge {
 public:
@@ -38,6 +39,7 @@ public:
 	 */
 	CartridgeBridge(uint16_t port,
 					ICartridge& cartridge,
+					CartridgeActorLoader& actorLoader,
 					std::function<void(ILoadedCartridge&)> onCartridgeInsertedCallback);
 	
 	/**
@@ -89,6 +91,8 @@ private:
 	
 	// Reference to the cartridge interface
 	ICartridge& mCartridge;
+	
+	CartridgeActorLoader& mActorLoader;
 	
 	// Thread to run the server
 	std::thread m_thread;

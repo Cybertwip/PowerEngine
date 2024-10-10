@@ -9,11 +9,16 @@ class ShaderWrapper;
 
 class CartridgeActorLoader : public ICartridgeActorLoader {
 public:
-	CartridgeActorLoader(MeshActorLoader& meshActorLoader, IActorVisualManager& actorVisualManager, ShaderWrapper& meshShader);
+	CartridgeActorLoader(MeshActorLoader& meshActorLoader, IActorManager& actorManager, IActorVisualManager& actorVisualManager, ShaderWrapper& meshShader);
 	Actor& create_actor(const std::string& actorName, PrimitiveShape primitiveShape) override;
+	
+	void cleanup();
 	
 private:
 	MeshActorLoader& mMeshActorLoader;
+	IActorManager& mActorManager;
 	IActorVisualManager& mActorVisualManager;
 	ShaderWrapper& mMeshShader;
+	
+	std::vector<std::reference_wrapper<Actor>> mLoadedActors;
 };
