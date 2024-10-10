@@ -3,8 +3,6 @@
 #include "DebugBridgeServer.hpp"
 
 #include "simulation/Cartridge.hpp"
-#include "ICameraManager.hpp"
-#include "actors/IActorManager.hpp"
 
 #include <iostream>
 #include <stdexcept>
@@ -308,7 +306,7 @@ void DebugBridgeServer::execute_shared_object(const std::vector<uint8_t>& data) 
 	dlerror();
 	
 	// Get the say_hello function
-	typedef ICartridge* (*GetRootActorFunc)(IActorManager&, ICameraManager);
+	typedef ICartridge* (*GetRootActorFunc)(IActorManager&, ICameraManager&);
 	GetRootActorFunc load_cartridge = (GetRootActorFunc)dlsym(handle, "load_cartridge");
 	
 	const char* dlsym_error = dlerror();
