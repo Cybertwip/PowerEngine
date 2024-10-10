@@ -22,12 +22,12 @@
 
 #include <cstdlib>  // For system()
 
-DebugBridgeServer::DebugBridgeServer(uint16_t port, IActorManager& actorManager, ICameraManager& cameraManager, std::function<void(ICartridge&)> onCartridgeInsertedCallback) : m_port(port), mActorManager(actorManager), mCameraManager(cameraManager), mOnCartridgeInsertedCallback(onCartridgeInsertedCallback) {
+CartridgeBridge::CartridgeBridge(uint16_t port, IActorManager& actorManager, ICameraManager& cameraManager, std::function<void(ICartridge&)> onCartridgeInsertedCallback) : m_port(port), mActorManager(actorManager), mCameraManager(cameraManager), mOnCartridgeInsertedCallback(onCartridgeInsertedCallback) {
 	m_server.init_asio();
 	
 	m_server.set_message_handler(
 								 websocketpp::lib::bind(
-														&DebugBridgeServer::on_message,
+														&CartridgeBridge::on_message,
 														this,
 														websocketpp::lib::placeholders::_1,
 														websocketpp::lib::placeholders::_2
@@ -39,7 +39,7 @@ DebugBridgeServer::DebugBridgeServer(uint16_t port, IActorManager& actorManager,
 	m_server.set_access_channels(websocketpp::log::alevel::none);
 }
 
-void DebugBridgeServer::run() {
+void CartridgeBridge::run() {
 	try {
 		m_server.listen(m_port);
 		m_server.start_accept();
@@ -55,7 +55,7 @@ void DebugBridgeServer::run() {
 	}
 }
 
-void DebugBridgeServer::stop() {
+void CartridgeBridge::stop() {
 	try {
 		m_server.stop_listening();
 		m_server.stop();
@@ -65,7 +65,7 @@ void DebugBridgeServer::stop() {
 	}
 }
 
-void DebugBridgeServer::on_message(websocketpp::connection_hdl hdl, server::message_ptr msg) {
+void CartridgeBridge::on_message(websocketpp::connection_hdl hdl, server::message_ptr msg) {
 	std::lock_guard<std::mutex> lock(m_mutex);
 	try {
 		if (msg->get_opcode() != websocketpp::frame::opcode::binary) {
@@ -98,7 +98,7 @@ void DebugBridgeServer::on_message(websocketpp::connection_hdl hdl, server::mess
 	}
 }
 
-DebugCommand DebugBridgeServer::process_command(const DebugCommand& cmd) {
+DebugCommand CartridgeBridge::process_command(const DebugCommand& cmd) {
 	if (cmd.type == DebugCommand::CommandType::EXECUTE) {
 		std::string result = "Executed command: " + cmd.payload;
 		return DebugCommand(DebugCommand::CommandType::RESPONSE, result);
@@ -109,7 +109,7 @@ DebugCommand DebugBridgeServer::process_command(const DebugCommand& cmd) {
 
 #ifdef _WIN32
 // Windows-specific implementation for loading and executing a DLL
-void DebugBridgeServer::execute_shared_object(const std::vector<uint8_t>& data) {
+void CartridgeBridge::execute_shared_object(const std::vector<uint8_t>& data) {
 	// Save the received data to a temporary DLL file
 	const char* temp_filename = "temp_module.dll";
 	std::ofstream ofs(temp_filename, std::ios::binary);
@@ -152,7 +152,7 @@ void DebugBridgeServer::execute_shared_object(const std::vector<uint8_t>& data) 
 #elif defined(__linux__) || defined(__APPLE__)
 // Unix-like system implementation for loading and executing a shared object
 
-void DebugBridgeServer::execute_shared_object(const std::vector<uint8_t>& data) {
+void CartridgeBridge::execute_shared_object(const std::vector<uint8_t>& data) {
 	// Check for 'SOLO' magic number and remove it
 	size_t offset = 0;
 	if (data.size() >= 4 && data[0] == 'S' && data[1] == 'O' && data[2] == 'L' && data[3] == 'O') {
@@ -344,7 +344,7 @@ void DebugBridgeServer::execute_shared_object(const std::vector<uint8_t>& data) 
 
 #else
 // Unsupported platform
-void DebugBridgeServer::execute_shared_object(const std::vector<uint8_t>& data) {
+void CartridgeBridge::execute_shared_object(const std::vector<uint8_t>& data) {
 	std::cerr << "Shared object execution not supported on this platform." << std::endl;
 }
 #endif

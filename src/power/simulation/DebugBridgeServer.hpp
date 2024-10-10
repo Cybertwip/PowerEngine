@@ -7,6 +7,7 @@
 #include <queue>
 #include <functional>
 #include "DebugBridgeCommon.hpp"
+#include "simulation/Cartridge.hpp"
 
 typedef websocketpp::server<websocketpp::config::asio> server;
 
@@ -14,9 +15,9 @@ class IActorManager;
 class ICameraManager;
 class ICartridge;
 
-class DebugBridgeServer {
+class CartridgeBridge {
 public:
-	DebugBridgeServer(uint16_t port, IActorManager& actorManager, ICameraManager& cameraManager, std::function<void(ICartridge&)> onCartridgeInsertedCallback);
+	CartridgeBridge(uint16_t port, IActorManager& actorManager, ICameraManager& cameraManager, std::function<void(ICartridge&)> onCartridgeInsertedCallback);
 	void run();
 	void stop();
 	

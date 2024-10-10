@@ -192,6 +192,7 @@ private:
 class Actor;
 class ActorManager;
 class Canvas;
+class CartridgeBridge;
 class CameraManager;
 class DeepMotionApiClient;
 class GizmoManager;
@@ -229,6 +230,7 @@ class Application : public nanogui::DraggableScreen
 	AnimationTimeProvider mGlobalAnimationTimeProvider;
 	
 	// Reversed unique_ptr declarations
+	std::unique_ptr<CartridgeBridge> mCartridgeBridge;
 	std::unique_ptr<Canvas> mCanvas; // Place appropriately based on actual dependencies
 	std::unique_ptr<UiManager> mUiManager;
 	std::unique_ptr<GizmoManager> mGizmoManager;

@@ -21,6 +21,7 @@
 #include "graphics/drawing/SkinnedMesh.hpp"
 #include "graphics/drawing/SkinnedMeshBatch.hpp"
 #include "import/Fbx.hpp"
+#include "simulation/DebugBridgeServer.hpp"
 #include "ui/AnimationPanel.hpp"
 #include "ui/HierarchyPanel.hpp"
 #include "ui/ScenePanel.hpp"
@@ -122,6 +123,10 @@ void Application::initialize() {
 	set_background(mRenderCommon->canvas()->background_color());
 	
 	DraggableScreen::initialize();
+	
+	mCartridgeBridge = std::make_unique<CartridgeBridge>(9003, *mActorManager, *mCameraManager, [this](ICartridge& cartridge) {
+		
+	});
 
 	perform_layout();
 }

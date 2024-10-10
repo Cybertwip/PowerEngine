@@ -17,7 +17,7 @@ class GizmoManager;
 class UiManager;
 class Batch;
 
-class ActorManager : IActorManager {
+class ActorManager : public IActorManager {
 public:
     ActorManager(entt::registry& registry, CameraManager& cameraManager);
 	Actor& create_actor() override;
