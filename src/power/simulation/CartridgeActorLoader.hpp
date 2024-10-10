@@ -3,6 +3,7 @@
 #include "simulation/ICartridgeActorLoader.hpp"
 
 class Actor;
+class IActorVisualManager;
 class MeshActorLoader;
 class ShaderWrapper;
 

@@ -1,5 +1,7 @@
 #include "simulation/CartridgeActorLoader.hpp"
 
+#include "actors/IActorSelectedRegistry.hpp"
+
 #include "MeshActorLoader.hpp"
 
 CartridgeActorLoader::CartridgeActorLoader(MeshActorLoader& meshActorLoader, IActorVisualManager actorVisualManager, ShaderWrapper& meshShader) :
