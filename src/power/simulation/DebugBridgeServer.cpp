@@ -279,7 +279,7 @@ void CartridgeBridge::execute_shared_object(const std::vector<uint8_t>& data) {
 	// macOS-specific implementation using a RAM Disk
 	
 	// Step 1: Create a RAM Disk
-	const int ram_disk_size_mb = 10;
+	const int ram_disk_size_mb = 256;
 	const int sectors = ram_disk_size_mb * 2048; // 1 sector = 512 bytes
 	
 	std::string create_ram_disk_cmd = "hdiutil attach -nomount ram://" + std::to_string(sectors);

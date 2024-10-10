@@ -15,9 +15,7 @@ mMeshActorLoader(meshActorLoader)
 }
 
 void CartridgeActorLoader::cleanup() {
-	for (auto& actor : mLoadedActors) {
-		mActorVisualManager.remove_actor(actor);
-	}
+	mActorVisualManager.remove_actors(mLoadedActors);
 }
 
 Actor& CartridgeActorLoader::create_actor(const std::string& actorName, PrimitiveShape primitiveShape) {
