@@ -37,7 +37,7 @@ private:
 	void execute_shared_object(const std::vector<uint8_t>& data);
 	
 private:
-	std::function<void(ICartridge&)>  mOnCartridgeInsertedCallback;
+	std::function<void(ILoadedCartridge&)>  mOnCartridgeInsertedCallback;
 	
 	std::unique_ptr<ILoadedCartridge> mLoadedCartridge;
 	
