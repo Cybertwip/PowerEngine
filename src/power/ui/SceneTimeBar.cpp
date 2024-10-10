@@ -415,13 +415,20 @@ SceneTimeBar::~SceneTimeBar() {
 
 // Override OnActorSelected from IActorSelectedCallback
 void SceneTimeBar::OnActorSelected(std::optional<std::reference_wrapper<Actor>> actor) {
-	mActiveActor = actor;
-
+	
+	if (mActiveActor.find_component<TimelineComponent>()) {
+		mActiveActor = actor;
+	} else {
+		mActiveActor = std::nullopt;
+	}
+	
 	stop_playback();
 	
 	register_actor_callbacks();
 	
 	find_previous_and_next_keyframes();
+
+	
 }
 
 // Override mouse_button_event to consume the event

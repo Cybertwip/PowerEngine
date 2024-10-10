@@ -276,8 +276,6 @@ Actor& PrimitiveBuilder::build(Actor& actor, const std::string& actorName, Primi
 	// Add TransformComponent for positioning
 	actor.add_component<TransformComponent>();
 	
-	// Optionally, add AnimationComponent or other components as needed
-	// For simplicity, we'll omit them here
 	
 	return actor;
 }
