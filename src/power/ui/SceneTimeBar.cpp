@@ -417,7 +417,7 @@ SceneTimeBar::~SceneTimeBar() {
 void SceneTimeBar::OnActorSelected(std::optional<std::reference_wrapper<Actor>> actor) {
 	
 	if (actor.has_value()){
-		if (actor.find_component<TimelineComponent>()) {
+		if (actor->get().find_component<TimelineComponent>()) {
 			mActiveActor = actor;
 		} else {
 			mActiveActor = std::nullopt;
