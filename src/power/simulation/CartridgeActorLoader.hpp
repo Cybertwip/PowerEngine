@@ -14,6 +14,6 @@ public:
 	
 private:
 	MeshActorLoader& mMeshActorLoader;
-	IActorVisualManager mActorVisualManager;
+	IActorVisualManager& mActorVisualManager;
 	ShaderWrapper& mMeshShader;
 };
