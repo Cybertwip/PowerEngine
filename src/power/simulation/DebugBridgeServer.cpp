@@ -30,7 +30,7 @@ m_mem_fd(-1),
 #elif defined(__APPLE__)
 m_ram_disk_path(""),
 #endif
-m_loadedCartridge(nullptr)
+mLoadedCartridge(nullptr)
 {
 	m_server.init_asio();
 	
