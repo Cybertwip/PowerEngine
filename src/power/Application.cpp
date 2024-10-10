@@ -200,7 +200,7 @@ void Application::register_click_callback(std::function<void(bool, int, int, int
 }
 
 bool Application::drop_event(Widget& sender, const std::vector<std::string> & filenames) {
-	if (&sender == mUiManager->status_bar_panel()->resources_panel().get()) {
+	//if (&sender == mUiManager->status_bar_panel()->resources_panel().get()) {
 
 		if (mUiCommon->animation_panel()->contains(m_mouse_pos, true, true)) {
 			if (filenames[0].find(".pan") != std::string::npos){
@@ -215,5 +215,5 @@ bool Application::drop_event(Widget& sender, const std::vector<std::string> & fi
 				mUiCommon->scene_time_bar()->refresh_actors();
 			}
 		}
-	}
+	//}
 }

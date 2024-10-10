@@ -85,7 +85,7 @@ void GizmoManager::translate(float px, float py) {
 			
 			auto translation = transformComponent.get_translation();
 			
-			translation.x += px;
+			translation.x -= px;
 			
 			transformComponent.set_translation(translation);
 		}
@@ -96,7 +96,7 @@ void GizmoManager::translate(float px, float py) {
 			
 			auto translation = transformComponent.get_translation();
 			
-			translation.y += py;
+			translation.z += py;
 			
 			transformComponent.set_translation(translation);
 		}
@@ -107,7 +107,7 @@ void GizmoManager::translate(float px, float py) {
 			
 			auto translation = transformComponent.get_translation();
 			
-			translation.z -= py; // Use py instead of px
+			translation.y += py; // Use py instead of px
 
 			transformComponent.set_translation(translation);
 		}
@@ -127,14 +127,14 @@ void GizmoManager::rotate(float px, float py) {
 		case GizmoAxis::X:{
 			auto& transformComponent = actor.get_component<TransformComponent>();
 			
-			transformComponent.rotate(glm::vec3(1.0f, 0.0f, 0.0f), -angle); // Rotate around X-axis
+			transformComponent.rotate(glm::vec3(1.0f, 0.0f, 0.0f), angle); // Rotate around X-axis
 		}
 			break;
 			
 		case GizmoAxis::Y:{
 			auto& transformComponent = actor.get_component<TransformComponent>();
 			
-			transformComponent.rotate(glm::vec3(0.0f, 0.0f, -1.0f), -angle); // Rotate around Z-axis
+			transformComponent.rotate(glm::vec3(0.0f, 0.0f, -1.0f), angle); // Rotate around Z-axis
 		}
 			break;
 			
@@ -170,7 +170,7 @@ void GizmoManager::scale(float px, float py) {
 			
 			auto scale = transformComponent.get_scale();
 			
-			scale.y += py;
+			scale.z += py;
 			
 			transformComponent.set_scale(scale);
 		}
@@ -181,7 +181,7 @@ void GizmoManager::scale(float px, float py) {
 			
 			auto scale = transformComponent.get_scale();
 			
-			scale.z -= py;
+			scale.y += py;
 			
 			transformComponent.set_scale(scale);
 		}
@@ -277,10 +277,12 @@ void GizmoManager::draw_content(const nanogui::Matrix4f& model, const nanogui::M
 			
 			if (&mActiveGizmo->get() == &mTranslationGizmo || &mActiveGizmo->get() == &mScaleGizmo) {
 				rotationMatrix = glm::rotate(rotationMatrix, glm::radians(-90.0f), glm::vec3(1, 0, 0));
-				rotationMatrix = glm::rotate(rotationMatrix, glm::radians(180.0f), glm::vec3(0, 1, 0));
-				
+				rotationMatrix = glm::rotate(rotationMatrix, glm::radians(180.0f), glm::vec3(0, 0, 1));
 				rotationMatrix = glm::rotate(rotationMatrix, glm::radians(180.0f), glm::vec3(1, 0, 0));
 			}
+			
+			rotationMatrix = glm::rotate(rotationMatrix, glm::radians(90.0f), glm::vec3(1, 0, 0));
+
 
 			// Apply transformations in order: rotation, translation, then scale
 			auto gizmoModel = actorTranslationMatrix * rotationMatrix * scaleMatrix;
@@ -292,8 +294,6 @@ void GizmoManager::draw_content(const nanogui::Matrix4f& model, const nanogui::M
 			drawable.draw_content(gizmoMatrix, view, projection);
 
 		}
-
-		
 
 	}
 }

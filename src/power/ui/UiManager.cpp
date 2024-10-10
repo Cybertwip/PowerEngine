@@ -68,14 +68,13 @@ glm::vec3 ScreenToWorld(glm::vec2 screenPos, float depth, glm::mat4 projectionMa
 	float focal_length = 1.0f/tanf(glm::radians(45.0f / 2.0f));
 	float ar = (float)WINDOW_HEIGHT / (float)WINDOW_WIDTH;
 	glm::vec3 ray_view(ndc_x / focal_length, (ndc_y * ar) / focal_length, 1.0f);
+		
+	// Swap Y and Z axes for Z-up
+	glm::vec3 ray_view_z_up(ray_view.x, ray_view.z, ray_view.y);
 	
-	// Step 2 - NDC to view (Anton's version)
-	glm::vec4 ray_ndc_4d(ndc_x, ndc_y, 1.0f, 1.0f);
-	glm::vec4 ray_view_4d = ProjectionInv * ray_ndc_4d;
-	
-	// Step 3 - intersect view vector with object Z plane (in view)
-	glm::vec4 view_space_intersect = glm::vec4(ray_view * depth, 1.0f);
-	
+	// Step 3: Scale the ray by depth to get the intersection point in view space
+	glm::vec4 view_space_intersect = glm::vec4(ray_view_z_up * depth, 1.0f);
+
 	// Step 4 - View to World space
 	glm::mat4 View = viewMatrix;
 	glm::mat4 InvView = glm::inverse(viewMatrix);
@@ -241,9 +240,9 @@ UiManager::UiManager(nanogui::Screen& screen, std::shared_ptr<IActorSelectedRegi
 			adjusted_dx *= scaleX;
 			adjusted_dy *= scaleY;
 			
-			auto world = UIUtils::ScreenToWorld(glm::vec2(adjusted_x, adjusted_y), cameraPosition.z, projMatrix, viewMatrix, width, height);
+			auto world = UIUtils::ScreenToWorld(glm::vec2(adjusted_x, adjusted_y), cameraPosition.y, projMatrix, viewMatrix, width, height);
 			
-			auto offset = UIUtils::ScreenToWorld(glm::vec2(adjusted_dx, adjusted_dy), cameraPosition.z, projMatrix, viewMatrix, width, height);
+			auto offset = UIUtils::ScreenToWorld(glm::vec2(adjusted_dx, adjusted_dy), cameraPosition.y, projMatrix, viewMatrix, width, height);
 			
 			int id = readFromFramebuffer(width, height, x, y);
 			
@@ -429,8 +428,6 @@ void UiManager::draw() {
 		}
 		
 		// Depth testing for gizmos
-		mCanvas->render_pass().push_depth_test_state(nanogui::RenderPass::DepthTest::Always, true, mShaderManager.identifier("gizmo"));
-		mCanvas->render_pass().push_depth_test_state(nanogui::RenderPass::DepthTest::Always, true, mShaderManager.identifier("gizmo"));
 		mCanvas->render_pass().push_depth_test_state(nanogui::RenderPass::DepthTest::Always, true, mShaderManager.identifier("gizmo"));
 		
 		// Draw gizmos
