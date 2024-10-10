@@ -40,13 +40,39 @@ CartridgeBridge::CartridgeBridge(uint16_t port, ICartridge& cartridge, std::func
 	m_server.set_access_channels(websocketpp::log::alevel::none);
 }
 
+CartridgeBridge::~CartridgeBridge() {
+	stop();
+}
+
+
 void CartridgeBridge::run() {
+	std::lock_guard<std::mutex> lock(m_mutex);
+	if (m_running.load()) {
+		std::cerr << "Server is already running." << std::endl;
+		return;
+	}
+	
 	try {
 		m_server.listen(m_port);
 		m_server.start_accept();
 		
 		std::cout << "DebugBridgeServer is running on port " << m_port << std::endl;
-		m_server.run();
+		
+		m_running.store(true);
+		m_thread = std::thread([this]() {
+			try {
+				m_server.run();
+			} catch (const websocketpp::exception& e) {
+				std::cerr << "WebSocket++ exception in thread: " << e.what() << std::endl;
+			} catch (const std::exception& e) {
+				std::cerr << "Standard exception in thread: " << e.what() << std::endl;
+			} catch (...) {
+				std::cerr << "Unknown exception in thread." << std::endl;
+			}
+			
+			m_running.store(false);
+			std::cout << "DebugBridgeServer thread has exited." << std::endl;
+		});
 	} catch (const websocketpp::exception& e) {
 		std::cerr << "WebSocket++ exception: " << e.what() << std::endl;
 	} catch (const std::exception& e) {
@@ -57,13 +83,70 @@ void CartridgeBridge::run() {
 }
 
 void CartridgeBridge::stop() {
+	std::lock_guard<std::mutex> lock(m_mutex);
+	if (!m_running.load()) {
+		std::cerr << "Server is not running." << std::endl;
+		return;
+	}
+	
 	try {
 		m_server.stop_listening();
 		m_server.stop();
+		
+		if (m_thread.joinable()) {
+			m_thread.join();
+		}
+		
 		std::cout << "DebugBridgeServer has stopped." << std::endl;
 	} catch (const websocketpp::exception& e) {
 		std::cerr << "WebSocket++ exception on stop: " << e.what() << std::endl;
+	} catch (const std::exception& e) {
+		std::cerr << "Standard exception on stop: " << e.what() << std::endl;
+	} catch (...) {
+		std::cerr << "Unknown exception on stop." << std::endl;
 	}
+}
+
+void CartridgeBridge::on_message(websocketpp::connection_hdl hdl, server::message_ptr msg) {
+	std::lock_guard<std::mutex> lock(m_mutex);
+	try {
+		if (msg->get_opcode() != websocketpp::frame::opcode::binary) {
+			std::cerr << "Received non-binary message. Ignoring." << std::endl;
+			return;
+		}
+		
+		std::vector<uint8_t> data(msg->get_payload().begin(), msg->get_payload().end());
+		
+		// Check for magic number 'SOLO' at the start (optional)
+		if (data.size() >= 4 && data[0] == 'S' && data[1] == 'O' && data[2] == 'L' && data[3] == 'O') {
+			// Shared Object execution
+			execute_shared_object(data);
+			std::string ack = "Shared object executed successfully.";
+			m_server.send(hdl, ack, websocketpp::frame::opcode::text);
+		} else {
+			// Assume it's a DebugCommand
+			DebugCommand cmd = DebugCommand::deserialize(data);
+			
+			std::cout << "Received command of type " << static_cast<int>(cmd.type)
+			<< " with payload: " << cmd.payload << std::endl;
+			
+			DebugCommand response = process_command(cmd);
+			
+			std::vector<uint8_t> response_bytes = response.serialize();
+			m_server.send(hdl, response_bytes.data(), response_bytes.size(), websocketpp::frame::opcode::binary);
+		}
+	} catch (const std::exception& e) {
+		std::cerr << "Error handling message: " << e.what() << std::endl;
+	}
+}
+
+DebugCommand CartridgeBridge::process_command(const DebugCommand& cmd) {
+	if (cmd.type == DebugCommand::CommandType::EXECUTE) {
+		std::string result = "Executed command: " + cmd.payload;
+		return DebugCommand(DebugCommand::CommandType::RESPONSE, result);
+	}
+	
+	return DebugCommand(DebugCommand::CommandType::RESPONSE, "Unknown command type.");
 }
 
 void CartridgeBridge::on_message(websocketpp::connection_hdl hdl, server::message_ptr msg) {

@@ -6,6 +6,8 @@
 #include <mutex>
 #include <queue>
 #include <functional>
+#include <thread>   // For std::thread
+#include <atomic>   // For std::atomic<bool>
 #include "DebugBridgeCommon.hpp"
 #include "simulation/Cartridge.hpp"
 
@@ -22,6 +24,8 @@ public:
 	CartridgeBridge(uint16_t port,
 					ICartridge& cartridge,
 					std::function<void(ILoadedCartridge&)> onCartridgeInsertedCallback);
+	
+	~CartridgeBridge();
 	void run();
 	void stop();
 	
@@ -42,5 +46,10 @@ private:
 	std::unique_ptr<ILoadedCartridge> mLoadedCartridge;
 	
 	ICartridge& mCartridge;
+	
+	std::thread m_thread;                // Thread to run the server
+	std::atomic<bool> m_running;         // Flag to indicate if the server is running
+	std::mutex m_mutex;                  // Mutex to protect shared resources
+
 };
 

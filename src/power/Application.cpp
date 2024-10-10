@@ -134,6 +134,8 @@ void Application::initialize() {
 	mCartridgeBridge = std::make_unique<CartridgeBridge>(9003, *mCartridge, [this](ILoadedCartridge& cartridge) {
 		
 	});
+	
+	mCartridgeBridge->run();
 
 	perform_layout();
 }
