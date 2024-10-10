@@ -1,18 +1,24 @@
 #pragma once
 
-class ICameraManager;
+#include "simulation/ICartridge.hpp"
 
-class ICartridgeActorLoader;
-
-class ICartridge {
+class Cartridge : public ICartridge {
 public:
-	ICartridge(ICartridgeActorLoader& actorLoader, ICameraManager& cameraManager) : mActorLoader(actorLoader), mCameraManager(cameraManager) {
+	Cartridge(ICartridgeActorLoader& actorLoader, ICameraManager& cameraManager) : mActorLoader(actorLoader), mCameraManager(cameraManager) {
 		
 	}
 	
-	virtual ~ICartridge() = default;
+	~Cartridge() = default;
 	
-protected:
+	ICartridgeActorLoader& GetActorLoader() override {
+		return mActorLoader;
+	}
+	
+	ICameraManager& GetCameraManager() override {
+		return mCameraManager;
+	}
+
+private:
 	ICartridgeActorLoader& mActorLoader;
 	ICameraManager& mCameraManager;
 };

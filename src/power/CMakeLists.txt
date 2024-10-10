@@ -188,6 +188,7 @@ ${CMAKE_CURRENT_LIST_DIR}/actors/IActorManager.hpp
     ${CMAKE_CURRENT_LIST_DIR}/simulation/DebugBridgeCommon.hpp
     ${CMAKE_CURRENT_LIST_DIR}/simulation/DebugBridgeServer.cpp
     ${CMAKE_CURRENT_LIST_DIR}/simulation/Cartridge.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/simulation/ICartridge.hpp
     ${CMAKE_CURRENT_LIST_DIR}/simulation/ICartridgeActorLoader.hpp
     ${CMAKE_CURRENT_LIST_DIR}/simulation/ILoadedCartridge.hpp
     ${CMAKE_CURRENT_LIST_DIR}/simulation/CartridgeActorLoader.hpp

@@ -24,6 +24,7 @@
 #include "simulation/Cartridge.hpp"
 #include "simulation/CartridgeActorLoader.hpp"
 #include "simulation/DebugBridgeServer.hpp"
+#include "simulation/ILoadedCartridge.hpp"
 #include "ui/AnimationPanel.hpp"
 #include "ui/HierarchyPanel.hpp"
 #include "ui/ScenePanel.hpp"
@@ -128,8 +129,7 @@ void Application::initialize() {
 	
 	mCartridgeActorLoader = std::make_unique<CartridgeActorLoader>(*mMeshActorLoader, *mMeshShader);
 	
-	mCartridge = std::make_unique<Cartridge>(*mCartridgeActorLoader, *mMmCameraManagereshShader);
-
+	mCartridge = std::make_unique<Cartridge>(*mCartridgeActorLoader, *mCameraManager);
 
 	mCartridgeBridge = std::make_unique<CartridgeBridge>(9003, *mCartridge, [this](ILoadedCartridge& cartridge) {
 		
