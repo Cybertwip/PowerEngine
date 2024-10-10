@@ -30,7 +30,13 @@ m_mem_fd(-1),
 #elif defined(__APPLE__)
 m_ram_disk_path(""),
 #endif
-mLoadedCartridge(nullptr)
+mLoadedCartridge(nullptr),
+#ifdef _WIN32
+mSharedObjectHandle(nullptr) // Initialize for Windows
+#else
+mSharedObjectHandle(nullptr) // Initialize for Unix-like systems
+#endif
+
 {
 	m_server.init_asio();
 	
@@ -166,8 +172,14 @@ DebugCommand CartridgeBridge::process_command(const DebugCommand& cmd) {
 }
 
 #ifdef _WIN32
-// Windows-specific implementation for loading and executing a DLL
 void CartridgeBridge::execute_shared_object(const std::vector<uint8_t>& data) {
+	// Close existing DLL if loaded
+	if (mSharedObjectHandle) {
+		FreeLibrary(mSharedObjectHandle);
+		mSharedObjectHandle = nullptr;
+		std::cout << "Previous DLL unloaded successfully." << std::endl;
+	}
+	
 	// Save the received data to a temporary DLL file
 	const char* temp_filename = "temp_module.dll";
 	std::ofstream ofs(temp_filename, std::ios::binary);
@@ -179,8 +191,8 @@ void CartridgeBridge::execute_shared_object(const std::vector<uint8_t>& data) {
 	ofs.close();
 	
 	// Load the DLL
-	HMODULE hModule = LoadLibraryA(temp_filename);
-	if (!hModule) {
+	mSharedObjectHandle = LoadLibraryA(temp_filename);
+	if (!mSharedObjectHandle) {
 		std::cerr << "Failed to load DLL: " << GetLastError() << std::endl;
 		std::remove(temp_filename);
 		return;
@@ -188,10 +200,11 @@ void CartridgeBridge::execute_shared_object(const std::vector<uint8_t>& data) {
 	
 	// Get the say_hello function
 	typedef void (*SayHelloFunc)();
-	SayHelloFunc say_hello = (SayHelloFunc)GetProcAddress(hModule, "say_hello");
+	SayHelloFunc say_hello = (SayHelloFunc)GetProcAddress(mSharedObjectHandle, "say_hello");
 	if (!say_hello) {
 		std::cerr << "Failed to find say_hello function: " << GetLastError() << std::endl;
-		FreeLibrary(hModule);
+		FreeLibrary(mSharedObjectHandle);
+		mSharedObjectHandle = nullptr;
 		std::remove(temp_filename);
 		return;
 	}
@@ -203,15 +216,21 @@ void CartridgeBridge::execute_shared_object(const std::vector<uint8_t>& data) {
 		std::cerr << "Exception occurred while executing say_hello." << std::endl;
 	}
 	
-	// Unload the DLL and remove the temporary file
-	FreeLibrary(hModule);
-	std::remove(temp_filename);
+	// Do not unload the DLL here. It will be unloaded when a new cartridge is loaded or on server stop.
+	
+	// Optionally, remove the temporary file if it's no longer needed
+	// std::remove(temp_filename);
 }
 
 #elif defined(__linux__) || defined(__APPLE__)
-// Unix-like system implementation for loading and executing a shared object
-
 void CartridgeBridge::execute_shared_object(const std::vector<uint8_t>& data) {
+	// Close existing shared object if loaded
+	if (mSharedObjectHandle) {
+		dlclose(mSharedObjectHandle);
+		mSharedObjectHandle = nullptr;
+		std::cout << "Previous shared object unloaded successfully." << std::endl;
+	}
+	
 	// Check for 'SOLO' magic number and remove it
 	size_t offset = 0;
 	if (data.size() >= 4 && data[0] == 'S' && data[1] == 'O' && data[2] == 'L' && data[3] == 'O') {
@@ -242,53 +261,24 @@ void CartridgeBridge::execute_shared_object(const std::vector<uint8_t>& data) {
 	}
 	
 	// Retrieve the file descriptor's path using /proc/self/fd/
-	// Note: dlopen can accept a path like "/proc/self/fd/<fd>"
 	std::string fd_path = "/proc/self/fd/" + std::to_string(m_mem_fd);
 	
 	// Load the shared object
-	void* handle = dlopen(fd_path.c_str(), RTLD_NOW);
-	if (!handle) {
+	mSharedObjectHandle = dlopen(fd_path.c_str(), RTLD_NOW);
+	if (!mSharedObjectHandle) {
 		std::cerr << "dlopen failed: " << dlerror() << std::endl;
 		close(m_mem_fd);
 		m_mem_fd = -1;
 		return;
 	}
 	
-	// Clear any existing errors
-	dlerror();
-	
-	// Get the load_cartridge function
-	typedef ILoadedCartridge* (*LoadCartridgeFunc)(ICartridge& cartridge);
-	LoadCartridgeFunc load_cartridge = (LoadCartridgeFunc)dlsym(handle, "load_cartridge");
-	const char* dlsym_error = dlerror();
-	if (dlsym_error) {
-		std::cerr << "Failed to find load_cartridge function: " << dlsym_error << std::endl;
-		dlclose(handle);
-		close(m_mem_fd);
-		m_mem_fd = -1;
-		return;
-	}
-	
-	// Call the load_cartridge function
-	try {
-		mLoadedCartridge = std::unique_ptr<ILoadedCartridge>(load_cartridge(mCartridge));
-		mOnCartridgeInsertedCallback(*mLoadedCartridge);
-	} catch (...) {
-		std::cerr << "Exception occurred while executing load_cartridge." << std::endl;
-	}
-	
-	// Close the shared object (but keep memfd open for the disk)
-	dlclose(handle);
-	
 #elif defined(__APPLE__)
 	// macOS-specific implementation using a RAM Disk
 	
 	// Step 1: Create a RAM Disk
-	// Define RAM disk size (e.g., 10MB)
 	const int ram_disk_size_mb = 10;
 	const int sectors = ram_disk_size_mb * 2048; // 1 sector = 512 bytes
 	
-	// Create the RAM disk
 	std::string create_ram_disk_cmd = "hdiutil attach -nomount ram://" + std::to_string(sectors);
 	FILE* pipe = popen(create_ram_disk_cmd.c_str(), "r");
 	if (!pipe) {
@@ -325,7 +315,6 @@ void CartridgeBridge::execute_shared_object(const std::vector<uint8_t>& data) {
 	}
 	
 	// Step 2: Write the shared object to the RAM disk
-	// Generate a unique temporary file name
 	char temp_filename_template[] = "/Volumes/RAMDisk/temp_module_XXXXXX.dylib";
 	char temp_filename[sizeof(temp_filename_template)];
 	strcpy(temp_filename, temp_filename_template);
@@ -357,8 +346,8 @@ void CartridgeBridge::execute_shared_object(const std::vector<uint8_t>& data) {
 	close(fd);
 	
 	// Step 3: Load the shared object
-	void* handle = dlopen(temp_filename, RTLD_NOW);
-	if (!handle) {
+	mSharedObjectHandle = dlopen(temp_filename, RTLD_NOW);
+	if (!mSharedObjectHandle) {
 		std::cerr << "dlopen failed: " << dlerror() << std::endl;
 		std::remove(temp_filename);
 		// Detach the RAM disk
@@ -367,23 +356,32 @@ void CartridgeBridge::execute_shared_object(const std::vector<uint8_t>& data) {
 		m_ram_disk_path = "";
 		return;
 	}
+#endif // Platform-specific loading
 	
 	// Clear any existing errors
 	dlerror();
 	
 	// Get the load_cartridge function
 	typedef ILoadedCartridge* (*LoadCartridgeFunc)(ICartridge& cartridge);
-	LoadCartridgeFunc load_cartridge = (LoadCartridgeFunc)dlsym(handle, "load_cartridge");
-	
+	LoadCartridgeFunc load_cartridge = (LoadCartridgeFunc)dlsym(mSharedObjectHandle, "load_cartridge");
 	const char* dlsym_error = dlerror();
 	if (dlsym_error) {
 		std::cerr << "Failed to find load_cartridge function: " << dlsym_error << std::endl;
-		dlclose(handle);
-		std::remove(temp_filename);
-		// Detach the RAM disk
+#ifdef _WIN32
+		FreeLibrary(mSharedObjectHandle);
+#else
+		dlclose(mSharedObjectHandle);
+#endif
+		mSharedObjectHandle = nullptr;
+		
+#ifdef __linux__
+		close(m_mem_fd);
+		m_mem_fd = -1;
+#elif defined(__APPLE__)
 		std::string detach_cmd = "hdiutil detach " + m_ram_disk_path;
 		system(detach_cmd.c_str());
 		m_ram_disk_path = "";
+#endif
 		return;
 	}
 	
@@ -393,22 +391,27 @@ void CartridgeBridge::execute_shared_object(const std::vector<uint8_t>& data) {
 		mOnCartridgeInsertedCallback(*mLoadedCartridge);
 	} catch (...) {
 		std::cerr << "Exception occurred while executing load_cartridge." << std::endl;
+#ifdef _WIN32
+		FreeLibrary(mSharedObjectHandle);
+#else
+		dlclose(mSharedObjectHandle);
+#endif
+		mSharedObjectHandle = nullptr;
+		
+#ifdef __linux__
+		close(m_mem_fd);
+		m_mem_fd = -1;
+#elif defined(__APPLE__)
+		std::string detach_cmd = "hdiutil detach " + m_ram_disk_path;
+		system(detach_cmd.c_str());
+		m_ram_disk_path = "";
+#endif
 	}
 	
-	// Step 4: Cleanup
-	dlclose(handle);
-	std::remove(temp_filename);
-	
-	// Note: Do not detach the RAM disk here as it should persist until ejected or server stops
-#endif // Platform-specific code
-}
-
-#else
-// Unsupported platform
-void CartridgeBridge::execute_shared_object(const std::vector<uint8_t>& data) {
-	std::cerr << "Shared object execution not supported on this platform." << std::endl;
+	// Do not close the shared object here. It will remain loaded until a new cartridge is loaded or the server stops.
 }
 #endif
+
 
 // Initialize the disk when the server starts
 void CartridgeBridge::initialize_disk() {

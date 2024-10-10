@@ -103,6 +103,14 @@ private:
 	std::string m_ram_disk_path;  // Path to the RAM disk on macOS
 #endif
 	
+	
+#ifdef _WIN32
+	HMODULE mSharedObjectHandle; // Handle for Windows DLL
+#else
+	void* mSharedObjectHandle;   // Handle for Unix-like shared objects
+#endif
+
+	
 	// Prevent copying
 	CartridgeBridge(const CartridgeBridge&) = delete;
 	CartridgeBridge& operator=(const CartridgeBridge&) = delete;
