@@ -416,8 +416,12 @@ SceneTimeBar::~SceneTimeBar() {
 // Override OnActorSelected from IActorSelectedCallback
 void SceneTimeBar::OnActorSelected(std::optional<std::reference_wrapper<Actor>> actor) {
 	
-	if (mActiveActor.find_component<TimelineComponent>()) {
-		mActiveActor = actor;
+	if (actor.has_value()){
+		if (actor.find_component<TimelineComponent>()) {
+			mActiveActor = actor;
+		} else {
+			mActiveActor = std::nullopt;
+		}
 	} else {
 		mActiveActor = std::nullopt;
 	}
