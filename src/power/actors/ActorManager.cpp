@@ -43,7 +43,7 @@ void ActorManager::remove_actor(Actor& actor) {
 void ActorManager::remove_actors(const std::vector<std::reference_wrapper<Actor>>& actors) {
 	// Step 1: Collect pointers to actors to remove
 	std::unordered_set<Actor*> actors_to_remove;
-	for (auto& actor_ref : actors) {
+	for (const auto& actor_ref : actors) {
 		actors_to_remove.insert(&actor_ref.get());
 	}
 	
