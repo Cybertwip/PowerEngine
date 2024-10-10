@@ -50,7 +50,6 @@ private:
 	
 	std::thread m_thread;                // Thread to run the server
 	std::atomic<bool> m_running;         // Flag to indicate if the server is running
-	std::mutex m_mutex;                  // Mutex to protect shared resources
 
 };
 
