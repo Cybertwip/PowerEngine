@@ -9,6 +9,7 @@
 #include "UiCommon.hpp"
 #include "actors/Actor.hpp"
 #include "actors/ActorManager.hpp"
+#include "actors/IActorSelectedRegistry.hpp"
 #include "ai/DeepMotionApiClient.hpp"
 #include "components/CameraComponent.hpp"
 #include "components/TransformComponent.hpp"

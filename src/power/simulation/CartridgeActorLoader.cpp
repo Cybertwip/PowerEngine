@@ -4,7 +4,7 @@
 
 #include "MeshActorLoader.hpp"
 
-CartridgeActorLoader::CartridgeActorLoader(MeshActorLoader& meshActorLoader, IActorVisualManager actorVisualManager, ShaderWrapper& meshShader) :
+CartridgeActorLoader::CartridgeActorLoader(MeshActorLoader& meshActorLoader, IActorVisualManager& actorVisualManager, ShaderWrapper& meshShader) :
 mMeshActorLoader(meshActorLoader)
 , mActorVisualManager(actorVisualManager)
 , mMeshShader(meshShader)

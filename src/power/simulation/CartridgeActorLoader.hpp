@@ -9,7 +9,7 @@ class ShaderWrapper;
 
 class CartridgeActorLoader : public ICartridgeActorLoader {
 public:
-	CartridgeActorLoader(MeshActorLoader& meshActorLoader, IActorVisualManager actorVisualManager, ShaderWrapper& meshShader);
+	CartridgeActorLoader(MeshActorLoader& meshActorLoader, IActorVisualManager& actorVisualManager, ShaderWrapper& meshShader);
 	Actor& create_actor(const std::string& actorName, PrimitiveShape primitiveShape) override;
 	
 private:
