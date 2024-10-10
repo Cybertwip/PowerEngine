@@ -9,7 +9,9 @@
 #include <nanogui/layout.h>
 #include <GLFW/glfw3.h>
 
+#include <functional>
 #include <memory>
+#include <optional>
 #include <vector>
 
 class DraggableWindow : public nanogui::Window {
@@ -191,6 +193,7 @@ private:
 
 class ICartridge;
 class ICartridgeActorLoader;
+class ILoadedCartridge;
 
 class Actor;
 class ActorManager;
@@ -231,6 +234,7 @@ class Application : public nanogui::DraggableScreen
 	
 	
 	AnimationTimeProvider mGlobalAnimationTimeProvider;
+	std::optional<std::reference_wrapper<ILoadedCartridge>> mLoadedCartridge;
 	
 	// Reversed unique_ptr declarations
 	std::unique_ptr<ICartridge> mCartridge;

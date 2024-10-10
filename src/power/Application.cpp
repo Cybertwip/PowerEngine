@@ -133,7 +133,7 @@ void Application::initialize() {
 	mCartridge = std::make_unique<Cartridge>(*mCartridgeActorLoader, *mCameraManager);
 
 	mCartridgeBridge = std::make_unique<CartridgeBridge>(9003, *mCartridge, [this](ILoadedCartridge& cartridge) {
-		
+		mLoadedCartridge = std::ref(cartridge);
 	});
 	
 	mCartridgeBridge->run();
@@ -160,6 +160,10 @@ void Application::draw(NVGcontext *ctx) {
 
 void Application::process_events() {
 	mGlobalAnimationTimeProvider.Update();
+	
+	if (mLoadedCartridge.has_value()) {
+		mLoadedCartridge->get().update();
+	}
 	
 	// Dispatch queued click events
 	while (!mClickQueue.empty()) {

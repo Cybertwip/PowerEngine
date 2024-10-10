@@ -23,7 +23,15 @@
 
 #include <cstdlib>  // For system()
 
-CartridgeBridge::CartridgeBridge(uint16_t port, ICartridge& cartridge, std::function<void(ILoadedCartridge&)> onCartridgeInsertedCallback) : m_port(port), mCartridge(cartridge), mOnCartridgeInsertedCallback(onCartridgeInsertedCallback) {
+CartridgeBridge::CartridgeBridge(uint16_t port, ICartridge& cartridge, std::function<void(ILoadedCartridge&)> onCartridgeInsertedCallback)
+: m_port(port), mCartridge(cartridge), mOnCartridgeInsertedCallback(onCartridgeInsertedCallback),
+#ifdef __linux__
+m_mem_fd(-1),
+#elif defined(__APPLE__)
+m_ram_disk_path(""),
+#endif
+m_loadedCartridge(nullptr)
+{
 	m_server.init_asio();
 	
 	m_server.set_message_handler(
@@ -44,7 +52,6 @@ CartridgeBridge::~CartridgeBridge() {
 	stop();
 }
 
-
 void CartridgeBridge::run() {
 	std::lock_guard<std::mutex> lock(m_mutex);
 	if (m_running.load()) {
@@ -57,6 +64,9 @@ void CartridgeBridge::run() {
 		m_server.start_accept();
 		
 		std::cout << "DebugBridgeServer is running on port " << m_port << std::endl;
+		
+		// Initialize the disk at server start
+		initialize_disk();
 		
 		m_running.store(true);
 		m_thread = std::thread([this]() {
@@ -97,6 +107,9 @@ void CartridgeBridge::stop() {
 			m_thread.join();
 		}
 		
+		// Cleanup the disk when stopping the server
+		erase_disk();
+		
 		std::cout << "DebugBridgeServer has stopped." << std::endl;
 	} catch (const websocketpp::exception& e) {
 		std::cerr << "WebSocket++ exception on stop: " << e.what() << std::endl;
@@ -120,6 +133,9 @@ void CartridgeBridge::on_message(websocketpp::connection_hdl hdl, server::messag
 		// Check for magic number 'SOLO' at the start (optional)
 		if (data.size() >= 4 && data[0] == 'S' && data[1] == 'O' && data[2] == 'L' && data[3] == 'O') {
 			// Shared Object execution
+			// Before loading a new cartridge, erase/eject the existing disk
+			erase_disk();
+			
 			execute_shared_object(data);
 			std::string ack = "Shared object executed successfully.";
 			m_server.send(hdl, ack, websocketpp::frame::opcode::text);
@@ -191,6 +207,7 @@ void CartridgeBridge::execute_shared_object(const std::vector<uint8_t>& data) {
 	FreeLibrary(hModule);
 	std::remove(temp_filename);
 }
+
 #elif defined(__linux__) || defined(__APPLE__)
 // Unix-like system implementation for loading and executing a shared object
 
@@ -209,63 +226,64 @@ void CartridgeBridge::execute_shared_object(const std::vector<uint8_t>& data) {
 	
 #ifdef __linux__
 	// Linux-specific implementation using memfd_create
-	int mem_fd = memfd_create("in_memory_so", MFD_CLOEXEC);
-	if (mem_fd == -1) {
+	m_mem_fd = memfd_create("cartridge_disk", MFD_CLOEXEC);
+	if (m_mem_fd == -1) {
 		std::cerr << "memfd_create failed: " << strerror(errno) << std::endl;
 		return;
 	}
 	
 	// Write the .so data into the memory file
-	ssize_t written = write(mem_fd, data.data() + offset, so_size);
+	ssize_t written = write(m_mem_fd, data.data() + offset, so_size);
 	if (written != static_cast<ssize_t>(so_size)) {
 		std::cerr << "Failed to write all data to memfd: " << strerror(errno) << std::endl;
-		close(mem_fd);
+		close(m_mem_fd);
+		m_mem_fd = -1;
 		return;
 	}
 	
 	// Retrieve the file descriptor's path using /proc/self/fd/
 	// Note: dlopen can accept a path like "/proc/self/fd/<fd>"
-	std::string fd_path = "/proc/self/fd/" + std::to_string(mem_fd);
+	std::string fd_path = "/proc/self/fd/" + std::to_string(m_mem_fd);
 	
 	// Load the shared object
 	void* handle = dlopen(fd_path.c_str(), RTLD_NOW);
 	if (!handle) {
 		std::cerr << "dlopen failed: " << dlerror() << std::endl;
-		close(mem_fd);
+		close(m_mem_fd);
+		m_mem_fd = -1;
 		return;
 	}
 	
 	// Clear any existing errors
 	dlerror();
 	
-	// Get the say_hello function
-	typedef void (*SayHelloFunc)();
-	SayHelloFunc say_hello = (SayHelloFunc)dlsym(handle, "say_hello");
+	// Get the load_cartridge function
+	typedef ILoadedCartridge* (*LoadCartridgeFunc)(ICartridge& cartridge);
+	LoadCartridgeFunc load_cartridge = (LoadCartridgeFunc)dlsym(handle, "load_cartridge");
 	const char* dlsym_error = dlerror();
 	if (dlsym_error) {
-		std::cerr << "Failed to find say_hello function: " << dlsym_error << std::endl;
+		std::cerr << "Failed to find load_cartridge function: " << dlsym_error << std::endl;
 		dlclose(handle);
-		close(mem_fd);
+		close(m_mem_fd);
+		m_mem_fd = -1;
 		return;
 	}
 	
-	// Call the say_hello function
+	// Call the load_cartridge function
 	try {
-		say_hello();
+		mLoadedCartridge = std::unique_ptr<ILoadedCartridge>(load_cartridge(mCartridge));
+		mOnCartridgeInsertedCallback(*mLoadedCartridge);
 	} catch (...) {
-		std::cerr << "Exception occurred while executing say_hello." << std::endl;
+		std::cerr << "Exception occurred while executing load_cartridge." << std::endl;
 	}
 	
-	// Close the shared object and the memory file descriptor
+	// Close the shared object (but keep memfd open for the disk)
 	dlclose(handle);
-	close(mem_fd);
+	
 #elif defined(__APPLE__)
 	// macOS-specific implementation using a RAM Disk
 	
 	// Step 1: Create a RAM Disk
-	// You can create a RAM disk using the `hdiutil` command
-	// Here, we'll create it programmatically
-	
 	// Define RAM disk size (e.g., 10MB)
 	const int ram_disk_size_mb = 10;
 	const int sectors = ram_disk_size_mb * 2048; // 1 sector = 512 bytes
@@ -292,14 +310,17 @@ void CartridgeBridge::execute_shared_object(const std::vector<uint8_t>& data) {
 		ram_disk_path[len - 1] = '\0';
 	}
 	
+	m_ram_disk_path = std::string(ram_disk_path);
+	
 	// Format the RAM disk as HFS+
-	std::string format_ram_disk_cmd = "diskutil erasevolume HFS+ 'RAMDisk' " + std::string(ram_disk_path);
+	std::string format_ram_disk_cmd = "diskutil erasevolume HFS+ 'RAMDisk' " + m_ram_disk_path;
 	int ret = system(format_ram_disk_cmd.c_str());
 	if (ret != 0) {
 		std::cerr << "Failed to format RAM disk." << std::endl;
 		// Detach the RAM disk
-		std::string detach_cmd = "hdiutil detach " + std::string(ram_disk_path);
+		std::string detach_cmd = "hdiutil detach " + m_ram_disk_path;
 		system(detach_cmd.c_str());
+		m_ram_disk_path = "";
 		return;
 	}
 	
@@ -313,8 +334,9 @@ void CartridgeBridge::execute_shared_object(const std::vector<uint8_t>& data) {
 	if (fd == -1) {
 		std::cerr << "Failed to create temporary dylib file on RAM disk: " << strerror(errno) << std::endl;
 		// Detach the RAM disk
-		std::string detach_cmd = "hdiutil detach " + std::string(ram_disk_path);
+		std::string detach_cmd = "hdiutil detach " + m_ram_disk_path;
 		system(detach_cmd.c_str());
+		m_ram_disk_path = "";
 		return;
 	}
 	
@@ -325,8 +347,9 @@ void CartridgeBridge::execute_shared_object(const std::vector<uint8_t>& data) {
 		close(fd);
 		std::remove(temp_filename);
 		// Detach the RAM disk
-		std::string detach_cmd = "hdiutil detach " + std::string(ram_disk_path);
+		std::string detach_cmd = "hdiutil detach " + m_ram_disk_path;
 		system(detach_cmd.c_str());
+		m_ram_disk_path = "";
 		return;
 	}
 	
@@ -339,49 +362,45 @@ void CartridgeBridge::execute_shared_object(const std::vector<uint8_t>& data) {
 		std::cerr << "dlopen failed: " << dlerror() << std::endl;
 		std::remove(temp_filename);
 		// Detach the RAM disk
-		std::string detach_cmd = "hdiutil detach " + std::string(ram_disk_path);
+		std::string detach_cmd = "hdiutil detach " + m_ram_disk_path;
 		system(detach_cmd.c_str());
+		m_ram_disk_path = "";
 		return;
 	}
 	
 	// Clear any existing errors
 	dlerror();
 	
-	// Get the say_hello function
-	typedef ILoadedCartridge* (*GetLoadedCartridgeFunc)(ICartridge& cartridge);
-	GetLoadedCartridgeFunc load_cartridge = (GetLoadedCartridgeFunc)dlsym(handle, "load_cartridge");
+	// Get the load_cartridge function
+	typedef ILoadedCartridge* (*LoadCartridgeFunc)(ICartridge& cartridge);
+	LoadCartridgeFunc load_cartridge = (LoadCartridgeFunc)dlsym(handle, "load_cartridge");
 	
 	const char* dlsym_error = dlerror();
 	if (dlsym_error) {
-		std::cerr << "Failed to find say_hello function: " << dlsym_error << std::endl;
+		std::cerr << "Failed to find load_cartridge function: " << dlsym_error << std::endl;
 		dlclose(handle);
 		std::remove(temp_filename);
 		// Detach the RAM disk
-		std::string detach_cmd = "hdiutil detach " + std::string(ram_disk_path);
+		std::string detach_cmd = "hdiutil detach " + m_ram_disk_path;
 		system(detach_cmd.c_str());
+		m_ram_disk_path = "";
 		return;
 	}
 	
-	// Call the say_hello function
+	// Call the load_cartridge function
 	try {
 		mLoadedCartridge = std::unique_ptr<ILoadedCartridge>(load_cartridge(mCartridge));
-		
 		mOnCartridgeInsertedCallback(*mLoadedCartridge);
-		
 	} catch (...) {
-		std::cerr << "Exception occurred while executing say_hello." << std::endl;
+		std::cerr << "Exception occurred while executing load_cartridge." << std::endl;
 	}
 	
 	// Step 4: Cleanup
 	dlclose(handle);
 	std::remove(temp_filename);
 	
-	// Detach the RAM disk
-	std::string detach_cmd = "hdiutil detach " + std::string(ram_disk_path);
-	system(detach_cmd.c_str());
-#else
-	std::cerr << "In-memory shared object loading is not supported on this platform." << std::endl;
-#endif // __APPLE__
+	// Note: Do not detach the RAM disk here as it should persist until ejected or server stops
+#endif // Platform-specific code
 }
 
 #else
@@ -391,9 +410,84 @@ void CartridgeBridge::execute_shared_object(const std::vector<uint8_t>& data) {
 }
 #endif
 
-// Optionally remove or comment out the raw memory execution methods if they are no longer needed
-/*
- void DebugBridgeServer::execute_raw_memory(const std::vector<uint8_t>& data) {
- // Original raw memory execution code...
- }
- */
+// Initialize the disk when the server starts
+void CartridgeBridge::initialize_disk() {
+#ifdef __linux__
+	// Create an initial memory file (disk)
+	m_mem_fd = memfd_create("initial_disk", MFD_CLOEXEC);
+	if (m_mem_fd == -1) {
+		std::cerr << "memfd_create failed: " << strerror(errno) << std::endl;
+		// Handle error as needed
+	}
+	// Optionally, set up the memory file as needed
+#elif defined(__APPLE__)
+	// Create an initial RAM disk
+	const int ram_disk_size_mb = 10;
+	const int sectors = ram_disk_size_mb * 2048; // 1 sector = 512 bytes
+	
+	std::string create_ram_disk_cmd = "hdiutil attach -nomount ram://" + std::to_string(sectors);
+	FILE* pipe = popen(create_ram_disk_cmd.c_str(), "r");
+	if (!pipe) {
+		std::cerr << "Failed to create initial RAM disk." << std::endl;
+		return;
+	}
+	
+	char ram_disk_path[256];
+	if (!fgets(ram_disk_path, sizeof(ram_disk_path), pipe)) {
+		std::cerr << "Failed to get initial RAM disk path." << std::endl;
+		pclose(pipe);
+		return;
+	}
+	pclose(pipe);
+	
+	// Remove trailing newline
+	size_t len = strlen(ram_disk_path);
+	if (len > 0 && ram_disk_path[len - 1] == '\n') {
+		ram_disk_path[len - 1] = '\0';
+	}
+	
+	m_ram_disk_path = std::string(ram_disk_path);
+	
+	// Format the RAM disk as HFS+
+	std::string format_ram_disk_cmd = "diskutil erasevolume HFS+ 'RAMDisk' " + m_ram_disk_path;
+	int ret = system(format_ram_disk_cmd.c_str());
+	if (ret != 0) {
+		std::cerr << "Failed to format initial RAM disk." << std::endl;
+		// Detach the RAM disk
+		std::string detach_cmd = "hdiutil detach " + m_ram_disk_path;
+		system(detach_cmd.c_str());
+		m_ram_disk_path = "";
+		return;
+	}
+#endif
+}
+
+// Erase and eject the current disk
+void CartridgeBridge::erase_disk() {
+#ifdef __linux__
+	if (m_mem_fd != -1) {
+		close(m_mem_fd);
+		m_mem_fd = -1;
+		std::cout << "Memory file (disk) erased and closed on Linux." << std::endl;
+	}
+#elif defined(__APPLE__)
+	if (!m_ram_disk_path.empty()) {
+		// Detach the RAM disk
+		std::string detach_cmd = "hdiutil detach " + m_ram_disk_path;
+		int ret = system(detach_cmd.c_str());
+		if (ret != 0) {
+			std::cerr << "Failed to detach RAM disk: " << m_ram_disk_path << std::endl;
+		} else {
+			std::cout << "RAM disk detached successfully: " << m_ram_disk_path << std::endl;
+		}
+		m_ram_disk_path = "";
+	}
+#endif
+	
+	// If a cartridge was loaded, reset it
+	if (mLoadedCartridge) {
+		mLoadedCartridge.reset();
+		std::cout << "Loaded cartridge has been ejected." << std::endl;
+	}
+}
+

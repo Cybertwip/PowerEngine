@@ -9,28 +9,30 @@
 
 #include "graphics/drawing/Mesh.hpp"
 
-
 #include "graphics/shading/MaterialProperties.hpp"
 
 #include <stdexcept>
 #include <vector>
 #include <cmath>
 
+// Scaling factor
+const float SCALE_FACTOR = 100.0f;
+
 // Helper function to create MeshData for a Cube
 std::unique_ptr<MeshData> create_cube_mesh_data() {
 	auto meshData = std::make_unique<MeshData>();
 	
-	// Define cube vertices
+	// Define cube vertices scaled by SCALE_FACTOR
 	// 8 vertices of a cube
 	std::vector<std::unique_ptr<MeshVertex>> vertices;
-	vertices.emplace_back(std::make_unique<MeshVertex>(glm::vec3(-0.5f, -0.5f, -0.5f)));
-	vertices.emplace_back(std::make_unique<MeshVertex>(glm::vec3( 0.5f, -0.5f, -0.5f)));
-	vertices.emplace_back(std::make_unique<MeshVertex>(glm::vec3( 0.5f,  0.5f, -0.5f)));
-	vertices.emplace_back(std::make_unique<MeshVertex>(glm::vec3(-0.5f,  0.5f, -0.5f)));
-	vertices.emplace_back(std::make_unique<MeshVertex>(glm::vec3(-0.5f, -0.5f,  0.5f)));
-	vertices.emplace_back(std::make_unique<MeshVertex>(glm::vec3( 0.5f, -0.5f,  0.5f)));
-	vertices.emplace_back(std::make_unique<MeshVertex>(glm::vec3( 0.5f,  0.5f,  0.5f)));
-	vertices.emplace_back(std::make_unique<MeshVertex>(glm::vec3(-0.5f,  0.5f,  0.5f)));
+	vertices.emplace_back(std::make_unique<MeshVertex>(glm::vec3(-0.5f * SCALE_FACTOR, -0.5f * SCALE_FACTOR, -0.5f * SCALE_FACTOR)));
+	vertices.emplace_back(std::make_unique<MeshVertex>(glm::vec3( 0.5f * SCALE_FACTOR, -0.5f * SCALE_FACTOR, -0.5f * SCALE_FACTOR)));
+	vertices.emplace_back(std::make_unique<MeshVertex>(glm::vec3( 0.5f * SCALE_FACTOR,  0.5f * SCALE_FACTOR, -0.5f * SCALE_FACTOR)));
+	vertices.emplace_back(std::make_unique<MeshVertex>(glm::vec3(-0.5f * SCALE_FACTOR,  0.5f * SCALE_FACTOR, -0.5f * SCALE_FACTOR)));
+	vertices.emplace_back(std::make_unique<MeshVertex>(glm::vec3(-0.5f * SCALE_FACTOR, -0.5f * SCALE_FACTOR,  0.5f * SCALE_FACTOR)));
+	vertices.emplace_back(std::make_unique<MeshVertex>(glm::vec3( 0.5f * SCALE_FACTOR, -0.5f * SCALE_FACTOR,  0.5f * SCALE_FACTOR)));
+	vertices.emplace_back(std::make_unique<MeshVertex>(glm::vec3( 0.5f * SCALE_FACTOR,  0.5f * SCALE_FACTOR,  0.5f * SCALE_FACTOR)));
+	vertices.emplace_back(std::make_unique<MeshVertex>(glm::vec3(-0.5f * SCALE_FACTOR,  0.5f * SCALE_FACTOR,  0.5f * SCALE_FACTOR)));
 	
 	// Assign normals and texture coordinates as needed
 	// For simplicity, setting default normals and tex coords
@@ -82,7 +84,7 @@ std::unique_ptr<MeshData> create_sphere_mesh_data() {
 	
 	const int sectorCount = 36;
 	const int stackCount = 18;
-	const float radius = 0.5f;
+	const float radius = 0.5f * SCALE_FACTOR; // Scaled radius
 	
 	std::vector<std::unique_ptr<MeshVertex>> vertices;
 	std::vector<unsigned int> indices;
@@ -107,7 +109,7 @@ std::unique_ptr<MeshData> create_sphere_mesh_data() {
 		{
 			sectorAngle = j * sectorStep;           // starting from 0 to 2pi
 			
-			// vertex position
+			// vertex position scaled by SCALE_FACTOR
 			x = xy * cosf(sectorAngle);             // r * cos(u) * cos(v)
 			y = xy * sinf(sectorAngle);             // r * cos(u) * sin(v)
 			// normalized vertex normal
@@ -168,17 +170,17 @@ std::unique_ptr<MeshData> create_sphere_mesh_data() {
 std::unique_ptr<MeshData> create_cuboid_mesh_data(float width, float height, float depth) {
 	auto meshData = std::make_unique<MeshData>();
 	
-	// Define cuboid vertices
+	// Define cuboid vertices scaled by SCALE_FACTOR
 	// 8 vertices of a cuboid
 	std::vector<std::unique_ptr<MeshVertex>> vertices;
-	vertices.emplace_back(std::make_unique<MeshVertex>(glm::vec3(-width / 2, -height / 2, -depth / 2)));
-	vertices.emplace_back(std::make_unique<MeshVertex>(glm::vec3( width / 2, -height / 2, -depth / 2)));
-	vertices.emplace_back(std::make_unique<MeshVertex>(glm::vec3( width / 2,  height / 2, -depth / 2)));
-	vertices.emplace_back(std::make_unique<MeshVertex>(glm::vec3(-width / 2,  height / 2, -depth / 2)));
-	vertices.emplace_back(std::make_unique<MeshVertex>(glm::vec3(-width / 2, -height / 2,  depth / 2)));
-	vertices.emplace_back(std::make_unique<MeshVertex>(glm::vec3( width / 2, -height / 2,  depth / 2)));
-	vertices.emplace_back(std::make_unique<MeshVertex>(glm::vec3( width / 2,  height / 2,  depth / 2)));
-	vertices.emplace_back(std::make_unique<MeshVertex>(glm::vec3(-width / 2,  height / 2,  depth / 2)));
+	vertices.emplace_back(std::make_unique<MeshVertex>(glm::vec3(-width / 2 * SCALE_FACTOR, -height / 2 * SCALE_FACTOR, -depth / 2 * SCALE_FACTOR)));
+	vertices.emplace_back(std::make_unique<MeshVertex>(glm::vec3( width / 2 * SCALE_FACTOR, -height / 2 * SCALE_FACTOR, -depth / 2 * SCALE_FACTOR)));
+	vertices.emplace_back(std::make_unique<MeshVertex>(glm::vec3( width / 2 * SCALE_FACTOR,  height / 2 * SCALE_FACTOR, -depth / 2 * SCALE_FACTOR)));
+	vertices.emplace_back(std::make_unique<MeshVertex>(glm::vec3(-width / 2 * SCALE_FACTOR,  height / 2 * SCALE_FACTOR, -depth / 2 * SCALE_FACTOR)));
+	vertices.emplace_back(std::make_unique<MeshVertex>(glm::vec3(-width / 2 * SCALE_FACTOR, -height / 2 * SCALE_FACTOR,  depth / 2 * SCALE_FACTOR)));
+	vertices.emplace_back(std::make_unique<MeshVertex>(glm::vec3( width / 2 * SCALE_FACTOR, -height / 2 * SCALE_FACTOR,  depth / 2 * SCALE_FACTOR)));
+	vertices.emplace_back(std::make_unique<MeshVertex>(glm::vec3( width / 2 * SCALE_FACTOR,  height / 2 * SCALE_FACTOR,  depth / 2 * SCALE_FACTOR)));
+	vertices.emplace_back(std::make_unique<MeshVertex>(glm::vec3(-width / 2 * SCALE_FACTOR,  height / 2 * SCALE_FACTOR,  depth / 2 * SCALE_FACTOR)));
 	
 	// Assign normals and texture coordinates as needed
 	// For simplicity, setting default normals and tex coords
@@ -231,7 +233,7 @@ std::unique_ptr<MeshData> PrimitiveBuilder::create_mesh_data(PrimitiveShape prim
 		case PrimitiveShape::Sphere:
 			return create_sphere_mesh_data();
 		case PrimitiveShape::Cuboid:
-			// Example dimensions; these could be parameters if needed
+			// Example dimensions scaled by SCALE_FACTOR; these could be parameters if needed
 			return create_cuboid_mesh_data(1.0f, 2.0f, 1.0f);
 		default:
 			throw std::invalid_argument("Unsupported PrimitiveShape.");
@@ -249,8 +251,8 @@ Actor& PrimitiveBuilder::build(Actor& actor, const std::string& actorName, Primi
 		throw std::runtime_error("Failed to create MeshData for the specified PrimitiveShape.");
 	}
 	
-	auto& metadataComponent = 	actor.add_component<MetadataComponent>(actor.identifier(), actorName);
-
+	auto& metadataComponent = actor.add_component<MetadataComponent>(actor.identifier(), actorName);
+	
 	// Retrieve or create ColorComponent
 	// Assuming the Actor does not already have a ColorComponent
 	auto& colorComponent = actor.add_component<ColorComponent>(metadataComponent);
@@ -273,9 +275,9 @@ Actor& PrimitiveBuilder::build(Actor& actor, const std::string& actorName, Primi
 	
 	actor.add_component<DrawableComponent>(std::move(drawableComponent));
 	
-	// Add TransformComponent for positioning
-	actor.add_component<TransformComponent>();
-	
+	// Add TransformComponent for positioning and scaling
+	auto& transformComponent = actor.add_component<TransformComponent>();
+	transformComponent.set_scale(glm::vec3(SCALE_FACTOR)); // Ensure the scale is consistent
 	
 	return actor;
 }
