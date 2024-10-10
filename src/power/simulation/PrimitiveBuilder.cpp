@@ -242,7 +242,7 @@ PrimitiveBuilder::PrimitiveBuilder(IMeshBatch& meshBatch)
 : mMeshBatch(meshBatch) {
 }
 
-Actor& PrimitiveBuilder::build(Actor& actor, std::string& actorName, PrimitiveShape primitiveShape, ShaderWrapper& meshShader) {
+Actor& PrimitiveBuilder::build(Actor& actor, const std::string& actorName, PrimitiveShape primitiveShape, ShaderWrapper& meshShader) {
 	// Create MeshData for the specified primitive shape
 	std::unique_ptr<MeshData> meshData = create_mesh_data(primitiveShape);
 	if (!meshData) {
