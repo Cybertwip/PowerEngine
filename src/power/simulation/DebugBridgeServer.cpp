@@ -499,11 +499,11 @@ void CartridgeBridge::erase_disk() {
 	
 	// If a cartridge was loaded, reset it
 	if (mLoadedCartridge) {
-		
-		mActorLoader.cleanup();
-		
-		mOnCartridgeInsertedCallback(std::nullopt); // eject cartridge
+	
+		mOnCartridgeInsertedCallback(std::nullopt); // eject cartridge to prevent updating
 
+		mActorLoader.cleanup();
+	
 		mLoadedCartridge.reset(); // release cartridge memory
 		std::cout << "Loaded cartridge has been ejected." << std::endl;
 	}
