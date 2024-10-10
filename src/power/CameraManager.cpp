@@ -83,15 +83,14 @@ void CameraManager::OnActorSelected(std::optional<std::reference_wrapper<Actor>>
 	mActiveActor = actor;
 }
 
-std::optional<glm::mat4> CameraManager::get_transform() {
+std::optional<std::reference_wrapper<TransformComponent>> CameraManager::get_transform_component() {
 	if (mActiveCamera.has_value()) {
-		auto& cameraTransform = mActiveCamera->get().get_component<TransformComponent>();
-		
-		return cameraTransform.get_matrix();
+		return mActiveCamera->get().get_component<TransformComponent>();
 	} else {
 		return std::nullopt;
 	}
 }
+
 void CameraManager::set_transform(const glm::mat4& transform) {
 	if (mActiveCamera.has_value()) {
 			auto& cameraTransform = mActiveCamera->get().get_component<TransformComponent>();

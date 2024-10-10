@@ -35,9 +35,9 @@ public:
 	
 	void look_at(const glm::vec3& position) override;
 
-	void set_transform(const glm::mat4& transform) override;
+	void set_transform(const glm::mat4& transform);
 
-	std::optional<glm::mat4> get_transform() override;
+	std::optional<std::reference_wrapper<TransformComponent>> get_transform_component() override;
 	
 	void rotate_camera(float dx, float dy);
 	void zoom_camera(float dy);
