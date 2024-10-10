@@ -2,15 +2,20 @@
 
 #include "MeshActorLoader.hpp"
 
-CartridgeActorLoader::CartridgeActorLoader(MeshActorLoader& meshActorLoader, ShaderWrapper& meshShader) :
+CartridgeActorLoader::CartridgeActorLoader(MeshActorLoader& meshActorLoader, IActorVisualManager actorVisualManager, ShaderWrapper& meshShader) :
 mMeshActorLoader(meshActorLoader)
+, mActorVisualManager(actorVisualManager)
 , mMeshShader(meshShader)
 {
 	
 }
 
 Actor& CartridgeActorLoader::create_actor(const std::string& actorName, PrimitiveShape primitiveShape) {
-	return mMeshActorLoader.create_actor(actorName, primitiveShape, mMeshShader);
+	Actor& actor = mMeshActorLoader.create_actor(actorName, primitiveShape, mMeshShader);
+	
+	mActorVisualManager.add_actor(actor)
+	
+	return actor;
 }
 
 

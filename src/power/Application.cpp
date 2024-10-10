@@ -127,7 +127,7 @@ void Application::initialize() {
 	
 	DraggableScreen::initialize();
 	
-	mCartridgeActorLoader = std::make_unique<CartridgeActorLoader>(*mMeshActorLoader, *mMeshShader);
+	mCartridgeActorLoader = std::make_unique<CartridgeActorLoader>(*mUiCommon->hierarchy_panel(), *mMeshActorLoader, *mMeshShader);
 	
 	mCartridge = std::make_unique<Cartridge>(*mCartridgeActorLoader, *mCameraManager);
 
