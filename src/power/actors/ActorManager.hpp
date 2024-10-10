@@ -1,5 +1,7 @@
 #pragma once
 
+#include "IActorManager.hpp"
+
 #include "actors/Actor.hpp"
 
 #include <entt/entt.hpp>
@@ -15,11 +17,11 @@ class GizmoManager;
 class UiManager;
 class Batch;
 
-class ActorManager {
+class ActorManager : IActorManager {
 public:
     ActorManager(entt::registry& registry, CameraManager& cameraManager);
-	Actor& create_actor();
-	void remove_actor(Actor& actor);
+	Actor& create_actor() override;
+	void remove_actor(Actor& actor) override;
 
 	template<typename T>
 	const std::vector<std::reference_wrapper<Actor>> get_actors_with_component() const {

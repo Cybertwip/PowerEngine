@@ -46,6 +46,7 @@ add_executable(PowerEngine
     ${CMAKE_CURRENT_LIST_DIR}/CameraActorLoader.hpp
     ${CMAKE_CURRENT_LIST_DIR}/CameraManager.cpp
     ${CMAKE_CURRENT_LIST_DIR}/CameraManager.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/ICameraManager.hpp
     ${CMAKE_CURRENT_LIST_DIR}/main.cpp
     ${CMAKE_CURRENT_LIST_DIR}/MeshActorLoader.cpp
     ${CMAKE_CURRENT_LIST_DIR}/MeshActorLoader.hpp
@@ -63,6 +64,7 @@ add_executable(PowerEngine
     ${CMAKE_CURRENT_LIST_DIR}/ai/PromptWindow.hpp
     ${CMAKE_CURRENT_LIST_DIR}/ai/PromptWindow.cpp
 
+${CMAKE_CURRENT_LIST_DIR}/actors/IActorManager.hpp
     ${CMAKE_CURRENT_LIST_DIR}/actors/IActorSelectedCallback.hpp
     ${CMAKE_CURRENT_LIST_DIR}/actors/IActorSelectedRegistry.hpp
 

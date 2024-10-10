@@ -1,5 +1,6 @@
 #pragma once
 
+#include "ICameraManager.hpp"
 #include "actors/IActorSelectedCallback.hpp"
 
 #include <entt/entt.hpp>
@@ -14,7 +15,7 @@ class ActorManager;
 class IActorSelectedRegistry;
 class ScenePanel;
 
-class CameraManager : public IActorSelectedCallback
+class CameraManager : public IActorSelectedCallback, public ICameraManager
 {
 public:
     CameraManager(entt::registry& registry);
@@ -30,13 +31,13 @@ public:
     const nanogui::Matrix4f get_view() const;
     const nanogui::Matrix4f get_projection() const;
     
-    void look_at(Actor& actor);
+    void look_at(Actor& actor) override;
 	
-	void look_at(const glm::vec3& position);
+	void look_at(const glm::vec3& position) override;
 
-	void set_transform(const glm::mat4& transform);
+	void set_transform(const glm::mat4& transform) override;
 
-	std::optional<glm::mat4> get_transform();
+	std::optional<glm::mat4> get_transform() override;
 	
 	void rotate_camera(float dx, float dy);
 	void zoom_camera(float dy);
