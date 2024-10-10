@@ -11,21 +11,22 @@
 #include <unordered_map>
 #include <iostream>
 
+
+static nanogui::Matrix4f glm_to_nanogui(glm::mat4 glmMatrix) {
+	nanogui::Matrix4f matrix;
+	std::memcpy(matrix.m, glm::value_ptr(glmMatrix), sizeof(float) * 16);
+	return matrix;
+}
+
+static glm::mat4 nanogui_to_glm(const nanogui::Matrix4f& nanoguiMatrix) {
+	glm::mat4 glmMatrix;
+	std::memcpy(glm::value_ptr(glmMatrix), nanoguiMatrix.m, sizeof(float) * 16);
+	return glmMatrix;
+}
+
 class TransformComponent {
 public:
 	using TransformChangedCallback = std::function<void(const TransformComponent&)>;
-	
-	static nanogui::Matrix4f glm_to_nanogui(glm::mat4 glmMatrix) {
-		nanogui::Matrix4f matrix;
-		std::memcpy(matrix.m, glm::value_ptr(glmMatrix), sizeof(float) * 16);
-		return matrix;
-	}
-	
-	static glm::mat4 nanogui_to_glm(const nanogui::Matrix4f& nanoguiMatrix) {
-		glm::mat4 glmMatrix;
-		std::memcpy(glm::value_ptr(glmMatrix), nanoguiMatrix.m, sizeof(float) * 16);
-		return glmMatrix;
-	}
 	
 	Transform transform;
 	

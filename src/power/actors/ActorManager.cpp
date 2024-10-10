@@ -53,7 +53,7 @@ void ActorManager::draw() {
 		
 		color.set_color(glm::vec4(1.0f, 1.0f, 1.0f, 1.0f));
 
-        nanogui::Matrix4f model = TransformComponent::glm_to_nanogui(transform.get_matrix());
+        nanogui::Matrix4f model = glm_to_nanogui(transform.get_matrix());
 
         drawable.draw_content(model, mCameraManager.get_view(), mCameraManager.get_projection());
     }

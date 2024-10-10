@@ -245,14 +245,13 @@ void FileView::populate_file_view() {
 				
 				auto drag_start_position = icon_button->absolute_position();
 				drag_widget->set_position(drag_start_position);
-				drag_widget->perform_layout(screen().nvg_context());
 				
 				screen().set_drag_widget(drag_widget, [this, content, drag_widget, child]() {
 					std::lock_guard<std::mutex> lock(m_mutex);
 					auto path = child->FullPath;
 					
 					// Remove drag widget
-					drag_widget->remove_child(*content);
+					drag_widget->shed_children();
 					screen().set_drag_widget(nullptr, nullptr);
 					
 					std::vector<std::string> path_vector = { path };
@@ -354,26 +353,4 @@ DirectoryNode* FileView::find_node_by_path(DirectoryNode& root, const std::strin
 
 void FileView::handle_file_interaction(DirectoryNode& node) {
 	
-	if (node.IsDirectory) {
-		node.refresh(m_allowed_extensions);
-		m_selected_directory_path = node.FullPath;
-	} else {
-		if (node.FileName.find(".seq") != std::string::npos || node.FileName.find(".cmp") != std::string::npos) {
-			// Logic for opening sequence or composition
-		} else if (node.FileName.find(".fbx") != std::string::npos) {
-			// mActorVisualManager.add_actor(mMeshActorLoader.create_actor(node.FullPath, mDummyAnimationTimeProvider, *mMeshShader, *mSkinnedShader));
-		}
-		// Handle other file type interactions...
-	}
-	
-	// Reset the selection
-	if (m_selected_button) {
-		m_selected_button->set_background_color(m_normal_button_color);
-		m_selected_button = nullptr;
-		m_selected_node = nullptr;
-	}
-	
-	nanogui::async([this]() {
-		this->safe_refresh();
-	});
 }

@@ -214,8 +214,8 @@ UiManager::UiManager(nanogui::Screen& screen, std::shared_ptr<IActorSelectedRegi
 		}
 		
 		if (mActiveActor.has_value()) {
-			glm::mat4 viewMatrix = TransformComponent::nanogui_to_glm(mCameraManager.get_view());
-			glm::mat4 projMatrix = TransformComponent::nanogui_to_glm(mCameraManager.get_projection());
+			glm::mat4 viewMatrix = nanogui_to_glm(mCameraManager.get_view());
+			glm::mat4 projMatrix = nanogui_to_glm(mCameraManager.get_projection());
 			
 			auto viewport = mCanvas->render_pass().viewport();
 			auto glmViewport = glm::vec4(viewport.first[0], viewport.first[1], viewport.second[0], viewport.second[1]);

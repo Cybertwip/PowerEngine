@@ -66,7 +66,6 @@ add_executable(PowerEngine
     ${CMAKE_CURRENT_LIST_DIR}/actors/IActorSelectedCallback.hpp
     ${CMAKE_CURRENT_LIST_DIR}/actors/IActorSelectedRegistry.hpp
 
-    ${CMAKE_CURRENT_LIST_DIR}/actors/Actor.cpp
     ${CMAKE_CURRENT_LIST_DIR}/actors/Actor.hpp
     ${CMAKE_CURRENT_LIST_DIR}/actors/ActorManager.cpp
     ${CMAKE_CURRENT_LIST_DIR}/actors/ActorManager.hpp
@@ -180,6 +179,11 @@ add_executable(PowerEngine
     ${CMAKE_CURRENT_LIST_DIR}/import/SkinnedFbx.hpp
     ${CMAKE_CURRENT_LIST_DIR}/import/SkinnedFbx.cpp
 
+    ${CMAKE_CURRENT_LIST_DIR}/simulation/DebugBridgeServer.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/simulation/DebugBridgeCommon.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/simulation/DebugBridgeCommon.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/simulation/DebugBridgeServer.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/simulation/Cartridge.hpp
 
     ${CMAKE_CURRENT_LIST_DIR}/ui/AnimationPanel.hpp
     ${CMAKE_CURRENT_LIST_DIR}/ui/AnimationPanel.cpp
@@ -211,6 +215,11 @@ add_executable(PowerEngine
 
 find_package(OpenSSL 3.0 REQUIRED COMPONENTS Crypto SSL)
 
+target_compile_definitions(PowerEngine PUBLIC -DASIO_STANDALONE)
+
+
+target_include_directories(PowerEngine PUBLIC ../../external/asio/include)
+target_include_directories(PowerEngine PUBLIC ../../external/websocketpp)
 target_include_directories(PowerEngine PUBLIC ../../external/smallfbx)
 target_include_directories(PowerEngine PUBLIC ../../external/stb)
 target_include_directories(PowerEngine PUBLIC ${CMAKE_CURRENT_LIST_DIR})
@@ -227,6 +236,7 @@ OpenSSL::SSL
 OpenSSL::Crypto
 ozz_animation_tools
 ozz_animation_fbx
+websocketpp
 zlib
 #grpc++ 
 ${platform_specific_libraries})

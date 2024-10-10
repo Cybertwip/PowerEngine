@@ -19,7 +19,6 @@
 #include "components/ColorComponent.hpp"
 #include "components/DrawableComponent.hpp"
 #include "components/TransformComponent.hpp"
-
 GizmoManager::GizmoManager(nanogui::Widget& parent, nanogui::Screen& screen, ShaderManager& shaderManager, ActorManager& actorManager, MeshActorLoader& meshActorLoader)
 : mDummyAnimationTimeProvider(60 * 30), mShaderManager(shaderManager), mActorManager(actorManager),
 mMeshActorLoader(meshActorLoader),
@@ -286,7 +285,7 @@ void GizmoManager::draw_content(const nanogui::Matrix4f& model, const nanogui::M
 			// Apply transformations in order: rotation, translation, then scale
 			auto gizmoModel = actorTranslationMatrix * rotationMatrix * scaleMatrix;
 			
-			auto gizmoMatrix = TransformComponent::glm_to_nanogui(gizmoModel);
+			auto gizmoMatrix = glm_to_nanogui(gizmoModel);
 			
 			auto& drawable = mActiveGizmo->get().get_component<DrawableComponent>();
 						

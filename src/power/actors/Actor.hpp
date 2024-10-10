@@ -4,9 +4,13 @@
 
 class Actor {
 public:
-    Actor(entt::registry& registry);
+    Actor(entt::registry& registry) : mRegistry(registry), mEntity(mRegistry.create()) {}
 
-	virtual ~Actor();
+	virtual ~Actor() {
+        if (mRegistry.valid(mEntity)) {
+            mRegistry.destroy(mEntity);
+        }
+    }
 	
     template<typename T>
     bool find_component() {
@@ -37,4 +41,3 @@ private:
     entt::registry& mRegistry;
     entt::entity mEntity;
 };
-

@@ -58,8 +58,6 @@ mApplicationClickRegistrator(applicationClickRegistrator) {
 		}
 		
 		if (mResourcesButton->contains(nanogui::Vector2i(x, y), true)) {
-			rootNode->refresh();
-			mResourcesPanel->refresh_file_view();
 			toggle_resources_panel(!mIsPanelVisible);
 			mResourcesButton->set_pushed(mIsPanelVisible);
 		}
@@ -71,6 +69,8 @@ void StatusBarPanel::toggle_resources_panel(bool active) {
 		return; // Animation is still running, do not start a new one
 	}
 	
+	//mResourcesPanel->refresh_file_view();
+
 	if (active) {
 		mAnimationFuture = std::async(std::launch::async, [this]() {
 			auto target = nanogui::Vector2i(0, parent()->get().parent()->get().fixed_height() * 0.5f - fixed_height());
