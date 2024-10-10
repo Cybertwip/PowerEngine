@@ -149,48 +149,6 @@ DebugCommand CartridgeBridge::process_command(const DebugCommand& cmd) {
 	return DebugCommand(DebugCommand::CommandType::RESPONSE, "Unknown command type.");
 }
 
-void CartridgeBridge::on_message(websocketpp::connection_hdl hdl, server::message_ptr msg) {
-	std::lock_guard<std::mutex> lock(m_mutex);
-	try {
-		if (msg->get_opcode() != websocketpp::frame::opcode::binary) {
-			std::cerr << "Received non-binary message. Ignoring." << std::endl;
-			return;
-		}
-		
-		std::vector<uint8_t> data(msg->get_payload().begin(), msg->get_payload().end());
-		
-		// Check for magic number 'SOLO' at the start (optional)
-		if (data.size() >= 4 && data[0] == 'S' && data[1] == 'O' && data[2] == 'L' && data[3] == 'O') {
-			// Shared Object execution
-			execute_shared_object(data);
-			std::string ack = "Shared object executed successfully.";
-			m_server.send(hdl, ack, websocketpp::frame::opcode::text);
-		} else {
-			// Assume it's a DebugCommand
-			DebugCommand cmd = DebugCommand::deserialize(data);
-			
-			std::cout << "Received command of type " << static_cast<int>(cmd.type)
-			<< " with payload: " << cmd.payload << std::endl;
-			
-			DebugCommand response = process_command(cmd);
-			
-			std::vector<uint8_t> response_bytes = response.serialize();
-			m_server.send(hdl, response_bytes.data(), response_bytes.size(), websocketpp::frame::opcode::binary);
-		}
-	} catch (const std::exception& e) {
-		std::cerr << "Error handling message: " << e.what() << std::endl;
-	}
-}
-
-DebugCommand CartridgeBridge::process_command(const DebugCommand& cmd) {
-	if (cmd.type == DebugCommand::CommandType::EXECUTE) {
-		std::string result = "Executed command: " + cmd.payload;
-		return DebugCommand(DebugCommand::CommandType::RESPONSE, result);
-	}
-	
-	return DebugCommand(DebugCommand::CommandType::RESPONSE, "Unknown command type.");
-}
-
 #ifdef _WIN32
 // Windows-specific implementation for loading and executing a DLL
 void CartridgeBridge::execute_shared_object(const std::vector<uint8_t>& data) {
