@@ -1,17 +1,18 @@
 #pragma once
 
-class IActorManager;
 class ICameraManager;
+
+class ICartridgeActorLoader;
 
 class ICartridge {
 public:
-	ICartridge(IActorManager& actorManager, ICameraManager& cameraManager) : mActorManager(actorManager), mCameraManager(cameraManager) {
+	ICartridge(ICartridgeActorLoader& actorLoader, ICameraManager& cameraManager) : mActorLoader(actorLoader), mCameraManager(cameraManager) {
 		
 	}
 	
 	virtual ~ICartridge() = default;
 	
 protected:
-	IActorManager& mActorManager;
+	ICartridgeActorLoader& mActorLoader;
 	ICameraManager& mCameraManager;
 };

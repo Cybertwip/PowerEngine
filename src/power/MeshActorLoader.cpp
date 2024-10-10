@@ -7,6 +7,7 @@
 
 #include "components/MeshComponent.hpp"
 #include "graphics/drawing/MeshActorBuilder.hpp"
+#include "graphics/drawing/MeshBatch.hpp"
 #include "import/SkinnedFbx.hpp"
 
 #include "simulation/PrimitiveBuilder.hpp"
@@ -15,7 +16,7 @@ MeshActorLoader::MeshActorLoader(ActorManager& actorManager, ShaderManager& shad
     
 : mActorManager(actorManager),
 mMeshActorBuilder(std::make_unique<MeshActorBuilder>(batchUnit)),
-mPrimitiveBuilder(std::make_unique<PrimitiveBuilder>(batchUnit)),
+mPrimitiveBuilder(std::make_unique<PrimitiveBuilder>(batchUnit.mMeshBatch)),
 mBatchUnit(batchUnit) {
 		  
 }

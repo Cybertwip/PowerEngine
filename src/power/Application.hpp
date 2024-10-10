@@ -189,6 +189,8 @@ private:
 
 }  // namespace nanogui
 
+class ICartridgeActorLoader;
+
 class Actor;
 class ActorManager;
 class Canvas;
@@ -230,6 +232,7 @@ class Application : public nanogui::DraggableScreen
 	AnimationTimeProvider mGlobalAnimationTimeProvider;
 	
 	// Reversed unique_ptr declarations
+	std::unique_ptr<ICartridgeActorLoader> mCartridgeActorLoader;
 	std::unique_ptr<CartridgeBridge> mCartridgeBridge;
 	std::unique_ptr<Canvas> mCanvas; // Place appropriately based on actual dependencies
 	std::unique_ptr<UiManager> mUiManager;
