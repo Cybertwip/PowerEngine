@@ -277,7 +277,6 @@ Actor& PrimitiveBuilder::build(Actor& actor, const std::string& actorName, Primi
 	
 	// Add TransformComponent for positioning and scaling
 	auto& transformComponent = actor.add_component<TransformComponent>();
-	transformComponent.set_scale(glm::vec3(SCALE_FACTOR)); // Ensure the scale is consistent
 	
 	return actor;
 }
