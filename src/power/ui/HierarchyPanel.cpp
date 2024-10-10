@@ -65,9 +65,9 @@ void HierarchyPanel::remove_actors(std::vector<std::reference_wrapper<Actor>> ac
 	
 	mActorManager.remove_actors(actors);
 	
-	auto validActors = mActorManager.get_actors_with_component<UiComponent>();
+	auto existingActors = mActorManager.get_actors_with_component<UiComponent>();
 	
-	for (auto& actor : validActors) {
+	for (auto& actor : existingActors) {
 		populate_tree(actor);
 	}
 	
