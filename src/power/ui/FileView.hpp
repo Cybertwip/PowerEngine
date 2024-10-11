@@ -20,7 +20,7 @@ public:
 			 nanogui::Screen& screen,
 			 DirectoryNode& root_directory_node,
 			 const std::string& filter_text = "",
-			 const std::set<std::string>& allowed_extensions = {});
+			 const std::set<std::string>& allowed_extensions = {".psk", ".pma", ".pan", ".psq", ".psn"});
 	
 	virtual ~FileView();
 	

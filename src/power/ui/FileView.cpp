@@ -65,7 +65,6 @@ void FileView::initialize_texture_cache() {
 }
 
 std::shared_ptr<nanogui::Texture> FileView::acquire_texture() {
-	std::lock_guard<std::mutex> lock(m_mutex);
 	if (m_texture_cache.empty()) {
 		// Handle texture exhaustion by reusing the oldest texture
 		if (!m_used_textures.empty()) {
@@ -83,7 +82,6 @@ std::shared_ptr<nanogui::Texture> FileView::acquire_texture() {
 }
 
 void FileView::release_texture(std::shared_ptr<nanogui::Texture> texture) {
-	std::lock_guard<std::mutex> lock(m_mutex);
 	auto it = std::find(m_used_textures.begin(), m_used_textures.end(), texture);
 	if (it != m_used_textures.end()) {
 		m_used_textures.erase(it);
@@ -439,7 +437,6 @@ bool FileView::scroll_event(const nanogui::Vector2i& p, const nanogui::Vector2f&
 }
 
 void FileView::wrap_texture_cache(bool scroll_down) {
-	std::lock_guard<std::mutex> lock(m_mutex);
 	if (scroll_down) {
 		// Move the last 8 textures to the front
 		for (int i = 0; i < m_textures_per_wrap && !m_texture_cache.empty(); ++i) {

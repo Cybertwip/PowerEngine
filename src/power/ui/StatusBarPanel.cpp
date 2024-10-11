@@ -69,7 +69,7 @@ void StatusBarPanel::toggle_resources_panel(bool active) {
 		return; // Animation is still running, do not start a new one
 	}
 	
-	//mResourcesPanel->refresh_file_view();
+	mResourcesPanel->refresh_file_view();
 
 	if (active) {
 		mAnimationFuture = std::async(std::launch::async, [this]() {
