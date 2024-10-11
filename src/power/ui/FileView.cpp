@@ -55,7 +55,7 @@ void FileView::initialize_texture_cache() {
 		auto texture = std::make_shared<nanogui::Texture>(
 														  nanogui::Texture::PixelFormat::RGBA,       // Set pixel format to RGBA
 														  nanogui::Texture::ComponentFormat::UInt8,  // Use unsigned 8-bit components for each channel
-														  nanogui::Vector2i(128, 128),
+														  nanogui::Vector2i(512, 512),
 														  nanogui::Texture::InterpolationMode::Bilinear,
 														  nanogui::Texture::InterpolationMode::Nearest,
 														  nanogui::Texture::WrapMode::ClampToEdge
@@ -208,7 +208,7 @@ void FileView::populate_file_view() {
 			texture = std::make_shared<nanogui::Texture>(
 															  nanogui::Texture::PixelFormat::RGBA,       // Set pixel format to RGBA
 															  nanogui::Texture::ComponentFormat::UInt8,  // Use unsigned 8-bit components for each channel
-															  nanogui::Vector2i(128, 128),
+															  nanogui::Vector2i(512, 512),
 															  nanogui::Texture::InterpolationMode::Bilinear,
 															  nanogui::Texture::InterpolationMode::Nearest,
 															  nanogui::Texture::WrapMode::ClampToEdge
@@ -415,9 +415,20 @@ std::vector<uint8_t> FileView::load_image_data(const std::string& path) {
 	// Implement image loading logic (e.g., using stb_image or another library)
 	// Placeholder implementation: Return a solid color image
 	// In a real scenario, you would load the image from the file system
-	int width = 128;
-	int height = 128;
-	std::vector<uint8_t> data(width * height * 4, 255); // White texture with full opacity
+	
+	CompressedSerialization::Deserializer deserializer;
+	deserializer.load_from_file(child->FullPath);
+	
+	data->resize(512 * 512 * 4);
+	uint64_t thumbnail_size = 0;
+	uint64_t hash_id[] = {0, 0};
+	
+	deserializer.read_header_raw(hash_id, sizeof(hash_id)); // To increase the offset and read the thumbnail size
+	deserializer.read_header_uint64(thumbnail_size);
+	
+	if (thumbnail_size != 0) {
+		deserializer.read_header_raw(data->data(), thumbnail_size);
+	}
 	return data;
 }
 
