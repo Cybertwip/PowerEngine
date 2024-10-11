@@ -400,7 +400,7 @@ void FileView::load_thumbnail(const std::shared_ptr<DirectoryNode>& node,
 		// Update the texture on the main thread
 		nanogui::async([this, image_view, texture, thumbnail_data]() {
 			if (!thumbnail_data.empty()) {
-				nanogui::Texture::decompress_into(image_data, *texture);
+				nanogui::Texture::decompress_into(thumbnail_data, *texture);
 
 				image_view->set_image(texture);
 				image_view->set_visible(true);
