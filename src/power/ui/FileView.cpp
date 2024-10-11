@@ -1,9 +1,9 @@
-// FileView.cpp
 #include "FileView.hpp"
 
 #include <future>
 #include <iostream>
 
+// Constructor
 FileView::FileView(nanogui::Widget& parent,
 				   nanogui::Screen& screen,
 				   DirectoryNode& root_directory_node,
@@ -18,25 +18,24 @@ m_selected_node(nullptr),
 m_normal_button_color(nanogui::Color(200, 200, 200, 255)),
 m_selected_button_color(nanogui::Color(100, 100, 255, 255)),
 m_allowed_extensions(allowed_extensions),
-m_scroll_offset(0.0f) {
-	
+m_scroll_offset(0.0f),
+m_total_rows(0),
+m_visible_rows(0),
+m_row_height(150) // Assuming row height of 150 pixels
+{
 	// Initialize layout
-	auto grid_layout = std::unique_ptr<nanogui::AdvancedGridLayout>( new nanogui::AdvancedGridLayout(
+	auto grid_layout = std::make_unique<nanogui::AdvancedGridLayout>(
 																	 /* columns */ std::vector<int>{144, 144, 144, 144, 144, 144, 144, 144}, // 8 columns
 																	 /* rows */ {}, // No predefined rows
 																	 /* margin */ 8
-																	 ));
+																	 );
 	
 	// Set stretch factors for columns
 	for (int i = 0; i < 8; ++i) {
 		grid_layout->set_col_stretch(i, 1.0f);
 	}
-		
-	m_v_scroll_wrapper = std::make_shared<nanogui::VScrollPanel>(*this, screen);
 	
-	m_widget_container = std::make_shared<nanogui::Widget>(*m_v_scroll_wrapper, screen);
-	
-	m_widget_container->set_layout(std::move(grid_layout));
+	set_layout(std::move(grid_layout));
 	
 	// Initialize texture cache
 	initialize_texture_cache();
@@ -45,6 +44,7 @@ m_scroll_offset(0.0f) {
 	refresh();
 }
 
+// Destructor
 FileView::~FileView() {
 	// Release all used textures back to the cache
 	for (auto& texture : m_used_textures) {
@@ -106,9 +106,9 @@ void FileView::refresh(const std::string& filter_text) {
 	m_root_directory_node.refresh(m_allowed_extensions);
 	
 	// Clear existing child widgets
-	m_widget_container->shed_children();
+	shed_children();
 	
-	auto grid_layout = dynamic_cast<nanogui::AdvancedGridLayout*>(&m_widget_container->layout());
+	auto grid_layout = dynamic_cast<nanogui::AdvancedGridLayout*>(&this->layout());
 	if (grid_layout) {
 		grid_layout->shed_anchor();
 	}
@@ -161,6 +161,7 @@ void FileView::populate_file_view() {
 	
 	const int columns = 8; // 8 columns
 	int current_index = 0;
+	m_total_rows = 0; // Reset total rows
 	
 	for (const auto& child : selected_node->Children) {
 		// Apply filter if any
@@ -182,12 +183,16 @@ void FileView::populate_file_view() {
 		auto item_container = std::make_shared<nanogui::Widget>(std::nullopt, screen());
 		
 		item_container->set_theme(theme());
-		item_container->set_fixed_size(nanogui::Vector2i(150, 150));
+		item_container->set_fixed_size(nanogui::Vector2i(150, m_row_height));
 		m_item_containers.push_back(item_container);
 		
 		// Calculate grid position based on current index and number of columns
 		int col = current_index % columns;
 		int row = current_index / columns;
+		float y = row * m_row_height - m_scroll_offset;
+		
+		// Set the position of the item container
+		item_container->set_position(nanogui::Vector2i(col * 150, y));
 		
 		// Define the anchor for this item in the grid
 		nanogui::AdvancedGridLayout::Anchor anchor(
@@ -197,7 +202,7 @@ void FileView::populate_file_view() {
 												   );
 		
 		// Retrieve the grid layout from this widget
-		auto grid_layout = dynamic_cast<nanogui::AdvancedGridLayout*>(&m_widget_container->layout());
+		auto grid_layout = dynamic_cast<nanogui::AdvancedGridLayout*>(&this->layout());
 		if (grid_layout) {
 			grid_layout->set_anchor(*item_container, std::move(anchor));
 		}
@@ -210,13 +215,13 @@ void FileView::populate_file_view() {
 		if (!texture) {
 			// Handle texture exhaustion by creating a new placeholder texture
 			texture = std::make_shared<nanogui::Texture>(
-															  nanogui::Texture::PixelFormat::RGBA,       // Set pixel format to RGBA
-															  nanogui::Texture::ComponentFormat::UInt8,  // Use unsigned 8-bit components for each channel
-															  nanogui::Vector2i(512, 512),
-															  nanogui::Texture::InterpolationMode::Bilinear,
-															  nanogui::Texture::InterpolationMode::Nearest,
-															  nanogui::Texture::WrapMode::ClampToEdge
-															  );
+														 nanogui::Texture::PixelFormat::RGBA,       // Set pixel format to RGBA
+														 nanogui::Texture::ComponentFormat::UInt8,  // Use unsigned 8-bit components for each channel
+														 nanogui::Vector2i(512, 512),
+														 nanogui::Texture::InterpolationMode::Bilinear,
+														 nanogui::Texture::InterpolationMode::Nearest,
+														 nanogui::Texture::WrapMode::ClampToEdge
+														 );
 		}
 		
 		// Create the icon button within the item container
@@ -235,7 +240,7 @@ void FileView::populate_file_view() {
 		
 		// Asynchronously load the thumbnail if necessary
 		load_thumbnail(child, image_view, texture);
-				
+		
 		// Add a label below the icon to display the file name
 		auto name_label = std::make_shared<nanogui::Label>(*item_container, screen(), child->FileName);
 		name_label->set_fixed_width(144);
@@ -337,144 +342,178 @@ void FileView::populate_file_view() {
 		});
 		
 		// Add the item container as a child widget
-		m_widget_container->add_child(*item_container.get());
+		this->add_child(*item_container.get());
 		
 		// Increment the index for the next item
 		current_index++;
+		m_total_rows = std::max(m_total_rows, row + 1);
 	}
 	
-	// After adding all items, adjust the grid layout rows based on the number of items
-	if (auto grid_layout = dynamic_cast<nanogui::AdvancedGridLayout*>(&m_widget_container->layout())) {
-		int total_items = m_file_buttons.size();
-		int required_rows = (total_items + columns - 1) / columns; // Ceiling division
+	// Determine the appropriate icon for the file type
+	int FileView::get_icon_for_file(const DirectoryNode& node) const {
+		// No shared resources accessed here; mutex not required
+		if (node.IsDirectory) return FA_FOLDER;
+		if (node.FileName.find(".psk") != std::string::npos) return FA_WALKING;
+		if (node.FileName.find(".pma") != std::string::npos)
+			return FA_OBJECT_GROUP;
+		if (node.FileName.find(".pan") != std::string::npos) return FA_PERSON_BOOTH;
 		
-		// Append rows if the current number of rows is less than required
-		while (grid_layout->row_count() < required_rows) {
-			grid_layout->append_row(150, 1.0f); // Example row height and stretch factor
-		}
+		// More conditions for other file types...
+		return FA_FILE; // Default icon
+	}
+	
+	// Recursive function to find a node by its path
+	DirectoryNode* FileView::find_node_by_path(DirectoryNode& root, const std::string& path) const {
+		// Recursive function; protect with mutex if called from multiple threads
 		
-		// Optionally, remove excess rows if there are fewer items
-		while (grid_layout->row_count() > required_rows) {
-			grid_layout->shed_row();
+		if (root.FullPath == path) {
+			return &root;
 		}
-	}
-	
-	perform_layout(screen().nvg_context());
-}
-
-int FileView::get_icon_for_file(const DirectoryNode& node) const {
-	// No shared resources accessed here; mutex not required
-	if (node.IsDirectory) return FA_FOLDER;
-	if (node.FileName.find(".psk") != std::string::npos) return FA_WALKING;
-	if (node.FileName.find(".pma") != std::string::npos)
-		return FA_OBJECT_GROUP;
-	if (node.FileName.find(".pan") != std::string::npos) return FA_PERSON_BOOTH;
-	
-	// More conditions for other file types...
-	return FA_FILE; // Default icon
-}
-
-DirectoryNode* FileView::find_node_by_path(DirectoryNode& root, const std::string& path) const {
-	// Recursive function; protect with mutex if called from multiple threads
-	
-	if (root.FullPath == path) {
-		return &root;
-	}
-	for (const auto& child : root.Children) {
-		if (child->FullPath == path) {
-			return child.get();
-		}
-		if (child->IsDirectory) {
-			DirectoryNode* found = find_node_by_path(*child, path);
-			if (found) {
-				return found;
+		for (const auto& child : root.Children) {
+			if (child->FullPath == path) {
+				return child.get();
+			}
+			if (child->IsDirectory) {
+				DirectoryNode* found = find_node_by_path(*child, path);
+				if (found) {
+					return found;
+				}
 			}
 		}
+		return nullptr;
 	}
-	return nullptr;
-}
-
-void FileView::handle_file_interaction(DirectoryNode& node) {
-	if (node.IsDirectory) {
-		// Change the selected directory path and refresh
-		set_selected_directory_path(node.FullPath);
-	} else {
-		// Handle file opening or other interactions
-		std::cout << "Opening file: " << node.FullPath << std::endl;
-		// Implement actual file opening logic here
+	
+	// Handle file interactions (e.g., double-click)
+	void FileView::handle_file_interaction(DirectoryNode& node) {
+		if (node.IsDirectory) {
+			// Change the selected directory path and refresh
+			set_selected_directory_path(node.FullPath);
+		} else {
+			// Handle file opening or other interactions
+			std::cout << "Opening file: " << node.FullPath << std::endl;
+			// Implement actual file opening logic here
+		}
 	}
-}
-
-void FileView::load_thumbnail(const std::shared_ptr<DirectoryNode>& node,
-							  const std::shared_ptr<nanogui::ImageView>& image_view,
-							  const std::shared_ptr<nanogui::Texture>& texture) {
-	nanogui::async([this, node, image_view, texture]() {
-		// Load and process the thumbnail
-		// Example: Read image data from file
-		std::vector<uint8_t> thumbnail_data = load_image_data(node->FullPath);
+	
+	// Asynchronously load thumbnail
+	void FileView::load_thumbnail(const std::shared_ptr<DirectoryNode>& node,
+								  const std::shared_ptr<nanogui::ImageView>& image_view,
+								  const std::shared_ptr<nanogui::Texture>& texture) {
+		nanogui::async([this, node, image_view, texture]() {
+			// Load and process the thumbnail
+			// Example: Read image data from file
+			std::vector<uint8_t> thumbnail_data = load_image_data(node->FullPath);
+			
+			if (!thumbnail_data.empty()) {
+				texture->resize(nanogui::Vector2i(512, 512));
+				nanogui::Texture::decompress_into(thumbnail_data, *texture);
+				
+				image_view->set_image(texture);
+				image_view->set_visible(true);
+				
+				texture->resize(nanogui::Vector2i(288, 288));
+				perform_layout(screen().nvg_context());
+			}
+		});
+	}
+	
+	// Load image data from a file
+	std::vector<uint8_t> FileView::load_image_data(const std::string& path) {
+		CompressedSerialization::Deserializer deserializer;
+		deserializer.load_from_file(path);
 		
-		if (!thumbnail_data.empty()) {
-			texture->resize(nanogui::Vector2i(512, 512));
-			nanogui::Texture::decompress_into(thumbnail_data, *texture);
-			
-			image_view->set_image(texture);
-			image_view->set_visible(true);
-			
-			texture->resize(nanogui::Vector2i(288, 288));
-			perform_layout(screen().nvg_context());
+		std::vector<uint8_t> data;
+		uint64_t thumbnail_size = 0;
+		uint64_t hash_id[] = {0, 0};
+		
+		deserializer.read_header_raw(hash_id, sizeof(hash_id)); // To increase the offset and read the thumbnail size
+		deserializer.read_header_uint64(thumbnail_size);
+		
+		if (thumbnail_size != 0) {
+			data.resize(512 * 512 * 4);
+			deserializer.read_header_raw(data.data(), thumbnail_size);
 		}
-	});
-}
-
-std::vector<uint8_t> FileView::load_image_data(const std::string& path) {
-	CompressedSerialization::Deserializer deserializer;
-	deserializer.load_from_file(path);
-	
-	std::vector<uint8_t> data;
-	uint64_t thumbnail_size = 0;
-	uint64_t hash_id[] = {0, 0};
-	
-	deserializer.read_header_raw(hash_id, sizeof(hash_id)); // To increase the offset and read the thumbnail size
-	deserializer.read_header_uint64(thumbnail_size);
-	
-	if (thumbnail_size != 0) {
-		data.resize(512 * 512 * 4);
-		deserializer.read_header_raw(data.data(), thumbnail_size);
-	}
-	return data;
-}
-
-bool FileView::scroll_event(const nanogui::Vector2i& p, const nanogui::Vector2f& rel) {
-	// Handle scroll events to implement texture wrapping
-	// rel.y() > 0 means scrolling down, rel.y() < 0 means scrolling up
-	
-	if (rel.y() > 0.0f) {
-		// Scrolling down
-		wrap_texture_cache(true);
-	} else if (rel.y() < 0.0f) {
-		// Scrolling up
-		wrap_texture_cache(false);
+		return data;
 	}
 	
-	return Widget::scroll_event(p, rel);
-}
-
-void FileView::wrap_texture_cache(bool scroll_down) {
-	if (scroll_down) {
-		// Move the last 8 textures to the front
-		for (int i = 0; i < m_textures_per_wrap && !m_texture_cache.empty(); ++i) {
-			auto texture = m_texture_cache.back();
-			m_texture_cache.pop_back();
-			m_texture_cache.push_front(texture);
+	// Handle scroll events to update the scroll offset
+	bool FileView::scroll_event(const nanogui::Vector2i& p, const nanogui::Vector2f& rel) {
+		std::lock_guard<std::mutex> lock(m_mutex);
+		
+		// Define scroll sensitivity
+		float scroll_sensitivity = 30.0f; // Pixels per scroll unit
+		
+		// Update scroll offset based on vertical scroll
+		m_scroll_offset -= rel.y() * scroll_sensitivity;
+		
+		// Clamp the scroll offset to valid range
+		int content_height = m_total_rows * m_row_height;
+		int view_height = this->height();
+		
+		if (content_height > view_height) {
+			if (m_scroll_offset < 0.0f)
+				m_scroll_offset = 0.0f;
+			if (m_scroll_offset > (content_height - view_height))
+				m_scroll_offset = content_height - view_height;
+		} else {
+			m_scroll_offset = 0.0f;
 		}
-	} else {
-		// Move the first 8 textures to the back
-		for (int i = 0; i < m_textures_per_wrap && !m_texture_cache.empty(); ++i) {
-			auto texture = m_texture_cache.front();
-			m_texture_cache.pop_front();
-			m_texture_cache.push_back(texture);
+		
+		// Update the positions of all item containers based on the new scroll offset
+		for (size_t i = 0; i < m_item_containers.size(); ++i) {
+			int col = i % 8;
+			int row = i / 8;
+			float y = row * m_row_height - m_scroll_offset;
+			m_item_containers[i]->set_position(nanogui::Vector2i(col * 150, y));
 		}
+		
+		perform_layout(screen().nvg_context());
+		
+		return true; // Indicate that the event has been handled
 	}
-}
-
-
+	
+	// Callback to handle scrollbar value changes (Removed as scrollbar is not used)
+	// Removed: void on_scrollbar_value_changed(float value);
+	
+	// Override draw to implement clipping
+	void FileView::draw(NVGcontext* ctx) {
+		// Begin clipping
+		nvgSave(ctx);
+		nvgScissor(ctx, absolute_position().x(), absolute_position().y(), width(), height());
+		
+		// Draw children normally
+		Widget::draw(ctx);
+		
+		// End clipping
+		nvgRestore(ctx);
+	}
+	
+	// Handle resizing events to adjust visible area and item positions
+	bool FileView::resize_event(const nanogui::Vector2i& size) {
+		Widget::resize_event(size);
+		
+		// Recalculate visible rows
+		m_visible_rows = size.y() / m_row_height;
+		
+		// Recalculate scroll if necessary
+		int content_height = m_total_rows * m_row_height;
+		
+		if (content_height > size.y()) {
+			if (m_scroll_offset > (content_height - size.y()))
+				m_scroll_offset = content_height - size.y();
+		} else {
+			m_scroll_offset = 0.0f;
+		}
+		
+		// Update item positions based on the new scroll offset
+		for (size_t i = 0; i < m_item_containers.size(); ++i) {
+			int col = i % 8;
+			int row = i / 8;
+			float y = row * m_row_height - m_scroll_offset;
+			m_item_containers[i]->set_position(nanogui::Vector2i(col * 150, y));
+		}
+		
+		perform_layout(screen().nvg_context());
+		
+		return true;
+	}

@@ -37,6 +37,12 @@ protected:
 	// Handle scrolling events
 	virtual bool scroll_event(const nanogui::Vector2i& p, const nanogui::Vector2f& rel) override;
 	
+	// Override draw to implement clipping
+	virtual void draw(NVGcontext* ctx) override;
+	
+	// Override resize_event to handle resizing
+	virtual bool resize_event(const nanogui::Vector2i& size) override;
+	
 private:
 	// Initialize the texture cache
 	void initialize_texture_cache();
@@ -91,9 +97,6 @@ private:
 	std::vector<std::shared_ptr<nanogui::Texture>> m_used_textures;
 	
 	// UI Elements
-	std::shared_ptr<nanogui::VScrollPanel> m_v_scroll_wrapper;
-	std::shared_ptr<nanogui::Widget> m_widget_container;
-
 	std::vector<std::shared_ptr<nanogui::Widget>> m_item_containers;
 	std::vector<std::shared_ptr<nanogui::Button>> m_file_buttons;
 	std::vector<std::shared_ptr<nanogui::ImageView>> m_image_views;
@@ -101,8 +104,9 @@ private:
 	
 	// Scroll management
 	float m_scroll_offset;
+	int m_total_rows;
+	int m_visible_rows;
+	int m_row_height;
 	const int m_textures_per_wrap = 8;
 	const int m_total_textures = 40;
 };
-
-
