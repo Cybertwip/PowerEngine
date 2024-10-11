@@ -415,7 +415,6 @@ std::vector<uint8_t> FileView::load_image_data(const std::string& path) {
 	deserializer.load_from_file(path);
 	
 	std::vector<uint8_t> data;
-	data.resize(512 * 512 * 4);
 	uint64_t thumbnail_size = 0;
 	uint64_t hash_id[] = {0, 0};
 	
@@ -423,6 +422,7 @@ std::vector<uint8_t> FileView::load_image_data(const std::string& path) {
 	deserializer.read_header_uint64(thumbnail_size);
 	
 	if (thumbnail_size != 0) {
+		data.resize(512 * 512 * 4);
 		deserializer.read_header_raw(data.data(), thumbnail_size);
 	}
 	return data;
