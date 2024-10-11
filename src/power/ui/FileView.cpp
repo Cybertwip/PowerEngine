@@ -208,11 +208,13 @@ void FileView::populate_file_view() {
 		if (!texture) {
 			// Handle texture exhaustion by creating a new placeholder texture
 			texture = std::make_shared<nanogui::Texture>(
-														 nullptr, 0, 0, 128, 128,
-														 nanogui::Texture::InterpolationMode::Nearest,
-														 nanogui::Texture::InterpolationMode::Nearest,
-														 nanogui::Texture::WrapMode::ClampToEdge
-														 );
+															  nanogui::Texture::PixelFormat::RGBA,       // Set pixel format to RGBA
+															  nanogui::Texture::ComponentFormat::UInt8,  // Use unsigned 8-bit components for each channel
+															  nanogui::Vector2i(128, 128),
+															  nanogui::Texture::InterpolationMode::Bilinear,
+															  nanogui::Texture::InterpolationMode::Nearest,
+															  nanogui::Texture::WrapMode::ClampToEdge
+															  );
 		}
 		
 		// Create the icon button within the item container
