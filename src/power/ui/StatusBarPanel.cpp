@@ -68,8 +68,6 @@ void StatusBarPanel::toggle_resources_panel(bool active) {
 	if (mAnimationFuture.valid() && mAnimationFuture.wait_for(std::chrono::seconds(0)) != std::future_status::ready) {
 		return; // Animation is still running, do not start a new one
 	}
-	
-	mResourcesPanel->refresh_file_view();
 
 	if (active) {
 		mAnimationFuture = std::async(std::launch::async, [this]() {
@@ -80,6 +78,8 @@ void StatusBarPanel::toggle_resources_panel(bool active) {
 		mAnimationFuture = std::async(std::launch::async, [this]() {
 			auto target = nanogui::Vector2i(0, parent()->get().parent()->get().fixed_height());
 			animate_panel_position(target);
+			
+			mResourcesPanel->refresh_file_view();
 		});
 	}
 	

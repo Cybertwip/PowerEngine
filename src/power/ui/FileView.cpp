@@ -404,23 +404,21 @@ void FileView::handle_file_interaction(DirectoryNode& node) {
 void FileView::load_thumbnail(const std::shared_ptr<DirectoryNode>& node,
 							  const std::shared_ptr<nanogui::ImageView>& image_view,
 							  const std::shared_ptr<nanogui::Texture>& texture) {
-	std::async(std::launch::async, [this, node, image_view, texture]() {
+	nanogui::async([this, node, image_view, texture]() {
 		// Load and process the thumbnail
 		// Example: Read image data from file
 		std::vector<uint8_t> thumbnail_data = load_image_data(node->FullPath);
 		
-		// Update the texture on the main thread
-		nanogui::async([this, image_view, texture, thumbnail_data]() {
-			if (!thumbnail_data.empty()) {
-				nanogui::Texture::decompress_into(thumbnail_data, *texture);
-
-				image_view->set_image(texture);
-				image_view->set_visible(true);
-				image_view->image()->resize(nanogui::Vector2i(288, 288));
-
-				perform_layout(screen().nvg_context());
-			}
-		});
+		if (!thumbnail_data.empty()) {
+			texture->resize(nanogui::Vector2i(512, 512));
+			nanogui::Texture::decompress_into(thumbnail_data, *texture);
+			
+			image_view->set_image(texture);
+			image_view->set_visible(true);
+			
+			texture->resize(nanogui::Vector2i(288, 288));
+			perform_layout(screen().nvg_context());
+		}
 	});
 }
 
