@@ -282,7 +282,7 @@ void FileView::populate_file_view() {
 				auto drag_start_position = icon_button->absolute_position();
 				drag_widget->set_position(drag_start_position);
 				
-				screen().set_drag_widget(drag_widget, [this, content, drag_widget, child]() {
+				screen().set_drag_widget(drag_widget, [this, thumbnail = std::move(content), drag_widget, child]() {
 					auto path = child->FullPath;
 					
 					// Remove drag widget
