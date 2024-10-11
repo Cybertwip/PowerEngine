@@ -31,8 +31,12 @@ m_scroll_offset(0.0f) {
 	for (int i = 0; i < 8; ++i) {
 		grid_layout->set_col_stretch(i, 1.0f);
 	}
+		
+	m_v_scroll_wrapper = std::make_shared<nanogui::VScrollPanel>(*this, screen);
 	
-	set_layout(std::move(grid_layout));
+	m_widget_container = std::make_shared<nanogui::Widget>(*m_v_scroll_wrapper, screen);
+	
+	m_widget_container->set_layout(std::move(grid_layout));
 	
 	// Initialize texture cache
 	initialize_texture_cache();
@@ -102,9 +106,9 @@ void FileView::refresh(const std::string& filter_text) {
 	m_root_directory_node.refresh(m_allowed_extensions);
 	
 	// Clear existing child widgets
-	shed_children();
+	m_widget_container->shed_children();
 	
-	auto grid_layout = dynamic_cast<nanogui::AdvancedGridLayout*>(&this->layout());
+	auto grid_layout = dynamic_cast<nanogui::AdvancedGridLayout*>(&m_widget_container->layout());
 	if (grid_layout) {
 		grid_layout->shed_anchor();
 	}
@@ -193,7 +197,7 @@ void FileView::populate_file_view() {
 												   );
 		
 		// Retrieve the grid layout from this widget
-		auto grid_layout = dynamic_cast<nanogui::AdvancedGridLayout*>(&this->layout());
+		auto grid_layout = dynamic_cast<nanogui::AdvancedGridLayout*>(&m_widget_container->layout());
 		if (grid_layout) {
 			grid_layout->set_anchor(*item_container, std::move(anchor));
 		}
@@ -333,14 +337,14 @@ void FileView::populate_file_view() {
 		});
 		
 		// Add the item container as a child widget
-		this->add_child(*item_container.get());
+		m_widget_container->add_child(*item_container.get());
 		
 		// Increment the index for the next item
 		current_index++;
 	}
 	
 	// After adding all items, adjust the grid layout rows based on the number of items
-	if (auto grid_layout = dynamic_cast<nanogui::AdvancedGridLayout*>(&this->layout())) {
+	if (auto grid_layout = dynamic_cast<nanogui::AdvancedGridLayout*>(&m_widget_container->layout())) {
 		int total_items = m_file_buttons.size();
 		int required_rows = (total_items + columns - 1) / columns; // Ceiling division
 		

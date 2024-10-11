@@ -91,6 +91,9 @@ private:
 	std::vector<std::shared_ptr<nanogui::Texture>> m_used_textures;
 	
 	// UI Elements
+	std::shared_ptr<nanogui::VScrollPanel> m_v_scroll_wrapper;
+	std::shared_ptr<nanogui::Widget> m_widget_container;
+
 	std::vector<std::shared_ptr<nanogui::Widget>> m_item_containers;
 	std::vector<std::shared_ptr<nanogui::Button>> m_file_buttons;
 	std::vector<std::shared_ptr<nanogui::ImageView>> m_image_views;
@@ -99,7 +102,7 @@ private:
 	// Scroll management
 	float m_scroll_offset;
 	const int m_textures_per_wrap = 8;
-	const int m_total_textures = 32;
+	const int m_total_textures = 40;
 };
 
 
