@@ -147,6 +147,24 @@ void ImportWindow::ImportIntoProject() {
 		}
 		
 		if (mAnimationsCheckbox->checked()) {
+			
+			for (auto& data : *mCompressedMeshData->mAnimations) {
+				auto& serializer = data.mSerializer;
+				std::stringstream compressedData;
+				
+				serializer->get_compressed_data(compressedData);
+
+				uint64_t hash_id[] = { 0, 0 };
+				
+				Md5::generate_md5_from_compressed_data(compressedData, hash_id);
+				
+				// Write the unique hash identifier to the header
+				serializer->write_header_raw(hash_id, sizeof(hash_id));
+				
+				serializer->write_header_uint64(0);
+
+			}
+			
 			mCompressedMeshData->persist_animations();
 		}
 

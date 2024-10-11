@@ -139,6 +139,8 @@ public:
             InterpolationMode min_interpolation_mode = InterpolationMode::Bilinear,
             InterpolationMode mag_interpolation_mode = InterpolationMode::Bilinear,
             WrapMode wrap_mode                       = WrapMode::Repeat);
+	
+	static void decompress_into(const std::vector<uint8_t>& data, Texture& texture);
 
     /// Return the pixel format
     PixelFormat pixel_format() const { return m_pixel_format; }

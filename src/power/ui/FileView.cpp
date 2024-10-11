@@ -241,7 +241,6 @@ void FileView::populate_file_view() {
 		
 		// Set the callback for the icon button to handle interactions
 		icon_button->set_callback([this, icon_button, child]() {
-			std::lock_guard<std::mutex> lock(m_mutex);
 			int file_icon = get_icon_for_file(*child);
 			
 			if (file_icon == FA_WALKING || file_icon == FA_PERSON_BOOTH || file_icon == FA_OBJECT_GROUP) {
@@ -272,7 +271,6 @@ void FileView::populate_file_view() {
 				drag_widget->set_position(drag_start_position);
 				
 				screen().set_drag_widget(drag_widget, [this, content, drag_widget, child]() {
-					std::lock_guard<std::mutex> lock(m_mutex);
 					auto path = child->FullPath;
 					
 					// Remove drag widget
@@ -402,7 +400,8 @@ void FileView::load_thumbnail(const std::shared_ptr<DirectoryNode>& node,
 		// Update the texture on the main thread
 		nanogui::async([this, image_view, texture, thumbnail_data]() {
 			if (!thumbnail_data.empty()) {
-				texture->upload(thumbnail_data.data());
+				nanogui::Texture::decompress_into(image_data, *texture);
+
 				image_view->set_image(texture);
 				image_view->set_visible(true);
 				perform_layout(screen().nvg_context());
@@ -412,14 +411,11 @@ void FileView::load_thumbnail(const std::shared_ptr<DirectoryNode>& node,
 }
 
 std::vector<uint8_t> FileView::load_image_data(const std::string& path) {
-	// Implement image loading logic (e.g., using stb_image or another library)
-	// Placeholder implementation: Return a solid color image
-	// In a real scenario, you would load the image from the file system
-	
 	CompressedSerialization::Deserializer deserializer;
-	deserializer.load_from_file(child->FullPath);
+	deserializer.load_from_file(path);
 	
-	data->resize(512 * 512 * 4);
+	std::vector<uint8_t> data;
+	data.resize(512 * 512 * 4);
 	uint64_t thumbnail_size = 0;
 	uint64_t hash_id[] = {0, 0};
 	
@@ -427,7 +423,7 @@ std::vector<uint8_t> FileView::load_image_data(const std::string& path) {
 	deserializer.read_header_uint64(thumbnail_size);
 	
 	if (thumbnail_size != 0) {
-		deserializer.read_header_raw(data->data(), thumbnail_size);
+		deserializer.read_header_raw(data.data(), thumbnail_size);
 	}
 	return data;
 }
