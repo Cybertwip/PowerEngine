@@ -232,6 +232,8 @@ void FileView::populate_file_view() {
 		// Asynchronously load the thumbnail if necessary
 		load_thumbnail(child, image_view, texture);
 		
+		image_view->image()->resize(nanogui::Vector2i(288, 288));
+		
 		// Add a label below the icon to display the file name
 		auto name_label = std::make_shared<nanogui::Label>(*item_container, screen(), child->FileName);
 		name_label->set_fixed_width(128);
