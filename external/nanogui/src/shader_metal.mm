@@ -308,7 +308,7 @@ size_t Shader::get_buffer_size(const std::string &name) {
 	throw std::runtime_error("Shader::get_buffer_size(): buffer \"" + name + "\" not found");
 }
 
-void Shader::set_texture(const std::string &name, std::shared_ptr<Texture> texture, int index) {
+void Shader::set_texture(const std::string &name, std::shared_ptr<Texture> texture, int index, bool persist) {
 	auto it = m_buffer_definitions.find(name);
 	if (it == m_buffer_definitions.end())
 		throw std::runtime_error(
@@ -339,10 +339,18 @@ void Shader::set_texture(const std::string &name, std::shared_ptr<Texture> textu
 		buf2.index = index != -1 ? index : sampler_def.index;
 		buf2.buffer = (__bridge_retained void *)((__bridge id<MTLSamplerState>)texture->sampler_state_handle());
 		
-		m_persisted_buffers[sampler_name][buf2.index] = buf2;
+		if (persist) {
+			m_persisted_buffers[sampler_name][buf2.index] = buf2;
+		} else {
+			m_queued_buffers[sampler_name][buf2.index] = buf2;
+		}
 	}
 	
-	m_persisted_buffers[name][buf.index] = buf;
+	if (persist) {
+		m_persisted_buffers[name][buf.index] = buf;
+	} else {
+		m_queued_buffers[name][buf.index] = buf;
+	}
 }
 
 void Shader::begin() {

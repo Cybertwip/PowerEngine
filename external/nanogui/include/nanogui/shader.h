@@ -139,7 +139,7 @@ public:
 	 *
 	 * The association will be replaced if it is already present.
 	 */
-	void set_texture(const std::string &name, std::shared_ptr<Texture> texture, int index = 0);
+	void set_texture(const std::string &name, std::shared_ptr<Texture> texture, int index = 0, bool persist = true);
 	
 	/**
 	 * \brief Begin drawing using this shader

@@ -217,7 +217,7 @@ void FileView::populate_file_view() {
 		
 		// Create the icon button within the item container
 		auto icon_button = std::make_shared<nanogui::Button>(*item_container, screen(), "", file_icon);
-		icon_button->set_fixed_size(nanogui::Vector2i(128, 128));
+		icon_button->set_fixed_size(nanogui::Vector2i(144, 144));
 		icon_button->set_background_color(m_normal_button_color);
 		m_file_buttons.push_back(icon_button);
 		
@@ -231,18 +231,16 @@ void FileView::populate_file_view() {
 		
 		// Asynchronously load the thumbnail if necessary
 		load_thumbnail(child, image_view, texture);
-		
-		image_view->image()->resize(nanogui::Vector2i(288, 288));
-		
+				
 		// Add a label below the icon to display the file name
 		auto name_label = std::make_shared<nanogui::Label>(*item_container, screen(), child->FileName);
-		name_label->set_fixed_width(128);
+		name_label->set_fixed_width(144);
 		name_label->set_position(nanogui::Vector2i(0, 110));
 		name_label->set_alignment(nanogui::Label::Alignment::Center);
 		m_name_labels.push_back(name_label);
 		
 		// Set the callback for the icon button to handle interactions
-		icon_button->set_callback([this, icon_button, child]() {
+		icon_button->set_callback([this, icon_button, image_view, child]() {
 			int file_icon = get_icon_for_file(*child);
 			
 			if (file_icon == FA_WALKING || file_icon == FA_PERSON_BOOTH || file_icon == FA_OBJECT_GROUP) {
@@ -262,10 +260,22 @@ void FileView::populate_file_view() {
 																		  ));
 				} else {
 					// Assuming texture contains the thumbnail
-					content->set_image(dynamic_cast<nanogui::ImageView&>(icon_button->children()[0].get()).image());
+					auto texture = std::make_shared<nanogui::Texture>(
+																	  nanogui::Texture::PixelFormat::RGBA,       // Set pixel format to RGBA
+																	  nanogui::Texture::ComponentFormat::UInt8,  // Use unsigned 8-bit components for each channel
+																	  nanogui::Vector2i(512, 512),
+																	  nanogui::Texture::InterpolationMode::Bilinear,
+																	  nanogui::Texture::InterpolationMode::Nearest,
+																	  nanogui::Texture::WrapMode::ClampToEdge
+																	  );
+					
+					std::vector<uint8_t> thumbnail_data = load_image_data(child->FullPath);
+					nanogui::Texture::decompress_into(thumbnail_data, *texture);
+					
+					content->set_image(texture);
+					content->image()->resize(nanogui::Vector2i(288, 288));
 				}
 				
-				content->image()->resize(nanogui::Vector2i(288, 288));
 				content->set_visible(true);
 				drag_widget->set_size(icon_button->fixed_size());
 				
@@ -406,6 +416,8 @@ void FileView::load_thumbnail(const std::shared_ptr<DirectoryNode>& node,
 
 				image_view->set_image(texture);
 				image_view->set_visible(true);
+				image_view->image()->resize(nanogui::Vector2i(288, 288));
+
 				perform_layout(screen().nvg_context());
 			}
 		});

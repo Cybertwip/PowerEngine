@@ -66,8 +66,9 @@ void ImageView::set_image(std::shared_ptr<Texture> image) {
     if (image->mag_interpolation_mode() != Texture::InterpolationMode::Nearest)
         throw std::runtime_error(
             "ImageView::set_image(): interpolation mode must be set to 'Nearest'!");
-    m_image_shader->set_texture("image", image);
 	m_image = image;
+	
+	m_image_shader->set_texture("image", m_image);
 }
 
 float ImageView::scale() const {
@@ -219,7 +220,7 @@ void ImageView::draw_contents() {
         Matrix4f::translate(Vector3f(m_offset.x(), (int) m_offset.y(), 0.f)) *
         Matrix4f::scale(Vector3f(m_image->size().x() * scale,
                                  m_image->size().y() * scale, 1.f));
-
+	
     m_image_shader->set_uniform("matrix_image",      Matrix4f(matrix_image));
     m_image_shader->set_uniform("matrix_background", Matrix4f(matrix_background));
     m_image_shader->set_uniform("background_color",  m_image_background_color);
