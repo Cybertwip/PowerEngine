@@ -903,7 +903,9 @@ void Screen::update_focus(Widget& widget) {
 	m_focused_widget = &widget;
 	
 	if (auto* window = dynamic_cast<Window*>(&widget); window) {
-		move_window_to_front(*window);
+		if (window->modal()) {
+			move_window_to_front(*window);
+		}
 	}
 }
 
