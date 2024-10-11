@@ -95,6 +95,19 @@ void Fbx::ProcessMesh(fbxsdk::FbxMesh* mesh, fbxsdk::FbxNode* node) {
 	// Get global transform of the node
 	FbxAMatrix globalTransform = node->EvaluateGlobalTransform();
 	
+	// === Begin Rotation Modification ===
+	
+	// Create a rotation matrix for 90 degrees around the X-axis
+	FbxAMatrix rotationMatrix;
+	// FbxEuler takes angles in radians. 90 degrees = π/2 radians.
+	rotationMatrix.SetR(FbxEuler(FbxPI_2, 0.0, 0.0));
+	
+	// Combine the global transform with the rotation matrix
+	// The rotation is applied after the global transform
+	FbxAMatrix finalTransform = globalTransform * rotationMatrix;
+	
+	// === End Rotation Modification ===
+	
 	// Reserve space for vertices and indices
 	resultMesh->get_vertices().resize(controlPointCount);
 	int polygonCount = mesh->GetPolygonCount();
@@ -118,20 +131,20 @@ void Fbx::ProcessMesh(fbxsdk::FbxMesh* mesh, fbxsdk::FbxNode* node) {
 			// Get position
 			FbxVector4 position = controlPoints[controlPointIndex];
 			
-			// Apply global transform
-			FbxVector4 transformedPosition = globalTransform.MultT(position);
+			// Apply the combined transformation (original global transform + rotation)
+			FbxVector4 transformedPosition = finalTransform.MultT(position);
 			
 			// Convert to glm::vec3
 			vertex.set_position({ static_cast<float>(transformedPosition[0]),
 				static_cast<float>(transformedPosition[1]),
 				static_cast<float>(transformedPosition[2]) });
-			// Now, get normal
-			// Get normal from mesh
 			
+			// Now, get normal
 			FbxVector4 normal;
 			if (mesh->GetPolygonVertexNormal(i, j, normal)) {
-				// Apply the global transform to the normal
-				FbxVector4 transformedNormal = globalTransform.MultT(normal);
+				// Apply the combined transformation to the normal
+				// For normals, use only the rotation part of the matrix
+				FbxVector4 transformedNormal = rotationMatrix.MultT(normal);
 				
 				// Convert to glm::vec3
 				vertex.set_normal({ static_cast<float>(transformedNormal[0]),
