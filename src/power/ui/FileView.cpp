@@ -407,11 +407,12 @@ void FileView::refresh(const std::string& filter_text) {
 		// Populate the file view with updated contents
 		populate_file_view();
 	}
-	
-	scroll_event(nanogui::Vector2i(0, 0), nanogui::Vector2i(0, -1));
 
 	// Perform layout to apply all changes
 	perform_layout(m_screen.nvg_context());
+	
+	scroll_event(nanogui::Vector2i(0, 0), nanogui::Vector2i(0, -1));
+
 }
 void FileView::populate_file_view() {
 	if (m_selected_directory_path.empty()) {
@@ -477,8 +478,6 @@ void FileView::populate_file_view() {
 		
 		m_dummy_widget->set_size(nanogui::Vector2i(1, 1));
 	}
-	
-	m_content->perform_layout(m_screen.nvg_context());
 }
 
 
@@ -529,6 +528,8 @@ bool FileView::scroll_event(const nanogui::Vector2i& p, const nanogui::Vector2f&
 	
 	// Apply the scroll offset by updating the content's position
 	m_content->set_position(nanogui::Vector2i(0, -static_cast<int>(m_scroll_offset)));	return true; // Indicate that the event has been handled
+	
+	m_content->perform_layout(screen().nvg_context());
 }
 
 void FileView::update_visible_items(int first_visible_row, int direction) {
@@ -578,9 +579,6 @@ void FileView::update_visible_items(int first_visible_row, int direction) {
 	
 	// Optionally remove widgets that are no longer visible
 	remove_invisible_widgets(first_visible_row);
-	
-	// Perform layout update
-	m_content->perform_layout(m_screen.nvg_context());
 }
 
 void FileView::add_or_update_widget(int index, const std::shared_ptr<DirectoryNode>& child) {
