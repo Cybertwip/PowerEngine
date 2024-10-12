@@ -3,6 +3,8 @@
 #include "filesystem/CompressedSerialization.hpp"
 #include "filesystem/DirectoryNode.hpp"
 
+#include "ui/FileView.hpp"
+
 #include <nanogui/layout.h>
 #include <nanogui/button.h>
 #include <nanogui/imageview.h>

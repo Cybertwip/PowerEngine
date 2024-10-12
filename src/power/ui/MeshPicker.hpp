@@ -9,7 +9,7 @@
 // Forward declaration
 struct DirectoryNode;
 
-class FIleView;
+class FileView;
 
 class MeshPicker : public nanogui::Window {
 public:
@@ -30,7 +30,7 @@ private:
 	std::function<void(const std::string&)> on_model_selected_;
 	
 	std::shared_ptr<nanogui::TextBox> filter_box_;
-	std::shared_ptr<FIleView> mFileView;
+	std::shared_ptr<FileView> mFileView;
 	
 	std::string mFilterValue;
 		
