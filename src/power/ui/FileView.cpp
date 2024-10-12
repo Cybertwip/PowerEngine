@@ -1,5 +1,3 @@
-// FileView.cpp
-
 #include "FileView.hpp"
 
 #include <nanogui/layout.h>
@@ -12,6 +10,7 @@
 #include <algorithm>
 #include <chrono>
 
+#include "filesystem/DirectoryNode.hpp" // Assuming this is needed for load_image_data
 #include "filesystem/CompressedSerialization.hpp" // Assuming this is needed for load_image_data
 
 // Constructor
@@ -37,16 +36,17 @@ m_visible_rows(3),
 m_row_height(144), // Assuming row height of 144 pixels
 m_total_textures(40), // Example value, adjust as needed
 m_previous_first_visible_row(0),
-m_is_loading_thumbnail(false)
+m_is_loading_thumbnail(false),
+m_previous_scroll_offset(0)
 {
 	// Initialize main layout using GridLayout
-	auto grid_layout = std::unique_ptr<nanogui::GridLayout>(new nanogui::GridLayout(
-											   nanogui::Orientation::Horizontal,
-											   8, // Number of columns
-											   nanogui::Alignment::Middle,
-											   8, // Margin
-											   8  // Spacing between widgets
-											   ));
+	auto grid_layout = std::make_unique<nanogui::GridLayout>(
+															 nanogui::Orientation::Horizontal,
+															 8, // Number of columns
+															 nanogui::Alignment::Middle,
+															 8, // Margin
+															 8  // Spacing between widgets
+															 );
 	
 	set_layout(std::move(grid_layout));
 	
@@ -55,16 +55,15 @@ m_is_loading_thumbnail(false)
 	
 	// Create a content widget that will hold all file items
 	m_content = std::make_shared<nanogui::Widget>(*this, screen);
-	m_content->set_layout(std::unique_ptr<nanogui::GridLayout>(new nanogui::GridLayout(
-												  nanogui::Orientation::Horizontal,
-												  8, // Number of columns
-												  nanogui::Alignment::Middle,
-												  8, // Margin
-												  8  // Spacing
-												  )));
+	m_content->set_layout(std::make_unique<nanogui::GridLayout>(
+																nanogui::Orientation::Horizontal,
+																8, // Number of columns
+																nanogui::Alignment::Middle,
+																8, // Margin
+																8  // Spacing
+																));
 	
 	m_content->set_position(nanogui::Vector2i(0, 0));
-	m_content->set_fixed_size(nanogui::Vector2i(this->width(), 288));
 	
 	// Initial population
 	refresh();
@@ -128,8 +127,10 @@ std::shared_ptr<nanogui::Button> FileView::acquire_button(const DirectoryNode& c
 	if (!m_button_cache.empty()) {
 		icon_button = m_button_cache.front();
 		m_button_cache.pop_front();
+		icon_button->set_parent(*item_container);
+		icon_button->set_visible(true);
 	} else {
-		icon_button = std::make_shared<nanogui::Button>(*item_container, screen(), "", get_icon_for_file(child));
+		icon_button = std::make_shared<nanogui::Button>(*item_container, m_screen, "", get_icon_for_file(child));
 	}
 	
 	// Setup button properties
@@ -178,6 +179,7 @@ std::shared_ptr<nanogui::Button> FileView::acquire_button(const DirectoryNode& c
 }
 
 void FileView::release_button(std::shared_ptr<nanogui::Button> button) {
+	button->set_visible(false);
 	m_button_cache.push_back(button);
 }
 
@@ -204,7 +206,6 @@ void FileView::clear_file_buttons() {
 	m_file_buttons.clear();
 }
 
-// Determine the appropriate icon for the file type
 int FileView::get_icon_for_file(const DirectoryNode& node) const {
 	if (node.IsDirectory) return FA_FOLDER;
 	if (node.FileName.find(".psk") != std::string::npos) return FA_WALKING;
@@ -215,7 +216,6 @@ int FileView::get_icon_for_file(const DirectoryNode& node) const {
 	return FA_FILE; // Default icon
 }
 
-// Recursive function to find a node by its path
 DirectoryNode* FileView::find_node_by_path(DirectoryNode& root, const std::string& path) const {
 	if (root.FullPath == path) {
 		return &root;
@@ -234,7 +234,6 @@ DirectoryNode* FileView::find_node_by_path(DirectoryNode& root, const std::strin
 	return nullptr;
 }
 
-// Handle file interactions (e.g., double-click)
 void FileView::handle_file_interaction(DirectoryNode& node) {
 	if (node.IsDirectory) {
 		// Change the selected directory path and refresh
@@ -246,7 +245,6 @@ void FileView::handle_file_interaction(DirectoryNode& node) {
 	}
 }
 
-// Asynchronously load thumbnail
 void FileView::load_thumbnail(const std::shared_ptr<DirectoryNode>& node,
 							  const std::shared_ptr<nanogui::ImageView>& image_view,
 							  const std::shared_ptr<nanogui::Texture>& texture) {
@@ -262,13 +260,12 @@ void FileView::load_thumbnail(const std::shared_ptr<DirectoryNode>& node,
 			image_view->set_image(texture);
 			image_view->set_visible(true);
 			
-			texture->resize(nanogui::Vector2i(288, 288));
+			texture->resize(nanogui::Vector2i(144, 144));
 			m_content->perform_layout(m_screen.nvg_context());
 		}
 	});
 }
 
-// Load image data from a file
 std::vector<uint8_t> FileView::load_image_data(const std::string& path) {
 	CompressedSerialization::Deserializer deserializer;
 	deserializer.load_from_file(path);
@@ -305,70 +302,6 @@ void FileView::draw(NVGcontext* ctx) {
 	nvgRestore(ctx);
 }
 
-// Implement load_row_thumbnails
-void FileView::load_row_thumbnails(int row_index) {
-	// Ensure the row index is within valid range
-	if (row_index < 0 || row_index >= m_total_rows) {
-		return;
-	}
-	
-	for (int col = 0; col < 8; ++col) { // Assuming 8 columns
-		int index = row_index * 8 + col;
-		if (index >= m_file_buttons.size()) {
-			break;
-		}
-		
-		auto icon_button = m_file_buttons[index];
-		auto image_view = m_image_views[index];
-		auto name_label = m_name_labels[index];
-		
-		// Determine the corresponding DirectoryNode
-		DirectoryNode* node = get_node_by_index(index);
-		if (!node) {
-			continue;
-		}
-		
-		// Acquire a texture from the cache
-		auto texture = acquire_texture();
-		if (!texture) {
-			// Handle texture exhaustion by reusing the oldest texture
-			if (!m_used_textures.empty()) {
-				texture = m_used_textures.front();
-				m_used_textures.pop_front();
-			} else {
-				// Create a new placeholder texture if necessary
-				texture = std::make_shared<nanogui::Texture>(
-															 nanogui::Texture::PixelFormat::RGBA,
-															 nanogui::Texture::ComponentFormat::UInt8,
-															 nanogui::Vector2i(512, 512),
-															 nanogui::Texture::InterpolationMode::Bilinear,
-															 nanogui::Texture::InterpolationMode::Nearest,
-															 nanogui::Texture::WrapMode::ClampToEdge
-															 );
-			}
-		}
-		
-		// Update the ImageView with the new texture
-		image_view->set_image(texture);
-		image_view->set_visible(true);
-		
-		// Asynchronously load the new thumbnail
-		m_thumbnail_load_queue.push([this, node, image_view, texture]() {
-			load_thumbnail(node->shared_from_this(), image_view, texture);
-		});
-	}
-	
-	// Optionally perform layout updates
-	m_content->perform_layout(m_screen.nvg_context());
-}
-
-DirectoryNode* FileView::get_node_by_index(int index) const {
-	if (index < 0 || index >= m_nodes.size()) {
-		return nullptr;
-	}
-	return m_nodes[index];
-}
-
 void FileView::ProcessEvents() {
 	std::function<void()> task;
 	
@@ -392,7 +325,6 @@ void FileView::ProcessEvents() {
 		});
 	}
 }
-
 
 void FileView::refresh(const std::string& filter_text) {
 	std::lock_guard<std::mutex> lock(m_mutex);
@@ -463,12 +395,13 @@ void FileView::populate_file_view() {
 		filtered_children.push_back(child);
 	}
 	
+	m_all_nodes = filtered_children; // Store all filtered nodes for future use
 	m_total_rows = (filtered_children.size() + columns - 1) / columns;
 	
 	// Only load the initial visible rows
 	int max_items = m_visible_rows * columns;
 	
-	for (int i = 0; i < std::min((int)filtered_children.size(), max_items); ++i) {
+	for (int i = 0; i < std::min(static_cast<int>(filtered_children.size()), max_items); ++i) {
 		const auto& child = filtered_children[i];
 		
 		auto item_container = std::make_shared<nanogui::Widget>(*m_content, m_screen);
@@ -478,12 +411,14 @@ void FileView::populate_file_view() {
 		// Acquire a texture from cache
 		auto texture = acquire_texture();
 		if (!texture) {
-			texture = std::make_shared<nanogui::Texture>(nanogui::Texture::PixelFormat::RGBA,
+			texture = std::make_shared<nanogui::Texture>(
+														 nanogui::Texture::PixelFormat::RGBA,
 														 nanogui::Texture::ComponentFormat::UInt8,
 														 nanogui::Vector2i(512, 512),
 														 nanogui::Texture::InterpolationMode::Bilinear,
 														 nanogui::Texture::InterpolationMode::Nearest,
-														 nanogui::Texture::WrapMode::ClampToEdge);
+														 nanogui::Texture::WrapMode::ClampToEdge
+														 );
 		}
 		
 		// Create the image view
@@ -511,8 +446,6 @@ void FileView::populate_file_view() {
 		name_label->set_alignment(nanogui::Label::Alignment::Center);
 		m_name_labels.push_back(name_label);
 	}
-	
-	m_all_nodes = filtered_children; // Store all filtered nodes for future use
 	
 	m_content->perform_layout(m_screen.nvg_context());
 }
@@ -528,26 +461,35 @@ bool FileView::scroll_event(const nanogui::Vector2i& p, const nanogui::Vector2f&
 	
 	// Clamp the scroll offset
 	int content_height = m_total_rows * m_row_height;
-	int view_height = m_visible_rows * m_row_height;
+	int view_height = this->height();
 	
 	if (content_height > view_height) {
 		if (m_scroll_offset < 0.0f) {
 			m_scroll_offset = 0.0f;
 		}
-		if (m_scroll_offset > (content_height - view_height)) {
+		if (m_scroll_offset > content_height - view_height) {
 			m_scroll_offset = content_height - view_height;
 		}
 	} else {
 		m_scroll_offset = 0.0f;
 	}
 	
+	// Determine scroll direction
+	int direction = 0; // 1 for down, -1 for up
+	if (m_scroll_offset > m_previous_scroll_offset) {
+		direction = 1; // Scrolling down
+	} else if (m_scroll_offset < m_previous_scroll_offset) {
+		direction = -1; // Scrolling up
+	}
+	m_previous_scroll_offset = m_scroll_offset;
+	
 	// Calculate the first visible row
 	int new_first_visible_row = static_cast<int>(m_scroll_offset / m_row_height);
 	
 	// Check if we need to update visible items
 	if (new_first_visible_row != m_previous_first_visible_row) {
-		// Update visible items
-		update_visible_items(new_first_visible_row);
+		// Update visible items based on scroll direction
+		update_visible_items(new_first_visible_row, direction);
 		m_previous_first_visible_row = new_first_visible_row;
 	}
 	
@@ -557,64 +499,164 @@ bool FileView::scroll_event(const nanogui::Vector2i& p, const nanogui::Vector2f&
 	return true; // Indicate that the event has been handled
 }
 
-void FileView::update_visible_items(int first_visible_row) {
+void FileView::update_visible_items(int first_visible_row, int direction) {
 	const int columns = 8;
-	int start_index = first_visible_row * columns;
-	int end_index = start_index + m_visible_rows * columns;
+	int start_index;
 	
-	// Clear current items
-	clear_file_buttons();
-	m_content->shed_children();
-	m_item_containers.clear();
-	m_image_views.clear();
-	m_name_labels.clear();
-	m_nodes.clear();
+	if (direction > 0) { // Scrolling down
+		start_index = (first_visible_row + m_visible_rows - 1) * columns;
+	} else if (direction < 0) { // Scrolling up
+		start_index = first_visible_row * columns;
+	} else {
+		start_index = first_visible_row * columns;
+	}
 	
-	// Reuse item containers if possible
-	int total_items = m_all_nodes.size();
-	for (int i = start_index; i < end_index && i < total_items; ++i) {
-		const auto& child = m_all_nodes[i];
-		
-		auto item_container = std::make_shared<nanogui::Widget>(*m_content, m_screen);
-		item_container->set_fixed_size(nanogui::Vector2i(144, m_row_height));
-		m_item_containers.push_back(item_container);
-		
-		// Acquire a texture from cache
-		auto texture = acquire_texture();
-		if (!texture) {
-			texture = std::make_shared<nanogui::Texture>(nanogui::Texture::PixelFormat::RGBA,
-														 nanogui::Texture::ComponentFormat::UInt8,
-														 nanogui::Vector2i(512, 512),
-														 nanogui::Texture::InterpolationMode::Bilinear,
-														 nanogui::Texture::InterpolationMode::Nearest,
-														 nanogui::Texture::WrapMode::ClampToEdge);
+	// Ensure start_index is within bounds
+	if (start_index < 0) start_index = 0;
+	if (start_index >= static_cast<int>(m_all_nodes.size())) return;
+	
+	// Determine the range of items to load
+	int end_index = start_index + columns * 1; // Load one additional row
+	
+	// Loop through the range and update/reuse widgets
+	for (int i = start_index; i < end_index && i < static_cast<int>(m_all_nodes.size()); ++i) {
+		// Check if the item is already visible
+		if (i >= first_visible_row * columns && i < (first_visible_row + m_visible_rows) * columns) {
+			continue; // Already visible
 		}
 		
-		// Create the image view
-		auto image_view = std::make_shared<nanogui::ImageView>(*item_container, m_screen);
+		// Otherwise, update or add the new item
+		const auto& child = m_all_nodes[i];
+		
+		// Reuse existing widgets if possible
+		add_or_update_widget(i, child);
+	}
+	
+	// Optionally remove widgets that are no longer visible
+	remove_invisible_widgets(first_visible_row);
+	
+	// Perform layout update
+	m_content->perform_layout(m_screen.nvg_context());
+}
+
+void FileView::add_or_update_widget(int index, const std::shared_ptr<DirectoryNode>& child) {
+	// Reuse a widget from the cache or create a new one
+	std::shared_ptr<nanogui::Widget> item_container;
+	if (!m_item_containers.empty()) {
+		item_container = m_item_containers.back();
+		m_item_containers.pop_back();
+		item_container->set_parent(*m_content);
+		item_container->set_visible(true);
+	} else {
+		item_container = std::make_shared<nanogui::Widget>(*m_content, m_screen);
+	}
+	
+	// Set fixed size
+	item_container->set_fixed_size(nanogui::Vector2i(144, m_row_height));
+	
+	// Set position based on index
+	int row = index / 8;
+	int col = index % 8;
+	int x = col * (144 + 8); // Assuming 8 pixels padding
+	int y = row * (m_row_height + 8) - static_cast<int>(m_scroll_offset);
+	item_container->set_position(nanogui::Vector2i(x, y));
+	
+	// Acquire a texture
+	auto texture = acquire_texture();
+	if (!texture) {
+		texture = std::make_shared<nanogui::Texture>(
+													 nanogui::Texture::PixelFormat::RGBA,
+													 nanogui::Texture::ComponentFormat::UInt8,
+													 nanogui::Vector2i(512, 512),
+													 nanogui::Texture::InterpolationMode::Bilinear,
+													 nanogui::Texture::InterpolationMode::Nearest,
+													 nanogui::Texture::WrapMode::ClampToEdge
+													 );
+	}
+	
+	// Create or update ImageView
+	std::shared_ptr<nanogui::ImageView> image_view;
+	if (!m_image_views.empty()) {
+		image_view = m_image_views.back();
+		m_image_views.pop_back();
+		image_view->set_parent(*item_container);
+		image_view->set_image(texture);
+		image_view->set_visible(true);
+	} else {
+		image_view = std::make_shared<nanogui::ImageView>(*item_container, m_screen);
 		image_view->set_size(nanogui::Vector2i(144, 144));
 		image_view->set_fixed_size(nanogui::Vector2i(144, 144));
 		image_view->set_image(texture);
 		image_view->set_visible(true);
-		m_image_views.push_back(image_view);
-		
-		// Acquire or reuse the button
-		auto icon_button = acquire_button(*child, item_container, texture, image_view);
-		m_file_buttons.push_back(icon_button);
-		m_nodes.push_back(child.get());
-		
-		// Async thumbnail loading
-		m_thumbnail_load_queue.push([this, child, image_view, texture]() {
-			load_thumbnail(child, image_view, texture);
-		});
-		
-		// Label
-		auto name_label = std::make_shared<nanogui::Label>(*item_container, m_screen, child->FileName);
-		name_label->set_fixed_width(144);
-		name_label->set_position(nanogui::Vector2i(0, 110));
-		name_label->set_alignment(nanogui::Label::Alignment::Center);
-		m_name_labels.push_back(name_label);
+	}
+	m_image_views.push_back(image_view);
+	
+	// Acquire or reuse the button
+	auto icon_button = acquire_button(*child, item_container, texture, image_view);
+	m_file_buttons.push_back(icon_button);
+	m_nodes.push_back(child.get());
+	
+	// Async thumbnail loading
+	m_thumbnail_load_queue.push([this, child, image_view, texture]() {
+		load_thumbnail(child, image_view, texture);
+	});
+	
+	// Label
+	std::shared_ptr<nanogui::Label> name_label;
+	if (!m_name_labels.empty()) {
+		name_label = m_name_labels.back();
+		m_name_labels.pop_back();
+		name_label->set_parent(*item_container);
+		name_label->set_caption(child->FileName);
+	} else {
+		name_label = std::make_shared<nanogui::Label>(*item_container, m_screen, child->FileName);
+	}
+	name_label->set_fixed_width(144);
+	name_label->set_position(nanogui::Vector2i(0, m_row_height - 34)); // Adjust y-position based on label height
+	name_label->set_alignment(nanogui::Label::Alignment::Center);
+	m_name_labels.push_back(name_label);
+}
+
+void FileView::remove_invisible_widgets(int first_visible_row) {
+	// Determine the range of visible indices
+	const int columns = 8;
+	int start_visible = first_visible_row * columns;
+	int end_visible = (first_visible_row + m_visible_rows) * columns;
+	
+	// Iterate through file buttons and release those outside the visible range
+	for (int i = m_file_buttons.size() - 1; i >= 0; --i) {
+		if (i < start_visible || i >= end_visible) {
+			release_button(m_file_buttons[i]);
+			m_file_buttons.erase(m_file_buttons.begin() + i);
+		}
 	}
 	
-	m_content->perform_layout(m_screen.nvg_context());
+	// Similarly handle image views and labels
+	for (int i = m_image_views.size() - 1; i >= 0; --i) {
+		if (i < start_visible || i >= end_visible) {
+			m_image_views[i]->set_visible(false);
+			m_image_views.erase(m_image_views.begin() + i);
+		}
+	}
+	
+	for (int i = m_name_labels.size() - 1; i >= 0; --i) {
+		if (i < start_visible || i >= end_visible) {
+			m_name_labels[i]->set_visible(false);
+			m_name_labels.erase(m_name_labels.begin() + i);
+		}
+	}
+	
+	for (int i = m_item_containers.size() - 1; i >= 0; --i) {
+		if (i < start_visible || i >= end_visible) {
+			m_item_containers[i]->set_visible(false);
+			m_item_containers.erase(m_item_containers.begin() + i);
+		}
+	}
+}
+
+DirectoryNode* FileView::get_node_by_index(int index) const {
+	if (index < 0 || index >= static_cast<int>(m_nodes.size())) {
+		return nullptr;
+	}
+	return m_nodes[index];
 }
