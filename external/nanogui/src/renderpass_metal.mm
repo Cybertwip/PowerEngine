@@ -183,27 +183,22 @@ void RenderPass::resize(const Vector2i &size) {
 }
 
 
-void RenderPass::set_scissor_rect(float x, float y, float width, float height) {
+void RenderPass::set_scissor_rect(Vector2i offset, Vector2i size) {
 	if (m_active) {
 		id<MTLRenderCommandEncoder> command_encoder =
 		(__bridge id<MTLRenderCommandEncoder>) m_command_encoder;
 		
 		// Convert coordinates based on pixel ratio if necessary
 		// Adjust Y coordinate since Metal's origin is bottom-left
-		Vector2i framebuffer_size = m_framebuffer_size; // Ensure this is up-to-date
-		y = framebuffer_size.y() - (y + height);
+//(		Vector2i framebuffer_size = m_framebuffer_size; // Ensure this is up-to-date
+//		y = framebuffer_size.y() - (y + height);
 		
-		NSUInteger scissorX = static_cast<NSUInteger>(x);
-		NSUInteger scissorY = static_cast<NSUInteger>(y);
-		NSUInteger scissorWidth = static_cast<NSUInteger>(width);
-		NSUInteger scissorHeight = static_cast<NSUInteger>(height);
-		
-		[command_encoder setScissorRect:(MTLScissorRect){
-			scissorX,
-			scissorY,
-			scissorWidth,
-			scissorHeight
-		}];
+		Vector2i scissor_size = max(min(offset + size, m_framebuffer_size) - offset, Vector2i(0));
+		Vector2i scissor_offset = max(min(offset, m_framebuffer_size), Vector2i(0));
+		[command_encoder setScissorRect: (MTLScissorRect) {
+			(NSUInteger) scissor_offset.x(), (NSUInteger) scissor_offset.y(),
+			(NSUInteger) scissor_size.x(),   (NSUInteger) scissor_size.y() }
+		];
 	}
 }
 
@@ -352,12 +347,7 @@ void RenderPass::set_viewport(const Vector2i &offset, const Vector2i &size) {
 			0.0, 1.0 }
 		];
 		
-		Vector2i scissor_size = max(min(offset + size, m_framebuffer_size) - offset, Vector2i(0));
-		Vector2i scissor_offset = max(min(offset, m_framebuffer_size), Vector2i(0));
-		[command_encoder setScissorRect: (MTLScissorRect) {
-			(NSUInteger) scissor_offset.x(), (NSUInteger) scissor_offset.y(),
-			(NSUInteger) scissor_size.x(),   (NSUInteger) scissor_size.y() }
-		];
+		set_scissor_rect(offset, size);
 	}
 }
 

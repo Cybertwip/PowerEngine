@@ -440,6 +440,11 @@ std::vector<uint8_t> FileView::load_image_data(const std::string& path) {
 	return data;
 }
 void FileView::draw(NVGcontext* ctx) {
+	
+	for (auto& view : m_image_views) {
+		view->set_scissor_rect(absolute_position(), size());
+	}
+	
 	nvgSave(ctx);
 	nvgTranslate(ctx, m_pos.x(), m_pos.y());
 	

@@ -46,7 +46,6 @@
 #define NVG_INIT_PATHS_SIZE 16
 #define NVG_INIT_VERTS_SIZE 256
 #define NVG_MAX_STATES 32
-#define NVG_MAX_SCISSORS 64
 
 #define NVG_KAPPA90 0.5522847493f	// Length proportional to radius of a cubic bezier handle for 90deg arcs.
 
@@ -113,15 +112,6 @@ struct NVGpathCache {
 };
 typedef struct NVGpathCache NVGpathCache;
 
-struct NVGscissorRegion {
-	float x;
-	float y;
-	float w;
-	float h;
-};
-
-typedef struct NVGscissorRegion NVGscissorRegion;
-
 struct NVGcontext {
 	NVGparams params;
 	float* commands;
@@ -142,10 +132,6 @@ struct NVGcontext {
 	int fillTriCount;
 	int strokeTriCount;
 	int textTriCount;
-	
-	NVGscissorRegion scissorStack[NVG_MAX_SCISSORS];
-	int scissorStackSize;
-
 };
 
 static float nvg__sqrtf(float a) { return sqrtf(a); }
@@ -307,8 +293,6 @@ NVGcontext* nvgCreateInternal(NVGparams* params)
 	int i;
 	if (ctx == NULL) goto error;
 	memset(ctx, 0, sizeof(NVGcontext));
-
-	ctx->scissorStackSize = 0; // Initialize stack size to 0
 
 	ctx->params = *params;
 	for (i = 0; i < NVG_MAX_FONTIMAGES; i++)
@@ -972,47 +956,9 @@ NVGpaint nvgImagePattern(NVGcontext* ctx,
 	return p;
 }
 
-// Retrieve the current scissor rectangle
-int nvgGetCurrentScissorRect(const NVGcontext* ctx, float* x, float* y, float* w, float* h) {
-	if (ctx->scissorStackSize > 0) {
-		const NVGscissorRegion* scissor = &ctx->scissorStack[ctx->scissorStackSize - 1];
-		*x = scissor->x;
-		*y = scissor->y;
-		*w = scissor->w;
-		*h = scissor->h;
-		return 1;
-	}
-	return 0;
-}
-
-
-// Push a scissor rectangle onto the stack
-void nvgPushScissor(NVGcontext* ctx, float x, float y, float w, float h) {
-	if (ctx->scissorStackSize >= NVG_MAX_SCISSORS) {
-		// Handle stack overflow (optional: print a warning)
-		fprintf(stderr, "Warning: Scissor stack overflow.\n");
-		return;
-	}
-	
-	NVGscissorRegion scissor = { x, y, w, h };
-	ctx->scissorStack[ctx->scissorStackSize++] = scissor;
-}
-
-void nvgPopScissor(NVGcontext* ctx) {
-	if (ctx->scissorStackSize > 0) {
-		ctx->scissorStackSize--;
-	} else {
-		// Handle stack underflow (optional: print a warning)
-		fprintf(stderr, "Warning: Scissor stack underflow.\n");
-	}
-}
-
 // Scissoring
 void nvgScissor(NVGcontext* ctx, float x, float y, float w, float h)
 {
-	
-	nvgPushScissor(ctx, x, y, w, h);
-
 	NVGstate* state = nvg__getState(ctx);
 
 	w = nvg__maxf(0.0f, w);
@@ -1043,23 +989,6 @@ static void nvg__isectRects(float* dst,
 
 void nvgIntersectScissor(NVGcontext* ctx, float x, float y, float w, float h)
 {
-	if (ctx->scissorStackSize > 0) {
-		NVGscissorRegion* top = &ctx->scissorStack[ctx->scissorStackSize - 1];
-		float newX = (x > top->x) ? x : top->x;
-		float newY = (y > top->y) ? y : top->y;
-		float newW = ((x + w) < (top->x + top->w)) ? (x + w - newX) : (top->x + top->w - newX);
-		float newH = ((y + h) < (top->y + top->h)) ? (y + h - newY) : (top->y + top->h - newY);
-		
-		// Update the top scissor rectangle
-		top->x = newX;
-		top->y = newY;
-		top->w = (newW > 0.0f) ? newW : 0.0f;
-		top->h = (newH > 0.0f) ? newH : 0.0f;
-	} else {
-		// If no scissor is set, set it as the current scissor
-		nvgScissor(ctx, x, y, w, h);
-	}
-
 	NVGstate* state = nvg__getState(ctx);
 	float pxform[6], invxorm[6];
 	float rect[4];
@@ -1089,8 +1018,6 @@ void nvgIntersectScissor(NVGcontext* ctx, float x, float y, float w, float h)
 
 void nvgResetScissor(NVGcontext* ctx)
 {
-	nvgPopScissor(ctx);
-
 	NVGstate* state = nvg__getState(ctx);
 	memset(state->scissor.xform, 0, sizeof(state->scissor.xform));
 	state->scissor.extent[0] = -1.0f;

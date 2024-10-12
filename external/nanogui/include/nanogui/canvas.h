@@ -96,7 +96,13 @@ public:
     /// Draw the widget
     virtual void draw(NVGcontext *ctx) override;
 
-protected:	
+	void set_scissor_rect(Vector2i offset, Vector2i size);
+
+protected:
+	
+	Vector2i m_scissor_offset;
+	Vector2i m_scissor_size;
+	
     std::unique_ptr<RenderPass> m_render_pass;
     bool m_draw_border;
     Color m_border_color;
