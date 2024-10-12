@@ -247,7 +247,7 @@ void FileView::populate_file_view() {
 		m_nodes.push_back(child.get()); // Store the node pointer
 		
 		// Create the image view and assign the texture
-		auto image_view = std::make_shared<nanogui::ImageView>(icon_button);
+		auto image_view = std::make_shared<nanogui::ImageView>(*icon_button, screen());
 		image_view->set_size(icon_button->fixed_size());
 		image_view->set_fixed_size(icon_button->fixed_size());
 		image_view->set_image(texture);
@@ -422,7 +422,7 @@ bool FileView::scroll_event(const nanogui::Vector2i& p, const nanogui::Vector2f&
 	std::lock_guard<std::mutex> lock(m_mutex);
 	
 	// Define scroll sensitivity
-	float scroll_sensitivity = 10.0f; // Pixels per scroll unit
+	float scroll_sensitivity = 30.0f; // Pixels per scroll unit
 	
 	float scroll_delta = rel.y() * scroll_sensitivity;
 	
