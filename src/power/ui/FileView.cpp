@@ -40,24 +40,22 @@ m_previous_first_visible_row(0),
 m_is_loading_thumbnail(false)
 {
 	// Initialize main layout using GridLayout
-	auto grid_layout = std::unique_ptr<nanogui::GridLayout>(new nanogui::GridLayout(
+	auto box_layout = std::unique_ptr<nanogui::BoxLayout>(new nanogui::BoxLayout(
 											   nanogui::Orientation::Horizontal,
-											   8, // Number of columns
 											   nanogui::Alignment::Middle,
 											   8, // Margin
 											   8  // Spacing between widgets
 											   ));
 	
-	set_layout(std::move(grid_layout));
+	set_layout(std::move(box_layout));
 	
 	// Initialize texture cache
 	initialize_texture_cache();
 	
 	// Create a content widget that will hold all file items
 	m_content = std::make_shared<nanogui::Widget>(*this, screen);
-	m_content->set_layout(std::unique_ptr<nanogui::GridLayout>(new nanogui::GridLayout(
+	m_content->set_layout(std::unique_ptr<nanogui::BoxLayout>(new nanogui::BoxLayout(
 												  nanogui::Orientation::Horizontal,
-												  8, // Number of columns
 												  nanogui::Alignment::Middle,
 												  8, // Margin
 												  8  // Spacing
@@ -150,7 +148,7 @@ void FileView::refresh(const std::string& filter_text) {
 	populate_file_view();
 	
 	// Perform layout to apply all changes
-	perform_layout(m_screen.nvg_context());
+	m_content->perform_layout(m_screen.nvg_context());
 }
 
 void FileView::set_selected_directory_path(const std::string& path) {
@@ -376,7 +374,7 @@ void FileView::load_thumbnail(const std::shared_ptr<DirectoryNode>& node,
 			image_view->set_visible(true);
 			
 			texture->resize(nanogui::Vector2i(288, 288));
-			perform_layout(m_screen.nvg_context());
+			m_content->perform_layout(m_screen.nvg_context());
 		}
 	});
 }
