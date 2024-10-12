@@ -273,10 +273,11 @@ void FileView::handle_file_interaction(DirectoryNode& node) {
 	if (node.IsDirectory) {
 		// Change the selected directory path and refresh
 		
+		m_filter_text = "";
+		
 		m_root_directory_node = node;
 
 		set_selected_directory_path(node.FullPath);
-
 
 	} else {
 		if (mOnFileSelected) {
@@ -403,9 +404,7 @@ void FileView::refresh(const std::string& filter_text) {
 	m_previous_first_visible_row = 0;
 	
 	// Populate the file view with updated contents
-	if (!m_root_directory_node.Children.empty()) {
-		populate_file_view();
-	}
+	populate_file_view();
 	
 	// Perform layout to apply all changes
 	perform_layout(m_screen.nvg_context());
@@ -468,7 +467,18 @@ void FileView::populate_file_view() {
 		m_nodes.push_back(child.get());
 	}
 	
+	
+	if (filtered_children.empty()) {
+		m_dummy_widget = std::make_shared<nanogui::Widget>(*m_content, screen());
+		
+		m_dummy_widget->set_size(nanogui::Vector2i(1, 1));
+	}
+	
 	m_content->perform_layout(m_screen.nvg_context());
+	
+	nanogui::async([this](){
+		scroll_event(nanogui::Vector2i(0, 0), nanogui::Vector2i(0, -1));
+	}); // fix offset bug, probably wrong
 }
 
 

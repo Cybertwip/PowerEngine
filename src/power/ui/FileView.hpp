@@ -151,5 +151,7 @@ private:
 	int m_columns;
 	
 	bool m_recursive; // Add this line
-
+	
+	
+	std::shared_ptr<nanogui::Widget> m_dummy_widget;
 };
