@@ -295,8 +295,7 @@ void FileView::load_thumbnail(const std::shared_ptr<DirectoryNode>& node,
 		} else {
 			thumbnail_data.resize(512 * 512 * 4);
 			texture->resize(nanogui::Vector2i(512, 512));
-			nanogui::Texture::decompress_into(thumbnail_data, *texture);
-			
+			texture->upload(thumbnail_data.data());
 			image_view->set_image(texture);
 			image_view->set_visible(true);
 			
