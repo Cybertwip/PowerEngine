@@ -447,7 +447,7 @@ void FileView::populate_file_view() {
 bool FileView::scroll_event(const nanogui::Vector2i& p, const nanogui::Vector2f& rel) {
 	std::lock_guard<std::mutex> lock(m_mutex);
 	
-	if (!m_is_loading_thubnail) {
+	if (!m_is_loading_thumbnail) {
 		
 		float scroll_delta = rel.y();
 		
