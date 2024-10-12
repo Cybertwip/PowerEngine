@@ -42,6 +42,14 @@ protected:
 	void initialize_texture_cache();
 	std::shared_ptr<nanogui::Texture> acquire_texture();
 	void release_texture(std::shared_ptr<nanogui::Texture> texture);
+	
+	std::shared_ptr<nanogui::Button> acquire_button(const DirectoryNode& child,
+													const std::shared_ptr<nanogui::Widget>& item_container,
+													const std::shared_ptr<nanogui::Texture>& texture,
+													const std::shared_ptr<nanogui::ImageView>& image_view);
+	
+	void release_button(std::shared_ptr<nanogui::Button> button);
+
 	void clear_file_buttons();
 	void populate_file_view();
 	DirectoryNode* find_node_by_path(DirectoryNode& root, const std::string& path) const;
@@ -51,6 +59,8 @@ protected:
 						const std::shared_ptr<nanogui::Texture>& texture);
 	std::vector<uint8_t> load_image_data(const std::string& path);
 	int get_icon_for_file(const DirectoryNode& node) const;
+	
+	void update_visible_items(int first_visible_row);
 	
 	void load_row_thumbnails(int row_index); // New method
 	DirectoryNode* get_node_by_index(int index) const;
@@ -82,6 +92,9 @@ private:
 	
 	int m_total_textures;
 	
+	std::deque<std::shared_ptr<nanogui::Button>> m_button_cache;
+
+	
 	float m_scroll_offset;
 	float m_accumulated_scroll_delta;
 	const float m_scroll_threshold = 10.0f; // Adjust as needed
@@ -97,5 +110,7 @@ private:
 	
 	std::queue<std::function<void()>> m_thumbnail_load_queue;
 	bool m_is_loading_thumbnail;
+	
+	std::vector<std::shared_ptr<DirectoryNode>> m_all_nodes;
 };
 
