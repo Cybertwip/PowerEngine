@@ -538,7 +538,7 @@ void FileView::load_row_thumbnails(int row_index) {
 	}
 	
 	// Optionally perform layout updates
-	perform_layout(m_screen.nvg_context());
+	m_content->perform_layout(screen().nvg_context());
 }
 
 DirectoryNode* FileView::get_node_by_index(int index) const {
