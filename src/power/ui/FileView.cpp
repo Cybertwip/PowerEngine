@@ -379,10 +379,8 @@ void FileView::ProcessEvents() {
 void FileView::refresh(const std::string& filter_text) {
 	{
 		std::lock_guard<std::mutex> lock(m_mutex);
-		if (!filter_text.empty()) {
-			m_filter_text = filter_text;
-		}
-		
+		m_filter_text = filter_text;
+
 		// Clear existing buttons and selection
 		clear_file_buttons();
 		m_selected_button = nullptr;
