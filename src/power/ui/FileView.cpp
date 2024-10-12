@@ -292,6 +292,16 @@ void FileView::load_thumbnail(const std::shared_ptr<DirectoryNode>& node,
 			
 			texture->resize(nanogui::Vector2i(288, 288));
 			image_view->perform_layout(m_screen.nvg_context());
+		} else {
+			thumbnail_data.resize(512 * 512 * 4);
+			texture->resize(nanogui::Vector2i(512, 512));
+			nanogui::Texture::decompress_into(thumbnail_data, *texture);
+			
+			image_view->set_image(texture);
+			image_view->set_visible(true);
+			
+			texture->resize(nanogui::Vector2i(288, 288));
+			image_view->perform_layout(m_screen.nvg_context());
 		}
 	});
 }
