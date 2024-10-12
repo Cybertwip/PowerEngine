@@ -440,17 +440,17 @@ std::vector<uint8_t> FileView::load_image_data(const std::string& path) {
 	return data;
 }
 void FileView::draw(NVGcontext* ctx) {
-	
-	for (auto& view : m_image_views) {
-		view->set_scissor_rect(absolute_position(), size());
-	}
-	
+		
 	nvgSave(ctx);
 	nvgTranslate(ctx, m_pos.x(), m_pos.y());
 	
 	// Use intersect scissor to respect any existing scissor regions
 	nvgIntersectScissor(ctx, 0, 0, m_size.x(), m_size.y());
 	
+	for (auto& view : m_image_views) {
+		view->set_scissor_rect(absolute_position(), m_content->size());
+	}
+
 	// Draw scissor boundary for debugging
 	nvgBeginPath(ctx);
 	nvgRect(ctx, 0, 0, width(), height());

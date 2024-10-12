@@ -99,7 +99,7 @@ void Canvas::draw(NVGcontext *ctx) {
 
 	m_render_pass->begin();
 	
-	if (m_scissor_size != Vector2i()) {
+	if (m_scissor_size.x() != 0 && m_scissor_size.y() != 0) {
 		m_render_pass->set_scissor_rect(m_scissor_offset, m_scissor_size);
 	}
 	
@@ -122,8 +122,12 @@ void Canvas::draw(NVGcontext *ctx) {
 
 void Canvas::set_scissor_rect(Vector2i offset, Vector2i size)
 {
-	m_scissor_offset = offset;
-	m_scissor_size = size;
+	auto& scr = screen();
+	
+	float pixel_ratio = scr.pixel_ratio();
+
+	m_scissor_offset = offset * pixel_ratio;
+	m_scissor_size = size * pixel_ratio;
 }
 
 NAMESPACE_END(nanogui)
