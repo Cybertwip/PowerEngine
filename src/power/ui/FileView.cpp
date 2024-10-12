@@ -16,9 +16,9 @@
 // Constructor
 FileView::FileView(nanogui::Widget& parent,
 				   nanogui::Screen& screen,
+				   DirectoryNode& root_directory_node,
 				   std::function<void(const std::string&)> onFileSelected,
 				   int columns,
-				   DirectoryNode& root_directory_node,
 				   const std::string& filter_text,
 				   const std::set<std::string>& allowed_extensions)
 : nanogui::Widget(parent, screen),
