@@ -448,7 +448,7 @@ void FileView::draw(NVGcontext* ctx) {
 	nvgIntersectScissor(ctx, 0, 0, m_size.x(), m_size.y());
 	
 	for (auto& view : m_image_views) {
-		view->set_scissor_rect(absolute_position(), m_content->size());
+		view->set_scissor_rect(absolute_position(), m_size);
 	}
 
 	// Draw scissor boundary for debugging
