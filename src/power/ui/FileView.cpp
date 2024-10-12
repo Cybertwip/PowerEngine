@@ -16,6 +16,8 @@
 // Constructor
 FileView::FileView(nanogui::Widget& parent,
 				   nanogui::Screen& screen,
+				   std::function<void(const std::string&)> onFileSelected,
+				   int columns,
 				   DirectoryNode& root_directory_node,
 				   const std::string& filter_text,
 				   const std::set<std::string>& allowed_extensions)
@@ -37,12 +39,14 @@ m_row_height(144), // Assuming row height of 144 pixels
 m_total_textures(40), // Example value, adjust as needed
 m_previous_first_visible_row(0),
 m_is_loading_thumbnail(false),
-m_previous_scroll_offset(0)
+m_previous_scroll_offset(0),
+m_columns(columns),
+mOnFileSelected(onFileSelected)
 {
 	// Initialize main layout using GridLayout
 	auto grid_layout = std::make_unique<nanogui::GridLayout>(
 															 nanogui::Orientation::Horizontal,
-															 8, // Number of columns
+															 m_columns, // Number of columns
 															 nanogui::Alignment::Middle,
 															 8, // Margin
 															 8  // Spacing between widgets
@@ -57,7 +61,7 @@ m_previous_scroll_offset(0)
 	m_content = std::make_shared<nanogui::Widget>(*this, screen);
 	m_content->set_layout(std::make_unique<nanogui::GridLayout>(
 																nanogui::Orientation::Horizontal,
-																8, // Number of columns
+																m_columns, // Number of columns
 																nanogui::Alignment::Middle,
 																8, // Margin
 																8  // Spacing
@@ -269,9 +273,9 @@ void FileView::handle_file_interaction(DirectoryNode& node) {
 		// Change the selected directory path and refresh
 		set_selected_directory_path(node.FullPath);
 	} else {
-		// Handle file opening or other interactions
-		std::cout << "Opening file: " << node.FullPath << std::endl;
-		// Implement actual file opening logic here
+		if (mOnFileSelected) {
+			mOnFileSelected(node.FullPath);
+		}
 	}
 }
 
@@ -412,7 +416,7 @@ void FileView::populate_file_view() {
 	
 	selected_node->refresh(m_allowed_extensions);
 	
-	const int columns = 8;
+	const int columns = m_columns;
 	int current_index = 0;
 	
 	m_nodes.clear();
@@ -503,7 +507,7 @@ bool FileView::scroll_event(const nanogui::Vector2i& p, const nanogui::Vector2f&
 }
 
 void FileView::update_visible_items(int first_visible_row, int direction) {
-	const int columns = 8;
+	const int columns = m_columns;
 	int start_index;
 	int end_index;
 	
@@ -559,7 +563,7 @@ void FileView::add_or_update_widget(int index, const std::shared_ptr<DirectoryNo
 }
 
 void FileView::remove_invisible_widgets(int first_visible_row) {
-	const int columns = 8;
+	const int columns = m_columns;
 	int start_visible = first_visible_row * columns;
 	int end_visible = (first_visible_row + m_visible_rows) * columns;
 	

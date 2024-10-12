@@ -9,6 +9,8 @@
 // Forward declaration
 struct DirectoryNode;
 
+class FIleView;
+
 class MeshPicker : public nanogui::Window {
 public:
 	/**
@@ -21,37 +23,16 @@ public:
 	MeshPicker(nanogui::Screen& parent, nanogui::Screen& screen, DirectoryNode& root_directory_node,
 			   std::function<void(const std::string&)> on_model_selected);
 	
-private:	
+private:
+	void refresh_file_list();
+	
 	DirectoryNode& root_directory_node_;
 	std::function<void(const std::string&)> on_model_selected_;
 	
 	std::shared_ptr<nanogui::TextBox> filter_box_;
-	std::shared_ptr<nanogui::Widget> file_list_widget_;
-	
-	std::vector<std::string> model_files_;
-	
-	/**
-	 * @brief Recursively searches for model files in the directory tree.
-	 *
-	 * @param node Current DirectoryNode.
-	 */
-	void search_model_files(const DirectoryNode& node);
-	
-	/**
-	 * @brief Refreshes the displayed file list based on the current filter.
-	 */
-	void refresh_file_list();
-	
-	/**
-	 * @brief Handles the double-click event on a file item.
-	 *
-	 * @param model_path Path of the selected model.
-	 */
-	void handle_double_click(const std::string& model_path);
+	std::shared_ptr<FIleView> mFileView;
 	
 	std::string mFilterValue;
-	
-	std::shared_ptr<nanogui::VScrollPanel> mScrollPanel;
-	
+		
 	std::shared_ptr<nanogui::Button> mCloseButton;
 };

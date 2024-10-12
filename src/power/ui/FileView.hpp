@@ -22,6 +22,8 @@ public:
 	FileView(nanogui::Widget& parent,
 			 nanogui::Screen& screen,
 			 DirectoryNode& root_directory_node,
+			 std::function<void(const std::string&)> onFileSelected = nullptr,
+			 int columns = 8,
 			 const std::string& filter_text = "",
 			 const std::set<std::string>& allowed_extensions = {".psk", ".pma", ".pan", ".psq", ".psn"});
 	
@@ -140,4 +142,8 @@ private:
 	
 	// Thumbnail Loading Queue
 	std::queue<std::function<void()>> m_thumbnail_load_queue;
+	
+	std::function<void(const std::string&)> mOnFileSelected;
+
+	int m_columns;
 };

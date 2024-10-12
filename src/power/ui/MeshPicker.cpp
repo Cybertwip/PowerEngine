@@ -51,47 +51,9 @@ on_model_selected_(on_model_selected)
 		return true;
 	});
 	
-	// Scrollable File List
-	// Create a ScrollPanel to make the file list scrollable
-	mScrollPanel = std::make_shared<nanogui::VScrollPanel>(*this, screen);
-	mScrollPanel->set_fixed_size(nanogui::Vector2i(380, 270)); // Adjust size as needed
-	
-	// Set layout for the scroll panel
-	file_list_widget_ = std::make_shared<nanogui::Widget>(*mScrollPanel, screen);
-	file_list_widget_->set_layout(std::make_unique<nanogui::BoxLayout>(nanogui::Orientation::Horizontal, nanogui::Alignment::Minimum));
-	
-	search_model_files(root_directory_node_);
-	refresh_file_list();
-
-}
-
-void MeshPicker::search_model_files(const DirectoryNode& node) {
-	if (!node.IsDirectory) {
-		// Check for .pma or .psk extensions
-		if (node.FileName.size() >= 4) {
-			std::string ext = node.FileName.substr(node.FileName.size() - 4);
-			std::transform(ext.begin(), ext.end(), ext.begin(), ::tolower);
-			if (ext == ".pma" || ext == ".psk") {
-				model_files_.push_back(node.FullPath);
-			}
-		}
-		return;
-	}
-	
-	for (const auto& child : node.Children) {
-		search_model_files(*child);
-	}
+	mFileView = std::make_shared<FileView>(*this, screen, root_directory_node_, on_model_selected_, 2, "", {".psk"});
 }
 
 void MeshPicker::refresh_file_list() {
-	
-	perform_layout(screen().nvg_context());
-}
-
-void MeshPicker::handle_double_click(const std::string& model_path) {
-	nanogui::async([this, model_path](){
-		if (on_model_selected_) {
-			on_model_selected_(model_path);
-		}
-	});
+	mFileView->refresh(mFilterValue);
 }
