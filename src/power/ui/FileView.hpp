@@ -50,10 +50,8 @@ private:
 	void release_texture(std::shared_ptr<nanogui::Texture> texture);
 	
 	// Acquire and release buttons
-	std::shared_ptr<nanogui::Button> acquire_button(const DirectoryNode& child,
-													const std::shared_ptr<nanogui::Widget>& item_container,
-													const std::shared_ptr<nanogui::Texture>& texture,
-													const std::shared_ptr<nanogui::ImageView>& image_view);
+	std::shared_ptr<nanogui::Button> acquire_button(const std::shared_ptr<DirectoryNode>& child);
+	
 	void release_button(std::shared_ptr<nanogui::Button> button);
 	
 	// Setters
