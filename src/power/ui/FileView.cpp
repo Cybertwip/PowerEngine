@@ -187,7 +187,6 @@ std::shared_ptr<nanogui::Button> FileView::acquire_button(const std::shared_ptr<
 			
 			if (click_duration < 400) { // 400 ms threshold for double-click
 				nanogui::async([this]() {
-					std::lock_guard<std::mutex> lock(m_mutex);
 					if (m_selected_node) {
 						handle_file_interaction(*m_selected_node);
 					}
@@ -622,28 +621,20 @@ DirectoryNode* FileView::get_node_by_index(int index) const {
 }
 
 void FileView::collect_nodes_recursive(DirectoryNode* node, std::vector<std::shared_ptr<DirectoryNode>>& collected_nodes) {
+	
+	collected_nodes.clear();
+	
 	for (const auto& child : node->Children) {
-		// Apply filter if any
-		bool include_node = true;
-		if (!m_filter_text.empty()) {
-			std::string filename = child->FileName;
-			std::string filter = m_filter_text;
-			std::transform(filename.begin(), filename.end(), filename.begin(), ::tolower);
-			std::transform(filter.begin(), filter.end(), filter.begin(), ::tolower);
-			if (filename.find(filter) == std::string::npos) {
-				include_node = false;
-			}
-		}
+
 		// Apply allowed extensions if any
-		if (include_node && !m_allowed_extensions.empty() && !child->IsDirectory) {
+		if (!m_allowed_extensions.empty() && !child->IsDirectory) {
 			std::string extension = child->FileName.substr(child->FileName.find_last_of('.') + 1);
 			if (m_allowed_extensions.find(extension) == m_allowed_extensions.end()) {
-				include_node = false;
+				
+				collected_nodes.push_back(child);
 			}
 		}
-		if (include_node) {
-			collected_nodes.push_back(child);
-		}
+		
 		if (child->IsDirectory) {
 			// Recurse into child directory
 			collect_nodes_recursive(child.get(), collected_nodes);
