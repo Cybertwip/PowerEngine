@@ -55,9 +55,13 @@ on_model_selected_(on_model_selected)
 	
 	const std::set<std::string>& allowed_extensions = {".psk"};
 	
-	mFileView = std::make_shared<FileView>(*this, screen, root_directory_node_, on_model_selected_, 2, "", allowed_extensions);
+	mFileView = std::make_shared<FileView>(*this, screen, root_directory_node_, true, on_model_selected_, 2, "", allowed_extensions);
 }
 
 void MeshPicker::refresh_file_list() {
 	mFileView->refresh(mFilterValue);
+}
+
+void MeshPicker::ProcessEvents() {
+	mFileView->ProcessEvents();
 }

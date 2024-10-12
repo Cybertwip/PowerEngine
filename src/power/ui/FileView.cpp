@@ -17,6 +17,7 @@
 FileView::FileView(nanogui::Widget& parent,
 				   nanogui::Screen& screen,
 				   DirectoryNode& root_directory_node,
+				   bool recursive,
 				   std::function<void(const std::string&)> onFileSelected,
 				   int columns,
 				   const std::string& filter_text,
@@ -41,7 +42,8 @@ m_previous_first_visible_row(0),
 m_is_loading_thumbnail(false),
 m_previous_scroll_offset(0),
 m_columns(columns),
-mOnFileSelected(onFileSelected)
+mOnFileSelected(onFileSelected),
+m_recursive(recursive)
 {
 	// Initialize main layout using GridLayout
 	auto grid_layout = std::make_unique<nanogui::GridLayout>(
@@ -421,10 +423,19 @@ void FileView::populate_file_view() {
 	
 	m_nodes.clear();
 	
+	// Collect nodes
+	std::vector<std::shared_ptr<DirectoryNode>> collected_nodes;
+	if (m_recursive) {
+		collect_nodes_recursive(selected_node, collected_nodes);
+	} else {
+		collected_nodes = selected_node->Children;
+	}
+
+	
 	// Filtered list of children
 	std::vector<std::shared_ptr<DirectoryNode>> filtered_children;
 	
-	for (const auto& child : selected_node->Children) {
+	for (const auto& child : collected_nodes) {
 		if (!m_filter_text.empty()) {
 			std::string filename = child->FileName;
 			std::string filter = m_filter_text;
@@ -608,4 +619,34 @@ DirectoryNode* FileView::get_node_by_index(int index) const {
 		return nullptr;
 	}
 	return m_nodes[index];
+}
+
+void FileView::collect_nodes_recursive(DirectoryNode* node, std::vector<std::shared_ptr<DirectoryNode>>& collected_nodes) {
+	for (const auto& child : node->Children) {
+		// Apply filter if any
+		bool include_node = true;
+		if (!m_filter_text.empty()) {
+			std::string filename = child->FileName;
+			std::string filter = m_filter_text;
+			std::transform(filename.begin(), filename.end(), filename.begin(), ::tolower);
+			std::transform(filter.begin(), filter.end(), filter.begin(), ::tolower);
+			if (filename.find(filter) == std::string::npos) {
+				include_node = false;
+			}
+		}
+		// Apply allowed extensions if any
+		if (include_node && !m_allowed_extensions.empty() && !child->IsDirectory) {
+			std::string extension = child->FileName.substr(child->FileName.find_last_of('.') + 1);
+			if (m_allowed_extensions.find(extension) == m_allowed_extensions.end()) {
+				include_node = false;
+			}
+		}
+		if (include_node) {
+			collected_nodes.push_back(child);
+		}
+		if (child->IsDirectory) {
+			// Recurse into child directory
+			collect_nodes_recursive(child.get(), collected_nodes);
+		}
+	}
 }

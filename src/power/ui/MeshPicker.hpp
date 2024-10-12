@@ -23,6 +23,8 @@ public:
 	MeshPicker(nanogui::Screen& parent, nanogui::Screen& screen, DirectoryNode& root_directory_node,
 			   std::function<void(const std::string&)> on_model_selected);
 	
+	void ProcessEvents();
+	
 private:
 	void refresh_file_list();
 	

@@ -22,6 +22,7 @@ public:
 	FileView(nanogui::Widget& parent,
 			 nanogui::Screen& screen,
 			 DirectoryNode& root_directory_node,
+			 bool recursive = false,
 			 std::function<void(const std::string&)> onFileSelected = nullptr,
 			 int columns = 8,
 			 const std::string& filter_text = "",
@@ -99,6 +100,8 @@ private:
 	// Helper to determine if a widget is visible
 	bool is_widget_visible(int index) const;
 	
+	void collect_nodes_recursive(DirectoryNode* node, std::vector<std::shared_ptr<DirectoryNode>>& collected_nodes);
+	
 	// Member Variables
 	nanogui::Screen& m_screen;
 	DirectoryNode& m_root_directory_node;
@@ -146,4 +149,7 @@ private:
 	std::function<void(const std::string&)> mOnFileSelected;
 
 	int m_columns;
+	
+	bool m_recursive; // Add this line
+
 };
