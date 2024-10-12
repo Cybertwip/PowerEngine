@@ -91,7 +91,6 @@ void Texture::upload(const uint8_t *data) {
 
     [command_encoder endEncoding];
     [command_buffer commit];
-    [command_buffer waitUntilCompleted];
 
     if (!m_mipmap_manual && m_min_interpolation_mode == InterpolationMode::Trilinear)
         generate_mipmap();

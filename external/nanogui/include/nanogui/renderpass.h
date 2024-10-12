@@ -154,6 +154,8 @@ public:
 
     /// Resize all texture targets attached to the render pass
     void resize(const Vector2i &size);
+	
+	void set_scissor_rect(float x, float y, float width, float height);
 
 #if defined(NANOGUI_USE_OPENGL) || defined(NANOGUI_USE_GLES)
     uint32_t framebuffer_handle() const { return m_framebuffer_handle; }

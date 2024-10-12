@@ -230,7 +230,8 @@ mShaderManager(shaderManager)
 	});
 	
 	// Create the file view below the toolbar
-	mFileView = std::make_shared<FileView>(*this, screen, mRootDirectoryNode);	
+	
+	mFileView = std::make_shared<FileView>(*this, screen, mRootDirectoryNode);
 	
 	mSelectedDirectoryPath = fs::current_path().string();
 	mFilterText = "";

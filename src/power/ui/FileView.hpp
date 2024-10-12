@@ -40,9 +40,6 @@ protected:
 	// Override draw to implement clipping
 	virtual void draw(NVGcontext* ctx) override;
 	
-	// Override resize_event to handle resizing
-	virtual bool resize_event(const nanogui::Vector2i& size) override;
-	
 private:
 	// Initialize the texture cache
 	void initialize_texture_cache();
@@ -102,6 +99,9 @@ private:
 	std::vector<std::shared_ptr<nanogui::ImageView>> m_image_views;
 	std::vector<std::shared_ptr<nanogui::Label>> m_name_labels;
 	
+	// Content widget for manual scrolling
+	std::shared_ptr<nanogui::Widget> m_content;
+
 	// Scroll management
 	float m_scroll_offset;
 	int m_total_rows;

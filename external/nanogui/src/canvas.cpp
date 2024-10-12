@@ -97,6 +97,29 @@ void Canvas::draw(NVGcontext *ctx) {
 
 	m_render_pass->set_viewport(offset, fbsize);
 
+	// Retrieve current scissor rectangle from NVGcontext
+	float scissorX, scissorY, scissorW, scissorH;
+	int hasScissor = nvgGetCurrentScissorRect(ctx, &scissorX, &scissorY, &scissorW, &scissorH);
+	if (hasScissor == 1) {
+		// Adjust scissor rectangle based on pixel ratio and position
+		scissorX *= pixel_ratio;
+		scissorY *= pixel_ratio;
+		scissorW *= pixel_ratio;
+		scissorH *= pixel_ratio;
+		
+		// Apply the scissor rectangle to the RenderPass
+		m_render_pass->set_scissor_rect(scissorX + offset.x(),
+										scissorY + offset.y(),
+										scissorW,
+										scissorH);
+	} else {
+		// If no scissor is set, reset to the full viewport
+		m_render_pass->set_scissor_rect(offset.x(),
+										offset.y(),
+										offset.x(),
+										offset.y());
+	}
+
 	m_render_pass->begin();
 	draw_contents();
 	m_render_pass->end();

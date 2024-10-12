@@ -446,6 +446,8 @@ extern NVG_EXPORT NVGpaint nvgImagePattern(NVGcontext* ctx, float ox, float oy, 
 // The scissor rectangle is transformed by the current transform.
 extern NVG_EXPORT void nvgScissor(NVGcontext* ctx, float x, float y, float w, float h);
 
+extern NVG_EXPORT int nvgGetCurrentScissorRect(const NVGcontext* ctx, float* x, float* y, float* w, float* h);
+
 // Intersects current scissor rectangle with the specified rectangle.
 // The scissor rectangle is transformed by the current transform.
 // Note: in case the rotation of previous scissor rect differs from

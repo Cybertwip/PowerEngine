@@ -182,6 +182,31 @@ void RenderPass::resize(const Vector2i &size) {
 	m_viewport_size = size;
 }
 
+
+void RenderPass::set_scissor_rect(float x, float y, float width, float height) {
+	if (m_active) {
+		id<MTLRenderCommandEncoder> command_encoder =
+		(__bridge id<MTLRenderCommandEncoder>) m_command_encoder;
+		
+		// Convert coordinates based on pixel ratio if necessary
+		// Adjust Y coordinate since Metal's origin is bottom-left
+		Vector2i framebuffer_size = m_framebuffer_size; // Ensure this is up-to-date
+		y = framebuffer_size.y() - (y + height);
+		
+		NSUInteger scissorX = static_cast<NSUInteger>(x);
+		NSUInteger scissorY = static_cast<NSUInteger>(y);
+		NSUInteger scissorWidth = static_cast<NSUInteger>(width);
+		NSUInteger scissorHeight = static_cast<NSUInteger>(height);
+		
+		[command_encoder setScissorRect:(MTLScissorRect){
+			scissorX,
+			scissorY,
+			scissorWidth,
+			scissorHeight
+		}];
+	}
+}
+
 void RenderPass::set_clear_color(size_t index, const Color &color) {
 	m_clear_color.at(index) = color;
 	
