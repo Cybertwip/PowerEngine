@@ -456,54 +456,50 @@ void FileView::populate_file_view() {
 bool FileView::scroll_event(const nanogui::Vector2i& p, const nanogui::Vector2f& rel) {
 	std::lock_guard<std::mutex> lock(m_mutex);
 	
-	if (!m_is_loading_thumbnail) {
-		
-		float scroll_delta = rel.y();
-		
-		scroll_delta = glm::sign(scroll_delta) * std::max(std::abs(scroll_delta), 4.0f); // clamp max 1/2 row per scroll
-		
-		// Update scroll offset
-		m_scroll_offset -= scroll_delta;
-		
-		// Clamp the scroll offset
-		int content_height = m_total_rows * m_row_height;
-		int view_height = this->height();
-		
-		if (content_height > view_height) {
-			if (m_scroll_offset < 0.0f) {
-				m_scroll_offset = 0.0f;
-			}
-			if (m_scroll_offset > content_height - view_height) {
-				m_scroll_offset = content_height - view_height;
-			}
-		} else {
+	float scroll_delta = rel.y();
+	
+	scroll_delta = glm::sign(scroll_delta) * std::max(std::abs(scroll_delta), 4.0f); // clamp max 1/2 row per scroll
+	
+	// Update scroll offset
+	m_scroll_offset -= scroll_delta;
+	
+	// Clamp the scroll offset
+	int content_height = m_total_rows * m_row_height;
+	int view_height = this->height();
+	
+	if (content_height > view_height) {
+		if (m_scroll_offset < 0.0f) {
 			m_scroll_offset = 0.0f;
 		}
-		
-		// Determine scroll direction
-		int direction = 0; // 1 for down, -1 for up
-		if (m_scroll_offset > m_previous_scroll_offset) {
-			direction = 1; // Scrolling down
-		} else if (m_scroll_offset < m_previous_scroll_offset) {
-			direction = -1; // Scrolling up
+		if (m_scroll_offset > content_height - view_height) {
+			m_scroll_offset = content_height - view_height;
 		}
-		m_previous_scroll_offset = m_scroll_offset;
-		
-		// Calculate the first visible row
-		int new_first_visible_row = static_cast<int>(m_scroll_offset / m_row_height);
-		
-		// Check if we need to update visible items
-		if (new_first_visible_row != m_previous_first_visible_row) {
-			// Update visible items based on scroll direction
-			
-			update_visible_items(new_first_visible_row, direction);
-			m_previous_first_visible_row = new_first_visible_row;
-		}
-		
-		// Apply the scroll offset by updating the content's position
-		m_content->set_position(nanogui::Vector2i(0, -static_cast<int>(m_scroll_offset)));
+	} else {
+		m_scroll_offset = 0.0f;
 	}
-	return true; // Indicate that the event has been handled
+	
+	// Determine scroll direction
+	int direction = 0; // 1 for down, -1 for up
+	if (m_scroll_offset > m_previous_scroll_offset) {
+		direction = 1; // Scrolling down
+	} else if (m_scroll_offset < m_previous_scroll_offset) {
+		direction = -1; // Scrolling up
+	}
+	m_previous_scroll_offset = m_scroll_offset;
+	
+	// Calculate the first visible row
+	int new_first_visible_row = static_cast<int>(m_scroll_offset / m_row_height);
+	
+	// Check if we need to update visible items
+	if (new_first_visible_row != m_previous_first_visible_row) {
+		// Update visible items based on scroll direction
+		
+		update_visible_items(new_first_visible_row, direction);
+		m_previous_first_visible_row = new_first_visible_row;
+	}
+	
+	// Apply the scroll offset by updating the content's position
+	m_content->set_position(nanogui::Vector2i(0, -static_cast<int>(m_scroll_offset)));	return true; // Indicate that the event has been handled
 }
 
 void FileView::update_visible_items(int first_visible_row, int direction) {
