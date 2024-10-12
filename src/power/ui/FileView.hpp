@@ -33,6 +33,8 @@ public:
 	// Set the filter text
 	void set_filter_text(const std::string& filter);
 	
+	void ProcessEvents();
+
 protected:
 	// Handle scrolling events
 	virtual bool scroll_event(const nanogui::Vector2i& p, const nanogui::Vector2f& rel) override;
@@ -40,7 +42,6 @@ protected:
 	// Override draw to implement clipping
 	virtual void draw(NVGcontext* ctx) override;
 	
-	void ProcessEvents();
 	
 private:
 	// Initialize the texture cache
