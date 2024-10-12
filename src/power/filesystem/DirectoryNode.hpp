@@ -4,7 +4,7 @@
 #include <memory>
 #include <set>
 
-struct DirectoryNode
+struct DirectoryNode : public std::enable_shared_from_this<DirectoryNode>
 {
 	static std::unique_ptr<DirectoryNode> create(const std::string& path);
 	

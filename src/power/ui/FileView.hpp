@@ -40,6 +40,8 @@ protected:
 	// Override draw to implement clipping
 	virtual void draw(NVGcontext* ctx) override;
 	
+	void ProcessEvents();
+	
 private:
 	// Initialize the texture cache
 	void initialize_texture_cache();
@@ -74,7 +76,15 @@ private:
 	
 	// Clear all file buttons and related widgets
 	void clear_file_buttons();
+
+	float m_accumulated_scroll_delta = 0.0f;
+	const float m_scroll_threshold = 1.0f * 144.0f; // Assuming row_height = 144
 	
+	// Helper methods
+	void update_visible_items(int first_visible_row);
+	void reuse_textures();
+	DirectoryNode* get_node_by_index(int index) const;
+
 	// Members
 	DirectoryNode& m_root_directory_node;
 	std::string m_selected_directory_path;
@@ -91,7 +101,7 @@ private:
 	
 	// Texture cache
 	std::deque<std::shared_ptr<nanogui::Texture>> m_texture_cache;
-	std::vector<std::shared_ptr<nanogui::Texture>> m_used_textures;
+	std::deque<std::shared_ptr<nanogui::Texture>> m_used_textures;
 	
 	// UI Elements
 	std::vector<std::shared_ptr<nanogui::Widget>> m_item_containers;
@@ -107,6 +117,15 @@ private:
 	int m_total_rows;
 	int m_visible_rows;
 	int m_row_height;
-	const int m_textures_per_wrap = 8;
 	const int m_total_textures = 40;
+	
+	// Queue to hold thumbnail loading tasks
+	std::queue<std::function<void()>> m_thumbnail_load_queue;
+	
+	// Mutex to protect access to the queue
+	std::mutex m_queue_mutex;
+	
+	// Flag to indicate if a thumbnail is currently being loaded
+	bool m_is_loading_thumbnail = false;
+
 };
