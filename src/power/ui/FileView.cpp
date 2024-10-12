@@ -149,16 +149,8 @@ std::shared_ptr<nanogui::Button> FileView::acquire_button(const std::shared_ptr<
 	m_image_views.push_back(image_view);
 	
 	// Reuse button from cache or create a new one
-	std::shared_ptr<nanogui::Button> icon_button;
-	if (!m_button_cache.empty()) {
-		icon_button = m_button_cache.front();
-		m_button_cache.pop_front();
-		icon_button->set_visible(true);
-		item_container->add_child(*icon_button);
-	} else {
-		icon_button = std::make_shared<nanogui::Button>(*item_container, m_screen, "", get_icon_for_file(*child));
-	}
-	
+	std::shared_ptr<nanogui::Button> icon_button = std::make_shared<nanogui::Button>(*item_container, m_screen, "", get_icon_for_file(*child));
+
 	item_container->remove_child(*image_view);
 	icon_button->add_child(*image_view);
 	
@@ -224,11 +216,6 @@ std::shared_ptr<nanogui::Button> FileView::acquire_button(const std::shared_ptr<
 	return icon_button;
 }
 
-void FileView::release_button(std::shared_ptr<nanogui::Button> button) {
-	button->set_visible(false);
-	m_button_cache.push_back(button);
-}
-
 void FileView::set_selected_directory_path(const std::string& path) {
 	{
 		std::lock_guard<std::mutex> lock(m_mutex);
@@ -246,9 +233,6 @@ void FileView::set_filter_text(const std::string& filter) {
 }
 
 void FileView::clear_file_buttons() {
-	for (auto& button : m_file_buttons) {
-		release_button(button);
-	}
 	m_file_buttons.clear();
 }
 
@@ -574,7 +558,6 @@ void FileView::remove_invisible_widgets(int first_visible_row) {
 	for (int i = m_file_buttons.size() - 1; i >= 0; --i) {
 		// Only remove buttons that are beyond the end_visible index
 		if (i >= end_visible) {
-			release_button(m_file_buttons[i]);
 			m_file_buttons.erase(m_file_buttons.begin() + i);
 		}
 	}

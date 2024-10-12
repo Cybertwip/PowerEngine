@@ -51,9 +51,7 @@ private:
 	
 	// Acquire and release buttons
 	std::shared_ptr<nanogui::Button> acquire_button(const std::shared_ptr<DirectoryNode>& child);
-	
-	void release_button(std::shared_ptr<nanogui::Button> button);
-	
+		
 	// Setters
 	void set_selected_directory_path(const std::string& path);
 	void set_filter_text(const std::string& filter);
@@ -126,7 +124,6 @@ private:
 	// Caching Mechanisms
 	std::deque<std::shared_ptr<nanogui::Texture>> m_texture_cache;
 	std::deque<std::shared_ptr<nanogui::Texture>> m_used_textures;
-	std::deque<std::shared_ptr<nanogui::Button>> m_button_cache;
 	
 	// Widgets
 	std::shared_ptr<nanogui::Widget> m_content;
