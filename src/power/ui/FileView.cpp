@@ -272,7 +272,12 @@ DirectoryNode* FileView::find_node_by_path(DirectoryNode& root, const std::strin
 void FileView::handle_file_interaction(DirectoryNode& node) {
 	if (node.IsDirectory) {
 		// Change the selected directory path and refresh
+		
+		m_root_directory_node = node;
+
 		set_selected_directory_path(node.FullPath);
+
+
 	} else {
 		if (mOnFileSelected) {
 			mOnFileSelected(node.FullPath);
