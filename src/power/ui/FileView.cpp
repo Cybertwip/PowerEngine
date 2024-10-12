@@ -377,35 +377,39 @@ void FileView::ProcessEvents() {
 }
 
 void FileView::refresh(const std::string& filter_text) {
-	std::lock_guard<std::mutex> lock(m_mutex);
-	if (!filter_text.empty()) {
-		m_filter_text = filter_text;
+	{
+		std::lock_guard<std::mutex> lock(m_mutex);
+		if (!filter_text.empty()) {
+			m_filter_text = filter_text;
+		}
+		
+		// Clear existing buttons and selection
+		clear_file_buttons();
+		m_selected_button = nullptr;
+		m_selected_node = nullptr;
+		
+		// Refresh the root directory node to get the latest contents
+		m_root_directory_node.refresh(m_allowed_extensions);
+		
+		// Clear existing child widgets in the content
+		m_content->shed_children();
+		
+		// Clear stored references to previously allocated objects
+		m_item_containers.clear();
+		m_image_views.clear();
+		m_name_labels.clear();
+		m_nodes.clear();
+		
+		// Reset scroll offset and row indices
+		m_scroll_offset = 0.0f;
+		m_previous_first_visible_row = 0;
+		
+		// Populate the file view with updated contents
+		populate_file_view();
 	}
 	
-	// Clear existing buttons and selection
-	clear_file_buttons();
-	m_selected_button = nullptr;
-	m_selected_node = nullptr;
-	
-	// Refresh the root directory node to get the latest contents
-	m_root_directory_node.refresh(m_allowed_extensions);
-	
-	// Clear existing child widgets in the content
-	m_content->shed_children();
-	
-	// Clear stored references to previously allocated objects
-	m_item_containers.clear();
-	m_image_views.clear();
-	m_name_labels.clear();
-	m_nodes.clear();
-	
-	// Reset scroll offset and row indices
-	m_scroll_offset = 0.0f;
-	m_previous_first_visible_row = 0;
-	
-	// Populate the file view with updated contents
-	populate_file_view();
-	
+	scroll_event(nanogui::Vector2i(0, 0), nanogui::Vector2i(0, -1));
+
 	// Perform layout to apply all changes
 	perform_layout(m_screen.nvg_context());
 }
@@ -475,10 +479,6 @@ void FileView::populate_file_view() {
 	}
 	
 	m_content->perform_layout(m_screen.nvg_context());
-	
-	nanogui::async([this](){
-		scroll_event(nanogui::Vector2i(0, 0), nanogui::Vector2i(0, -1));
-	}); // fix offset bug, probably wrong
 }
 
 
