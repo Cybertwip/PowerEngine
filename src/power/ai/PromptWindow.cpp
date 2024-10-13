@@ -165,11 +165,12 @@ void PromptWindow::Preview(const std::string& path, const std::string& directory
 		mSubmitButton->set_enabled(false);
 	}
 	
+	mActiveActor = actor;
+	
 	mPreviewCanvas->set_update(false);
 	mPreviewCanvas->set_active_actor(actor);
 	mPreviewCanvas->set_update(true);
 	
-	mActiveActor = actor;
 
 	
 	// Update Status Label to Idle
@@ -468,12 +469,12 @@ void PromptWindow::PollJobStatusAsync(const std::string& request_id) {
 													
 													animation->deserialize(animationDeserializer);
 													
-													auto playbackData = std::make_shared<PlaybackData>(std::make_shared<Skeleton>(), std::move(animation));
-													
 													auto& playbackComponent = mActiveActor->get_component<PlaybackComponent>();
 													
-													playbackComponent.setPlaybackData(playbackData);
+													auto playbackData = std::make_shared<PlaybackData>(playbackComponent.getPlaybackData()->get_skeleton(), std::move(animation));
 													
+													playbackComponent.setPlaybackData(playbackData);
+
 													break;
 												}
 												
