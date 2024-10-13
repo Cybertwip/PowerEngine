@@ -31,14 +31,14 @@ public:
 		return true;
 	}
 	
-	virtual int Read(void* pBuffer, FbxUInt64 pSize) const override {
+	virtual FbxUInt64 Read(void* pBuffer, FbxUInt64 pSize) const override {
 		int bytesToRead = static_cast<int>(std::min<size_t>(pSize, mSize - mPosition));
 		memcpy(pBuffer, mData + mPosition, bytesToRead);
 		mPosition += bytesToRead;
 		return bytesToRead;
 	}
 	
-	virtual int Write(const void* /*pBuffer*/, FbxUInt64 /*pSize*/) override {
+	virtual FbxUInt64 Write(const void* /*pBuffer*/, FbxUInt64 /*pSize*/) override {
 		// Read-only stream
 		return 0;
 	}
