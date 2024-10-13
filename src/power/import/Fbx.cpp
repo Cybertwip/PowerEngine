@@ -51,11 +51,11 @@ public:
 		return -1; // Not writable
 	}
 	
-	virtual void Flush() override {
-		// No action needed for read-only stream
+	virtual bool Flush() override {		
+		return true;
 	}
 	
-	virtual int64_t Seek(const int64_t& pOffset, const FbxFile::ESeekPos& pSeekPos) override {
+	virtual void Seek(const int64_t& pOffset, const FbxFile::ESeekPos& pSeekPos) override {
 		size_t newPos = 0;
 		switch (pSeekPos) {
 			case FbxFile::eBegin:
