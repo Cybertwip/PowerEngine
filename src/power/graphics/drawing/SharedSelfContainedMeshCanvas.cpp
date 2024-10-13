@@ -27,6 +27,8 @@ void SharedSelfContainedMeshCanvas::set_active_actor(std::shared_ptr<Actor> acto
 }
 
 void SharedSelfContainedMeshCanvas::draw_contents() {
+	std::unique_lock<std::mutex> lock(mPreviewMutex);
+
 	SelfContainedMeshCanvas::draw_contents();
 }
 

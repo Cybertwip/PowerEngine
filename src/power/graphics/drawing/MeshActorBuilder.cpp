@@ -14,6 +14,8 @@
 #include "components/TransformComponent.hpp"
 #include "components/TransformAnimationComponent.hpp"
 
+#include "filesystem/MeshActorImporter.hpp"
+
 #include "graphics/drawing/BatchUnit.hpp"
 #include "graphics/drawing/IMeshBatch.hpp"
 #include "graphics/drawing/ISkinnedMeshBatch.hpp"

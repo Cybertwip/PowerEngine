@@ -1,7 +1,6 @@
 #pragma once
 
 #include "filesystem/CompressedSerialization.hpp"
-#include "filesystem/MeshActorImporter.hpp"
 
 #include "graphics/drawing/Mesh.hpp"
 

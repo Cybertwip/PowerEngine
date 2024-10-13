@@ -1,74 +1,64 @@
 #pragma once
 
-// Include your internal structures
-#include "filesystem/MeshActorImporter.hpp" // Adjust the path as needed
-#include "graphics/shading/MeshData.hpp"
-#include "animation/Skeleton.hpp"
-#include "animation/Animation.hpp"
+#include "filesystem/CompressedSerialization.hpp"
 
-#include <SmallFBX.h>
+// Include FBX SDK headers
+#include <fbxsdk.h>
 
 #include <string>
 #include <vector>
 #include <memory>
 #include <map>
-#include <cassert>
-#include <functional> // For std::function
+#include <functional>
+#include <ostream>
 
+// Forward declarations of custom classes
+class MeshData;
 class MeshDeserializer;
+class SerializableMaterialProperties;
 
 class MeshActorExporter {
 public:
+	// Constructor and Destructor
 	MeshActorExporter();
 	~MeshActorExporter();
 	
-	// Existing synchronous methods
-	bool exportToFile(CompressedSerialization::Deserializer& actor, const std::string& sourcePath, const std::string& exportPath);
+	// Synchronous export to file
+	bool exportToFile(CompressedSerialization::Deserializer& deserializer,
+					  const std::string& sourcePath,
+					  const std::string& exportPath);
 	
+	// Synchronous export to stream
 	bool exportToStream(CompressedSerialization::Deserializer& deserializer,
 						const std::string& sourcePath,
 						std::ostream& outStream);
 	
-	// New asynchronous methods
-	/**
-	 * @brief Asynchronously exports to a file.
-	 *
-	 * @param actor The deserializer object.
-	 * @param sourcePath The source path.
-	 * @param exportPath The destination export path.
-	 * @param callback A callback function that takes a bool indicating success or failure.
-	 */
-	void exportToFileAsync(CompressedSerialization::Deserializer& actor,
+	// Asynchronous export to file
+	void exportToFileAsync(CompressedSerialization::Deserializer& deserializer,
 						   const std::string& sourcePath,
 						   const std::string& exportPath,
 						   std::function<void(bool success)> callback);
 	
-	/**
-	 * @brief Asynchronously exports to a stream.
-	 *
-	 * @param deserializer The deserializer object.
-	 * @param sourcePath The source path.
-	 * @param outStream The output stream to write to.
-	 * @param callback A callback function that takes a bool indicating success or failure.
-	 */
+	// Asynchronous export to stream
 	void exportToStreamAsync(std::unique_ptr<CompressedSerialization::Deserializer> deserializerPtr,
 							 const std::string& sourcePath,
 							 std::ostream& outStream,
 							 std::function<void(bool success)> callback);
 	
-	private:
-	// Internal Data
-	std::vector<std::unique_ptr<MeshData>> mMeshes;
-	std::vector<std::shared_ptr<sfbx::Mesh>> mMeshModels;
-	std::unique_ptr<Skeleton> mSkeleton;
-	std::unique_ptr<MeshDeserializer> mMeshDeserializer;
-	
-	// Helper Functions
-	void createMaterials(std::shared_ptr<sfbx::Document> document,
+private:
+	// Helper functions
+	void createMaterials(FbxManager* fbxManager,
+						 FbxScene* scene,
 						 const std::vector<std::shared_ptr<SerializableMaterialProperties>>& materials,
-						 std::map<int, std::shared_ptr<sfbx::Material>>& materialMap);
+						 std::map<int, FbxSurfacePhong*>& materialMap);
 	
 	void createMesh(MeshData& meshData,
-					const std::map<int, std::shared_ptr<sfbx::Material>>& materialMap,
-					std::shared_ptr<sfbx::Mesh> parentModel);
+					const std::map<int, FbxSurfacePhong*>& materialMap,
+					FbxMesh* fbxMesh,
+					FbxNode* meshNode);
+	
+	// Member variables
+	std::unique_ptr<MeshDeserializer> mMeshDeserializer;
+	std::vector<std::unique_ptr<MeshData>> mMeshes;
+	std::vector<FbxNode*> mMeshModels;
 };

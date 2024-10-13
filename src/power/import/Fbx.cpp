@@ -9,7 +9,6 @@
 
 namespace FbxUtil {
 
-
 class MemoryStreamFbxStream : public FbxStream {
 public:
 	MemoryStreamFbxStream(const char* data, size_t size)
@@ -23,6 +22,7 @@ public:
 	
 	virtual bool Open(void* /*pStreamData*/) override {
 		// Stream is already open
+		mPosition = 0;
 		return true;
 	}
 	
@@ -32,7 +32,7 @@ public:
 	}
 	
 	virtual size_t Read(void* pBuffer, FbxUInt64 pSize) const override {
-		int bytesToRead = static_cast<int>(std::min<size_t>(pSize, mSize - mPosition));
+		size_t bytesToRead = static_cast<size_t>(std::min<FbxUInt64>(pSize, mSize - mPosition));
 		memcpy(pBuffer, mData + mPosition, bytesToRead);
 		mPosition += bytesToRead;
 		return bytesToRead;
@@ -51,38 +51,38 @@ public:
 		return -1; // Not writable
 	}
 	
-	virtual bool Flush() override {		
+	virtual bool Flush() override {
 		return true;
 	}
 	
 	virtual void Seek(const int64_t& pOffset, const FbxFile::ESeekPos& pSeekPos) override {
-		size_t newPos = 0;
+		int64_t newPos = 0;
 		switch (pSeekPos) {
 			case FbxFile::eBegin:
-				newPos = static_cast<size_t>(pOffset);
+				newPos = pOffset;
 				break;
 			case FbxFile::eCurrent:
-				newPos = mPosition + pOffset;
+				newPos = static_cast<int64_t>(mPosition) + pOffset;
 				break;
 			case FbxFile::eEnd:
-				newPos = mSize + pOffset;
+				newPos = static_cast<int64_t>(mSize) + pOffset;
 				break;
 			default:
-				return -1;
+				return;
 		}
-		if (newPos > mSize) {
-			return -1; // Out of bounds
+		if (newPos < 0 || newPos > static_cast<int64_t>(mSize)) {
+			return; // Out of bounds
 		}
-		mPosition = newPos;
+		mPosition = static_cast<size_t>(newPos);
 		return mPosition;
 	}
 	
 	virtual int64_t GetPosition() const override {
-		return mPosition;
+		return static_cast<int64_t>(mPosition);
 	}
 	
 	virtual void SetPosition(FbxInt64 pPosition) override {
-		if (pPosition >= 0 && pPosition <= mSize) {
+		if (pPosition >= 0 && pPosition <= static_cast<FbxInt64>(mSize)) {
 			mPosition = static_cast<size_t>(pPosition);
 		}
 	}
@@ -173,10 +173,10 @@ void Fbx::LoadModel(std::stringstream& data) {
 	
 	if (mSceneLoader->scene()) {
 		// Apply axis system conversion if needed
-		FbxAxisSystem directXAxisSys(FbxAxisSystem::EUpVector::eZAxis,
-									 FbxAxisSystem::EFrontVector::eParityOdd,
-									 FbxAxisSystem::eRightHanded);
-		directXAxisSys.DeepConvertScene(mSceneLoader->scene());
+//		FbxAxisSystem directXAxisSys(FbxAxisSystem::EUpVector::eZAxis,
+//									 FbxAxisSystem::EFrontVector::eParityOdd,
+//									 FbxAxisSystem::eRightHanded);
+//		directXAxisSys.DeepConvertScene(mSceneLoader->scene());
 		
 		// Process the root node of the scene
 		ProcessNode(mSceneLoader->scene()->GetRootNode());
