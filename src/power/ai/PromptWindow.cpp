@@ -153,10 +153,10 @@ void PromptWindow::Preview(const std::string& path, const std::string& directory
 		return;
 	}
 	
-	Preview(path, directory, deserializer, std::nullopt);
+	Preview(path, directory, deserializer, nullptr);
 }
 
-void PromptWindow::Preview(const std::string& path, const std::string& directory, CompressedSerialization::Deserializer& deserializer, std::optional<std::shared_ptr<PlaybackData>> playbackData) {
+void PromptWindow::Preview(const std::string& path, const std::string& directory, CompressedSerialization::Deserializer& deserializer, std::shared_ptr<PlaybackData> playbackData) {
 	set_visible(true);
 	set_modal(true);
 	
@@ -186,10 +186,10 @@ void PromptWindow::Preview(const std::string& path, const std::string& directory
 		mSubmitButton->set_enabled(false);
 	} else {
 		
-		if (playbackData.has_value()) {
+		if (playbackData != nullptr) {
 			auto& playbackComponent = actor->get_component<PlaybackComponent>();
 			
-			playbackComponent.setPlaybackData((*playbackData));
+			playbackComponent.setPlaybackData(playbackData);
 		}
 	}
 
@@ -380,7 +380,7 @@ void PromptWindow::PollJobStatusAsync(const std::string& request_id) {
 						keep_polling = false;
 						// Asynchronously download results
 						mDeepMotionApiClient.download_job_results_async(request_id,
-																		[this](const Json::Value& results, const std::string& error) {
+																		[this, &keep_polling](const Json::Value& results, const std::string& error) {
 							if (!error.empty()) {
 								std::cerr << "Failed to download animations: " << error << std::endl;
 								nanogui::async([this]() {
@@ -522,7 +522,7 @@ void PromptWindow::PollJobStatusAsync(const std::string& request_id) {
 													mSubmitButton->set_enabled(true); // Re-enable Submit button
 												});
 												
-												return;
+												keep_polling = false;
 											} else {
 												std::cerr << "Failed to download animations. HTTP Status: " << (res_download ? std::to_string(res_download->status) : "No Response") << std::endl;
 												{

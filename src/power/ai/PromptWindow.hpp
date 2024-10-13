@@ -41,7 +41,7 @@ public:
 	
 	void Preview(const std::string& path, const std::string& directory);
 	
-	void Preview(const std::string& path, const std::string& directory, CompressedSerialization::Deserializer& deserializer, std::optional<std::shared_ptr<PlaybackData>>playbackData);
+	void Preview(const std::string& path, const std::string& directory, CompressedSerialization::Deserializer& deserializer, std::shared_ptr<PlaybackData> playbackData);
 	
 	void ProcessEvents();
 	

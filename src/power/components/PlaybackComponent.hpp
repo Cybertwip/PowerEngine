@@ -9,13 +9,20 @@ class Animation;
 class Skeleton;
 
 struct PlaybackData {
-	PlaybackData(std::shared_ptr<Skeleton> skeleton, std::unique_ptr<Animation> animation) : mSkeleton(std::move(skeleton)), mAnimation(std::move(animation)) {}
+	PlaybackData(std::shared_ptr<Skeleton> skeleton, std::unique_ptr<Animation> animation) : mSkeleton(std::move(skeleton)), mAnimation(std::move(animation)) {
+		
+		assert(mAnimation != nullptr);
+		
+	}
 	
 	void set_skeleton(std::shared_ptr<Skeleton> skeleton) {
 		mSkeleton = skeleton;
 	}
 	
 	void set_animation(std::unique_ptr<Animation> animation) {
+		assert(animation != nullptr);
+		
+
 		mAnimation = std::move(animation);
 	}
 	
@@ -29,6 +36,7 @@ struct PlaybackData {
 	
 	
 private:
+	PlaybackData();
 	std::shared_ptr<Skeleton> mSkeleton;
 	std::unique_ptr<Animation> mAnimation;
 };
@@ -64,6 +72,7 @@ public:
 		Keyframe(float t, PlaybackState state, PlaybackModifier modifier, PlaybackTrigger trigger, std::shared_ptr<PlaybackData> playbackData)
 		: time(t), mPlaybackState(state), mPlaybackModifier(modifier), mPlaybackTrigger(trigger),
 			mPlaybackData(playbackData) {
+				assert(mPlaybackData != nullptr);
 			// Setting trigger sets state to Pause
 			if (trigger == PlaybackTrigger::Rewind || trigger == PlaybackTrigger::FastForward) {
 				mPlaybackState = PlaybackState::Pause;
@@ -100,7 +109,8 @@ public:
 			return mPlaybackData;
 		}
 		
-		void setPlaybackData(std::shared_ptr<PlaybackData> playbackData)  {
+		void setPlaybackData(std::shared_ptr<PlaybackData> playbackData) {
+			assert(playbackData != nullptr);
 			mPlaybackData = playbackData;
 		}
 
@@ -191,6 +201,7 @@ public:
 	}
 
 	void setPlaybackData(std::shared_ptr<PlaybackData> playbackData) {
+		assert(playbackData != nullptr);
 		mState.setPlaybackData(playbackData);
 		trigger_on_playback_changed();
 	}
