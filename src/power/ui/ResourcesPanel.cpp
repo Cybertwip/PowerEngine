@@ -8,6 +8,7 @@
 #include "ui/FileView.hpp"
 #include "ui/ImportWindow.hpp"
 #include "ui/MeshPicker.hpp"
+#include "ui/SceneTimeBar.hpp"
 #include "ui/UiManager.hpp"
 
 #include "MeshActorLoader.hpp"
@@ -119,7 +120,7 @@ mMeshActorLoader(meshActorLoader),
 mMeshShader(std::make_unique<ShaderWrapper>(shaderManager.get_shader("mesh"))),
 mSkinnedShader(std::make_unique<ShaderWrapper>(shaderManager.get_shader("skinned_mesh"))),
 mSceneTimeBar(sceneTimeBar),
-mGlobalAnimationTimeProvider(globalAnimationTimeProvider),
+mGlobalAnimationTimeProvider(animationTimeProvider),
 mUiManager(uiManager),
 mDeepMotionApiClient(deepMotionApiClient),
 mShaderManager(shaderManager)
@@ -231,7 +232,7 @@ mShaderManager(shaderManager)
 		auto filename = node->FullPath;
 		
 		if (filename.find(".psk") != std::string::npos || filename.find(".pma") != std::string::npos){
-			mActorVisualManager->add_actor(mMeshActorLoader->create_actor(filename, mGlobalAnimationTimeProvider, *mMeshShader, *mSkinnedShader));
+			mActorVisualManager->add_actor(mMeshActorLoader.create_actor(filename, mGlobalAnimationTimeProvider, *mMeshShader, *mSkinnedShader));
 			
 			mSceneTimeBar->refresh_actors();
 		}
