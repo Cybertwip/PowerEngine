@@ -50,7 +50,7 @@ public:
 	
 	MeshActorImporter();
 	
-	std::unique_ptr<CompressedMeshActor> process(const std::string& path, const std::string& destination);
+	std::unique_ptr<CompressedMeshActor> process(const std::string& path, const std::string& destination, bool convertAxis = true);
 	
-	std::unique_ptr<CompressedMeshActor> process(std::stringstream& data, const std::string& modelName, const std::string& destination);
+	std::unique_ptr<CompressedMeshActor> process(std::stringstream& data, const std::string& modelName, const std::string& destination, bool convertAxis = true);
 };

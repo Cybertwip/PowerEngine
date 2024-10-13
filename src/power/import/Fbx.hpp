@@ -31,8 +31,8 @@ public:
 	
 	virtual ~Fbx() = default;
 	
-	void LoadModel(std::stringstream& data);
-	void LoadModel(const std::string& path);
+	void LoadModel(std::stringstream& data, bool convertAxis = true);
+	void LoadModel(const std::string& path, bool convertAxis = true);
 
 	std::vector<std::unique_ptr<MeshData>>& GetMeshData() { return mMeshes; }
 	

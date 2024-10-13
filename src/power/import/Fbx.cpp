@@ -133,7 +133,7 @@ glm::mat4 GetUpAxisRotation(int up_axis, int up_axis_sign) {
 
 }  // namespace
 
-void Fbx::LoadModel(const std::string& path) {
+void Fbx::LoadModel(const std::string& path, bool convertAxis) {
 	mFbxManager = std::make_unique<ozz::animation::offline::fbx::FbxManagerInstance>();
 	
 	mSettings = std::make_unique<ozz::animation::offline::fbx::FbxDefaultIOSettings>(*mFbxManager);
@@ -147,15 +147,21 @@ void Fbx::LoadModel(const std::string& path) {
 		FbxAxisSystem directXAxisSys(FbxAxisSystem::EUpVector::eZAxis,
 									 FbxAxisSystem::EFrontVector::eParityOdd,
 									 FbxAxisSystem::eRightHanded);
-		directXAxisSys.DeepConvertScene(mSceneLoader->scene());
-
+		const FbxAxisSystem& sceneAxisSystem = mSceneLoader->scene()->GetGlobalSettings().GetAxisSystem();
+		
+		// Compare the scene's axis system with the desired axis system
+		if (sceneAxisSystem != directXAxisSys && convertAxis) {
+			// Convert only if they are different
+			directXAxisSys.DeepConvertScene(mSceneLoader->scene());
+		}
+	
 		ProcessNode(mSceneLoader->scene()->GetRootNode());
 	} else {
 		std::cerr << "Error: Failed to load FBX scene from file " << path << std::endl;
 	}
 }
 
-void Fbx::LoadModel(std::stringstream& data) {
+void Fbx::LoadModel(std::stringstream& data, bool convertAxis) {
 	// Initialize the FBX manager and IO settings
 	mFbxManager = std::make_unique<ozz::animation::offline::fbx::FbxManagerInstance>();
 	mSettings = std::make_unique<ozz::animation::offline::fbx::FbxDefaultIOSettings>(*mFbxManager);
@@ -176,8 +182,15 @@ void Fbx::LoadModel(std::stringstream& data) {
 		FbxAxisSystem directXAxisSys(FbxAxisSystem::EUpVector::eZAxis,
 									 FbxAxisSystem::EFrontVector::eParityOdd,
 									 FbxAxisSystem::eRightHanded);
-		directXAxisSys.DeepConvertScene(mSceneLoader->scene());
+		const FbxAxisSystem& sceneAxisSystem = mSceneLoader->scene()->GetGlobalSettings().GetAxisSystem();
 		
+		// Compare the scene's axis system with the desired axis system
+		if (sceneAxisSystem != directXAxisSys && convertAxis) {
+			// Convert only if they are different
+			directXAxisSys.DeepConvertScene(mSceneLoader->scene());
+		}
+		
+
 		// Process the root node of the scene
 		ProcessNode(mSceneLoader->scene()->GetRootNode());
 	} else {

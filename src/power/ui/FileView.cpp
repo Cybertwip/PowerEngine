@@ -180,6 +180,14 @@ std::shared_ptr<nanogui::Button> FileView::acquire_button(const std::shared_ptr<
 		// Store selected node
 		m_selected_node = child;
 		
+		// Handle click
+		nanogui::async([this]() {
+			if (m_selected_node) {
+				handle_file_click(*m_selected_node);
+			}
+		});
+
+		
 		// Handle double-click
 		static std::chrono::time_point<std::chrono::high_resolution_clock> last_click_time = std::chrono::high_resolution_clock::time_point::min();
 		auto current_click_time = std::chrono::high_resolution_clock::now();
@@ -196,12 +204,6 @@ std::shared_ptr<nanogui::Button> FileView::acquire_button(const std::shared_ptr<
 				
 				last_click_time = std::chrono::high_resolution_clock::time_point::min();
 			} else {
-				nanogui::async([this]() {
-					if (m_selected_node) {
-						handle_file_click(*m_selected_node);
-					}
-				});
-
 				last_click_time = current_click_time;
 			}
 		} else {

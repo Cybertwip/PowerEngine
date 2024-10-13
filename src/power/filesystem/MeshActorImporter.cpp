@@ -34,7 +34,7 @@ std::unique_ptr<MeshActorImporter::CompressedMeshActor> MeshActorImporter::proce
 
 	auto model = std::make_unique<SkinnedFbx>();
 		
-	model->LoadModel(path);
+	model->LoadModel(path, convertAxis);
 	model->TryImportAnimations();
 
 	// Ensure destination path exists
@@ -124,7 +124,7 @@ std::unique_ptr<MeshActorImporter::CompressedMeshActor> MeshActorImporter::proce
 }
 
 
-std::unique_ptr<MeshActorImporter::CompressedMeshActor> MeshActorImporter::process(std::stringstream& data, const std::string& modelName, const std::string& destination) {
+std::unique_ptr<MeshActorImporter::CompressedMeshActor> MeshActorImporter::process(std::stringstream& data, const std::string& modelName, const std::string& destination, bool convertAxis) {
 	
 	auto actor = std::make_unique<CompressedMeshActor>();
 	
@@ -132,7 +132,7 @@ std::unique_ptr<MeshActorImporter::CompressedMeshActor> MeshActorImporter::proce
 	
 	auto model = std::make_unique<SkinnedFbx>();
 	
-	model->LoadModel(data);
+	model->LoadModel(data, convertAxis);
 	model->TryImportAnimations();
 	
 	// Ensure destination path exists
