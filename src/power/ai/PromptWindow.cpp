@@ -4,6 +4,8 @@
 
 #include "ai/DeepMotionApiClient.hpp"
 
+
+#include "components/PlaybackComponent.hpp"
 #include "filesystem/MeshActorImporter.hpp"
 #include "filesystem/MeshActorExporter.hpp"
 #include "graphics/drawing/BatchUnit.hpp"
@@ -158,6 +160,8 @@ void PromptWindow::Preview(const std::string& path, const std::string& directory
 	set_visible(true);
 	set_modal(true);
 	
+	mPreviewCanvas->set_update(false);
+	mPreviewCanvas->set_active_actor(nullptr);
 	mActorPath = path;
 	mOutputDirectory = directory;
 	
@@ -187,11 +191,12 @@ void PromptWindow::Preview(const std::string& path, const std::string& directory
 		if (playbackData.has_value()) {
 			auto& playbackComponent = actor->get_component<PlaybackComponent>();
 			
-			playbackData.value()->mSkeleton = playbackComponent.getPlaybackData()->mSkeleton;
+			auto parsedPlayback = std::make_shared<PlaybackData>(playbackComponent.getPlaybackData()->mSkeleton, std::move((*playbackData)->mAnimation));
 			
-			playbackComponent.setPlaybackData(playbackData.value());
+			playbackComponent.setPlaybackData(parsedPlayback);
 		}
 	}
+
 	
 	mPreviewCanvas->set_active_actor(actor);
 	mPreviewCanvas->set_update(true);

@@ -12,13 +12,16 @@ SharedSelfContainedMeshCanvas::SharedSelfContainedMeshCanvas(nanogui::Widget& pa
 }
 
 void SharedSelfContainedMeshCanvas::set_active_actor(std::shared_ptr<Actor> actor) {
+	std::unique_lock<std::mutex> lock(mPreviewMutex);
+	
 	clear();
 
-	mSharedPreviewActor = actor;
 	
-	if (mSharedPreviewActor != nullptr) {
+	if (actor != nullptr) {
+		mSharedPreviewActor = actor;
 		SelfContainedMeshCanvas::set_active_actor(*mSharedPreviewActor);
 	} else {
+		mSharedPreviewActor = nullptr;
 		set_update(false);
 	}
 }

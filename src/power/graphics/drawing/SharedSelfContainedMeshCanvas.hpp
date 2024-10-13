@@ -2,6 +2,8 @@
 
 #include "SelfContainedMeshCanvas.hpp"
 
+#include <mutex>
+
 class SharedSelfContainedMeshCanvas : public SelfContainedMeshCanvas {
 public:
 	SharedSelfContainedMeshCanvas(nanogui::Widget& parent, nanogui::Screen& screen);
@@ -17,4 +19,6 @@ private:
 	
 	std::shared_ptr<Actor> mSharedPreviewActor;
 	std::function<void(std::vector<uint8_t>&)> mSnapshotCallback;
+	
+	std::mutex mPreviewMutex;
 };
