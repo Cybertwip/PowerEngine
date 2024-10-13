@@ -35,9 +35,9 @@ m_selected_button_color(nanogui::Color(100, 100, 255, 255)),
 m_scroll_offset(0.0f),
 m_accumulated_scroll_delta(0.0f),
 m_total_rows(0),
-m_visible_rows(3),
+m_visible_rows(2),
 m_row_height(144), // Assuming row height of 144 pixels
-m_total_textures(24), // Example value, adjust as needed
+m_total_textures(16), // Example value, adjust as needed
 m_previous_first_visible_row(0),
 m_is_loading_thumbnail(false),
 m_previous_scroll_offset(0),
