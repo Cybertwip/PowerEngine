@@ -20,7 +20,6 @@
 
 #include <openssl/md5.h>
 
-
 class Md5 {
 public:
 	static
@@ -49,193 +48,98 @@ public:
 };
 
 /*
-
-// Structure to manage in-memory data
-struct MemoryBuffer {
-	std::vector<unsigned char> data;
-	size_t position;
-	
-	MemoryBuffer() : position(0) {}
-};
-
-// Custom write function
-static unsigned long ZCALLBACK mem_write_func(void* opaque, void* stream, const void* buf, unsigned long size) {
-	MemoryBuffer* mem = static_cast<MemoryBuffer*>(opaque);
-	mem->data.insert(mem->data.end(), (unsigned char*)buf, (unsigned char*)buf + size);
-	mem->position += size;
-	return size;
-}
-
-// Custom read function
-static unsigned long ZCALLBACK mem_read_func(void* opaque, void* stream, void* buf, unsigned long size) {
-	MemoryBuffer* mem = static_cast<MemoryBuffer*>(opaque);
-	if (mem->position + size > mem->data.size()) {
-		size = mem->data.size() - mem->position;
-	}
-	if (size > 0) {
-		memcpy(buf, mem->data.data() + mem->position, size);
-		mem->position += size;
-		return size;
-	}
-	return 0;
-}
-
-// Custom seek function
-static long ZCALLBACK mem_seek_func(voidpf opaque, voidpf stream, unsigned long offset, int origin) {
-	MemoryBuffer* mem = static_cast<MemoryBuffer*>(opaque);
-	size_t new_pos = 0;
-	
-	switch (origin) {
-		case ZLIB_FILEFUNC_SEEK_SET:
-			new_pos = offset;
-			break;
-		case ZLIB_FILEFUNC_SEEK_CUR:
-			new_pos = mem->position + offset;
-			break;
-		case ZLIB_FILEFUNC_SEEK_END:
-			new_pos = mem->data.size() + offset;
-			break;
-		default:
-			return -1;
-	}
-	
-	if (new_pos > mem->data.size()) {
-		return -1;
-	}
-	
-	mem->position = new_pos;
-	return 0;
-}
-
-// Custom tell function
-static long ZCALLBACK mem_tell_func(void* opaque, void* stream) {
-	MemoryBuffer* mem = static_cast<MemoryBuffer*>(opaque);
-	return mem->position;
-}
-
-// Custom close function (no action needed for memory)
-static int ZCALLBACK mem_close_func(voidpf opaque, voidpf stream) {
-	return 0;
-}
-
-// Custom error function (no error handling)
-static int ZCALLBACK mem_error_func(voidpf opaque, voidpf stream) {
-	return 0;
-}
-
-
-// Function to fill zlib_filefunc_def with memory I/O functions
-static void fill_memory_filefunc(zlib_filefunc_def* pzlib_filefunc_def, MemoryBuffer* mem_buffer) {
-	pzlib_filefunc_def->zopen_file = nullptr;
-	pzlib_filefunc_def->zread_file = mem_read_func;
-	pzlib_filefunc_def->zwrite_file = mem_write_func;
-	pzlib_filefunc_def->ztell_file = mem_tell_func;
-	pzlib_filefunc_def->zseek_file = mem_seek_func;
-	pzlib_filefunc_def->zclose_file = mem_close_func;
-	pzlib_filefunc_def->zerror_file = mem_error_func;
-	pzlib_filefunc_def->opaque = mem_buffer;
-}
-
+ 
+ // Structure to manage in-memory data
+ struct MemoryBuffer {
+ std::vector<unsigned char> data;
+ size_t position;
+ 
+ MemoryBuffer() : position(0) {}
+ };
+ 
+ // Custom write function
+ static unsigned long ZCALLBACK mem_write_func(void* opaque, void* stream, const void* buf, unsigned long size) {
+ MemoryBuffer* mem = static_cast<MemoryBuffer*>(opaque);
+ mem->data.insert(mem->data.end(), (unsigned char*)buf, (unsigned char*)buf + size);
+ mem->position += size;
+ return size;
+ }
+ 
+ // Custom read function
+ static unsigned long ZCALLBACK mem_read_func(void* opaque, void* stream, void* buf, unsigned long size) {
+ MemoryBuffer* mem = static_cast<MemoryBuffer*>(opaque);
+ if (mem->position + size > mem->data.size()) {
+ size = mem->data.size() - mem->position;
+ }
+ if (size > 0) {
+ memcpy(buf, mem->data.data() + mem->position, size);
+ mem->position += size;
+ return size;
+ }
+ return 0;
+ }
+ 
+ // Custom seek function
+ static long ZCALLBACK mem_seek_func(voidpf opaque, voidpf stream, unsigned long offset, int origin) {
+ MemoryBuffer* mem = static_cast<MemoryBuffer*>(opaque);
+ size_t new_pos = 0;
+ 
+ switch (origin) {
+ case ZLIB_FILEFUNC_SEEK_SET:
+ new_pos = offset;
+ break;
+ case ZLIB_FILEFUNC_SEEK_CUR:
+ new_pos = mem->position + offset;
+ break;
+ case ZLIB_FILEFUNC_SEEK_END:
+ new_pos = mem->data.size() + offset;
+ break;
+ default:
+ return -1;
+ }
+ 
+ if (new_pos > mem->data.size()) {
+ return -1;
+ }
+ 
+ mem->position = new_pos;
+ return 0;
+ }
+ 
+ // Custom tell function
+ static long ZCALLBACK mem_tell_func(void* opaque, void* stream) {
+ MemoryBuffer* mem = static_cast<MemoryBuffer*>(opaque);
+ return mem->position;
+ }
+ 
+ // Custom close function (no action needed for memory)
+ static int ZCALLBACK mem_close_func(voidpf opaque, voidpf stream) {
+ return 0;
+ }
+ 
+ // Custom error function (no error handling)
+ static int ZCALLBACK mem_error_func(voidpf opaque, voidpf stream) {
+ return 0;
+ }
+ 
+ 
+ // Function to fill zlib_filefunc_def with memory I/O functions
+ static void fill_memory_filefunc(zlib_filefunc_def* pzlib_filefunc_def, MemoryBuffer* mem_buffer) {
+ pzlib_filefunc_def->zopen_file = nullptr;
+ pzlib_filefunc_def->zread_file = mem_read_func;
+ pzlib_filefunc_def->zwrite_file = mem_write_func;
+ pzlib_filefunc_def->ztell_file = mem_tell_func;
+ pzlib_filefunc_def->zseek_file = mem_seek_func;
+ pzlib_filefunc_def->zclose_file = mem_close_func;
+ pzlib_filefunc_def->zerror_file = mem_error_func;
+ pzlib_filefunc_def->opaque = mem_buffer;
+ }
+ 
  */
-
 
 class Zip {
 public:
-//	static std::vector<std::stringstream> decompress(const std::vector<unsigned char>& zip_data) {
-//		std::vector<std::stringstream> decompressed_files;
-//		
-//		if (zip_data.empty()) {
-//			throw std::runtime_error("ZIP data is empty.");
-//		}
-//		
-//		// Initialize memory buffer for reading
-//		MemoryBuffer mem_buffer;
-//		
-//		mem_buffer.data = zip_data;
-//		
-//		// Define custom file functions for in-memory reading
-//		zlib_filefunc_def mem_filefunc;
-//		fill_memory_filefunc(&mem_filefunc, &mem_buffer);
-//		
-//		// Open the ZIP archive from memory
-//		// Note: The 'filename' parameter is ignored when using custom I/O functions
-//		unzFile uf = unzOpen2(NULL, &mem_filefunc);
-//		if (uf == NULL) {
-//			throw std::runtime_error("Failed to open in-memory ZIP archive.");
-//		}
-//		
-//		// Define the regex pattern for filtering filenames
-//		std::regex filename_regex(R"(^[A-Za-z0-9\-_]+_[A-Za-z0-9\-_]+_v[0-9]+\.fbx$)");
-//		
-//		// Go to the first file in the ZIP archive
-//		int ret = unzGoToFirstFile(uf);
-//		if (ret != UNZ_OK) {
-//			unzClose(uf);
-//			throw std::runtime_error("Failed to navigate to the first file in ZIP archive.");
-//		}
-//		
-//		// Iterate through all files in the ZIP archive
-//		do {
-//			char filename_inzip[256];
-//			unz_file_info file_info;
-//			
-//			// Get information about the current file
-//			ret = unzGetCurrentFileInfo(uf, &file_info, filename_inzip, sizeof(filename_inzip), NULL, 0, NULL, 0);
-//			if (ret != UNZ_OK) {
-//				unzClose(uf);
-//				throw std::runtime_error("Failed to retrieve file info from ZIP archive.");
-//			}
-//			
-//			std::string current_filename = filename_inzip;
-//			
-//			// Check if the current entry is a directory; skip if so
-//			if (!current_filename.empty() && current_filename.back() == '/') {
-//				continue;
-//			}
-//			
-//			// Check if the filename matches the regex pattern
-//			if (!std::regex_match(current_filename, filename_regex)) {
-//				continue; // Skip non-matching files
-//			}
-//			
-//			// Open the current file within the ZIP archive
-//			ret = unzOpenCurrentFile(uf);
-//			if (ret != UNZ_OK) {
-//				// Unable to open the file; skip to the next
-//				std::cerr << "Warning: Failed to open file '" << current_filename << "' in ZIP archive." << std::endl;
-//				continue;
-//			}
-//			
-//			// Read the file content into a stringstream
-//			std::stringstream ss;
-//			const size_t buffer_size = 8192;
-//			std::vector<char> buffer(buffer_size);
-//			int bytes_read = 0;
-//			
-//			while ((bytes_read = unzReadCurrentFile(uf, buffer.data(), buffer_size)) > 0) {
-//				ss.write(buffer.data(), bytes_read);
-//			}
-//			
-//			if (bytes_read < 0) {
-//				// Error while reading the file
-//				std::cerr << "Warning: Error reading file '" << current_filename << "' in ZIP archive." << std::endl;
-//				unzCloseCurrentFile(uf);
-//				continue;
-//			}
-//			
-//			// Close the current file in the ZIP archive
-//			unzCloseCurrentFile(uf);
-//			
-//			// Add the extracted data to the vector
-//			decompressed_files.emplace_back(std::move(ss));
-//			
-//		} while (unzGoToNextFile(uf) == UNZ_OK); // Continue until no more files
-//		
-//		// Close the ZIP archive
-//		unzClose(uf);
-//		
-//		return decompressed_files;
-//	}
+	// Function to decompress ZIP data
 	static std::vector<std::stringstream> decompress(const std::vector<unsigned char>& zip_data) {
 		std::vector<std::stringstream> decompressed_files;
 		
@@ -351,7 +255,7 @@ public:
 		
 		return decompressed_files;
 	}
-
+	
 };
 
 // Utility class for serialization and deserialization with compression
@@ -477,6 +381,11 @@ public:
 		// Method to add raw data to the header
 		void write_header_raw(const void* data, size_t size) {
 			write_data(data, size, header);
+		}
+		
+		// Method to retrieve the header data
+		const std::vector<char>& get_header_data() const {
+			return header;
 		}
 		
 		// Finalize and write the compressed data directly to a stream using multithreading
@@ -641,6 +550,56 @@ public:
 	class Deserializer {
 	public:
 		Deserializer() = default;
+		
+		// Method to initialize the header data from external data
+		void initialize_header(const std::vector<char>& header_data) {
+			header = header_data;
+			readHeaderOffset = 0;
+		}
+		
+		// Method to initialize the header data from a file
+		bool initialize_header_from_file(const std::string& filename) {
+			std::ifstream inFile(filename, std::ios::binary);
+			if (!inFile) {
+				std::cerr << "Failed to open file for reading: " << filename << "\n";
+				return false;
+			}
+			
+			// Read and verify Magic Number
+			char fileMagicNumber[4];
+			inFile.read(fileMagicNumber, sizeof(fileMagicNumber));
+			if (inFile.gcount() != sizeof(fileMagicNumber)) {
+				std::cerr << "Failed to read magic number.\n";
+				return false;
+			}
+			if (std::memcmp(fileMagicNumber, MAGIC_NUMBER, sizeof(MAGIC_NUMBER)) != 0) {
+				std::cerr << "Magic number mismatch. This file is not from this program.\n";
+				return false;
+			}
+			
+			// Read Header Size
+			uint32_t headerSize = 0;
+			inFile.read(reinterpret_cast<char*>(&headerSize), sizeof(uint32_t));
+			if (inFile.gcount() != sizeof(uint32_t)) {
+				std::cerr << "Failed to read header size.\n";
+				return false;
+			}
+			
+			// Read Header Data
+			header.clear();
+			if (headerSize > 0) {
+				header.resize(headerSize);
+				inFile.read(header.data(), headerSize);
+				if (static_cast<uint32_t>(inFile.gcount()) != headerSize) {
+					std::cerr << "Failed to read header data.\n";
+					return false;
+				}
+			}
+			
+			readHeaderOffset = 0;
+			return true;
+		}
+
 		
 		// Initialize by reading from a stream
 		bool initialize(std::istream& inStream) {

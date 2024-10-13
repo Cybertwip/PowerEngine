@@ -21,13 +21,16 @@
 #include <nanogui/opengl.h>
 #include <nanogui/metal.h>
 #include <unordered_map>  // Replaced <map> with <unordered_map> for better performance
-#include <queue>          // Added for asynchronous function queue
+#include <deque>          // Changed to deque for efficient front and back operations
 #include <thread>
 #include <chrono>
 #include <mutex>
 #include <iostream>
-#include <atomic>         // Added for atomic variables
-#include <functional>     // Added for std::function
+#include <atomic>
+#include <functional>
+#include <condition_variable>
+#include <future>
+#include <vector>
 
 #if !defined(_WIN32)
 #  include <locale.h>
@@ -52,10 +55,89 @@ extern void disable_saved_application_state_osx();
 static std::atomic<bool> redraw_thread_running(false);
 static std::thread redraw_thread;
 
-// Mutex and queue for asynchronous functions
-std::mutex m_async_mutex;
-// Changed from std::vector to std::queue for better FIFO handling
-std::queue<std::function<void()>> m_async_functions;
+// Thread pool for asynchronous function execution
+class ThreadPool {
+public:
+	ThreadPool(size_t num_threads);
+	~ThreadPool();
+	
+	void enqueue(std::function<void()> func);
+	
+private:
+	// Keep track of threads
+	std::vector<std::thread> workers;
+	// Queue of tasks
+	std::deque<std::function<void()>> tasks;
+	
+	// Synchronization
+	std::mutex queue_mutex;
+	std::condition_variable condition;
+	bool stop;
+};
+
+// Constructor
+ThreadPool::ThreadPool(size_t num_threads) : stop(false) {
+	for (size_t i = 0; i < num_threads; ++i) {
+		workers.emplace_back([this] {
+			for (;;) {
+				std::function<void()> task;
+				
+				{ // Acquire lock
+					std::unique_lock<std::mutex> lock(this->queue_mutex);
+					this->condition.wait(lock, [this] {
+						return this->stop || !this->tasks.empty();
+					});
+					if (this->stop && this->tasks.empty())
+						return;
+					task = std::move(this->tasks.front());
+					this->tasks.pop_front();
+				} // Release lock
+				
+				task();
+			}
+		});
+	}
+}
+
+// Add new work item to the pool
+void ThreadPool::enqueue(std::function<void()> func) {
+	{ // Acquire lock
+		std::unique_lock<std::mutex> lock(queue_mutex);
+		if (stop)
+			throw std::runtime_error("enqueue on stopped ThreadPool");
+		tasks.emplace_back(std::move(func));
+	} // Release lock
+	condition.notify_one();
+}
+
+// Destructor
+ThreadPool::~ThreadPool() {
+	{ // Acquire lock
+		std::unique_lock<std::mutex> lock(queue_mutex);
+		stop = true;
+	} // Release lock
+	condition.notify_all();
+	for (std::thread &worker : workers)
+		worker.join();
+}
+
+// Initialize the thread pool with the desired number of threads
+ThreadPool thread_pool(std::thread::hardware_concurrency());
+
+// Mutex and queue for main thread tasks
+std::mutex main_thread_mutex;
+std::deque<std::function<void()>> main_thread_tasks;
+
+void post_to_main_thread(const std::function<void()> &func) {
+	{
+		std::lock_guard<std::mutex> lock(main_thread_mutex);
+		main_thread_tasks.push_back(func);
+	}
+}
+
+void async(const std::function<void()> &func) {
+	thread_pool.enqueue(func);
+}
 
 #if defined(__APPLE__)
 extern void disable_saved_application_state_osx();
@@ -64,10 +146,10 @@ extern void disable_saved_application_state_osx();
 // Function to start the redraw thread
 void start_redraw_thread() {
 	redraw_thread_running = true;
-	redraw_thread = std::thread([](){
+	redraw_thread = std::thread([]() {
 		while (redraw_thread_running) {
-			// Enqueue redraw for all visible screens
-			async([](){
+			// Request redraw on the main thread
+			post_to_main_thread([]() {
 				for (auto &kv : __nanogui_screens) {
 					Screen *screen = kv.second;
 					if (screen->visible()) {
@@ -125,14 +207,14 @@ static double emscripten_last = 0;
 static float emscripten_refresh = 0;
 #endif
 
-void mainloop() {
+void mainloop(float refresh) {
 	if (mainloop_active)
 		throw std::runtime_error("Main loop is already running!");
 	
 	// Start the redraw thread
 	start_redraw_thread();
 	
-	auto mainloop_iteration = []() {
+	auto mainloop_iteration = [&]() {
 		int num_screens = 0;
 		
 #if defined(EMSCRIPTEN)
@@ -144,17 +226,15 @@ void mainloop() {
 		}
 #endif
 		
-		/* Run async functions */
+		// Process main thread tasks
 		{
-			std::queue<std::function<void()>> local_queue;
+			std::deque<std::function<void()>> local_tasks;
 			{
-				std::lock_guard<std::mutex> guard(m_async_mutex);
-				std::swap(local_queue, m_async_functions);
+				std::lock_guard<std::mutex> lock(main_thread_mutex);
+				std::swap(local_tasks, main_thread_tasks);
 			}
-			while (!local_queue.empty()) {
-				auto &f = local_queue.front();
-				f();
-				local_queue.pop();
+			for (auto &task : local_tasks) {
+				task();
 			}
 		}
 		
@@ -209,11 +289,6 @@ void mainloop() {
 	
 	// Stop the redraw thread after exiting the main loop
 	stop_redraw_thread();
-}
-
-void async(const std::function<void()> &func) {
-	std::lock_guard<std::mutex> guard(m_async_mutex);
-	m_async_functions.push(func);
 }
 
 void leave() {
@@ -470,7 +545,5 @@ std::vector<std::string> file_dialog(const std::vector<std::pair<std::string, st
 #endif
 
 Object::~Object() { }
-
-
 
 NAMESPACE_END(nanogui)

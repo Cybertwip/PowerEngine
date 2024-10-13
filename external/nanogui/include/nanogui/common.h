@@ -242,7 +242,7 @@ extern NANOGUI_EXPORT void shutdown();
  *     wait for the termination of the main loop and then swap the two thread
  *     environments back into their initial configuration.
  */
-extern NANOGUI_EXPORT void mainloop();
+extern NANOGUI_EXPORT void mainloop(float refresh);
 
 /// Request the application main loop to terminate (e.g. if you detached mainloop).
 extern NANOGUI_EXPORT void leave();

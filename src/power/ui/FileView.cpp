@@ -35,7 +35,7 @@ m_selected_button_color(nanogui::Color(100, 100, 255, 255)),
 m_scroll_offset(0.0f),
 m_accumulated_scroll_delta(0.0f),
 m_total_rows(0),
-m_visible_rows(2),
+m_visible_rows(3),
 m_row_height(144), // Assuming row height of 144 pixels
 m_total_textures(16), // Example value, adjust as needed
 m_previous_first_visible_row(0),
@@ -318,7 +318,7 @@ void FileView::load_thumbnail(const std::shared_ptr<DirectoryNode>& node,
 
 std::vector<uint8_t> FileView::load_image_data(const std::string& path) {
 	CompressedSerialization::Deserializer deserializer;
-	deserializer.load_from_file(path);
+	deserializer.initialize_header_from_file(path);
 	
 	std::vector<uint8_t> data;
 	uint64_t thumbnail_size = 0;
@@ -478,12 +478,13 @@ void FileView::populate_file_view() {
 	}
 }
 
+
 bool FileView::scroll_event(const nanogui::Vector2i& p, const nanogui::Vector2f& rel) {
 	std::lock_guard<std::mutex> lock(m_mutex);
 	
 	float scroll_delta = rel.y();
 	
-	scroll_delta = glm::sign(scroll_delta) * std::max(std::abs(scroll_delta), 4.0f); // Clamp max 1/2 row per scroll
+	scroll_delta = glm::sign(scroll_delta) * std::max(std::abs(scroll_delta), 4.0f); // clamp max 1/2 row per scroll
 	
 	// Update scroll offset
 	m_scroll_offset -= scroll_delta;
@@ -515,49 +516,67 @@ bool FileView::scroll_event(const nanogui::Vector2i& p, const nanogui::Vector2f&
 	// Calculate the first visible row
 	int new_first_visible_row = static_cast<int>(m_scroll_offset / m_row_height);
 	
-	// Update visible items regardless of row change to account for preloading
-	update_visible_items(new_first_visible_row, direction);
-	m_previous_first_visible_row = new_first_visible_row;
+	// Check if we need to update visible items
+	if (new_first_visible_row != m_previous_first_visible_row) {
+		// Update visible items based on scroll direction
+		
+		update_visible_items(new_first_visible_row, direction);
+		m_previous_first_visible_row = new_first_visible_row;
+	}
 	
 	// Apply the scroll offset by updating the content's position
-	m_content->set_position(nanogui::Vector2i(0, -static_cast<int>(m_scroll_offset)));
+	m_content->set_position(nanogui::Vector2i(0, -static_cast<int>(m_scroll_offset)));	return true; // Indicate that the event has been handled
 	
-	return true; // Indicate that the event has been handled
+	m_content->perform_layout(screen().nvg_context());
 }
-
 
 void FileView::update_visible_items(int first_visible_row, int direction) {
 	const int columns = m_columns;
 	int start_index;
 	int end_index;
 	
-	// Calculate the range of rows to load, including two extra rows in advance
-	int preload_rows = 2; // Number of rows to preload before and after
+	if (direction > 0) { // Scrolling down
+		// Load the row after the last visible row
+		start_index = (first_visible_row + m_visible_rows) * columns;
+		end_index = start_index + columns; // Load one additional row
+	} else if (direction < 0) { // Scrolling up
+		// Load the row before the first visible row
+		start_index = (first_visible_row - 1) * columns;
+		end_index = start_index + columns; // Load one additional row
+	} else {
+		// No direction change; do not update
+		return;
+	}
 	
-	// Calculate the range of items to be loaded
-	start_index = (first_visible_row - preload_rows) * columns;
-	end_index = (first_visible_row + m_visible_rows + preload_rows) * columns;
-	
-	// Ensure indices are within bounds
+	// Ensure start_index is within bounds
 	if (start_index < 0) {
 		start_index = 0;
 	}
+	if (start_index >= static_cast<int>(m_all_nodes.size())) {
+		return; // Nothing to load
+	}
+	
+	// Ensure end_index is within bounds
 	if (end_index > static_cast<int>(m_all_nodes.size())) {
 		end_index = static_cast<int>(m_all_nodes.size());
 	}
 	
-	// Clear existing items
-	m_content->shed_children();
-	m_file_buttons.clear();
-	m_image_views.clear();
-	m_name_labels.clear();
-	m_item_containers.clear();
-	
-	// Loop through the range and update/add widgets
+	// Loop through the range and update/reuse widgets
 	for (int i = start_index; i < end_index; ++i) {
+		// Check if the item is already visible
+		if (i >= first_visible_row * columns && i < (first_visible_row + m_visible_rows) * columns) {
+			continue; // Already visible
+		}
+		
+		// Otherwise, update or add the new item
 		const auto& child = m_all_nodes[i];
-		acquire_button(child);
+		
+		// Reuse existing widgets if possible
+		add_or_update_widget(i, child);
 	}
+	
+	// Optionally remove widgets that are no longer visible
+	remove_invisible_widgets(first_visible_row);
 	
 	m_content->perform_layout(screen().nvg_context());
 }
@@ -568,24 +587,39 @@ void FileView::add_or_update_widget(int index, const std::shared_ptr<DirectoryNo
 
 void FileView::remove_invisible_widgets(int first_visible_row) {
 	const int columns = m_columns;
-	int preload_rows = 2; // Number of rows preloaded before and after
+	int start_visible = first_visible_row * columns;
+	int end_visible = (first_visible_row + m_visible_rows) * columns;
 	
-	int start_visible = (first_visible_row - preload_rows) * columns;
-	int end_visible = (first_visible_row + m_visible_rows + preload_rows) * columns;
-	
-	// Clamp indices
-	if (start_visible < 0) start_visible = 0;
-	if (end_visible > static_cast<int>(m_all_nodes.size())) end_visible = static_cast<int>(m_all_nodes.size());
-	
-	// Remove widgets outside the preloaded range
+	// Iterate through file buttons and release those outside the visible range
 	for (int i = m_file_buttons.size() - 1; i >= 0; --i) {
-		int item_index = start_visible + i;
-		if (item_index < start_visible || item_index >= end_visible) {
-			// Remove this widget
-			m_content->remove_child(*m_item_containers[i]);
+		// Only remove buttons that are beyond the end_visible index
+		if (i >= end_visible) {
 			m_file_buttons.erase(m_file_buttons.begin() + i);
+		}
+	}
+	
+	// Similarly handle image views
+	for (int i = m_image_views.size() - 1; i >= 0; --i) {
+		if (i >= end_visible) {
+			release_texture(m_image_views[i]->image());
+			m_image_views[i]->set_visible(false);
 			m_image_views.erase(m_image_views.begin() + i);
+		}
+	}
+	
+	// Similarly handle labels
+	for (int i = m_name_labels.size() - 1; i >= 0; --i) {
+		if (i >= end_visible) {
+			m_name_labels[i]->set_visible(false);
 			m_name_labels.erase(m_name_labels.begin() + i);
+		}
+	}
+	
+	// Similarly handle item containers
+	for (int i = m_item_containers.size() - 1; i >= 0; --i) {
+		if (i >= end_visible) {
+			m_item_containers[i]->set_visible(false);
+			m_content->remove_child(*m_item_containers[i]);
 			m_item_containers.erase(m_item_containers.begin() + i);
 		}
 	}
