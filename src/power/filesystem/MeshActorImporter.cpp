@@ -26,7 +26,7 @@ MeshActorImporter::MeshActorImporter() {
 	
 }
 
-std::unique_ptr<MeshActorImporter::CompressedMeshActor> MeshActorImporter::process(const std::string& path, const std::string& destination) {
+std::unique_ptr<MeshActorImporter::CompressedMeshActor> MeshActorImporter::process(const std::string& path, const std::string& destination, bool convertAxis) {
 	
 	auto actor = std::make_unique<CompressedMeshActor>();
 	
