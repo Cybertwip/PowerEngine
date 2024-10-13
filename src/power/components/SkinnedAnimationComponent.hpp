@@ -32,6 +32,9 @@ public:
 		};
 	};
 	
+private:
+	SkinnedAnimationComponent();
+	
 public:
 	SkinnedAnimationComponent(PlaybackComponent& provider, AnimationTimeProvider& animationTimeProvider)
 	: mProvider(provider), mAnimationTimeProvider(animationTimeProvider), mRegistrationId(-1), mFrozen(false)

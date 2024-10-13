@@ -40,9 +40,7 @@ public:
 	PromptWindow(nanogui::Screen& parent, nanogui::Screen& screen, ResourcesPanel& resourcesPanel, DeepMotionApiClient& deepMotionApiClient, nanogui::RenderPass& renderpass, ShaderManager& shaderManager);
 	
 	void Preview(const std::string& path, const std::string& directory);
-	
-	void Preview(const std::string& path, const std::string& directory, CompressedSerialization::Deserializer& deserializer, std::shared_ptr<PlaybackData> playbackData);
-	
+		
 	void ProcessEvents();
 	
 private:	
@@ -102,4 +100,6 @@ private:
 	std::optional<std::unique_ptr<CompressedSerialization::Serializer>> mSerializedPrompt;
 	
 	nanogui::RenderPass& mRenderPass;
+	
+	std::shared_ptr<Actor> mActiveActor;
 };

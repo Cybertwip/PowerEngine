@@ -132,31 +132,10 @@ mRenderPass(renderpass) { // update with proper duration, dynamically after load
 }
 
 void PromptWindow::Preview(const std::string& path, const std::string& directory) {
-	set_visible(true);
-	set_modal(true);
-	
-	mActorPath = path;
-	mOutputDirectory = directory;
-	
-	mImportButton->set_enabled(false);
-	
-	std::filesystem::path filePath(mActorPath);
-	std::string extension = filePath.extension().string();
-	
-	std::string actorName = std::filesystem::path(mActorPath).stem().string();
 	
 	// Create Deserializer
 	CompressedSerialization::Deserializer deserializer;
-	
-	if (!deserializer.load_from_file(mActorPath)) {
-		std::cerr << "Failed to load serialized file: " << path << "\n";
-		return;
-	}
-	
-	Preview(path, directory, deserializer, nullptr);
-}
 
-void PromptWindow::Preview(const std::string& path, const std::string& directory, CompressedSerialization::Deserializer& deserializer, std::shared_ptr<PlaybackData> playbackData) {
 	set_visible(true);
 	set_modal(true);
 	
@@ -184,19 +163,14 @@ void PromptWindow::Preview(const std::string& path, const std::string& directory
 	if (path.find(".psk") == std::string::npos) {
 		// Mesh rigging is still not implemented
 		mSubmitButton->set_enabled(false);
-	} else {
-		
-		if (playbackData != nullptr) {
-			auto& playbackComponent = actor->get_component<PlaybackComponent>();
-			
-			playbackComponent.setPlaybackData(playbackData);
-		}
 	}
-
-
+	
 	mPreviewCanvas->set_update(false);
 	mPreviewCanvas->set_active_actor(actor);
 	mPreviewCanvas->set_update(true);
+	
+	mActiveActor = actor;
+
 	
 	// Update Status Label to Idle
 	{
@@ -496,7 +470,9 @@ void PromptWindow::PollJobStatusAsync(const std::string& request_id) {
 													
 													auto playbackData = std::make_shared<PlaybackData>(std::make_shared<Skeleton>(), std::move(animation));
 													
-													Preview(mActorPath, mOutputDirectory, deserializer, playbackData);
+													auto& playbackComponent = mActiveActor->get_component<PlaybackComponent>();
+													
+													playbackComponent.setPlaybackData(playbackData);
 													
 													break;
 												}
