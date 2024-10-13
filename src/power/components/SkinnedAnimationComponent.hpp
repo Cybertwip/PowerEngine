@@ -304,7 +304,7 @@ private:
 		// If time is before the first keyframe
 		if (time < keyframes_.front().time) {
 			// Set the model pose to the first keyframe's pose
-			evaluate_animation(*keyframes_.front().getPlaybackData()->mAnimation, keyframes_.front().time);
+			evaluate_animation(keyframes_.front().getPlaybackData()->get_animation(), keyframes_.front().time);
 			
 			return std::nullopt;
 		}
@@ -312,7 +312,7 @@ private:
 		// If time is after the last keyframe
 		if (time > keyframes_.back().time) {
 			// Set the model pose to the last keyframe's pose
-			evaluate_animation(*keyframes_.back().getPlaybackData()->mAnimation, keyframes_.back().time);
+			evaluate_animation(keyframes_.back().getPlaybackData()->get_animation(), keyframes_.back().time);
 			
 			return keyframes_.back();
 		}
@@ -425,7 +425,7 @@ private:
 		std::optional<std::reference_wrapper<Animation>> animation;
 		
 		if (keyframe.has_value()) {
-			animation = *keyframe->getPlaybackData()->mAnimation;
+			animation = keyframe->getPlaybackData()->get_animation();
 		} else {
 			return std::nullopt;
 		}
@@ -528,11 +528,11 @@ private:
 		
 		// Check if the iterator is valid
 		if (keyframe_it != keyframes_.rend()) {
-			auto& currentAnimation = keyframes_.front().getPlaybackData()->mAnimation;
+			auto& currentAnimation = keyframes_.front().getPlaybackData()->get_animation();
 			
 			// Loop backwards through the keyframes starting from the found keyframe
 			for (auto it = keyframe_it; it != keyframes_.rend(); ++it) {
-				if (it->getPlaybackData()->mAnimation != currentAnimation) {
+				if (&it->getPlaybackData()->get_animation() != &currentAnimation) {
 					// If the animation has changed, reset the offset and break
 					mAnimationOffset = 0.0f;
 					break;
@@ -604,15 +604,15 @@ private:
 						 const PlaybackComponent::Keyframe& next,
 						 float time,
 						 float t) {
-		if (!current.getPlaybackData() || !current.getPlaybackData()->mAnimation ||
-			!next.getPlaybackData() || !next.getPlaybackData()->mAnimation) {
+		if (!current.getPlaybackData() ||
+			!next.getPlaybackData() ) {
 			std::cerr << "Invalid playback data or animation in keyframes." << std::endl;
 			return;
 		}
 		
 		// Retrieve the associated animations
-		Animation& animationA = *current.getPlaybackData()->mAnimation;
-		Animation& animationB = *next.getPlaybackData()->mAnimation;
+		Animation& animationA = current.getPlaybackData()->get_animation();
+		Animation& animationB = next.getPlaybackData()->get_animation();
 		
 		// Get the total number of bones from the skeleton
 		size_t numBones = mProvider.get_skeleton().num_bones();

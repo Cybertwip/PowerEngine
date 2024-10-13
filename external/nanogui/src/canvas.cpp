@@ -100,7 +100,7 @@ void Canvas::draw(NVGcontext *ctx) {
 	m_render_pass->begin();
 	
 	if (m_scissor_size.x() != 0 && m_scissor_size.y() != 0) {
-		m_render_pass->set_scissor_rect(m_scissor_offset, m_scissor_size);
+		//m_render_pass->set_scissor_rect(m_scissor_offset, m_scissor_size);
 	}
 	
 	draw_contents();

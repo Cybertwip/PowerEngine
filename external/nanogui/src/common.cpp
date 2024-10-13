@@ -21,15 +21,13 @@
 #include <nanogui/opengl.h>
 #include <nanogui/metal.h>
 #include <unordered_map>  // Replaced <map> with <unordered_map> for better performance
-#include <deque>          // Changed to deque for efficient front and back operations
+#include <queue>          // Added for asynchronous function queue
 #include <thread>
 #include <chrono>
 #include <mutex>
 #include <iostream>
-#include <atomic>
-#include <functional>
-#include <future>
-#include <vector>
+#include <atomic>         // Added for atomic variables
+#include <functional>     // Added for std::function
 
 #if !defined(_WIN32)
 #  include <locale.h>
@@ -54,20 +52,10 @@ extern void disable_saved_application_state_osx();
 static std::atomic<bool> redraw_thread_running(false);
 static std::thread redraw_thread;
 
-// Mutex and queue for main thread tasks
-std::mutex main_thread_mutex;
-std::deque<std::function<void()>> main_thread_tasks;
-
-void post_to_main_thread(const std::function<void()> &func) {
-	{
-		std::lock_guard<std::mutex> lock(main_thread_mutex);
-		main_thread_tasks.push_back(func);
-	}
-}
-
-void async(const std::function<void()> &func) {
-	std::async(std::launch::async, func);
-}
+// Mutex and queue for asynchronous functions
+std::mutex m_async_mutex;
+// Changed from std::vector to std::queue for better FIFO handling
+std::queue<std::function<void()>> m_async_functions;
 
 #if defined(__APPLE__)
 extern void disable_saved_application_state_osx();
@@ -76,10 +64,10 @@ extern void disable_saved_application_state_osx();
 // Function to start the redraw thread
 void start_redraw_thread() {
 	redraw_thread_running = true;
-	redraw_thread = std::thread([]() {
+	redraw_thread = std::thread([](){
 		while (redraw_thread_running) {
-			// Request redraw on the main thread
-			post_to_main_thread([]() {
+			// Enqueue redraw for all visible screens
+			async([](){
 				for (auto &kv : __nanogui_screens) {
 					Screen *screen = kv.second;
 					if (screen->visible()) {
@@ -137,14 +125,14 @@ static double emscripten_last = 0;
 static float emscripten_refresh = 0;
 #endif
 
-void mainloop(float refresh) {
+void mainloop() {
 	if (mainloop_active)
 		throw std::runtime_error("Main loop is already running!");
 	
 	// Start the redraw thread
 	start_redraw_thread();
 	
-	auto mainloop_iteration = [&]() {
+	auto mainloop_iteration = []() {
 		int num_screens = 0;
 		
 #if defined(EMSCRIPTEN)
@@ -156,15 +144,17 @@ void mainloop(float refresh) {
 		}
 #endif
 		
-		// Process main thread tasks
+		/* Run async functions */
 		{
-			std::deque<std::function<void()>> local_tasks;
+			std::queue<std::function<void()>> local_queue;
 			{
-				std::lock_guard<std::mutex> lock(main_thread_mutex);
-				std::swap(local_tasks, main_thread_tasks);
+				std::lock_guard<std::mutex> guard(m_async_mutex);
+				std::swap(local_queue, m_async_functions);
 			}
-			for (auto &task : local_tasks) {
-				task();
+			while (!local_queue.empty()) {
+				auto &f = local_queue.front();
+				f();
+				local_queue.pop();
 			}
 		}
 		
@@ -219,6 +209,11 @@ void mainloop(float refresh) {
 	
 	// Stop the redraw thread after exiting the main loop
 	stop_redraw_thread();
+}
+
+void async(const std::function<void()> &func) {
+	std::lock_guard<std::mutex> guard(m_async_mutex);
+	m_async_functions.push(func);
 }
 
 void leave() {
@@ -475,5 +470,7 @@ std::vector<std::string> file_dialog(const std::vector<std::pair<std::string, st
 #endif
 
 Object::~Object() { }
+
+
 
 NAMESPACE_END(nanogui)

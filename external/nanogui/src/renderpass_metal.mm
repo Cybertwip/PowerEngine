@@ -364,6 +364,8 @@ void RenderPass::set_viewport(const Vector2i &offset, const Vector2i &size) {
 			(double) size.x(),   (double) size.y(),
 			0.0, 1.0 }
 		];
+		
+		set_scissor_rect(offset, size);
 	}
 }
 

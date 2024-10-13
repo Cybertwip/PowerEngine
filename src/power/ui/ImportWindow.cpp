@@ -89,19 +89,19 @@ void ImportWindow::Preview(const std::string& path, const std::string& directory
 	set_visible(true);
 	set_modal(true);
 	
-	mCompressedMeshData = std::move(mMeshActorImporter->process(path, directory));
-	
+	auto meshData = mMeshActorImporter->process(path, directory);
+		
 	auto actor = std::make_shared<Actor>(mDummyRegistry);
 	
 	std::stringstream compressedData;
 	
-	mCompressedMeshData->mMesh.mSerializer->get_compressed_data(compressedData);
+	meshData->mMesh.mSerializer->get_compressed_data(compressedData);
 	
 	CompressedSerialization::Deserializer deserializer;
 	
 	deserializer.initialize(compressedData);
 	
-	if (mCompressedMeshData->mMesh.mPrecomputedPath.find(".psk") != std::string::npos) {
+	if (meshData->mMesh.mPrecomputedPath.find(".psk") != std::string::npos) {
 		
 		mMeshActorBuilder->build_skinned(*actor, mDummyAnimationTimeProvider, "DummyActor", deserializer, mPreviewCanvas->get_mesh_shader(), mPreviewCanvas->get_skinned_mesh_shader());
 	} else {
@@ -111,13 +111,16 @@ void ImportWindow::Preview(const std::string& path, const std::string& directory
 	mPreviewCanvas->set_active_actor(actor);
 	mPreviewCanvas->set_update(true);
 	
-	if (!mCompressedMeshData->mAnimations.has_value()) {
+	if (!meshData->mAnimations.has_value()) {
 		mAnimationsCheckbox->set_enabled(false);
 		mAnimationsCheckbox->set_checked(false); // Optionally uncheck if disabled
 	} else {
 		mAnimationsCheckbox->set_enabled(true);
 		// Optionally set the checked state based on your requirements
 	}
+	
+	mCompressedMeshData = std::move(meshData);
+
 }
 
 void ImportWindow::ImportIntoProject() {
