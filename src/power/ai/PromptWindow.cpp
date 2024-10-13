@@ -341,46 +341,38 @@ void PromptWindow::SubmitPromptAsync() {
 }
 
 void PromptWindow::PollJobStatusAsync(const std::string& request_id) {
-	// Lambda to poll job status
+	// Start polling
 	auto poll = [this, request_id]() {
-		bool keep_polling = true;
-		while (keep_polling) {
-			std::promise<Json::Value> status_promise;
-			std::future<Json::Value> status_future = status_promise.get_future();
-			
-			// Asynchronously check job status
-			mDeepMotionApiClient.check_job_status_async(request_id,
-														[&status_promise](const Json::Value& status, const std::string& error) {
-				if (!error.empty()) {
-					std::cerr << "Failed to check job status: " << error << std::endl;
-					status_promise.set_value(Json::Value()); // Return empty on error
-					return;
-				}
-				status_promise.set_value(status);
+		// Asynchronously check job status
+		mDeepMotionApiClient.check_job_status_async(request_id,
+													[this, request_id](const Json::Value& status, const std::string& error) {
+			if (!error.empty()) {
+				std::cerr << "Failed to check job status: " << error << std::endl;
+				// Retry after a delay
+				std::this_thread::sleep_for(std::chrono::seconds(3));
+				PollJobStatusAsync(request_id);
+				return;
 			}
-														);
-			
-			Json::Value status = status_future.get();
 			
 			if (status.empty()) {
-				// Handle error or retry
+				// Retry after a delay
 				std::this_thread::sleep_for(std::chrono::seconds(3));
-				continue;
+				PollJobStatusAsync(request_id);
+				return;
 			}
 			
 			int status_count = status["count"].asInt();
 			
 			if (status_count > 0) {
-				for(auto& json : status["status"]){
+				for (auto& json : status["status"]) {
 					auto job_status = json["status"].asString();
 					
 					std::cout << "Job Status: " << job_status << std::endl;
 					
 					if (job_status == "SUCCESS") {
-						keep_polling = false;
 						// Asynchronously download results
 						mDeepMotionApiClient.download_job_results_async(request_id,
-																		[this, &keep_polling](const Json::Value& results, const std::string& error) {
+																		[this](const Json::Value& results, const std::string& error) {
 							if (!error.empty()) {
 								std::cerr << "Failed to download animations: " << error << std::endl;
 								nanogui::async([this]() {
@@ -395,10 +387,10 @@ void PromptWindow::PollJobStatusAsync(const std::string& request_id) {
 							if (results.isMember("links")) {
 								Json::Value urls = results["links"][0]["urls"];
 								
-								for(auto& url : urls){
-									for(auto& file : url["files"]){
+								for (auto& url : urls) {
+									for (auto& file : url["files"]) {
 										
-										if(file.isMember("fbx")){
+										if (file.isMember("fbx")) {
 											auto download_url = file["fbx"].asString();
 											
 											std::cout << "Download URL: " << download_url << std::endl;
@@ -411,11 +403,11 @@ void PromptWindow::PollJobStatusAsync(const std::string& request_id) {
 												protocol_pos += 3;
 											} else {
 												std::cerr << "Invalid download URL format: " << download_url << std::endl;
-												{
+												nanogui::async([this]() {
 													std::lock_guard<std::mutex> lock(mStatusMutex);
 													mStatusLabel->set_caption("Status: Invalid download URL.");
-												}
-												break;
+												});
+												return;
 											}
 											
 											std::string::size_type host_pos = download_url.find("/", protocol_pos);
@@ -448,16 +440,15 @@ void PromptWindow::PollJobStatusAsync(const std::string& request_id) {
 												
 												// Process the extracted animation files as needed
 												
-												std::filesystem::path path(mActorPath);
+												std::filesystem::path filepath(mActorPath);
 												
-												auto actorName = path.stem().string();
+												auto actorName = filepath.stem().string();
 												
 												for (auto& stream : animation_files) {
 													
 													auto modelData = mMeshActorImporter->process(stream, actorName, mOutputDirectory);
 													
 													auto& serializer = modelData->mMesh.mSerializer;
-													
 													
 													// Generate the unique hash identifier from the compressed data
 													
@@ -474,16 +465,15 @@ void PromptWindow::PollJobStatusAsync(const std::string& request_id) {
 													
 													// Proceed with serialization
 													
-													// no thumbnails yet as this will be animated, then re-serialized in the import method
+													// No thumbnails yet as this will be animated, then re-serialized in the import method
 													serializer->write_header_uint64(0);
 													
 													CompressedSerialization::Deserializer deserializer;
 													
 													if (!deserializer.initialize(compressedData)) {
 														
-														mStatusLabel->set_caption("Status: Unable to deserialize model.");
-														
 														nanogui::async([this]() {
+															mStatusLabel->set_caption("Status: Unable to deserialize model.");
 															mResourcesPanel.refresh_file_view();
 														});
 														
@@ -511,80 +501,77 @@ void PromptWindow::PollJobStatusAsync(const std::string& request_id) {
 													break;
 												}
 												
-												{
+												nanogui::async([this]() {
 													std::lock_guard<std::mutex> lock(mStatusMutex);
 													mStatusLabel->set_caption("Status: Animations Imported.");
-												}
-												
-												// Enable the Import button and re-enable Submit button
-												nanogui::async([this]() {
 													mImportButton->set_enabled(true);
-													mSubmitButton->set_enabled(true); // Re-enable Submit button
+													mSubmitButton->set_enabled(true);
 												});
 												
-												keep_polling = false;
+												return;
 											} else {
-												std::cerr << "Failed to download animations. HTTP Status: " << (res_download ? std::to_string(res_download->status) : "No Response") << std::endl;
-												{
+												std::cerr << "Failed to download animations. HTTP Status: "
+												<< (res_download ? std::to_string(res_download->status) : "No Response") << std::endl;
+												nanogui::async([this]() {
 													std::lock_guard<std::mutex> lock(mStatusMutex);
 													mStatusLabel->set_caption("Status: Failed to download animations.");
-												}
+												});
+												return;
 											}
-											break;
 										}
 									}
 								}
 							}
 						}
 																		);
+						// Do not schedule next poll; job is complete
+						return;
 					} else if (job_status == "FAILURE") {
-						keep_polling = false;
-						
 						std::cerr << "Job failed." << std::endl;
 						
-						std::string messsage = status["details"]["exc_message"].asString();
-						std::string type = status["details"]["exc_type"].asString();
+						std::string message = json["details"]["exc_message"].asString();
+						std::string type = json["details"]["exc_type"].asString();
 						
-						std::cerr << "Failure: " << messsage << std::endl;
-						
+						std::cerr << "Failure: " << message << std::endl;
 						std::cerr << "Exception: " << type << std::endl;
 						
-						
-						{
+						nanogui::async([this]() {
 							std::lock_guard<std::mutex> lock(mStatusMutex);
 							mStatusLabel->set_caption("Status: Job failed.");
-						}
-						break;
+						});
+						// Do not schedule next poll; job is complete
+						return;
 					} else if (job_status == "PROGRESS") {
 						float total = json["details"]["total"].asFloat();
 						float current = json["details"]["step"].asFloat();
-						if (current > total){
+						if (current > total) {
 							current = total;
 						}
 						float percentage = (current * 100.0f) / total;
-						{
+						nanogui::async([this, percentage]() {
 							std::lock_guard<std::mutex> lock(mStatusMutex);
 							mStatusLabel->set_caption("Status: In Progress (" + std::to_string(static_cast<int>(percentage)) + "%)");
-						}
+						});
 					} else {
-						{
+						nanogui::async([this, job_status]() {
 							std::lock_guard<std::mutex> lock(mStatusMutex);
 							mStatusLabel->set_caption("Status: " + job_status);
-						}
+						});
 					}
-					
-					break;
 				}
 			}
 			
-			// Wait before next poll
+			// Schedule next poll after delay
 			std::this_thread::sleep_for(std::chrono::seconds(3));
+			PollJobStatusAsync(request_id);
 		}
+													);
 	};
 	
-	// Launch polling in a separate thread
+	// Launch polling
 	std::thread(poll).detach();
 }
+
 
 void PromptWindow::ImportIntoProjectAsync() {
 	//	std::string animationName = mInputTextBox->value();
