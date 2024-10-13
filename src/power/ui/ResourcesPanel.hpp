@@ -30,7 +30,8 @@ class ResourcesPanel : public Panel {
 public:
 	ResourcesPanel(nanogui::Widget& parent, nanogui::Screen& screen,
 				   DirectoryNode& root_directory_node, std::shared_ptr<IActorVisualManager> actorVisualManager,
-				   std::shared_ptr<SceneTimeBar> sceneTimeBar, MeshActorLoader& meshActorLoader, ShaderManager& shaderManager, DeepMotionApiClient& deepMotionApiClient, UiManager& uiManager);
+				   std::shared_ptr<SceneTimeBar> sceneTimeBar,
+				   AnimationTimeProvider& animationTimeProvider, MeshActorLoader& meshActorLoader, ShaderManager& shaderManager, DeepMotionApiClient& deepMotionApiClient, UiManager& uiManager);
 	
 	~ResourcesPanel();
 	
@@ -43,7 +44,7 @@ public:
 	void process_events();
 	
 private:
-	AnimationTimeProvider mDummyAnimationTimeProvider;
+	AnimationTimeProvider& mGlobalAnimationTimeProvider;
 	
 	DirectoryNode& mRootDirectoryNode;
 	std::string mSelectedDirectoryPath;

@@ -111,15 +111,15 @@ const DirectoryNode* FindNodeByPath(const DirectoryNode& currentNode, const std:
 }
 
 
-ResourcesPanel::ResourcesPanel(nanogui::Widget& parent, nanogui::Screen& screen, DirectoryNode& root_directory_node, std::shared_ptr<IActorVisualManager> actorVisualManager, std::shared_ptr<SceneTimeBar> sceneTimeBar,  MeshActorLoader& meshActorLoader, ShaderManager& shaderManager, DeepMotionApiClient& deepMotionApiClient, UiManager& uiManager)
+ResourcesPanel::ResourcesPanel(nanogui::Widget& parent, nanogui::Screen& screen, DirectoryNode& root_directory_node, std::shared_ptr<IActorVisualManager> actorVisualManager, std::shared_ptr<SceneTimeBar> sceneTimeBar, AnimationTimeProvider& animationTimeProvider, MeshActorLoader& meshActorLoader, ShaderManager& shaderManager, DeepMotionApiClient& deepMotionApiClient, UiManager& uiManager)
 : Panel(parent, screen, "Resources"),
-mDummyAnimationTimeProvider(60 * 30),
 mRootDirectoryNode(root_directory_node),
 mActorVisualManager(actorVisualManager),
 mMeshActorLoader(meshActorLoader),
 mMeshShader(std::make_unique<ShaderWrapper>(shaderManager.get_shader("mesh"))),
 mSkinnedShader(std::make_unique<ShaderWrapper>(shaderManager.get_shader("skinned_mesh"))),
 mSceneTimeBar(sceneTimeBar),
+mGlobalAnimationTimeProvider(globalAnimationTimeProvider),
 mUiManager(uiManager),
 mDeepMotionApiClient(deepMotionApiClient),
 mShaderManager(shaderManager)
@@ -225,6 +225,16 @@ mShaderManager(shaderManager)
 	// Create the file view below the toolbar
 	mFileView = std::make_shared<FileView>(*this, screen, mRootDirectoryNode, false, [this](std::shared_ptr<DirectoryNode> node){
 		mSelectedNode = node;
+	}, [this](std::shared_ptr<DirectoryNode> node){
+		 mSelectedNode = node;
+		
+		auto filename = node->FullPath;
+		
+		if (filename.find(".psk") != std::string::npos || filename.find(".pma") != std::string::npos){
+			mActorVisualManager->add_actor(mMeshActorLoader->create_actor(filename, mGlobalAnimationTimeProvider, *mMeshShader, *mSkinnedShader));
+			
+			mSceneTimeBar->refresh_actors();
+		}
 	});
 	
 	mSelectedDirectoryPath = fs::current_path().string();

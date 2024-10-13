@@ -14,7 +14,7 @@
 
 static std::unique_ptr<DirectoryNode> rootNode = DirectoryNode::create(std::filesystem::current_path().string());
 
-StatusBarPanel::StatusBarPanel(nanogui::Widget& parent, nanogui::Screen& screen, std::shared_ptr<IActorVisualManager>  actorVisualManager, std::shared_ptr<SceneTimeBar> sceneTimeBar,  MeshActorLoader& meshActorLoader, ShaderManager& shaderManager, DeepMotionApiClient& deepMotionApiClient, UiManager& uiManager, std::function<void(std::function<void(int, int)>)> applicationClickRegistrator) : Panel(parent, screen, ""),
+StatusBarPanel::StatusBarPanel(nanogui::Widget& parent, nanogui::Screen& screen, std::shared_ptr<IActorVisualManager>  actorVisualManager, std::shared_ptr<SceneTimeBar> sceneTimeBar, AnimationTimeProvider& animationTimeProvider, MeshActorLoader& meshActorLoader, ShaderManager& shaderManager, DeepMotionApiClient& deepMotionApiClient, UiManager& uiManager, std::function<void(std::function<void(int, int)>)> applicationClickRegistrator) : Panel(parent, screen, ""),
 mSceneTimeBar(sceneTimeBar),
 mActorVisualManager(actorVisualManager),
 mMeshActorLoader(meshActorLoader),
@@ -38,7 +38,7 @@ mApplicationClickRegistrator(applicationClickRegistrator) {
 	mResourcesButton->set_enabled(false);
 	
 	// Resources panel setup
-	mResourcesPanel = std::make_shared<ResourcesPanel>(parent.parent()->get(), screen, *rootNode, mActorVisualManager, mSceneTimeBar, mMeshActorLoader, mShaderManager, mDeepMotionApiClient, mUiManager);
+	mResourcesPanel = std::make_shared<ResourcesPanel>(parent.parent()->get(), screen, *rootNode, mActorVisualManager, mSceneTimeBar, animationTimeProvider, mMeshActorLoader, mShaderManager, mDeepMotionApiClient, mUiManager);
 	mResourcesPanel->set_visible(true);
 	// Add widgets to resourcesPanel here
 	

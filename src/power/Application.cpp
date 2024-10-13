@@ -92,6 +92,7 @@ void Application::initialize() {
 											 mUiCommon->status_bar(),
 											 mUiCommon->animation_panel(),
 											 mUiCommon->scene_time_bar(),
+											 mGlobalAnimationTimeProvider,
 											 *mCameraManager,
 											 *mDeepMotionApiClient,
 											 *mGizmoManager,

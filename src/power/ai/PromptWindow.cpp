@@ -421,7 +421,7 @@ void PromptWindow::PollJobStatusAsync(const std::string& request_id) {
 												
 												for (auto& stream : animation_files) {
 													
-													auto modelData = mMeshActorImporter->process(stream, actorName, mOutputDirectory, false);
+													auto modelData = mMeshActorImporter->process(stream, actorName, mOutputDirectory);
 													
 													auto& serializer = modelData->mMesh.mSerializer;
 													

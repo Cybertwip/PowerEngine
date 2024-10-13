@@ -42,6 +42,7 @@ class IActorSelectedRegistry;
 class IActorVisualManager;
 class ActorManager;
 class AnimationPanel;
+class AnimationTimeProvider;
 class BatchUnit;
 class Canvas;
 class CameraManager;
@@ -70,6 +71,7 @@ public:
 			  std::shared_ptr<nanogui::Widget> statusBar,
 			  std::shared_ptr<AnimationPanel> animationPanel,
 			  std::shared_ptr<SceneTimeBar> sceneTimeBar,
+			  AnimationTimeProvider& animationTimeProvider,
 			  CameraManager& cameraManager,
 			  DeepMotionApiClient& deepMotionApiClient,
 			  GizmoManager& gizmoManager,
