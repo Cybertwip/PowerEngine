@@ -11,7 +11,7 @@
 #include <iostream>
 #include <thread>       // For std::thread
 #include <exception>    // For std::exception
-#include <functional>   // For std::function>
+#include <functional>   // For std::function
 
 namespace ExporterUtil {
 
@@ -63,27 +63,12 @@ MeshActorExporter::~MeshActorExporter() {
 	// Resources are managed by smart pointers, so no manual cleanup is needed
 }
 
-// Synchronous exportToFile implementation
-bool MeshActorExporter::exportToFile(CompressedSerialization::Deserializer& deserializer, const std::string& sourcePath, const std::string& exportPath) {
-	
+// Common function to set up the scene (used by both exportToFile and exportToStream)
+bool MeshActorExporter::setupScene(CompressedSerialization::Deserializer& deserializer,
+								   const std::string& sourcePath,
+								   FbxManager* fbxManager,
+								   FbxScene* scene) {
 	mMeshModels.clear();
-	
-	// Initialize the FBX Manager and Scene
-	FbxManager* fbxManager = FbxManager::Create();
-	if (!fbxManager) {
-		std::cerr << "Error: Unable to create FBX Manager!" << std::endl;
-		return false;
-	}
-	
-	FbxIOSettings* ios = FbxIOSettings::Create(fbxManager, IOSROOT);
-	fbxManager->SetIOSettings(ios);
-	
-	FbxScene* scene = FbxScene::Create(fbxManager, "MyScene");
-	if (!scene) {
-		std::cerr << "Error: Unable to create FBX scene!" << std::endl;
-		fbxManager->Destroy();
-		return false;
-	}
 	
 	// Step 1: Deserialize or transfer data from CompressedMeshActor to internal structures
 	mMeshDeserializer->load_mesh(deserializer, sourcePath);
@@ -242,6 +227,36 @@ bool MeshActorExporter::exportToFile(CompressedSerialization::Deserializer& dese
 		}
 	}
 	
+	return true;
+}
+
+// Synchronous exportToFile implementation
+bool MeshActorExporter::exportToFile(CompressedSerialization::Deserializer& deserializer,
+									 const std::string& sourcePath,
+									 const std::string& exportPath) {
+	
+	// Initialize the FBX Manager and Scene
+	FbxManager* fbxManager = FbxManager::Create();
+	if (!fbxManager) {
+		std::cerr << "Error: Unable to create FBX Manager!" << std::endl;
+		return false;
+	}
+	
+	FbxIOSettings* ios = FbxIOSettings::Create(fbxManager, IOSROOT);
+	fbxManager->SetIOSettings(ios);
+	
+	FbxScene* scene = FbxScene::Create(fbxManager, "MyScene");
+	if (!scene) {
+		std::cerr << "Error: Unable to create FBX scene!" << std::endl;
+		fbxManager->Destroy();
+		return false;
+	}
+	
+	if (!setupScene(deserializer, sourcePath, fbxManager, scene)) {
+		fbxManager->Destroy();
+		return false;
+	}
+	
 	// Step 5: Export the Scene to a file
 	FbxExporter* exporter = FbxExporter::Create(fbxManager, "");
 	
@@ -263,6 +278,112 @@ bool MeshActorExporter::exportToFile(CompressedSerialization::Deserializer& dese
 	fbxManager->Destroy();
 	
 	std::cout << "Successfully exported actor to " << exportPath << std::endl;
+	return true;
+}
+
+// Synchronous exportToStream implementation
+bool MeshActorExporter::exportToStream(CompressedSerialization::Deserializer& deserializer,
+									   const std::string& sourcePath,
+									   std::ostream& outStream) {
+	
+	// Initialize the FBX Manager and Scene
+	FbxManager* fbxManager = FbxManager::Create();
+	if (!fbxManager) {
+		std::cerr << "Error: Unable to create FBX Manager!" << std::endl;
+		return false;
+	}
+	
+	FbxIOSettings* ios = FbxIOSettings::Create(fbxManager, IOSROOT);
+	fbxManager->SetIOSettings(ios);
+	
+	FbxScene* scene = FbxScene::Create(fbxManager, "MyScene");
+	if (!scene) {
+		std::cerr << "Error: Unable to create FBX scene!" << std::endl;
+		fbxManager->Destroy();
+		return false;
+	}
+	
+	if (!setupScene(deserializer, sourcePath, fbxManager, scene)) {
+		fbxManager->Destroy();
+		return false;
+	}
+	
+	// Create an exporter
+	FbxExporter* exporter = FbxExporter::Create(fbxManager, "");
+	
+	// Implement a custom stream class that uses the provided std::ostream
+	class OStreamWrapper : public FbxStream {
+	public:
+		OStreamWrapper(std::ostream& stream) : mStream(stream) {}
+		virtual ~OStreamWrapper() {}
+		
+		virtual EState GetState() override { return mStream.good() ? eOpen : eClosed; }
+		virtual bool Open(void* /*pStreamData*/) override {
+			return true;
+		}
+		virtual bool Close() override { return true; }
+		virtual bool Flush() override { mStream.flush(); return true; }
+		virtual size_t Write(const void* pData, FbxUInt64 pSize) override {
+			mStream.write(static_cast<const char*>(pData), pSize);
+			return pSize;
+		}
+		virtual size_t Read(void* /*pData*/, FbxUInt64 /*pSize*/) const override { return 0; }
+		virtual int GetReaderID() const override { return -1; }
+		virtual int GetWriterID() const override { return 0; }
+		virtual void Seek(const FbxInt64& pOffset, const FbxFile::ESeekPos& pSeekPos) override {
+			std::ios_base::seekdir dir;
+			switch (pSeekPos) {
+				case FbxFile::eBegin:
+					dir = std::ios_base::beg;
+					break;
+				case FbxFile::eCurrent:
+					dir = std::ios_base::cur;
+					break;
+				case FbxFile::eEnd:
+					dir = std::ios_base::end;
+					break;
+				default:
+					dir = std::ios_base::beg;
+					break;
+			}
+			mStream.seekp(static_cast<std::streamoff>(pOffset), dir);
+		}
+		virtual FbxInt64 GetPosition() const override {
+			return static_cast<FbxInt64>(mStream.tellp());
+		}
+		virtual void SetPosition(FbxInt64 pPosition) override {
+			mStream.seekp(static_cast<std::streamoff>(pPosition), std::ios_base::beg);
+		}
+		virtual int GetError() const override { return 0; }
+		virtual void ClearError() override {}
+	private:
+		std::ostream& mStream;
+	};
+	
+	OStreamWrapper customStream(outStream);
+	
+	// Initialize the exporter with the custom stream
+	if (!exporter->Initialize(&customStream, nullptr, -1, fbxManager->GetIOSettings())) {
+		std::cerr << "Error: Failed to initialize FBX exporter with custom stream." << std::endl;
+		exporter->Destroy();
+		fbxManager->Destroy();
+		return false;
+	}
+	
+	if (!exporter->Export(scene)) {
+		
+		auto status = exporter->GetStatus();
+		
+		std::cerr << "Error: Failed to export FBX scene to stream. Status: " << status << std::endl;
+		exporter->Destroy();
+		fbxManager->Destroy();
+		return false;
+	}
+	
+	exporter->Destroy();
+	fbxManager->Destroy();
+	
+	std::cout << "Successfully exported actor to stream." << std::endl;
 	return true;
 }
 
@@ -379,4 +500,30 @@ void MeshActorExporter::createMesh(
 	for (const auto& [index, material] : materialMap) {
 		meshNode->AddMaterial(material);
 	}
+}
+
+// Asynchronous exportToFile implementation
+void MeshActorExporter::exportToFileAsync(CompressedSerialization::Deserializer& deserializer,
+										  const std::string& sourcePath,
+										  const std::string& exportPath,
+										  std::function<void(bool success)> callback) {
+	std::thread([this, &deserializer, sourcePath, exportPath, callback]() {
+		bool success = this->exportToFile(deserializer, sourcePath, exportPath);
+		if (callback) {
+			callback(success);
+		}
+	}).detach();
+}
+
+// Asynchronous exportToStream implementation
+void MeshActorExporter::exportToStreamAsync(std::unique_ptr<CompressedSerialization::Deserializer> deserializerPtr,
+											const std::string& sourcePath,
+											std::ostream& outStream,
+											std::function<void(bool success)> callback) {
+	std::thread([this, deserializer = std::move(deserializerPtr), sourcePath, &outStream, callback]() mutable {
+		bool success = this->exportToStream(*deserializer, sourcePath, outStream);
+		if (callback) {
+			callback(success);
+		}
+	}).detach();
 }

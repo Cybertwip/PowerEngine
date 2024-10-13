@@ -149,7 +149,9 @@ mShaderManager(shaderManager)
 		
 		mPromptWindow->set_visible(true);
 		mPromptWindow->set_modal(true);
-		mPromptWindow->Preview(modelPath, mSelectedDirectoryPath);
+		nanogui::async([this, modelPath](){
+						mPromptWindow->Preview(modelPath, mSelectedDirectoryPath);
+		});
 	});
 	
 	mMeshPicker->set_visible(false);

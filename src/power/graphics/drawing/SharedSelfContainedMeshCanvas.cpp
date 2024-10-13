@@ -21,8 +21,8 @@ void SharedSelfContainedMeshCanvas::set_active_actor(std::shared_ptr<Actor> acto
 		mSharedPreviewActor = actor;
 		SelfContainedMeshCanvas::set_active_actor(*mSharedPreviewActor);
 	} else {
-		mSharedPreviewActor = nullptr;
 		set_update(false);
+		mSharedPreviewActor = nullptr;
 	}
 }
 
@@ -37,7 +37,8 @@ void SharedSelfContainedMeshCanvas::take_snapshot(std::function<void(std::vector
 }
 
 void SharedSelfContainedMeshCanvas::process_events() {
-	
+	std::unique_lock<std::mutex> lock(mPreviewMutex);
+
 	// schedule here
 	if (mSnapshotCallback) {
 		auto& scr = screen();

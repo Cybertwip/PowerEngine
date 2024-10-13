@@ -160,8 +160,6 @@ void PromptWindow::Preview(const std::string& path, const std::string& directory
 	set_visible(true);
 	set_modal(true);
 	
-	mPreviewCanvas->set_update(false);
-	mPreviewCanvas->set_active_actor(nullptr);
 	mActorPath = path;
 	mOutputDirectory = directory;
 	
@@ -525,6 +523,7 @@ void PromptWindow::PollJobStatusAsync(const std::string& request_id) {
 													mSubmitButton->set_enabled(true); // Re-enable Submit button
 												});
 												
+												return;
 											} else {
 												std::cerr << "Failed to download animations. HTTP Status: " << (res_download ? std::to_string(res_download->status) : "No Response") << std::endl;
 												{

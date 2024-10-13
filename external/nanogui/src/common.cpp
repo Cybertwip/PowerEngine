@@ -28,7 +28,6 @@
 #include <iostream>
 #include <atomic>
 #include <functional>
-#include <condition_variable>
 #include <future>
 #include <vector>
 
@@ -55,75 +54,6 @@ extern void disable_saved_application_state_osx();
 static std::atomic<bool> redraw_thread_running(false);
 static std::thread redraw_thread;
 
-// Thread pool for asynchronous function execution
-class ThreadPool {
-public:
-	ThreadPool(size_t num_threads);
-	~ThreadPool();
-	
-	void enqueue(std::function<void()> func);
-	
-private:
-	// Keep track of threads
-	std::vector<std::thread> workers;
-	// Queue of tasks
-	std::deque<std::function<void()>> tasks;
-	
-	// Synchronization
-	std::mutex queue_mutex;
-	std::condition_variable condition;
-	bool stop;
-};
-
-// Constructor
-ThreadPool::ThreadPool(size_t num_threads) : stop(false) {
-	for (size_t i = 0; i < num_threads; ++i) {
-		workers.emplace_back([this] {
-			for (;;) {
-				std::function<void()> task;
-				
-				{ // Acquire lock
-					std::unique_lock<std::mutex> lock(this->queue_mutex);
-					this->condition.wait(lock, [this] {
-						return this->stop || !this->tasks.empty();
-					});
-					if (this->stop && this->tasks.empty())
-						return;
-					task = std::move(this->tasks.front());
-					this->tasks.pop_front();
-				} // Release lock
-				
-				task();
-			}
-		});
-	}
-}
-
-// Add new work item to the pool
-void ThreadPool::enqueue(std::function<void()> func) {
-	{ // Acquire lock
-		std::unique_lock<std::mutex> lock(queue_mutex);
-		if (stop)
-			throw std::runtime_error("enqueue on stopped ThreadPool");
-		tasks.emplace_back(std::move(func));
-	} // Release lock
-	condition.notify_one();
-}
-
-// Destructor
-ThreadPool::~ThreadPool() {
-	{ // Acquire lock
-		std::unique_lock<std::mutex> lock(queue_mutex);
-		stop = true;
-	} // Release lock
-	condition.notify_all();
-	for (std::thread &worker : workers)
-		worker.join();
-}
-
-// Initialize the thread pool with the desired number of threads
-ThreadPool thread_pool(std::thread::hardware_concurrency());
-
 // Mutex and queue for main thread tasks
 std::mutex main_thread_mutex;
 std::deque<std::function<void()>> main_thread_tasks;
@@ -136,7 +66,7 @@ void post_to_main_thread(const std::function<void()> &func) {
 }
 
 void async(const std::function<void()> &func) {
-	thread_pool.enqueue(func);
+	std::async(std::launch::async, func);
 }
 
 #if defined(__APPLE__)

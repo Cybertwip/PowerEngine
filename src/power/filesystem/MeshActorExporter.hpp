@@ -46,6 +46,11 @@ public:
 							 std::function<void(bool success)> callback);
 	
 private:
+	
+	bool setupScene(CompressedSerialization::Deserializer& deserializer,
+									   const std::string& sourcePath,
+									   FbxManager* fbxManager,
+					FbxScene* scene);
 	// Helper functions
 	void createMaterials(FbxManager* fbxManager,
 						 FbxScene* scene,
