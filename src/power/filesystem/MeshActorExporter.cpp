@@ -92,12 +92,15 @@ bool MeshActorExporter::setupScene(CompressedSerialization::Deserializer& deseri
 	
 	// Step 3: Create Meshes and Models
 	FbxNode* rootNode = scene->GetRootNode();
-	
+
 	for (size_t i = 0; i < mMeshes.size(); ++i) {
 		auto& meshData = *mMeshes[i];
 		
 		FbxMesh* fbxMesh = FbxMesh::Create(scene, ("Mesh_" + std::to_string(i)).c_str());
 		FbxNode* meshNode = FbxNode::Create(scene, ("Mesh_Node_" + std::to_string(i)).c_str());
+		
+		meshNode->LclRotation.Set(FbxDouble3(-90.0f, -180.0f, 0.0f)); //revert axis system conversion
+
 		meshNode->SetNodeAttribute(fbxMesh);
 		rootNode->AddChild(meshNode);
 		
@@ -152,6 +155,8 @@ bool MeshActorExporter::setupScene(CompressedSerialization::Deserializer& deseri
 			
 			if (parentIndex == -1) {
 				// Root bone: attach to the root node
+				boneNode->LclRotation.Set(FbxDouble3(-90.0f, -180.0f, 0.0f)); //revert axis system conversion
+
 				rootNode->AddChild(boneNode);
 			} else {
 				// Child bone: attach to its parent bone
@@ -266,7 +271,7 @@ bool MeshActorExporter::exportToFile(CompressedSerialization::Deserializer& dese
 		fbxManager->Destroy();
 		return false;
 	}
-	
+
 	if (!exporter->Export(scene)) {
 		std::cerr << "Error: Failed to export FBX scene." << std::endl;
 		exporter->Destroy();
@@ -369,17 +374,14 @@ bool MeshActorExporter::exportToStream(CompressedSerialization::Deserializer& de
 		fbxManager->Destroy();
 		return false;
 	}
-	
+
 	if (!exporter->Export(scene)) {
-		
-		auto status = exporter->GetStatus();
-		
-		std::cerr << "Error: Failed to export FBX scene to stream. Status: " << status << std::endl;
+		std::cerr << "Error: Failed to export FBX scene." << std::endl;
 		exporter->Destroy();
 		fbxManager->Destroy();
 		return false;
 	}
-	
+
 	exporter->Destroy();
 	fbxManager->Destroy();
 	
