@@ -187,6 +187,7 @@ void SelfContainedMeshCanvas::draw_contents() {
 }
 
 void SelfContainedMeshCanvas::clear() {
+	std::unique_lock<std::mutex> lock(mMutex);
 	set_update(false);
 	
 	mMeshBatch->clear();

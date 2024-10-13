@@ -42,7 +42,7 @@ public:
 	void set_active_actor(std::optional<std::reference_wrapper<Actor>> actor);
 	
 	void set_update(bool update) {
-		std::unique_lock<std::mutex> lock(mMutex);
+		std::unique_lock<std::mutex> lock(mUpdateMutex);
 		mUpdate = update;
 	}
 	
@@ -83,4 +83,6 @@ private:
 	std::unique_ptr<SelfContainedSkinnedMeshBatch> mSkinnedMeshBatch;
 	
 	std::mutex mMutex;
+	
+	std::mutex mUpdateMutex;
 };
