@@ -195,7 +195,8 @@ void PromptWindow::Preview(const std::string& path, const std::string& directory
 		}
 	}
 
-	
+
+	mPreviewCanvas->set_update(false);
 	mPreviewCanvas->set_active_actor(actor);
 	mPreviewCanvas->set_update(true);
 	

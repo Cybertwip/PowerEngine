@@ -1,13 +1,4 @@
 #pragma once
-#include <nanogui/canvas.h>
-#include <nanogui/vector.h>
-#include <nanogui/texture.h>
-#include <glm/glm.hpp>
-#include <glm/gtc/type_ptr.hpp>
-#include <glm/gtx/quaternion.hpp>
-#include <entt/entt.hpp>
-#include <unordered_map>
-#include <optional>
 #include "actors/Actor.hpp"
 #include "ShaderManager.hpp"
 #include "SkinnedMesh.hpp"
@@ -16,6 +7,21 @@
 #include "components/TransformComponent.hpp"
 #include "components/DrawableComponent.hpp"
 #include "components/SkinnedAnimationComponent.hpp"
+
+#include <nanogui/canvas.h>
+#include <nanogui/vector.h>
+#include <nanogui/texture.h>
+
+#include <glm/glm.hpp>
+#include <glm/gtc/type_ptr.hpp>
+#include <glm/gtx/quaternion.hpp>
+
+#include <entt/entt.hpp>
+
+#include <unordered_map>
+#include <optional>
+
+#include <mutex>
 
 class SelfContainedSkinnedMeshBatch;
 class SelfContainedMeshBatch;
@@ -36,6 +42,7 @@ public:
 	void set_active_actor(std::optional<std::reference_wrapper<Actor>> actor);
 	
 	void set_update(bool update) {
+		std::unique_lock<std::mutex> lock(mMutex);
 		mUpdate = update;
 	}
 	
@@ -75,4 +82,5 @@ private:
 	std::unique_ptr<SelfContainedMeshBatch> mMeshBatch;
 	std::unique_ptr<SelfContainedSkinnedMeshBatch> mSkinnedMeshBatch;
 	
+	std::mutex mMutex;
 };

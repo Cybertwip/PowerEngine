@@ -53,6 +53,7 @@ SelfContainedMeshCanvas::SelfContainedMeshCanvas(nanogui::Widget& parent, nanogu
 }
 
 void SelfContainedMeshCanvas::set_active_actor(std::optional<std::reference_wrapper<Actor>> actor) {
+	std::unique_lock<std::mutex> lock(mMutex);
 	clear();
 	mCurrentTime = 0;
 	
@@ -165,6 +166,8 @@ void SelfContainedMeshCanvas::draw_content(const nanogui::Matrix4f& view,
 }
 
 void SelfContainedMeshCanvas::draw_contents() {
+	std::unique_lock<std::mutex> lock(mMutex);
+	
 	if (mPreviewActor.has_value() && mUpdate) {
 		update_camera_view();
 		
