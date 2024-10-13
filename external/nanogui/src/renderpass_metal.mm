@@ -192,13 +192,31 @@ void RenderPass::set_scissor_rect(Vector2i offset, Vector2i size) {
 		// Adjust Y coordinate since Metal's origin is bottom-left
 //(		Vector2i framebuffer_size = m_framebuffer_size; // Ensure this is up-to-date
 //		y = framebuffer_size.y() - (y + height);
+		// Clamp scissor_offset to be within [0, m_framebuffer_size]
+		Vector2i clamped_offset = Vector2i(
+										   std::max(0, std::min(offset.x(), m_framebuffer_size.x())),
+										   std::max(0, std::min(offset.y(), m_framebuffer_size.y()))
+										   );
 		
-		Vector2i scissor_size = max(min(offset + size, m_framebuffer_size) - offset, Vector2i(0));
-		Vector2i scissor_offset = max(min(offset, m_framebuffer_size), Vector2i(0));
+		// Calculate the maximum allowable size based on the clamped offset
+		Vector2i max_size = Vector2i(
+									 m_framebuffer_size.x() - clamped_offset.x(),
+									 m_framebuffer_size.y() - clamped_offset.y()
+									 );
+		
+		// Clamp scissor_size to ensure it doesn't exceed the framebuffer boundaries
+		Vector2i clamped_size = Vector2i(
+										 std::max(0, std::min(size.x(), max_size.x())),
+										 std::max(0, std::min(size.y(), max_size.y()))
+										 );
+		
+		// Set the scissor rectangle with the clamped offset and size
 		[command_encoder setScissorRect: (MTLScissorRect) {
-			(NSUInteger) scissor_offset.x(), (NSUInteger) scissor_offset.y(),
-			(NSUInteger) scissor_size.x(),   (NSUInteger) scissor_size.y() }
-		];
+			(NSUInteger)clamped_offset.x(),
+			(NSUInteger)clamped_offset.y(),
+			(NSUInteger)clamped_size.x(),
+			(NSUInteger)clamped_size.y()
+		}];
 	}
 }
 
@@ -346,8 +364,6 @@ void RenderPass::set_viewport(const Vector2i &offset, const Vector2i &size) {
 			(double) size.x(),   (double) size.y(),
 			0.0, 1.0 }
 		];
-		
-		set_scissor_rect(offset, size);
 	}
 }
 
