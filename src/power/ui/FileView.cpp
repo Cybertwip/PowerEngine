@@ -35,7 +35,7 @@ m_selected_button_color(nanogui::Color(100, 100, 255, 255)),
 m_scroll_offset(0.0f),
 m_accumulated_scroll_delta(0.0f),
 m_total_rows(0),
-m_visible_rows(3),
+m_visible_rows(4),
 m_row_height(144), // Assuming row height of 144 pixels
 m_total_textures(40), // Example value, adjust as needed
 m_previous_first_visible_row(0),
@@ -577,6 +577,8 @@ void FileView::update_visible_items(int first_visible_row, int direction) {
 	
 	// Optionally remove widgets that are no longer visible
 	remove_invisible_widgets(first_visible_row);
+	
+	m_content->perform_layout(screen().nvg_context());
 }
 
 void FileView::add_or_update_widget(int index, const std::shared_ptr<DirectoryNode>& child) {
