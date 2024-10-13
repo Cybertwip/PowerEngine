@@ -9,6 +9,98 @@
 
 namespace FbxUtil {
 
+
+class MemoryStreamFbxStream : public FbxStream {
+public:
+	MemoryStreamFbxStream(const char* data, size_t size)
+	: mData(data), mSize(size), mPosition(0) {}
+	
+	virtual ~MemoryStreamFbxStream() override {}
+	
+	virtual EState GetState() override {
+		return FbxStream::eOpen;
+	}
+	
+	virtual bool Open(void* /*pStreamData*/) override {
+		// Stream is already open
+		return true;
+	}
+	
+	virtual bool Close() override {
+		// Nothing to close for memory stream
+		return true;
+	}
+	
+	virtual int Read(void* pBuffer, int pSize) const override {
+		int bytesToRead = static_cast<int>(std::min<size_t>(pSize, mSize - mPosition));
+		memcpy(pBuffer, mData + mPosition, bytesToRead);
+		mPosition += bytesToRead;
+		return bytesToRead;
+	}
+	
+	virtual int Write(const void* /*pBuffer*/, int /*pSize*/) override {
+		// Read-only stream
+		return 0;
+	}
+	
+	virtual int GetReaderID() const override {
+		return 0;
+	}
+	
+	virtual int GetWriterID() const override {
+		return -1; // Not writable
+	}
+	
+	virtual void Flush() override {
+		// No action needed for read-only stream
+	}
+	
+	virtual int64_t Seek(const int64_t& pOffset, const FbxFile::ESeekPos& pSeekPos) override {
+		size_t newPos = 0;
+		switch (pSeekPos) {
+			case FbxFile::eBegin:
+				newPos = static_cast<size_t>(pOffset);
+				break;
+			case FbxFile::eCurrent:
+				newPos = mPosition + pOffset;
+				break;
+			case FbxFile::eEnd:
+				newPos = mSize + pOffset;
+				break;
+			default:
+				return -1;
+		}
+		if (newPos > mSize) {
+			return -1; // Out of bounds
+		}
+		mPosition = newPos;
+		return mPosition;
+	}
+	
+	virtual int64_t GetPosition() const override {
+		return mPosition;
+	}
+	
+	virtual void SetPosition(const int64_t& pPosition) override {
+		if (pPosition >= 0 && pPosition <= mSize) {
+			mPosition = static_cast<size_t>(pPosition);
+		}
+	}
+	
+	virtual int GetError() const override {
+		return 0;
+	}
+	
+	virtual void ClearError() override {
+		// No action needed
+	}
+	
+private:
+	const char* mData;
+	size_t mSize;
+	mutable size_t mPosition;
+};
+
 glm::mat4 GetUpAxisRotation(int up_axis, int up_axis_sign) {
 	glm::mat4 rotation = glm::mat4(1.0f); // Identity matrix
 	
@@ -64,9 +156,33 @@ void Fbx::LoadModel(const std::string& path) {
 }
 
 void Fbx::LoadModel(std::stringstream& data) {
-	// ozz::FbxSceneLoader does not support loading from a stringstream directly.
-	// If needed, write the data to a temporary file and load from it.
-	std::cerr << "Error: Loading from std::stringstream is not supported with ozz" << std::endl;
+	// Initialize the FBX manager and IO settings
+	mFbxManager = std::make_unique<ozz::animation::offline::fbx::FbxManagerInstance>();
+	mSettings = std::make_unique<ozz::animation::offline::fbx::FbxDefaultIOSettings>(*mFbxManager);
+	
+	// Extract data from the stringstream
+	std::string str = data.str();
+	const char* buffer = str.data();
+	size_t size = str.size();
+	
+	// Create an instance of the custom FbxStream
+	FbxUtil::MemoryStreamFbxStream fbxStream(buffer, size);
+	
+	// Load the scene using FbxSceneLoader with the custom stream
+	mSceneLoader = std::make_unique<ozz::animation::offline::fbx::FbxSceneLoader>(&fbxStream, "", *mFbxManager, *mSettings);
+	
+	if (mSceneLoader->scene()) {
+		// Apply axis system conversion if needed
+		FbxAxisSystem directXAxisSys(FbxAxisSystem::EUpVector::eZAxis,
+									 FbxAxisSystem::EFrontVector::eParityOdd,
+									 FbxAxisSystem::eRightHanded);
+		directXAxisSys.DeepConvertScene(mSceneLoader->scene());
+		
+		// Process the root node of the scene
+		ProcessNode(mSceneLoader->scene()->GetRootNode());
+	} else {
+		std::cerr << "Error: Failed to load FBX scene from stream" << std::endl;
+	}
 }
 
 void Fbx::ProcessNode(fbxsdk::FbxNode* node) {
