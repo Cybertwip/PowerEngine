@@ -31,14 +31,14 @@ public:
 		return true;
 	}
 	
-	virtual int Read(void* pBuffer, int pSize) const override {
+	virtual int Read(void* pBuffer, FbxUInt64 pSize) const override {
 		int bytesToRead = static_cast<int>(std::min<size_t>(pSize, mSize - mPosition));
 		memcpy(pBuffer, mData + mPosition, bytesToRead);
 		mPosition += bytesToRead;
 		return bytesToRead;
 	}
 	
-	virtual int Write(const void* /*pBuffer*/, int /*pSize*/) override {
+	virtual int Write(const void* /*pBuffer*/, FbxUInt64 /*pSize*/) override {
 		// Read-only stream
 		return 0;
 	}
@@ -81,7 +81,7 @@ public:
 		return mPosition;
 	}
 	
-	virtual void SetPosition(const int64_t& pPosition) override {
+	virtual void SetPosition(FbxInt64 pPosition) override {
 		if (pPosition >= 0 && pPosition <= mSize) {
 			mPosition = static_cast<size_t>(pPosition);
 		}
