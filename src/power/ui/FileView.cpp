@@ -33,6 +33,7 @@ m_selected_node(nullptr),
 m_normal_button_color(nanogui::Color(200, 200, 200, 255)),
 m_selected_button_color(nanogui::Color(100, 100, 255, 255)),
 m_scroll_offset(0.0f),
+m_spawn_scroll_offset(0.0f),
 m_accumulated_scroll_delta(0.0f),
 m_total_rows(0),
 m_visible_rows(4),
@@ -400,6 +401,7 @@ void FileView::refresh(const std::string& filter_text) {
 		
 		// Reset scroll offset and row indices
 		m_scroll_offset = 0.0f;
+		m_spawn_scroll_offset = 0.0f;
 		m_previous_first_visible_row = 0;
 		
 		// Populate the file view with updated contents
@@ -488,7 +490,8 @@ bool FileView::scroll_event(const nanogui::Vector2i& p, const nanogui::Vector2f&
 	
 	// Update scroll offset
 	m_scroll_offset -= scroll_delta;
-	
+	m_spawn_scroll_offset -= scroll_delta * 2;
+
 	// Clamp the scroll offset
 	int content_height = m_total_rows * m_row_height;
 	int view_height = this->height();
@@ -496,12 +499,15 @@ bool FileView::scroll_event(const nanogui::Vector2i& p, const nanogui::Vector2f&
 	if (content_height > view_height) {
 		if (m_scroll_offset < 0.0f) {
 			m_scroll_offset = 0.0f;
+			m_spawn_scroll_offset = 0.0f;
 		}
 		if (m_scroll_offset > content_height - view_height) {
 			m_scroll_offset = content_height - view_height;
+			m_spawn_scroll_offset = content_height - view_height;
 		}
 	} else {
 		m_scroll_offset = 0.0f;
+		m_spawn_scroll_offset = 0.0f;
 	}
 	
 	// Determine scroll direction
@@ -514,7 +520,7 @@ bool FileView::scroll_event(const nanogui::Vector2i& p, const nanogui::Vector2f&
 	m_previous_scroll_offset = m_scroll_offset;
 	
 	// Calculate the first visible row
-	int new_first_visible_row = static_cast<int>(m_scroll_offset / m_row_height);
+	int new_first_visible_row = static_cast<int>(m_spawn_scroll_offset / m_row_height);
 	
 	// Check if we need to update visible items
 	if (new_first_visible_row != m_previous_first_visible_row) {
@@ -538,11 +544,11 @@ void FileView::update_visible_items(int first_visible_row, int direction) {
 	if (direction > 0) { // Scrolling down
 		// Load the row after the last visible row
 		start_index = (first_visible_row + m_visible_rows) * columns;
-		end_index = start_index + columns; // Load one additional row
+		end_index = start_index + columns * 2; // Load two additional rows
 	} else if (direction < 0) { // Scrolling up
 		// Load the row before the first visible row
 		start_index = (first_visible_row - 1) * columns;
-		end_index = start_index + columns; // Load one additional row
+		end_index = start_index + columns * 2; // Load two additional rows
 	} else {
 		// No direction change; do not update
 		return;
@@ -564,7 +570,7 @@ void FileView::update_visible_items(int first_visible_row, int direction) {
 	// Loop through the range and update/reuse widgets
 	for (int i = start_index; i < end_index; ++i) {
 		// Check if the item is already visible
-		if (i >= first_visible_row * columns && i < (first_visible_row + m_visible_rows) * columns) {
+		if (i >= first_visible_row * columns * 2 && i < (first_visible_row + m_visible_rows) * columns * 2) {
 			continue; // Already visible
 		}
 		

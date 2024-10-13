@@ -116,6 +116,7 @@ private:
 	nanogui::Color m_selected_button_color;
 	
 	float m_scroll_offset;
+	float m_spawn_scroll_offset;
 	float m_accumulated_scroll_delta;
 	int m_total_rows;
 	int m_visible_rows;
