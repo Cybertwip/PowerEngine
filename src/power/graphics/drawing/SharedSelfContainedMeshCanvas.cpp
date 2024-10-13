@@ -37,8 +37,6 @@ void SharedSelfContainedMeshCanvas::take_snapshot(std::function<void(std::vector
 }
 
 void SharedSelfContainedMeshCanvas::process_events() {
-	std::unique_lock<std::mutex> lock(mPreviewMutex);
-
 	// schedule here
 	if (mSnapshotCallback) {
 		auto& scr = screen();

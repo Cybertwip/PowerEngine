@@ -17,7 +17,7 @@
 #include <chrono> // For double-click detection
 
 MeshPicker::MeshPicker(nanogui::Screen& parent, nanogui::Screen& screen, DirectoryNode& root_directory_node,
-					   std::function<void(const std::string&)> on_model_selected)
+					   std::function<void(std::shared_ptr<DirectoryNode>)> on_model_selected)
 : nanogui::Window(parent, screen),
 root_directory_node_(root_directory_node),
 on_model_selected_(on_model_selected)
@@ -55,7 +55,7 @@ on_model_selected_(on_model_selected)
 	
 	const std::set<std::string>& allowed_extensions = {".psk"};
 	
-	mFileView = std::make_shared<FileView>(*this, screen, root_directory_node_, true, on_model_selected_, 2, "", allowed_extensions);
+	mFileView = std::make_shared<FileView>(*this, screen, root_directory_node_, true, nullptr, on_model_selected_, 2, "", allowed_extensions);
 }
 
 void MeshPicker::refresh_file_list() {

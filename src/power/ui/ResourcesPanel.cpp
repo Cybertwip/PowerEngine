@@ -119,20 +119,11 @@ mActorVisualManager(actorVisualManager),
 mMeshActorLoader(meshActorLoader),
 mMeshShader(std::make_unique<ShaderWrapper>(shaderManager.get_shader("mesh"))),
 mSkinnedShader(std::make_unique<ShaderWrapper>(shaderManager.get_shader("skinned_mesh"))),
-mSelectedButton(nullptr),
-mSelectedNode(nullptr),
-mNormalButtonColor(nanogui::Color(0.7f, 0.7f, 0.7f, 1.0f)),
-mSelectedButtonColor(nanogui::Color(0.5f, 0.5f, 0.8f, 1.0f)),
 mSceneTimeBar(sceneTimeBar),
 mUiManager(uiManager),
 mDeepMotionApiClient(deepMotionApiClient),
 mShaderManager(shaderManager)
 {
-	
-	mNormalButtonColor = theme().m_button_gradient_bot_unfocused;
-	
-	mSelectedButtonColor = mNormalButtonColor + nanogui::Color(0.25f, 0.25f, 0.32f, 1.0f);
-	
 	// Set the layout
 	set_layout(std::make_unique<nanogui::BoxLayout>(nanogui::Orientation::Vertical, nanogui::Alignment::Fill, 0, 10));
 	
@@ -143,14 +134,14 @@ mShaderManager(shaderManager)
 	
 	mPromptWindow = std::make_shared<PromptWindow>(screen, screen, *this, mDeepMotionApiClient, mShaderManager.render_pass(), mShaderManager);
 	
-	mMeshPicker = std::make_shared<MeshPicker>(screen, screen, mRootDirectoryNode, [this](const std::string& modelPath){
+	mMeshPicker = std::make_shared<MeshPicker>(screen, screen, mRootDirectoryNode, [this](std::shared_ptr<DirectoryNode> node){
 		mMeshPicker->set_visible(false);
 		mMeshPicker->set_modal(false);
 		
 		mPromptWindow->set_visible(true);
 		mPromptWindow->set_modal(true);
-		nanogui::async([this, modelPath](){
-						mPromptWindow->Preview(modelPath, mSelectedDirectoryPath);
+		nanogui::async([this, node](){
+						mPromptWindow->Preview(node->FullPath, mSelectedDirectoryPath);
 		});
 	});
 	
@@ -232,8 +223,9 @@ mShaderManager(shaderManager)
 	});
 	
 	// Create the file view below the toolbar
-	
-	mFileView = std::make_shared<FileView>(*this, screen, mRootDirectoryNode);
+	mFileView = std::make_shared<FileView>(*this, screen, mRootDirectoryNode, false, [this](std::shared_ptr<DirectoryNode> node){
+		mSelectedNode = selected;
+	});
 	
 	mSelectedDirectoryPath = fs::current_path().string();
 	mFilterText = "";
@@ -267,59 +259,6 @@ int ResourcesPanel::get_icon_for_file(const DirectoryNode& node) {
 	return FA_FILE; // Default icon
 }
 
-bool ResourcesPanel::mouse_button_event(const nanogui::Vector2i &p, int button, bool down, int modifiers) {
-	if (down && button == GLFW_MOUSE_BUTTON_1) {
-		Widget* widget = find_widget(p);
-		bool clickOnButton = false;
-		for (auto fileButton : mFileButtons) {
-			if (widget == fileButton.get()) {
-				clickOnButton = true;
-				break;
-			}
-		}
-		if (!clickOnButton) {
-			if (!this->contains(p, true)){
-				// Clicked outside of buttons
-				if (mSelectedButton) {
-					mSelectedButton->set_background_color(mNormalButtonColor);
-					mSelectedButton = nullptr;
-					mSelectedNode = nullptr;
-				}
-			}
-			
-		}
-	}
-	
-	return Panel::mouse_button_event(p, button, down, modifiers);
-}
-
-
-void ResourcesPanel::handle_file_interaction(DirectoryNode& node) {
-	if (node.IsDirectory) {
-		node.refresh();
-		mSelectedDirectoryPath = node.FullPath;
-	} else {
-		if (node.FileName.find(".seq") != std::string::npos || node.FileName.find(".cmp") != std::string::npos) {
-			// Logic for opening sequence or composition
-		} else if (node.FileName.find(".fbx") != std::string::npos) {
-			mActorVisualManager->add_actor(mMeshActorLoader.create_actor(node.FullPath, mDummyAnimationTimeProvider, *mMeshShader, *mSkinnedShader));
-		}
-		// Handle other file type interactions...
-	}
-	
-	
-	// Reset the selection
-	if (mSelectedButton) {
-		mSelectedButton->set_background_color(mNormalButtonColor);
-		mSelectedButton = nullptr;
-		mSelectedNode = nullptr;
-	}
-	
-	nanogui::async([this](){
-		refresh_file_view();
-	});
-}
-
 void ResourcesPanel::refresh() {
 	// Here you might want to refresh or rebuild the file view if the directory content changes
 	nanogui::async([this](){
@@ -327,25 +266,25 @@ void ResourcesPanel::refresh() {
 	});
 	
 }
-
-bool ResourcesPanel::keyboard_event(int key, int scancode, int action, int modifiers) {
-	if (action == GLFW_PRESS || action == GLFW_REPEAT) {
-		// Check for CMD (on macOS) or CTRL (on other platforms) + Up Arrow
-		bool isCommand = modifiers & (
-#ifdef __APPLE__
-									  GLFW_MOD_SUPER
-#else
-									  GLFW_MOD_CONTROL
-#endif
-									  );
-		
-		if (isCommand && key == GLFW_KEY_UP) {
-			navigate_up_to_cwd();
-			return true; // Event handled
-		}
-	}
-	return Panel::keyboard_event(key, scancode, action, modifiers);
-}
+//
+//bool ResourcesPanel::keyboard_event(int key, int scancode, int action, int modifiers) {
+//	if (action == GLFW_PRESS || action == GLFW_REPEAT) {
+//		// Check for CMD (on macOS) or CTRL (on other platforms) + Up Arrow
+//		bool isCommand = modifiers & (
+//#ifdef __APPLE__
+//									  GLFW_MOD_SUPER
+//#else
+//									  GLFW_MOD_CONTROL
+//#endif
+//									  );
+//		
+//		if (isCommand && key == GLFW_KEY_UP) {
+//			navigate_up_to_cwd();
+//			return true; // Event handled
+//		}
+//	}
+//	return Panel::keyboard_event(key, scancode, action, modifiers);
+//}
 
 
 void ResourcesPanel::import_assets() {
@@ -375,7 +314,7 @@ void ResourcesPanel::import_assets() {
 }
 
 void ResourcesPanel::export_assets() {
-	if (false) {
+	if (mSelectedNode != nullptr) {
 		// Open a file dialog to select the destination directory
 		nanogui::file_dialog_async(
 								   { {"fbx", "All Files"} }, true, false, [this](const std::vector<std::string>& files){
@@ -402,8 +341,6 @@ void ResourcesPanel::export_assets() {
 										   std::cerr << "Error exporting assets: " << e.what() << std::endl;
 									   }
 								   });
-		
-		
 	} else {
 		nanogui::file_dialog_async(
 								   { {"mp4", "All Files"} }, true, false, [this](const std::vector<std::string>& files){
@@ -415,23 +352,6 @@ void ResourcesPanel::export_assets() {
 									   
 									   mUiManager.export_movie(destinationFile);
 								   });
-	}
-}
-
-void ResourcesPanel::navigate_up_to_cwd() {
-	fs::path cwd = fs::current_path();
-	fs::path selectedPath = mSelectedDirectoryPath;
-	
-	if (selectedPath != cwd) {
-		fs::path parentPath = fs::path(mSelectedDirectoryPath).parent_path();
-		
-		// Prevent navigating above the current working directory
-		if (parentPath.string().size() >= cwd.string().size()) {
-			mSelectedDirectoryPath = parentPath.string();
-			nanogui::async([this](){
-				refresh_file_view();
-			});
-		}
 	}
 }
 

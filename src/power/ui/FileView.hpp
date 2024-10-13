@@ -23,7 +23,8 @@ public:
 			 nanogui::Screen& screen,
 			 DirectoryNode& root_directory_node,
 			 bool recursive = false,
-			 std::function<void(const std::string&)> onFileSelected = nullptr,
+			 std::function<void(std::shared_ptr<DirectoryNode>)> onFileClicked = nullptr,
+			 std::function<void(std::shared_ptr<DirectoryNode>)> onFileSelected = nullptr,
 			 int columns = 8,
 			 const std::string& filter_text = "",
 			 const std::set<std::string>& allowed_extensions = {".psk", ".pma", ".pan", ".psq", ".psn"});
@@ -68,9 +69,12 @@ private:
 	// Find a node by its path
 	DirectoryNode* find_node_by_path(DirectoryNode& root, const std::string& path) const;
 	
+	// Handle interactions like click
+	void handle_file_click(DirectoryNode& node);
+
 	// Handle interactions like double-click
 	void handle_file_interaction(DirectoryNode& node);
-	
+
 	// Asynchronously load thumbnail
 	void load_thumbnail(const std::shared_ptr<DirectoryNode>& node,
 						const std::shared_ptr<nanogui::ImageView>& image_view,
@@ -146,7 +150,8 @@ private:
 	// Thumbnail Loading Queue
 	std::queue<std::function<void()>> m_thumbnail_load_queue;
 	
-	std::function<void(const std::string&)> mOnFileSelected;
+	std::function<void(std::shared_ptr<DirectoryNode>)> mOnFileClicked;
+	std::function<void(std::shared_ptr<DirectoryNode>)> mOnFileSelected;
 
 	int m_columns;
 	

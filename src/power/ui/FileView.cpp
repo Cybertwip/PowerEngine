@@ -18,7 +18,8 @@ FileView::FileView(nanogui::Widget& parent,
 				   nanogui::Screen& screen,
 				   DirectoryNode& root_directory_node,
 				   bool recursive,
-				   std::function<void(const std::string&)> onFileSelected,
+				   std::function<void(std::shared_ptr<DirectoryNode>)> onFileClicked,
+				   std::function<void(std::shared_ptr<DirectoryNode>)> onFileSelected,
 				   int columns,
 				   const std::string& filter_text,
 				   const std::set<std::string>& allowed_extensions)
@@ -42,6 +43,7 @@ m_previous_first_visible_row(0),
 m_is_loading_thumbnail(false),
 m_previous_scroll_offset(0),
 m_columns(columns),
+mOnFileClicked(onFileClicked),
 mOnFileSelected(onFileSelected),
 m_recursive(recursive)
 {
@@ -194,6 +196,12 @@ std::shared_ptr<nanogui::Button> FileView::acquire_button(const std::shared_ptr<
 				
 				last_click_time = std::chrono::high_resolution_clock::time_point::min();
 			} else {
+				nanogui::async([this]() {
+					if (m_selected_node) {
+						handle_file_click(*m_selected_node);
+					}
+				});
+
 				last_click_time = current_click_time;
 			}
 		} else {
@@ -281,7 +289,16 @@ void FileView::handle_file_interaction(DirectoryNode& node) {
 
 	} else {
 		if (mOnFileSelected) {
-			mOnFileSelected(node.FullPath);
+			mOnFileSelected(node.shared_from_this());
+		}
+	}
+}
+
+
+void FileView::handle_file_click(DirectoryNode& node) {
+	if (!node.IsDirectory) {
+		if (mOnFileClicked) {
+			mOnFileClicked(node.shared_from_this());
 		}
 	}
 }
