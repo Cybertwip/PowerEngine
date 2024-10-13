@@ -224,7 +224,7 @@ mShaderManager(shaderManager)
 	
 	// Create the file view below the toolbar
 	mFileView = std::make_shared<FileView>(*this, screen, mRootDirectoryNode, false, [this](std::shared_ptr<DirectoryNode> node){
-		mSelectedNode = selected;
+		mSelectedNode = node;
 	});
 	
 	mSelectedDirectoryPath = fs::current_path().string();
