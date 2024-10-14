@@ -3,7 +3,7 @@
 #include <glm/glm.hpp>
 
 class ColorComponent {
-public:
+public:	
     ColorComponent(int actorId)
         : mActorId(actorId), mColor(1.0f, 1.0f, 1.0f, 1.0f), mVisible(true) {}
 
