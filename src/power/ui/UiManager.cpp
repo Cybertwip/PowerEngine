@@ -177,12 +177,12 @@ UiManager::UiManager(nanogui::Screen& screen, std::shared_ptr<IActorSelectedRegi
 			int id = readFromFramebuffer(width, height, x, y);
 			
 			if (id != 0) {
-				auto actors = mActorManager.get_actors_with_component<MetadataComponent>();
+				auto actors = mActorManager.get_actors_with_component<ColorComponent>();
 				
 				for (auto& actor : actors) {
-					auto metadata = actor.get().get_component<MetadataComponent>();
+					auto color = actor.get().get_component<ColorComponent>();
 					
-					if (id == metadata.identifier()) {
+					if (id == color.identifier()) {
 						if (actor.get().find_component<UiComponent>()) {
 							actor.get().get_component<UiComponent>().select();
 						}

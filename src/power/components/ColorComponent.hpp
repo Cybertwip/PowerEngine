@@ -14,6 +14,10 @@ public:
     }
 	
 	ColorComponent(int actorId);
+	
+	int identifier() {
+		return mActorId;
+	}
 
 	void set_color(const glm::vec4& color);
 	
