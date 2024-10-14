@@ -209,6 +209,55 @@ std::shared_ptr<nanogui::Button> FileView::acquire_button(const std::shared_ptr<
 		} else {
 			last_click_time = current_click_time;
 		}
+		
+		if (file_icon == FA_WALKING || file_icon == FA_PERSON_BOOTH || file_icon == FA_OBJECT_GROUP) {
+			auto drag_widget = screen().drag_widget();
+			
+			auto content = std::make_shared<nanogui::ImageView>(*drag_widget, screen());
+			content->set_size(icon_button->fixed_size());
+			content->set_fixed_size(icon_button->fixed_size());
+			
+			if (file_icon == FA_PERSON_BOOTH) {
+				// Using a simple image icon for now
+				content->set_image(std::make_shared<nanogui::Texture>(
+																	  "internal/ui/animation.png",
+																	  nanogui::Texture::InterpolationMode::Nearest,
+																	  nanogui::Texture::InterpolationMode::Nearest,
+																	  nanogui::Texture::WrapMode::ClampToEdge
+																	  ));
+			} else {
+				auto thumbnail_pixels = load_image_data(child->FullPath);
+				
+				content->set_image(std::make_shared<nanogui::Texture>(
+																	  thumbnail_pixels.data(),
+																	  thumbnail_pixels.size(),
+																	  512, 512,
+																	  nanogui::Texture::InterpolationMode::Nearest,
+																	  nanogui::Texture::InterpolationMode::Nearest,
+																	  nanogui::Texture::WrapMode::ClampToEdge
+																	  ));
+			}
+			
+			content->image()->resize(nanogui::Vector2i(288, 288));
+			content->set_visible(true);
+			drag_widget->set_size(icon_button->fixed_size());
+			
+			auto drag_start_position = icon_button->absolute_position();
+			drag_widget->set_position(drag_start_position);
+			drag_widget->perform_layout(screen().nvg_context());
+			
+			screen().set_drag_widget(drag_widget, [this, content, drag_widget, child]() {
+				auto path = child->FullPath;
+				
+				// Remove drag widget
+				drag_widget->remove_child(*content);
+				screen().set_drag_widget(nullptr, nullptr);
+				
+				std::vector<std::string> path_vector = { path };
+				screen().drop_event(*this, path_vector);
+			});
+		}
+
 	});
 	
 	// Store the button

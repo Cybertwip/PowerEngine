@@ -147,7 +147,7 @@ void Fbx::LoadModel(const std::string& path) {
 		FbxAxisSystem directXAxisSys(FbxAxisSystem::EUpVector::eZAxis,
 									 FbxAxisSystem::EFrontVector::eParityOdd,
 									 FbxAxisSystem::eRightHanded);
-		directXAxisSys.ConvertScene(mSceneLoader->scene());
+		directXAxisSys.DeepConvertScene(mSceneLoader->scene());
 
 		ProcessNode(mSceneLoader->scene()->GetRootNode());
 	} else {
@@ -176,7 +176,7 @@ void Fbx::LoadModel(std::stringstream& data) {
 		FbxAxisSystem directXAxisSys(FbxAxisSystem::EUpVector::eZAxis,
 									 FbxAxisSystem::EFrontVector::eParityOdd,
 									 FbxAxisSystem::eRightHanded);
-		directXAxisSys.ConvertScene(mSceneLoader->scene());
+		directXAxisSys.DeepConvertScene(mSceneLoader->scene());
 		
 		// Process the root node of the scene
 		ProcessNode(mSceneLoader->scene()->GetRootNode());

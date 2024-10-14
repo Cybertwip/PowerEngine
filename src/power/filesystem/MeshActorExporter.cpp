@@ -243,9 +243,17 @@ bool MeshActorExporter::exportToFile(CompressedSerialization::Deserializer& dese
 	}
 	
 	FbxIOSettings* ios = FbxIOSettings::Create(fbxManager, IOSROOT);
+	
 	fbxManager->SetIOSettings(ios);
 	
 	FbxScene* scene = FbxScene::Create(fbxManager, "MyScene");
+	
+	FbxAxisSystem directXAxisSys(FbxAxisSystem::EUpVector::eZAxis,
+								 FbxAxisSystem::EFrontVector::eParityOdd,
+								 FbxAxisSystem::eRightHanded);
+
+	scene->GetGlobalSettings().SetAxisSystem(directXAxisSys);
+	
 	if (!scene) {
 		std::cerr << "Error: Unable to create FBX scene!" << std::endl;
 		fbxManager->Destroy();
@@ -266,7 +274,7 @@ bool MeshActorExporter::exportToFile(CompressedSerialization::Deserializer& dese
 		fbxManager->Destroy();
 		return false;
 	}
-
+		
 	if (!exporter->Export(scene)) {
 		std::cerr << "Error: Failed to export FBX scene." << std::endl;
 		exporter->Destroy();
@@ -297,6 +305,13 @@ bool MeshActorExporter::exportToStream(CompressedSerialization::Deserializer& de
 	fbxManager->SetIOSettings(ios);
 	
 	FbxScene* scene = FbxScene::Create(fbxManager, "MyScene");
+	
+	FbxAxisSystem directXAxisSys(FbxAxisSystem::EUpVector::eZAxis,
+								 FbxAxisSystem::EFrontVector::eParityOdd,
+								 FbxAxisSystem::eRightHanded);
+	
+	scene->GetGlobalSettings().SetAxisSystem(directXAxisSys);
+
 	if (!scene) {
 		std::cerr << "Error: Unable to create FBX scene!" << std::endl;
 		fbxManager->Destroy();
@@ -369,7 +384,7 @@ bool MeshActorExporter::exportToStream(CompressedSerialization::Deserializer& de
 		fbxManager->Destroy();
 		return false;
 	}
-
+	
 	if (!exporter->Export(scene)) {
 		std::cerr << "Error: Failed to export FBX scene." << std::endl;
 		exporter->Destroy();
