@@ -111,7 +111,7 @@ void SkinnedMeshBatch::append(std::reference_wrapper<SkinnedMesh> meshRef) {
 	}
 
 	auto& indexer = mVertexIndexingMap[identifier];
-	
+
 	size_t vertexOffset = indexer.mVertexOffset;
 	size_t indexOffset = indexer.mIndexOffset;
 	
@@ -158,8 +158,19 @@ void SkinnedMeshBatch::append(std::reference_wrapper<SkinnedMesh> meshRef) {
 
 void SkinnedMeshBatch::remove(std::reference_wrapper<SkinnedMesh> meshRef) {
 	auto& mesh = meshRef.get();
+	
 	auto& shader = mesh.get_shader();
 	int identifier = shader.identifier();
+	
+	auto instanceId = mesh.get_metadata_component().identifier();
+	
+	auto& instanceIndexer = mInstanceIndexer[identifier];
+	
+	auto instanceIt = std::find(instanceIndexer.begin(), instanceIndexer.end(), instanceId);
+	
+	if (instanceIt != instanceIndexer.end()) {
+		return;
+	}
 	
 	// 1. Locate the mesh in mMeshes
 	auto mesh_it = mMeshes.find(identifier);
@@ -179,16 +190,6 @@ void SkinnedMeshBatch::remove(std::reference_wrapper<SkinnedMesh> meshRef) {
 	
 	if (it == mesh_vector.end()) {
 		// Mesh not found in the vector; nothing to remove
-		return;
-	}
-	
-	auto instanceId = mesh.get_metadata_component().identifier();
-	
-	auto& instanceIndexer = mInstanceIndexer[identifier];
-	
-	auto instanceIt = std::find(instanceIndexer.begin(), instanceIndexer.end(), instanceId);
-	
-	if (instanceIt != instanceIndexer.end()) {
 		return;
 	}
 	
@@ -313,10 +314,6 @@ void SkinnedMeshBatch::draw_content(const nanogui::Matrix4f& view,
 		
 		if (mesh_vector.empty()) continue;
 		
-		// Set uniforms that are common to all meshes
-		shader.set_uniform("aView", view);
-		shader.set_uniform("aProjection", projection);
-		
 		for (size_t i = 0; i < mesh_vector.size(); ++i) {
 			auto& mesh = mesh_vector[i].get();
 			
@@ -325,8 +322,10 @@ void SkinnedMeshBatch::draw_content(const nanogui::Matrix4f& view,
 			}
 			
 			auto& shader = mesh.get_shader();
-
 			
+			// Set uniforms that are common to all meshes
+			shader.set_uniform("aView", view);
+			shader.set_uniform("aProjection", projection);
 			// Set the model matrix for the current mesh
 			shader.set_uniform("aModel", mesh.get_model_matrix());
 			
