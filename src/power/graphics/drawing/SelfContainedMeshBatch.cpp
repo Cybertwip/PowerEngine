@@ -252,7 +252,7 @@ void SelfContainedMeshBatch::draw_content(const nanogui::Matrix4f& view,
 		mShader.set_uniform("aModel", mesh.get_model_matrix());
 		
 		// Apply color component
-		mShader.set_uniform(mesh.get_color_component().identifier());
+		mShader.set_uniform("identifier", mesh.get_color_component().identifier());
 		
 		mShader.set_uniform("color", glm_to_nanogui(mesh.get_color_component().get_color()));
 
