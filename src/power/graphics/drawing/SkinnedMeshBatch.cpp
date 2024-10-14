@@ -313,6 +313,10 @@ void SkinnedMeshBatch::draw_content(const nanogui::Matrix4f& view,
 		
 		if (mesh_vector.empty()) continue;
 		
+		// Set uniforms that are common to all meshes
+		shader.set_uniform("aView", view);
+		shader.set_uniform("aProjection", projection);
+		
 		for (size_t i = 0; i < mesh_vector.size(); ++i) {
 			auto& mesh = mesh_vector[i].get();
 			
@@ -321,10 +325,6 @@ void SkinnedMeshBatch::draw_content(const nanogui::Matrix4f& view,
 			}
 			
 			auto& shader = mesh.get_shader();
-			
-			// Set uniforms that are common to all meshes
-			shader.set_uniform("aView", view);
-			shader.set_uniform("aProjection", projection);
 
 			
 			// Set the model matrix for the current mesh

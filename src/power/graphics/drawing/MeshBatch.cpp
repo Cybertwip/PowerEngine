@@ -299,7 +299,7 @@ void MeshBatch::draw_content(const nanogui::Matrix4f& view,
 		// Set common uniforms for projection and view matrices
 		shader.set_uniform("aProjection", projection);
 		shader.set_uniform("aView", view);
-		
+
 		for (size_t i = 0; i < mesh_vector.size(); ++i) {
 			auto& mesh = mesh_vector[i].get();
 			
@@ -307,6 +307,8 @@ void MeshBatch::draw_content(const nanogui::Matrix4f& view,
 				continue;
 			}
 			
+			shader.set_uniform("aModel", mesh.get_model_matrix());
+
 			// Retrieve the instance ID
 			auto instanceId = mesh.get_metadata_component().identifier();
 			
