@@ -27,11 +27,13 @@ SkinnedMesh::SkinnedMesh(
 						 std::unique_ptr<SkinnedMeshData> skinnedMeshData,
 						 ShaderWrapper& shader,
 						 ISkinnedMeshBatch& meshBatch,
+						 MetadataComponent& metadataComponent,
 						 ColorComponent& colorComponent,
 						 SkinnedAnimationComponent& skinnedComponent)
 : mSkinnedMeshData(std::move(skinnedMeshData)),
 mShader(shader),
 mMeshBatch(meshBatch),
+mMetadataComponent(metadataComponent),
 mColorComponent(colorComponent),
 mSkinnedComponent(skinnedComponent),
 mModelMatrix(nanogui::Matrix4f::identity()) {

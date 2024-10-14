@@ -258,7 +258,6 @@ set(RESOURCE_DIRECTORIES
     ${CMAKE_CURRENT_LIST_DIR}/resources
 )
 set(RESOURCE_FILES
-    imgui.ini
     LICENSE
 )
 

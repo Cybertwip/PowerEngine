@@ -251,18 +251,32 @@ Actor& PrimitiveBuilder::build(Actor& actor, const std::string& actorName, Primi
 		throw std::runtime_error("Failed to create MeshData for the specified PrimitiveShape.");
 	}
 	
-	auto& metadataComponent = actor.add_component<MetadataComponent>(actor.identifier(), actorName);
+	std::string crcGenerator = "";
+	
+	switch (primitiveShape) {
+		case PrimitiveShape::Cube:
+			crcGenerator = "Cube";
+			break;
+		case PrimitiveShape::Sphere:
+			crcGenerator = "Sphere";
+			break;
+		case PrimitiveShape::Cuboid:
+			crcGenerator = "Cuboid";
+			break;
+	}
+	
+	auto& metadataComponent = actor.add_component<MetadataComponent>(Hash32::generate_crc32_from_string(crcGenerator), actorName);
 	
 	// Retrieve or create ColorComponent
 	// Assuming the Actor does not already have a ColorComponent
-	auto& colorComponent = actor.add_component<ColorComponent>(metadataComponent);
-	// Optionally, set color based on the MeshData or other criteria
-	
+	auto& colorComponent = actor.add_component<ColorComponent>(actor.identifier());
+		
 	// Create Mesh
 	std::unique_ptr<Mesh> mesh = std::make_unique<Mesh>(
 														std::move(meshData),
 														meshShader,
 														mMeshBatch,
+														metadataComponent,
 														colorComponent
 														);
 	

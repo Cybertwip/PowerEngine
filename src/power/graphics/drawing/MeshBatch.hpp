@@ -57,11 +57,13 @@ private:
 	std::vector<std::shared_ptr<MaterialProperties>> mBatchMaterials;
 	
 	// Offset tracking
-	std::unordered_map<int, std::vector<size_t>> mMeshStartIndices;
-	
+	std::unordered_map<int, std::unordered_map<int, std::vector<size_t>>> mMeshStartIndices;
+
 	std::unordered_map<int, std::vector<size_t>> mMeshVertexStartIndices;
 
 	std::unordered_map<int, VertexIndexer> mVertexIndexingMap;
+	
+	std::unordered_map<int, std::vector<int>> mInstanceIndexer;
 	
 	nanogui::RenderPass& mRenderPass;
 };

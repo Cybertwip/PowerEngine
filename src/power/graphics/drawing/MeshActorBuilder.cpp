@@ -36,11 +36,13 @@ MeshActorBuilder::MeshActorBuilder(BatchUnit& batchUnit)
 Actor& MeshActorBuilder::build_mesh(Actor& actor, AnimationTimeProvider& timeProvider, const std::string& actorName, CompressedSerialization::Deserializer& deserializer, ShaderWrapper& meshShader, ShaderWrapper& skinnedShader) {
 	// Deserialize Non-Skinned Mesh Data
 	
+	std::string crcGenerator = deserializer.get_header_string();
+	
 	// Add MetadataComponent to the actor
-	actor.add_component<MetadataComponent>(actor.identifier(), actorName);
+	auto& metadataComponent = actor.add_component<MetadataComponent>(Hash32::generate_crc32_from_string(crcGenerator), actorName);
 	
 	// Add ColorComponent
-	auto& colorComponent = actor.add_component<ColorComponent>(actor.get_component<MetadataComponent>());
+	auto& colorComponent = actor.add_component<ColorComponent>(actor.identifier());
 	
 	// Corrected: Use a non-skinned model type
 	auto model = std::make_unique<Fbx>(); 
@@ -100,6 +102,7 @@ Actor& MeshActorBuilder::build_mesh(Actor& actor, AnimationTimeProvider& timePro
 														   std::move(meshDataItem),
 														   meshShader,
 														   mBatchUnit.mMeshBatch,
+														   metadataComponent,
 														   colorComponent
 														   ));
 	}
@@ -125,11 +128,13 @@ Actor& MeshActorBuilder::build_mesh(Actor& actor, AnimationTimeProvider& timePro
 
 Actor& MeshActorBuilder::build_skinned(Actor& actor, AnimationTimeProvider& timeProvider, const std::string& actorName,  CompressedSerialization::Deserializer& deserializer, ShaderWrapper& meshShader, ShaderWrapper& skinnedShader){
 	
-	// Add MetadataComponent to the actor
-	actor.add_component<MetadataComponent>(actor.identifier(), actorName);
+	std::string crcGenerator = deserializer.get_header_string();
 	
+	// Add MetadataComponent to the actor
+	auto& metadataComponent = actor.add_component<MetadataComponent>(Hash32::generate_crc32_from_string(crcGenerator), actorName);
+
 	// Add ColorComponent
-	auto& colorComponent = actor.add_component<ColorComponent>(actor.get_component<MetadataComponent>());
+	auto& colorComponent = actor.add_component<ColorComponent>(actor.identifier());
 	
 	// Create a SkinnedFbx model for deserialization
 	auto model = std::make_unique<SkinnedFbx>();
@@ -212,6 +217,7 @@ Actor& MeshActorBuilder::build_skinned(Actor& actor, AnimationTimeProvider& time
 																			 std::move(skinnedMeshData),
 																			 skinnedShader,
 																			 mBatchUnit.mSkinnedMeshBatch,
+																			 metadataComponent,
 																			 colorComponent,
 																			 skinnedComponent
 																			 ));
@@ -228,6 +234,7 @@ Actor& MeshActorBuilder::build_skinned(Actor& actor, AnimationTimeProvider& time
 															   std::move(meshData),
 															   meshShader,
 															   mBatchUnit.mMeshBatch,
+															   metadataComponent,
 															   colorComponent
 															   ));
 		}

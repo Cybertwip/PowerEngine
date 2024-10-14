@@ -23,8 +23,8 @@
 #include <cmath>
 #include <algorithm>
 
-Mesh::Mesh(std::unique_ptr<MeshData> meshData, ShaderWrapper& shader, IMeshBatch& meshBatch, ColorComponent& colorComponent)
-: mMeshData(std::move(meshData)), mShader(shader), mMeshBatch(meshBatch), mColorComponent(colorComponent), mModelMatrix(nanogui::Matrix4f::identity()) {
+Mesh::Mesh(std::unique_ptr<MeshData> meshData, ShaderWrapper& shader, IMeshBatch& meshBatch, MetadataComponent& metadataComponent, ColorComponent& colorComponent)
+: mMeshData(std::move(meshData)), mShader(shader), mMeshBatch(meshBatch), mMetadataComponent(metadataComponent), mColorComponent(colorComponent), mModelMatrix(nanogui::Matrix4f::identity()) {
 	
 	if (!mMeshData) {
 		throw std::invalid_argument("MeshData cannot be null.");

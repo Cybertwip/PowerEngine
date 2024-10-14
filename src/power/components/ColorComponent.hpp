@@ -13,7 +13,7 @@ public:
 		return nanogui::Vector4f(color.x, color.y, color.z, color.w);
     }
 	
-	ColorComponent(MetadataComponent& metadataComponent);
+	ColorComponent(int actorId);
 
 	void set_color(const glm::vec4& color);
 	
@@ -29,7 +29,7 @@ public:
 	void apply_to(ShaderWrapper& shaderWrapper);
 	
 private:
-	MetadataComponent& mMetadataComponent;
+	int mActorId;
 	glm::vec4 mColor;
 	bool mVisible;
 };

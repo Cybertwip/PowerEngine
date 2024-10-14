@@ -6,6 +6,20 @@
 #include <array>
 #include <algorithm> // For std::any_of
 
+
+#if defined(NANOGUI_USE_METAL)
+
+struct MeshInstanceCPU
+{
+	float mPosition[4] = {0.0f, 0.0f, 0.0f, 0.0f};
+	float mNormal[4] = {0.0f, 0.0f, 0.0f, 0.0f};
+	float mColor[4] = {0.0f, 0.0f, 0.0f, 0.0f};
+	float mTexCoords1[2] = {0.0f, 0.0f};
+	float mTexCoords2[2] = {0.0f, 0.0f};
+};
+
+#endif
+
 class MeshVertex {
 public:
 	MeshVertex();

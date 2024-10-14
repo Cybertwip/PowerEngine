@@ -3,8 +3,8 @@
 #include "components/MetadataComponent.hpp"
 #include "graphics/shading/ShaderWrapper.hpp"
 
-ColorComponent::ColorComponent(MetadataComponent& metadataComponent)
-: mMetadataComponent(metadataComponent)
+ColorComponent::ColorComponent(int actorId)
+: mActorId(actorId)
 , mColor(1.0f, 1.0f, 1.0f, 1.0f)
 , mVisible(true) {
 	
@@ -19,6 +19,6 @@ void ColorComponent::set_visible(bool visible) {
 }
 
 void ColorComponent::apply_to(ShaderWrapper& shader) {
-	shader.set_uniform("identifier", static_cast<int>(mMetadataComponent.identifier())); // should move to metadata
+	shader.set_uniform("identifier", mActorId); // should move to metadata
 	shader.set_uniform("color", glm_to_nanogui(mColor));
 }

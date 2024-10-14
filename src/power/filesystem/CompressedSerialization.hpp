@@ -20,6 +20,25 @@
 
 #include <openssl/md5.h>
 
+class Hash32 {
+public:
+	// Generates a 32-bit CRC32 hash from the provided compressed data
+	static uint32_t generate_crc32_from_compressed_data(const std::stringstream& compressedData) {
+		// Convert the stringstream to a string
+		std::string data = compressedData.str();
+		
+		// Compute CRC32 using zlib
+		uint32_t crc = crc32(0L, Z_NULL, 0); // Initialize CRC
+		crc = crc32(crc, reinterpret_cast<const Bytef*>(data.c_str()), data.size());
+		
+		return crc;
+	}
+	
+	// Optional: Generates a CRC32 hash from a string directly
+	static uint32_t generate_crc32_from_string(const std::string& data) {
+		return crc32(0L, reinterpret_cast<const Bytef*>(data.c_str()), data.size());
+	}
+};
 
 class Md5 {
 public:
