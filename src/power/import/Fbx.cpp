@@ -143,12 +143,6 @@ void Fbx::LoadModel(const std::string& path) {
 	mFBXFilePath = path;
 	
 	if (mSceneLoader->scene()) {
-		
-		FbxAxisSystem directXAxisSys(FbxAxisSystem::EUpVector::eZAxis,
-									 FbxAxisSystem::EFrontVector::eParityOdd,
-									 FbxAxisSystem::eRightHanded);
-		directXAxisSys.DeepConvertScene(mSceneLoader->scene());
-
 		ProcessNode(mSceneLoader->scene()->GetRootNode());
 	} else {
 		std::cerr << "Error: Failed to load FBX scene from file " << path << std::endl;
@@ -172,12 +166,6 @@ void Fbx::LoadModel(std::stringstream& data) {
 	mSceneLoader = std::make_unique<ozz::animation::offline::fbx::FbxSceneLoader>(&fbxStream, "", *mFbxManager, *mSettings);
 	
 	if (mSceneLoader->scene()) {
-		// Apply axis system conversion if needed
-		FbxAxisSystem directXAxisSys(FbxAxisSystem::EUpVector::eZAxis,
-									 FbxAxisSystem::EFrontVector::eParityOdd,
-									 FbxAxisSystem::eRightHanded);
-		directXAxisSys.DeepConvertScene(mSceneLoader->scene());
-		
 		// Process the root node of the scene
 		ProcessNode(mSceneLoader->scene()->GetRootNode());
 	} else {
