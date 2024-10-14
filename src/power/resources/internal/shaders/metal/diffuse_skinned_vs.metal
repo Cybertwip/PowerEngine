@@ -15,35 +15,27 @@ struct Bone {
     float4x4 transform;
 };
 
-struct Instance {
-    float3 Position;
-    float3 Normal;
-    float4 Color;
-    float2 Texcoords1;
-    float2 Texcoords2;
-};
-
 vertex VertexOut vertex_main(
-    constant Instance *aInstances [[buffer(0)]],
-    const device int *const aInstanceId [[buffer(1)]],
-    const device int *const aMaterialId [[buffer(2)]],    
-    const device packed_int4 *const aBoneIds [[buffer(3)]],
-    const device packed_float4 *const aWeights [[buffer(4)]],
-    constant float4x4 &aProjection [[buffer(5)]],
-    constant float4x4 &aView [[buffer(6)]],
-    constant float4x4 &aModel [[buffer(7)]],
-    constant Bone *bones [[buffer(8)]],
+    const device packed_float3 *const aPosition [[buffer(0)]],
+    const device packed_float3 *const aNormal [[buffer(1)]],
+    const device packed_float4 *const aColor [[buffer(2)]],
+    const device packed_float2 *const aTexcoords1 [[buffer(3)]],
+    const device packed_float2 *const aTexcoords2 [[buffer(4)]],
+    const device packed_int4 *const aBoneIds [[buffer(5)]],
+    const device packed_float4 *const aWeights [[buffer(6)]],
+    const device int *const aMaterialId [[buffer(7)]],
+    constant float4x4 &aProjection [[buffer(8)]],
+    constant float4x4 &aView [[buffer(9)]],
+    constant float4x4 &aModel [[buffer(10)]],
+    constant Bone *bones [[buffer(11)]],
     uint id [[vertex_id]]
 ) {
     const int MAX_BONE_INFLUENCE = 4;
 
-    int instanceIndex = aInstanceId[id];
-    Instance inst = aInstances[instanceIndex];
-
     VertexOut vert;
 
-    float4 pos = float4(inst.Position, 1.0);
-    float3 norm = inst.Normal;
+    float4 pos = float4(aPosition[id], 1.0);
+    float3 norm = aNormal[id];
 
     float4 skinnedPosition = float4(0.0);
     float3 skinnedNormal = float3(0.0);
@@ -79,11 +71,11 @@ vertex VertexOut vertex_main(
     // Position in world space for fragment shader calculations
     vert.FragPos = worldPosition.xyz;
 
-    vert.TexCoords1 = inst.Texcoords1;
-    vert.TexCoords2 = inst.Texcoords2;
+    vert.TexCoords1 = aTexcoords1[id];
+    vert.TexCoords2 = aTexcoords2[id];
 
     vert.MaterialId = aMaterialId[id];
-    vert.Color = inst.Color;
+    vert.Color = aColor[id];
 
     return vert;
 }
