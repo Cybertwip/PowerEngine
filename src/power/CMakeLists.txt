@@ -89,7 +89,6 @@ ${CMAKE_CURRENT_LIST_DIR}/actors/IActorManager.hpp
     ${CMAKE_CURRENT_LIST_DIR}/components/Component.cpp
     ${CMAKE_CURRENT_LIST_DIR}/components/Component.hpp
     ${CMAKE_CURRENT_LIST_DIR}/components/ColorComponent.hpp
-    ${CMAKE_CURRENT_LIST_DIR}/components/ColorComponent.cpp
     ${CMAKE_CURRENT_LIST_DIR}/components/DrawableComponent.cpp
     ${CMAKE_CURRENT_LIST_DIR}/components/DrawableComponent.hpp
     ${CMAKE_CURRENT_LIST_DIR}/components/MetadataComponent.hpp

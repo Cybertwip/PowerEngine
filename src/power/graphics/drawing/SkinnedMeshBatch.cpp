@@ -343,8 +343,10 @@ void SkinnedMeshBatch::draw_content(const nanogui::Matrix4f& view,
 			auto instanceId = mesh.get_metadata_component().identifier();
 
 			// Apply color component
-			mesh.get_color_component().apply_to(shader);
+			shader.set_uniform(mesh.get_color_component().identifier());
 			
+			shader.set_uniform("color", glm_to_nanogui(mesh.get_color_component().get_color()));
+
 			// Upload materials for the current mesh
 			upload_material_data(shader, mesh.get_mesh_data().get_material_properties());
 			

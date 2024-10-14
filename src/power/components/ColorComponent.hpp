@@ -2,38 +2,33 @@
 
 #include <glm/glm.hpp>
 
-#include <nanogui/vector.h>
-
-class MetadataComponent;
-class ShaderWrapper;
-
 class ColorComponent {
 public:
-    static nanogui::Vector4f glm_to_nanogui(glm::vec4 color){
-		return nanogui::Vector4f(color.x, color.y, color.z, color.w);
-    }
-	
-	ColorComponent(int actorId);
-	
-	int identifier() {
-		return mActorId;
-	}
+    ColorComponent(int actorId)
+        : mActorId(actorId), mColor(1.0f, 1.0f, 1.0f, 1.0f), mVisible(true) {}
 
-	void set_color(const glm::vec4& color);
-	
-	glm::vec4 get_color() const {
-		return mColor;
-	}
-	
-	void set_visible(bool visible);
-	bool get_visible() const {
-		return mVisible;
-	}
-	
-	void apply_to(ShaderWrapper& shaderWrapper);
-	
+    int identifier() {
+        return mActorId;
+    }
+
+    void set_color(const glm::vec4& color) {
+        mColor = color;
+    }
+
+    glm::vec4 get_color() const {
+        return mColor;
+    }
+
+    void set_visible(bool visible) {
+        mVisible = visible;
+    }
+
+    bool get_visible() const {
+        return mVisible;
+    }
+
 private:
-	int mActorId;
-	glm::vec4 mColor;
-	bool mVisible;
+    int mActorId;
+    glm::vec4 mColor;
+    bool mVisible;
 };

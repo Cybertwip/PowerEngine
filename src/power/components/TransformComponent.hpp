@@ -11,6 +11,9 @@
 #include <unordered_map>
 #include <iostream>
 
+static nanogui::Vector4f glm_to_nanogui(glm::vec4 color) {
+	return nanogui::Vector4f(color.x, color.y, color.z, color.w);
+}
 
 static nanogui::Matrix4f glm_to_nanogui(glm::mat4 glmMatrix) {
 	nanogui::Matrix4f matrix;

@@ -10,6 +10,7 @@
 #include <nanogui/slider.h>
 #include <nanogui/toolbutton.h>
 #include <nanogui/textbox.h>
+#include <nanovg.h>
 #include <iostream>
 
 // Anonymous namespace for helper functions

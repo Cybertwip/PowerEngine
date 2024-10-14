@@ -275,8 +275,10 @@ void SelfContainedSkinnedMeshBatch::draw_content(const nanogui::Matrix4f& view,
 		mShader.set_uniform("aProjection", projection);
 		mShader.set_uniform("aModel", mesh.get_model_matrix());
 		
-		mesh.get_color_component().apply_to(mShader);
+		mShader.set_uniform(mesh.get_color_component().identifier());
 		
+		mShader.set_uniform("color", glm_to_nanogui(mesh.get_color_component().get_color()));
+
 		// Apply skinning and animations (if any)
 		auto bones = mesh.get_skinned_component().get_bones();
 		
