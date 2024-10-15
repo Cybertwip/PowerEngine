@@ -46,7 +46,9 @@ fragment FragmentOut fragment_main(VertexOut vert [[stage_in]],
         mat_diffuse.a = mat.opacity;
     }
 
-    mat_diffuse = mix(mat_diffuse, vert.Color, 0.5);
+    mat_diffuse = mix(mat_diffuse, vert.Color, 0.25);
+
+    mat_diffuse = mix(mat_diffuse, color, 0.25);
 
     float3 final_color = mat_diffuse.rgb;
     float selectionOpacity = mat_diffuse.a;  // Use the alpha from the texture

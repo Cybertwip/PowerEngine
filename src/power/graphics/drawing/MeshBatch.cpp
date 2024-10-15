@@ -308,11 +308,11 @@ void MeshBatch::draw_content(const nanogui::Matrix4f& view,
 
 			// Upload materials for the current mesh
 			upload_material_data(shader, mesh.get_mesh_data().get_material_properties());
-			
+						
 			// Calculate the range of indices to draw for this mesh
-			size_t startIdx = mMeshStartIndices[identifier][instanceId][i];
-			size_t endIdx = (i + 1 < mMeshStartIndices[identifier][instanceId].size()) ?
-			mMeshStartIndices[identifier][instanceId][i + 1] :
+			size_t startIdx = mMeshStartIndices[identifier][instanceId][0];
+			size_t endIdx = (1 < mMeshStartIndices[identifier][instanceId].size()) ?
+			mMeshStartIndices[identifier][instanceId][1] :
 			mBatchIndices[identifier].size();
 			size_t count = endIdx - startIdx;
 			
