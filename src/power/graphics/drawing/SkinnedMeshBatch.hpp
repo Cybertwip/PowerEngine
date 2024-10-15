@@ -64,7 +64,7 @@ private:
 	std::unordered_map<int, std::vector<size_t>> mMeshVertexStartIndices;
 	
 	std::unordered_map<int, VertexIndexer> mVertexIndexingMap;
-	std::unordered_map<int, std::vector<int>> mInstanceIndexer;
+	std::unordered_map<int, std::unordered_map<int, int>> mInstanceIndexer;
 
 	nanogui::RenderPass& mRenderPass;
 };

@@ -100,18 +100,22 @@ void SkinnedMeshBatch::append(std::reference_wrapper<SkinnedMesh> meshRef) {
 	auto& shader = mesh.get_shader();
 	int identifier = shader.identifier();
 	
-	auto instanceId = mesh.get_metadata_component().identifier();
+	int instanceId = mesh.get_metadata_component().identifier();
+	int entityId = mesh.get_color_component().identifier();
 	
 	auto& instanceIndexer = mInstanceIndexer[identifier];
 	
-	auto instanceIt = std::find(instanceIndexer.begin(), instanceIndexer.end(), instanceId);
+	auto instanceIt = instanceIndexer.find(entityId);
 	
 	if (instanceIt != instanceIndexer.end()) {
+		instanceIndexer[entityId] = instanceId;
 		return;
 	}
-
+	
+	instanceIndexer[entityId] = instanceId;
+	
 	auto& indexer = mVertexIndexingMap[identifier];
-
+	
 	size_t vertexOffset = indexer.mVertexOffset;
 	size_t indexOffset = indexer.mIndexOffset;
 	
@@ -163,12 +167,14 @@ void SkinnedMeshBatch::remove(std::reference_wrapper<SkinnedMesh> meshRef) {
 	int identifier = shader.identifier();
 	
 	auto instanceId = mesh.get_metadata_component().identifier();
+	int entityId = mesh.get_color_component().identifier();
 	
 	auto& instanceIndexer = mInstanceIndexer[identifier];
 	
-	auto instanceIt = std::find(instanceIndexer.begin(), instanceIndexer.end(), instanceId);
+	auto instanceIt = instanceIndexer.find(entityId);
 	
-	if (instanceIt != instanceIndexer.end()) {
+	if (instanceIt == instanceIndexer.end()) {
+		// instance not found
 		return;
 	}
 	
@@ -199,71 +205,67 @@ void SkinnedMeshBatch::remove(std::reference_wrapper<SkinnedMesh> meshRef) {
 	// Remove the mesh from the mesh vector
 	mesh_vector.erase(it);
 	
-	// Get starting indices
-	size_t indexStartIdx = mMeshStartIndices[identifier][instanceId][meshIndex];
-	size_t indexEndIdx = (meshIndex + 1 < mMeshStartIndices[identifier][instanceId].size()) ?
-	mMeshStartIndices[identifier][instanceId][meshIndex + 1] :
-	mBatchIndices[identifier].size();
-	size_t indexCount = indexEndIdx - indexStartIdx;
-	
-	size_t vertexStartIdx = mMeshVertexStartIndices[identifier][meshIndex];
-	size_t vertexEndIdx = (meshIndex + 1 < mMeshVertexStartIndices[identifier].size()) ?
-	mMeshVertexStartIndices[identifier][meshIndex + 1] :
-	mBatchPositions[identifier].size() / 3;
-	size_t vertexCount = vertexEndIdx - vertexStartIdx;
-	
-	// Remove indices
-	mBatchIndices[identifier].erase(mBatchIndices[identifier].begin() + indexStartIdx,
-									mBatchIndices[identifier].begin() + indexEndIdx);
-	
-	// Adjust indices after the removed indices
-	for (size_t i = 0; i < mBatchIndices[identifier].size(); ++i) {
-		if (mBatchIndices[identifier][i] >= vertexEndIdx) {
-			mBatchIndices[identifier][i] -= vertexCount;
-		} else if (mBatchIndices[identifier][i] >= vertexStartIdx) {
-			mBatchIndices[identifier][i] = 0; // Or handle appropriately if needed
-		}
-	}
-	
-	// Remove per-vertex data
-	auto removeRange = [](auto& dataVec, size_t startIdx, size_t count, size_t componentsPerVertex) {
-		dataVec.erase(
-					  dataVec.begin() + startIdx * componentsPerVertex,
-					  dataVec.begin() + (startIdx + count) * componentsPerVertex
-					  );
-	};
-	
-	removeRange(mBatchPositions[identifier], vertexStartIdx, vertexCount, 3);
-	removeRange(mBatchNormals[identifier], vertexStartIdx, vertexCount, 3);
-	removeRange(mBatchTexCoords1[identifier], vertexStartIdx, vertexCount, 2);
-	removeRange(mBatchTexCoords2[identifier], vertexStartIdx, vertexCount, 2);
-	removeRange(mBatchMaterialIds[identifier], vertexStartIdx, vertexCount, 1);
-	removeRange(mBatchColors[identifier], vertexStartIdx, vertexCount, 4);
-	removeRange(mBatchBoneIds[identifier], vertexStartIdx, vertexCount, 4);
-	removeRange(mBatchBoneWeights[identifier], vertexStartIdx, vertexCount, 4);
-	
-	// Remove from mMeshStartIndices and mMeshVertexStartIndices
-	mMeshStartIndices[identifier][instanceId].erase(mMeshStartIndices[identifier][instanceId].begin() + meshIndex);
-	mMeshVertexStartIndices[identifier].erase(mMeshVertexStartIndices[identifier].begin() + meshIndex);
-	
-	// Adjust subsequent start indices
-	for (size_t i = meshIndex; i < mMeshStartIndices[identifier][instanceId].size(); ++i) {
-		mMeshStartIndices[identifier][instanceId][i] -= indexCount;
-		mMeshVertexStartIndices[identifier][i] -= vertexCount;
-	}
-	
-	// Update indexer
-	auto& indexer = mVertexIndexingMap[identifier];
-	indexer.mIndexOffset -= indexCount;
-	indexer.mVertexOffset -= vertexCount;
-	
-	// Remove instanceId from instanceIndexer
-	instanceIndexer.erase(std::remove(instanceIndexer.begin(), instanceIndexer.end(), mesh.get_metadata_component().identifier()),
-						  instanceIndexer.end());
-	
-
 	// If no meshes left, clean up
 	if (mesh_vector.empty()) {
+		
+		// Get starting indices
+		size_t indexStartIdx = mMeshStartIndices[identifier][instanceId][meshIndex];
+		size_t indexEndIdx = (meshIndex + 1 < mMeshStartIndices[identifier][instanceId].size()) ?
+		mMeshStartIndices[identifier][instanceId][meshIndex + 1] :
+		mBatchIndices[identifier].size();
+		size_t indexCount = indexEndIdx - indexStartIdx;
+		
+		size_t vertexStartIdx = mMeshVertexStartIndices[identifier][meshIndex];
+		size_t vertexEndIdx = (meshIndex + 1 < mMeshVertexStartIndices[identifier].size()) ?
+		mMeshVertexStartIndices[identifier][meshIndex + 1] :
+		mBatchPositions[identifier].size() / 3;
+		size_t vertexCount = vertexEndIdx - vertexStartIdx;
+		
+		// Remove indices
+		mBatchIndices[identifier].erase(mBatchIndices[identifier].begin() + indexStartIdx,
+										mBatchIndices[identifier].begin() + indexEndIdx);
+		
+		// Adjust indices after the removed indices
+		for (size_t i = 0; i < mBatchIndices[identifier].size(); ++i) {
+			if (mBatchIndices[identifier][i] >= vertexEndIdx) {
+				mBatchIndices[identifier][i] -= vertexCount;
+			} else if (mBatchIndices[identifier][i] >= vertexStartIdx) {
+				mBatchIndices[identifier][i] = 0; // Or handle appropriately if needed
+			}
+		}
+		
+		// Remove per-vertex data
+		auto removeRange = [](auto& dataVec, size_t startIdx, size_t count, size_t componentsPerVertex) {
+			dataVec.erase(
+						  dataVec.begin() + startIdx * componentsPerVertex,
+						  dataVec.begin() + (startIdx + count) * componentsPerVertex
+						  );
+		};
+		
+		removeRange(mBatchPositions[identifier], vertexStartIdx, vertexCount, 3);
+		removeRange(mBatchNormals[identifier], vertexStartIdx, vertexCount, 3);
+		removeRange(mBatchTexCoords1[identifier], vertexStartIdx, vertexCount, 2);
+		removeRange(mBatchTexCoords2[identifier], vertexStartIdx, vertexCount, 2);
+		removeRange(mBatchMaterialIds[identifier], vertexStartIdx, vertexCount, 1);
+		removeRange(mBatchColors[identifier], vertexStartIdx, vertexCount, 4);
+		removeRange(mBatchBoneIds[identifier], vertexStartIdx, vertexCount, 4);
+		removeRange(mBatchBoneWeights[identifier], vertexStartIdx, vertexCount, 4);
+		
+		// Remove from mMeshStartIndices and mMeshVertexStartIndices
+		mMeshStartIndices[identifier][instanceId].erase(mMeshStartIndices[identifier][instanceId].begin() + meshIndex);
+		mMeshVertexStartIndices[identifier].erase(mMeshVertexStartIndices[identifier].begin() + meshIndex);
+		
+		// Adjust subsequent start indices
+		for (size_t i = meshIndex; i < mMeshStartIndices[identifier][instanceId].size(); ++i) {
+			mMeshStartIndices[identifier][instanceId][i] -= indexCount;
+			mMeshVertexStartIndices[identifier][i] -= vertexCount;
+		}
+		
+		// Update indexer
+		auto& indexer = mVertexIndexingMap[identifier];
+		indexer.mIndexOffset -= indexCount;
+		indexer.mVertexOffset -= vertexCount;
+		
 		mMeshes.erase(mesh_it);
 		mBatchPositions.erase(identifier);
 		mBatchNormals.erase(identifier);
@@ -339,27 +341,35 @@ void SkinnedMeshBatch::draw_content(const nanogui::Matrix4f& view,
 							  bones.data()
 							  );
 			
-			// Retrieve the instance ID
-			auto instanceId = mesh.get_metadata_component().identifier();
-
+			auto entityId = mesh.get_color_component().identifier();
+			
 			// Apply color component
 			shader.set_uniform("identifier", mesh.get_color_component().identifier());
 			
 			shader.set_uniform("color", glm_to_nanogui(mesh.get_color_component().get_color()));
-
+			
 			// Upload materials for the current mesh
 			upload_material_data(shader, mesh.get_mesh_data().get_material_properties());
 			
+			int instanceId = mInstanceIndexer[identifier][entityId];
+			
+			auto it = std::find_if(mesh_vector.begin(), mesh_vector.end(),
+								   [instanceId](const std::reference_wrapper<SkinnedMesh>& m) {
+				return m.get().get_color_component().identifier() == instanceId;
+			});
+			
+			size_t meshIndex = std::distance(mesh_vector.begin(), it);
+			
 			// Calculate the range of indices to draw for this mesh
-			size_t startIdx = mMeshStartIndices[identifier][instanceId][0];
-			size_t endIdx = (1 < mMeshStartIndices[identifier][instanceId].size()) ?
-			mMeshStartIndices[identifier][instanceId][1] :
+			size_t startIdx = mMeshStartIndices[identifier][instanceId][meshIndex];
+			size_t endIdx = (meshIndex + 1 < mMeshStartIndices[identifier][instanceId].size()) ?
+			mMeshStartIndices[identifier][instanceId][meshIndex + 1] :
 			mBatchIndices[identifier].size();
 			size_t count = endIdx - startIdx;
 			
 			// Begin shader program
 			shader.begin();
-
+			
 			// Draw the mesh segment
 			shader.draw_array(nanogui::Shader::PrimitiveType::Triangle,
 							  startIdx, count, true);
@@ -367,7 +377,7 @@ void SkinnedMeshBatch::draw_content(const nanogui::Matrix4f& view,
 			
 			// End shader program
 			shader.end();
-
+			
 		}
 	}
 }
