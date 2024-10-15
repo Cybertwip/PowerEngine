@@ -322,7 +322,7 @@ void MeshBatch::draw_content(const nanogui::Matrix4f& view,
 			
 			auto it = std::find_if(mesh_vector.begin(), mesh_vector.end(),
 								   [instanceId](const std::reference_wrapper<Mesh>& m) {
-				return m.get().get_color_component().identifier() == instanceId;
+				return m.get().get_metadata_component().identifier() == instanceId;
 			});
 
 			size_t meshIndex = std::distance(mesh_vector.begin(), it);
