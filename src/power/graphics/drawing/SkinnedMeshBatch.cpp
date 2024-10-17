@@ -350,7 +350,7 @@ void SkinnedMeshBatch::draw_content(const nanogui::Matrix4f& view,
 			
 			// Upload materials for the current mesh
 			upload_material_data(shader, mesh.get_mesh_data().get_material_properties());
-			
+			 
 			int instanceId = mInstanceIndexer[identifier][entityId];
 			
 			auto it = std::find_if(mesh_vector.begin(), mesh_vector.end(),
