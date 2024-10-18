@@ -316,6 +316,10 @@ void RenderPass::clear_color(size_t index, const Color &color) {
 
 void RenderPass::set_clear_depth(float depth) {
 	m_clear_depth = depth;
+	
+	MTLRenderPassDescriptor *pass_descriptor =
+	(__bridge MTLRenderPassDescriptor *) m_pass_descriptor;
+	pass_descriptor.depthAttachment.clearDepth = depth;
 }
 void RenderPass::clear_depth(float depth) {
 	// Set the clear depth value
@@ -391,7 +395,7 @@ void RenderPass::set_depth_test(DepthTest depth_test, bool depth_write) {
 			depth_desc.depthCompareFunction = MTLCompareFunctionAlways;
 			depth_desc.depthWriteEnabled = NO;
 		}
-		
+				
 		id<MTLDevice> device = (__bridge id<MTLDevice>) metal_device();
 		id<MTLDepthStencilState> depth_state =
 		[device newDepthStencilStateWithDescriptor: depth_desc];

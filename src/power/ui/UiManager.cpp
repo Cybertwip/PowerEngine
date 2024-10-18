@@ -436,10 +436,8 @@ void UiManager::draw() {
 		
 		mActorManager.visit(*this);
 		
-		// Adjust depth testing for gizmos
-		// Option 1: Disable depth testing
 		mCanvas->render_pass().set_depth_test(nanogui::RenderPass::DepthTest::Less, false);
-		
+
 		// Draw gizmos
 		mGizmoManager.draw();
 		auto& gizmo_batch_unit = mGizmoActorLoader.get_batch_unit();
