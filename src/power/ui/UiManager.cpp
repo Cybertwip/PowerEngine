@@ -68,13 +68,14 @@ glm::vec3 ScreenToWorld(glm::vec2 screenPos, float depth, glm::mat4 projectionMa
 	float focal_length = 1.0f/tanf(glm::radians(45.0f / 2.0f));
 	float ar = (float)WINDOW_HEIGHT / (float)WINDOW_WIDTH;
 	glm::vec3 ray_view(ndc_x / focal_length, (ndc_y * ar) / focal_length, 1.0f);
-		
-	// Swap Y and Z axes for Z-up
-	glm::vec3 ray_view_z_up(ray_view.x, ray_view.z, ray_view.y);
 	
-	// Step 3: Scale the ray by depth to get the intersection point in view space
-	glm::vec4 view_space_intersect = glm::vec4(ray_view_z_up * depth, 1.0f);
-
+	// Step 2 - NDC to view (Anton's version)
+	glm::vec4 ray_ndc_4d(ndc_x, ndc_y, 1.0f, 1.0f);
+	glm::vec4 ray_view_4d = ProjectionInv * ray_ndc_4d;
+	
+	// Step 3 - intersect view vector with object Z plane (in view)
+	glm::vec4 view_space_intersect = glm::vec4(ray_view * depth, 1.0f);
+	
 	// Step 4 - View to World space
 	glm::mat4 View = viewMatrix;
 	glm::mat4 InvView = glm::inverse(viewMatrix);
@@ -410,15 +411,16 @@ void UiManager::draw() {
 			}
 		}
 	} else {
+		// Update UI elements
 		mSceneTimeBar->update();
 		mSceneTimeBar->overlay();
-		
 		mAnimationPanel->update_with(mSceneTimeBar->current_time());
 		
-		// Begin the first render pass for actors
+		// Begin the first render pass for main actors
 		mCanvas->render_pass().clear_color(0, mCanvas->background_color());
 		mCanvas->render_pass().clear_color(1, nanogui::Color(0.0f, 0.0f, 0.0f, 0.0f));
 		mCanvas->render_pass().clear_depth(1.0f);
+		mCanvas->render_pass().set_depth_test(nanogui::RenderPass::DepthTest::Less, true);
 		
 		// Draw all actors
 		mActorManager.draw();
@@ -428,28 +430,23 @@ void UiManager::draw() {
 			color.set_color(mSelectionColor);
 		}
 		
-		// Depth testing for gizmos
-		mCanvas->render_pass().set_depth_test(nanogui::RenderPass::DepthTest::Less, true);
-		
-		mCanvas->render_pass().clear_depth(1.0f);
-		
 		auto& batch_unit = mMeshActorLoader.get_batch_unit();
 		mActorManager.visit(batch_unit.mMeshBatch);
 		mActorManager.visit(batch_unit.mSkinnedMeshBatch);
 		
 		mActorManager.visit(*this);
-
-		mCanvas->render_pass().set_depth_test(nanogui::RenderPass::DepthTest::Less, true);
-
-		mCanvas->render_pass().clear_depth(1.0f);
+		
+		// Adjust depth testing for gizmos
+		// Option 1: Disable depth testing
+		mCanvas->render_pass().set_depth_test(nanogui::RenderPass::DepthTest::Less, false);
 		
 		// Draw gizmos
 		mGizmoManager.draw();
 		auto& gizmo_batch_unit = mGizmoActorLoader.get_batch_unit();
 		mActorManager.visit(gizmo_batch_unit.mMeshBatch);
 		mActorManager.visit(gizmo_batch_unit.mSkinnedMeshBatch);
-
 	}
+
 }
 
 void UiManager::draw_content(const nanogui::Matrix4f& model,

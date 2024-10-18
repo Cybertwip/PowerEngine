@@ -316,10 +316,6 @@ void RenderPass::clear_color(size_t index, const Color &color) {
 
 void RenderPass::set_clear_depth(float depth) {
 	m_clear_depth = depth;
-	
-	MTLRenderPassDescriptor *pass_descriptor =
-	(__bridge MTLRenderPassDescriptor *) m_pass_descriptor;
-	pass_descriptor.depthAttachment.clearDepth = depth;
 }
 void RenderPass::clear_depth(float depth) {
 	// Set the clear depth value
