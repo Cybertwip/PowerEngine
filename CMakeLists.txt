@@ -70,7 +70,7 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
 if(!APPLE)
   # file(COPY py_module DESTINATION ${CMAKE_BINARY_DIR}/bin)
-  file(COPY LICENSE DESTINATION ${CMAKE_BINARY_DIR}/bin)
+  file(COPY LICENSE.md DESTINATION ${CMAKE_BINARY_DIR}/bin)
 endif()
 message("==========================================================")
 

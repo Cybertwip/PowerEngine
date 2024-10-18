@@ -257,7 +257,7 @@ set(RESOURCE_DIRECTORIES
     ${CMAKE_CURRENT_LIST_DIR}/resources
 )
 set(RESOURCE_FILES
-    LICENSE
+    LICENSE.md
 )
 
 # Copy resource and shader files to the binary directory after the build
