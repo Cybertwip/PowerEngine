@@ -251,6 +251,8 @@ class Application : public nanogui::DraggableScreen
 	std::unique_ptr<BatchUnit> mGizmoBatchUnit;
 	std::unique_ptr<SkinnedMeshBatch> mSkinnedMeshBatch;
 	std::unique_ptr<MeshBatch> mMeshBatch;
+	std::unique_ptr<MeshBatch> mGizmoMeshBatch;
+	std::unique_ptr<SkinnedMeshBatch> mGizmoSkinnedMeshBatch;
 	std::shared_ptr<RenderCommon> mRenderCommon;
 	std::shared_ptr<UiCommon> mUiCommon;
 	std::unique_ptr<DeepMotionApiClient> mDeepMotionApiClient;

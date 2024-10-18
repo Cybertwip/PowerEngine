@@ -69,9 +69,15 @@ void Application::initialize() {
 	mMeshBatch = std::make_unique<MeshBatch>(mRenderCommon->canvas()->render_pass());
 	
 	mSkinnedMeshBatch = std::make_unique<SkinnedMeshBatch>(mRenderCommon->canvas()->render_pass());
+
+	mGizmoMeshBatch = std::make_unique<MeshBatch>(mRenderCommon->canvas()->render_pass());
 	
+	mGizmoSkinnedMeshBatch = std::make_unique<SkinnedMeshBatch>(mRenderCommon->canvas()->render_pass());
+
 	mBatchUnit = std::make_unique<BatchUnit>(*mMeshBatch, *mSkinnedMeshBatch);
-	
+
+	mGizmoBatchUnit = std::make_unique<BatchUnit>(*mGizmoMeshBatch, *mGizmoSkinnedMeshBatch);
+
 	mMeshShader = std::make_unique<ShaderWrapper>(mRenderCommon->shader_manager().get_shader("mesh"));
 	
 	mSkinnedShader = std::make_unique<ShaderWrapper>(mRenderCommon->shader_manager().get_shader("skinned_mesh"));
