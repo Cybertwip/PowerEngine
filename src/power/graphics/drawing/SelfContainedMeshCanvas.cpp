@@ -128,7 +128,7 @@ void SelfContainedMeshCanvas::update_camera_view() {
 		// Set the camera position and view direction
 		auto& cameraTransform = mCamera.get_component<TransformComponent>();
 		
-		cameraTransform.set_translation(center - glm::vec3(0.0f, -distance, 0.0f));
+		cameraTransform.set_translation(center - glm::vec3(0.0f, 0.0f, -distance));
 
 		camera.look_at(center);
 	}
