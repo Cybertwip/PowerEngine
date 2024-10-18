@@ -19,8 +19,8 @@ void CameraComponent::update_view() {
 	glm::quat rotation = mTransformComponent.get_rotation();
 	
 	// Calculate forward and up vectors from rotation
-	glm::vec3 forward = glm::normalize(glm::rotate(rotation, glm::vec3(0.0f, -1.0f, 0.0f)));
-	glm::vec3 up = rotation * glm::vec3(0.0f, 0.0f, 1.0f);
+	glm::vec3 forward = glm::normalize(glm::rotate(rotation, glm::vec3(0.0f, 0.0f, -1.0f)));
+	glm::vec3 up = rotation * glm::vec3(0.0f, 1.0f, 0.0f);
 	
 	// Calculate the view matrix with the rotated up vector
 	glm::mat4 viewMatrix = glm::lookAt(position, position + forward, up);
@@ -44,17 +44,6 @@ void CameraComponent::look_at(const glm::vec3& targetPosition) {
 	
 	// Define the world up vector (y-up)
 	glm::vec3 worldUp(0.0f, 1.0f, 0.0f);
-	
-	
-	float tZ = target.z;
-	float oZ = position.z;
-	
-	target.z = target.y;
-	position.z = position.y;
-	
-	target.y = tZ;
-	position.y = oZ;
-	
 	
 	// Compute the direction vector
 	glm::vec3 direction = glm::normalize(target - position);

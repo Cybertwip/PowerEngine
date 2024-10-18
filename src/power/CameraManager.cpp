@@ -125,7 +125,7 @@ void CameraManager::rotate_camera(float dx, float dy) {
 		glm::quat rotation = transform.get_rotation();
 		
 		// Create quaternions for yaw and pitch
-		glm::quat qYaw = glm::angleAxis(glm::radians(yaw), glm::vec3(0, 0, 1));   // Yaw around Z-axis
+		glm::quat qYaw = glm::angleAxis(glm::radians(yaw), glm::vec3(0, 1, 0));   // Yaw around y-axis
 		glm::quat qPitch = glm::angleAxis(glm::radians(pitch), glm::vec3(1, 0, 0)); // Pitch around X-axis
 		
 		// Update the rotation

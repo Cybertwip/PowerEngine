@@ -261,7 +261,6 @@ void SelfContainedSkinnedMeshBatch::upload_vertex_data() {
 
 void SelfContainedSkinnedMeshBatch::draw_content(const nanogui::Matrix4f& view,
 												 const nanogui::Matrix4f& projection) {
-	mRenderPass.pop_depth_test_state(mShader.identifier());
 	
 	for (size_t i = 0; i < mMeshes.size(); ++i) {
 		auto& mesh = mMeshes[i].get();

@@ -281,8 +281,23 @@ Actor& MeshActorBuilder::build(Actor& actor, AnimationTimeProvider& timeProvider
 		std::stringstream compressedData;
 		
 		compressedMeshActor->mMesh.mSerializer->get_compressed_data(compressedData);
+		
+		uint64_t hash_id[] = { 0, 0 };
+		
+		Md5::generate_md5_from_compressed_data(compressedData, hash_id);
+		
+		// Write the unique hash identifier to the header
+		compressedMeshActor->mMesh.mSerializer->write_header_raw(hash_id, sizeof(hash_id));
 				
-		if (!deserializer.initialize(compressedData)) {
+
+		// get the compressed data with the header included this time, - should optimize
+		
+		std::stringstream compressedDataHeader;
+
+		compressedMeshActor->mMesh.mSerializer->get_compressed_data(compressedDataHeader);
+
+		
+		if (!deserializer.initialize(compressedDataHeader)) {
 			std::cerr << "Failed to load serialized file: " << path << "\n";
 			return actor;
 		}

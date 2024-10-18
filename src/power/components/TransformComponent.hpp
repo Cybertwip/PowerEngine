@@ -104,7 +104,7 @@ public:
 	
 	// Get the up vector (positive Z-axis)
 	glm::vec3 get_up() const {
-		return glm::normalize(transform.rotation * glm::vec3(0.0f, 0.0f, 1.0f));
+		return glm::normalize(transform.rotation * glm::vec3(0.0f, 1.0f, 0.0f));
 	}
 	
 	// Get the right vector (positive X-axis)

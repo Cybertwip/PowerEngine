@@ -63,8 +63,15 @@ MeshBatch::MeshBatch(nanogui::RenderPass& renderPass) : mRenderPass(renderPass) 
 }
 
 void MeshBatch::add_mesh(std::reference_wrapper<Mesh> mesh) {
-	int identifier = mesh.get().get_shader().identifier();
-	mMeshes[identifier].push_back(mesh);
+	int instanceId = mesh.get().get_metadata_component().identifier();
+	
+	auto instanceIt = mMeshes.find(instanceId);
+	
+	if (instanceIt != mMeshes.end()) {
+		return;
+	}
+
+	mMeshes[instanceId].push_back(mesh); // per instance
 	append(mesh);
 }
 
@@ -80,36 +87,22 @@ void MeshBatch::clear() {
 	mMeshStartIndices.clear();
 	mMeshVertexStartIndices.clear();
 	mVertexIndexingMap.clear();
-	mInstanceIndexer.clear();
 }
 
 void MeshBatch::append(std::reference_wrapper<Mesh> meshRef) {
 	auto& mesh = meshRef.get();
 	
+	int instanceId = mesh.get_metadata_component().identifier();
+		
 	auto& shader = mesh.get_shader();
 	int identifier = shader.identifier();
-	
-	int instanceId = mesh.get_metadata_component().identifier();
-	int entityId = mesh.get_color_component().identifier();
-	
-	auto& instanceIndexer = mInstanceIndexer[identifier];
-	
-	auto instanceIt = instanceIndexer.find(entityId);
-	
-	if (instanceIt != instanceIndexer.end()) {
-		instanceIndexer[entityId] = instanceId;
-		return;
-	}
-	
-	instanceIndexer[entityId] = instanceId;
-	
-	
+		
 	auto& indexer = mVertexIndexingMap[identifier];
 	
 	size_t vertexOffset = indexer.mVertexOffset;
 	size_t indexOffset = indexer.mIndexOffset;
 	
-	mMeshStartIndices[identifier][instanceId].push_back(indexOffset);
+	mMeshStartIndices[instanceId].push_back(indexOffset);
 	mMeshVertexStartIndices[identifier].push_back(vertexOffset);
 	
 	// Append vertex data using getters
@@ -151,12 +144,10 @@ void MeshBatch::remove(std::reference_wrapper<Mesh> meshRef) {
 	
 	auto instanceId = mesh.get_metadata_component().identifier();
 	int entityId = mesh.get_color_component().identifier();
-
-	auto& instanceIndexer = mInstanceIndexer[identifier];
 	
-	auto instanceIt = instanceIndexer.find(entityId);
+	auto instanceIt = mMeshes.find(instanceId);
 	
-	if (instanceIt == instanceIndexer.end()) {
+	if (instanceIt == mMeshes.end()) {
 		// instance not found
 		return;
 	}
@@ -191,9 +182,9 @@ void MeshBatch::remove(std::reference_wrapper<Mesh> meshRef) {
 	if (mesh_vector.empty()) {
 		
 		// Get starting indices
-		size_t indexStartIdx = mMeshStartIndices[identifier][instanceId][meshIndex];
-		size_t indexEndIdx = (meshIndex + 1 < mMeshStartIndices[identifier][instanceId].size()) ?
-		mMeshStartIndices[identifier][instanceId][meshIndex + 1] :
+		size_t indexStartIdx = mMeshStartIndices[instanceId][meshIndex];
+		size_t indexEndIdx = (meshIndex + 1 < mMeshStartIndices[instanceId].size()) ?
+		mMeshStartIndices[instanceId][meshIndex + 1] :
 		mBatchIndices[identifier].size();
 		size_t indexCount = indexEndIdx - indexStartIdx;
 		
@@ -232,12 +223,12 @@ void MeshBatch::remove(std::reference_wrapper<Mesh> meshRef) {
 		removeRange(mBatchColors[identifier], vertexStartIdx, vertexCount, 4);
 		
 		// Remove from mMeshStartIndices and mMeshVertexStartIndices
-		mMeshStartIndices[identifier][instanceId].erase(mMeshStartIndices[identifier][instanceId].begin() + meshIndex);
+		mMeshStartIndices[instanceId].erase(mMeshStartIndices[instanceId].begin() + meshIndex);
 		mMeshVertexStartIndices[identifier].erase(mMeshVertexStartIndices[identifier].begin() + meshIndex);
 		
 		// Adjust subsequent start indices
-		for (size_t i = meshIndex; i < mMeshStartIndices[identifier][instanceId].size(); ++i) {
-			mMeshStartIndices[identifier][instanceId][i] -= indexCount;
+		for (size_t i = meshIndex; i < mMeshStartIndices[instanceId].size(); ++i) {
+			mMeshStartIndices[instanceId][i] -= indexCount;
 			mMeshVertexStartIndices[identifier][i] -= vertexCount;
 		}
 		
@@ -257,8 +248,6 @@ void MeshBatch::remove(std::reference_wrapper<Mesh> meshRef) {
 		mMeshStartIndices.erase(identifier);
 		mMeshVertexStartIndices.erase(identifier);
 		mVertexIndexingMap.erase(identifier);
-		mInstanceIndexer.erase(identifier);
-		
 	} else {
 		// Re-upload updated vertex and index data to the GPU
 		upload_vertex_data(shader, identifier);
@@ -287,8 +276,7 @@ void MeshBatch::upload_vertex_data(ShaderWrapper& shader, int identifier) {
 
 void MeshBatch::draw_content(const nanogui::Matrix4f& view,
 							 const nanogui::Matrix4f& projection) {
-	for (auto& [identifier, mesh_vector] : mMeshes) {
-		mRenderPass.pop_depth_test_state(identifier);
+	for (auto& [instance_id, mesh_vector] : mMeshes) {
 		
 		if (mesh_vector.empty()) continue;
 		
@@ -316,24 +304,21 @@ void MeshBatch::draw_content(const nanogui::Matrix4f& view,
 			
 			// Upload materials for the current mesh
 			upload_material_data(shader, mesh.get_mesh_data().get_material_properties());
-			
-			
-			int instanceId = mInstanceIndexer[identifier][entityId];
-			
+
+			int shader_id = shader.identifier();
+
 			auto it = std::find_if(mesh_vector.begin(), mesh_vector.end(),
-								   [instanceId](const std::reference_wrapper<Mesh>& m) {
-				return m.get().get_metadata_component().identifier() == instanceId;
+								   [instance_id](const std::reference_wrapper<Mesh>& m) {
+				return m.get().get_metadata_component().identifier() == instance_id;
 			});
 
 			size_t meshIndex = std::distance(mesh_vector.begin(), it);
 
 			// Calculate the range of indices to draw for this mesh
-			size_t startIdx = mMeshStartIndices[identifier][instanceId][meshIndex];
-			size_t endIdx = (meshIndex + 1 < mMeshStartIndices[identifier][instanceId].size()) ?
-			mMeshStartIndices[identifier][instanceId][meshIndex + 1] :
-			mBatchIndices[identifier].size();
-			size_t count = endIdx - startIdx;
+			size_t startIdx = mMeshStartIndices[instance_id][meshIndex];
 			
+			// By default, assume the end index is the size of the batch indices
+			size_t count = mesh.get_mesh_data().get_indices().size();
 			
 			// Begin shader program
 			shader.begin();

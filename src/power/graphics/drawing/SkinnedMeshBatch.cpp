@@ -312,8 +312,7 @@ void SkinnedMeshBatch::upload_vertex_data(ShaderWrapper& shader, int identifier)
 void SkinnedMeshBatch::draw_content(const nanogui::Matrix4f& view,
 									const nanogui::Matrix4f& projection) {
 	for (auto& [identifier, mesh_vector] : mMeshes) {
-		mRenderPass.pop_depth_test_state(identifier);
-		
+
 		if (mesh_vector.empty()) continue;
 		
 		for (size_t i = 0; i < mesh_vector.size(); ++i) {

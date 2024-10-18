@@ -340,11 +340,7 @@ void UiManager::draw() {
 		
 		// Draw all actors
 		mActorManager.draw();
-		
-		// Depth testing for mesh shaders
-		mCanvas->render_pass().push_depth_test_state(nanogui::RenderPass::DepthTest::Less, true, mShaderManager.identifier("mesh"));
-		mCanvas->render_pass().push_depth_test_state(nanogui::RenderPass::DepthTest::Less, true, mShaderManager.identifier("skinned_mesh"));
-		
+
 		auto& batch_unit = mMeshActorLoader.get_batch_unit();
 		mActorManager.visit(batch_unit.mMeshBatch);
 		mActorManager.visit(batch_unit.mSkinnedMeshBatch);
@@ -420,6 +416,8 @@ void UiManager::draw() {
 		mCanvas->render_pass().clear_color(1, nanogui::Color(0.0f, 0.0f, 0.0f, 0.0f));
 		mCanvas->render_pass().clear_depth(1.0f);
 		
+		mCanvas->render_pass().set_depth_test(nanogui::RenderPass::DepthTest::Less, true);
+
 		// Draw all actors
 		mActorManager.draw();
 		
@@ -428,21 +426,13 @@ void UiManager::draw() {
 			color.set_color(mSelectionColor);
 		}
 		
-		// Depth testing for gizmos
-		mCanvas->render_pass().push_depth_test_state(nanogui::RenderPass::DepthTest::Always, true, mShaderManager.identifier("gizmo"));
-		
 		// Draw gizmos
 		mGizmoManager.draw();
-		
-		// Depth testing for mesh shaders
-		mCanvas->render_pass().push_depth_test_state(nanogui::RenderPass::DepthTest::Less, true, mShaderManager.identifier("mesh"));
-		mCanvas->render_pass().push_depth_test_state(nanogui::RenderPass::DepthTest::Less, true, mShaderManager.identifier("skinned_mesh"));
-		
+				
 		auto& batch_unit = mMeshActorLoader.get_batch_unit();
 		mActorManager.visit(batch_unit.mMeshBatch);
 		mActorManager.visit(batch_unit.mSkinnedMeshBatch);
 		
-		mCanvas->render_pass().set_depth_test(nanogui::RenderPass::DepthTest::Less, true);
 		mActorManager.visit(*this);
 	}
 }
