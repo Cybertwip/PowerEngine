@@ -91,6 +91,7 @@ UiManager::UiManager(nanogui::Screen& screen, std::shared_ptr<IActorSelectedRegi
 					 std::shared_ptr<IActorVisualManager> actorVisualManager,
 					 ActorManager& actorManager,
 					 MeshActorLoader& meshActorLoader,
+					 MeshActorLoader& gizmoActorLoader,
 					 ShaderManager& shaderManager,
 					 std::shared_ptr<ScenePanel> scenePanel,
 					 std::shared_ptr<Canvas> canvas,
@@ -109,6 +110,7 @@ UiManager::UiManager(nanogui::Screen& screen, std::shared_ptr<IActorSelectedRegi
 , mShaderManager(shaderManager)
 , mGrid(std::make_unique<Grid>(shaderManager))
 , mMeshActorLoader(meshActorLoader)
+, mGizmoActorLoader(gizmoActorLoader)
 , mGizmoManager(gizmoManager)
 , mCameraManager(cameraManager)
 , mCanvas(canvas)
@@ -340,7 +342,9 @@ void UiManager::draw() {
 		
 		// Draw all actors
 		mActorManager.draw();
-
+		
+		mCanvas->render_pass().set_depth_test(nanogui::RenderPass::DepthTest::Less, true);
+		
 		auto& batch_unit = mMeshActorLoader.get_batch_unit();
 		mActorManager.visit(batch_unit.mMeshBatch);
 		mActorManager.visit(batch_unit.mSkinnedMeshBatch);
@@ -416,8 +420,6 @@ void UiManager::draw() {
 		mCanvas->render_pass().clear_color(1, nanogui::Color(0.0f, 0.0f, 0.0f, 0.0f));
 		mCanvas->render_pass().clear_depth(1.0f);
 		
-		mCanvas->render_pass().set_depth_test(nanogui::RenderPass::DepthTest::Less, true);
-
 		// Draw all actors
 		mActorManager.draw();
 		
@@ -426,14 +428,27 @@ void UiManager::draw() {
 			color.set_color(mSelectionColor);
 		}
 		
-		// Draw gizmos
-		mGizmoManager.draw();
-				
+		// Depth testing for gizmos
+		mCanvas->render_pass().set_depth_test(nanogui::RenderPass::DepthTest::Less, true);
+		
+		mCanvas->render_pass().clear_depth(1.0f);
+		
 		auto& batch_unit = mMeshActorLoader.get_batch_unit();
 		mActorManager.visit(batch_unit.mMeshBatch);
 		mActorManager.visit(batch_unit.mSkinnedMeshBatch);
 		
 		mActorManager.visit(*this);
+
+		mCanvas->render_pass().set_depth_test(nanogui::RenderPass::DepthTest::Less, true);
+
+		mCanvas->render_pass().clear_depth(1.0f);
+		
+		// Draw gizmos
+		mGizmoManager.draw();
+		auto& batch_unit = mGizmoActorLoader.get_batch_unit();
+		mActorManager.visit(batch_unit.mMeshBatch);
+		mActorManager.visit(batch_unit.mSkinnedMeshBatch);
+
 	}
 }
 

@@ -125,10 +125,6 @@ public:
     /// Specify the depth test and depth write mask of this render pass
     void set_depth_test(DepthTest depth_test, bool depth_write);
 	
-	void push_depth_test_state(DepthTest depth_test, bool depth_write, int identifier);
-	
-	void pop_depth_test_state(int identifier);
-
     /// Return the depth test and depth write mask of this render pass
     std::pair<DepthTest, bool> depth_test() const { return { m_depth_test, m_depth_write }; }
 

@@ -60,7 +60,7 @@ private:
 	std::unique_ptr<ISkinnedMeshBatch> mSkinnedMeshBatch;
 	
 	std::unique_ptr<BatchUnit> mBatchUnit;
-	
+
 	std::unique_ptr<MeshActorBuilder> mMeshActorBuilder;
 	
 	std::shared_ptr<SharedSelfContainedMeshCanvas> mPreviewCanvas;

@@ -72,17 +72,18 @@ void SkinnedMeshBatch::upload_material_data(ShaderWrapper& shader, const std::ve
 
 SkinnedMeshBatch::SkinnedMeshBatch(nanogui::RenderPass& renderPass) : mRenderPass(renderPass) {
 }
+
+
 void SkinnedMeshBatch::add_mesh(std::reference_wrapper<SkinnedMesh> mesh) {
 	int instanceId = mesh.get().get_metadata_component().identifier();
 	
 	auto instanceIt = mMeshes.find(instanceId);
 	
-	if (instanceIt != mMeshes.end()) {
-		return;
+	if (instanceIt == mMeshes.end()) {
+		append(mesh);
 	}
 	
-	mMeshes[instanceId].push_back(mesh); // per instance
-	append(mesh);
+	mMeshes[instanceId].push_back(mesh);
 }
 
 

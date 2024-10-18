@@ -67,12 +67,11 @@ void MeshBatch::add_mesh(std::reference_wrapper<Mesh> mesh) {
 	
 	auto instanceIt = mMeshes.find(instanceId);
 	
-	if (instanceIt != mMeshes.end()) {
-		return;
+	if (instanceIt == mMeshes.end()) {
+		append(mesh);
 	}
-
-	mMeshes[instanceId].push_back(mesh); // per instance
-	append(mesh);
+	
+	mMeshes[instanceId].push_back(mesh);
 }
 
 void MeshBatch::clear() {

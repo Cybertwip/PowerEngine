@@ -15,7 +15,7 @@ class ShaderWrapper
 {
 public:
 	ShaderWrapper(std::shared_ptr<nanogui::Shader> shader);
-	~ShaderWrapper();
+	virtual ~ShaderWrapper();
 	void persist_buffer(const std::string &name, nanogui::VariableType type,
 					std::initializer_list<size_t> shape, const void *data, int index = -1);
 
@@ -33,8 +33,8 @@ public:
 	
 	int identifier() const;
 
-	void begin();
-	void end();
+	virtual void begin();
+	virtual void end();
 	void draw_array(nanogui::Shader::PrimitiveType primitive_type,
 					size_t offset, size_t count,
 					bool indexed = false);

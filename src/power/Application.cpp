@@ -78,13 +78,16 @@ void Application::initialize() {
 	
 	mMeshActorLoader = std::make_unique<MeshActorLoader>(*mActorManager, mRenderCommon->shader_manager(), *mBatchUnit);
 	
-	mGizmoManager = std::make_unique<GizmoManager>(*mUiCommon->toolbox(), *this, mRenderCommon->shader_manager(), *mActorManager, *mMeshActorLoader);
+	mGizmoActorLoader = std::make_unique<MeshActorLoader>(*mActorManager, mRenderCommon->shader_manager(), *mGizmoBatchUnit);
+	
+	mGizmoManager = std::make_unique<GizmoManager>(*mUiCommon->toolbox(), *this, mRenderCommon->shader_manager(), *mActorManager, *mGizmoActorLoader);
 	
 	mUiManager = std::make_unique<UiManager>(*this,
 											 mUiCommon->hierarchy_panel(),
 											 mUiCommon->hierarchy_panel(),
 											 *mActorManager,
 											 *mMeshActorLoader,
+											 *mGizmoActorLoader,
 											 mRenderCommon->shader_manager(),
 											 mUiCommon->scene_panel(),
 											 mRenderCommon->canvas(),

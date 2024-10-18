@@ -64,6 +64,7 @@ public:
 			  std::shared_ptr<IActorVisualManager> actorVisualManager,
 			  ActorManager& actorManager,
 			  MeshActorLoader& meshActorLoader,
+			  MeshActorLoader& gizmoActorLoader,
 			  ShaderManager& shaderManager,
 			  std::shared_ptr<ScenePanel> scenePanel,
 			  std::shared_ptr<Canvas> canvas,
@@ -103,6 +104,7 @@ private:
 	ShaderManager& mShaderManager;
 	std::unique_ptr<Grid> mGrid;
 	MeshActorLoader& mMeshActorLoader;
+	MeshActorLoader& mGizmoActorLoader;
 	GizmoManager& mGizmoManager;
 	CameraManager& mCameraManager;
 	std::shared_ptr<Canvas> mCanvas;
