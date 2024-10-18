@@ -445,9 +445,9 @@ void UiManager::draw() {
 		
 		// Draw gizmos
 		mGizmoManager.draw();
-		auto& batch_unit = mGizmoActorLoader.get_batch_unit();
-		mActorManager.visit(batch_unit.mMeshBatch);
-		mActorManager.visit(batch_unit.mSkinnedMeshBatch);
+		auto& gizmo_batch_unit = mGizmoActorLoader.get_batch_unit();
+		mActorManager.visit(gizmo_batch_unit.mMeshBatch);
+		mActorManager.visit(gizmo_batch_unit.mSkinnedMeshBatch);
 
 	}
 }
