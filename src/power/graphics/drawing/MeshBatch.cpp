@@ -145,17 +145,10 @@ void MeshBatch::remove(std::reference_wrapper<Mesh> meshRef) {
 	auto instanceId = mesh.get_metadata_component().identifier();
 	int entityId = mesh.get_color_component().identifier();
 	
-	auto instanceIt = mMeshes.find(instanceId);
+	auto mesh_it = mMeshes.find(instanceId);
 	
-	if (instanceIt == mMeshes.end()) {
-		// instance not found
-		return;
-	}
-	
-	// 1. Locate the mesh in mMeshes
-	auto mesh_it = mMeshes.find(identifier);
 	if (mesh_it == mMeshes.end()) {
-		// Shader not found; nothing to remove
+		// instance not found
 		return;
 	}
 	
@@ -183,10 +176,7 @@ void MeshBatch::remove(std::reference_wrapper<Mesh> meshRef) {
 		
 		// Get starting indices
 		size_t indexStartIdx = mMeshStartIndices[instanceId][meshIndex];
-		size_t indexEndIdx = (meshIndex + 1 < mMeshStartIndices[instanceId].size()) ?
-		mMeshStartIndices[instanceId][meshIndex + 1] :
-		mBatchIndices[identifier].size();
-		size_t indexCount = indexEndIdx - indexStartIdx;
+		size_t indexCount = mesh.get_mesh_data().get_indices().size();
 		
 		size_t vertexStartIdx = mMeshVertexStartIndices[identifier][meshIndex];
 		size_t vertexEndIdx = (meshIndex + 1 < mMeshVertexStartIndices[identifier].size()) ?
@@ -196,7 +186,7 @@ void MeshBatch::remove(std::reference_wrapper<Mesh> meshRef) {
 		
 		// Remove indices
 		mBatchIndices[identifier].erase(mBatchIndices[identifier].begin() + indexStartIdx,
-										mBatchIndices[identifier].begin() + indexEndIdx);
+										mBatchIndices[identifier].begin() + indexStartIdx + indexCount);
 		
 		// Adjust indices after the removed indices
 		for (size_t i = 0; i < mBatchIndices[identifier].size(); ++i) {
@@ -307,15 +297,8 @@ void MeshBatch::draw_content(const nanogui::Matrix4f& view,
 
 			int shader_id = shader.identifier();
 
-			auto it = std::find_if(mesh_vector.begin(), mesh_vector.end(),
-								   [instance_id](const std::reference_wrapper<Mesh>& m) {
-				return m.get().get_metadata_component().identifier() == instance_id;
-			});
-
-			size_t meshIndex = std::distance(mesh_vector.begin(), it);
-
 			// Calculate the range of indices to draw for this mesh
-			size_t startIdx = mMeshStartIndices[instance_id][meshIndex];
+			size_t startIdx = mMeshStartIndices[instance_id][i];
 			
 			// By default, assume the end index is the size of the batch indices
 			size_t count = mesh.get_mesh_data().get_indices().size();

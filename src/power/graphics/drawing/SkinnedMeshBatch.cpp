@@ -73,8 +73,15 @@ void SkinnedMeshBatch::upload_material_data(ShaderWrapper& shader, const std::ve
 SkinnedMeshBatch::SkinnedMeshBatch(nanogui::RenderPass& renderPass) : mRenderPass(renderPass) {
 }
 void SkinnedMeshBatch::add_mesh(std::reference_wrapper<SkinnedMesh> mesh) {
-	int identifier = mesh.get().get_shader().identifier();
-	mMeshes[identifier].push_back(mesh);
+	int instanceId = mesh.get().get_metadata_component().identifier();
+	
+	auto instanceIt = mMeshes.find(instanceId);
+	
+	if (instanceIt != mMeshes.end()) {
+		return;
+	}
+	
+	mMeshes[instanceId].push_back(mesh); // per instance
 	append(mesh);
 }
 
@@ -91,37 +98,24 @@ void SkinnedMeshBatch::clear() {
 	mMeshStartIndices.clear();
 	mMeshVertexStartIndices.clear();
 	mVertexIndexingMap.clear();
-	mInstanceIndexer.clear();
 }
 
 void SkinnedMeshBatch::append(std::reference_wrapper<SkinnedMesh> meshRef) {
 	auto& mesh = meshRef.get();
 	
+	int instanceId = mesh.get_metadata_component().identifier();
+	
 	auto& shader = mesh.get_shader();
 	int identifier = shader.identifier();
-	
-	int instanceId = mesh.get_metadata_component().identifier();
-	int entityId = mesh.get_color_component().identifier();
-	
-	auto& instanceIndexer = mInstanceIndexer[identifier];
-	
-	auto instanceIt = instanceIndexer.find(entityId);
-	
-	if (instanceIt != instanceIndexer.end()) {
-		instanceIndexer[entityId] = instanceId;
-		return;
-	}
-	
-	instanceIndexer[entityId] = instanceId;
 	
 	auto& indexer = mVertexIndexingMap[identifier];
 	
 	size_t vertexOffset = indexer.mVertexOffset;
 	size_t indexOffset = indexer.mIndexOffset;
 	
-	mMeshStartIndices[identifier][instanceId].push_back(indexOffset);
+	mMeshStartIndices[instanceId].push_back(indexOffset);
 	mMeshVertexStartIndices[identifier].push_back(vertexOffset);
-	
+
 	// Append vertex data using getters
 	mBatchPositions[identifier].insert(mBatchPositions[identifier].end(),
 									   mesh.get_flattened_positions().begin(),
@@ -169,17 +163,8 @@ void SkinnedMeshBatch::remove(std::reference_wrapper<SkinnedMesh> meshRef) {
 	auto instanceId = mesh.get_metadata_component().identifier();
 	int entityId = mesh.get_color_component().identifier();
 	
-	auto& instanceIndexer = mInstanceIndexer[identifier];
-	
-	auto instanceIt = instanceIndexer.find(entityId);
-	
-	if (instanceIt == instanceIndexer.end()) {
-		// instance not found
-		return;
-	}
-	
 	// 1. Locate the mesh in mMeshes
-	auto mesh_it = mMeshes.find(identifier);
+	auto mesh_it = mMeshes.find(instanceId);
 	if (mesh_it == mMeshes.end()) {
 		// Shader not found; nothing to remove
 		return;
@@ -207,13 +192,9 @@ void SkinnedMeshBatch::remove(std::reference_wrapper<SkinnedMesh> meshRef) {
 	
 	// If no meshes left, clean up
 	if (mesh_vector.empty()) {
-		
 		// Get starting indices
-		size_t indexStartIdx = mMeshStartIndices[identifier][instanceId][meshIndex];
-		size_t indexEndIdx = (meshIndex + 1 < mMeshStartIndices[identifier][instanceId].size()) ?
-		mMeshStartIndices[identifier][instanceId][meshIndex + 1] :
-		mBatchIndices[identifier].size();
-		size_t indexCount = indexEndIdx - indexStartIdx;
+		size_t indexStartIdx = mMeshStartIndices[instanceId][meshIndex];
+		size_t indexCount = mesh.get_mesh_data().get_indices().size();
 		
 		size_t vertexStartIdx = mMeshVertexStartIndices[identifier][meshIndex];
 		size_t vertexEndIdx = (meshIndex + 1 < mMeshVertexStartIndices[identifier].size()) ?
@@ -223,8 +204,8 @@ void SkinnedMeshBatch::remove(std::reference_wrapper<SkinnedMesh> meshRef) {
 		
 		// Remove indices
 		mBatchIndices[identifier].erase(mBatchIndices[identifier].begin() + indexStartIdx,
-										mBatchIndices[identifier].begin() + indexEndIdx);
-		
+										mBatchIndices[identifier].begin() + indexStartIdx + indexCount);
+
 		// Adjust indices after the removed indices
 		for (size_t i = 0; i < mBatchIndices[identifier].size(); ++i) {
 			if (mBatchIndices[identifier][i] >= vertexEndIdx) {
@@ -252,12 +233,12 @@ void SkinnedMeshBatch::remove(std::reference_wrapper<SkinnedMesh> meshRef) {
 		removeRange(mBatchBoneWeights[identifier], vertexStartIdx, vertexCount, 4);
 		
 		// Remove from mMeshStartIndices and mMeshVertexStartIndices
-		mMeshStartIndices[identifier][instanceId].erase(mMeshStartIndices[identifier][instanceId].begin() + meshIndex);
+		mMeshStartIndices[instanceId].erase(mMeshStartIndices[instanceId].begin() + meshIndex);
 		mMeshVertexStartIndices[identifier].erase(mMeshVertexStartIndices[identifier].begin() + meshIndex);
 		
 		// Adjust subsequent start indices
-		for (size_t i = meshIndex; i < mMeshStartIndices[identifier][instanceId].size(); ++i) {
-			mMeshStartIndices[identifier][instanceId][i] -= indexCount;
+		for (size_t i = meshIndex; i < mMeshStartIndices[instanceId].size(); ++i) {
+			mMeshStartIndices[instanceId][i] -= indexCount;
 			mMeshVertexStartIndices[identifier][i] -= vertexCount;
 		}
 		
@@ -279,7 +260,6 @@ void SkinnedMeshBatch::remove(std::reference_wrapper<SkinnedMesh> meshRef) {
 		mMeshStartIndices.erase(identifier);
 		mMeshVertexStartIndices.erase(identifier);
 		mVertexIndexingMap.erase(identifier);
-		mInstanceIndexer.erase(identifier);
 	} else {
 		// Re-upload updated vertex and index data to the GPU
 		upload_vertex_data(shader, identifier);
@@ -311,8 +291,7 @@ void SkinnedMeshBatch::upload_vertex_data(ShaderWrapper& shader, int identifier)
 
 void SkinnedMeshBatch::draw_content(const nanogui::Matrix4f& view,
 									const nanogui::Matrix4f& projection) {
-	for (auto& [identifier, mesh_vector] : mMeshes) {
-
+	for (auto& [instanceId, mesh_vector] : mMeshes) {
 		if (mesh_vector.empty()) continue;
 		
 		for (size_t i = 0; i < mesh_vector.size(); ++i) {
@@ -350,21 +329,9 @@ void SkinnedMeshBatch::draw_content(const nanogui::Matrix4f& view,
 			// Upload materials for the current mesh
 			upload_material_data(shader, mesh.get_mesh_data().get_material_properties());
 			 
-			int instanceId = mInstanceIndexer[identifier][entityId];
-			
-			auto it = std::find_if(mesh_vector.begin(), mesh_vector.end(),
-								   [instanceId](const std::reference_wrapper<SkinnedMesh>& m) {
-				return m.get().get_metadata_component().identifier() == instanceId;
-			});
-			
-			size_t meshIndex = std::distance(mesh_vector.begin(), it);
-			
 			// Calculate the range of indices to draw for this mesh
-			size_t startIdx = mMeshStartIndices[identifier][instanceId][meshIndex];
-			size_t endIdx = (meshIndex + 1 < mMeshStartIndices[identifier][instanceId].size()) ?
-			mMeshStartIndices[identifier][instanceId][meshIndex + 1] :
-			mBatchIndices[identifier].size();
-			size_t count = endIdx - startIdx;
+			size_t startIdx = mMeshStartIndices[instanceId][i];
+			size_t count = mesh.get_mesh_data().get_indices().size();
 			
 			// Begin shader program
 			shader.begin();
