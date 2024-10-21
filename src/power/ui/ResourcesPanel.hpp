@@ -79,6 +79,8 @@ private:
 	
 	std::shared_ptr<DeepMotionSettingsWindow> mDeepMotionSettings;
 	
+	std::shared_ptr<nanogui::Button> mCharacterButton;
+	std::shared_ptr<nanogui::Button> mModelButton;
 	std::shared_ptr<nanogui::Button> mAnimationButton;
 	std::shared_ptr<nanogui::Button> mSceneButton;
 

@@ -1,6 +1,9 @@
 #include "components/CameraComponent.hpp"
 
+#include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>
+
+#include "actors/Actor.hpp"
 
 #include "components/MetadataComponent.hpp"
 #include "components/TransformComponent.hpp"
@@ -19,7 +22,7 @@ void CameraComponent::update_view() {
 	glm::quat rotation = mTransformComponent.get_rotation();
 	
 	// Calculate forward and up vectors from rotation
-	glm::vec3 forward = glm::normalize(glm::rotate(rotation, glm::vec3(0.0f, 0.0f, -1.0f)));
+	glm::vec3 forward = glm::normalize(rotation * glm::vec3(0.0f, 0.0f, -1.0f));
 	glm::vec3 up = rotation * glm::vec3(0.0f, 1.0f, 0.0f);
 	
 	// Calculate the view matrix with the rotated up vector

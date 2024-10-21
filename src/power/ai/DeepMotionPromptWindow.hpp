@@ -16,6 +16,7 @@
 #include <optional>
 
 // Forward Declarations
+class Actor;
 class DeepMotionApiClient;
 class MeshActorBuilder;
 class MeshActorExporter;

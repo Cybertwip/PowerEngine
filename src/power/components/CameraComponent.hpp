@@ -4,6 +4,7 @@
 
 #include <nanogui/vector.h>
 
+class Actor;
 class TransformComponent;
 
 class CameraComponent

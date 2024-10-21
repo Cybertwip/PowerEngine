@@ -311,8 +311,6 @@ void MeshBatch::draw_content(const nanogui::Matrix4f& view,
 			
 			// End shader program
 			shader.end();
-			
 		}
-		
 	}
 }

@@ -1,10 +1,11 @@
 #include "ui/ResourcesPanel.hpp"
 
 #include "ai/DeepMotionSettingsWindow.hpp"
-#include "ai/PromptWindow.hpp"
+#include "ai/DeepMotionPromptWindow.hpp"
 #include "actors/IActorSelectedRegistry.hpp"
 #include "filesystem/MeshActorImporter.hpp"
 #include "filesystem/MeshActorExporter.hpp"
+#include "graphics/drawing/MeshActorBuilder.hpp"
 #include "ui/FileView.hpp"
 #include "ui/ImportWindow.hpp"
 #include "ui/MeshPicker.hpp"
@@ -170,7 +171,15 @@ mShaderManager(shaderManager)
 	
 	mSceneButton = std::make_shared<nanogui::Button>(mAddButton->popup(), screen, "Scene");
 	
-	mSceneButton->set_icon(FA_HAND_PAPER);
+	mSceneButton->set_icon(FA_NEWSPAPER);
+	
+	mCharacterButton = std::make_shared<nanogui::Button>(mAddButton->popup(), screen, "Character");
+	
+	mCharacterButton->set_icon(FA_PERSON_BOOTH);
+	
+	mCharacterButton->set_callback([this](){
+	});
+
 	
 	mAnimationButton = std::make_shared<nanogui::Button>(mAddButton->popup(), screen, "Animation");
 	

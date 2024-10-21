@@ -61,8 +61,15 @@ add_executable(PowerEngine
     ${CMAKE_CURRENT_LIST_DIR}/ai/DeepMotionSettingsWindow.cpp
     ${CMAKE_CURRENT_LIST_DIR}/ai/DeepMotionApiClient.hpp
     ${CMAKE_CURRENT_LIST_DIR}/ai/DeepMotionApiClient.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/ai/PromptWindow.hpp
-    ${CMAKE_CURRENT_LIST_DIR}/ai/PromptWindow.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/ai/DeepMotionPromptWindow.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/ai/DeepMotionPromptWindow.cpp
+
+    ${CMAKE_CURRENT_LIST_DIR}/ai/DallESettingsWindow.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/ai/DallESettingsWindow.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/ai/DallEApiClient.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/ai/DallEApiClient.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/ai/DallEPromptWindow.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/ai/DallEPromptWindow.cpp
 
 ${CMAKE_CURRENT_LIST_DIR}/actors/IActorManager.hpp
     ${CMAKE_CURRENT_LIST_DIR}/actors/IActorSelectedCallback.hpp

@@ -4,6 +4,8 @@
 
 #include <string>
 
+class Actor;
+
 class ICartridgeActorLoader {
 public:
 	ICartridgeActorLoader() = default;

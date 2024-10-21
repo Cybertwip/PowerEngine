@@ -1,4 +1,4 @@
-#include "PromptWindow.hpp"
+#include "DeepMotionPromptWindow.hpp"
 
 #include "ShaderManager.hpp"
 

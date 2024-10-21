@@ -1,4 +1,4 @@
-#include "DeepMotionApiClient.hpp"
+#include "DallEApiClient.hpp"
 
 #include <cctype>
 #include <algorithm>
@@ -9,7 +9,7 @@
 #include <future>
 #include <thread>
 
-namespace DeepMotionUtils {
+namespace DallEUtils {
 // Base64 encoding table
 const std::string base64_chars =
 "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
@@ -29,10 +29,10 @@ inline bool is_base64(uint8_t c) {
 
 }
 
-DeepMotionApiClient::DeepMotionApiClient()
+DallEApiClient::DallEApiClient()
 : client_(nullptr), authenticated_(false) {}
 
-DeepMotionApiClient::~DeepMotionApiClient() {
+DallEApiClient::~DallEApiClient() {
 	// Destructor can be used to clean up resources if needed
 }
 
@@ -40,7 +40,7 @@ DeepMotionApiClient::~DeepMotionApiClient() {
 // Private Helper Methods
 // ---------------------
 
-std::string DeepMotionApiClient::base64_encode(const std::string& input) const {
+std::string DallEApiClient::base64_encode(const std::string& input) const {
 	std::string ret;
 	int i = 0;
 	int j = 0;
@@ -61,7 +61,7 @@ std::string DeepMotionApiClient::base64_encode(const std::string& input) const {
 			char_array_4[3] = char_array_3[2] & 0x3f;
 			
 			for (i = 0; i < 4; ++i)
-				ret += DeepMotionUtils::base64_chars[char_array_4[i]];
+				ret += DallEUtils::base64_chars[char_array_4[i]];
 			i = 0;
 		}
 	}
@@ -78,7 +78,7 @@ std::string DeepMotionApiClient::base64_encode(const std::string& input) const {
 		char_array_4[3] = char_array_3[2] & 0x3f;
 		
 		for (j = 0; j < i + 1; j++)
-			ret += DeepMotionUtils::base64_chars[char_array_4[j]];
+			ret += DallEUtils::base64_chars[char_array_4[j]];
 		
 		while ((i++ < 3))
 			ret += '=';
@@ -87,7 +87,7 @@ std::string DeepMotionApiClient::base64_encode(const std::string& input) const {
 	return ret;
 }
 
-bool DeepMotionApiClient::read_file(const std::string& file_path, std::vector<char>& data) const {
+bool DallEApiClient::read_file(const std::string& file_path, std::vector<char>& data) const {
 	std::ifstream file(file_path, std::ios::binary | std::ios::ate);
 	if (!file.is_open()) {
 		std::cerr << "Failed to open file for reading: " << file_path << std::endl;
@@ -113,7 +113,7 @@ bool DeepMotionApiClient::read_file(const std::string& file_path, std::vector<ch
 	return true;
 }
 
-std::string DeepMotionApiClient::store_model_internal(const std::string& model_url, const std::string& model_name) {
+std::string DallEApiClient::store_model_internal(const std::string& model_url, const std::string& model_name) {
 	// Construct JSON payload
 	Json::Value post_json_data;
 	post_json_data["modelUrl"] = model_url;
@@ -155,7 +155,7 @@ std::string DeepMotionApiClient::store_model_internal(const std::string& model_u
 // Public Methods
 // ---------------------
 
-bool DeepMotionApiClient::authenticate(const std::string& api_base_url, int api_base_port,
+bool DallEApiClient::authenticate(const std::string& api_base_url, int api_base_port,
 									   const std::string& client_id, const std::string& client_secret) {
 	std::lock_guard<std::mutex> lock(client_mutex_);
 	
@@ -210,17 +210,17 @@ bool DeepMotionApiClient::authenticate(const std::string& api_base_url, int api_
 	return false;
 }
 
-std::string DeepMotionApiClient::get_session_cookie() const {
+std::string DallEApiClient::get_session_cookie() const {
 	std::lock_guard<std::mutex> lock(client_mutex_);
 	return session_cookie_;
 }
 
-bool DeepMotionApiClient::is_authenticated() const {
+bool DallEApiClient::is_authenticated() const {
 	std::lock_guard<std::mutex> lock(client_mutex_);
 	return authenticated_;
 }
 
-std::string DeepMotionApiClient::process_text_to_motion(const std::string& prompt, const std::string& model_id) {
+std::string DallEApiClient::process_text_to_motion(const std::string& prompt, const std::string& model_id) {
 	std::lock_guard<std::mutex> lock(client_mutex_);
 	
 	if (!authenticated_) {
@@ -270,7 +270,7 @@ std::string DeepMotionApiClient::process_text_to_motion(const std::string& promp
 	return "";
 }
 
-Json::Value DeepMotionApiClient::check_job_status(const std::string& request_id) {
+Json::Value DallEApiClient::check_job_status(const std::string& request_id) {
 	std::lock_guard<std::mutex> lock(client_mutex_);
 	
 	Json::Value empty_response;
@@ -307,7 +307,7 @@ Json::Value DeepMotionApiClient::check_job_status(const std::string& request_id)
 	return empty_response;
 }
 
-Json::Value DeepMotionApiClient::download_job_results(const std::string& request_id) {
+Json::Value DallEApiClient::download_job_results(const std::string& request_id) {
 	std::lock_guard<std::mutex> lock(client_mutex_);
 	
 	Json::Value empty_response;
@@ -344,7 +344,7 @@ Json::Value DeepMotionApiClient::download_job_results(const std::string& request
 	return empty_response;
 }
 
-std::string DeepMotionApiClient::get_model_upload_url(bool resumable, const std::string& model_ext) {
+std::string DallEApiClient::get_model_upload_url(bool resumable, const std::string& model_ext) {
 	std::lock_guard<std::mutex> lock(client_mutex_);
 	
 	if (!authenticated_) {
@@ -379,7 +379,7 @@ std::string DeepMotionApiClient::get_model_upload_url(bool resumable, const std:
 	return "";
 }
 
-std::string DeepMotionApiClient::store_model(const std::string& model_url, const std::string& model_name) {
+std::string DallEApiClient::store_model(const std::string& model_url, const std::string& model_name) {
 	std::lock_guard<std::mutex> lock(client_mutex_);
 	
 	if (!authenticated_) {
@@ -390,7 +390,7 @@ std::string DeepMotionApiClient::store_model(const std::string& model_url, const
 	return store_model_internal(model_url, model_name);
 }
 
-Json::Value DeepMotionApiClient::list_models() {
+Json::Value DallEApiClient::list_models() {
 	std::lock_guard<std::mutex> lock(client_mutex_);
 	
 	Json::Value empty_response;
@@ -427,7 +427,7 @@ Json::Value DeepMotionApiClient::list_models() {
 	return empty_response;
 }
 
-std::string DeepMotionApiClient::upload_model(std::stringstream& model_stream, const std::string& model_name, const std::string& model_ext) {
+std::string DallEApiClient::upload_model(std::stringstream& model_stream, const std::string& model_name, const std::string& model_ext) {
 	std::unique_lock<std::mutex> lock(client_mutex_);
 	
 	if (!authenticated_) {
@@ -524,7 +524,7 @@ std::string DeepMotionApiClient::upload_model(std::stringstream& model_stream, c
 // Asynchronous Methods Implementation
 // ---------------------
 
-void DeepMotionApiClient::authenticate_async(const std::string& api_base_url, int api_base_port,
+void DallEApiClient::authenticate_async(const std::string& api_base_url, int api_base_port,
 											 const std::string& client_id, const std::string& client_secret,
 											 AuthCallback callback) {
 	// Launch asynchronous task
@@ -540,7 +540,7 @@ void DeepMotionApiClient::authenticate_async(const std::string& api_base_url, in
 	}).detach();
 }
 
-void DeepMotionApiClient::process_text_to_motion_async(const std::string& prompt, const std::string& model_id,
+void DallEApiClient::process_text_to_motion_async(const std::string& prompt, const std::string& model_id,
 													   ProcessMotionCallback callback) {
 	// Launch asynchronous task
 	std::thread([this, prompt, model_id, callback]() {
@@ -555,7 +555,7 @@ void DeepMotionApiClient::process_text_to_motion_async(const std::string& prompt
 	}).detach();
 }
 
-void DeepMotionApiClient::upload_model_async(std::stringstream model_stream, const std::string& model_name,
+void DallEApiClient::upload_model_async(std::stringstream model_stream, const std::string& model_name,
 											 const std::string& model_ext, UploadModelCallback callback) {
 	// Launch asynchronous task
 	std::thread([this, stream = std::move(model_stream), model_name, model_ext, callback]() mutable {
@@ -570,7 +570,7 @@ void DeepMotionApiClient::upload_model_async(std::stringstream model_stream, con
 	}).detach();
 }
 
-void DeepMotionApiClient::check_job_status_async(const std::string& request_id, StatusCallback callback) {
+void DallEApiClient::check_job_status_async(const std::string& request_id, StatusCallback callback) {
 	// Launch asynchronous task
 	std::thread([this, request_id, callback]() {
 		Json::Value status = check_job_status(request_id);
@@ -584,7 +584,7 @@ void DeepMotionApiClient::check_job_status_async(const std::string& request_id, 
 	}).detach();
 }
 
-void DeepMotionApiClient::download_job_results_async(const std::string& request_id, DownloadCallback callback) {
+void DallEApiClient::download_job_results_async(const std::string& request_id, DownloadCallback callback) {
 	// Launch asynchronous task
 	std::thread([this, request_id, callback]() {
 		Json::Value results = download_job_results(request_id);
@@ -598,7 +598,7 @@ void DeepMotionApiClient::download_job_results_async(const std::string& request_
 	}).detach();
 }
 
-void DeepMotionApiClient::list_models_async(ModelsListCallback callback) {
+void DallEApiClient::list_models_async(ModelsListCallback callback) {
 	// Launch asynchronous task
 	std::thread([this, callback]() {
 		Json::Value models = list_models();
