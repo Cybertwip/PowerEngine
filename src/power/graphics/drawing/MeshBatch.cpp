@@ -297,7 +297,7 @@ void MeshBatch::draw_content(const nanogui::Matrix4f& view,
 			int shader_id = shader.identifier();
 
 			// Calculate the range of indices to draw for this mesh
-			size_t startIdx = mMeshStartIndices[instance_id][i];
+			size_t startIdx = mMeshStartIndices[instance_id][0];
 			
 			// By default, assume the end index is the size of the batch indices
 			size_t count = mesh.get_mesh_data().get_indices().size();

@@ -331,7 +331,7 @@ void SkinnedMeshBatch::draw_content(const nanogui::Matrix4f& view,
 			upload_material_data(shader, mesh.get_mesh_data().get_material_properties());
 			 
 			// Calculate the range of indices to draw for this mesh
-			size_t startIdx = mMeshStartIndices[instanceId][i];
+			size_t startIdx = mMeshStartIndices[instanceId][0];
 			size_t count = mesh.get_mesh_data().get_indices().size();
 			
 			// Begin shader program
