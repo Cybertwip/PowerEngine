@@ -30,15 +30,13 @@ inline bool is_base64(uint8_t c) {
 }
 
 DallEApiClient::DallEApiClient()
-: client_(nullptr), authenticated_(false) {}
+: api_key_(""), client_(nullptr) {
+	// Default constructor does not initialize the client
+}
 
 DallEApiClient::~DallEApiClient() {
 	// Destructor can be used to clean up resources if needed
 }
-
-// ---------------------
-// Private Helper Methods
-// ---------------------
 
 std::string DallEApiClient::base64_encode(const std::string& input) const {
 	std::string ret;
@@ -87,449 +85,81 @@ std::string DallEApiClient::base64_encode(const std::string& input) const {
 	return ret;
 }
 
-bool DallEApiClient::read_file(const std::string& file_path, std::vector<char>& data) const {
-	std::ifstream file(file_path, std::ios::binary | std::ios::ate);
-	if (!file.is_open()) {
+bool DallEApiClient::save_api_key(const std::string& file_path) const {
+	std::lock_guard<std::mutex> lock(client_mutex_);
+	
+	if (api_key_.empty()) {
+		std::cerr << "API key is empty. Cannot save." << std::endl;
+		return false;
+	}
+	
+	std::ofstream ofs(file_path, std::ios::out | std::ios::trunc);
+	if (!ofs.is_open()) {
+		std::cerr << "Failed to open file for writing: " << file_path << std::endl;
+		return false;
+	}
+	
+	ofs << api_key_;
+	ofs.close();
+	
+	std::cout << "API key saved to " << file_path << std::endl;
+	return true;
+}
+
+bool DallEApiClient::load_api_key(const std::string& file_path) {
+	std::lock_guard<std::mutex> lock(client_mutex_);
+	
+	std::ifstream ifs(file_path, std::ios::in);
+	if (!ifs.is_open()) {
 		std::cerr << "Failed to open file for reading: " << file_path << std::endl;
 		return false;
 	}
 	
-	std::streamsize size = file.tellg();
-	if (size < 0) {
-		std::cerr << "Failed to get file size: " << file_path << std::endl;
-		file.close();
+	std::stringstream buffer;
+	buffer << ifs.rdbuf();
+	api_key_ = buffer.str();
+	ifs.close();
+	
+	if (api_key_.empty()) {
+		std::cerr << "API key is empty after loading from file." << std::endl;
 		return false;
 	}
 	
-	file.seekg(0, std::ios::beg);
-	data.resize(static_cast<size_t>(size));
-	if (!file.read(data.data(), size)) {
-		std::cerr << "Failed to read file data: " << file_path << std::endl;
-		file.close();
-		return false;
-	}
+	// Initialize the HTTP client with the loaded API key
+	initialize_client(api_key_);
 	
-	file.close();
+	std::cout << "API key loaded from " << file_path << std::endl;
 	return true;
 }
 
-std::string DallEApiClient::store_model_internal(const std::string& model_url, const std::string& model_name) {
-	// Construct JSON payload
-	Json::Value post_json_data;
-	post_json_data["modelUrl"] = model_url;
-	post_json_data["modelName"] = model_name;
-	
-	Json::StreamWriterBuilder writer;
-	std::string json_payload = Json::writeString(writer, post_json_data);
-	
-	std::string path = "/character/v1/storeModel";
-	std::string content_type = "application/json";
-	
-	auto res = client_->Post(path.c_str(), json_payload, content_type.c_str());
-	
-	if (res && res->status == 200) {
-		// Parse JSON response to extract modelId
-		Json::CharReaderBuilder reader_builder;
-		std::unique_ptr<Json::CharReader> reader(reader_builder.newCharReader());
-		Json::Value json_data;
-		std::string errors;
-		
-		bool parsing_successful = reader->parse(res->body.c_str(),
-												res->body.c_str() + res->body.size(),
-												&json_data,
-												&errors);
-		if (parsing_successful && json_data.isMember("modelId")) {
-			return json_data["modelId"].asString();
-		} else {
-			std::cerr << "Failed to parse JSON response or 'modelId' not found." << std::endl;
-			return "";
-		}
-	} else {
-		std::cerr << "Failed to store model. HTTP Status: " << (res ? std::to_string(res->status) : "No Response") << std::endl;
-	}
-	
-	return "";
+void DallEApiClient::initialize_client(const std::string& api_key) {
+	client_ = std::make_unique<httplib::SSLClient>("api.openai.com", 443);
+	client_->set_default_headers({
+		{ "Authorization", "Bearer " + api_key },
+		{ "Content-Type", "application/json" }
+	});
 }
 
-// ---------------------
-// Public Methods
-// ---------------------
-
-bool DallEApiClient::authenticate(const std::string& api_base_url, int api_base_port,
-									   const std::string& client_id, const std::string& client_secret) {
+bool DallEApiClient::authenticate(const std::string& api_key) {
 	std::lock_guard<std::mutex> lock(client_mutex_);
 	
-	// Encode client_id and client_secret in Base64
-	std::string credentials = client_id + ":" + client_secret;
-	std::string encoded_credentials = base64_encode(credentials);
-	
-	// Initialize or update the HTTP client with the new API base URL
-	client_ = std::make_unique<httplib::SSLClient>(api_base_url.c_str(), api_base_port);
-	if (!client_) {
-		std::cerr << "Failed to create HTTP client." << std::endl;
+	if (api_key.empty()) {
+		std::cerr << "API key is empty. Cannot authenticate." << std::endl;
 		return false;
 	}
 	
-	// Set Authorization header
-	httplib::Headers headers = {
-		{ "Authorization", "Basic " + encoded_credentials }
-	};
-	client_->set_default_headers(headers);
+	api_key_ = api_key;
+	initialize_client(api_key_);
 	
-	// Perform authentication request
-	auto res = client_->Get("/account/v1/auth"); // Replace with your auth endpoint
-	
-	if (res && res->status == 200) {
-		auto it = res->headers.find("Set-Cookie");
-		if (it != res->headers.end()) {
-			session_cookie_ = it->second;
-			
-			// Extract the 'dmsess' cookie value
-			std::size_t start_pos = session_cookie_.find("dmsess=");
-			if (start_pos != std::string::npos) {
-				std::size_t end_pos = session_cookie_.find(";", start_pos);
-				if (end_pos != std::string::npos) {
-					session_cookie_ = session_cookie_.substr(start_pos, end_pos - start_pos);
-				} else {
-					session_cookie_ = session_cookie_.substr(start_pos);
-				}
-			}
-			
-			// Set cookie header for future requests if needed
-			httplib::Headers cookie_headers = {
-				{ "cookie", session_cookie_ }
-			};
-			client_->set_default_headers(cookie_headers);
-			
-			authenticated_ = true;
-			return true;
-		}
-	}
-	
-	authenticated_ = false;
-	return false;
+	// Test authentication by listing models
+	Json::Value models = list_models();
+	return !models.empty();
 }
 
-std::string DallEApiClient::get_session_cookie() const {
-	std::lock_guard<std::mutex> lock(client_mutex_);
-	return session_cookie_;
-}
-
-bool DallEApiClient::is_authenticated() const {
-	std::lock_guard<std::mutex> lock(client_mutex_);
-	return authenticated_;
-}
-
-std::string DallEApiClient::process_text_to_motion(const std::string& prompt, const std::string& model_id) {
-	std::lock_guard<std::mutex> lock(client_mutex_);
-	
-	if (!authenticated_) {
-		std::cerr << "Client not authenticated." << std::endl;
-		return "";
-	}
-	
-	Json::Value post_json_data;
-	
-	auto params = std::vector<std::string>{
-		"prompt=" + prompt,
-		"model=" + model_id
-	};
-	
-	for (const auto& param : params) {
-		post_json_data["params"].append(param);
-	}
-	
-	Json::StreamWriterBuilder writer;
-	std::string json_payload = Json::writeString(writer, post_json_data);
-	
-	std::string path = "/job/v1/process/text2motion";
-	std::string content_type = "application/json";
-	
-	auto res = client_->Post(path.c_str(), json_payload, content_type.c_str());
-	
-	if (res && res->status == 200) {
-		// Parse JSON response to extract request ID
-		Json::CharReaderBuilder reader_builder;
-		std::unique_ptr<Json::CharReader> reader(reader_builder.newCharReader());
-		Json::Value json_data;
-		std::string errors;
-		
-		bool parsing_successful = reader->parse(res->body.c_str(),
-												res->body.c_str() + res->body.size(),
-												&json_data,
-												&errors);
-		if (parsing_successful && json_data.isMember("rid")) {
-			return json_data["rid"].asString();
-		} else {
-			std::cerr << "Failed to parse JSON response or 'rid' not found." << std::endl;
-		}
-	} else {
-		std::cerr << "Failed to process text to motion. HTTP Status: " << (res ? std::to_string(res->status) : "No Response") << std::endl;
-	}
-	
-	return "";
-}
-
-Json::Value DallEApiClient::check_job_status(const std::string& request_id) {
-	std::lock_guard<std::mutex> lock(client_mutex_);
-	
-	Json::Value empty_response;
-	
-	if (!authenticated_) {
-		std::cerr << "Client not authenticated." << std::endl;
-		return empty_response;
-	}
-	
-	std::string path = "/job/v1/status/" + request_id;
-	
-	auto res = client_->Get(path.c_str());
-	
-	if (res && res->status == 200) {
-		// Parse JSON response
-		Json::CharReaderBuilder reader_builder;
-		std::unique_ptr<Json::CharReader> reader(reader_builder.newCharReader());
-		Json::Value json_data;
-		std::string errors;
-		
-		bool parsing_successful = reader->parse(res->body.c_str(),
-												res->body.c_str() + res->body.size(),
-												&json_data,
-												&errors);
-		if (parsing_successful) {
-			return json_data;
-		} else {
-			std::cerr << "Failed to parse JSON response for job status." << std::endl;
-		}
-	} else {
-		std::cerr << "Failed to check job status. HTTP Status: " << (res ? std::to_string(res->status) : "No Response") << std::endl;
-	}
-	
-	return empty_response;
-}
-
-Json::Value DallEApiClient::download_job_results(const std::string& request_id) {
-	std::lock_guard<std::mutex> lock(client_mutex_);
-	
-	Json::Value empty_response;
-	
-	if (!authenticated_) {
-		std::cerr << "Client not authenticated." << std::endl;
-		return empty_response;
-	}
-	
-	std::string path = "/job/v1/download/" + request_id;
-	
-	auto res = client_->Get(path.c_str());
-	
-	if (res && res->status == 200) {
-		// Parse JSON response
-		Json::CharReaderBuilder reader_builder;
-		std::unique_ptr<Json::CharReader> reader(reader_builder.newCharReader());
-		Json::Value json_data;
-		std::string errors;
-		
-		bool parsing_successful = reader->parse(res->body.c_str(),
-												res->body.c_str() + res->body.size(),
-												&json_data,
-												&errors);
-		if (parsing_successful) {
-			return json_data;
-		} else {
-			std::cerr << "Failed to parse JSON response for job download." << std::endl;
-		}
-	} else {
-		std::cerr << "Failed to download job results. HTTP Status: " << (res ? std::to_string(res->status) : "No Response") << std::endl;
-	}
-	
-	return empty_response;
-}
-
-std::string DallEApiClient::get_model_upload_url(bool resumable, const std::string& model_ext) {
-	std::lock_guard<std::mutex> lock(client_mutex_);
-	
-	if (!authenticated_) {
-		std::cerr << "Client not authenticated." << std::endl;
-		return "";
-	}
-	
-	std::string path = "/character/v1/getModelUploadUrl?resumable=" + std::string(resumable ? "1" : "0") + "&modelExt=" + model_ext;
-	
-	auto res = client_->Get(path.c_str());
-	
-	if (res && res->status == 200) {
-		// Parse JSON response to extract modelUrl
-		Json::CharReaderBuilder reader_builder;
-		std::unique_ptr<Json::CharReader> reader(reader_builder.newCharReader());
-		Json::Value json_data;
-		std::string errors;
-		
-		bool parsing_successful = reader->parse(res->body.c_str(),
-												res->body.c_str() + res->body.size(),
-												&json_data,
-												&errors);
-		if (parsing_successful && json_data.isMember("modelUrl")) {
-			return json_data["modelUrl"].asString();
-		} else {
-			std::cerr << "Failed to parse JSON response or 'modelUrl' not found." << std::endl;
-		}
-	} else {
-		std::cerr << "Failed to get model upload URL. HTTP Status: " << (res ? std::to_string(res->status) : "No Response") << std::endl;
-	}
-	
-	return "";
-}
-
-std::string DallEApiClient::store_model(const std::string& model_url, const std::string& model_name) {
-	std::lock_guard<std::mutex> lock(client_mutex_);
-	
-	if (!authenticated_) {
-		std::cerr << "Client not authenticated." << std::endl;
-		return "";
-	}
-	
-	return store_model_internal(model_url, model_name);
-}
-
-Json::Value DallEApiClient::list_models() {
-	std::lock_guard<std::mutex> lock(client_mutex_);
-	
-	Json::Value empty_response;
-	
-	if (!authenticated_) {
-		std::cerr << "Client not authenticated." << std::endl;
-		return empty_response;
-	}
-	
-	std::string path = "/character/v1/listModels";
-	
-	auto res = client_->Get(path.c_str());
-	
-	if (res && res->status == 200) {
-		// Parse JSON response
-		Json::CharReaderBuilder reader_builder;
-		std::unique_ptr<Json::CharReader> reader(reader_builder.newCharReader());
-		Json::Value json_data;
-		std::string errors;
-		
-		bool parsing_successful = reader->parse(res->body.c_str(),
-												res->body.c_str() + res->body.size(),
-												&json_data,
-												&errors);
-		if (parsing_successful) {
-			return json_data;
-		} else {
-			std::cerr << "Failed to parse JSON response for list models." << std::endl;
-		}
-	} else {
-		std::cerr << "Failed to list models. HTTP Status: " << (res ? std::to_string(res->status) : "No Response") << std::endl;
-	}
-	
-	return empty_response;
-}
-
-std::string DallEApiClient::upload_model(std::stringstream& model_stream, const std::string& model_name, const std::string& model_ext) {
-	std::unique_lock<std::mutex> lock(client_mutex_);
-	
-	if (!authenticated_) {
-		std::cerr << "Client not authenticated. Please authenticate before uploading models." << std::endl;
-		return "";
-	}
-	
-	// Validate model data
-	if (model_stream.str().empty()) {
-		std::cerr << "Model data is empty." << std::endl;
-		return "";
-	}
-	
-	// Validate model extension
-	if (model_ext.empty()) {
-		std::cerr << "Model extension is empty." << std::endl;
-		return "";
-	}
-	
-	lock.unlock();
-	// Step 1: Get the model upload URL
-	std::string upload_url = get_model_upload_url(false, model_ext);
-	
-	lock.lock();
-	
-	if (upload_url.empty()) {
-		std::cerr << "Failed to obtain model upload URL." << std::endl;
-		return "";
-	}
-	
-	// Step 2: Parse the upload URL to get host and path
-	std::string protocol, host, upload_path;
-	std::size_t protocol_pos = upload_url.find("://");
-	if (protocol_pos != std::string::npos) {
-		protocol = upload_url.substr(0, protocol_pos);
-		protocol_pos += 3; // Move past "://"
-	} else {
-		std::cerr << "Invalid upload URL format: " << upload_url << std::endl;
-		return "";
-	}
-	
-	std::size_t host_pos = upload_url.find("/", protocol_pos);
-	if (host_pos != std::string::npos) {
-		host = upload_url.substr(protocol_pos, host_pos - protocol_pos);
-		upload_path = upload_url.substr(host_pos);
-	} else {
-		host = upload_url.substr(protocol_pos);
-		upload_path = "/";
-	}
-	
-	// Step 3: Upload the model via PUT request
-	// Determine the port based on the protocol
-	int port = 443; // Default HTTPS port
-	if (protocol == "http") {
-		port = 80;
-	}
-	
-	httplib::SSLClient upload_client(host.c_str(), port);
-	upload_client.set_compress(false);
-	
-	std::string content_type = "application/octet-stream";
-	
-	std::string model_data_str = model_stream.str();
-	auto res = upload_client.Put(upload_path.c_str(),
-								 model_data_str.c_str(),
-								 model_data_str.size(),
-								 content_type.c_str());
-	
-	if (!res) {
-		std::cerr << "Failed to upload model. Network error." << std::endl;
-		return "";
-	}
-	
-	if (res->status != 200 && res->status != 201) {
-		std::cerr << "Failed to upload model. HTTP Status: " << res->status << std::endl;
-		return "";
-	}
-	
-	lock.unlock();
-	// Step 4: Store the model using the API
-	std::string modelId = store_model_internal(upload_url, model_name);
-	lock.lock();
-	
-	if (modelId.empty()) {
-		std::cerr << "Failed to store the uploaded model." << std::endl;
-		return "";
-	}
-	
-	std::cout << "Model uploaded and stored successfully: " << model_name << std::endl;
-	return modelId;
-}
-
-// ---------------------
-// Asynchronous Methods Implementation
-// ---------------------
-
-void DallEApiClient::authenticate_async(const std::string& api_base_url, int api_base_port,
-											 const std::string& client_id, const std::string& client_secret,
-											 AuthCallback callback) {
+void DallEApiClient::authenticate_async(const std::string& api_key, AuthCallback callback) {
 	// Launch asynchronous task
-	std::thread([this, api_base_url, api_base_port, client_id, client_secret, callback]() {
-		bool success = authenticate(api_base_url, api_base_port, client_id, client_secret);
+	std::thread([this, api_key, callback]() {
+		bool success = authenticate(api_key);
 		if (callback) {
 			if (success) {
 				callback(true, "");
@@ -540,74 +170,116 @@ void DallEApiClient::authenticate_async(const std::string& api_base_url, int api
 	}).detach();
 }
 
-void DallEApiClient::process_text_to_motion_async(const std::string& prompt, const std::string& model_id,
-													   ProcessMotionCallback callback) {
-	// Launch asynchronous task
-	std::thread([this, prompt, model_id, callback]() {
-		std::string request_id = process_text_to_motion(prompt, model_id);
-		if (callback) {
-			if (!request_id.empty()) {
-				callback(request_id, "");
-			} else {
-				callback("", "Failed to process text to motion.");
+std::string DallEApiClient::generate_image(const std::string& prompt) {
+	std::lock_guard<std::mutex> lock(client_mutex_);
+	
+	if (api_key_.empty()) {
+		std::cerr << "API key is not set. Please authenticate first." << std::endl;
+		return "";
+	}
+	
+	Json::Value post_json_data;
+	post_json_data["prompt"] = prompt;
+	post_json_data["n"] = 1; // Number of images to generate
+	post_json_data["size"] = "1024x1024"; // Image size
+	
+	Json::StreamWriterBuilder writer;
+	std::string json_payload = Json::writeString(writer, post_json_data);
+	
+	auto res = client_->Post("/v1/images/generations", json_payload, "application/json");
+	
+	if (res) {
+		if (res->status == 200) {
+			// Parse JSON response to extract image URL
+			Json::CharReaderBuilder reader_builder;
+			std::unique_ptr<Json::CharReader> reader(reader_builder.newCharReader());
+			Json::Value json_data;
+			std::string errors;
+			
+			bool parsing_successful = reader->parse(res->body.c_str(),
+													res->body.c_str() + res->body.size(),
+													&json_data,
+													&errors);
+			if (parsing_successful && json_data.isMember("data")) {
+				const Json::Value& data = json_data["data"];
+				if (data.isArray() && data.size() > 0 && data[0].isMember("url")) {
+					return data[0]["url"].asString();
+				}
 			}
+			std::cerr << "Failed to parse JSON response or 'url' not found. Errors: " << errors << std::endl;
+		} else if (res->status == 401) {
+			std::cerr << "Authentication failed: Invalid API key." << std::endl;
+		} else {
+			std::cerr << "Failed to generate image. HTTP Status: " << res->status << std::endl;
+			std::cerr << "Response Body: " << res->body << std::endl;
+		}
+	} else {
+		std::cerr << "Failed to generate image. No response from server." << std::endl;
+	}
+	
+	return "";
+}
+
+void DallEApiClient::generate_image_async(const std::string& prompt, GenerateImageCallback callback) {
+	// Launch asynchronous task
+	std::thread([this, prompt, callback]() {
+		std::string image_url = generate_image(prompt);
+		if (!image_url.empty()) {
+			callback(image_url, "");
+		} else {
+			callback("", "Failed to generate image.");
 		}
 	}).detach();
 }
 
-void DallEApiClient::upload_model_async(std::stringstream model_stream, const std::string& model_name,
-											 const std::string& model_ext, UploadModelCallback callback) {
-	// Launch asynchronous task
-	std::thread([this, stream = std::move(model_stream), model_name, model_ext, callback]() mutable {
-		std::string model_id = upload_model(stream, model_name, model_ext);
-		if (callback) {
-			if (!model_id.empty()) {
-				callback(model_id, "");
-			} else {
-				callback("", "Failed to upload model.");
+Json::Value DallEApiClient::list_models() {
+	std::lock_guard<std::mutex> lock(client_mutex_);
+	
+	if (api_key_.empty()) {
+		std::cerr << "API key is not set. Please authenticate first." << std::endl;
+		return Json::Value();
+	}
+	
+	auto res = client_->Get("/v1/models");
+	
+	if (res) {
+		if (res->status == 200) {
+			// Parse JSON response
+			Json::CharReaderBuilder reader_builder;
+			std::unique_ptr<Json::CharReader> reader(reader_builder.newCharReader());
+			Json::Value json_data;
+			std::string errors;
+			
+			bool parsing_successful = reader->parse(res->body.c_str(),
+													res->body.c_str() + res->body.size(),
+													&json_data,
+													&errors);
+			if (parsing_successful && json_data.isMember("data")) {
+				return json_data["data"];
 			}
+			std::cerr << "Failed to parse JSON response or 'data' not found. Errors: " << errors << std::endl;
+		} else if (res->status == 401) {
+			std::cerr << "Authentication failed: Invalid API key." << std::endl;
+		} else {
+			std::cerr << "Failed to list models. HTTP Status: " << res->status << std::endl;
+			std::cerr << "Response Body: " << res->body << std::endl;
 		}
-	}).detach();
+	} else {
+		std::cerr << "Failed to list models. No response from server." << std::endl;
+	}
+	
+	return Json::Value(); // Return empty JSON value on failure
 }
 
-void DallEApiClient::check_job_status_async(const std::string& request_id, StatusCallback callback) {
-	// Launch asynchronous task
-	std::thread([this, request_id, callback]() {
-		Json::Value status = check_job_status(request_id);
-		if (callback) {
-			if (!status.empty()) {
-				callback(status, "");
-			} else {
-				callback(status, "Failed to check job status.");
-			}
-		}
-	}).detach();
-}
-
-void DallEApiClient::download_job_results_async(const std::string& request_id, DownloadCallback callback) {
-	// Launch asynchronous task
-	std::thread([this, request_id, callback]() {
-		Json::Value results = download_job_results(request_id);
-		if (callback) {
-			if (!results.empty()) {
-				callback(results, "");
-			} else {
-				callback(results, "Failed to download job results.");
-			}
-		}
-	}).detach();
-}
-
-void DallEApiClient::list_models_async(ModelsListCallback callback) {
+void DallEApiClient::list_models_async(ListModelsCallback callback) {
 	// Launch asynchronous task
 	std::thread([this, callback]() {
 		Json::Value models = list_models();
-		if (callback) {
-			if (!models.empty()) {
-				callback(models, "");
-			} else {
-				callback(models, "Failed to list models.");
-			}
+		if (!models.empty()) {
+			callback(models, "");
+		} else {
+			callback(Json::Value(), "Failed to list models.");
 		}
 	}).detach();
 }
+
