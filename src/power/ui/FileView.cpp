@@ -493,7 +493,6 @@ void FileView::refresh(const std::string& filter_text) {
 		perform_layout(screen().nvg_context());
 		
 		scroll_event(nanogui::Vector2i(0, 0), nanogui::Vector2i(0, -1));
-		
 	});
 	
 	

@@ -178,13 +178,6 @@ void Application::process_events() {
 		mLoadedCartridge->get().update();
 	}
 	
-
-	mUiCommon->scene_panel()->process_events();
-	mUiManager->status_bar_panel()->resources_panel()->process_events();
-	
-	mUiManager->process_events();
-	
-	
 	// Dispatch queued click events
 	while (!mClickQueue.empty()) {
 		auto [down, w, h, x, y] = mClickQueue.front();
@@ -200,6 +193,11 @@ void Application::process_events() {
 		mEventQueue.pop_back();
 		callback();
 	}
+
+	mUiCommon->scene_panel()->process_events();
+	mUiManager->status_bar_panel()->resources_panel()->process_events();
+	
+	mUiManager->process_events();
 }
 
 bool Application::mouse_button_event(const nanogui::Vector2i &p, int button, bool down, int modifiers) {
