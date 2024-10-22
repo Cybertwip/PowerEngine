@@ -192,14 +192,18 @@ m_mipmap_manual(false) {
 void Texture::decompress_into(const std::vector<uint8_t>& data, Texture& texture){
 	
 	int n = 0;
-	unsigned char* image_data = stbi_load_from_memory(data.data(), data.size(), &texture.m_size.x(), &texture.m_size.y(), &n, 4);
+	Vector2i new_size;
+	unsigned char* image_data = stbi_load_from_memory(data.data(), data.size(), &new_size.x(), &new_size.y(), &n, 4);
 	
 	n = 4;
+	
 	
 	std::unique_ptr<uint8_t[], void(*)(void*)> texture_data_holder(image_data, stbi_image_free);
 	if (!texture_data_holder) {
 		throw std::runtime_error("Could not load texture data from memory.");
 	}
+
+	texture.resize(new_size);
 
 	texture.upload((const uint8_t *) texture_data_holder.get());
 }

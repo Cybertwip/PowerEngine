@@ -6,6 +6,11 @@
 #include "stb_image_write.h"
 
 #include <cstring> // For std::memcpy
+#include <cstdint>
+#include <fstream>
+#include <iterator>
+#include <iostream>
+#include <vector>
 
 namespace {
 // -------------------- Helper Functions --------------------

@@ -10,9 +10,6 @@
 #include <algorithm>
 #include <chrono>
 #include <vector>
-#include <cstdint>
-#include <fstream>
-#include <iterator>
 
 #include "filesystem/DirectoryNode.hpp" // Assuming this is needed for load_image_data
 #include "filesystem/CompressedSerialization.hpp" // Assuming this is needed for load_image_data
@@ -377,16 +374,8 @@ void FileView::load_thumbnail(const std::shared_ptr<DirectoryNode>& node,
 
 			// One-liner to load PNG file into a vector of uint8_t
 			thumbnail_data = load_file_to_vector(node->FullPath);
-
-			if (!thumbnail_data.empty()) {
-				texture->resize(nanogui::Vector2i(1024, 1024));
-			}
 		} else {
 			thumbnail_data = load_image_data(node->FullPath);
-			
-			if (!thumbnail_data.empty()) {
-				texture->resize(nanogui::Vector2i(512, 512));
-			}
 		}
 		
 		if (!thumbnail_data.empty()) {
@@ -399,7 +388,6 @@ void FileView::load_thumbnail(const std::shared_ptr<DirectoryNode>& node,
 			image_view->perform_layout(screen().nvg_context());
 		} else {
 			thumbnail_data.resize(512 * 512 * 4);
-			texture->resize(nanogui::Vector2i(512, 512));
 			texture->upload(thumbnail_data.data());
 			image_view->set_image(texture);
 			image_view->set_visible(true);
