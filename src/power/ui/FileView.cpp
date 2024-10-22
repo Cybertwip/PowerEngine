@@ -45,7 +45,8 @@ m_previous_scroll_offset(0),
 m_columns(columns),
 mOnFileClicked(onFileClicked),
 mOnFileSelected(onFileSelected),
-m_recursive(recursive)
+m_recursive(recursive),
+m_trigger_drag(false)
 {
 	// Initialize main layout using GridLayout
 	auto grid_layout = std::make_unique<nanogui::GridLayout>(
@@ -688,9 +689,11 @@ void FileView::collect_nodes_recursive(DirectoryNode* node, std::vector<std::sha
 	}
 }
 
-bool FileView::mouse_button_event(const nanogui::Vector2i &p, int button, bool down, int modifiers) {
+bool FileView::mouse_motion_event(const Vector2i &p, const Vector2i &rel, int button, int modifiers) {
 	
-	if (m_selected_button != nullptr && m_selected_button->contains(p) && down) {
+	if (m_selected_button != nullptr && m_selected_button->contains(p) && !m_trigger_drag) {
+		
+		m_trigger_drag = true;
 		
 		assert(m_selected_node);
 		
@@ -748,6 +751,8 @@ bool FileView::mouse_button_event(const nanogui::Vector2i &p, int button, bool d
 				
 				std::vector<std::string> path_vector = { path };
 				screen().drop_event(*this, path_vector);
+				
+				m_trigger_drag = false;
 			});
 		}
 		
