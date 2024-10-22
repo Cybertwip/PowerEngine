@@ -293,6 +293,8 @@ int ResourcesPanel::get_icon_for_file(const DirectoryNode& node) {
 	if (node.FileName.find(".pma") != std::string::npos)
 		return FA_OBJECT_GROUP;
 	if (node.FileName.find(".pan") != std::string::npos) return FA_PERSON_BOOTH;
+	if (node.FileName.find(".png") != std::string::npos)
+		return FA_PHOTO_VIDEO;
 	
 	// More conditions for other file types...
 	return FA_FILE; // Default icon

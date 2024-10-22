@@ -177,13 +177,13 @@ void MeshBatch::remove(std::reference_wrapper<Mesh> meshRef) {
 		size_t indexStartIdx = mMeshStartIndices[instanceId][meshIndex];
 		size_t indexCount = mesh.get_mesh_data().get_indices().size();
 		
-		size_t vertexStartIdx = mMeshVertexStartIndices[instanceId][meshIndex];
+		size_t vertexStartIdx = mMeshVertexStartIndices[identifier][meshIndex];
 		size_t vertexCount = mesh.get_mesh_data().get_vertices().size();
 		size_t vertexEndIdx = vertexStartIdx + vertexCount;
 
 		// Remove indices
 		mBatchIndices[identifier].erase(mBatchIndices[identifier].begin() + indexStartIdx,
-										mBatchIndices[identifier].begin() + indexStartIdx + indexCount);
+										mBatchIndices[identifier].begin() + indexStartIdx + vertexCount);
 		
 		// Adjust indices after the removed indices
 		for (size_t i = 0; i < mBatchIndices[identifier].size(); ++i) {

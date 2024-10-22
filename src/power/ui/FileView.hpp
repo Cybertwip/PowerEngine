@@ -26,7 +26,7 @@ public:
 			 std::function<void(std::shared_ptr<DirectoryNode>)> onFileSelected = nullptr,
 			 int columns = 8,
 			 const std::string& filter_text = "",
-			 const std::set<std::string>& allowed_extensions = {".psk", ".pma", ".pan", ".psq", ".psn"});
+			 const std::set<std::string>& allowed_extensions = {".psk", ".pma", ".pan", ".psq", ".psn", ".png"});
 	
 	// Destructor
 	virtual ~FileView();

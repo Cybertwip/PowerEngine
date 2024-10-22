@@ -15,6 +15,9 @@
 #include <mutex>
 #include <sstream>
 #include <fstream>
+#include <chrono>
+#include <iomanip>
+#include <sstream>
 
 // Include httplib
 #include "httplib.h"
@@ -216,7 +219,6 @@ void DallEPromptWindow::SubmitPromptAsync() {
 		}
 	});
 }
-
 void DallEPromptWindow::SaveImageAsync() {
 	if (mImageData.empty() || mLastImageUrl.empty()) {
 		std::cerr << "No image data available to save." << std::endl;
@@ -227,12 +229,36 @@ void DallEPromptWindow::SaveImageAsync() {
 		return;
 	}
 	
-	// Determine a unique filename
-	std::string filename = "generated_image.png"; // You can enhance this to generate unique filenames
+	// Generate a unique filename using the current timestamp
+	auto now = std::chrono::system_clock::now();
+	std::time_t now_time = std::chrono::system_clock::to_time_t(now);
+	std::tm tm;
+	
+	// Thread-safe conversion of time
+#ifdef _WIN32
+	localtime_s(&tm, &now_time);
+#else
+	localtime_r(&now_time, &tm);
+#endif
+	
+	std::ostringstream oss;
+	oss << "generated_image_"
+	<< std::put_time(&tm, "%Y%m%d_%H%M%S")
+	<< ".png";
+	std::string filename = oss.str();
+	
+	// If a file with the same timestamp exists, append a counter
 	int counter = 1;
 	while (fs::exists(filename)) {
-		filename = "generated_image_" + std::to_string(counter++) + ".png";
+		oss.str(""); // Clear the stream
+		oss << "generated_image_"
+		<< std::put_time(&tm, "%Y%m%d_%H%M%S")
+		<< "_" << counter++
+		<< ".png";
+		filename = oss.str();
 	}
+	
+	// Attempt to write the image data to the file
 	if (!write_compressed_png_to_file(mImageData, filename)) {
 		std::cerr << "Failed to decode image data for saving." << std::endl;
 		{
@@ -241,10 +267,11 @@ void DallEPromptWindow::SaveImageAsync() {
 		}
 		return;
 	} else {
-		std::cerr << "Failed to save image to " << filename << std::endl;
+		std::cout << "Image saved successfully to " << filename << std::endl;
 		{
 			std::lock_guard<std::mutex> lock(mStatusMutex);
-			mStatusLabel->set_caption("Status: Failed to save image.");
+			mStatusLabel->set_caption("Status: Image saved successfully.");
 		}
 	}
 }
+
