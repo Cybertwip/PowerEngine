@@ -397,6 +397,8 @@ m_stencil_buffer(stencil_buffer), m_float_buffer(float_buffer), m_redraw(false),
 	}
 
 #endif
+	
+	set_screen(*this);
 }
 
 void Screen::initialize(GLFWwindow *window, bool shutdown_glfw) {
