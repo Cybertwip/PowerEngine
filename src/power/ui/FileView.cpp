@@ -265,9 +265,8 @@ std::shared_ptr<nanogui::Button> FileView::acquire_button(const std::shared_ptr<
 				screen().drop_event(*this, path_vector);
 				
 				// next loop cleanup, thread safety
-				nanogui::async([this, drag_widget](){
+				nanogui::async([this](){
 					// Remove drag widget
-					drag_widget->shed_children();
 					m_drag_payload = nullptr;
 				});
 			});

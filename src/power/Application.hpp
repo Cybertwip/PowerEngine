@@ -45,6 +45,8 @@ public:
 			m_drag_callback();
 			m_drag_callback = nullptr;
 		}
+		
+		shed_children();
 	}
 	
 private:
