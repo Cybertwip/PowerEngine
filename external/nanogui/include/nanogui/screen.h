@@ -277,6 +277,14 @@ public:
 		return m_drag_active;
 	}
 	
+	bool process_events() const {
+		return m_process_events;
+	}
+	
+	void set_pixel_ratio(float ratio) {
+		m_pixel_ratio = ratio;
+	}
+
 protected:
     GLFWwindow *m_glfw_window = nullptr;
     NVGcontext *m_nvg_context = nullptr;

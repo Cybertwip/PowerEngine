@@ -41,12 +41,9 @@
 
 NAMESPACE_BEGIN(nanogui)
 
-// Replaced std::map with std::unordered_map for faster average-case lookups
-extern std::unordered_map<GLFWwindow *, Screen *> __nanogui_screens;
-
-#if defined(__APPLE__)
-extern void disable_saved_application_state_osx();
-#endif
+// Define the single screen and window
+Screen* screen1 = nullptr;
+GLFWwindow* window1 = nullptr;
 
 // Redraw thread management variables
 static std::atomic<bool> redraw_thread_running(false);
@@ -66,13 +63,10 @@ void start_redraw_thread() {
 	redraw_thread_running = true;
 	redraw_thread = std::thread([](){
 		while (redraw_thread_running) {
-			// Enqueue redraw for all visible screens
+			// Enqueue redraw for the visible screen
 			async([](){
-				for (auto &kv : __nanogui_screens) {
-					Screen *screen = kv.second;
-					if (screen->visible()) {
-						screen->redraw();
-					}
+				if (screen1 && screen1->visible()) {
+					screen1->redraw();
 				}
 			});
 			// Sleep for approximately 16ms to achieve ~60fps
@@ -118,6 +112,7 @@ void init() {
 	glfwSetTime(0);
 }
 
+// Screen visibility flag
 static bool mainloop_active = false;
 
 #if defined(EMSCRIPTEN)
@@ -129,10 +124,95 @@ void mainloop() {
 	if (mainloop_active)
 		throw std::runtime_error("Main loop is already running!");
 	
-	// Start the redraw thread
-//	start_redraw_thread();
+	// Ensure window1 and screen1 are initialized
+	if (!window1 || !screen1) {
+		throw std::runtime_error("window1 and screen1 must be initialized before entering the main loop.");
+	}
 	
-	auto mainloop_iteration = []() {
+	/* Propagate GLFW events to the Screen instance */
+	glfwSetCursorPosCallback(window1,
+							 [](GLFWwindow *w, double x, double y) {
+		if (screen1 && screen1->process_events()) {
+			screen1->cursor_pos_callback_event(x, y);
+		}
+	}
+							 );
+	
+	glfwSetMouseButtonCallback(window1,
+							   [](GLFWwindow *w, int button, int action, int modifiers) {
+		if (screen1 && screen1->process_events()) {
+			screen1->mouse_button_callback_event(button, action, modifiers);
+		}
+	}
+							   );
+	
+	glfwSetKeyCallback(window1,
+					   [](GLFWwindow *w, int key, int scancode, int action, int mods) {
+		if (screen1 && screen1->process_events()) {
+			screen1->key_callback_event(key, scancode, action, mods);
+		}
+	}
+					   );
+	
+	glfwSetCharCallback(window1,
+						[](GLFWwindow *w, unsigned int codepoint) {
+		if (screen1 && screen1->process_events()) {
+			screen1->char_callback_event(codepoint);
+		}
+	}
+						);
+	
+	glfwSetDropCallback(window1,
+						[](GLFWwindow *w, int count, const char **filenames) {
+		if (screen1 && screen1->process_events()) {
+			screen1->drop_callback_event(count, filenames);
+		}
+	}
+						);
+	
+	glfwSetScrollCallback(window1,
+						  [](GLFWwindow *w, double x, double y) {
+		if (screen1 && screen1->process_events()) {
+			screen1->scroll_callback_event(x, y);
+		}
+	}
+						  );
+	
+	/* React to framebuffer size events -- includes window
+	 size events and also catches things like dragging
+	 a window from a Retina-capable screen to a normal
+	 screen on Mac OS X */
+	glfwSetFramebufferSizeCallback(window1,
+								   [](GLFWwindow* w, int width, int height) {
+		if (screen1 && screen1->process_events()) {
+			screen1->resize_callback_event(width, height);
+		}
+	}
+								   );
+	
+	// Notify when the screen has lost focus (e.g., application switch)
+	glfwSetWindowFocusCallback(window1,
+							   [](GLFWwindow *w, int focused) {
+		if (screen1) {
+			// focus_event: 0 when false, 1 when true
+			screen1->focus_event(focused != 0);
+		}
+	}
+							   );
+	
+	glfwSetWindowContentScaleCallback(window1,
+									  [](GLFWwindow* w, float xscale, float yscale) {
+		if (screen1) {
+			screen1->set_pixel_ratio(get_pixel_ratio(w));
+			screen1->resize_callback_event(screen1->size().x(), screen1->size().y());
+		}
+	}
+									  );
+	
+	// Start the redraw thread
+	start_redraw_thread();
+	
+	auto mainloop_iteration = [&]() {
 		int num_screens = 0;
 		
 #if defined(EMSCRIPTEN)
@@ -158,24 +238,20 @@ void mainloop() {
 			}
 		}
 		
-		for (auto &kv : __nanogui_screens) {
-			Screen *screen = kv.second;
-			if (!screen->visible()) {
-				continue;
-			} else if (glfwWindowShouldClose(screen->glfw_window())) {
-				screen->set_visible(false);
-				continue;
-			}
+		{
+			// Directly access the single screen
+			if (screen1 && screen1->visible()) {
+				if (glfwWindowShouldClose(window1)) {
+					screen1->set_visible(false);
+				} else {
 #if defined(EMSCRIPTEN)
-			if (emscripten_redraw || screen->tooltip_fade_in_progress())
-				screen->redraw();
-#else
-			if (screen->visible()) {
-				screen->redraw();
-			}
+					if (emscripten_redraw || screen1->tooltip_fade_in_progress())
+						screen1->redraw();
 #endif
-			screen->draw_all();
-			num_screens++;
+					screen1->draw_all();
+					num_screens++;
+				}
+			}
 		}
 		
 		if (num_screens == 0) {
@@ -212,7 +288,7 @@ void mainloop() {
 	}
 	
 	// Stop the redraw thread after exiting the main loop
-//	stop_redraw_thread();
+	stop_redraw_thread();
 }
 
 void async(const std::function<void()> &func) {
@@ -238,7 +314,7 @@ std::pair<bool, bool> test_10bit_edr_support() {
 
 void shutdown() {
 	leave(); // Ensure mainloop_active is set to false
-//	stop_redraw_thread(); // Stop the redraw thread
+	stop_redraw_thread(); // Stop the redraw thread
 	
 	glfwTerminate();
 	
@@ -328,7 +404,8 @@ load_image_directory(NVGcontext *ctx, const std::string &path) {
 			if (img == 0)
 				throw std::runtime_error("Could not open image data!");
 			result.emplace_back(
-								std::make_pair(img, full_name.substr(0, full_name.length() - 4)));
+								std::make_pair(img, full_name.substr(0, full_name.length() - 4))
+								);
 #if !defined(_WIN32)
 		}
 		closedir(dp);
@@ -475,6 +552,6 @@ std::vector<std::string> file_dialog(const std::vector<std::pair<std::string, st
 
 Object::~Object() { }
 
-
+// Removed add_screen and remove_screen functions as only a single screen is managed
 
 NAMESPACE_END(nanogui)

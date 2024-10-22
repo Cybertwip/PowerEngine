@@ -67,7 +67,8 @@
 
 NAMESPACE_BEGIN(nanogui)
 
-std::unordered_map<GLFWwindow *, Screen *> __nanogui_screens;
+Screen * screen1;
+GLFWwindow * window1;
 
 #if defined(NANOGUI_GLAD)
 static bool glad_initialized = false;
@@ -262,123 +263,6 @@ m_stencil_buffer(stencil_buffer), m_float_buffer(float_buffer), m_redraw(false),
 	glfwPollEvents();
 #endif
 	
-	/* Propagate GLFW events to the appropriate Screen instance */
-	glfwSetCursorPosCallback(m_glfw_window,
-							 [](GLFWwindow *w, double x, double y) {
-		auto it = __nanogui_screens.find(w);
-		if (it == __nanogui_screens.end())
-			return;
-		Screen *s = it->second;
-		if (!s->m_process_events)
-			return;
-		s->cursor_pos_callback_event(x, y);
-	}
-							 );
-	
-	glfwSetMouseButtonCallback(m_glfw_window,
-							   [](GLFWwindow *w, int button, int action, int modifiers) {
-		auto it = __nanogui_screens.find(w);
-		if (it == __nanogui_screens.end())
-			return;
-		Screen *s = it->second;
-		if (!s->m_process_events)
-			return;
-		s->mouse_button_callback_event(button, action, modifiers);
-	}
-							   );
-	
-	glfwSetKeyCallback(m_glfw_window,
-					   [](GLFWwindow *w, int key, int scancode, int action, int mods) {
-		auto it = __nanogui_screens.find(w);
-		if (it == __nanogui_screens.end())
-			return;
-		Screen *s = it->second;
-		if (!s->m_process_events)
-			return;
-		s->key_callback_event(key, scancode, action, mods);
-	}
-					   );
-	
-	glfwSetCharCallback(m_glfw_window,
-						[](GLFWwindow *w, unsigned int codepoint) {
-		auto it = __nanogui_screens.find(w);
-		if (it == __nanogui_screens.end())
-			return;
-		Screen *s = it->second;
-		if (!s->m_process_events)
-			return;
-		s->char_callback_event(codepoint);
-	}
-						);
-	
-	glfwSetDropCallback(m_glfw_window,
-						[](GLFWwindow *w, int count, const char **filenames) {
-		auto it = __nanogui_screens.find(w);
-		if (it == __nanogui_screens.end())
-			return;
-		Screen *s = it->second;
-		if (!s->m_process_events)
-			return;
-		s->drop_callback_event(count, filenames);
-	}
-						);
-	
-	glfwSetScrollCallback(m_glfw_window,
-						  [](GLFWwindow *w, double x, double y) {
-		auto it = __nanogui_screens.find(w);
-		if (it == __nanogui_screens.end())
-			return;
-		Screen *s = it->second;
-		if (!s->m_process_events)
-			return;
-		s->scroll_callback_event(x, y);
-	}
-						  );
-	
-	/* React to framebuffer size events -- includes window
-	 size events and also catches things like dragging
-	 a window from a Retina-capable screen to a normal
-	 screen on Mac OS X */
-	glfwSetFramebufferSizeCallback(m_glfw_window,
-								   [](GLFWwindow* w, int width, int height) {
-		auto it = __nanogui_screens.find(w);
-		if (it == __nanogui_screens.end())
-			return;
-		Screen *s = it->second;
-		
-		if (!s->m_process_events)
-			return;
-		
-		s->resize_callback_event(width, height);
-	}
-								   );
-
-	
-	// notify when the screen has lost focus (e.g. application switch)
-	glfwSetWindowFocusCallback(m_glfw_window,
-							   [](GLFWwindow *w, int focused) {
-//		auto it = __nanogui_screens.find(w);
-//		if (it == __nanogui_screens.end())
-//			return;
-		
-//		Screen *s = it->second;
-		// focus_event: 0 when false, 1 when true
-		///s->focus_event(focused != 0);
-	}
-							   );
-	
-	glfwSetWindowContentScaleCallback(m_glfw_window,
-									  [](GLFWwindow* w, float, float) {
-		auto it = __nanogui_screens.find(w);
-		if (it == __nanogui_screens.end())
-			return;
-		Screen* s = it->second;
-		
-		s->m_pixel_ratio = get_pixel_ratio(w);
-		s->resize_callback_event(s->m_size.x(), s->m_size.y());
-	}
-									  );
-	
 	initialize(m_glfw_window, true);
 	
 #if defined(NANOGUI_USE_METAL)
@@ -476,7 +360,8 @@ void Screen::initialize(GLFWwindow *window, bool shutdown_glfw) {
 	m_last_interaction = glfwGetTime();
 	m_process_events = true;
 	m_redraw = true;
-	__nanogui_screens[m_glfw_window] = this;
+	window1 = m_glfw_window;
+	sceren1 = this;
 	
 	for (size_t i = 0; i < (size_t) Cursor::CursorCount; ++i)
 		m_cursors[i] = glfwCreateStandardCursor(GLFW_ARROW_CURSOR + (int) i);

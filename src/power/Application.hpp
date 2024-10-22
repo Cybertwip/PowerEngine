@@ -46,7 +46,7 @@ public:
 			m_drag_callback = nullptr;
 		}
 		
-		shed_children();
+		m_children.clear(); // hollow clearing, deallocation is own responsibility
 	}
 	
 private:

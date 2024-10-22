@@ -254,7 +254,8 @@ std::shared_ptr<nanogui::Button> FileView::acquire_button(const std::shared_ptr<
 			
 			auto drag_start_position = icon_button->absolute_position();
 			drag_widget->set_position(drag_start_position);
-			drag_widget->perform_layout(screen().nvg_context());
+			
+//			drag_widget->perform_layout(screen().nvg_context());
 			
 			screen().set_drag_widget(drag_widget, [this, drag_widget, child]() {
 				auto path = child->FullPath;
@@ -264,11 +265,7 @@ std::shared_ptr<nanogui::Button> FileView::acquire_button(const std::shared_ptr<
 				std::vector<std::string> path_vector = { path };
 				screen().drop_event(*this, path_vector);
 				
-				// next loop cleanup, thread safety
-				nanogui::async([this](){
-					// Remove drag widget
-					m_drag_payload = nullptr;
-				});
+				m_drag_payload = nullptr;
 			});
 		}
 		
