@@ -239,7 +239,7 @@ std::shared_ptr<nanogui::Button> FileView::acquire_button(const std::shared_ptr<
 			
 			if (file_icon == FA_PERSON_BOOTH) {
 				
-				auto thumbnail_data = load_file_to_vector(child->FullPath);
+				auto thumbnail_data = load_file_to_vector("internal/ui/animation.png");
 				
 				nanogui::Texture::decompress_into(thumbnail_data, *m_drag_payload->image());
 				
