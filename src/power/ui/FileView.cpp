@@ -363,17 +363,16 @@ void FileView::handle_file_click(DirectoryNode& node) {
 void FileView::load_thumbnail(const std::shared_ptr<DirectoryNode>& node,
 							  const std::shared_ptr<nanogui::ImageView>& image_view,
 							  std::shared_ptr<nanogui::Texture>& texture) {
-	nanogui::async([this, node, image_view, texture]() {
+	nanogui::async([this, node, image_view, &texture]() {
 		// Load and process the thumbnail
 		// Example: Read image data from file
 		
 		if (get_icon_for_file(*node) == FA_PHOTO_VIDEO) {
-			texture.reset(new nanogui::Texture(
-											   node->FullPath,
-											   nanogui::Texture::InterpolationMode::Nearest,
-											   nanogui::Texture::InterpolationMode::Nearest,
-											   nanogui::Texture::WrapMode::ClampToEdge
-											   ));
+			texture = std::make_shared<nanogui::Texture>(
+														 node->FullPath,
+														 nanogui::Texture::InterpolationMode::Nearest,
+														 nanogui::Texture::InterpolationMode::Nearest,
+														 nanogui::Texture::WrapMode::ClampToEdge);
 			
 			texture->resize(nanogui::Vector2i(512, 512));
 			image_view->set_image(texture);

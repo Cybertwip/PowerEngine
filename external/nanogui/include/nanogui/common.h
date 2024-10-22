@@ -257,7 +257,7 @@ extern NANOGUI_EXPORT bool active();
  * NanoGUI is not thread-safe, and async() provides a mechanism
  * for queuing up UI-related state changes from other threads.
  */
-extern NANOGUI_EXPORT void async(std::function<void()> func);
+extern NANOGUI_EXPORT void async(const std::function<void()> &func);
 
 /**
  * \brief Open a native file open/save dialog.
