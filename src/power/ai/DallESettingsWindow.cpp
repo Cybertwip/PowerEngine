@@ -24,9 +24,9 @@ mDallEApiClient(dalleClient)
 	set_visible(false); // Initially hidden
 	
 	// API Key Label
-	auto api_key_label = std::make_shared<nanogui::Label>(*this, "OpenAI API Key:", "sans-bold");
-	api_key_label->set_font_size(14);
-	api_key_label->set_fixed_width(120);
+	m_api_key_label_ = std::make_shared<nanogui::Label>(*this, "OpenAI API Key:", "sans-bold");
+	m_api_key_label_->set_font_size(14);
+	m_api_key_label_->set_fixed_width(120);
 	
 	// API Key TextBox
 	api_key_box_ = std::make_shared<nanogui::TextBox>(*this, "");
