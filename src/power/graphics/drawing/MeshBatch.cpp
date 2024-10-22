@@ -177,7 +177,7 @@ void MeshBatch::remove(std::reference_wrapper<Mesh> meshRef) {
 		size_t indexStartIdx = mMeshStartIndices[instanceId][meshIndex];
 		size_t indexCount = mesh.get_mesh_data().get_indices().size();
 		
-		size_t vertexStartIdx = mMeshVertexStartIndices[instanceId][0];
+		size_t vertexStartIdx = mMeshVertexStartIndices[instanceId][meshIndex];
 		size_t vertexCount = mesh.get_mesh_data().get_vertices().size();
 		size_t vertexEndIdx = vertexStartIdx + vertexCount;
 
@@ -225,16 +225,6 @@ void MeshBatch::remove(std::reference_wrapper<Mesh> meshRef) {
 		indexer.mVertexOffset -= vertexCount;
 		
 		mMeshes.erase(mesh_it);
-		mBatchPositions.erase(identifier);
-		mBatchNormals.erase(identifier);
-		mBatchTexCoords1.erase(identifier);
-		mBatchTexCoords2.erase(identifier);
-		mBatchMaterialIds.erase(identifier);
-		mBatchIndices.erase(identifier);
-		mBatchColors.erase(identifier);
-		mMeshStartIndices.erase(identifier);
-		mMeshVertexStartIndices.erase(identifier);
-		mVertexIndexingMap.erase(identifier);
 	} else {
 		// Re-upload updated vertex and index data to the GPU
 		upload_vertex_data(shader, identifier);
