@@ -45,8 +45,7 @@ m_previous_scroll_offset(0),
 m_columns(columns),
 mOnFileClicked(onFileClicked),
 mOnFileSelected(onFileSelected),
-m_recursive(recursive),
-m_trigger_drag(false)
+m_recursive(recursive)
 {
 	// Initialize main layout using GridLayout
 	auto grid_layout = std::make_unique<nanogui::GridLayout>(
@@ -160,6 +159,9 @@ std::shared_ptr<nanogui::Button> FileView::acquire_button(const std::shared_ptr<
 	// Reuse button from cache or create a new one
 	std::shared_ptr<nanogui::Button> icon_button = std::make_shared<nanogui::Button>(*item_container, "", get_icon_for_file(*child));
 	
+	// Store the button
+	m_file_buttons.push_back(icon_button); // due to thread safety, first store, then set the callbacks
+
 	item_container->remove_child(*image_view);
 	icon_button->add_child(*image_view);
 	
@@ -210,11 +212,64 @@ std::shared_ptr<nanogui::Button> FileView::acquire_button(const std::shared_ptr<
 		} else {
 			last_click_time = current_click_time;
 		}
+		
+		if (file_icon == FA_WALKING || file_icon == FA_PERSON_BOOTH || file_icon == FA_OBJECT_GROUP || file_icon == FA_PHOTO_VIDEO) {
+			auto drag_widget = screen().drag_widget();
+			
+			auto content = std::make_shared<nanogui::ImageView>(*drag_widget, screen());
+			content->set_size(icon_button->fixed_size());
+			content->set_fixed_size(icon_button->fixed_size());
+			
+			if (file_icon == FA_PERSON_BOOTH) {
+				// Using a simple image icon for now
+				content->set_image(std::make_shared<nanogui::Texture>(
+																	  "internal/ui/animation.png",
+																	  nanogui::Texture::InterpolationMode::Nearest,
+																	  nanogui::Texture::InterpolationMode::Nearest,
+																	  nanogui::Texture::WrapMode::ClampToEdge
+																	  ));
+			} else if (file_icon == FA_PHOTO_VIDEO) {
+				content->set_image(std::make_shared<nanogui::Texture>(
+																	  child->FullPath,
+																	  nanogui::Texture::InterpolationMode::Nearest,
+																	  nanogui::Texture::InterpolationMode::Nearest,
+																	  nanogui::Texture::WrapMode::ClampToEdge
+																	  ));
+			} else {
+				auto thumbnail_pixels = load_image_data(child->FullPath);
+				
+				content->set_image(std::make_shared<nanogui::Texture>(
+																	  thumbnail_pixels.data(),
+																	  thumbnail_pixels.size(),
+																	  512, 512,
+																	  nanogui::Texture::InterpolationMode::Nearest,
+																	  nanogui::Texture::InterpolationMode::Nearest,
+																	  nanogui::Texture::WrapMode::ClampToEdge
+																	  ));
+			}
+			
+			content->image()->resize(nanogui::Vector2i(288, 288));
+			content->set_visible(true);
+			drag_widget->set_size(icon_button->fixed_size());
+			
+			auto drag_start_position = icon_button->absolute_position();
+			drag_widget->set_position(drag_start_position);
+			drag_widget->perform_layout(screen().nvg_context());
+			
+			screen().set_drag_widget(drag_widget, [this, content, drag_widget, child]() {
+				auto path = child->FullPath;
+				
+				// Remove drag widget
+				drag_widget->remove_child(*content);
+				screen().set_drag_widget(nullptr, nullptr);
+				
+				std::vector<std::string> path_vector = { path };
+				screen().drop_event(*this, path_vector);
+			});
+		}
+		
 	});
-	
-	// Store the button
-	m_file_buttons.push_back(icon_button);
-	
+
 	// Async thumbnail loading
 	m_thumbnail_load_queue.push([this, child, image_view, texture]() {
 		load_thumbnail(child, image_view, texture);
@@ -314,9 +369,9 @@ void FileView::load_thumbnail(const std::shared_ptr<DirectoryNode>& node,
 		// Load and process the thumbnail
 		// Example: Read image data from file
 		std::vector<uint8_t> thumbnail_data;
-		
+
 		if (get_icon_for_file(*node) == FA_PHOTO_VIDEO) {
-			
+
 			// One-liner to load PNG file into a vector of uint8_t
 			thumbnail_data = load_file_to_vector(node->FullPath);
 		} else {
@@ -405,45 +460,39 @@ void FileView::ProcessEvents() {
 }
 
 void FileView::refresh(const std::string& filter_text) {
-	m_filter_text = filter_text;
-	
-	// Clear existing buttons and selection
-	clear_file_buttons();
-	m_selected_button = nullptr;
-	m_selected_node = nullptr;
-	
-	// Refresh the root directory node to get the latest contents
-	m_root_directory_node.refresh(m_allowed_extensions);
-	
-	// Clear existing child widgets in the content
-	m_content->shed_children();
-	
-	// Clear stored references to previously allocated objects
-	m_item_containers.clear();
-	m_image_views.clear();
-	m_name_labels.clear();
-	m_nodes.clear();
-	
-	// Reset scroll offset and row indices
-	m_scroll_offset = 0.0f;
-	m_previous_first_visible_row = 0;
-	
-	nanogui::async([this, filter_text](){
-		{
-			std::lock_guard<std::mutex> lock(m_mutex);
-			
-			// Populate the file view with updated contents
-			populate_file_view();
-
-		}
+	{
+		std::lock_guard<std::mutex> lock(m_mutex);
+		m_filter_text = filter_text;
 		
-
-		// Perform layout to apply all changes
-		perform_layout(screen().nvg_context());
+		// Clear existing buttons and selection
+		clear_file_buttons();
+		m_selected_button = nullptr;
+		m_selected_node = nullptr;
 		
-		scroll_event(nanogui::Vector2i(0, 0), nanogui::Vector2i(0, -1));
-	});
+		// Refresh the root directory node to get the latest contents
+		m_root_directory_node.refresh(m_allowed_extensions);
+		
+		// Clear existing child widgets in the content
+		m_content->shed_children();
+		
+		// Clear stored references to previously allocated objects
+		m_item_containers.clear();
+		m_image_views.clear();
+		m_name_labels.clear();
+		m_nodes.clear();
+		
+		// Reset scroll offset and row indices
+		m_scroll_offset = 0.0f;
+		m_previous_first_visible_row = 0;
+		
+		// Populate the file view with updated contents
+		populate_file_view();
+	}
 	
+	// Perform layout to apply all changes
+	perform_layout(screen().nvg_context());
+	
+	scroll_event(nanogui::Vector2i(0, 0), nanogui::Vector2i(0, -1));
 	
 }
 void FileView::populate_file_view() {
@@ -687,78 +736,4 @@ void FileView::collect_nodes_recursive(DirectoryNode* node, std::vector<std::sha
 			collect_nodes_recursive(child.get(), collected_nodes);
 		}
 	}
-}
-
-bool FileView::mouse_motion_event(const Vector2i &p, const Vector2i &rel, int button, int modifiers) {
-	
-	if (m_selected_button != nullptr && m_selected_button->contains(p) && !m_trigger_drag) {
-		
-		m_trigger_drag = true;
-		
-		assert(m_selected_node);
-		
-		auto file_icon = get_icon_for_file(*m_selected_node);
-		
-		if (file_icon == FA_WALKING || file_icon == FA_PERSON_BOOTH || file_icon == FA_OBJECT_GROUP || file_icon == FA_PHOTO_VIDEO) {
-			auto drag_widget = screen().drag_widget();
-			
-			auto content = std::make_shared<nanogui::ImageView>(*drag_widget, screen());
-			content->set_size(m_selected_button->fixed_size());
-			content->set_fixed_size(m_selected_button->fixed_size());
-			
-			if (file_icon == FA_PERSON_BOOTH) {
-				// Using a simple image icon for now
-				content->set_image(std::make_shared<nanogui::Texture>(
-																	  "internal/ui/animation.png",
-																	  nanogui::Texture::InterpolationMode::Nearest,
-																	  nanogui::Texture::InterpolationMode::Nearest,
-																	  nanogui::Texture::WrapMode::ClampToEdge
-																	  ));
-			} else if (file_icon == FA_PHOTO_VIDEO) {
-				content->set_image(std::make_shared<nanogui::Texture>(
-																	  m_selected_node->FullPath,
-																	  nanogui::Texture::InterpolationMode::Nearest,
-																	  nanogui::Texture::InterpolationMode::Nearest,
-																	  nanogui::Texture::WrapMode::ClampToEdge
-																	  ));
-			} else {
-				auto thumbnail_pixels = load_image_data(m_selected_node->FullPath);
-				
-				content->set_image(std::make_shared<nanogui::Texture>(
-																	  thumbnail_pixels.data(),
-																	  thumbnail_pixels.size(),
-																	  512, 512,
-																	  nanogui::Texture::InterpolationMode::Nearest,
-																	  nanogui::Texture::InterpolationMode::Nearest,
-																	  nanogui::Texture::WrapMode::ClampToEdge
-																	  ));
-			}
-			
-			content->image()->resize(nanogui::Vector2i(288, 288));
-			content->set_visible(true);
-			drag_widget->set_size(m_selected_button->fixed_size());
-			
-			auto drag_start_position = m_selected_button->absolute_position();
-			drag_widget->set_position(drag_start_position);
-			drag_widget->perform_layout(screen().nvg_context());
-			
-			screen().set_drag_widget(drag_widget, [this, content, drag_widget]() {
-				auto path = m_selected_node->FullPath;
-				
-				// Remove drag widget
-				drag_widget->remove_child(*content);
-				screen().set_drag_widget(nullptr, nullptr);
-				
-				std::vector<std::string> path_vector = { path };
-				screen().drop_event(*this, path_vector);
-				
-				m_trigger_drag = false;
-			});
-		}
-		
-		return true;
-
-	}
-
-	return false;
 }
