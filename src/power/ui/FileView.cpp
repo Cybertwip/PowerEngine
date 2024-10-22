@@ -12,6 +12,7 @@
 
 #include "filesystem/DirectoryNode.hpp" // Assuming this is needed for load_image_data
 #include "filesystem/CompressedSerialization.hpp" // Assuming this is needed for load_image_data
+#include "filesystem/ImageUtils.hpp" // Assuming this is needed for load_image_data
 
 // Constructor
 FileView::FileView(nanogui::Widget& parent,
@@ -362,48 +363,48 @@ void FileView::handle_file_click(DirectoryNode& node) {
 
 void FileView::load_thumbnail(const std::shared_ptr<DirectoryNode>& node,
 							  const std::shared_ptr<nanogui::ImageView>& image_view,
-							  std::shared_ptr<nanogui::Texture>& texture) {
-	nanogui::async([this, node, image_view, &texture]() {
+							  std::shared_ptr<nanogui::Texture> texture) {
+	nanogui::async([this, node, image_view, texture]() {
 		// Load and process the thumbnail
 		// Example: Read image data from file
-		
+		std::vector<uint8_t> thumbnail_data;
+
 		if (get_icon_for_file(*node) == FA_PHOTO_VIDEO) {
-			texture = std::make_shared<nanogui::Texture>(
-														 node->FullPath,
-														 nanogui::Texture::InterpolationMode::Nearest,
-														 nanogui::Texture::InterpolationMode::Nearest,
-														 nanogui::Texture::WrapMode::ClampToEdge);
 			
-			texture->resize(nanogui::Vector2i(512, 512));
+			int width;
+			int height;
+			int channels;
+			
+			read_png_file_to_vector(node->FullPath, thumbnail_data, width, height, channels);
+			
+			if (!thumbnail_data.empty()) {
+				texture->resize(nanogui::Vector2i(1024, 1024));
+			}
+		} else {
+			thumbnail_data = load_image_data(node->FullPath);
+			
+			if (!thumbnail_data.empty()) {
+				texture->resize(nanogui::Vector2i(512, 512));
+			}
+		}
+		
+		if (!thumbnail_data.empty()) {
+			nanogui::Texture::decompress_into(thumbnail_data, *texture);
+			
 			image_view->set_image(texture);
 			image_view->set_visible(true);
 			
 			texture->resize(nanogui::Vector2i(288, 288));
 			image_view->perform_layout(screen().nvg_context());
-			
 		} else {
+			thumbnail_data.resize(512 * 512 * 4);
+			texture->resize(nanogui::Vector2i(512, 512));
+			texture->upload(thumbnail_data.data());
+			image_view->set_image(texture);
+			image_view->set_visible(true);
 			
-			std::vector<uint8_t> thumbnail_data = load_image_data(node->FullPath);
-			
-			if (!thumbnail_data.empty()) {
-				texture->resize(nanogui::Vector2i(512, 512));
-				nanogui::Texture::decompress_into(thumbnail_data, *texture);
-				
-				image_view->set_image(texture);
-				image_view->set_visible(true);
-				
-				texture->resize(nanogui::Vector2i(288, 288));
-				image_view->perform_layout(screen().nvg_context());
-			} else {
-				thumbnail_data.resize(512 * 512 * 4);
-				texture->resize(nanogui::Vector2i(512, 512));
-				texture->upload(thumbnail_data.data());
-				image_view->set_image(texture);
-				image_view->set_visible(true);
-				
-				texture->resize(nanogui::Vector2i(288, 288));
-				image_view->perform_layout(screen().nvg_context());
-			}
+			texture->resize(nanogui::Vector2i(288, 288));
+			image_view->perform_layout(screen().nvg_context());
 		}
 		
 	});
