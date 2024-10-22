@@ -57,3 +57,7 @@ bool read_png_file_to_vector(const std::string& filename,
 							 int& width,
 							 int& height,
 							 int& channels);
+
+
+// Function to load a file into a vector of uint8_t
+std::vector<uint8_t> load_file_to_vector(const std::string& filepath);

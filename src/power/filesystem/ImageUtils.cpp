@@ -192,3 +192,21 @@ bool read_png_file_to_vector(const std::string& filename,
 	std::cout << "Image loaded and processed successfully from " << filename << std::endl;
 	return true;
 }
+
+std::vector<uint8_t> load_file_to_vector(const std::string& filepath) {
+	std::ifstream file(filepath, std::ios::binary | std::ios::ate);
+	if (!file) {
+		throw std::runtime_error("Unable to open file: " + filepath);
+	}
+	
+	std::streamsize size = file.tellg();
+	file.seekg(0, std::ios::beg);
+	
+	std::vector<uint8_t> buffer(size);
+	if (!file.read(reinterpret_cast<char*>(buffer.data()), size)) {
+		throw std::runtime_error("Error reading file: " + filepath);
+	}
+	
+	return buffer;
+}
+

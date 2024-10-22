@@ -376,10 +376,7 @@ void FileView::load_thumbnail(const std::shared_ptr<DirectoryNode>& node,
 		if (get_icon_for_file(*node) == FA_PHOTO_VIDEO) {
 
 			// One-liner to load PNG file into a vector of uint8_t
-			thumbnail_data = std::vector<uint8_t> (
-												(std::istreambuf_iterator<char>(std::ifstream(node->FullPath, std::ios::binary)),
-												 std::istreambuf_iterator<char>())
-												);
+			thumbnail_data = load_file_to_vector(node->FullPath);
 
 			if (!thumbnail_data.empty()) {
 				texture->resize(nanogui::Vector2i(1024, 1024));
