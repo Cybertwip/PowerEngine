@@ -61,6 +61,22 @@ m_recursive(recursive)
 	// Initialize texture cache
 	initialize_texture_cache();
 	
+	m_drag_payload = std::make_shared<nanogui::ImageView>(parent, screen());
+	
+	m_drag_payload->set_image(
+							  std::make_shared<nanogui::Texture>(
+																 nanogui::Texture::PixelFormat::RGBA,       // Set pixel format to RGBA
+																 nanogui::Texture::ComponentFormat::UInt8,  // Use unsigned 8-bit components for each channel
+																 nanogui::Vector2i(512, 512),
+																 nanogui::Texture::InterpolationMode::Bilinear,
+																 nanogui::Texture::InterpolationMode::Nearest,
+																 nanogui::Texture::WrapMode::ClampToEdge
+																 ));
+	
+	m_drag_payload->set_visible(false);
+	
+	parent.remove_child(*m_drag_payload);
+	
 	// Create a content widget that will hold all file items
 	m_content = std::make_shared<nanogui::Widget>(std::make_optional<std::reference_wrapper<nanogui::Widget>>(*this));
 	m_content->set_layout(std::make_unique<nanogui::GridLayout>(
@@ -161,7 +177,7 @@ std::shared_ptr<nanogui::Button> FileView::acquire_button(const std::shared_ptr<
 	
 	// Store the button
 	m_file_buttons.push_back(icon_button); // due to thread safety, first store, then set the callbacks
-
+	
 	item_container->remove_child(*image_view);
 	icon_button->add_child(*image_view);
 	
@@ -216,36 +232,27 @@ std::shared_ptr<nanogui::Button> FileView::acquire_button(const std::shared_ptr<
 		if (file_icon == FA_WALKING || file_icon == FA_PERSON_BOOTH || file_icon == FA_OBJECT_GROUP || file_icon == FA_PHOTO_VIDEO) {
 			auto drag_widget = screen().drag_widget();
 			
-			m_drag_payload = std::make_shared<nanogui::ImageView>(*drag_widget, screen());
+			drag_widget->add_child(*m_drag_payload);
+			
 			m_drag_payload->set_size(icon_button->fixed_size());
 			m_drag_payload->set_fixed_size(icon_button->fixed_size());
 			
 			if (file_icon == FA_PERSON_BOOTH) {
-				// Using a simple image icon for now
-				m_drag_payload->set_image(std::make_shared<nanogui::Texture>(
-																	  "internal/ui/animation.png",
-																	  nanogui::Texture::InterpolationMode::Nearest,
-																	  nanogui::Texture::InterpolationMode::Nearest,
-																	  nanogui::Texture::WrapMode::ClampToEdge
-																	  ));
-			} else if (file_icon == FA_PHOTO_VIDEO) {
-				m_drag_payload->set_image(std::make_shared<nanogui::Texture>(
-																	  child->FullPath,
-																	  nanogui::Texture::InterpolationMode::Nearest,
-																	  nanogui::Texture::InterpolationMode::Nearest,
-																	  nanogui::Texture::WrapMode::ClampToEdge
-																	  ));
-			} else {
-				auto thumbnail_pixels = load_image_data(child->FullPath);
 				
-				m_drag_payload->set_image(std::make_shared<nanogui::Texture>(
-																	  thumbnail_pixels.data(),
-																	  thumbnail_pixels.size(),
-																	  512, 512,
-																	  nanogui::Texture::InterpolationMode::Nearest,
-																	  nanogui::Texture::InterpolationMode::Nearest,
-																	  nanogui::Texture::WrapMode::ClampToEdge
-																	  ));
+				auto thumbnail_data = load_file_to_vector(child->FullPath);
+				
+				nanogui::Texture::decompress_into(thumbnail_data, *m_drag_payload->image());
+				
+			} else if (file_icon == FA_PHOTO_VIDEO) {
+				
+				auto thumbnail_data = load_file_to_vector(child->FullPath);
+				
+				nanogui::Texture::decompress_into(thumbnail_data, *m_drag_payload->image());
+				
+			} else {
+				auto thumbnail_data = load_image_data(child->FullPath);
+				
+				nanogui::Texture::decompress_into(thumbnail_data, *m_drag_payload->image());
 			}
 			
 			m_drag_payload->image()->resize(nanogui::Vector2i(288, 288));
@@ -255,7 +262,7 @@ std::shared_ptr<nanogui::Button> FileView::acquire_button(const std::shared_ptr<
 			auto drag_start_position = icon_button->absolute_position();
 			drag_widget->set_position(drag_start_position);
 			
-//			drag_widget->perform_layout(screen().nvg_context());
+			//			drag_widget->perform_layout(screen().nvg_context());
 			
 			screen().set_drag_widget(drag_widget, [this, drag_widget, child]() {
 				auto path = child->FullPath;
@@ -264,13 +271,11 @@ std::shared_ptr<nanogui::Button> FileView::acquire_button(const std::shared_ptr<
 				
 				std::vector<std::string> path_vector = { path };
 				screen().drop_event(*this, path_vector);
-				
-				m_drag_payload = nullptr;
 			});
 		}
 		
 	});
-
+	
 	// Async thumbnail loading
 	m_thumbnail_load_queue.push([this, child, image_view, texture]() {
 		load_thumbnail(child, image_view, texture);
@@ -370,9 +375,9 @@ void FileView::load_thumbnail(const std::shared_ptr<DirectoryNode>& node,
 		// Load and process the thumbnail
 		// Example: Read image data from file
 		std::vector<uint8_t> thumbnail_data;
-
+		
 		if (get_icon_for_file(*node) == FA_PHOTO_VIDEO) {
-
+			
 			// One-liner to load PNG file into a vector of uint8_t
 			thumbnail_data = load_file_to_vector(node->FullPath);
 		} else {

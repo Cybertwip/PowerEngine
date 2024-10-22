@@ -41,21 +41,12 @@
 
 NAMESPACE_BEGIN(nanogui)
 
-
-/* Calculate pixel ratio for hi-dpi devices. */
-static float get_pixel_ratio(GLFWwindow *window) {
-#if defined(EMSCRIPTEN)
-	return emscripten_get_device_pixel_ratio();
-#else
-	float xscale, yscale;
-	glfwGetWindowContentScale(window, &xscale, &yscale);
-	return xscale;
-#endif
-}
-
-// Define the single screen and window
+// Forward declarations
 extern Screen* screen1;
 extern GLFWwindow* window1;
+
+// Mutex to protect access to screen1
+std::mutex screen1_mutex;
 
 // Redraw thread management variables
 static std::atomic<bool> redraw_thread_running(false);
@@ -70,20 +61,38 @@ std::queue<std::function<void()>> m_async_functions;
 extern void disable_saved_application_state_osx();
 #endif
 
+/* Calculate pixel ratio for hi-dpi devices. */
+static float get_pixel_ratio(GLFWwindow *window) {
+#if defined(EMSCRIPTEN)
+	return emscripten_get_device_pixel_ratio();
+#else
+	float xscale, yscale;
+	glfwGetWindowContentScale(window, &xscale, &yscale);
+	return xscale;
+#endif
+}
+
+// Function to enqueue asynchronous functions
+void async(const std::function<void()> &func) {
+	std::lock_guard<std::mutex> guard(m_async_mutex);
+	m_async_functions.push(func);
+}
+
 // Function to start the redraw thread
 void start_redraw_thread() {
 	redraw_thread_running = true;
 	redraw_thread = std::thread([](){
-		while (redraw_thread_running) {
-			// Enqueue redraw for the visible screen
-			async([](){
-				if (screen1 && screen1->visible()) {
-					screen1->redraw();
-				}
-			});
-			// Sleep for approximately 16ms to achieve ~60fps
-			std::this_thread::sleep_for(std::chrono::milliseconds(16));
-		}
+//		while (redraw_thread_running) {
+//			// Enqueue redraw for the visible screen
+//			async([](){
+//				std::lock_guard<std::mutex> lock(screen1_mutex);
+//				if (screen1 && screen1->visible()) {
+//					screen1->redraw();
+//				}
+//			});
+//			// Sleep for approximately 16ms to achieve ~60fps
+//			std::this_thread::sleep_for(std::chrono::milliseconds(16));
+//		}
 	});
 }
 
@@ -132,79 +141,82 @@ static double emscripten_last = 0;
 static float emscripten_refresh = 0;
 #endif
 
-void mainloop() {
-	if (mainloop_active)
-		throw std::runtime_error("Main loop is already running!");
-	
-	// Ensure window1 and screen1 are initialized
-	if (!window1 || !screen1) {
-		throw std::runtime_error("window1 and screen1 must be initialized before entering the main loop.");
-	}
-	
-	/* Propagate GLFW events to the Screen instance */
+// Function to register all GLFW event callbacks with mutex protection
+void register_event_callbacks() {
+	// Cursor Position Callback
 	glfwSetCursorPosCallback(window1,
 							 [](GLFWwindow *w, double x, double y) {
+		std::lock_guard<std::mutex> lock(screen1_mutex);
 		if (screen1 && screen1->get_process_events()) {
 			screen1->cursor_pos_callback_event(x, y);
 		}
 	}
 							 );
 	
+	// Mouse Button Callback
 	glfwSetMouseButtonCallback(window1,
 							   [](GLFWwindow *w, int button, int action, int modifiers) {
+		std::lock_guard<std::mutex> lock(screen1_mutex);
 		if (screen1 && screen1->get_process_events()) {
 			screen1->mouse_button_callback_event(button, action, modifiers);
 		}
 	}
 							   );
 	
+	// Key Callback
 	glfwSetKeyCallback(window1,
 					   [](GLFWwindow *w, int key, int scancode, int action, int mods) {
+		std::lock_guard<std::mutex> lock(screen1_mutex);
 		if (screen1 && screen1->get_process_events()) {
 			screen1->key_callback_event(key, scancode, action, mods);
 		}
 	}
 					   );
 	
+	// Character Callback
 	glfwSetCharCallback(window1,
 						[](GLFWwindow *w, unsigned int codepoint) {
+		std::lock_guard<std::mutex> lock(screen1_mutex);
 		if (screen1 && screen1->get_process_events()) {
 			screen1->char_callback_event(codepoint);
 		}
 	}
 						);
 	
+	// Drop Callback
 	glfwSetDropCallback(window1,
 						[](GLFWwindow *w, int count, const char **filenames) {
+		std::lock_guard<std::mutex> lock(screen1_mutex);
 		if (screen1 && screen1->get_process_events()) {
 			screen1->drop_callback_event(count, filenames);
 		}
 	}
 						);
 	
+	// Scroll Callback
 	glfwSetScrollCallback(window1,
 						  [](GLFWwindow *w, double x, double y) {
+		std::lock_guard<std::mutex> lock(screen1_mutex);
 		if (screen1 && screen1->get_process_events()) {
 			screen1->scroll_callback_event(x, y);
 		}
 	}
 						  );
 	
-	/* React to framebuffer size events -- includes window
-	 size events and also catches things like dragging
-	 a window from a Retina-capable screen to a normal
-	 screen on Mac OS X */
+	// Framebuffer Size Callback
 	glfwSetFramebufferSizeCallback(window1,
 								   [](GLFWwindow* w, int width, int height) {
+		std::lock_guard<std::mutex> lock(screen1_mutex);
 		if (screen1 && screen1->get_process_events()) {
 			screen1->resize_callback_event(width, height);
 		}
 	}
 								   );
 	
-	// Notify when the screen has lost focus (e.g., application switch)
+	// Window Focus Callback
 	glfwSetWindowFocusCallback(window1,
 							   [](GLFWwindow *w, int focused) {
+		std::lock_guard<std::mutex> lock(screen1_mutex);
 		if (screen1) {
 			// focus_event: 0 when false, 1 when true
 			screen1->focus_event(focused != 0);
@@ -212,14 +224,32 @@ void mainloop() {
 	}
 							   );
 	
+	// Window Content Scale Callback
 	glfwSetWindowContentScaleCallback(window1,
 									  [](GLFWwindow* w, float xscale, float yscale) {
+		std::lock_guard<std::mutex> lock(screen1_mutex);
 		if (screen1) {
 			screen1->set_pixel_ratio(get_pixel_ratio(w));
 			screen1->resize_callback_event(screen1->size().x(), screen1->size().y());
 		}
 	}
 									  );
+}
+
+void mainloop() {
+	if (mainloop_active)
+		throw std::runtime_error("Main loop is already running!");
+	
+	// Ensure window1 and screen1 are initialized
+	{
+		std::lock_guard<std::mutex> lock(screen1_mutex);
+		if (!window1 || !screen1) {
+			throw std::runtime_error("window1 and screen1 must be initialized before entering the main loop.");
+		}
+	}
+	
+	/* Register event callbacks with mutex protection */
+	register_event_callbacks();
 	
 	// Start the redraw thread
 	start_redraw_thread();
@@ -251,6 +281,7 @@ void mainloop() {
 		}
 		
 		{
+			std::lock_guard<std::mutex> lock(screen1_mutex);
 			// Directly access the single screen
 			if (screen1 && screen1->visible()) {
 				if (glfwWindowShouldClose(window1)) {
@@ -259,6 +290,8 @@ void mainloop() {
 #if defined(EMSCRIPTEN)
 					if (emscripten_redraw || screen1->tooltip_fade_in_progress())
 						screen1->redraw();
+#else
+					screen1->redraw();
 #endif
 					screen1->draw_all();
 					num_screens++;
@@ -303,35 +336,22 @@ void mainloop() {
 	stop_redraw_thread();
 }
 
-void async(const std::function<void()> &func) {
-	std::lock_guard<std::mutex> guard(m_async_mutex);
-	m_async_functions.push(func);
-}
-
+// Function to terminate the main loop
 void leave() {
 	mainloop_active = false;
 }
 
+// Function to check if the main loop is active
 bool active() {
 	return mainloop_active;
 }
 
+// Function to test 10-bit EDR support
 std::pair<bool, bool> test_10bit_edr_support() {
 #if defined(NANOGUI_USE_METAL)
 	return metal_10bit_edr_support();
 #else
 	return { false, false };
-#endif
-}
-
-void shutdown() {
-	leave(); // Ensure mainloop_active is set to false
-	stop_redraw_thread(); // Stop the redraw thread
-	
-	glfwTerminate();
-	
-#if defined(NANOGUI_USE_METAL)
-	metal_shutdown();
 #endif
 }
 
@@ -377,6 +397,7 @@ std::string utf8(uint32_t c) {
 	return result;
 }
 
+// Function to get or create an image in the NanoVG context
 int __nanogui_get_image(NVGcontext *ctx, const std::string &name, uint8_t *data, uint32_t size) {
 	// Replaced std::map with std::unordered_map for faster image cache lookups
 	static std::unordered_map<std::string, int> icon_cache;
@@ -390,6 +411,7 @@ int __nanogui_get_image(NVGcontext *ctx, const std::string &name, uint8_t *data,
 	return icon_id;
 }
 
+// Function to load all PNG images from a directory into the NanoVG context
 std::vector<std::pair<int, std::string>>
 load_image_directory(NVGcontext *ctx, const std::string &path) {
 	std::vector<std::pair<int, std::string> > result;
@@ -442,8 +464,8 @@ std::vector<std::string> file_dialog(const std::vector<std::pair<std::string, st
 	ZeroMemory(&ofn, sizeof(OPENFILENAME));
 	ofn.lStructSize = sizeof(OPENFILENAME);
 	char tmp[FILE_DIALOG_MAX_BUFFER];
-	ofn.lpstrFile = tmp;
 	ZeroMemory(tmp, FILE_DIALOG_MAX_BUFFER);
+	ofn.lpstrFile = tmp;
 	ofn.nMaxFile = FILE_DIALOG_MAX_BUFFER;
 	ofn.nFilterIndex = 1;
 	
@@ -562,8 +584,20 @@ std::vector<std::string> file_dialog(const std::vector<std::pair<std::string, st
 }
 #endif
 
+// Destructor for Object
 Object::~Object() { }
 
-// Removed add_screen and remove_screen functions as only a single screen is managed
+// Function to gracefully shutdown NanoGUI
+void shutdown() {
+	leave(); // Ensure mainloop_active is set to false
+	stop_redraw_thread(); // Stop the redraw thread
+	
+	glfwTerminate();
+	
+#if defined(NANOGUI_USE_METAL)
+	metal_shutdown();
+#endif
+}
 
 NAMESPACE_END(nanogui)
+

@@ -41,12 +41,13 @@ public:
 	}
 	
 	void do_drag_finish() {
+		m_children.clear(); // hollow clearing, deallocation is own responsibility
+
 		if (m_drag_callback) {
 			m_drag_callback();
 			m_drag_callback = nullptr;
 		}
 		
-		m_children.clear(); // hollow clearing, deallocation is own responsibility
 	}
 	
 private:
