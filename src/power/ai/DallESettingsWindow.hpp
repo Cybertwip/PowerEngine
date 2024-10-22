@@ -31,10 +31,11 @@ public:
 private:
 	// UI Components
 	std::shared_ptr<nanogui::TextBox> api_key_box_;
+	std::shared_ptr<nanogui::Widget> m_button_panel_;
 	std::shared_ptr<nanogui::Button> sync_button_;
 	std::shared_ptr<nanogui::Button> close_button_;
 	std::shared_ptr<nanogui::Label> status_label_;
-	
+
 	// Internal state
 	bool data_saved_;
 	

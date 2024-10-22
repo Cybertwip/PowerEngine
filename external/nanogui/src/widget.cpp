@@ -164,8 +164,8 @@ void Widget::add_child(int index, Widget& widget) {
 	assert(index <= child_count());
 	m_children.insert(m_children.begin() + index, widget);
 	widget.set_parent(*this);
-	widget.set_theme(m_theme);
 	widget.set_screen(screen());
+	widget.set_theme(m_theme);
 }
 
 void Widget::add_child(Widget& widget) {
@@ -185,9 +185,7 @@ void Widget::remove_child(Widget& widget) {
 void Widget::remove_child_at(int index) {
 	if (index < 0 || index >= (int) m_children.size())
 		throw std::runtime_error("Widget::remove_child_at(): out of bounds!");
-	Widget& widget = m_children[index];
 	m_children.erase(m_children.begin() + index);
-	
 }
 void Widget::shed_children() {
 	// Continue removing children until m_children is empty
@@ -270,7 +268,7 @@ void Widget::set_parent(Widget& parent) {
 }
 
 void Widget::set_screen(Screen& screen) {
-	m_screen = screen;
+	m_screen = std::ref(screen);
 	// Propagate to children
 	for (auto child : m_children) {
 		child.get().set_screen(screen);

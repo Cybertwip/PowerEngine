@@ -75,7 +75,6 @@ void Window::perform_layout(NVGcontext *ctx) {
 void Window::set_modal(bool modal) {
 	m_modal = modal;
 	if (m_modal) {
-		center();
 		// Bring to front by moving to the end of the parent's children list
 		auto& p = parent()->get();
 		
@@ -83,6 +82,8 @@ void Window::set_modal(bool modal) {
 		p.remove_child(std::ref(*this));
 		// Add it back to the end, which typically renders it on top
 		p.add_child(std::ref(*this));
+
+		center();
 		
 		set_focused(true);
 		
