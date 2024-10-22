@@ -182,6 +182,7 @@ std::string DallEApiClient::generate_image(const std::string& prompt) {
 	post_json_data["prompt"] = prompt;
 	post_json_data["n"] = 1; // Number of images to generate
 	post_json_data["size"] = "1024x1024"; // Image size
+	post_json_data["model"] = "dall-e-3";
 	
 	Json::StreamWriterBuilder writer;
 	std::string json_payload = Json::writeString(writer, post_json_data);

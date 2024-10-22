@@ -3,6 +3,7 @@
 #include "ShaderManager.hpp"
 #include "DallEApiClient.hpp"
 
+#include "filesystem/ImageUtils.hpp"
 #include "ui/ResourcesPanel.hpp"
 
 #include <nanogui/layout.h>
@@ -223,29 +224,13 @@ void DallEPromptWindow::SaveImageAsync() {
 	while (fs::exists(filename)) {
 		filename = "generated_image_" + std::to_string(counter++) + ".png";
 	}
-	
-	// Save the image using stb_image_write
-	int width, height, channels;
-	unsigned char* img = stbi_load_from_memory(mImageData.data(), mImageData.size(), &width, &height, &channels, 4);
-	if (!img) {
+	if (!write_compressed_png_to_file(mImageData, filename)) {
 		std::cerr << "Failed to decode image data for saving." << std::endl;
 		{
 			std::lock_guard<std::mutex> lock(mStatusMutex);
 			mStatusLabel->set_caption("Status: Failed to decode image for saving.");
 		}
 		return;
-	}
-	
-	if (stbi_write_png(filename.c_str(), width, height, 4, img, width * 4)) {
-		std::cout << "Image saved successfully to " << filename << std::endl;
-		{
-			std::lock_guard<std::mutex> lock(mStatusMutex);
-			mStatusLabel->set_caption("Status: Image saved successfully.");
-		}
-		// Refresh the resources panel to show the new image
-		nanogui::async([this, filename]() {
-			mResourcesPanel.refresh_file_view();
-		});
 	} else {
 		std::cerr << "Failed to save image to " << filename << std::endl;
 		{
@@ -253,6 +238,4 @@ void DallEPromptWindow::SaveImageAsync() {
 			mStatusLabel->set_caption("Status: Failed to save image.");
 		}
 	}
-	
-	stbi_image_free(img);
 }

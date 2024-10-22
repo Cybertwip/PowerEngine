@@ -1,9 +1,12 @@
 #include "ImageUtils.hpp"
 
+#define STB_IMAGE_IMPLEMENTATION
+#define STBI_MSC_SECURE_CRT
 #define STB_IMAGE_WRITE_IMPLEMENTATION
-
+#include "stb_image.h"
 #include "stb_image_write.h"
 
+// -------------------- JPEG Writing --------------------
 
 // Callback function to handle JPEG data writing
 void jpeg_write_callback(void* context, void* data, int size) {
@@ -30,9 +33,6 @@ void write_to_jpeg(const std::vector<uint8_t>& pixels,
 				   int quality) {
 	JpegWriteContext ctx; // Initialize the context with an empty vector
 	
-	// Calculate the stride (number of bytes per row)
-	int stride_bytes = width * channels;
-	
 	// Use stb_image_write's function to write JPEG to the callback
 	if (!stbi_write_jpg_to_func(jpeg_write_callback, &ctx, width, height, channels, pixels.data(), quality)) {
 		std::cerr << "Error writing JPEG to memory" << std::endl;
@@ -40,4 +40,27 @@ void write_to_jpeg(const std::vector<uint8_t>& pixels,
 		output_jpeg = std::move(ctx.data); // Move the data to the output vector
 		std::cout << "JPEG written successfully to memory, size: " << output_jpeg.size() << " bytes" << std::endl;
 	}
+}
+
+
+bool write_compressed_png_to_file(const std::vector<uint8_t>& imageData, const std::string& filename) {
+	// Decode image data from memory
+	int width, height, channels;
+	unsigned char* img = stbi_load_from_memory(imageData.data(), imageData.size(), &width, &height, &channels, 4);
+	if (!img) {
+		std::cerr << "Failed to decode image data for saving." << std::endl;
+		return false;
+	}
+	
+	// Save the image using stb_image_write with compression
+	if (stbi_write_png(filename.c_str(), width, height, 4, img, width * 4)) {
+		std::cout << "Image saved successfully to " << filename << std::endl;
+	} else {
+		std::cerr << "Failed to save image to " << filename << std::endl;
+	}
+	
+	// Free the image memory
+	stbi_image_free(img);
+	
+	return true;
 }
