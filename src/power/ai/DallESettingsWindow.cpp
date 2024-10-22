@@ -80,15 +80,7 @@ void DallESettingsWindow::on_sync() {
 		status_label_->set_color(nanogui::Color(255, 0, 0, 255)); // Red
 		return;
 	}
-	
-	// Optionally, more robust validation can be added here using regex
-	std::regex api_key_regex(R"(^sk-[A-Za-z0-9]{48}$)"); // Example pattern, adjust as per OpenAI's API key format
-	if (!std::regex_match(api_key_input, api_key_regex)) {
-		status_label_->set_caption("Invalid API key format.");
-		status_label_->set_color(nanogui::Color(255, 0, 0, 255)); // Red
-		return;
-	}
-	
+		
 	// Update status label to indicate authentication is in progress
 	status_label_->set_caption("Status: Authenticating...");
 	status_label_->set_color(nanogui::Color(255, 255, 0, 255)); // Yellow
