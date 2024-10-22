@@ -53,9 +53,6 @@ bool Button::mouse_enter_event(const Vector2i &p, bool enter) {
 
 bool Button::mouse_button_event(const Vector2i &p, int button, bool down, int modifiers) {
     Widget::mouse_button_event(p, button, down, modifiers);
-    /* Temporarily increase the reference count of the button in case the
-       button causes the parent window to be destructed */
-    auto self = dynamic_cast<Button*>(this);
 
     if (m_enabled == 1 &&
         ((button == GLFW_MOUSE_BUTTON_1 && !(m_flags & MenuButton)) ||
@@ -105,7 +102,10 @@ bool Button::mouse_button_event(const Vector2i &p, int button, bool down, int mo
 			
 			if (contains(p) && m_callback)
 				m_callback();
-        }
+		} else if(m_pushed) {
+			if (contains(p) && m_callback)
+				m_callback();
+		}
 		
         if (pushed_backup != m_pushed && m_change_callback)
             m_change_callback(m_pushed);

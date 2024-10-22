@@ -205,7 +205,6 @@ bool Application::mouse_button_event(const nanogui::Vector2i &p, int button, boo
 		request_focus();
 	}
 	
-	
 	// Queue the click event
 	if (button == GLFW_MOUSE_BUTTON_1) {
 		mClickQueue.push(std::make_tuple(down, width(), height(), p.x(), p.y()));
