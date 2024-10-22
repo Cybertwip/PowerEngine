@@ -214,6 +214,8 @@ mShaderManager(shaderManager)
 		//		}
 	});
 	
+	mAddButton->popup()->set_size(Vector2i(320, 320));
+	
 	mAddButton->popup().perform_layout(screen.nvg_context());
 	
 	mDeepMotionSettings->perform_layout(screen.nvg_context());
