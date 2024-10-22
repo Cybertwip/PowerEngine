@@ -25,7 +25,7 @@ DallEPromptWindow::DallEPromptWindow(nanogui::Screen& parent, ResourcesPanel& re
 : nanogui::Window(parent), mResourcesPanel(resourcesPanel), mDallEApiClient(dallEApiClient), mRenderPass(renderpass) {
 	
 	set_fixed_size(nanogui::Vector2i(600, 600)); // Adjusted size for better layout
-	set_layout(std::make_unique<nanogui::BoxLayout>(nanogui::Orientation::Vertical, nanogui::Alignment::Fill, 10, 10));
+	set_layout(std::make_unique<nanogui::BoxLayout>(nanogui::Orientation::Vertical, nanogui::Alignment::Middle, 10, 10));
 	set_title("DALL·E Image Generation");
 	
 	// Close Button
@@ -36,14 +36,25 @@ DallEPromptWindow::DallEPromptWindow(nanogui::Screen& parent, ResourcesPanel& re
 		this->set_modal(false);
 	});
 	
-	// Input Panel for Prompt
-	auto inputPanel = std::make_shared<nanogui::Widget>(std::make_optional<std::reference_wrapper<nanogui::Widget>>(*this));
-	inputPanel->set_layout(std::make_unique<nanogui::BoxLayout>(nanogui::Orientation::Vertical, nanogui::Alignment::Fill, 5, 5));
 	
-	mInputLabel = std::make_shared<nanogui::Label>(*inputPanel, "Enter Image Generation Prompt:", "sans-bold");
+	// **New Centering Container for ImageView**
+	mImageContainer = std::make_shared<nanogui::Widget>(std::make_optional<std::reference_wrapper<nanogui::Widget>>(*this));
+	
+	mImageContainer->set_layout(std::make_unique<nanogui::BoxLayout>(nanogui::Orientation::Horizontal, nanogui::Alignment::Middle, 0, 0));
+	
+	// Image View
+	mImageView = std::make_shared<nanogui::ImageView>(*mImageContainer, parent); // Assuming ImageView can take an empty string initially
+	mImageView->set_fixed_size(nanogui::Vector2i(300, 300));
+	mImageView->set_background_color(nanogui::Color(0.0f, 0.0f, 0.0f, 1.0f));
+	
+	// Input Panel for Prompt
+	mInputPanel = std::make_shared<nanogui::Widget>(std::make_optional<std::reference_wrapper<nanogui::Widget>>(*this));
+	mInputPanel->set_layout(std::make_unique<nanogui::BoxLayout>(nanogui::Orientation::Vertical, nanogui::Alignment::Fill, 5, 5));
+	
+	mInputLabel = std::make_shared<nanogui::Label>(*mInputPanel, "Enter Image Generation Prompt:", "sans-bold");
 	mInputLabel->set_fixed_height(25);
 	
-	mInputTextBox = std::make_shared<nanogui::TextBox>(*inputPanel, "");
+	mInputTextBox = std::make_shared<nanogui::TextBox>(*mInputPanel, "");
 	mInputTextBox->set_fixed_size(nanogui::Vector2i(580, 100));
 	mInputTextBox->set_alignment(nanogui::TextBox::Alignment::Left);
 	mInputTextBox->set_placeholder("e.g., A futuristic cityscape at sunset");
@@ -51,29 +62,24 @@ DallEPromptWindow::DallEPromptWindow(nanogui::Screen& parent, ResourcesPanel& re
 	mInputTextBox->set_editable(true);
 	
 	// Buttons Panel
-	auto buttonsPanel = std::make_shared<nanogui::Widget>(std::make_optional<std::reference_wrapper<nanogui::Widget>>(*this));
-	buttonsPanel->set_layout(std::make_unique<nanogui::BoxLayout>(nanogui::Orientation::Horizontal, nanogui::Alignment::Middle, 10, 0));
+	mButtonsPanel = std::make_shared<nanogui::Widget>(std::make_optional<std::reference_wrapper<nanogui::Widget>>(*this));
+	mButtonsPanel->set_layout(std::make_unique<nanogui::BoxLayout>(nanogui::Orientation::Horizontal, nanogui::Alignment::Middle, 10, 0));
 	
-	mGenerateButton = std::make_shared<nanogui::Button>(*buttonsPanel, "Generate");
+	mGenerateButton = std::make_shared<nanogui::Button>(*mButtonsPanel, "Generate");
 	mGenerateButton->set_fixed_size(nanogui::Vector2i(100, 40));
 	mGenerateButton->set_callback([this]() {
 		nanogui::async([this]() { this->SubmitPromptAsync(); });
 	});
 	mGenerateButton->set_tooltip("Generate an image based on the prompt");
 	
-	mSaveButton = std::make_shared<nanogui::Button>(*buttonsPanel, "Save");
+	mSaveButton = std::make_shared<nanogui::Button>(*mButtonsPanel, "Save");
 	mSaveButton->set_fixed_size(nanogui::Vector2i(100, 40));
 	mSaveButton->set_enabled(false);
 	mSaveButton->set_callback([this]() {
 		nanogui::async([this]() { this->SaveImageAsync(); });
 	});
 	mSaveButton->set_tooltip("Save the generated image");
-	
-	// Image View
-	mImageView = std::make_shared<nanogui::ImageView>(*this, parent); // Assuming ImageView can take an empty string initially
-	mImageView->set_fixed_size(nanogui::Vector2i(580, 400));
-	mImageView->set_background_color(nanogui::Color(0.2f, 0.2f, 0.2f, 1.0f));
-	
+
 	// Status Label
 	mStatusLabel = std::make_shared<nanogui::Label>(*this, "Status: Idle", "sans-bold");
 	mStatusLabel->set_fixed_height(20);
@@ -178,6 +184,9 @@ void DallEPromptWindow::SubmitPromptAsync() {
 																			 nanogui::Texture::WrapMode::Repeat));
 					
 
+					
+					mImageView->image()->resize(nanogui::Vector2i(600, 600));
+					
 					// Update Status
 					std::lock_guard<std::mutex> lock(mStatusMutex);
 					mStatusLabel->set_caption("Status: Image generated successfully.");

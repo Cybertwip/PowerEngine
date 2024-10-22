@@ -41,8 +41,12 @@ public:
 	// UI Components
 	ResourcesPanel& mResourcesPanel;
 	
-	std::shared_ptr<nanogui::ImageView> mImageView;
+	std::shared_ptr<nanogui::Widget> mInputPanel;
+	std::shared_ptr<nanogui::Widget> mButtonsPanel;
+	std::shared_ptr<nanogui::Widget> mImageContainer;
 	
+	std::shared_ptr<nanogui::ImageView> mImageView;
+
 	std::shared_ptr<nanogui::Label> mInputLabel;
 	std::shared_ptr<nanogui::TextBox> mInputTextBox;
 	std::shared_ptr<nanogui::Button> mCloseButton;
