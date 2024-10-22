@@ -84,7 +84,7 @@ void BoxLayout::perform_layout(NVGcontext *ctx, Widget& widget) {
     }
 
     bool first = true;
-    for (auto w : widget.children()) {
+    for (auto& w : widget.children()) {
         if (!w.get().visible())
             continue;
         if (first)

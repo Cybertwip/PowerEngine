@@ -369,9 +369,9 @@ void FileView::load_thumbnail(const std::shared_ptr<DirectoryNode>& node,
 		// Load and process the thumbnail
 		// Example: Read image data from file
 		std::vector<uint8_t> thumbnail_data;
-
+		
 		if (get_icon_for_file(*node) == FA_PHOTO_VIDEO) {
-
+			
 			// One-liner to load PNG file into a vector of uint8_t
 			thumbnail_data = load_file_to_vector(node->FullPath);
 		} else {
@@ -460,7 +460,8 @@ void FileView::ProcessEvents() {
 }
 
 void FileView::refresh(const std::string& filter_text) {
-	{
+	nanogui::async([this, filter_text](){
+		
 		std::lock_guard<std::mutex> lock(m_mutex);
 		m_filter_text = filter_text;
 		
@@ -487,12 +488,14 @@ void FileView::refresh(const std::string& filter_text) {
 		
 		// Populate the file view with updated contents
 		populate_file_view();
-	}
+		
+		// Perform layout to apply all changes
+		perform_layout(screen().nvg_context());
+		
+		scroll_event(nanogui::Vector2i(0, 0), nanogui::Vector2i(0, -1));
+		
+	});
 	
-	// Perform layout to apply all changes
-	perform_layout(screen().nvg_context());
-	
-	scroll_event(nanogui::Vector2i(0, 0), nanogui::Vector2i(0, -1));
 	
 }
 void FileView::populate_file_view() {
