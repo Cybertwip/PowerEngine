@@ -62,7 +62,7 @@ mDallEApiClient(dalleClient)
 	m_button_panel_ = std::make_shared<nanogui::Widget>(std::optional<std::reference_wrapper<nanogui::Widget>>(*this));
 	m_button_panel_->set_layout(std::make_unique<nanogui::BoxLayout>(nanogui::Orientation::Horizontal, nanogui::Alignment::Middle, 10, 0));
 	m_button_panel_->add_child(*sync_button_);
-	m_buttonm_button_panel__panel->add_child(*close_button_);
+	m_button_panel_->add_child(*close_button_);
 	
 	// Attempt to load existing API key and authenticate
 	if (load_from_file("dalle_api_key.dat")) {
