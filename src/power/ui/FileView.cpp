@@ -461,34 +461,34 @@ void FileView::ProcessEvents() {
 
 void FileView::refresh(const std::string& filter_text) {
 	nanogui::async([this, filter_text](){
-		
-		std::lock_guard<std::mutex> lock(m_mutex);
-		m_filter_text = filter_text;
-		
-		// Clear existing buttons and selection
-		clear_file_buttons();
-		m_selected_button = nullptr;
-		m_selected_node = nullptr;
-		
-		// Refresh the root directory node to get the latest contents
-		m_root_directory_node.refresh(m_allowed_extensions);
-		
-		// Clear existing child widgets in the content
-		m_content->shed_children();
-		
-		// Clear stored references to previously allocated objects
-		m_item_containers.clear();
-		m_image_views.clear();
-		m_name_labels.clear();
-		m_nodes.clear();
-		
-		// Reset scroll offset and row indices
-		m_scroll_offset = 0.0f;
-		m_previous_first_visible_row = 0;
-		
-		// Populate the file view with updated contents
-		populate_file_view();
-		
+		{
+			std::lock_guard<std::mutex> lock(m_mutex);
+			m_filter_text = filter_text;
+			
+			// Clear existing buttons and selection
+			clear_file_buttons();
+			m_selected_button = nullptr;
+			m_selected_node = nullptr;
+			
+			// Refresh the root directory node to get the latest contents
+			m_root_directory_node.refresh(m_allowed_extensions);
+			
+			// Clear existing child widgets in the content
+			m_content->shed_children();
+			
+			// Clear stored references to previously allocated objects
+			m_item_containers.clear();
+			m_image_views.clear();
+			m_name_labels.clear();
+			m_nodes.clear();
+			
+			// Reset scroll offset and row indices
+			m_scroll_offset = 0.0f;
+			m_previous_first_visible_row = 0;
+			
+			// Populate the file view with updated contents
+			populate_file_view();
+		}
 		// Perform layout to apply all changes
 		perform_layout(screen().nvg_context());
 		
