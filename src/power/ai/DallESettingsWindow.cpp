@@ -64,6 +64,9 @@ mDallEApiClient(dalleClient)
 	m_button_panel_->add_child(*sync_button_);
 	m_button_panel_->add_child(*close_button_);
 	
+	remove_child(*sync_button);
+	remove_child(*close_button_);
+	
 	// Attempt to load existing API key and authenticate
 	if (load_from_file("dalle_api_key.dat")) {
 		api_key_box_->set_value(mDallEApiClient.get_api_key()); // Assuming DallEApiClient has get_api_key()
