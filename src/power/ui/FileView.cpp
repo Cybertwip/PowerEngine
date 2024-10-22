@@ -9,6 +9,10 @@
 #include <iostream>
 #include <algorithm>
 #include <chrono>
+#include <vector>
+#include <cstdint>
+#include <fstream>
+#include <iterator>
 
 #include "filesystem/DirectoryNode.hpp" // Assuming this is needed for load_image_data
 #include "filesystem/CompressedSerialization.hpp" // Assuming this is needed for load_image_data
@@ -370,13 +374,13 @@ void FileView::load_thumbnail(const std::shared_ptr<DirectoryNode>& node,
 		std::vector<uint8_t> thumbnail_data;
 
 		if (get_icon_for_file(*node) == FA_PHOTO_VIDEO) {
-			
-			int width;
-			int height;
-			int channels;
-			
-			read_png_file_to_vector(node->FullPath, thumbnail_data, width, height, channels);
-			
+
+			// One-liner to load PNG file into a vector of uint8_t
+			thumbnail_data = std::vector<uint8_t> (
+												(std::istreambuf_iterator<char>(std::ifstream(node->FullPath, std::ios::binary)),
+												 std::istreambuf_iterator<char>())
+												);
+
 			if (!thumbnail_data.empty()) {
 				texture->resize(nanogui::Vector2i(1024, 1024));
 			}
