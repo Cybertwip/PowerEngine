@@ -1,5 +1,8 @@
 #include "ui/ResourcesPanel.hpp"
 
+#include "ai/DallEApiClient.hpp"
+#include "ai/DallEPromptWindow.hpp"
+#include "ai/DallESettingsWindow.hpp"
 #include "ai/DeepMotionSettingsWindow.hpp"
 #include "ai/DeepMotionPromptWindow.hpp"
 #include "actors/IActorSelectedRegistry.hpp"
@@ -113,7 +116,7 @@ const DirectoryNode* FindNodeByPath(const DirectoryNode& currentNode, const std:
 }
 
 
-ResourcesPanel::ResourcesPanel(nanogui::Widget& parent, nanogui::Screen& screen, DirectoryNode& root_directory_node, std::shared_ptr<IActorVisualManager> actorVisualManager, std::shared_ptr<SceneTimeBar> sceneTimeBar, AnimationTimeProvider& animationTimeProvider, MeshActorLoader& meshActorLoader, ShaderManager& shaderManager, DeepMotionApiClient& deepMotionApiClient, UiManager& uiManager)
+ResourcesPanel::ResourcesPanel(nanogui::Widget& parent, nanogui::Screen& screen, DirectoryNode& root_directory_node, std::shared_ptr<IActorVisualManager> actorVisualManager, std::shared_ptr<SceneTimeBar> sceneTimeBar, AnimationTimeProvider& animationTimeProvider, MeshActorLoader& meshActorLoader, ShaderManager& shaderManager, DeepMotionApiClient& deepMotionApiClient, DallEApiClient& dallEApiClient, UiManager& uiManager)
 : Panel(parent, "Resources"),
 mRootDirectoryNode(root_directory_node),
 mActorVisualManager(actorVisualManager),
@@ -124,6 +127,7 @@ mSceneTimeBar(sceneTimeBar),
 mGlobalAnimationTimeProvider(animationTimeProvider),
 mUiManager(uiManager),
 mDeepMotionApiClient(deepMotionApiClient),
+mDallEApiClient(dallEApiClient),
 mShaderManager(shaderManager)
 {
 	// Set the layout
@@ -155,6 +159,13 @@ mShaderManager(shaderManager)
 		mMeshPicker->set_visible(true);
 		mMeshPicker->set_modal(true);
 	});
+	
+	mDallESettingsWindow = std::make_shared<DallESettingsWindow>(screen, mDallEApiClient, [this](){
+		mDallEPromptWindow->set_visible(true);
+		mDallEPromptWindow->set_modal(true);
+	});
+	
+	
 	mDeepMotionSettings->set_visible(false);
 	mDeepMotionSettings->set_modal(false);
 	
@@ -173,11 +184,17 @@ mShaderManager(shaderManager)
 	
 	mSceneButton->set_icon(FA_NEWSPAPER);
 	
-	mCharacterButton = std::make_shared<nanogui::Button>(mAddButton->popup(), "Character");
+	mConceptButton = std::make_shared<nanogui::Button>(mAddButton->popup(), "Concept");
 	
-	mCharacterButton->set_icon(FA_PERSON_BOOTH);
+	mConceptButton->set_icon(FA_PERSON_BOOTH);
 	
-	mCharacterButton->set_callback([this](){
+	mConceptButton->set_callback([this](){
+		mDallESettingsWindow->set_visible(true);
+		mDallESettingsWindow->set_modal(true);
+		
+		mAddButton->set_pushed(false);
+		mAddButton->popup().set_visible(false);
+
 	});
 
 	mAnimationButton = std::make_shared<nanogui::Button>(mAddButton->popup(), "Animation");

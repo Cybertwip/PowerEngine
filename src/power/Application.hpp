@@ -200,6 +200,7 @@ class Canvas;
 class CartridgeActorLoader;
 class CartridgeBridge;
 class CameraManager;
+class DallEApiClient;
 class DeepMotionApiClient;
 class GizmoManager;
 class MeshActor;
@@ -256,6 +257,7 @@ class Application : public nanogui::DraggableScreen
 	std::shared_ptr<RenderCommon> mRenderCommon;
 	std::shared_ptr<UiCommon> mUiCommon;
 	std::unique_ptr<DeepMotionApiClient> mDeepMotionApiClient;
+	std::unique_ptr<DallEApiClient> mDallEApiClient;
 	std::unique_ptr<ActorManager> mActorManager;
 	std::unique_ptr<CameraManager> mCameraManager;
 	std::unique_ptr<entt::registry> mEntityRegistry;

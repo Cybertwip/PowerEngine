@@ -1,215 +1,108 @@
 #include "DallEPromptWindow.hpp"
 
 #include "ShaderManager.hpp"
+#include "DallEApiClient.hpp"
 
-#include "ai/DeepMotionApiClient.hpp"
-
-
-#include "components/PlaybackComponent.hpp"
-#include "filesystem/MeshActorImporter.hpp"
-#include "filesystem/MeshActorExporter.hpp"
-#include "graphics/drawing/BatchUnit.hpp"
-#include "graphics/drawing/MeshActorBuilder.hpp"
-#include "graphics/drawing/SelfContainedMeshBatch.hpp"
-#include "graphics/drawing/SharedSelfContainedMeshCanvas.hpp"
-#include "graphics/drawing/SelfContainedSkinnedMeshBatch.hpp"
 #include "ui/ResourcesPanel.hpp"
 
-#include <nanogui/button.h>
 #include <nanogui/layout.h>
 #include <nanogui/screen.h>
-#include <nanogui/textbox.h>
 
 #include <iostream>
 #include <filesystem>
 #include <future>
 #include <mutex>
 #include <sstream>
+#include <fstream>
+
+// Include a library for image handling, e.g., stb_image
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h"
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#include "stb_image_write.h"
+
+// Include httplib
+#include "httplib.h"
 
 namespace fs = std::filesystem;
 
-namespace DallEUtils {
-
-// Helper function to generate a unique numeric-based filename
-static std::string GenerateUniqueFilename(const std::string& baseDir, const std::string& prefix, const std::string& extension) {
-	int maxNumber = 0; // Track the highest number found
-	std::regex filenamePattern("^" + prefix + "_(\\d+)\\." + extension + "$"); // Pattern to match filenames with numbers
+DallEPromptWindow::DallEPromptWindow(nanogui::Screen& parent, ResourcesPanel& resourcesPanel, DallEApiClient& dallEApiClient, nanogui::RenderPass& renderpass, ShaderManager& shaderManager)
+: nanogui::Window(parent), mResourcesPanel(resourcesPanel), mDallEApiClient(dallEApiClient), mRenderPass(renderpass) {
 	
-	for (const auto& entry : fs::directory_iterator(baseDir)) {
-		if (entry.is_regular_file()) {
-			std::smatch match;
-			std::string filename = entry.path().filename().string();
-			
-			if (std::regex_match(filename, match, filenamePattern) && match.size() == 2) {
-				int number = std::stoi(match[1].str());
-				maxNumber = std::max(maxNumber, number);
-			}
-		}
-	}
-	
-	// Generate the new filename with the next number
-	std::string newFilename = prefix + "_" + std::to_string(maxNumber + 1) + "." + extension;
-	return baseDir + "/" + newFilename;
-}
-
-}
-
-DallEPromptWindow::DallEPromptWindow(nanogui::Screen& parent, ResourcesPanel& resourcesPanel, DeepMotionApiClient& deepMotionApiClient, nanogui::RenderPass& renderpass, ShaderManager& shaderManager)
-: nanogui::Window(parent), mResourcesPanel(resourcesPanel), mDeepMotionApiClient(deepMotionApiClient), mDummyAnimationTimeProvider(60 * 30),
-mRenderPass(renderpass) { // update with proper duration, dynamically after loading the animation
-	
-	set_fixed_size(nanogui::Vector2i(400, 512)); // Adjusted height for additional UI elements
-	set_layout(std::make_unique<nanogui::BoxLayout>(nanogui::Orientation::Vertical, nanogui::Alignment::Middle));
-	set_title("Animation Prompt");
+	set_fixed_size(nanogui::Vector2i(600, 600)); // Adjusted size for better layout
+	set_layout(std::make_unique<nanogui::BoxLayout>(nanogui::Orientation::Vertical, nanogui::Alignment::Fill, 10, 10));
+	set_title("DALL·E Image Generation");
 	
 	// Close Button
 	mCloseButton = std::make_shared<nanogui::Button>(button_panel(), "X");
-	mCloseButton->set_fixed_size(nanogui::Vector2i(20, 20));
+	mCloseButton->set_fixed_size(nanogui::Vector2i(30, 30));
 	mCloseButton->set_callback([this]() {
 		this->set_visible(false);
 		this->set_modal(false);
-		mPreviewCanvas->set_update(false);
-		
-		// Disable Import Button when closing the window
-		nanogui::async([this]() {
-			mImportButton->set_enabled(false);
-		});
-		
 	});
 	
-	// Preview Canvas
-	mPreviewCanvas = std::make_shared<SharedSelfContainedMeshCanvas>(*this, parent);
-	mPreviewCanvas->set_fixed_size(nanogui::Vector2i(256, 256));
-	mPreviewCanvas->set_aspect_ratio(1.0f);
+	// Input Panel for Prompt
+	auto inputPanel = std::make_shared<nanogui::Widget>(std::make_optional<std::reference_wrapper<nanogui::Widget>>(*this));
+	inputPanel->set_layout(std::make_unique<nanogui::BoxLayout>(nanogui::Orientation::Vertical, nanogui::Alignment::Fill, 5, 5));
 	
-	// Mesh and Skinned Mesh Batches
-	mMeshBatch = std::make_unique<SelfContainedMeshBatch>(mRenderPass, mPreviewCanvas->get_mesh_shader());
-	mSkinnedMeshBatch = std::make_unique<SelfContainedSkinnedMeshBatch>(mRenderPass, mPreviewCanvas->get_skinned_mesh_shader());
-	mBatchUnit = std::make_unique<BatchUnit>(*mMeshBatch, *mSkinnedMeshBatch);
-	mMeshActorBuilder = std::make_unique<MeshActorBuilder>(*mBatchUnit);
-	mMeshActorImporter = std::make_unique<MeshActorImporter>();
+	mInputLabel = std::make_shared<nanogui::Label>(*inputPanel, "Enter Image Generation Prompt:", "sans-bold");
+	mInputLabel->set_fixed_height(25);
 	
-	// Add Text Box for User Input (e.g., Animation Name)
-	mInputPanel = std::make_shared<nanogui::Widget>(std::optional<std::reference_wrapper<nanogui::Widget>>(*this));
-	mInputPanel->set_layout(std::make_unique<nanogui::BoxLayout>(nanogui::Orientation::Vertical, nanogui::Alignment::Middle, 10, 10));
-	
-	mInputLabel = std::make_shared<nanogui::Label>(*mInputPanel, "Preview", "sans-bold");
-	mInputTextBox = std::make_shared<nanogui::TextBox>(*mInputPanel, "");
-	mInputTextBox->set_fixed_size(nanogui::Vector2i(256, 96));
-	
+	mInputTextBox = std::make_shared<nanogui::TextBox>(*inputPanel, "");
+	mInputTextBox->set_fixed_size(nanogui::Vector2i(580, 100));
 	mInputTextBox->set_alignment(nanogui::TextBox::Alignment::Left);
-	
-	mInputTextBox->set_placeholder("Enter the animation generation prompt");
+	mInputTextBox->set_placeholder("e.g., A futuristic cityscape at sunset");
 	mInputTextBox->set_font_size(14);
 	mInputTextBox->set_editable(true);
 	
-	mImportPanel = std::make_shared<nanogui::Widget>(std::make_optional<std::reference_wrapper<nanogui::Widget>>(*this));
-	mImportPanel->set_layout(std::make_unique<nanogui::BoxLayout>(nanogui::Orientation::Horizontal, nanogui::Alignment::Minimum, 0, 4));
+	// Buttons Panel
+	auto buttonsPanel = std::make_shared<nanogui::Widget>(std::make_optional<std::reference_wrapper<nanogui::Widget>>(*this));
+	buttonsPanel->set_layout(std::make_unique<nanogui::BoxLayout>(nanogui::Orientation::Horizontal, nanogui::Alignment::Middle, 10, 0));
 	
-	// Add Submit Button
-	mSubmitButton = std::make_shared<nanogui::Button>(*mImportPanel, "Submit");
-	mSubmitButton->set_callback([this]() {
+	mGenerateButton = std::make_shared<nanogui::Button>(*buttonsPanel, "Generate");
+	mGenerateButton->set_fixed_size(nanogui::Vector2i(100, 40));
+	mGenerateButton->set_callback([this]() {
 		nanogui::async([this]() { this->SubmitPromptAsync(); });
 	});
-	mSubmitButton->set_tooltip("Submit the animation import");
-	mSubmitButton->set_fixed_width(208);
+	mGenerateButton->set_tooltip("Generate an image based on the prompt");
 	
-	mImportButton = std::make_shared<nanogui::Button>(*mImportPanel, "");
-	mImportButton->set_icon(FA_SAVE);
-	mImportButton->set_enabled(false);
-	mImportButton->set_callback([this]() {
-		nanogui::async([this]() { this->ImportIntoProjectAsync();
-		});
+	mSaveButton = std::make_shared<nanogui::Button>(*buttonsPanel, "Save");
+	mSaveButton->set_fixed_size(nanogui::Vector2i(100, 40));
+	mSaveButton->set_enabled(false);
+	mSaveButton->set_callback([this]() {
+		nanogui::async([this]() { this->SaveImageAsync(); });
 	});
-	mImportButton->set_tooltip("Import the generated animation");
-	mImportButton->set_fixed_width(44);
+	mSaveButton->set_tooltip("Save the generated image");
 	
-	mMeshActorExporter = std::make_unique<MeshActorExporter>();
+	// Image View
+	mImageView = std::make_shared<nanogui::ImageView>(*this, parent); // Assuming ImageView can take an empty string initially
+	mImageView->set_fixed_size(nanogui::Vector2i(580, 400));
+	mImageView->set_background_color(nanogui::Color(0.2f, 0.2f, 0.2f, 1.0f));
 	
-	// Initialize Status Label
+	// Status Label
 	mStatusLabel = std::make_shared<nanogui::Label>(*this, "Status: Idle", "sans-bold");
-	mStatusLabel->set_fixed_size(nanogui::Vector2i(300, 20));
+	mStatusLabel->set_fixed_height(20);
+	mStatusLabel->set_font_size(14);
+	
+	// Initialize the download client as nullptr
+	mDownloadClient = nullptr;
 }
 
-void DallEPromptWindow::Preview(const std::string& path, const std::string& directory) {
-	
-	// Create Deserializer
-	CompressedSerialization::Deserializer deserializer;
-
-	set_visible(true);
-	set_modal(true);
-	
-	mActorPath = path;
-	mOutputDirectory = directory;
-	
-	mImportButton->set_enabled(false);
-	
-	std::filesystem::path filePath(mActorPath);
-	std::string extension = filePath.extension().string();
-	
-	std::string actorName = std::filesystem::path(mActorPath).stem().string();
-	
-	if (!deserializer.load_from_file(mActorPath)) {
-		std::cerr << "Failed to load serialized file: " << path << "\n";
-		return;
-	}
-	
-	deserializer.read_header_raw(mHashId, sizeof(mHashId));
-	
-	auto actor = std::make_shared<Actor>(mDummyRegistry);
-	
-	mMeshActorBuilder->build(*actor, mDummyAnimationTimeProvider, path, mPreviewCanvas->get_mesh_shader(), mPreviewCanvas->get_skinned_mesh_shader());
-	
-	if (path.find(".psk") == std::string::npos) {
-		// Mesh rigging is still not implemented
-		mSubmitButton->set_enabled(false);
-	}
-	
-	mActiveActor = actor;
-	
-	mPreviewCanvas->set_update(false);
-	mPreviewCanvas->set_active_actor(actor);
-	mPreviewCanvas->set_update(true);
-	
-
-	
-	// Update Status Label to Idle
-	{
-		std::lock_guard<std::mutex> lock(mStatusMutex);
-		mStatusLabel->set_caption("Status: Idle");
-	}
+void DallEPromptWindow::ProcessEvents() {
+	// Currently, no additional event processing is required
 }
 
 void DallEPromptWindow::SubmitPromptAsync() {
-	// Disable Submit Button to prevent multiple submissions
-	mSubmitButton->set_enabled(false);
+	// Disable Generate Button to prevent multiple submissions
+	mGenerateButton->set_enabled(false);
 	
-	// Disable Import Button since a new submission is starting
-	mImportButton->set_enabled(false);
+	// Disable Save Button since a new submission is starting
+	mSaveButton->set_enabled(false);
 	
 	// Update Status
 	{
 		std::lock_guard<std::mutex> lock(mStatusMutex);
-		mStatusLabel->set_caption("Status: Preparing to upload model...");
-	}
-	
-	// Determine file type based on extension
-	std::filesystem::path filePath(mActorPath);
-	std::string extension = filePath.extension().string();
-	
-	std::string actorName = std::filesystem::path(mActorPath).stem().string();
-	
-	// Create Deserializer
-	auto deserializer = std::make_unique<CompressedSerialization::Deserializer>();
-	
-	if (!deserializer->load_from_file(mActorPath)) {
-		std::cerr << "Failed to load serialized file: " << mActorPath << "\n";
-		{
-			std::lock_guard<std::mutex> lock(mStatusMutex);
-			mStatusLabel->set_caption("Status: Failed to load model.");
-		}
-		mSubmitButton->set_enabled(true);
-		return;
+		mStatusLabel->set_caption("Status: Generating image...");
 	}
 	
 	std::string prompt = mInputTextBox->value();
@@ -220,396 +113,152 @@ void DallEPromptWindow::SubmitPromptAsync() {
 			std::lock_guard<std::mutex> lock(mStatusMutex);
 			mStatusLabel->set_caption("Status: Prompt is empty.");
 		}
-		mSubmitButton->set_enabled(true);
+		mGenerateButton->set_enabled(true);
 		return;
 	}
 	
-	if (!mDeepMotionApiClient.is_authenticated()) {
-		// Prompt the user to authenticate
-		std::cerr << "Client is not authenticated. Please authenticate first." << std::endl;
-		{
-			std::lock_guard<std::mutex> lock(mStatusMutex);
-			mStatusLabel->set_caption("Status: Not authenticated.");
-		}
-		mSubmitButton->set_enabled(true);
-		return;
-	}
-	
-	// Generate Unique Model Name
-	std::string unique_model_name = GenerateUniqueModelName(std::to_string(mHashId[0]), std::to_string(mHashId[1]));
-	std::cout << "Generated Unique Model Name: " << unique_model_name << std::endl;
-	
-	// Update Status
-	{
-		std::lock_guard<std::mutex> lock(mStatusMutex);
-		mStatusLabel->set_caption("Status: Exporting model...");
-	}
-	
-	// Prepare a stringstream to hold the exported model data
-	auto modelData = std::make_shared<std::stringstream>();
-	
-	// Asynchronously export the model to the stream
-	mMeshActorExporter->exportToStreamAsync(std::move(deserializer), mActorPath, *modelData,
-											[this, modelData, unique_model_name, prompt](bool success) {
-		if (!success) {
-			std::cerr << "Failed to export model to stream." << std::endl;
+	// Asynchronously generate the image using DallEApiClient
+	mDallEApiClient.generate_image_async(prompt, [this](const std::string& image_url, const std::string& error) {
+		if (!error.empty()) {
+			std::cerr << "Failed to generate image: " << error << std::endl;
 			nanogui::async([this]() {
 				std::lock_guard<std::mutex> lock(mStatusMutex);
-				mStatusLabel->set_caption("Status: Failed to export model.");
-				mSubmitButton->set_enabled(true);
+				mStatusLabel->set_caption("Status: Failed to generate image.");
+				mGenerateButton->set_enabled(true);
 			});
 			return;
 		}
 		
-		std::cout << "Model exported successfully." << std::endl;
-		nanogui::async([this]() {
-			std::lock_guard<std::mutex> lock(mStatusMutex);
-			mStatusLabel->set_caption("Status: Uploading model...");
-		});
+		std::cout << "Image generated successfully. URL: " << image_url << std::endl;
+		mLastImageUrl = image_url;
 		
-		// Asynchronously upload the model
-		mDeepMotionApiClient.upload_model_async(std::move(*modelData), unique_model_name, "fbx",
-												[this, prompt](const std::string& modelId, const std::string& error) {
-			if (!error.empty()) {
-				std::cerr << "Failed to upload model: " << error << std::endl;
-				nanogui::async([this]() {
-					std::lock_guard<std::mutex> lock(mStatusMutex);
-					mStatusLabel->set_caption("Status: Failed to upload model.");
-					mSubmitButton->set_enabled(true);
-				});
-				return;
-			}
-			
-			std::cout << "Model uploaded successfully. Model ID: " << modelId << std::endl;
+		// Parse the URL to get host and path
+		std::string protocol, host, path;
+		std::string::size_type protocol_pos = image_url.find("://");
+		if (protocol_pos != std::string::npos) {
+			protocol = image_url.substr(0, protocol_pos);
+			protocol_pos += 3;
+		} else {
+			std::cerr << "Invalid image URL format: " << image_url << std::endl;
 			nanogui::async([this]() {
 				std::lock_guard<std::mutex> lock(mStatusMutex);
-				mStatusLabel->set_caption("Status: Model uploaded. Processing prompt...");
+				mStatusLabel->set_caption("Status: Invalid image URL.");
+				mGenerateButton->set_enabled(true);
 			});
+			return;
+		}
+		
+		std::string::size_type host_pos = image_url.find("/", protocol_pos);
+		if (host_pos != std::string::npos) {
+			host = image_url.substr(protocol_pos, host_pos - protocol_pos);
+			path = image_url.substr(host_pos);
+		} else {
+			host = image_url.substr(protocol_pos);
+			path = "/";
+		}
+		
+		// Determine port
+		int port = 443; // Default HTTPS
+		if (protocol == "http") {
+			port = 80;
+		}
+		
+		// Initialize the download client if it's not already initialized or if the host has changed
+		mDownloadClient = std::make_unique<httplib::SSLClient>(host.c_str(), port);
+		mDownloadClient->set_follow_location(true);
+		// Optionally, set timeouts or other settings here
+
+		// Perform the GET request to download the image
+		auto res_download = mDownloadClient->Get(path.c_str());
+		if (res_download && res_download->status == 200) {
+			// Load image data into mImageData
+			mImageData.assign(res_download->body.begin(), res_download->body.end());
 			
-			// Asynchronously process text to motion
-			mDeepMotionApiClient.process_text_to_motion_async(prompt, modelId,
-															  [this](const std::string& request_id, const std::string& error) {
-				if (!error.empty()) {
-					std::cerr << "Failed to process text to motion: " << error << std::endl;
-					nanogui::async([this]() {
-						std::lock_guard<std::mutex> lock(mStatusMutex);
-						mStatusLabel->set_caption("Status: Failed to process prompt.");
-						mSubmitButton->set_enabled(true);
-					});
-					return;
-				}
-				
-				std::cout << "Submitted prompt. Request ID: " << request_id << std::endl;
+			if (!mImageData.empty()) {
+				nanogui::async([this]() {
+					// Update ImageView with the new texture
+					mImageView->set_image(std::make_shared<nanogui::Texture>(mImageData.data(), mImageData.size(),
+																			 nanogui::Texture::InterpolationMode::Bilinear,
+																			 nanogui::Texture::InterpolationMode::Nearest,
+																			 nanogui::Texture::WrapMode::Repeat));
+					
+
+					// Update Status
+					std::lock_guard<std::mutex> lock(mStatusMutex);
+					mStatusLabel->set_caption("Status: Image generated successfully.");
+					
+					// Enable Save Button
+					mSaveButton->set_enabled(true);
+					
+					// Re-enable Generate Button
+					mGenerateButton->set_enabled(true);
+				});
+			} else {
+				std::cerr << "Failed to decode image data." << std::endl;
 				nanogui::async([this]() {
 					std::lock_guard<std::mutex> lock(mStatusMutex);
-					mStatusLabel->set_caption("Status: Processing animation...");
+					mStatusLabel->set_caption("Status: Failed to decode image.");
+					mGenerateButton->set_enabled(true);
 				});
-				
-				// Start polling job status asynchronously
-				PollJobStatusAsync(request_id);
 			}
-															  );
-		}
-												);
-	}
-											);
-}
-
-void DallEPromptWindow::PollJobStatusAsync(const std::string& request_id) {
-	// Start polling
-	auto poll = [this, request_id]() {
-		// Asynchronously check job status
-		mDeepMotionApiClient.check_job_status_async(request_id,
-													[this, request_id](const Json::Value& status, const std::string& error) {
-			if (!error.empty()) {
-				std::cerr << "Failed to check job status: " << error << std::endl;
-				// Retry after a delay
-				std::this_thread::sleep_for(std::chrono::seconds(3));
-				PollJobStatusAsync(request_id);
-				return;
-			}
-			
-			if (status.empty()) {
-				// Retry after a delay
-				std::this_thread::sleep_for(std::chrono::seconds(3));
-				PollJobStatusAsync(request_id);
-				return;
-			}
-			
-			int status_count = status["count"].asInt();
-			
-			if (status_count > 0) {
-				for (auto& json : status["status"]) {
-					auto job_status = json["status"].asString();
-					
-					std::cout << "Job Status: " << job_status << std::endl;
-					
-					if (job_status == "SUCCESS") {
-						// Asynchronously download results
-						mDeepMotionApiClient.download_job_results_async(request_id,
-																		[this](const Json::Value& results, const std::string& error) {
-							if (!error.empty()) {
-								std::cerr << "Failed to download animations: " << error << std::endl;
-								nanogui::async([this]() {
-									std::lock_guard<std::mutex> lock(mStatusMutex);
-									mStatusLabel->set_caption("Status: Failed to download animations.");
-									mSubmitButton->set_enabled(true); // Re-enable Submit button
-								});
-								return;
-							}
-							
-							// Process the results
-							if (results.isMember("links")) {
-								Json::Value urls = results["links"][0]["urls"];
-								
-								for (auto& url : urls) {
-									for (auto& file : url["files"]) {
-										
-										if (file.isMember("fbx")) {
-											auto download_url = file["fbx"].asString();
-											
-											std::cout << "Download URL: " << download_url << std::endl;
-											
-											// Parse the download URL
-											std::string protocol, host, path;
-											std::string::size_type protocol_pos = download_url.find("://");
-											if (protocol_pos != std::string::npos) {
-												protocol = download_url.substr(0, protocol_pos);
-												protocol_pos += 3;
-											} else {
-												std::cerr << "Invalid download URL format: " << download_url << std::endl;
-												nanogui::async([this]() {
-													std::lock_guard<std::mutex> lock(mStatusMutex);
-													mStatusLabel->set_caption("Status: Invalid download URL.");
-												});
-												return;
-											}
-											
-											std::string::size_type host_pos = download_url.find("/", protocol_pos);
-											if (host_pos != std::string::npos) {
-												host = download_url.substr(protocol_pos, host_pos - protocol_pos);
-												path = download_url.substr(host_pos);
-											} else {
-												host = download_url.substr(protocol_pos);
-												path = "/";
-											}
-											
-											// Determine port
-											int port = 443; // Default HTTPS
-											if (protocol == "http") {
-												port = 80;
-											}
-											
-											// Initialize HTTP client for download
-											httplib::SSLClient download_client(host.c_str(), port);
-											download_client.set_compress(false);
-											
-											// Perform GET request
-											auto res_download = download_client.Get(path.c_str());
-											if (res_download && res_download->status == 200) {
-												// Assuming the response body contains ZIP data
-												std::vector<unsigned char> zip_data(res_download->body.begin(), res_download->body.end());
-												
-												// Decompress ZIP data (use your existing decompress_zip_data function)
-												std::vector<std::stringstream> animation_files = Zip::decompress(zip_data);
-												
-												// Process the extracted animation files as needed
-												
-												std::filesystem::path filepath(mActorPath);
-												
-												auto actorName = filepath.stem().string();
-												
-												for (auto& stream : animation_files) {
-													
-													auto modelData = mMeshActorImporter->process(stream, actorName, mOutputDirectory);
-													
-													auto& serializer = modelData->mMesh.mSerializer;
-													
-													// Generate the unique hash identifier from the compressed data
-													
-													std::stringstream compressedData;
-													
-													serializer->get_compressed_data(compressedData);
-													
-													uint64_t hash_id[] = { 0, 0 };
-													
-													Md5::generate_md5_from_compressed_data(compressedData, hash_id);
-													
-													// Write the unique hash identifier to the header
-													serializer->write_header_raw(hash_id, sizeof(hash_id));
-													
-													// Proceed with serialization
-													
-													// No thumbnails yet as this will be animated, then re-serialized in the import method
-													serializer->write_header_uint64(0);
-													
-													CompressedSerialization::Deserializer deserializer;
-													
-													if (!deserializer.initialize(compressedData)) {
-														
-														nanogui::async([this]() {
-															mStatusLabel->set_caption("Status: Unable to deserialize model.");
-															mResourcesPanel.refresh_file_view();
-														});
-														
-														return;
-													}
-													
-													mSerializedPrompt = std::move(modelData->mAnimations.value()[0].mSerializer);
-													
-													std::stringstream animationCompressedData;
-													
-													mSerializedPrompt.value()->get_compressed_data(animationCompressedData);
-													
-													CompressedSerialization::Deserializer animationDeserializer;
-													
-													animationDeserializer.initialize(animationCompressedData);
-													
-													auto animation = std::make_unique<Animation>();
-													
-													animation->deserialize(animationDeserializer);
-													
-													auto& playbackComponent = mActiveActor->get_component<PlaybackComponent>();
-													
-													auto playbackData = std::make_shared<PlaybackData>(playbackComponent.getPlaybackData()->get_skeleton(), std::move(animation));
-													
-													playbackComponent.setPlaybackData(playbackData);
-
-													break;
-												}
-												
-												nanogui::async([this]() {
-													std::lock_guard<std::mutex> lock(mStatusMutex);
-													mStatusLabel->set_caption("Status: Animations Imported.");
-													mImportButton->set_enabled(true);
-													mSubmitButton->set_enabled(true);
-												});
-												
-												return;
-											} else {
-												std::cerr << "Failed to download animations. HTTP Status: "
-												<< (res_download ? std::to_string(res_download->status) : "No Response") << std::endl;
-												nanogui::async([this]() {
-													std::lock_guard<std::mutex> lock(mStatusMutex);
-													mStatusLabel->set_caption("Status: Failed to download animations.");
-												});
-												return;
-											}
-										}
-									}
-								}
-							}
-						}
-																		);
-						// Do not schedule next poll; job is complete
-						return;
-					} else if (job_status == "FAILURE") {
-						std::cerr << "Job failed." << std::endl;
-						
-						std::string message = json["details"]["exc_message"].asString();
-						std::string type = json["details"]["exc_type"].asString();
-						
-						std::cerr << "Failure: " << message << std::endl;
-						std::cerr << "Exception: " << type << std::endl;
-						
-						nanogui::async([this]() {
-							std::lock_guard<std::mutex> lock(mStatusMutex);
-							mStatusLabel->set_caption("Status: Job failed.");
-						});
-						// Do not schedule next poll; job is complete
-						return;
-					} else if (job_status == "PROGRESS") {
-						float total = json["details"]["total"].asFloat();
-						float current = json["details"]["step"].asFloat();
-						if (current > total) {
-							current = total;
-						}
-						float percentage = (current * 100.0f) / total;
-						nanogui::async([this, percentage]() {
-							std::lock_guard<std::mutex> lock(mStatusMutex);
-							mStatusLabel->set_caption("Status: In Progress (" + std::to_string(static_cast<int>(percentage)) + "%)");
-						});
-					} else {
-						nanogui::async([this, job_status]() {
-							std::lock_guard<std::mutex> lock(mStatusMutex);
-							mStatusLabel->set_caption("Status: " + job_status);
-						});
-					}
-				}
-			}
-			
-			// Schedule next poll after delay
-			std::this_thread::sleep_for(std::chrono::seconds(3));
-			PollJobStatusAsync(request_id);
-		}
-													);
-	};
-	
-	// Launch polling
-	std::thread(poll).detach();
-}
-
-
-void DallEPromptWindow::ImportIntoProjectAsync() {
-	//	std::string animationName = mInputTextBox->value();
-	//	if (animationName.empty()) {
-	//		// Optionally show an error message to the user
-	//		std::cerr << "Animation name is empty." << std::endl;
-	//		{
-	//			std::lock_guard<std::mutex> lock(mStatusMutex);
-	//			mStatusLabel->set_caption("Status: Animation name is empty.");
-	//		}
-	//		return;
-	//	} // maybe a save dialog
-	
-	mPreviewCanvas->take_snapshot([this](std::vector<uint8_t>& pixels) {
-		
-		if (mSerializedPrompt.has_value()) {
-			std::stringstream compressedData;
-			
-			mSerializedPrompt.value()->get_compressed_data(compressedData);
-			
-			uint64_t hash_id[2] = { 0, 0 };
-			
-			Md5::generate_md5_from_compressed_data(compressedData, hash_id);
-			
-			// Write the unique hash identifier to the header
-			mSerializedPrompt.value()->write_header_raw(hash_id, sizeof(hash_id));
-			
-			// Proceed with serialization
-			mSerializedPrompt.value()->write_header_uint64(pixels.size());
-			
-			mSerializedPrompt.value()->write_header_raw(pixels.data(), pixels.size());
-			
-			// Proceed with serialization
-			mSerializedPrompt.value()->write_header_uint64(pixels.size());
-			mSerializedPrompt.value()->write_header_raw(pixels.data(), pixels.size()); // Corrected variable name
-			
-			auto actorName = std::filesystem::path(mActorPath).stem().string();
-			
-			auto animationName = DallEUtils::GenerateUniqueFilename(mOutputDirectory, actorName, "pan");
-			
-			mSerializedPrompt.value()->save_to_file(animationName);
-			
+		} else {
+			std::cerr << "Failed to download image. HTTP Status: "
+			<< (res_download ? std::to_string(res_download->status) : "No Response") << std::endl;
 			nanogui::async([this]() {
-				mResourcesPanel.refresh_file_view();
+				std::lock_guard<std::mutex> lock(mStatusMutex);
+				mStatusLabel->set_caption("Status: Failed to download image.");
+				mGenerateButton->set_enabled(true);
 			});
-			
-			mPreviewCanvas->set_active_actor(nullptr);
-			mPreviewCanvas->set_update(false);
-			
-			set_visible(false);
-			set_modal(false);
 		}
 	});
 }
 
-void DallEPromptWindow::ProcessEvents() {
-	mDummyAnimationTimeProvider.Update();
+void DallEPromptWindow::SaveImageAsync() {
+	if (mImageData.empty() || mLastImageUrl.empty()) {
+		std::cerr << "No image data available to save." << std::endl;
+		{
+			std::lock_guard<std::mutex> lock(mStatusMutex);
+			mStatusLabel->set_caption("Status: No image to save.");
+		}
+		return;
+	}
 	
-	mPreviewCanvas->process_events();
-}
-
-std::string DallEPromptWindow::GenerateUniqueModelName(const std::string& hash_id0, const std::string& hash_id1) {
-	return hash_id0 + hash_id1;
+	// Determine a unique filename
+	std::string filename = "generated_image.png"; // You can enhance this to generate unique filenames
+	int counter = 1;
+	while (fs::exists(filename)) {
+		filename = "generated_image_" + std::to_string(counter++) + ".png";
+	}
+	
+	// Save the image using stb_image_write
+	int width, height, channels;
+	unsigned char* img = stbi_load_from_memory(mImageData.data(), mImageData.size(), &width, &height, &channels, 4);
+	if (!img) {
+		std::cerr << "Failed to decode image data for saving." << std::endl;
+		{
+			std::lock_guard<std::mutex> lock(mStatusMutex);
+			mStatusLabel->set_caption("Status: Failed to decode image for saving.");
+		}
+		return;
+	}
+	
+	if (stbi_write_png(filename.c_str(), width, height, 4, img, width * 4)) {
+		std::cout << "Image saved successfully to " << filename << std::endl;
+		{
+			std::lock_guard<std::mutex> lock(mStatusMutex);
+			mStatusLabel->set_caption("Status: Image saved successfully.");
+		}
+		// Refresh the resources panel to show the new image
+		nanogui::async([this, filename]() {
+			mResourcesPanel.refresh_file_view();
+		});
+	} else {
+		std::cerr << "Failed to save image to " << filename << std::endl;
+		{
+			std::lock_guard<std::mutex> lock(mStatusMutex);
+			mStatusLabel->set_caption("Status: Failed to save image.");
+		}
+	}
+	
+	stbi_image_free(img);
 }

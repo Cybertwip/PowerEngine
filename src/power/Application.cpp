@@ -11,6 +11,7 @@
 #include "actors/ActorManager.hpp"
 #include "actors/IActorSelectedRegistry.hpp"
 #include "ai/DeepMotionApiClient.hpp"
+#include "ai/DallEApiClient.hpp"
 #include "components/CameraComponent.hpp"
 #include "components/TransformComponent.hpp"
 #include "gizmo/GizmoManager.hpp"
@@ -58,7 +59,9 @@ mGlobalAnimationTimeProvider(60 * 30)
 	mActorManager  = std::make_unique<ActorManager>(*mEntityRegistry, *mCameraManager);
 	
 	mDeepMotionApiClient = std::make_unique<DeepMotionApiClient>();
-	
+
+	mDallEApiClient = std::make_unique<DallEApiClient>();
+
 }
 
 void Application::initialize() {	
@@ -103,7 +106,7 @@ void Application::initialize() {
 											 mUiCommon->scene_time_bar(),
 											 mGlobalAnimationTimeProvider,
 											 *mCameraManager,
-											 *mDeepMotionApiClient,
+											 *mDeepMotionApiClient, *mDallEApiClient,
 											 *mGizmoManager,
 											 [this](std::function<void(int, int)> callback){
 												 auto callbackWrapee = [this, callback](bool down, int width, int height, int x, int y){

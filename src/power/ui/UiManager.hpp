@@ -46,6 +46,7 @@ class AnimationTimeProvider;
 class BatchUnit;
 class Canvas;
 class CameraManager;
+class DallEApiClient;
 class DeepMotionApiClient;
 class GizmoManager;
 class Grid;
@@ -75,6 +76,7 @@ public:
 			  AnimationTimeProvider& animationTimeProvider,
 			  CameraManager& cameraManager,
 			  DeepMotionApiClient& deepMotionApiClient,
+			  DallEApiClient& dallEApiClient,
 			  GizmoManager& gizmoManager,
 			  std::function<void(std::function<void(int, int)>)> applicationClickRegistrator);
 	
