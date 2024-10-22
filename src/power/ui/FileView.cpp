@@ -255,8 +255,11 @@ std::shared_ptr<nanogui::Button> FileView::acquire_button(const std::shared_ptr<
 				nanogui::Texture::decompress_into(thumbnail_data, *m_drag_payload->image());
 			}
 			
+			m_drag_payload->set_image(m_drag_payload->image());
+			
 			m_drag_payload->image()->resize(nanogui::Vector2i(288, 288));
 			m_drag_payload->set_visible(true);
+			
 			drag_widget->set_size(icon_button->fixed_size());
 			
 			auto drag_start_position = icon_button->absolute_position();

@@ -197,7 +197,6 @@ void Texture::decompress_into(const std::vector<uint8_t>& data, Texture& texture
 	
 	n = 4;
 	
-	
 	std::unique_ptr<uint8_t[], void(*)(void*)> texture_data_holder(image_data, stbi_image_free);
 	if (!texture_data_holder) {
 		throw std::runtime_error("Could not load texture data from memory.");
