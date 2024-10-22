@@ -140,9 +140,7 @@ void DallEApiClient::initialize_client(const std::string& api_key) {
 	});
 }
 
-bool DallEApiClient::authenticate(const std::string& api_key) {
-	std::lock_guard<std::mutex> lock(client_mutex_);
-	
+bool DallEApiClient::authenticate(const std::string& api_key) {	
 	if (api_key.empty()) {
 		std::cerr << "API key is empty. Cannot authenticate." << std::endl;
 		return false;
