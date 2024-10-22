@@ -158,4 +158,5 @@ private:
 	
 	std::shared_ptr<nanogui::Widget> m_dummy_widget;
 	
+	std::shared_ptr<nanogui::ImageView> m_drag_payload;
 };

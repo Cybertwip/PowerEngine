@@ -130,7 +130,7 @@ void mainloop() {
 		throw std::runtime_error("Main loop is already running!");
 	
 	// Start the redraw thread
-	start_redraw_thread();
+//	start_redraw_thread();
 	
 	auto mainloop_iteration = []() {
 		int num_screens = 0;
@@ -169,6 +169,10 @@ void mainloop() {
 #if defined(EMSCRIPTEN)
 			if (emscripten_redraw || screen->tooltip_fade_in_progress())
 				screen->redraw();
+#else
+			if (screen->visible()) {
+				screen->redraw();
+			}
 #endif
 			screen->draw_all();
 			num_screens++;
@@ -208,7 +212,7 @@ void mainloop() {
 	}
 	
 	// Stop the redraw thread after exiting the main loop
-	stop_redraw_thread();
+//	stop_redraw_thread();
 }
 
 void async(const std::function<void()> &func) {
@@ -234,7 +238,7 @@ std::pair<bool, bool> test_10bit_edr_support() {
 
 void shutdown() {
 	leave(); // Ensure mainloop_active is set to false
-	stop_redraw_thread(); // Stop the redraw thread
+//	stop_redraw_thread(); // Stop the redraw thread
 	
 	glfwTerminate();
 	
