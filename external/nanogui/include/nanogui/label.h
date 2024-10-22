@@ -36,7 +36,7 @@ public:
 		Right
 	};
 	
-	Label(Widget& parent, Screen& screen,  const std::string &caption,
+	Label(Widget& parent,  const std::string &caption,
 		  const std::string &font = "sans", int font_size = -1,
 		  Alignment alignment = Alignment::Left);
 	

@@ -16,7 +16,7 @@
 
 class DraggableWindow : public nanogui::Window {
 public:
-	DraggableWindow(nanogui::Widget& parent, nanogui::Screen& screen, const std::string &title = "Drag Me") : nanogui::Window(parent, screen) {
+	DraggableWindow(nanogui::Widget& parent, const std::string &title = "Drag Me") : nanogui::Window(parent) {
 		set_modal(false);   // We want it to be freely interactive
 		
 		set_layout(std::make_unique< nanogui::BoxLayout>(nanogui::Orientation::Horizontal,
@@ -146,7 +146,7 @@ protected:
 	}
 	
 	void initialize() {
-		m_draggable_window = std::make_shared<DraggableWindow>(*this, *this, "");
+		m_draggable_window = std::make_shared<DraggableWindow>(*this, "");
 		
 		m_draggable_window->set_fixed_width(0);
 		m_draggable_window->set_fixed_height(0);

@@ -16,9 +16,9 @@
 #include <iostream>
 #include <chrono> // For double-click detection
 
-MeshPicker::MeshPicker(nanogui::Screen& parent, nanogui::Screen& screen, DirectoryNode& root_directory_node,
+MeshPicker::MeshPicker(nanogui::Screen& parent, DirectoryNode& root_directory_node,
 					   std::function<void(std::shared_ptr<DirectoryNode>)> on_model_selected)
-: nanogui::Window(parent, screen),
+: nanogui::Window(parent),
 root_directory_node_(root_directory_node),
 on_model_selected_(on_model_selected)
 {
@@ -28,7 +28,7 @@ on_model_selected_(on_model_selected)
 	set_title("Select Mesh");
 	
 	// Close Button
-	mCloseButton = std::make_shared<nanogui::Button>(button_panel(), screen, "X");
+	mCloseButton = std::make_shared<nanogui::Button>(button_panel(), "X");
 	mCloseButton->set_fixed_size(nanogui::Vector2i(20, 20));
 	mCloseButton->set_callback([this]() {
 		set_visible(false);
@@ -36,7 +36,7 @@ on_model_selected_(on_model_selected)
 	});
 	
 	// Filter Box
-	filter_box_ = std::make_shared<nanogui::TextBox>(*this, screen, "");
+	filter_box_ = std::make_shared<nanogui::TextBox>(*this, "");
 	filter_box_->set_placeholder("Filter by name...");
 	filter_box_->set_fixed_height(25);
 	filter_box_->set_alignment(nanogui::TextBox::Alignment::Left);
@@ -55,7 +55,7 @@ on_model_selected_(on_model_selected)
 	
 	const std::set<std::string>& allowed_extensions = {".psk"};
 	
-	mFileView = std::make_shared<FileView>(*this, screen, root_directory_node_, true, nullptr, on_model_selected_, 2, "", allowed_extensions);
+	mFileView = std::make_shared<FileView>(*this, root_directory_node_, true, nullptr, on_model_selected_, 2, "", allowed_extensions);
 }
 
 void MeshPicker::refresh_file_list() {

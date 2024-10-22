@@ -62,7 +62,7 @@ mGlobalAnimationTimeProvider(60 * 30)
 }
 
 void Application::initialize() {	
-	mUiCommon = std::make_shared<UiCommon>(*this, *this, *mActorManager, mGlobalAnimationTimeProvider);
+	mUiCommon = std::make_shared<UiCommon>(*this, screen(), *mActorManager, mGlobalAnimationTimeProvider);
 	
 	mRenderCommon = std::make_shared<RenderCommon>(*mUiCommon->scene_panel(), *this, *mEntityRegistry, *mActorManager, *mCameraManager);
 	
@@ -86,7 +86,7 @@ void Application::initialize() {
 	
 	mGizmoActorLoader = std::make_unique<MeshActorLoader>(*mActorManager, mRenderCommon->shader_manager(), *mGizmoBatchUnit);
 	
-	mGizmoManager = std::make_unique<GizmoManager>(*mUiCommon->toolbox(), *this, mRenderCommon->shader_manager(), *mActorManager, *mGizmoActorLoader);
+	mGizmoManager = std::make_unique<GizmoManager>(*mUiCommon->toolbox(), mRenderCommon->shader_manager(), *mActorManager, *mGizmoActorLoader);
 	
 	mUiManager = std::make_unique<UiManager>(*this,
 											 mUiCommon->hierarchy_panel(),

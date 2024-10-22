@@ -23,11 +23,11 @@
 
 NAMESPACE_BEGIN(nanogui)
 
-Widget::Widget(std::optional<std::reference_wrapper<Widget>> parent, Screen& screen)
+Widget::Widget(std::optional<std::reference_wrapper<Widget>> parent)
 : m_parent(parent), m_layout(nullptr),
 m_pos(0), m_size(0), m_fixed_size(0), m_visible(true), m_enabled(true),
 m_focused(false), m_mouse_focus(false), m_tooltip(""), m_font_size(-1.f),
-m_icon_extra_scale(1.f), m_cursor(Cursor::Arrow), m_screen(screen), m_initialized(false) {
+m_icon_extra_scale(1.f), m_cursor(Cursor::Arrow), m_initialized(false) {
 	
 	if (m_parent.has_value()){
 		m_parent->get().add_child(std::ref(*this));
@@ -224,7 +224,7 @@ Window* Widget::window() {
 }
 
 Screen& Widget::screen() {
-	return m_screen.get(); // Directly return the cached screen pointer
+	return m_screen->get(); // Directly return the cached screen pointer
 }
 
 void Widget::request_focus() {

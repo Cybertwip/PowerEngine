@@ -17,13 +17,13 @@
 NAMESPACE_BEGIN(nanogui)
 
 PopupButton::PopupButton(Widget& parent, Screen& screen,  const std::string &caption, int button_icon)
-    : Button(parent, screen, caption, button_icon) {
+    : Button(parent, caption, button_icon) {
 
     m_chevron_icon = theme().m_popup_chevron_right_icon;
 
     set_flags(Flags::ToggleButton | Flags::PopupButton);
 
-    m_popup = std::make_unique<Popup>(screen, screen, window());
+    m_popup = std::make_unique<Popup>(screen, window());
     m_popup->set_size(Vector2i(320, 250));
     m_popup->set_visible(false);
 

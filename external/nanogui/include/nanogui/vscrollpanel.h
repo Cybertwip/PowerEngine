@@ -25,7 +25,7 @@ NAMESPACE_BEGIN(nanogui)
  */
 class NANOGUI_EXPORT VScrollPanel : public Widget {
 public:
-    VScrollPanel(Widget& parent, Screen& screen);
+    VScrollPanel(Widget& parent);
 
     /**
      * Return the current scroll amount as a value between 0 and 1. 0 means

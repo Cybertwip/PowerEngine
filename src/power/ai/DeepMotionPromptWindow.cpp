@@ -54,8 +54,8 @@ static std::string GenerateUniqueFilename(const std::string& baseDir, const std:
 
 }
 
-PromptWindow::PromptWindow(nanogui::Screen& parent, nanogui::Screen& screen, ResourcesPanel& resourcesPanel, DeepMotionApiClient& deepMotionApiClient, nanogui::RenderPass& renderpass, ShaderManager& shaderManager)
-: nanogui::Window(parent, screen), mResourcesPanel(resourcesPanel), mDeepMotionApiClient(deepMotionApiClient), mDummyAnimationTimeProvider(60 * 30),
+PromptWindow::PromptWindow(nanogui::Screen& parent, ResourcesPanel& resourcesPanel, DeepMotionApiClient& deepMotionApiClient, nanogui::RenderPass& renderpass, ShaderManager& shaderManager)
+: nanogui::Window(parent), mResourcesPanel(resourcesPanel), mDeepMotionApiClient(deepMotionApiClient), mDummyAnimationTimeProvider(60 * 30),
 mRenderPass(renderpass) { // update with proper duration, dynamically after loading the animation
 	
 	set_fixed_size(nanogui::Vector2i(400, 512)); // Adjusted height for additional UI elements
@@ -63,7 +63,7 @@ mRenderPass(renderpass) { // update with proper duration, dynamically after load
 	set_title("Animation Prompt");
 	
 	// Close Button
-	mCloseButton = std::make_shared<nanogui::Button>(button_panel(), screen, "X");
+	mCloseButton = std::make_shared<nanogui::Button>(button_panel(), "X");
 	mCloseButton->set_fixed_size(nanogui::Vector2i(20, 20));
 	mCloseButton->set_callback([this]() {
 		this->set_visible(false);
@@ -78,7 +78,7 @@ mRenderPass(renderpass) { // update with proper duration, dynamically after load
 	});
 	
 	// Preview Canvas
-	mPreviewCanvas = std::make_shared<SharedSelfContainedMeshCanvas>(*this, screen);
+	mPreviewCanvas = std::make_shared<SharedSelfContainedMeshCanvas>(*this, parent);
 	mPreviewCanvas->set_fixed_size(nanogui::Vector2i(256, 256));
 	mPreviewCanvas->set_aspect_ratio(1.0f);
 	
@@ -90,11 +90,11 @@ mRenderPass(renderpass) { // update with proper duration, dynamically after load
 	mMeshActorImporter = std::make_unique<MeshActorImporter>();
 	
 	// Add Text Box for User Input (e.g., Animation Name)
-	mInputPanel = std::make_shared<nanogui::Widget>(*this, screen);
+	mInputPanel = std::make_shared<nanogui::Widget>(std::make_optional<std::reference_wrapper<nanogui::Widget>>(*this));
 	mInputPanel->set_layout(std::make_unique<nanogui::BoxLayout>(nanogui::Orientation::Vertical, nanogui::Alignment::Middle, 10, 10));
 	
-	mInputLabel = std::make_shared<nanogui::Label>(*mInputPanel, screen, "Preview", "sans-bold");
-	mInputTextBox = std::make_shared<nanogui::TextBox>(*mInputPanel, screen, "");
+	mInputLabel = std::make_shared<nanogui::Label>(*mInputPanel, "Preview", "sans-bold");
+	mInputTextBox = std::make_shared<nanogui::TextBox>(*mInputPanel, "");
 	mInputTextBox->set_fixed_size(nanogui::Vector2i(256, 96));
 	
 	mInputTextBox->set_alignment(nanogui::TextBox::Alignment::Left);
@@ -103,18 +103,18 @@ mRenderPass(renderpass) { // update with proper duration, dynamically after load
 	mInputTextBox->set_font_size(14);
 	mInputTextBox->set_editable(true);
 	
-	mImportPanel = std::make_shared<nanogui::Widget>(*this, screen);
+	mImportPanel = std::make_shared<nanogui::Widget>(std::make_optional<std::reference_wrapper<nanogui::Widget>>(*this));
 	mImportPanel->set_layout(std::make_unique<nanogui::BoxLayout>(nanogui::Orientation::Horizontal, nanogui::Alignment::Minimum, 0, 4));
 	
 	// Add Submit Button
-	mSubmitButton = std::make_shared<nanogui::Button>(*mImportPanel, screen, "Submit");
+	mSubmitButton = std::make_shared<nanogui::Button>(*mImportPanel, "Submit");
 	mSubmitButton->set_callback([this]() {
 		nanogui::async([this]() { this->SubmitPromptAsync(); });
 	});
 	mSubmitButton->set_tooltip("Submit the animation import");
 	mSubmitButton->set_fixed_width(208);
 	
-	mImportButton = std::make_shared<nanogui::Button>(*mImportPanel, screen, "");
+	mImportButton = std::make_shared<nanogui::Button>(*mImportPanel, "");
 	mImportButton->set_icon(FA_SAVE);
 	mImportButton->set_enabled(false);
 	mImportButton->set_callback([this]() {
@@ -127,7 +127,7 @@ mRenderPass(renderpass) { // update with proper duration, dynamically after load
 	mMeshActorExporter = std::make_unique<MeshActorExporter>();
 	
 	// Initialize Status Label
-	mStatusLabel = std::make_shared<nanogui::Label>(*this, screen, "Status: Idle", "sans-bold");
+	mStatusLabel = std::make_shared<nanogui::Label>(*this, "Status: Idle", "sans-bold");
 	mStatusLabel->set_fixed_size(nanogui::Vector2i(300, 20));
 }
 

@@ -37,7 +37,7 @@ class NANOGUI_EXPORT Widget : public Object {
 public:
 	
 	/// Construct a new widget with the given parent widget
-	Widget(std::optional<std::reference_wrapper<Widget>> parent, Screen& screen);
+	Widget(std::optional<std::reference_wrapper<Widget>> parent);
 
     /// Free all resources used by the widget and any children
     virtual ~Widget();
@@ -355,7 +355,7 @@ protected:
     float m_icon_extra_scale;
     Cursor m_cursor;
 	
-	std::reference_wrapper<Screen> m_screen;
+	std::optional<std::reference_wrapper<Screen>> m_screen;
 	
 	bool m_initialized;
 	

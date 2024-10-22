@@ -16,10 +16,10 @@
 
 NAMESPACE_BEGIN(nanogui)
 
-MessageDialog::MessageDialog(Widget& parent, Screen& screen,  Type type, const std::string &title,
+MessageDialog::MessageDialog(Widget& parent,  Type type, const std::string &title,
               const std::string &message,
               const std::string &button_text,
-              const std::string &alt_button_text, bool alt_button) : Window(parent, screen, title) {
+              const std::string &alt_button_text, bool alt_button) : Window(parent, title) {
     set_layout(std::make_unique<BoxLayout>(Orientation::Vertical,
                             Alignment::Middle, 10, 10));
     set_modal(true);

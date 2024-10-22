@@ -21,14 +21,14 @@
 
 #include <sstream>
 
-ImportWindow::ImportWindow(nanogui::Screen& parent, nanogui::Screen& screen, ResourcesPanel& resourcesPanel, nanogui::RenderPass& renderpass, ShaderManager& shaderManager) : nanogui::Window(parent, screen), mResourcesPanel(resourcesPanel), mDummyAnimationTimeProvider(60 * 30), mRenderPass(renderpass) {
+ImportWindow::ImportWindow(nanogui::Screen& parent, ResourcesPanel& resourcesPanel, nanogui::RenderPass& renderpass, ShaderManager& shaderManager) : nanogui::Window(parent), mResourcesPanel(resourcesPanel), mDummyAnimationTimeProvider(60 * 30), mRenderPass(renderpass) {
 	
 	set_fixed_size(nanogui::Vector2i(400, 320));
 	set_layout(std::make_unique<nanogui::GroupLayout>());
 	set_title("Import Asset");
 	
 	// Close Button
-	mCloseButton = std::make_shared<nanogui::Button>(button_panel(), screen, "X");
+	mCloseButton = std::make_shared<nanogui::Button>(button_panel(), "X");
 	mCloseButton->set_fixed_size(nanogui::Vector2i(20, 20));
 	mCloseButton->set_callback([this]() {
 		mPreviewCanvas->set_update(false);
@@ -39,7 +39,7 @@ ImportWindow::ImportWindow(nanogui::Screen& parent, nanogui::Screen& screen, Res
 		this->set_modal(false);
 	});
 	
-	mPreviewCanvas = std::make_shared<SharedSelfContainedMeshCanvas>(*this, screen);
+	mPreviewCanvas = std::make_shared<SharedSelfContainedMeshCanvas>(*this, parent);
 	
 	mMeshBatch = std::make_unique<SelfContainedMeshBatch>(mRenderPass, mPreviewCanvas->get_mesh_shader());
 	
@@ -57,7 +57,7 @@ ImportWindow::ImportWindow(nanogui::Screen& parent, nanogui::Screen& screen, Res
 	mMeshActorImporter = std::make_unique<MeshActorImporter>();
 	
 	// Create a panel or container for checkboxes using GridLayout
-	mCheckboxPanel = std::make_shared<nanogui::Widget>(*this, screen);
+	mCheckboxPanel = std::make_shared<nanogui::Widget>(std::make_optional<std::reference_wrapper<nanogui::Widget>>(*this));
 	mCheckboxPanel->set_layout(std::make_unique<nanogui::GridLayout>(
 																	 nanogui::Orientation::Horizontal, // Layout orientation
 																	 2,                               // Number of columns
@@ -68,15 +68,15 @@ ImportWindow::ImportWindow(nanogui::Screen& parent, nanogui::Screen& screen, Res
 	
 	
 	// Create "Mesh" checkbox
-	mMeshCheckbox = std::make_shared<nanogui::CheckBox>(*mCheckboxPanel, screen, "Mesh");
+	mMeshCheckbox = std::make_shared<nanogui::CheckBox>(*mCheckboxPanel, "Mesh");
 	mMeshCheckbox->set_checked(true); // Default state as needed
 	
 	// Create "Animations" checkbox
-	mAnimationsCheckbox = std::make_shared<nanogui::CheckBox>(*mCheckboxPanel, screen, "Animations");
+	mAnimationsCheckbox = std::make_shared<nanogui::CheckBox>(*mCheckboxPanel, "Animations");
 	mAnimationsCheckbox->set_checked(true); // Default state as needed
 	
 	// Create "Import" button
-	mImportButton = std::make_shared<nanogui::Button>(*this, screen, "Import");
+	mImportButton = std::make_shared<nanogui::Button>(*this, "Import");
 	mImportButton->set_callback([this]() {
 		nanogui::async([this](){this->ImportIntoProject();});
 	});

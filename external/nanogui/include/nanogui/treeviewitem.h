@@ -10,7 +10,7 @@ class TreeView;
 
 class TreeViewItem : public Widget {
 public:
-    TreeViewItem(Widget& parent, Screen& screen, TreeView& tree, const std::string &caption, std::function<void()> callback);
+    TreeViewItem(Widget& parent, TreeView& tree, const std::string &caption, std::function<void()> callback);
 
     virtual void draw(NVGcontext *ctx) override;
     virtual Vector2i preferred_size(NVGcontext *ctx) override;

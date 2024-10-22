@@ -24,7 +24,7 @@ NAMESPACE_BEGIN(nanogui)
 
 Canvas::Canvas(Widget& parent, Screen& screen, uint8_t samples,
 			   bool has_depth_buffer, bool has_stencil_buffer)
-: Widget(parent, screen), m_draw_border(true), m_samples(samples), m_has_depth_buffer(has_depth_buffer), m_has_stencil_buffer(has_stencil_buffer) {
+: Widget(std::make_optional<std::reference_wrapper<Widget>>(parent)), m_draw_border(true), m_samples(samples), m_has_depth_buffer(has_depth_buffer), m_has_stencil_buffer(has_stencil_buffer) {
 	m_size = Vector2i(192, 128);
 	
 #if defined(NANOGUI_USE_GLES)

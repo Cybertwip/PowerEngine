@@ -15,7 +15,6 @@
 
 // Constructor
 FileView::FileView(nanogui::Widget& parent,
-				   nanogui::Screen& screen,
 				   DirectoryNode& root_directory_node,
 				   bool recursive,
 				   std::function<void(std::shared_ptr<DirectoryNode>)> onFileClicked,
@@ -23,8 +22,7 @@ FileView::FileView(nanogui::Widget& parent,
 				   int columns,
 				   const std::string& filter_text,
 				   const std::set<std::string>& allowed_extensions)
-: nanogui::Widget(parent, screen),
-m_screen(screen),
+: nanogui::Widget(std::make_optional<std::reference_wrapper<Widget>>(parent)),
 m_root_directory_node(root_directory_node),
 m_selected_directory_path(root_directory_node.FullPath),
 m_filter_text(filter_text),
@@ -62,7 +60,7 @@ m_recursive(recursive)
 	initialize_texture_cache();
 	
 	// Create a content widget that will hold all file items
-	m_content = std::make_shared<nanogui::Widget>(*this, screen);
+	m_content = std::make_shared<nanogui::Widget>(std::make_optional<std::reference_wrapper<nanogui::Widget>>(*this));
 	m_content->set_layout(std::make_unique<nanogui::GridLayout>(
 																nanogui::Orientation::Horizontal,
 																m_columns, // Number of columns
@@ -129,7 +127,7 @@ void FileView::release_texture(std::shared_ptr<nanogui::Texture> texture) {
 
 std::shared_ptr<nanogui::Button> FileView::acquire_button(const std::shared_ptr<DirectoryNode>& child) {
 	// Create item container
-	auto item_container = std::make_shared<nanogui::Widget>(*m_content, m_screen);
+	auto item_container = std::make_shared<nanogui::Widget>(std::make_optional<std::reference_wrapper<nanogui::Widget>>(*m_content));
 	item_container->set_fixed_size(nanogui::Vector2i(144, m_row_height));
 	m_item_containers.push_back(item_container);
 	
@@ -149,7 +147,7 @@ std::shared_ptr<nanogui::Button> FileView::acquire_button(const std::shared_ptr<
 	}
 	
 	// Create the image view
-	auto image_view = std::make_shared<nanogui::ImageView>(*item_container, m_screen);
+	auto image_view = std::make_shared<nanogui::ImageView>(*item_container, screen());
 	image_view->set_size(nanogui::Vector2i(144, 144));
 	image_view->set_fixed_size(nanogui::Vector2i(144, 144));
 	image_view->set_image(texture);
@@ -157,7 +155,7 @@ std::shared_ptr<nanogui::Button> FileView::acquire_button(const std::shared_ptr<
 	m_image_views.push_back(image_view);
 	
 	// Reuse button from cache or create a new one
-	std::shared_ptr<nanogui::Button> icon_button = std::make_shared<nanogui::Button>(*item_container, m_screen, "", get_icon_for_file(*child));
+	std::shared_ptr<nanogui::Button> icon_button = std::make_shared<nanogui::Button>(*item_container, "", get_icon_for_file(*child));
 
 	item_container->remove_child(*image_view);
 	icon_button->add_child(*image_view);
@@ -269,7 +267,7 @@ std::shared_ptr<nanogui::Button> FileView::acquire_button(const std::shared_ptr<
 	});
 	
 	// Create and store the label
-	auto name_label = std::make_shared<nanogui::Label>(*icon_button, m_screen, child->FileName);
+	auto name_label = std::make_shared<nanogui::Label>(*icon_button, child->FileName);
 	name_label->set_fixed_width(144);
 	name_label->set_position(nanogui::Vector2i(0, 110));
 	name_label->set_alignment(nanogui::Label::Alignment::Center);
@@ -370,7 +368,7 @@ void FileView::load_thumbnail(const std::shared_ptr<DirectoryNode>& node,
 			image_view->set_visible(true);
 			
 			texture->resize(nanogui::Vector2i(288, 288));
-			image_view->perform_layout(m_screen.nvg_context());
+			image_view->perform_layout(screen().nvg_context());
 		} else {
 			thumbnail_data.resize(512 * 512 * 4);
 			texture->resize(nanogui::Vector2i(512, 512));
@@ -379,7 +377,7 @@ void FileView::load_thumbnail(const std::shared_ptr<DirectoryNode>& node,
 			image_view->set_visible(true);
 			
 			texture->resize(nanogui::Vector2i(288, 288));
-			image_view->perform_layout(m_screen.nvg_context());
+			image_view->perform_layout(screen().nvg_context());
 		}
 	});
 }
@@ -475,7 +473,7 @@ void FileView::refresh(const std::string& filter_text) {
 	}
 
 	// Perform layout to apply all changes
-	perform_layout(m_screen.nvg_context());
+	perform_layout(screen().nvg_context());
 	
 	scroll_event(nanogui::Vector2i(0, 0), nanogui::Vector2i(0, -1));
 
@@ -540,7 +538,7 @@ void FileView::populate_file_view() {
 	
 	
 	if (filtered_children.empty()) {
-		m_dummy_widget = std::make_shared<nanogui::Widget>(*m_content, screen());
+		m_dummy_widget = std::make_shared<nanogui::Widget>(std::make_optional<std::reference_wrapper<nanogui::Widget>>(*m_content));
 		
 		m_dummy_widget->set_size(nanogui::Vector2i(1, 1));
 	}

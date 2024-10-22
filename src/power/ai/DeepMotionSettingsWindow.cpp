@@ -19,8 +19,8 @@
 #include <cctype>
 #include <regex>
 
-DeepMotionSettingsWindow::DeepMotionSettingsWindow(nanogui::Screen& parent, nanogui::Screen& screen, DeepMotionApiClient& deepMotionApiClient, std::function<void()> successCallback)
-: nanogui::Window(parent, screen),
+DeepMotionSettingsWindow::DeepMotionSettingsWindow(nanogui::Screen& parent, DeepMotionApiClient& deepMotionApiClient, std::function<void()> successCallback)
+: nanogui::Window(parent),
 data_saved_(false),
 mSuccessCallback(successCallback),
 mDeepMotionApiClient(deepMotionApiClient)
@@ -33,7 +33,7 @@ mDeepMotionApiClient(deepMotionApiClient)
 	set_title("Sync With DeepMotion");
 	
 	// Close Button
-	mCloseButton = std::make_shared<nanogui::Button>(button_panel(), screen, "X");
+	mCloseButton = std::make_shared<nanogui::Button>(button_panel(), "X");
 	mCloseButton->set_fixed_size(nanogui::Vector2i(20, 20));
 	mCloseButton->set_callback([this]() {
 		this->set_visible(false);
@@ -42,13 +42,13 @@ mDeepMotionApiClient(deepMotionApiClient)
 	
 	// Position the close button at the top-right corner
 	// Using a horizontal BoxLayout with a spacer
-	mTopPanel = std::make_shared<nanogui::Widget>(*this, screen);
+	mTopPanel = std::make_shared<nanogui::Widget>(std::make_optional<std::reference_wrapper<nanogui::Widget>>(*this));
 	
 	mTopPanel->set_layout(std::make_unique<nanogui::BoxLayout>(nanogui::Orientation::Horizontal,
 															   nanogui::Alignment::Middle, 0, 0));
 	// API Base URL Input
-	mApiBaseLabel = std::make_shared<nanogui::Label>(*this, screen, "API Base URL:", "sans-bold");
-	api_base_url_box_ = std::make_shared<nanogui::TextBox>(*this, screen, "");
+	mApiBaseLabel = std::make_shared<nanogui::Label>(*this, "API Base URL:", "sans-bold");
+	api_base_url_box_ = std::make_shared<nanogui::TextBox>(*this, "");
 	api_base_url_box_->set_placeholder("Enter API Base URL");
 	api_base_url_box_->set_editable(true);
 	api_base_url_box_->set_fixed_width(350);
@@ -58,8 +58,8 @@ mDeepMotionApiClient(deepMotionApiClient)
 	});
 	
 	// Client ID Input
-	mClientIdLabel = std::make_shared<nanogui::Label>(*this, screen, "Client ID:", "sans-bold");
-	client_id_box_ = std::make_shared<nanogui::TextBox>(*this, screen, "");
+	mClientIdLabel = std::make_shared<nanogui::Label>(*this, "Client ID:", "sans-bold");
+	client_id_box_ = std::make_shared<nanogui::TextBox>(*this, "");
 	client_id_box_->set_placeholder("Enter Client ID");
 	client_id_box_->set_editable(true);
 	client_id_box_->set_password_character('*');
@@ -70,8 +70,8 @@ mDeepMotionApiClient(deepMotionApiClient)
 	});
 	
 	// Client Secret Input
-	mClientSecretLabel = std::make_shared<nanogui::Label>(*this, screen, "Client Secret:", "sans-bold");
-	client_secret_box_ = std::make_shared<nanogui::TextBox>(*this, screen, "");
+	mClientSecretLabel = std::make_shared<nanogui::Label>(*this, "Client Secret:", "sans-bold");
+	client_secret_box_ = std::make_shared<nanogui::TextBox>(*this, "");
 	client_secret_box_->set_placeholder("Enter Client Secret");
 	client_secret_box_->set_editable(true);
 	client_secret_box_->set_password_character('*');
@@ -82,14 +82,14 @@ mDeepMotionApiClient(deepMotionApiClient)
 	});
 	
 	// Sync Button
-	mSyncButton = std::make_shared<nanogui::Button>(*this, screen, "Sync");
+	mSyncButton = std::make_shared<nanogui::Button>(*this, "Sync");
 	mSyncButton->set_fixed_size(nanogui::Vector2i(96, 48));
 	mSyncButton->set_callback([this]() {
 		this->on_sync();
 	});
 	
 	// Status Panel
-	mStatusPanel = std::make_shared<nanogui::Widget>(*this, screen);
+	mStatusPanel = std::make_shared<nanogui::Widget>(std::make_optional<std::reference_wrapper<nanogui::Widget>>(*this));
 	mStatusPanel->set_layout(std::make_unique<nanogui::GridLayout>(
 																   nanogui::Orientation::Horizontal, // Layout orientation
 																   2,                               // Number of columns
@@ -99,18 +99,18 @@ mDeepMotionApiClient(deepMotionApiClient)
 																   ));
 	
 	// Status Label
-	mStatusLabel = std::make_shared<nanogui::Label>(*mStatusPanel, screen, "", "sans");
+	mStatusLabel = std::make_shared<nanogui::Label>(*mStatusPanel, "", "sans");
 	mStatusLabel->set_fixed_size(nanogui::Vector2i(175, 20));
 	mStatusLabel->set_color(nanogui::Color(255, 255, 255, 255)); // White color
 	
 	// DeepMotion Button with Image
-	mDeepMotionButton = std::make_shared<nanogui::Button>(*mStatusPanel, screen, "");
+	mDeepMotionButton = std::make_shared<nanogui::Button>(*mStatusPanel, "");
 	mDeepMotionButton->set_fixed_size(nanogui::Vector2i(48, 48));
 	mDeepMotionButton->set_callback([this]() {
 		UrlOpener::openUrl("https://deepmotion.com/");
 	});
 	
-	mImageView = std::make_shared<nanogui::ImageView>(*mDeepMotionButton, screen);
+	mImageView = std::make_shared<nanogui::ImageView>(*mDeepMotionButton, parent);
 	mImageView->set_size(nanogui::Vector2i(48, 48));
 	
 	mImageView->set_fixed_size(mImageView->size());

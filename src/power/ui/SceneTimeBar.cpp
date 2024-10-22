@@ -47,8 +47,8 @@ glm::vec3 ScreenToWorld(glm::vec2 screenPos, float depth, glm::mat4 projectionMa
 } // namespace
 
 // Constructor Implementation
-SceneTimeBar::SceneTimeBar(nanogui::Widget& parent, nanogui::Screen& screen, ActorManager& actorManager, AnimationTimeProvider& animationTimeProvider, std::shared_ptr<IActorSelectedRegistry> registry, int width, int height)
-: nanogui::Widget(parent, screen),
+SceneTimeBar::SceneTimeBar(nanogui::Widget& parent, ActorManager& actorManager, AnimationTimeProvider& animationTimeProvider, std::shared_ptr<IActorSelectedRegistry> registry, int width, int height)
+: nanogui::Widget(std::make_optional<std::reference_wrapper<Widget>>(parent)),
 mActorManager(actorManager),
 mAnimationTimeProvider(animationTimeProvider),
 mRegistry(registry),
@@ -80,13 +80,13 @@ mNormalButtonColor(theme().m_text_color) // Initialize normal button color
 	set_layout(std::make_unique<nanogui::BoxLayout>(nanogui::Orientation::Vertical, nanogui::Alignment::Maximum, 1, 1));
 	
 	// Slider Wrapper
-	mSliderWrapper = std::make_shared<nanogui::Widget>(*this, screen);
+	mSliderWrapper = std::make_shared<nanogui::Widget>(std::make_optional<std::reference_wrapper<nanogui::Widget>>(*this));
 	mSliderWrapper->set_layout(std::make_unique<nanogui::BoxLayout>(nanogui::Orientation::Horizontal, nanogui::Alignment::Fill, 1, 1));
 	
 	auto normalButtonColor = theme().m_text_color;
 	
 	// Timeline Slider
-	mTimelineSlider = std::make_shared<nanogui::Slider>(*mSliderWrapper, screen);
+	mTimelineSlider = std::make_shared<nanogui::Slider>(*mSliderWrapper);
 	mTimelineSlider->set_value(0.0f);  // Start at 0%
 	mTimelineSlider->set_fixed_width(fixedWidth * 0.985f);
 	mTimelineSlider->set_range(std::make_pair(0.0f, 1.0f));  // Normalized range
@@ -111,11 +111,11 @@ mNormalButtonColor(theme().m_text_color) // Initialize normal button color
 	});
 	
 	// Buttons Wrapper
-	mButtonWrapperWrapper = std::make_shared<nanogui::Widget>(*this, screen);
+	mButtonWrapperWrapper = std::make_shared<nanogui::Widget>(std::make_optional<std::reference_wrapper<nanogui::Widget>>(*this));
 	mButtonWrapperWrapper->set_layout(std::make_unique<nanogui::BoxLayout>(nanogui::Orientation::Vertical, nanogui::Alignment::Middle, 1, 1));
 	
 	// Time Counter Display
-	mTimeLabel = std::make_shared<nanogui::TextBox>(*mButtonWrapperWrapper, screen);
+	mTimeLabel = std::make_shared<nanogui::TextBox>(*mButtonWrapperWrapper);
 	mTimeLabel->set_fixed_width(fixedWidth);
 	mTimeLabel->set_font_size(36);
 	mTimeLabel->set_alignment(nanogui::TextBox::Alignment::Center);
@@ -123,11 +123,11 @@ mNormalButtonColor(theme().m_text_color) // Initialize normal button color
 	mTimeLabel->set_value("00:00:00:00");
 	
 	// Buttons Horizontal Layout
-	mButtonWrapper = std::make_shared<nanogui::Widget>(*mButtonWrapperWrapper, screen);
+	mButtonWrapper = std::make_shared<nanogui::Widget>(std::make_optional<std::reference_wrapper<nanogui::Widget>>(*mButtonWrapperWrapper));
 	mButtonWrapper->set_layout(std::make_unique<nanogui::BoxLayout>(nanogui::Orientation::Horizontal, nanogui::Alignment::Middle, 10, 5));
 	
 	// Rewind Button
-	mRewindBtn = std::make_shared<nanogui::Button>(*mButtonWrapper, screen, "", FA_FAST_BACKWARD);
+	mRewindBtn = std::make_shared<nanogui::Button>(*mButtonWrapper, "", FA_FAST_BACKWARD);
 	mRewindBtn->set_fixed_width(buttonWidth);
 	mRewindBtn->set_fixed_height(buttonHeight);
 	mRewindBtn->set_tooltip("Rewind to Start");
@@ -148,7 +148,7 @@ mNormalButtonColor(theme().m_text_color) // Initialize normal button color
 	});
 	
 	// Previous Frame Button
-	mPrevFrameBtn = std::make_shared<nanogui::Button>(*mButtonWrapper, screen, "", FA_STEP_BACKWARD);
+	mPrevFrameBtn = std::make_shared<nanogui::Button>(*mButtonWrapper, "", FA_STEP_BACKWARD);
 	mPrevFrameBtn->set_fixed_width(buttonWidth);
 	mPrevFrameBtn->set_fixed_height(buttonHeight);
 	mPrevFrameBtn->set_tooltip("Previous Frame");
@@ -172,7 +172,7 @@ mNormalButtonColor(theme().m_text_color) // Initialize normal button color
 	});
 	
 	// Stop Button
-	mStopBtn = std::make_shared<nanogui::Button>(*mButtonWrapper, screen, "", FA_STOP);
+	mStopBtn = std::make_shared<nanogui::Button>(*mButtonWrapper, "", FA_STOP);
 	mStopBtn->set_fixed_width(buttonWidth);
 	mStopBtn->set_fixed_height(buttonHeight);
 	mStopBtn->set_tooltip("Stop");
@@ -194,7 +194,7 @@ mNormalButtonColor(theme().m_text_color) // Initialize normal button color
 	});
 	
 	// Play/Pause Button
-	mPlayPauseBtn = std::make_shared<nanogui::ToolButton>(*mButtonWrapper, screen, FA_PLAY);
+	mPlayPauseBtn = std::make_shared<nanogui::ToolButton>(*mButtonWrapper, FA_PLAY);
 	mPlayPauseBtn->set_fixed_width(buttonWidth);
 	mPlayPauseBtn->set_fixed_height(buttonHeight);
 	mPlayPauseBtn->set_tooltip("Play");
@@ -221,7 +221,7 @@ mNormalButtonColor(theme().m_text_color) // Initialize normal button color
 	});
 	
 	// Record Button
-	mRecordBtn = std::make_shared<nanogui::ToolButton>(*mButtonWrapper, screen, FA_CIRCLE);
+	mRecordBtn = std::make_shared<nanogui::ToolButton>(*mButtonWrapper, FA_CIRCLE);
 	mRecordBtn->set_fixed_width(buttonWidth);
 	mRecordBtn->set_fixed_height(buttonHeight);
 	mRecordBtn->set_tooltip("Record");
@@ -251,7 +251,7 @@ mNormalButtonColor(theme().m_text_color) // Initialize normal button color
 	});
 	
 	// Next Frame Button
-	mNextFrameBtn = std::make_shared<nanogui::Button>(*mButtonWrapper, screen, "", FA_STEP_FORWARD);
+	mNextFrameBtn = std::make_shared<nanogui::Button>(*mButtonWrapper, "", FA_STEP_FORWARD);
 	mNextFrameBtn->set_fixed_width(buttonWidth);
 	mNextFrameBtn->set_fixed_height(buttonHeight);
 	mNextFrameBtn->set_tooltip("Next Frame");
@@ -275,7 +275,7 @@ mNormalButtonColor(theme().m_text_color) // Initialize normal button color
 	});
 	
 	// Seek to End Button
-	mSeekEndBtn = std::make_shared<nanogui::Button>(*mButtonWrapper, screen, "", FA_FAST_FORWARD);
+	mSeekEndBtn = std::make_shared<nanogui::Button>(*mButtonWrapper, "", FA_FAST_FORWARD);
 	mSeekEndBtn->set_fixed_width(buttonWidth);
 	mSeekEndBtn->set_fixed_height(buttonHeight);
 	mSeekEndBtn->set_tooltip("Seek to End");
@@ -297,10 +297,10 @@ mNormalButtonColor(theme().m_text_color) // Initialize normal button color
 	});
 	
 	// Keyframe Buttons Wrapper
-	mKeyBtnWrapper = std::make_shared<nanogui::Widget>(*this, screen);
+	mKeyBtnWrapper = std::make_shared<nanogui::Widget>(std::make_optional<std::reference_wrapper<nanogui::Widget>>(*this));
 	mKeyBtnWrapper->set_layout(std::make_unique<nanogui::BoxLayout>(nanogui::Orientation::Horizontal, nanogui::Alignment::Middle, 1, 1));
 	
-	mPrevKeyBtn = std::make_shared<nanogui::Button>(*mKeyBtnWrapper, screen, "", FA_STEP_BACKWARD);
+	mPrevKeyBtn = std::make_shared<nanogui::Button>(*mKeyBtnWrapper, "", FA_STEP_BACKWARD);
 	mPrevKeyBtn->set_enabled(false);
 	mPrevKeyBtn->set_fixed_width(keyBtnWidth);
 	mPrevKeyBtn->set_fixed_height(keyBtnHeight);
@@ -333,7 +333,7 @@ mNormalButtonColor(theme().m_text_color) // Initialize normal button color
 		}
 	});
 	
-	mKeyBtn = std::make_shared<nanogui::Button>(*mKeyBtnWrapper, screen, "", FA_KEY);
+	mKeyBtn = std::make_shared<nanogui::Button>(*mKeyBtnWrapper, "", FA_KEY);
 	mKeyBtn->set_fixed_width(keyBtnWidth);
 	mKeyBtn->set_fixed_height(keyBtnHeight);
 	mKeyBtn->set_tooltip("Keyframe Tool");
@@ -370,7 +370,7 @@ mNormalButtonColor(theme().m_text_color) // Initialize normal button color
 	});
 	
 	// Next Frame Button
-	mNextKeyBtn = std::make_shared<nanogui::Button>(*mKeyBtnWrapper, screen, "", FA_STEP_FORWARD);
+	mNextKeyBtn = std::make_shared<nanogui::Button>(*mKeyBtnWrapper, "", FA_STEP_FORWARD);
 	mNextKeyBtn->set_enabled(false);
 	mNextKeyBtn->set_fixed_width(keyBtnWidth);
 	mNextKeyBtn->set_fixed_height(keyBtnHeight);

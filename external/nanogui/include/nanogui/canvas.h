@@ -59,7 +59,7 @@ public:
      *     Should the widget clear its color/depth/stencil buffer?
      */
     Canvas(
-		   Widget& parent, Screen&,
+		   Widget& parent, Screen& screen,
         uint8_t samples = 4,
         bool has_depth_buffer = true,
         bool has_stencil_buffer = true

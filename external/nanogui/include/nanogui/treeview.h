@@ -10,7 +10,7 @@ class TreeViewItem;
 
 class TreeView : public Widget {
 public:
-    TreeView(Widget& parent, Screen& screen);
+    TreeView(Widget& parent);
 
     virtual void draw(NVGcontext *ctx) override;
 

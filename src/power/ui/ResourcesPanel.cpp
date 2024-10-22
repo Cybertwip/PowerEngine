@@ -114,7 +114,7 @@ const DirectoryNode* FindNodeByPath(const DirectoryNode& currentNode, const std:
 
 
 ResourcesPanel::ResourcesPanel(nanogui::Widget& parent, nanogui::Screen& screen, DirectoryNode& root_directory_node, std::shared_ptr<IActorVisualManager> actorVisualManager, std::shared_ptr<SceneTimeBar> sceneTimeBar, AnimationTimeProvider& animationTimeProvider, MeshActorLoader& meshActorLoader, ShaderManager& shaderManager, DeepMotionApiClient& deepMotionApiClient, UiManager& uiManager)
-: Panel(parent, screen, "Resources"),
+: Panel(parent, "Resources"),
 mRootDirectoryNode(root_directory_node),
 mActorVisualManager(actorVisualManager),
 mMeshActorLoader(meshActorLoader),
@@ -130,13 +130,13 @@ mShaderManager(shaderManager)
 	set_layout(std::make_unique<nanogui::BoxLayout>(nanogui::Orientation::Vertical, nanogui::Alignment::Fill, 0, 10));
 	
 	// Create the toolbar at the top
-	mToolbar = std::make_shared<nanogui::Widget>(*this, screen);
+	mToolbar = std::make_shared<nanogui::Widget>(std::make_optional<std::reference_wrapper<nanogui::Widget>>(*this));
 	mToolbar->set_layout(std::make_unique<nanogui::BoxLayout>(
 															  nanogui::Orientation::Horizontal, nanogui::Alignment::Middle, 10, 10));
 	
-	mPromptWindow = std::make_shared<PromptWindow>(screen, screen, *this, mDeepMotionApiClient, mShaderManager.render_pass(), mShaderManager);
+	mPromptWindow = std::make_shared<PromptWindow>(screen, *this, mDeepMotionApiClient, mShaderManager.render_pass(), mShaderManager);
 	
-	mMeshPicker = std::make_shared<MeshPicker>(screen, screen, mRootDirectoryNode, [this](std::shared_ptr<DirectoryNode> node){
+	mMeshPicker = std::make_shared<MeshPicker>(screen, mRootDirectoryNode, [this](std::shared_ptr<DirectoryNode> node){
 		mMeshPicker->set_visible(false);
 		mMeshPicker->set_modal(false);
 		
@@ -151,14 +151,14 @@ mShaderManager(shaderManager)
 	mMeshPicker->set_modal(false);
 	
 	/* Create the DeepMotion Settings Window (initially hidden) */
-	mDeepMotionSettings = std::make_shared<DeepMotionSettingsWindow>(screen, screen, mDeepMotionApiClient, [this](){
+	mDeepMotionSettings = std::make_shared<DeepMotionSettingsWindow>(screen, mDeepMotionApiClient, [this](){
 		mMeshPicker->set_visible(true);
 		mMeshPicker->set_modal(true);
 	});
 	mDeepMotionSettings->set_visible(false);
 	mDeepMotionSettings->set_modal(false);
 	
-	mImportWindow = std::make_shared<ImportWindow>(screen, screen, *this, mShaderManager.render_pass(), mShaderManager);
+	mImportWindow = std::make_shared<ImportWindow>(screen, *this, mShaderManager.render_pass(), mShaderManager);
 	
 	mImportWindow->set_visible(false);
 	mImportWindow->set_modal(false);
@@ -169,19 +169,18 @@ mShaderManager(shaderManager)
 	mAddButton->set_chevron_icon(0);
 	mAddButton->set_tooltip("Add Asset");
 	
-	mSceneButton = std::make_shared<nanogui::Button>(mAddButton->popup(), screen, "Scene");
+	mSceneButton = std::make_shared<nanogui::Button>(mAddButton->popup(), "Scene");
 	
 	mSceneButton->set_icon(FA_NEWSPAPER);
 	
-	mCharacterButton = std::make_shared<nanogui::Button>(mAddButton->popup(), screen, "Character");
+	mCharacterButton = std::make_shared<nanogui::Button>(mAddButton->popup(), "Character");
 	
 	mCharacterButton->set_icon(FA_PERSON_BOOTH);
 	
 	mCharacterButton->set_callback([this](){
 	});
 
-	
-	mAnimationButton = std::make_shared<nanogui::Button>(mAddButton->popup(), screen, "Animation");
+	mAnimationButton = std::make_shared<nanogui::Button>(mAddButton->popup(), "Animation");
 	
 	mAnimationButton->set_icon(FA_RUNNING);
 	
@@ -200,7 +199,7 @@ mShaderManager(shaderManager)
 	mDeepMotionSettings->perform_layout(screen.nvg_context());
 	
 	// Add the Import Assets button with a "+" icon
-	mImportButton = std::make_shared<nanogui::Button>(*mToolbar, screen, "Import");
+	mImportButton = std::make_shared<nanogui::Button>(*mToolbar, "Import");
 	mImportButton->set_icon(FA_UPLOAD);
 	mImportButton->set_tooltip("Import Assets");
 	mImportButton->set_callback([this]() {
@@ -208,7 +207,7 @@ mShaderManager(shaderManager)
 	});
 	
 	// Add the Export Assets button
-	mExportButton = std::make_shared<nanogui::Button>(*mToolbar, screen, "Export");
+	mExportButton = std::make_shared<nanogui::Button>(*mToolbar, "Export");
 	mExportButton->set_icon(FA_DOWNLOAD);
 	mExportButton->set_tooltip("Export Assets");
 	mExportButton->set_callback([this]() {
@@ -216,7 +215,7 @@ mShaderManager(shaderManager)
 	});
 	
 	// Add the Filter input box
-	mFilterBox = std::make_shared<nanogui::TextBox>(*mToolbar, screen, "");
+	mFilterBox = std::make_shared<nanogui::TextBox>(*mToolbar, "");
 	mFilterBox->set_placeholder("Filter");
 	mFilterBox->set_editable(true);
 	mFilterBox->set_fixed_size(nanogui::Vector2i(150, 25));
@@ -233,7 +232,7 @@ mShaderManager(shaderManager)
 	});
 	
 	// Create the file view below the toolbar
-	mFileView = std::make_shared<FileView>(*this, screen, mRootDirectoryNode, false, [this](std::shared_ptr<DirectoryNode> node){
+	mFileView = std::make_shared<FileView>(*this, mRootDirectoryNode, false, [this](std::shared_ptr<DirectoryNode> node){
 		mSelectedNode = node;
 	}, [this](std::shared_ptr<DirectoryNode> node){
 		 mSelectedNode = node;

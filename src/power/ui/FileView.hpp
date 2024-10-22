@@ -20,7 +20,6 @@ class FileView : public nanogui::Widget {
 public:
 	// Constructor
 	FileView(nanogui::Widget& parent,
-			 nanogui::Screen& screen,
 			 DirectoryNode& root_directory_node,
 			 bool recursive = false,
 			 std::function<void(std::shared_ptr<DirectoryNode>)> onFileClicked = nullptr,
@@ -107,7 +106,6 @@ private:
 	void collect_nodes_recursive(DirectoryNode* node, std::vector<std::shared_ptr<DirectoryNode>>& collected_nodes);
 	
 	// Member Variables
-	nanogui::Screen& m_screen;
 	DirectoryNode& m_root_directory_node;
 	std::string m_selected_directory_path;
 	std::string m_filter_text;

@@ -15,9 +15,9 @@
 
 NAMESPACE_BEGIN(nanogui)
 
-CheckBox::CheckBox(Widget& parent, Screen& screen,  const std::string &caption,
+CheckBox::CheckBox(Widget& parent,  const std::string &caption,
                    const std::function<void(bool) > &callback)
-    : Widget(parent, screen), m_caption(caption), m_pushed(false), m_checked(false),
+    : Widget(std::make_optional<std::reference_wrapper<Widget>>(parent)), m_caption(caption), m_pushed(false), m_checked(false),
       m_callback(callback) {
     m_icon_extra_scale = 1.2f; // widget override
 }

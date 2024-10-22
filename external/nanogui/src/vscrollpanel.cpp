@@ -16,8 +16,8 @@
 
 NAMESPACE_BEGIN(nanogui)
 
-VScrollPanel::VScrollPanel(Widget& parent, Screen& screen)
-    : Widget(parent, screen), m_child_preferred_height(0),
+VScrollPanel::VScrollPanel(Widget& parent)
+    : Widget(std::make_optional<std::reference_wrapper<Widget>>(parent)), m_child_preferred_height(0),
       m_scroll(0.f), m_update_layout(false) { }
 
 void VScrollPanel::perform_layout(NVGcontext *ctx) {

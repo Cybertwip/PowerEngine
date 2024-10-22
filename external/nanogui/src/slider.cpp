@@ -15,8 +15,8 @@
 
 NAMESPACE_BEGIN(nanogui)
 
-Slider::Slider(Widget& parent, Screen& screen)
-    : Widget(parent, screen), m_value(0.0f), m_range(0.f, 1.f),
+Slider::Slider(Widget& parent)
+    : Widget(std::make_optional<std::reference_wrapper<Widget>>(parent)), m_value(0.0f), m_range(0.f, 1.f),
       m_highlighted_range(0.f, 0.f), m_dragging(false) {
     m_highlight_color = Color(255, 80, 80, 70);
 }

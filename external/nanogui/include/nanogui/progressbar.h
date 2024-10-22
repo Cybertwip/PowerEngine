@@ -23,7 +23,7 @@ NAMESPACE_BEGIN(nanogui)
  */
 class NANOGUI_EXPORT ProgressBar : public Widget {
 public:
-    ProgressBar(Widget& parent, Screen& screen);
+    ProgressBar(Widget& parent);
 
     float value() { return m_value; }
     void set_value(float value) { m_value = value; }

@@ -2,7 +2,7 @@
 
 #include <GLFW/glfw3.h>
 
-Panel::Panel(nanogui::Widget& parent, nanogui::Screen& screen, const std::string &title) : nanogui::Window(parent, screen, title) {
+Panel::Panel(nanogui::Widget& parent, const std::string &title) : nanogui::Window(parent, title) {
 	
 	set_fixed_size(parent.fixed_size());
 }

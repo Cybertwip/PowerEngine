@@ -5,7 +5,7 @@
 class PromptBox : public nanogui::Window {
 public:
 	// Constructor initializes the chatbox and sets it up with a Nanogui screen
-	PromptBox(nanogui::Widget& parent, nanogui::Screen& screen);
+	PromptBox(nanogui::Widget& parent);
 		
 private:
 	

@@ -15,8 +15,8 @@
 
 NAMESPACE_BEGIN(nanogui)
 
-ImagePanel::ImagePanel(Widget& parent, Screen& screen)
-    : Widget(parent, screen), m_thumb_size(64), m_spacing(10), m_margin(10),
+ImagePanel::ImagePanel(Widget& parent)
+    : Widget(std::make_optional<std::reference_wrapper<Widget>>(parent)), m_thumb_size(64), m_spacing(10), m_margin(10),
       m_mouse_index(-1) {}
 
 Vector2i ImagePanel::grid_size() const {

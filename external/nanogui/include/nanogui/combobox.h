@@ -29,13 +29,13 @@ public:
     ComboBox(Widget& parent, Screen& screen);
 
     /// Create a new combo box with the given items
-    ComboBox(Widget& parent, Screen& screen,  const std::vector<std::string> &items);
+    ComboBox(Widget& parent, Screen& screen, const std::vector<std::string> &items);
 
     /**
      * \brief Create a new combo box with the given items, providing both short and
      * long descriptive labels for each item
      */
-    ComboBox(Widget& parent, Screen& screen,  const std::vector<std::string> &items,
+    ComboBox(Widget& parent, Screen& screen, const std::vector<std::string> &items,
              const std::vector<std::string> &items_short);
 
     /// The current index this ComboBox has selected.

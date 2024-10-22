@@ -26,7 +26,7 @@ class NANOGUI_EXPORT ImagePanel : public Widget {
 public:
     typedef std::vector<std::pair<int, std::string>> Images;
 public:
-    ImagePanel(Widget& parent, Screen& screen);
+    ImagePanel(Widget& parent);
 
     void set_images(const Images &data) { m_images = data; }
     const Images& images() const { return m_images; }

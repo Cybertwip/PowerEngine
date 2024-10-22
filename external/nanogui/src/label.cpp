@@ -15,8 +15,8 @@
 
 NAMESPACE_BEGIN(nanogui)
 
-Label::Label(Widget& parent, Screen& screen,  const std::string &caption, const std::string &font, int font_size, Alignment alignment)
-: Widget(parent, screen), m_caption(caption), m_font(font), m_alignment(alignment) {
+Label::Label(Widget& parent,  const std::string &caption, const std::string &font, int font_size, Alignment alignment)
+: Widget(std::make_optional<std::reference_wrapper<Widget>>(parent)), m_caption(caption), m_font(font), m_alignment(alignment) {
 	m_font_size = theme().m_standard_font_size;
 	m_color = theme().m_text_color;
 

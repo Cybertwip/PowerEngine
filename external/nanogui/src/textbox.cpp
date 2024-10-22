@@ -22,8 +22,8 @@
 
 NAMESPACE_BEGIN(nanogui)
 
-TextBox::TextBox(Widget& parent, Screen& screen,  const std::string &value)
-: Widget(parent, screen),
+TextBox::TextBox(Widget& parent,  const std::string &value)
+: Widget(std::make_optional<std::reference_wrapper<Widget>>(parent)),
 m_password_mode(false),
 m_password_char('*'),
 m_editable(false),

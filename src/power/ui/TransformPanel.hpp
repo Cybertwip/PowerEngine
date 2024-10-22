@@ -9,7 +9,7 @@ class TransformComponent;
 
 class TransformPanel : public Panel {
 public:
-	TransformPanel(nanogui::Widget& parent, nanogui::Screen& screen);
+	TransformPanel(nanogui::Widget& parent);
 	~TransformPanel();
     
     void gather_values_into(TransformComponent& transform);

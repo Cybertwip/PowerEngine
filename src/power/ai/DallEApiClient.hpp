@@ -69,6 +69,10 @@ public:
 	 */
 	bool load_api_key(const std::string& file_path);
 	
+	std::string get_api_key() const {
+		return api_key_;
+	}
+	
 	// Asynchronous Methods with Callbacks
 	
 	/**

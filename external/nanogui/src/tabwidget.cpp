@@ -21,8 +21,8 @@
 
 NAMESPACE_BEGIN(nanogui)
 
-TabWidgetBase::TabWidgetBase(Widget& parent, Screen& screen,  const std::string &font)
-    : Widget(parent, screen), m_font(font), m_background_color(Color(0.f, 0.f)) {
+TabWidgetBase::TabWidgetBase(Widget& parent,  const std::string &font)
+    : Widget(std::make_optional<std::reference_wrapper<Widget>>(parent)), m_font(font), m_background_color(Color(0.f, 0.f)) {
     m_tab_offsets.push_back(0);
 }
 
@@ -367,8 +367,8 @@ bool TabWidgetBase::mouse_motion_event(const Vector2i &p, const Vector2i &rel,
     return Widget::mouse_motion_event(p, rel, button, modifiers);
 }
 
-TabWidget::TabWidget(Widget& parent, Screen& screen,  const std::string &font)
-    : TabWidgetBase(parent, screen, font) { }
+TabWidget::TabWidget(Widget& parent,  const std::string &font)
+    : TabWidgetBase(parent, font) { }
 
 void TabWidget::perform_layout(NVGcontext* ctx) {
     TabWidgetBase::perform_layout(ctx);

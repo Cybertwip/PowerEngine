@@ -15,15 +15,15 @@
 #include "components/MetadataComponent.hpp"
 #include "components/UiComponent.hpp"
 
-HierarchyPanel::HierarchyPanel(nanogui::Widget& parent, nanogui::Screen& screen, std::shared_ptr<ScenePanel> scenePanel, std::shared_ptr<TransformPanel> transformPanel, std::shared_ptr<AnimationPanel> animationPanel, ActorManager& actorManager) : Panel(parent, screen, "Scene"), mTransformPanel(transformPanel), mAnimationPanel(animationPanel), mActorManager(actorManager) {
+HierarchyPanel::HierarchyPanel(nanogui::Widget& parent, std::shared_ptr<ScenePanel> scenePanel, std::shared_ptr<TransformPanel> transformPanel, std::shared_ptr<AnimationPanel> animationPanel, ActorManager& actorManager) : Panel(parent, "Scene"), mTransformPanel(transformPanel), mAnimationPanel(animationPanel), mActorManager(actorManager) {
 	set_position(nanogui::Vector2i(0, 0));
 	set_layout(std::make_unique<nanogui::GroupLayout>());
 	
-	mScrollPanel = std::make_shared<nanogui::VScrollPanel>(*this, screen);
+	mScrollPanel = std::make_shared<nanogui::VScrollPanel>(*this);
 	
 	mScrollPanel->set_fixed_size({0, 12 * 25});
 	
-	mTreeView = std::make_shared<nanogui::TreeView>(*mScrollPanel, screen);
+	mTreeView = std::make_shared<nanogui::TreeView>(*mScrollPanel);
 	mTreeView->set_layout(
 						  std::make_unique<nanogui::BoxLayout>(nanogui::Orientation::Vertical, nanogui::Alignment::Fill));
 	
