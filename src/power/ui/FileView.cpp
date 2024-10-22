@@ -262,7 +262,7 @@ std::shared_ptr<nanogui::Button> FileView::acquire_button(const std::shared_ptr<
 			auto drag_start_position = icon_button->absolute_position();
 			drag_widget->set_position(drag_start_position);
 			
-			//			drag_widget->perform_layout(screen().nvg_context());
+			drag_widget->perform_layout(screen().nvg_context());
 			
 			screen().set_drag_widget(drag_widget, [this, drag_widget, child]() {
 				auto path = child->FullPath;
