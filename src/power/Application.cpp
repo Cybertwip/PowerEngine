@@ -178,6 +178,13 @@ void Application::process_events() {
 		mLoadedCartridge->get().update();
 	}
 	
+
+	mUiCommon->scene_panel()->process_events();
+	mUiManager->status_bar_panel()->resources_panel()->process_events();
+	
+	mUiManager->process_events();
+	
+	
 	// Dispatch queued click events
 	while (!mClickQueue.empty()) {
 		auto [down, w, h, x, y] = mClickQueue.front();
@@ -187,11 +194,12 @@ void Application::process_events() {
 			callback(down, w, h, x, y);
 		}
 	}
-
-	mUiCommon->scene_panel()->process_events();
-	mUiManager->status_bar_panel()->resources_panel()->process_events();
 	
-	mUiManager->process_events();
+	while (!mEventQueue.empty()) {
+		auto callback = mEventQueue.back();
+		mEventQueue.pop_back();
+		callback();
+	}
 }
 
 bool Application::mouse_button_event(const nanogui::Vector2i &p, int button, bool down, int modifiers) {
@@ -215,7 +223,7 @@ void Application::register_click_callback(std::function<void(bool, int, int, int
 bool Application::drop_event(Widget& sender, const std::vector<std::string> & filenames) {
 	//if (&sender == mUiManager->status_bar_panel()->resources_panel().get()) {
 
-	nanogui::async([this, &sender, filenames](){
+	mEventQueue.push_back([this, &sender, filenames](){
 		if (mUiCommon->animation_panel()->contains(m_mouse_pos, true, true)) {
 			if (filenames[0].find(".pan") != std::string::npos){
 				mUiCommon->animation_panel()->parse_file(filenames[0]);

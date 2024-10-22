@@ -265,5 +265,5 @@ class Application : public nanogui::DraggableScreen
 
 	std::queue<std::tuple<bool, int, int, int, int>> mClickQueue;
 	std::vector<std::function<void(bool, int, int, int, int)>> mClickCallbacks;
-
+	std::vector<std::function<void()>> mEventQueue;
 };
