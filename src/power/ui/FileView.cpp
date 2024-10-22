@@ -256,15 +256,19 @@ std::shared_ptr<nanogui::Button> FileView::acquire_button(const std::shared_ptr<
 			drag_widget->set_position(drag_start_position);
 			drag_widget->perform_layout(screen().nvg_context());
 			
-			screen().set_drag_widget(drag_widget, [this, content, drag_widget, child]() {
+			screen().set_drag_widget(drag_widget, [this, drag_widget, child]() {
 				auto path = child->FullPath;
 				
-				// Remove drag widget
-				drag_widget->remove_child(*content);
 				screen().set_drag_widget(nullptr, nullptr);
 				
 				std::vector<std::string> path_vector = { path };
 				screen().drop_event(*this, path_vector);
+				
+				// next loop cleanup, thread safety
+				nanogui::async([drag_widget](){
+					// Remove drag widget
+					drag_widget->shed_children();
+				});
 			});
 		}
 		
