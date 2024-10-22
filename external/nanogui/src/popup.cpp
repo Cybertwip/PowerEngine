@@ -19,7 +19,6 @@ NAMESPACE_BEGIN(nanogui)
 Popup::Popup(Widget& parent,  Window* parent_window)
 : Window(parent, ""), m_parent_window(parent_window), m_anchor_pos(Vector2i(0)),
 m_anchor_offset(30), m_anchor_size(15), m_side(Side::Right) { }
-
 void Popup::perform_layout(NVGcontext *ctx) {
 	Widget::perform_layout(ctx);
 	
@@ -27,12 +26,12 @@ void Popup::perform_layout(NVGcontext *ctx) {
 		m_anchor_pos.x() -= size().x();
 	
 	int max_width = 0;
-	
 	m_size.y() = 0;
 	
-	// First pass: Calculate total height and maximum width
+	// First pass: Calculate total height (including spacing) and maximum width
+	const float spacing_factor = 1.125f; // Factor to determine spacing between children
 	for (auto &child : m_children) {
-		m_size.y() += child.get().height() * 1.125f;
+		m_size.y() += static_cast<int>(child.get().height() * spacing_factor);
 		
 		if (child.get().width() > max_width) {
 			max_width = child.get().width();
@@ -40,20 +39,23 @@ void Popup::perform_layout(NVGcontext *ctx) {
 	}
 	
 	m_size.x() = max_width;
-
 	
-	int offset = 0.0f;
+	int offset = 0;
 	
 	// Second pass: Adjust positions of child widgets
 	for (auto &child : m_children) {
-		// Ensure the offset is an integer value
-		child.get().set_width(max_width * 0.95f);
+		// Set the child width to 95% of the maximum width
+		child.get().set_width(static_cast<int>(max_width * 0.95f));
 		
-		child.get().set_position(child.get().position() + Vector2i(m_size.x() * 0.5f - child.get().width() * 0.5f, offset + m_size.y() * 0.5f - child.get().height()));
-
-		offset += static_cast<int>(child.get().height());
+		// Calculate horizontal position to center the child within the Popup
+		int x = (m_size.x() - child.get().width()) / 2;
+		
+		// Set the vertical position based on the current offset
+		child.get().set_position(Vector2i(x, offset));
+		
+		// Increment the offset by the child's height multiplied by the spacing factor
+		offset += static_cast<int>(child.get().height() * spacing_factor);
 	}
-	
 }
 
 void Popup::refresh_relative_placement() {

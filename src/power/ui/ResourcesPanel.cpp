@@ -214,10 +214,9 @@ mShaderManager(shaderManager)
 		//		}
 	});
 	
-	mAddButton->popup().set_size(nanogui::Vector2i(320, 320));
-	
+	mAddButton->perform_layout(screen.nvg_context());
 	mAddButton->popup().perform_layout(screen.nvg_context());
-	
+
 	mDeepMotionSettings->perform_layout(screen.nvg_context());
 	
 	// Add the Import Assets button with a "+" icon
