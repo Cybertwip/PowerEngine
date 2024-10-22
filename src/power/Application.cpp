@@ -62,7 +62,7 @@ mGlobalAnimationTimeProvider(60 * 30)
 }
 
 void Application::initialize() {	
-	mUiCommon = std::make_shared<UiCommon>(*this, screen(), *mActorManager, mGlobalAnimationTimeProvider);
+	mUiCommon = std::make_shared<UiCommon>(*this, *this, *mActorManager, mGlobalAnimationTimeProvider);
 	
 	mRenderCommon = std::make_shared<RenderCommon>(*mUiCommon->scene_panel(), *this, *mEntityRegistry, *mActorManager, *mCameraManager);
 	
