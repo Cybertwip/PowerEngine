@@ -34,7 +34,7 @@ private:
 	std::shared_ptr<nanogui::Widget> m_button_panel_;
 	std::shared_ptr<nanogui::Button> sync_button_;
 	std::shared_ptr<nanogui::Button> close_button_;
-	std::shared_ptr<nanogui::Label> m_api_key_label_
+	std::shared_ptr<nanogui::Label> m_api_key_label_;
 	std::shared_ptr<nanogui::Label> status_label_;
 	
 	// Internal state
