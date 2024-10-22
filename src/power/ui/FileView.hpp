@@ -77,7 +77,7 @@ private:
 	// Asynchronously load thumbnail
 	void load_thumbnail(const std::shared_ptr<DirectoryNode>& node,
 						const std::shared_ptr<nanogui::ImageView>& image_view,
-						const std::shared_ptr<nanogui::Texture>& texture);
+						std::shared_ptr<nanogui::Texture>& texture);
 	
 	// Load image data from a file
 	std::vector<uint8_t> load_image_data(const std::string& path);

@@ -211,7 +211,7 @@ void mainloop() {
 	stop_redraw_thread();
 }
 
-void async(const std::function<void()> &func) {
+void async(std::function<void()> func) {
 	std::lock_guard<std::mutex> guard(m_async_mutex);
 	m_async_functions.push(func);
 }

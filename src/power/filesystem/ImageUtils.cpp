@@ -4,6 +4,31 @@
 #include "stb_image.h"
 #include "stb_image_write.h"
 
+namespace {
+/**
+ * @brief Flips the image vertically in-place.
+ *
+ * @param image     Pointer to the image pixel data.
+ * @param width     The width of the image.
+ * @param height    The height of the image.
+ * @param channels  The number of color channels (e.g., 3 for RGB, 4 for RGBA).
+ */
+void flip_image_vertically(unsigned char* image, int width, int height, int channels) {
+	int stride = width * channels;
+	std::vector<unsigned char> row_buffer(stride);
+	
+	for (int y = 0; y < height / 2; ++y) {
+		unsigned char* row_top = image + y * stride;
+		unsigned char* row_bottom = image + (height - 1 - y) * stride;
+		
+		// Swap the rows
+		std::memcpy(row_buffer.data(), row_top, stride);
+		std::memcpy(row_top, row_bottom, stride);
+		std::memcpy(row_bottom, row_buffer.data(), stride);
+	}
+}
+}
+
 // -------------------- JPEG Writing --------------------
 
 // Callback function to handle JPEG data writing
@@ -40,21 +65,25 @@ void write_to_jpeg(const std::vector<uint8_t>& pixels,
 	}
 }
 
-
 bool write_compressed_png_to_file(const std::vector<uint8_t>& imageData, const std::string& filename) {
 	// Decode image data from memory
 	int width, height, channels;
-	unsigned char* img = stbi_load_from_memory(imageData.data(), imageData.size(), &width, &height, &channels, 4);
+	unsigned char* img = stbi_load_from_memory(imageData.data(), static_cast<int>(imageData.size()), &width, &height, &channels, 4);
 	if (!img) {
 		std::cerr << "Failed to decode image data for saving." << std::endl;
 		return false;
 	}
 	
-	// Save the image using stb_image_write with compression
+	// Flip the image vertically
+	flip_image_vertically(img, width, height, 4);
+	
+	// Save the flipped image using stb_image_write with compression
 	if (stbi_write_png(filename.c_str(), width, height, 4, img, width * 4)) {
 		std::cout << "Image saved successfully to " << filename << std::endl;
 	} else {
 		std::cerr << "Failed to save image to " << filename << std::endl;
+		stbi_image_free(img); // Free memory before returning
+		return false;
 	}
 	
 	// Free the image memory

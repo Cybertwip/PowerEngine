@@ -156,7 +156,7 @@ std::shared_ptr<nanogui::Button> FileView::acquire_button(const std::shared_ptr<
 	
 	// Reuse button from cache or create a new one
 	std::shared_ptr<nanogui::Button> icon_button = std::make_shared<nanogui::Button>(*item_container, "", get_icon_for_file(*child));
-
+	
 	item_container->remove_child(*image_view);
 	icon_button->add_child(*image_view);
 	
@@ -184,7 +184,7 @@ std::shared_ptr<nanogui::Button> FileView::acquire_button(const std::shared_ptr<
 				handle_file_click(*m_selected_node);
 			}
 		});
-
+		
 		
 		// Handle double-click
 		static std::chrono::time_point<std::chrono::high_resolution_clock> last_click_time = std::chrono::high_resolution_clock::time_point::min();
@@ -224,7 +224,6 @@ std::shared_ptr<nanogui::Button> FileView::acquire_button(const std::shared_ptr<
 																	  nanogui::Texture::WrapMode::ClampToEdge
 																	  ));
 			} else if (file_icon == FA_PHOTO_VIDEO) {
-				
 				content->set_image(std::make_shared<nanogui::Texture>(
 																	  child->FullPath,
 																	  nanogui::Texture::InterpolationMode::Nearest,
@@ -263,7 +262,7 @@ std::shared_ptr<nanogui::Button> FileView::acquire_button(const std::shared_ptr<
 				screen().drop_event(*this, path_vector);
 			});
 		}
-
+		
 	});
 	
 	// Store the button
@@ -312,7 +311,7 @@ int FileView::get_icon_for_file(const DirectoryNode& node) const {
 	if (node.FileName.find(".pma") != std::string::npos) return FA_OBJECT_GROUP;
 	if (node.FileName.find(".pan") != std::string::npos) return FA_PERSON_BOOTH;
 	if (node.FileName.find(".png") != std::string::npos) return FA_PHOTO_VIDEO;
-
+	
 	// More conditions for other file types...
 	return FA_FILE; // Default icon
 }
@@ -342,9 +341,9 @@ void FileView::handle_file_interaction(DirectoryNode& node) {
 		m_filter_text = "";
 		
 		m_root_directory_node = node;
-
+		
 		set_selected_directory_path(node.FullPath);
-
+		
 	} else {
 		if (mOnFileSelected) {
 			mOnFileSelected(node.shared_from_this());
@@ -363,31 +362,51 @@ void FileView::handle_file_click(DirectoryNode& node) {
 
 void FileView::load_thumbnail(const std::shared_ptr<DirectoryNode>& node,
 							  const std::shared_ptr<nanogui::ImageView>& image_view,
-							  const std::shared_ptr<nanogui::Texture>& texture) {
+							  std::shared_ptr<nanogui::Texture>& texture) {
 	nanogui::async([this, node, image_view, texture]() {
 		// Load and process the thumbnail
 		// Example: Read image data from file
-		std::vector<uint8_t> thumbnail_data = load_image_data(node->FullPath);
 		
-		if (!thumbnail_data.empty()) {
-			texture->resize(nanogui::Vector2i(512, 512));
-			nanogui::Texture::decompress_into(thumbnail_data, *texture);
+		if (get_icon_for_file(*node) == FA_PHOTO_VIDEO) {
+			texture.reset(new nanogui::Texture(
+											   node->FullPath,
+											   nanogui::Texture::InterpolationMode::Nearest,
+											   nanogui::Texture::InterpolationMode::Nearest,
+											   nanogui::Texture::WrapMode::ClampToEdge
+											   ));
 			
+			texture->resize(nanogui::Vector2i(512, 512));
 			image_view->set_image(texture);
 			image_view->set_visible(true);
 			
 			texture->resize(nanogui::Vector2i(288, 288));
 			image_view->perform_layout(screen().nvg_context());
+			
 		} else {
-			thumbnail_data.resize(512 * 512 * 4);
-			texture->resize(nanogui::Vector2i(512, 512));
-			texture->upload(thumbnail_data.data());
-			image_view->set_image(texture);
-			image_view->set_visible(true);
 			
-			texture->resize(nanogui::Vector2i(288, 288));
-			image_view->perform_layout(screen().nvg_context());
+			std::vector<uint8_t> thumbnail_data = load_image_data(node->FullPath);
+			
+			if (!thumbnail_data.empty()) {
+				texture->resize(nanogui::Vector2i(512, 512));
+				nanogui::Texture::decompress_into(thumbnail_data, *texture);
+				
+				image_view->set_image(texture);
+				image_view->set_visible(true);
+				
+				texture->resize(nanogui::Vector2i(288, 288));
+				image_view->perform_layout(screen().nvg_context());
+			} else {
+				thumbnail_data.resize(512 * 512 * 4);
+				texture->resize(nanogui::Vector2i(512, 512));
+				texture->upload(thumbnail_data.data());
+				image_view->set_image(texture);
+				image_view->set_visible(true);
+				
+				texture->resize(nanogui::Vector2i(288, 288));
+				image_view->perform_layout(screen().nvg_context());
+			}
 		}
+		
 	});
 }
 
@@ -455,7 +474,7 @@ void FileView::refresh(const std::string& filter_text) {
 	{
 		std::lock_guard<std::mutex> lock(m_mutex);
 		m_filter_text = filter_text;
-
+		
 		// Clear existing buttons and selection
 		clear_file_buttons();
 		m_selected_button = nullptr;
@@ -480,12 +499,12 @@ void FileView::refresh(const std::string& filter_text) {
 		// Populate the file view with updated contents
 		populate_file_view();
 	}
-
+	
 	// Perform layout to apply all changes
 	perform_layout(screen().nvg_context());
 	
 	scroll_event(nanogui::Vector2i(0, 0), nanogui::Vector2i(0, -1));
-
+	
 }
 void FileView::populate_file_view() {
 	if (m_selected_directory_path.empty()) {
@@ -511,7 +530,7 @@ void FileView::populate_file_view() {
 	} else {
 		collected_nodes = selected_node->Children;
 	}
-
+	
 	
 	// Filtered list of children
 	std::vector<std::shared_ptr<DirectoryNode>> filtered_children;
@@ -713,7 +732,7 @@ void FileView::collect_nodes_recursive(DirectoryNode* node, std::vector<std::sha
 	collected_nodes.clear();
 	
 	for (const auto& child : node->Children) {
-
+		
 		// Apply allowed extensions if any
 		if (!m_allowed_extensions.empty() && !child->IsDirectory) {
 			std::string extension = child->FileName.substr(child->FileName.find_last_of('.') + 1);
