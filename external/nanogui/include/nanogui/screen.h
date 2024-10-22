@@ -277,7 +277,7 @@ public:
 		return m_drag_active;
 	}
 	
-	bool process_events() const {
+	bool get_process_events() const {
 		return m_process_events;
 	}
 	

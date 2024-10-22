@@ -132,7 +132,7 @@ void mainloop() {
 	/* Propagate GLFW events to the Screen instance */
 	glfwSetCursorPosCallback(window1,
 							 [](GLFWwindow *w, double x, double y) {
-		if (screen1 && screen1->process_events()) {
+		if (screen1 && screen1->get_process_events()) {
 			screen1->cursor_pos_callback_event(x, y);
 		}
 	}
@@ -140,7 +140,7 @@ void mainloop() {
 	
 	glfwSetMouseButtonCallback(window1,
 							   [](GLFWwindow *w, int button, int action, int modifiers) {
-		if (screen1 && screen1->process_events()) {
+		if (screen1 && screen1->get_process_events()) {
 			screen1->mouse_button_callback_event(button, action, modifiers);
 		}
 	}
@@ -148,7 +148,7 @@ void mainloop() {
 	
 	glfwSetKeyCallback(window1,
 					   [](GLFWwindow *w, int key, int scancode, int action, int mods) {
-		if (screen1 && screen1->process_events()) {
+		if (screen1 && screen1->get_process_events()) {
 			screen1->key_callback_event(key, scancode, action, mods);
 		}
 	}
@@ -164,7 +164,7 @@ void mainloop() {
 	
 	glfwSetDropCallback(window1,
 						[](GLFWwindow *w, int count, const char **filenames) {
-		if (screen1 && screen1->process_events()) {
+		if (screen1 && screen1->get_process_events()) {
 			screen1->drop_callback_event(count, filenames);
 		}
 	}
@@ -172,7 +172,7 @@ void mainloop() {
 	
 	glfwSetScrollCallback(window1,
 						  [](GLFWwindow *w, double x, double y) {
-		if (screen1 && screen1->process_events()) {
+		if (screen1 && screen1->get_process_events()) {
 			screen1->scroll_callback_event(x, y);
 		}
 	}
@@ -184,7 +184,7 @@ void mainloop() {
 	 screen on Mac OS X */
 	glfwSetFramebufferSizeCallback(window1,
 								   [](GLFWwindow* w, int width, int height) {
-		if (screen1 && screen1->process_events()) {
+		if (screen1 && screen1->get_process_events()) {
 			screen1->resize_callback_event(width, height);
 		}
 	}

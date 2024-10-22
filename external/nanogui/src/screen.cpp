@@ -361,14 +361,14 @@ void Screen::initialize(GLFWwindow *window, bool shutdown_glfw) {
 	m_process_events = true;
 	m_redraw = true;
 	window1 = m_glfw_window;
-	sceren1 = this;
+	screen1 = this;
 	
 	for (size_t i = 0; i < (size_t) Cursor::CursorCount; ++i)
 		m_cursors[i] = glfwCreateStandardCursor(GLFW_ARROW_CURSOR + (int) i);
 }
 
 Screen::~Screen() {
-	__nanogui_screens.erase(m_glfw_window);
+	screen1 = nullptr;
 	for (size_t i = 0; i < (size_t) Cursor::CursorCount; ++i) {
 		if (m_cursors[i])
 			glfwDestroyCursor(m_cursors[i]);
