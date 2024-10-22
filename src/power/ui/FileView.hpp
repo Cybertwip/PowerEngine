@@ -157,4 +157,7 @@ private:
 	
 	
 	std::shared_ptr<nanogui::Widget> m_dummy_widget;
+	
+private:
+	bool mouse_button_event(const nanogui::Vector2i &p, int button, bool down, int modifiers) override;
 };

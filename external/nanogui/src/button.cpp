@@ -102,10 +102,7 @@ bool Button::mouse_button_event(const Vector2i &p, int button, bool down, int mo
 			
 			if (contains(p) && m_callback)
 				m_callback();
-		} else if(m_pushed) {
-			if (contains(p) && m_callback)
-				m_callback();
-		}
+		} 
 		
         if (pushed_backup != m_pushed && m_change_callback)
             m_change_callback(m_pushed);
