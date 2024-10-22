@@ -165,6 +165,7 @@ void Widget::add_child(int index, Widget& widget) {
 	m_children.insert(m_children.begin() + index, widget);
 	widget.set_parent(*this);
 	widget.set_theme(m_theme);
+	widget.set_screen(screen());
 }
 
 void Widget::add_child(Widget& widget) {
