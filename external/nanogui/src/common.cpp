@@ -41,6 +41,18 @@
 
 NAMESPACE_BEGIN(nanogui)
 
+
+/* Calculate pixel ratio for hi-dpi devices. */
+static float get_pixel_ratio(GLFWwindow *window) {
+#if defined(EMSCRIPTEN)
+	return emscripten_get_device_pixel_ratio();
+#else
+	float xscale, yscale;
+	glfwGetWindowContentScale(window, &xscale, &yscale);
+	return xscale;
+#endif
+}
+
 // Define the single screen and window
 Screen* screen1 = nullptr;
 GLFWwindow* window1 = nullptr;
@@ -156,7 +168,7 @@ void mainloop() {
 	
 	glfwSetCharCallback(window1,
 						[](GLFWwindow *w, unsigned int codepoint) {
-		if (screen1 && screen1->process_events()) {
+		if (screen1 && screen1->get_process_events()) {
 			screen1->char_callback_event(codepoint);
 		}
 	}
