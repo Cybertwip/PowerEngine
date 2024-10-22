@@ -54,8 +54,8 @@ static float get_pixel_ratio(GLFWwindow *window) {
 }
 
 // Define the single screen and window
-Screen* screen1 = nullptr;
-GLFWwindow* window1 = nullptr;
+extern Screen* screen1;
+extern GLFWwindow* window1;
 
 // Redraw thread management variables
 static std::atomic<bool> redraw_thread_running(false);

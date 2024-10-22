@@ -75,7 +75,7 @@ static bool glad_initialized = false;
 #endif
 
 /* Calculate pixel ratio for hi-dpi devices. */
-static float get_pixel_ratio(GLFWwindow *window) {
+static float get_screen_pixel_ratio(GLFWwindow *window) {
 #if defined(EMSCRIPTEN)
 	return emscripten_get_device_pixel_ratio();
 #else
@@ -291,7 +291,7 @@ void Screen::initialize(GLFWwindow *window, bool shutdown_glfw) {
 	glfwGetWindowSize(m_glfw_window, &m_size[0], &m_size[1]);
 	glfwGetFramebufferSize(m_glfw_window, &m_fbsize[0], &m_fbsize[1]);
 	
-	m_pixel_ratio = get_pixel_ratio(window);
+	m_pixel_ratio = get_screen_pixel_ratio(window);
 	
 #if defined(EMSCRIPTEN)
 	double w, h;
