@@ -160,6 +160,9 @@ mShaderManager(shaderManager)
 		mMeshPicker->set_modal(true);
 	});
 	
+	
+	mDallEPromptWindow = std::make_shared<DallEPromptWindow>(screen, *this, mDallEApiClient, mShaderManager.render_pass(), mShaderManager);
+	
 	mDallESettingsWindow = std::make_shared<DallESettingsWindow>(screen, mDallEApiClient, [this](){
 		mDallEPromptWindow->set_visible(true);
 		mDallEPromptWindow->set_modal(true);
