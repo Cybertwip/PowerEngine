@@ -208,7 +208,7 @@ std::shared_ptr<nanogui::Button> FileView::acquire_button(const std::shared_ptr<
 			last_click_time = current_click_time;
 		}
 		
-		if (file_icon == FA_WALKING || file_icon == FA_PERSON_BOOTH || file_icon == FA_OBJECT_GROUP) {
+		if (file_icon == FA_WALKING || file_icon == FA_PERSON_BOOTH || file_icon == FA_OBJECT_GROUP || file_icon == FA_PHOTO_VIDEO) {
 			auto drag_widget = screen().drag_widget();
 			
 			auto content = std::make_shared<nanogui::ImageView>(*drag_widget, screen());
@@ -219,6 +219,14 @@ std::shared_ptr<nanogui::Button> FileView::acquire_button(const std::shared_ptr<
 				// Using a simple image icon for now
 				content->set_image(std::make_shared<nanogui::Texture>(
 																	  "internal/ui/animation.png",
+																	  nanogui::Texture::InterpolationMode::Nearest,
+																	  nanogui::Texture::InterpolationMode::Nearest,
+																	  nanogui::Texture::WrapMode::ClampToEdge
+																	  ));
+			} else if (file_icon == FA_PHOTO_VIDEO) {
+				
+				content->set_image(std::make_shared<nanogui::Texture>(
+																	  child->FullPath,
 																	  nanogui::Texture::InterpolationMode::Nearest,
 																	  nanogui::Texture::InterpolationMode::Nearest,
 																	  nanogui::Texture::WrapMode::ClampToEdge
@@ -303,7 +311,8 @@ int FileView::get_icon_for_file(const DirectoryNode& node) const {
 	if (node.FileName.find(".psk") != std::string::npos) return FA_WALKING;
 	if (node.FileName.find(".pma") != std::string::npos) return FA_OBJECT_GROUP;
 	if (node.FileName.find(".pan") != std::string::npos) return FA_PERSON_BOOTH;
-	
+	if (node.FileName.find(".png") != std::string::npos) return FA_PHOTO_VIDEO;
+
 	// More conditions for other file types...
 	return FA_FILE; // Default icon
 }
