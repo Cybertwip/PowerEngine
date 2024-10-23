@@ -76,6 +76,8 @@ PowerPromptWindow::PowerPromptWindow(nanogui::Screen& parent, ResourcesPanel& re
 	
 	mImageView->set_visible(false);
 	
+	mImageView->set_image(mImageContent);
+	
 	mPreviewCanvas = std::make_shared<SharedSelfContainedMeshCanvas>(*mImageContainer, parent);
 	
 	mPreviewCanvas->set_fixed_size(nanogui::Vector2i(300, 300));
@@ -261,14 +263,6 @@ void PowerPromptWindow::SubmitPromptAsync() {
 		std::cout << "generate_animation: " << generate_animation << std::endl;
 		std::cout << "prompt_description: " << prompt_description << std::endl;
 		
-		if (generate_image) {
-			mImageView->set_visible(true);
-			mPreviewCanvas->set_visible(false);
-		} else if(generate_model) {
-			mImageView->set_visible(false);
-			mPreviewCanvas->set_visible(true);
-		}
-		
 		perform_layout(screen().nvg_context());
 		
 		if (generate_image && !generate_animation) {
@@ -309,9 +303,14 @@ void PowerPromptWindow::SubmitPromptAsync() {
 					
 					nanogui::Texture::decompress_into(mImageData, *mImageContent);
 					
+					mImageContent->resize(nanogui::Vector2i(600, 600));
+					
 					mImageView->set_image(mImageContent);
+
 					mImageView->set_visible(true);
 					mPreviewCanvas->set_visible(false);
+					
+					mImageView->perform_layout(screen().nvg_context());
 					
 					// Update Status
 					std::lock_guard<std::mutex> lock(mStatusMutex);
@@ -345,6 +344,10 @@ void PowerPromptWindow::SubmitPromptAsync() {
 				mPreviewCanvas->set_active_actor(actor);
 				
 				mActiveActor = actor;
+				
+				mImageView->set_visible(false);
+				mPreviewCanvas->set_visible(true);
+
 
 				nanogui::async([this]() {
 					std::lock_guard<std::mutex> lock(mStatusMutex);
