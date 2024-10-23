@@ -12,6 +12,8 @@
 #include "actors/IActorSelectedRegistry.hpp"
 #include "ai/DeepMotionApiClient.hpp"
 #include "ai/OpenAiApiClient.hpp"
+#include "ai/PowerAi.hpp"
+#include "ai/TripoAiApiClient.hpp"
 #include "components/CameraComponent.hpp"
 #include "components/TransformComponent.hpp"
 #include "gizmo/GizmoManager.hpp"
