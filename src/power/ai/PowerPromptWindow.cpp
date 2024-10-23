@@ -81,6 +81,9 @@ PowerPromptWindow::PowerPromptWindow(nanogui::Screen& parent, ResourcesPanel& re
 	mPreviewCanvas = std::make_shared<SharedSelfContainedMeshCanvas>(*mImageContainer, parent);
 	
 	mPreviewCanvas->set_fixed_size(nanogui::Vector2i(300, 300));
+	
+	mPreviewCanvas->set_aspect_ratio(1.0f);
+
 	mPreviewCanvas->set_background_color(nanogui::Color(0.0f, 0.0f, 0.0f, 1.0f));
 	
 	mPreviewCanvas->set_visible(true);
@@ -96,7 +99,7 @@ PowerPromptWindow::PowerPromptWindow(nanogui::Screen& parent, ResourcesPanel& re
 	mInputPanel = std::make_shared<nanogui::Widget>(std::make_optional<std::reference_wrapper<nanogui::Widget>>(*this));
 	mInputPanel->set_layout(std::make_unique<nanogui::BoxLayout>(nanogui::Orientation::Vertical, nanogui::Alignment::Fill, 5, 5));
 	
-	mInputLabel = std::make_shared<nanogui::Label>(*mInputPanel, "Enter Image Generation Prompt:", "sans-bold");
+	mInputLabel = std::make_shared<nanogui::Label>(*mInputPanel, "Enter Art Generation Prompt:", "sans-bold");
 	mInputLabel->set_fixed_height(25);
 	
 	mInputTextBox = std::make_shared<nanogui::TextBox>(*mInputPanel, "");
@@ -135,7 +138,9 @@ PowerPromptWindow::PowerPromptWindow(nanogui::Screen& parent, ResourcesPanel& re
 }
 
 void PowerPromptWindow::ProcessEvents() {
-	// Currently, no additional event processing is required
+	mDummyAnimationTimeProvider.Update();
+	
+	mPreviewCanvas->process_events();
 }
 
 void PowerPromptWindow::SubmitPromptAsync() {
