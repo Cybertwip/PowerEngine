@@ -15,6 +15,15 @@
  * asynchronously by leveraging the underlying API clients.
  */
 class PowerAi {
+private:
+	// Shared state to track authentication results
+	struct AuthState {
+		std::mutex mutex;
+		int completed = 0;
+		bool success = true;
+		std::string error_message;
+	};
+
 public:
 	/**
 	 * @brief Constructs the PowerAi instance with references to the API clients.
@@ -97,4 +106,6 @@ private:
 	OpenAiApiClient& mOpenAiApiClient;          /**< Reference to OpenAiApiClient */
 	TripoAiApiClient& mTripoAiApiClient;        /**< Reference to TripoAiApiClient */
 	DeepMotionApiClient& mDeepMotionApiClient;  /**< Reference to DeepMotionApiClient */
+	
+	std::shared_ptr<AuthState> mAuthState;
 };
