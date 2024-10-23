@@ -234,6 +234,16 @@ void PowerPromptWindow::SubmitPromptAsync() {
 		std::cout << "generate_animation: " << generate_animation << std::endl;
 		std::cout << "prompt_description: " << prompt_description << std::endl;
 		
+		if (generate_image) {
+			mImageView->set_visible(true);
+			mPreviewCanvas->set_visible(false);
+		} else if(generate_model) {
+			mImageView->set_visible(false);
+			mPreviewCanvas->set_visible(true);
+		}
+		
+		perform_layout(screen().nvg_context());
+		
 		if (generate_image && !generate_animation) {
 			// Asynchronously generate the image using OpenAiApiClient
 			mPowerAi.generate_image_async(prompt_description, [this](const std::string& image_url, const std::string& error) {
