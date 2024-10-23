@@ -470,7 +470,7 @@ void TripoAiApiClient::generate_mesh(const std::string& prompt, const std::strin
 							const int polling_interval_seconds = 3;
 							const int max_retries = 100; // Adjust as needed
 							
-							std::thread([this, convert_task_id, generate_rig, generate_animation, callback, polling_interval_seconds, max_retries]() {
+							std::thread([this, convert_task_id, generate_rig, generate_animation, format, callback, polling_interval_seconds, max_retries]() {
 								int retries = 0;
 								bool completed = false;
 								std::string final_status;
@@ -515,7 +515,7 @@ void TripoAiApiClient::generate_mesh(const std::string& prompt, const std::strin
 												const int polling_interval_seconds = 3;
 												const int max_retries = 100; // Adjust as needed
 												
-												std::thread([this, animate_rig_task_id, generate_animation, callback, polling_interval_seconds, max_retries]() {
+												std::thread([this, animate_rig_task_id, generate_animation, conversion_response, callback, polling_interval_seconds, max_retries]() {
 													int retries = 0;
 													bool completed = false;
 													std::string final_status;
