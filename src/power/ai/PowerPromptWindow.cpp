@@ -139,7 +139,7 @@ void PowerPromptWindow::SubmitPromptAsync() {
 		return;
 	}
 	
-	mOpenAiApiClient.generate_text_async(prompt, [this](const std::string& json_string, const std::string& error) {
+	mPowerAi.generate_text_async(prompt, [this](const std::string& json_string, const std::string& error) {
 		if (!error.empty()) {
 			// Handle error from OpenAI
 			std::cerr << "OpenAI API Error: " << error << std::endl;

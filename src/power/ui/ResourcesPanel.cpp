@@ -168,7 +168,6 @@ mShaderManager(shaderManager)
 		mPowerPromptWindow->set_modal(true);
 	});
 	
-	
 	mDeepMotionSettings->set_visible(false);
 	mDeepMotionSettings->set_modal(false);
 	
