@@ -277,7 +277,7 @@ void OpenAiApiClient::generate_image_download_async(const std::string& prompt, D
 		std::stringstream image_stream;
 		if (download_file(image_url, image_stream)) {
 			// Call the callback with the downloaded image
-			callback(image_stream, "");
+			callback(std::move(image_stream), "");
 		} else {
 			std::cerr << "Failed to download the image from URL: " << image_url << std::endl;
 			callback(std::stringstream(), "Failed to download the image.");
