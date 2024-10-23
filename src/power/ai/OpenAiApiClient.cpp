@@ -10,7 +10,7 @@
 #include <thread>
 
 // Namespace for utility functions related to DALL-E (if needed)
-namespace DallEUtils {
+namespace HttpUtils {
 // Base64 encoding table
 const std::string base64_chars =
 "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
@@ -295,7 +295,7 @@ std::string OpenAiApiClient::generate_text(const std::string& prompt, const std:
 	
 	// Encode image data to Base64
 	std::string image_str(image_data.begin(), image_data.end());
-	std::string base64_image = base64_encode(image_str);
+	std::string base64_image = HttpUtils::base64_encode(image_str);
 	
 	// Construct the JSON payload
 	Json::Value post_json_data;

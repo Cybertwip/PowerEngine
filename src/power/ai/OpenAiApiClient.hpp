@@ -99,6 +99,9 @@ public:
 	
 	// Text Generation Methods
 	
+	std::string generate_text(const std::string& prompt, const std::vector<uint8_t>& image_data);
+	
+	void generate_text_async(const std::string& prompt, const std::vector<uint8_t>& image_data, GenerateTextCallback callback);
 	/**
 	 * @brief Generates text based on a prompt.
 	 *
