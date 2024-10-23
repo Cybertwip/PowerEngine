@@ -9,7 +9,7 @@
 #include <algorithm> // For std::transform
 
 // Helper function to convert a string to uppercase
-std::string to_uppercase(const std::string& input) {
+std::string TripoAiApiClient::to_uppercase(const std::string& input) {
 	std::string result = input;
 	std::transform(result.begin(), result.end(), result.begin(),
 				   [](unsigned char c) { return std::toupper(c); });
@@ -293,14 +293,87 @@ void TripoAiApiClient::convert_model_async(const std::string& original_task_id, 
 	}).detach();
 }
 
-void TripoAiApiClient::generate_mesh(const std::string& prompt, const std::string& format, bool quad, int face_limit, ConvertModelCallback callback) {
+bool TripoAiApiClient::parse_url(const std::string& url, std::string& host, std::string& path) {
+	// Simple URL parsing (not handling all edge cases)
+	const std::string https_prefix = "https://";
+	const std::string http_prefix = "http://";
+	size_t pos = 0;
+	
+	if (url.find(https_prefix) == 0) {
+		pos = https_prefix.length();
+	} else if (url.find(http_prefix) == 0) {
+		pos = http_prefix.length();
+	} else {
+		return false;
+	}
+	
+	size_t slash_pos = url.find('/', pos);
+	if (slash_pos == std::string::npos) {
+		host = url.substr(pos);
+		path = "/";
+	} else {
+		host = url.substr(pos, slash_pos - pos);
+		path = url.substr(slash_pos);
+	}
+	
+	return true;
+}
+
+bool TripoAiApiClient::download_file(const std::string& url, std::stringstream& data_stream) {
+	// Parse the URL to extract host and path
+	std::string host, path;
+	if (!parse_url(url, host, path)) {
+		std::cerr << "Invalid URL: " << url << std::endl;
+		return false;
+	}
+	
+	// Determine if the URL uses HTTPS or HTTP
+	bool is_https = false;
+	if (url.find("https://") == 0) {
+		is_https = true;
+	} else if (url.find("http://") == 0) {
+		is_https = false;
+	} else {
+		std::cerr << "Unsupported URL scheme in URL: " << url << std::endl;
+		return false;
+	}
+	
+	// Create an HTTP or HTTPS client based on the URL scheme
+	std::unique_ptr<httplib::Client> http_client;
+	if (is_https) {
+		http_client = std::make_unique<httplib::SSLClient>(host.c_str(), 443);
+	} else {
+		http_client = std::make_unique<httplib::Client>(host.c_str(), 80);
+	}
+	
+	// Optional: Set timeout or other client settings here
+	
+	// Send GET request to download the file
+	auto res = http_client->Get(path.c_str());
+	
+	if (res && res->status == 200) {
+		data_stream << res->body;
+		return true;
+	} else {
+		std::cerr << "Failed to download file from URL: " << url << std::endl;
+		if (res) {
+			std::cerr << "HTTP Status: " << res->status << std::endl;
+			std::cerr << "Response Body: " << res->body << std::endl;
+		} else {
+			std::cerr << "No response from server." << std::endl;
+		}
+		return false;
+	}
+}
+
+void TripoAiApiClient::generate_mesh(const std::string& prompt, const std::string& format, bool quad, int face_limit, DownloadModelCallback callback) {
 	// Step 1: Generate the model
 	generate_model_async(prompt, [this, format, quad, face_limit, callback](const std::string& model_task_id, const std::string& error) {
 		if (!model_task_id.empty()) {
 			std::cout << "Model generation task ID: " << model_task_id << std::endl;
 			
 			// Step 2: Poll the status until completion
-			// We'll implement a simple polling mechanism with a fixed interval and maximum retries
+			// Implement a simple polling mechanism with a fixed interval and maximum retries
 			const int polling_interval_seconds = 3;
 			const int max_retries = 100; // Adjust as needed
 			
@@ -339,23 +412,95 @@ void TripoAiApiClient::generate_mesh(const std::string& prompt, const std::strin
 				
 				if (final_status == "SUCCESS") {
 					// Step 3: Convert the model
-					convert_model_async(model_task_id, format, quad, face_limit, callback);
+					convert_model_async(model_task_id, format, quad, face_limit, [this, callback](const std::string& convert_task_id, const std::string& convert_error) {
+						if (!convert_task_id.empty()) {
+							std::cout << "Model conversion task ID: " << convert_task_id << std::endl;
+							
+							// Step 4: Poll the conversion status until completion
+							const int polling_interval_seconds = 3;
+							const int max_retries = 100; // Adjust as needed
+							
+							std::thread([this, convert_task_id, callback, polling_interval_seconds, max_retries]() {
+								int retries = 0;
+								bool completed = false;
+								std::string final_status;
+								Json::Value conversion_response;
+								
+								while (retries < max_retries && !completed) {
+									std::this_thread::sleep_for(std::chrono::seconds(polling_interval_seconds));
+									conversion_response = check_job_status(convert_task_id);
+									
+									if (conversion_response.empty()) {
+										std::cerr << "Failed to retrieve status for conversion task ID: " << convert_task_id << std::endl;
+										retries++;
+										continue;
+									}
+									
+									std::string task_status = conversion_response["status"].asString();
+									// Convert status to uppercase to handle case sensitivity
+									std::string task_status_upper = to_uppercase(task_status);
+									int progress = conversion_response.get("progress", 0).asInt();
+									
+									std::cout << "Model Conversion Status: " << task_status_upper << " (" << progress << "%)" << std::endl;
+									
+									if (task_status_upper == "SUCCESS") {
+										completed = true;
+										final_status = "SUCCESS";
+									} else if (task_status_upper == "FAILURE") {
+										completed = true;
+										final_status = "FAILURE";
+									}
+									
+									retries++;
+								}
+								
+								if (final_status == "SUCCESS") {
+									// Step 5: Download the model
+									if (conversion_response.isMember("model")) {
+										std::string model_url = conversion_response["model"].asString();
+										std::cout << "Model URL: " << model_url << std::endl;
+										
+										std::stringstream model_stream;
+										if (download_file(model_url, model_stream)) {
+											// Call the callback with the downloaded model
+											callback(model_stream, "");
+										} else {
+											std::cerr << "Failed to download the model from URL: " << model_url << std::endl;
+											callback(std::stringstream(), "Failed to download the model.");
+										}
+									} else {
+										std::cerr << "'model' URL not found in conversion response." << std::endl;
+										callback(std::stringstream(), "'model' URL not found in conversion response.");
+									}
+								} else if (final_status == "FAILURE") {
+									std::cerr << "Model conversion task failed for task ID: " << convert_task_id << std::endl;
+									callback(std::stringstream(), "Model conversion task failed.");
+								} else {
+									std::cerr << "Model conversion task did not complete within the expected time for task ID: " << convert_task_id << std::endl;
+									callback(std::stringstream(), "Model conversion task timed out.");
+								}
+							}).detach();
+						} else {
+							std::cerr << "Model conversion failed: " << convert_error << std::endl;
+							callback(std::stringstream(), "Model conversion failed.");
+						}
+					});
 				} else if (final_status == "FAILURE") {
 					std::cerr << "Model generation task failed for task ID: " << model_task_id << std::endl;
-					callback("", "Model generation task failed.");
+					callback(std::stringstream(), "Model generation task failed.");
 				} else {
 					std::cerr << "Model generation task did not complete within the expected time for task ID: " << model_task_id << std::endl;
-					callback("", "Model generation task timed out.");
+					callback(std::stringstream(), "Model generation task timed out.");
 				}
 			}).detach();
 		} else {
 			std::cerr << "Model generation failed: " << error << std::endl;
-			callback("", "Model generation failed.");
+			callback(std::stringstream(), "Model generation failed.");
 		}
 	});
 }
 
-void TripoAiApiClient::generate_mesh_async(const std::string& prompt, const std::string& format, bool quad, int face_limit, ConvertModelCallback callback) {
+void TripoAiApiClient::generate_mesh_async(const std::string& prompt, const std::string& format, bool quad, int face_limit, DownloadModelCallback callback) {
 	// Launch asynchronous task
 	std::thread([this, prompt, format, quad, face_limit, callback]() {
 		generate_mesh(prompt, format, quad, face_limit, callback);

@@ -100,15 +100,15 @@ void PowerAi::generate_image_async(const std::string& prompt,
  * @brief Asynchronously generates a 3D mesh based on a text prompt.
  */
 void PowerAi::generate_mesh_async(const std::string& prompt,
-								  std::function<void(const std::string& task_id, const std::string& error_message)> callback) {
+								  std::function<void((std::stringstream model_stream, const std::string& error))> callback) {
 	// Delegate to TripoAiApiClient
-	mTripoAiApiClient.generate_mesh_async(prompt, "FBX", true, 5000, [callback](const std::string& task_id, const std::string& error_message) {
+	mTripoAiApiClient.generate_mesh_async(prompt, [callback](std::stringstream model_stream, const std::string& error) {
 		if (error_message.empty()) {
 			std::cout << "Mesh generation task submitted successfully. Task ID: " << task_id << std::endl;
-			callback(task_id, "");
+			callback(model_stream, "");
 		} else {
 			std::cerr << "Failed to generate mesh: " << error_message << std::endl;
-			callback("", error_message);
+			callback({}, error_message);
 		}
 	});
 }

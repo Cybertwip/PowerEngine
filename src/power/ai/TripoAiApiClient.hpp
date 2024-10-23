@@ -6,6 +6,7 @@
 #include <functional>
 #include <mutex>
 #include <json/json.h>
+#include <sstream>
 
 class TripoAiApiClient {
 public:
@@ -14,6 +15,7 @@ public:
 	using ConvertModelCallback = std::function<void(const std::string& convert_task_id, const std::string& error_message)>;
 	using StatusCallback = std::function<void(const Json::Value& status, const std::string& error_message)>;
 	using AuthCallback = std::function<void(bool success, const std::string& error_message)>;
+	using DownloadModelCallback = std::function<void(std::stringstream model_stream, const std::string& error_message)>;
 	
 	/**
 	 * @brief Constructs the TripoAiApiClient.
@@ -114,26 +116,26 @@ public:
 	// Combined Mesh Generation Methods
 	
 	/**
-	 * @brief Generates a 3D model from a text prompt, polls its status until completion, and then converts it to the specified format.
+	 * @brief Generates a 3D model from a text prompt, polls its status until completion, converts it, and downloads the model.
 	 *
 	 * @param prompt The text prompt describing the desired model.
 	 * @param format The desired format for conversion (e.g., "FBX").
 	 * @param quad Whether to generate a quad mesh.
 	 * @param face_limit The maximum number of faces allowed in the converted model.
-	 * @param callback The callback function to be invoked upon completion with the conversion Task ID or an error message.
+	 * @param callback The callback function to be invoked upon completion with the downloaded model data or an error message.
 	 */
-	void generate_mesh(const std::string& prompt, const std::string& format, bool quad, int face_limit, ConvertModelCallback callback);
+	void generate_mesh(const std::string& prompt, const std::string& format, bool quad, int face_limit, DownloadModelCallback callback);
 	
 	/**
-	 * @brief Asynchronously generates a 3D model from a text prompt, polls its status until completion, and then converts it to the specified format.
+	 * @brief Asynchronously generates a 3D model from a text prompt, polls its status until completion, converts it, and downloads the model.
 	 *
 	 * @param prompt The text prompt describing the desired model.
 	 * @param format The desired format for conversion (e.g., "FBX").
 	 * @param quad Whether to generate a quad mesh.
 	 * @param face_limit The maximum number of faces allowed in the converted model.
-	 * @param callback The callback function to be invoked upon completion with the conversion Task ID or an error message.
+	 * @param callback The callback function to be invoked upon completion with the downloaded model data or an error message.
 	 */
-	void generate_mesh_async(const std::string& prompt, const std::string& format, bool quad, int face_limit, ConvertModelCallback callback);
+	void generate_mesh_async(const std::string& prompt, const std::string& format, bool quad, int face_limit, DownloadModelCallback callback);
 	
 	// Job Status Methods
 	
@@ -153,6 +155,11 @@ public:
 	 */
 	void check_job_status_async(const std::string& task_id, StatusCallback callback);
 	
+	/**
+	 * @brief Checks the user's balance.
+	 *
+	 * @return Json::Value The JSON response containing the balance information.
+	 */
 	Json::Value check_user_balance();
 	
 private:
@@ -162,6 +169,35 @@ private:
 	 * @param api_key The API key to be used for authentication.
 	 */
 	void initialize_client(const std::string& api_key_);
+	
+	/**
+	 * @brief Downloads a file from the given URL and stores it in a stringstream.
+	 *
+	 * @param url The URL of the file to download.
+	 * @param data_stream The stringstream to store the downloaded data.
+	 * @return true If the download is successful.
+	 * @return false If the download fails.
+	 */
+	bool download_file(const std::string& url, std::stringstream& data_stream);
+	
+	/**
+	 * @brief Parses a URL into host and path components.
+	 *
+	 * @param url The URL to parse.
+	 * @param host The extracted host component.
+	 * @param path The extracted path component.
+	 * @return true If the URL is parsed successfully.
+	 * @return false If the URL is invalid.
+	 */
+	bool parse_url(const std::string& url, std::string& host, std::string& path);
+	
+	/**
+	 * @brief Converts a string to uppercase.
+	 *
+	 * @param input The input string.
+	 * @return std::string The uppercase version of the input string.
+	 */
+	std::string to_uppercase(const std::string& input);
 	
 	// Member variables
 	std::string api_key_;                           /**< Tripo3D API key */

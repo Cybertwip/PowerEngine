@@ -5,6 +5,7 @@
 #include "TripoAiApiClient.hpp"
 
 #include <functional>
+#include <sstream>
 #include <string>
 #include <json/json.h>
 
@@ -81,7 +82,7 @@ public:
 	 *                 Signature: void(const std::string& task_id, const std::string& error_message)
 	 */
 	void generate_mesh_async(const std::string& prompt,
-							 std::function<void(const std::string& task_id, const std::string& error_message)> callback);
+							 std::function<void((std::stringstream model_stream, const std::string& error))> callback);
 	
 	/**
 	 * @brief Asynchronously generates a 3D animation based on a text prompt and a model ID.
