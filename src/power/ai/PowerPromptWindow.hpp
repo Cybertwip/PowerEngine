@@ -107,6 +107,4 @@ public:
 	std::shared_ptr<Actor> mActiveActor;
 	
 	EPowerMode mPowerMode;
-	
-	float mRotationAngle;
 };
