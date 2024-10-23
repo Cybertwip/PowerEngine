@@ -262,9 +262,7 @@ void PowerPromptWindow::SubmitPromptAsync() {
 		std::cout << "generate_rig: " << generate_rig << std::endl;
 		std::cout << "generate_animation: " << generate_animation << std::endl;
 		std::cout << "prompt_description: " << prompt_description << std::endl;
-		
-		perform_layout(screen().nvg_context());
-		
+				
 		if (generate_image && !generate_animation) {
 			// Asynchronously generate the image using OpenAiApiClient
 			mPowerAi.generate_image_async(prompt_description, [this](std::stringstream image_stream, const std::string& error) {
@@ -303,24 +301,25 @@ void PowerPromptWindow::SubmitPromptAsync() {
 					
 					nanogui::Texture::decompress_into(mImageData, *mImageContent);
 					
-					mImageContent->resize(nanogui::Vector2i(600, 600));
-					
 					mImageView->set_image(mImageContent);
+
+					mImageContent->resize(nanogui::Vector2i(600, 600));
 
 					mImageView->set_visible(true);
 					mPreviewCanvas->set_visible(false);
 					
-					mImageView->perform_layout(screen().nvg_context());
-					
-					// Update Status
-					std::lock_guard<std::mutex> lock(mStatusMutex);
-					mStatusLabel->set_caption("Status: Image generated successfully.");
-					
-					// Enable Save Button
-					mSaveButton->set_enabled(true);
-					
-					// Re-enable Generate Button
-					mGenerateButton->set_enabled(true);
+					nanogui::async([this]() {
+						std::lock_guard<std::mutex> lock(mStatusMutex);
+						mStatusLabel->set_caption("Status: Model generated successfully.");
+						mSaveButton->set_enabled(true);
+						
+						// Re-enable Generate Button
+						mGenerateButton->set_enabled(true);
+						
+						perform_layout(screen().nvg_context());
+						
+					});
+
 				});
 			});
 		} else if (generate_image && generate_animation) {
@@ -356,7 +355,12 @@ void PowerPromptWindow::SubmitPromptAsync() {
 					
 					// Re-enable Generate Button
 					mGenerateButton->set_enabled(true);
+					
+					perform_layout(screen().nvg_context());
+
 				});
+				
+
 			});
 		} else if (generate_model && generate_rig && !generate_animation) {
 			// I'll do this later
