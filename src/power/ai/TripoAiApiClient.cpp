@@ -470,7 +470,7 @@ void TripoAiApiClient::generate_mesh(const std::string& prompt, const std::strin
 							const int polling_interval_seconds = 3;
 							const int max_retries = 100; // Adjust as needed
 							
-							std::thread([this, convert_task_id, generate_rig, generate_animation, format, callback, polling_interval_seconds, max_retries]() {
+							std::thread([this, model_task_id, format, convert_task_id, generate_rig, generate_animation, callback,  polling_interval_seconds, max_retries]() {
 								int retries = 0;
 								bool completed = false;
 								std::string final_status;
@@ -507,7 +507,7 @@ void TripoAiApiClient::generate_mesh(const std::string& prompt, const std::strin
 								if (final_status == "SUCCESS") {
 									// Step 5: Optional Rigging
 									if (generate_rig) {
-										animate_rig_async(conversion_response["task_id"].asString(), conversion_response["out_format"].asString(), [this, convert_task_id, conversion_response, generate_animation, callback](const std::string& animate_rig_task_id, const std::string& rig_error) {
+										animate_rig_async(model_task_id, format, [this, model_task_id, format, conversion_response, generate_animation, callback](const std::string& animate_rig_task_id, const std::string& rig_error) {
 											if (!animate_rig_task_id.empty()) {
 												std::cout << "Animate Rig task ID: " << animate_rig_task_id << std::endl;
 												
@@ -515,7 +515,7 @@ void TripoAiApiClient::generate_mesh(const std::string& prompt, const std::strin
 												const int polling_interval_seconds = 3;
 												const int max_retries = 100; // Adjust as needed
 												
-												std::thread([this, animate_rig_task_id, generate_animation, conversion_response, callback, polling_interval_seconds, max_retries]() {
+												std::thread([this, model_task_id, format, animate_rig_task_id, generate_animation, conversion_response, callback, polling_interval_seconds, max_retries]() {
 													int retries = 0;
 													bool completed = false;
 													std::string final_status;
@@ -551,7 +551,7 @@ void TripoAiApiClient::generate_mesh(const std::string& prompt, const std::strin
 													if (final_status == "SUCCESS") {
 														// Step 7: Optional Animation Retargeting
 														if (generate_animation) {
-															animate_retarget_async(animate_rig_task_id, "FBX", "preset:run", [this, animate_rig_task_id, callback](const std::string& animate_retarget_task_id, const std::string& retarget_error) {
+															animate_retarget_async(model_task_id, format, "preset:run", [this, animate_rig_task_id, callback](const std::string& animate_retarget_task_id, const std::string& retarget_error) {
 																if (!animate_retarget_task_id.empty()) {
 																	std::cout << "Animate Retarget task ID: " << animate_retarget_task_id << std::endl;
 																	
