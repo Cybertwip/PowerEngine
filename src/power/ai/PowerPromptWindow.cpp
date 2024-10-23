@@ -44,7 +44,7 @@ PowerPromptWindow::PowerPromptWindow(nanogui::Screen& parent, ResourcesPanel& re
 	
 	set_fixed_size(nanogui::Vector2i(600, 600)); // Adjusted size for better layout
 	set_layout(std::make_unique<nanogui::BoxLayout>(nanogui::Orientation::Vertical, nanogui::Alignment::Middle, 10, 10));
-	set_title("DALL·E Image Generation");
+	set_title("Power Prompt");
 	
 	// Close Button
 	mCloseButton = std::make_shared<nanogui::Button>(button_panel(), "X");
