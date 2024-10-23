@@ -246,101 +246,59 @@ void PowerPromptWindow::SubmitPromptAsync() {
 		
 		if (generate_image && !generate_animation) {
 			// Asynchronously generate the image using OpenAiApiClient
-			mPowerAi.generate_image_async(prompt_description, [this](const std::string& image_url, const std::string& error) {
+			mPowerAi.generate_image_download_async(prompt_description, [this](std::stringstream image_stream, const std::string& error) {
 				if (!error.empty()) {
-					std::cerr << "Failed to generate image: " << error << std::endl;
+					std::cerr << "Failed to generate or download image: " << error << std::endl;
 					nanogui::async([this]() {
 						std::lock_guard<std::mutex> lock(mStatusMutex);
-						mStatusLabel->set_caption("Status: Failed to generate image.");
+						mStatusLabel->set_caption("Status: Failed to generate or download image.");
 						mGenerateButton->set_enabled(true);
 					});
 					return;
 				}
 				
-				std::cout << "Image generated successfully. URL: " << image_url << std::endl;
-				mLastImageUrl = image_url;
+				std::cout << "Image downloaded successfully." << std::endl;
 				
-				// Parse the URL to get host and path
-				std::string protocol, host, path;
-				std::string::size_type protocol_pos = image_url.find("://");
-				if (protocol_pos != std::string::npos) {
-					protocol = image_url.substr(0, protocol_pos);
-					protocol_pos += 3;
-				} else {
-					std::cerr << "Invalid image URL format: " << image_url << std::endl;
+				// Convert stringstream to vector<uint8_t>
+				std::vector<uint8_t> image_data((std::istreambuf_iterator<char>(image_stream)),
+												std::istreambuf_iterator<char>());
+				
+				if (image_data.empty()) {
+					std::cerr << "Downloaded image data is empty." << std::endl;
 					nanogui::async([this]() {
 						std::lock_guard<std::mutex> lock(mStatusMutex);
-						mStatusLabel->set_caption("Status: Invalid image URL.");
+						mStatusLabel->set_caption("Status: Downloaded image data is empty.");
 						mGenerateButton->set_enabled(true);
 					});
 					return;
 				}
 				
-				std::string::size_type host_pos = image_url.find("/", protocol_pos);
-				if (host_pos != std::string::npos) {
-					host = image_url.substr(protocol_pos, host_pos - protocol_pos);
-					path = image_url.substr(host_pos);
-				} else {
-					host = image_url.substr(protocol_pos);
-					path = "/";
-				}
+				// Assign image data to mImageData
+				mImageData = image_data;
 				
-				// Determine port
-				int port = 443; // Default HTTPS
-				if (protocol == "http") {
-					port = 80;
-				}
-				
-				// Initialize the download client if it's not already initialized or if the host has changed
-				mDownloadClient = std::make_unique<httplib::SSLClient>(host.c_str(), port);
-				mDownloadClient->set_follow_location(true);
-				// Optionally, set timeouts or other settings here
-				
-				// Perform the GET request to download the image
-				auto res_download = mDownloadClient->Get(path.c_str());
-				if (res_download && res_download->status == 200) {
-					// Load image data into mImageData
-					mImageData.assign(res_download->body.begin(), res_download->body.end());
-					
-					if (!mImageData.empty()) {
-						nanogui::async([this]() {
-							// Update ImageView with the new texture
-							mImageView->set_image(std::make_shared<nanogui::Texture>(mImageData.data(), mImageData.size(),
-																					 nanogui::Texture::InterpolationMode::Bilinear,
-																					 nanogui::Texture::InterpolationMode::Nearest,
-																					 nanogui::Texture::WrapMode::Repeat));
-							
-							
-							
-							mImageView->image()->resize(nanogui::Vector2i(600, 600));
-							
-							// Update Status
-							std::lock_guard<std::mutex> lock(mStatusMutex);
-							mStatusLabel->set_caption("Status: Image generated successfully.");
-							
-							// Enable Save Button
-							mSaveButton->set_enabled(true);
-							
-							// Re-enable Generate Button
-							mGenerateButton->set_enabled(true);
-						});
+				// Update the ImageView with the new texture
+				nanogui::async([this]() {
+					// Assuming ImageUtils::create_texture_from_data exists and works as expected
+					auto texture = ImageUtils::create_texture_from_data(mImageData.data(), mImageData.size());
+					if (texture) {
+						mImageView->set_image(texture);
+						mImageView->set_visible(true);
+						mPreviewCanvas->set_visible(false);
+						
+						// Update Status
+						std::lock_guard<std::mutex> lock(mStatusMutex);
+						mStatusLabel->set_caption("Status: Image generated successfully.");
+						
+						// Enable Save Button
+						mSaveButton->set_enabled(true);
 					} else {
-						std::cerr << "Failed to decode image data." << std::endl;
-						nanogui::async([this]() {
-							std::lock_guard<std::mutex> lock(mStatusMutex);
-							mStatusLabel->set_caption("Status: Failed to decode image.");
-							mGenerateButton->set_enabled(true);
-						});
+						std::cerr << "Failed to create texture from image data." << std::endl;
+						mStatusLabel->set_caption("Status: Failed to create image texture.");
 					}
-				} else {
-					std::cerr << "Failed to download image. HTTP Status: "
-					<< (res_download ? std::to_string(res_download->status) : "No Response") << std::endl;
-					nanogui::async([this]() {
-						std::lock_guard<std::mutex> lock(mStatusMutex);
-						mStatusLabel->set_caption("Status: Failed to download image.");
-						mGenerateButton->set_enabled(true);
-					});
-				}
+					
+					// Re-enable Generate Button
+					mGenerateButton->set_enabled(true);
+				});
 			});
 		} else if (generate_image && generate_animation) {
 			std::cerr << "Unsupported prompt." << std::endl;

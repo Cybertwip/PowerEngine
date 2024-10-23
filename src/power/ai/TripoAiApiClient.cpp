@@ -332,19 +332,13 @@ bool TripoAiApiClient::download_file(const std::string& url, std::stringstream& 
 	if (url.find("https://") == 0) {
 		is_https = true;
 	} else if (url.find("http://") == 0) {
-		is_https = false;
-	} else {
 		std::cerr << "Unsupported URL scheme in URL: " << url << std::endl;
 		return false;
 	}
 	
 	// Create an HTTP or HTTPS client based on the URL scheme
-	std::unique_ptr<httplib::Client> http_client;
-	if (is_https) {
-		http_client = std::make_unique<httplib::SSLClient>(host.c_str(), 443);
-	} else {
-		http_client = std::make_unique<httplib::Client>(host.c_str(), 80);
-	}
+	std::unique_ptr<httplib::SSLClient> http_client =
+		std::make_unique<httplib::SSLClient>(host.c_str(), 443);
 	
 	// Optional: Set timeout or other client settings here
 	
@@ -463,7 +457,7 @@ void TripoAiApiClient::generate_mesh(const std::string& prompt, const std::strin
 										std::stringstream model_stream;
 										if (download_file(model_url, model_stream)) {
 											// Call the callback with the downloaded model
-											callback(model_stream, "");
+											callback(std::move(model_stream), "");
 										} else {
 											std::cerr << "Failed to download the model from URL: " << model_url << std::endl;
 											callback(std::stringstream(), "Failed to download the model.");

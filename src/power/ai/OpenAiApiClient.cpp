@@ -9,6 +9,7 @@
 #include <future>
 #include <thread>
 
+// Namespace for utility functions related to DALL-E (if needed)
 namespace DallEUtils {
 // Base64 encoding table
 const std::string base64_chars =
@@ -26,7 +27,6 @@ const std::string base64_chars =
 inline bool is_base64(uint8_t c) {
 	return (std::isalnum(c) || (c == '+') || (c == '/'));
 }
-
 }
 
 OpenAiApiClient::OpenAiApiClient()
@@ -36,53 +36,6 @@ OpenAiApiClient::OpenAiApiClient()
 
 OpenAiApiClient::~OpenAiApiClient() {
 	// Destructor can be used to clean up resources if needed
-}
-
-std::string OpenAiApiClient::base64_encode(const std::string& input) const {
-	std::string ret;
-	int i = 0;
-	int j = 0;
-	unsigned char char_array_3[3];
-	unsigned char char_array_4[4];
-	
-	size_t in_len = input.size();
-	size_t pos = 0;
-	
-	while (in_len--) {
-		char_array_3[i++] = input[pos++];
-		if (i == 3) {
-			char_array_4[0] = (char_array_3[0] & 0xfc) >> 2;
-			char_array_4[1] = ((char_array_3[0] & 0x03) << 4) +
-			((char_array_3[1] & 0xf0) >> 4);
-			char_array_4[2] = ((char_array_3[1] & 0x0f) << 2) +
-			((char_array_3[2] & 0xc0) >> 6);
-			char_array_4[3] = char_array_3[2] & 0x3f;
-			
-			for (i = 0; i < 4; ++i)
-				ret += DallEUtils::base64_chars[char_array_4[i]];
-			i = 0;
-		}
-	}
-	
-	if (i) {
-		for (j = i; j < 3; j++)
-			char_array_3[j] = '\0';
-		
-		char_array_4[0] = (char_array_3[0] & 0xfc) >> 2;
-		char_array_4[1] = ((char_array_3[0] & 0x03) << 4) +
-		((char_array_3[1] & 0xf0) >> 4);
-		char_array_4[2] = ((char_array_3[1] & 0x0f) << 2) +
-		((char_array_3[2] & 0xc0) >> 6);
-		char_array_4[3] = char_array_3[2] & 0x3f;
-		
-		for (j = 0; j < i + 1; j++)
-			ret += DallEUtils::base64_chars[char_array_4[j]];
-		
-		while ((i++ < 3))
-			ret += '=';
-	}
-	
-	return ret;
 }
 
 bool OpenAiApiClient::save_api_key(const std::string& file_path) const {
@@ -132,6 +85,11 @@ bool OpenAiApiClient::load_api_key(const std::string& file_path) {
 	return true;
 }
 
+std::string OpenAiApiClient::get_api_key() const {
+	std::lock_guard<std::mutex> lock(client_mutex_);
+	return api_key_;
+}
+
 void OpenAiApiClient::initialize_client(const std::string& api_key) {
 	client_ = std::make_unique<httplib::SSLClient>("api.openai.com", 443);
 	client_->set_default_headers({
@@ -151,7 +109,13 @@ bool OpenAiApiClient::authenticate(const std::string& api_key) {
 	
 	// Test authentication by listing models
 	Json::Value models = list_models();
-	return !models.empty();
+	if (!models.empty()) {
+		std::cout << "Authentication successful. Models retrieved." << std::endl;
+		return true;
+	}
+	
+	std::cerr << "Authentication failed." << std::endl;
+	return false;
 }
 
 void OpenAiApiClient::authenticate_async(const std::string& api_key, AuthCallback callback) {
@@ -180,7 +144,7 @@ std::string OpenAiApiClient::generate_image(const std::string& prompt) {
 	post_json_data["prompt"] = prompt;
 	post_json_data["n"] = 1; // Number of images to generate
 	post_json_data["size"] = "1024x1024"; // Image size
-	post_json_data["model"] = "dall-e-3";
+	post_json_data["model"] = "dall-e-3"; // Specify the model if required
 	
 	Json::StreamWriterBuilder writer;
 	std::string json_payload = Json::writeString(writer, post_json_data);
@@ -188,7 +152,7 @@ std::string OpenAiApiClient::generate_image(const std::string& prompt) {
 	auto res = client_->Post("/v1/images/generations", json_payload, "application/json");
 	
 	if (res) {
-		if (res->status == 200) {
+		if (res->status == 200 || res->status == 201) { // Assuming 201 Created is also possible
 			// Parse JSON response to extract image URL
 			Json::CharReaderBuilder reader_builder;
 			std::unique_ptr<Json::CharReader> reader(reader_builder.newCharReader());
@@ -231,53 +195,99 @@ void OpenAiApiClient::generate_image_async(const std::string& prompt, GenerateIm
 	}).detach();
 }
 
-Json::Value OpenAiApiClient::list_models() {
-	std::lock_guard<std::mutex> lock(client_mutex_);
+bool OpenAiApiClient::parse_url(const std::string& url, std::string& host, std::string& path) {
+	// Simple URL parsing (not handling all edge cases)
+	const std::string https_prefix = "https://";
+	const std::string http_prefix = "http://";
+	size_t pos = 0;
 	
-	if (api_key_.empty()) {
-		std::cerr << "API key is not set. Please authenticate first." << std::endl;
-		return Json::Value();
-	}
-	
-	auto res = client_->Get("/v1/models");
-	
-	if (res) {
-		if (res->status == 200) {
-			// Parse JSON response
-			Json::CharReaderBuilder reader_builder;
-			std::unique_ptr<Json::CharReader> reader(reader_builder.newCharReader());
-			Json::Value json_data;
-			std::string errors;
-			
-			bool parsing_successful = reader->parse(res->body.c_str(),
-													res->body.c_str() + res->body.size(),
-													&json_data,
-													&errors);
-			if (parsing_successful && json_data.isMember("data")) {
-				return json_data["data"];
-			}
-			std::cerr << "Failed to parse JSON response or 'data' not found. Errors: " << errors << std::endl;
-		} else if (res->status == 401) {
-			std::cerr << "Authentication failed: Invalid API key." << std::endl;
-		} else {
-			std::cerr << "Failed to list models. HTTP Status: " << res->status << std::endl;
-			std::cerr << "Response Body: " << res->body << std::endl;
-		}
+	if (url.find(https_prefix) == 0) {
+		pos = https_prefix.length();
+	} else if (url.find(http_prefix) == 0) {
+		pos = http_prefix.length();
 	} else {
-		std::cerr << "Failed to list models. No response from server." << std::endl;
+		return false;
 	}
 	
-	return Json::Value(); // Return empty JSON value on failure
+	size_t slash_pos = url.find('/', pos);
+	if (slash_pos == std::string::npos) {
+		host = url.substr(pos);
+		path = "/";
+	} else {
+		host = url.substr(pos, slash_pos - pos);
+		path = url.substr(slash_pos);
+	}
+	
+	return true;
 }
 
-void OpenAiApiClient::list_models_async(ListModelsCallback callback) {
-	// Launch asynchronous task
-	std::thread([this, callback]() {
-		Json::Value models = list_models();
-		if (!models.empty()) {
-			callback(models, "");
+bool OpenAiApiClient::download_file(const std::string& url, std::stringstream& data_stream) {
+	// Parse the URL to extract host and path
+	std::string host, path;
+	if (!parse_url(url, host, path)) {
+		std::cerr << "Invalid URL: " << url << std::endl;
+		return false;
+	}
+	
+	// Determine if the URL uses HTTPS or HTTP
+	bool is_https = false;
+	if (url.find("https://") == 0) {
+		is_https = true;
+	} else if (url.find("http://") == 0) {
+		is_https = false;
+	} else {
+		std::cerr << "Unsupported URL scheme in URL: " << url << std::endl;
+		return false;
+	}
+	
+	// Create an HTTP or HTTPS client based on the URL scheme
+	std::unique_ptr<httplib::Client> http_client;
+	if (is_https) {
+		http_client = std::make_unique<httplib::SSLClient>(host.c_str(), 443);
+	} else {
+		http_client = std::make_unique<httplib::Client>(host.c_str(), 80);
+	}
+	
+	// Optional: Set timeout or other client settings here
+	
+	// Send GET request to download the file
+	auto res = http_client->Get(path.c_str());
+	
+	if (res && res->status == 200) {
+		data_stream << res->body;
+		return true;
+	} else {
+		std::cerr << "Failed to download file from URL: " << url << std::endl;
+		if (res) {
+			std::cerr << "HTTP Status: " << res->status << std::endl;
+			std::cerr << "Response Body: " << res->body << std::endl;
 		} else {
-			callback(Json::Value(), "Failed to list models.");
+			std::cerr << "No response from server." << std::endl;
+		}
+		return false;
+	}
+}
+
+void OpenAiApiClient::generate_image_download_async(const std::string& prompt, DownloadImageCallback callback) {
+	// Launch asynchronous task
+	std::thread([this, prompt, callback]() {
+		// Step 1: Generate the image and get the URL
+		std::string image_url = generate_image(prompt);
+		if (image_url.empty()) {
+			callback(std::stringstream(), "Failed to generate image.");
+			return;
+		}
+		
+		std::cout << "Image generated. URL: " << image_url << std::endl;
+		
+		// Step 2: Download the image data
+		std::stringstream image_stream;
+		if (download_file(image_url, image_stream)) {
+			// Call the callback with the downloaded image
+			callback(image_stream, "");
+		} else {
+			std::cerr << "Failed to download the image from URL: " << image_url << std::endl;
+			callback(std::stringstream(), "Failed to download the image.");
 		}
 	}).detach();
 }
@@ -450,6 +460,57 @@ void OpenAiApiClient::generate_text_async(const std::string& prompt, GenerateTex
 			callback(generated_text, "");
 		} else {
 			callback("", "Failed to generate text.");
+		}
+	}).detach();
+}
+
+Json::Value OpenAiApiClient::list_models() {
+	std::lock_guard<std::mutex> lock(client_mutex_);
+	
+	if (api_key_.empty()) {
+		std::cerr << "API key is not set. Please authenticate first." << std::endl;
+		return Json::Value();
+	}
+	
+	auto res = client_->Get("/v1/models");
+	
+	if (res) {
+		if (res->status == 200) {
+			// Parse JSON response
+			Json::CharReaderBuilder reader_builder;
+			std::unique_ptr<Json::CharReader> reader(reader_builder.newCharReader());
+			Json::Value json_data;
+			std::string errors;
+			
+			bool parsing_successful = reader->parse(res->body.c_str(),
+													res->body.c_str() + res->body.size(),
+													&json_data,
+													&errors);
+			if (parsing_successful && json_data.isMember("data")) {
+				return json_data["data"];
+			}
+			std::cerr << "Failed to parse JSON response or 'data' not found. Errors: " << errors << std::endl;
+		} else if (res->status == 401) {
+			std::cerr << "Authentication failed: Invalid API key." << std::endl;
+		} else {
+			std::cerr << "Failed to list models. HTTP Status: " << res->status << std::endl;
+			std::cerr << "Response Body: " << res->body << std::endl;
+		}
+	} else {
+		std::cerr << "Failed to list models. No response from server." << std::endl;
+	}
+	
+	return Json::Value(); // Return empty JSON value on failure
+}
+
+void OpenAiApiClient::list_models_async(ListModelsCallback callback) {
+	// Launch asynchronous task
+	std::thread([this, callback]() {
+		Json::Value models = list_models();
+		if (!models.empty()) {
+			callback(models, "");
+		} else {
+			callback(Json::Value(), "Failed to list models.");
 		}
 	}).detach();
 }

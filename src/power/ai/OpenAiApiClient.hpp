@@ -4,19 +4,18 @@
 #include <string>
 #include <memory>
 #include <functional>
-#include <vector>
 #include <mutex>
-#include <sstream>
 #include <json/json.h>
+#include <sstream>
 
 class OpenAiApiClient {
 public:
 	// Type aliases for callback functions
 	using GenerateImageCallback = std::function<void(const std::string& image_url, const std::string& error_message)>;
+	using DownloadImageCallback = std::function<void(std::stringstream image_stream, const std::string& error_message)>;
+	using GenerateTextCallback = std::function<void(const std::string& generated_text, const std::string& error_message)>;
 	using ListModelsCallback = std::function<void(const Json::Value& models, const std::string& error_message)>;
-	
-	// Type alias for text generation callback
-	using GenerateTextCallback = std::function<void(const std::string& text, const std::string& error_message)>;
+	using AuthCallback = std::function<void(bool success, const std::string& error_message)>;
 	
 	/**
 	 * @brief Constructs the OpenAiApiClient.
@@ -31,7 +30,7 @@ public:
 	// Authentication Methods
 	
 	/**
-	 * @brief Authenticates the client with the provided API key.
+	 * @brief Authenticates the client with the provided API key by listing models.
 	 *
 	 * @param api_key Your OpenAI API key.
 	 * @return true If authentication is successful.
@@ -40,12 +39,11 @@ public:
 	bool authenticate(const std::string& api_key);
 	
 	/**
-	 * @brief Asynchronously authenticates the client with the provided API key.
+	 * @brief Asynchronously authenticates the client with the provided API key by listing models.
 	 *
 	 * @param api_key Your OpenAI API key.
 	 * @param callback The callback function to be invoked upon completion.
 	 */
-	using AuthCallback = std::function<void(bool success, const std::string& error_message)>;
 	void authenticate_async(const std::string& api_key, AuthCallback callback);
 	
 	/**
@@ -66,48 +64,17 @@ public:
 	 */
 	bool load_api_key(const std::string& file_path);
 	
-	std::string get_api_key() const {
-		return api_key_;
-	}
-	
-	// Asynchronous Methods with Callbacks
-	
 	/**
-	 * @brief Asynchronously generates an image from a text prompt.
+	 * @brief Retrieves the current API key.
 	 *
-	 * @param prompt The text prompt describing the desired image.
-	 * @param callback The callback function to be invoked upon completion.
+	 * @return std::string The current API key.
 	 */
-	void generate_image_async(const std::string& prompt, GenerateImageCallback callback);
+	std::string get_api_key() const;
+	
+	// Image Generation Methods
 	
 	/**
-	 * @brief Asynchronously lists all available models.
-	 *
-	 * @param callback The callback function to be invoked upon completion.
-	 */
-	void list_models_async(ListModelsCallback callback);
-	
-	/**
-	 * @brief Asynchronously generates text using the vision module by providing a prompt and an image.
-	 *
-	 * @param prompt The text prompt for the model.
-	 * @param image_data The raw PNG image data as a vector of bytes.
-	 * @param callback The callback function to be invoked upon completion.
-	 */
-	void generate_text_async(const std::string& prompt, const std::vector<uint8_t>& image_data, GenerateTextCallback callback);
-	
-	/**
-	 * @brief Asynchronously generates text based solely on a text prompt.
-	 *
-	 * @param prompt The text prompt for the model.
-	 * @param callback The callback function to be invoked upon completion.
-	 */
-	void generate_text_async(const std::string& prompt, GenerateTextCallback callback);
-	
-	// Synchronous Methods
-	
-	/**
-	 * @brief Generates an image from a text prompt.
+	 * @brief Generates an image based on a text prompt.
 	 *
 	 * @param prompt The text prompt describing the desired image.
 	 * @return std::string The URL of the generated image if successful, empty string otherwise.
@@ -115,28 +82,54 @@ public:
 	std::string generate_image(const std::string& prompt);
 	
 	/**
-	 * @brief Lists all available models.
+	 * @brief Asynchronously generates an image based on a text prompt.
 	 *
-	 * @return Json::Value The JSON response containing the list of models.
+	 * @param prompt The text prompt describing the desired image.
+	 * @param callback The callback function to be invoked upon completion with the image URL or an error message.
+	 */
+	void generate_image_async(const std::string& prompt, GenerateImageCallback callback);
+	
+	/**
+	 * @brief Asynchronously generates an image based on a text prompt, downloads the image data, and passes it via callback.
+	 *
+	 * @param prompt The text prompt describing the desired image.
+	 * @param callback The callback function to be invoked upon completion with the image data as a stringstream or an error message.
+	 */
+	void generate_image_download_async(const std::string& prompt, DownloadImageCallback callback);
+	
+	// Text Generation Methods
+	
+	/**
+	 * @brief Generates text based on a prompt.
+	 *
+	 * @param prompt The text prompt.
+	 * @return std::string The generated text if successful, empty string otherwise.
+	 */
+	std::string generate_text(const std::string& prompt);
+	
+	/**
+	 * @brief Asynchronously generates text based on a prompt.
+	 *
+	 * @param prompt The text prompt.
+	 * @param callback The callback function to be invoked upon completion with the generated text or an error message.
+	 */
+	void generate_text_async(const std::string& prompt, GenerateTextCallback callback);
+	
+	// Model Listing Methods
+	
+	/**
+	 * @brief Lists available models.
+	 *
+	 * @return Json::Value The JSON response containing the list of models if successful, empty JSON otherwise.
 	 */
 	Json::Value list_models();
 	
 	/**
-	 * @brief Generates text using the vision module by providing a prompt and an image.
+	 * @brief Asynchronously lists available models.
 	 *
-	 * @param prompt The text prompt for the model.
-	 * @param image_data The raw PNG image data as a vector of bytes.
-	 * @return std::string The generated text if successful, empty string otherwise.
+	 * @param callback The callback function to be invoked upon completion with the list of models or an error message.
 	 */
-	std::string generate_text(const std::string& prompt, const std::vector<uint8_t>& image_data);
-	
-	/**
-	 * @brief Generates text based solely on a text prompt.
-	 *
-	 * @param prompt The text prompt for the model.
-	 * @return std::string The generated text if successful, empty string otherwise.
-	 */
-	std::string generate_text(const std::string& prompt);
+	void list_models_async(ListModelsCallback callback);
 	
 private:
 	/**
@@ -147,12 +140,25 @@ private:
 	void initialize_client(const std::string& api_key);
 	
 	/**
-	 * @brief Encodes a string to Base64.
+	 * @brief Downloads a file from the given URL and stores it in a stringstream.
 	 *
-	 * @param input The string to encode.
-	 * @return std::string The Base64 encoded string.
+	 * @param url The URL of the file to download.
+	 * @param data_stream The stringstream to store the downloaded data.
+	 * @return true If the download is successful.
+	 * @return false If the download fails.
 	 */
-	std::string base64_encode(const std::string& input) const;
+	bool download_file(const std::string& url, std::stringstream& data_stream);
+	
+	/**
+	 * @brief Parses a URL into host and path components.
+	 *
+	 * @param url The URL to parse.
+	 * @param host The extracted host component.
+	 * @param path The extracted path component.
+	 * @return true If the URL is parsed successfully.
+	 * @return false If the URL is invalid.
+	 */
+	bool parse_url(const std::string& url, std::string& host, std::string& path);
 	
 	// Member variables
 	std::string api_key_;                           /**< OpenAI API key */
