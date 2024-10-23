@@ -507,7 +507,7 @@ void TripoAiApiClient::generate_mesh(const std::string& prompt, const std::strin
 								if (final_status == "SUCCESS") {
 									// Step 5: Optional Rigging
 									if (generate_rig) {
-										animate_rig_async(conversion_response["task_id"].asString(), conversion_response["out_format"].asString(), [this, convert_task_id, generate_animation, callback](const std::string& animate_rig_task_id, const std::string& rig_error) {
+										animate_rig_async(conversion_response["task_id"].asString(), conversion_response["out_format"].asString(), [this, convert_task_id, conversion_response, generate_animation, callback](const std::string& animate_rig_task_id, const std::string& rig_error) {
 											if (!animate_rig_task_id.empty()) {
 												std::cout << "Animate Rig task ID: " << animate_rig_task_id << std::endl;
 												
