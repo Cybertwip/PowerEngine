@@ -53,11 +53,11 @@ PowerPromptWindow::PowerPromptWindow(nanogui::Screen& parent, ResourcesPanel& re
 	mImageView = std::make_shared<nanogui::ImageView>(*mImageContainer, parent); // Assuming ImageView can take an empty string initially
 	mImageView->set_fixed_size(nanogui::Vector2i(300, 300));
 	mImageView->set_background_color(nanogui::Color(0.0f, 0.0f, 0.0f, 1.0f));
-	
+
+	mImageView->set_visible(false);
+
 	mPreviewCanvas = std::make_shared<SharedSelfContainedMeshCanvas>(*mImageContainer, parent);
 	
-	mPreviewCanvas->set_visible(false);
-
 	mPreviewCanvas->set_fixed_size(nanogui::Vector2i(300, 300));
 	mPreviewCanvas->set_background_color(nanogui::Color(0.0f, 0.0f, 0.0f, 1.0f));
 	
