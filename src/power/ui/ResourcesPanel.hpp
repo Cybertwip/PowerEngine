@@ -86,7 +86,7 @@ private:
 
 	std::shared_ptr<PowerPromptWindow> mPowerPromptWindow;
 
-	std::shared_ptr<nanogui::Button> mConceptButton;
+	std::shared_ptr<nanogui::Button> mArtButton;
 	std::shared_ptr<nanogui::Button> mModelButton;
 	std::shared_ptr<nanogui::Button> mAnimationButton;
 	std::shared_ptr<nanogui::Button> mSceneButton;

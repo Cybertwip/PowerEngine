@@ -186,11 +186,11 @@ mShaderManager(shaderManager)
 	
 	mSceneButton->set_icon(FA_NEWSPAPER);
 	
-	mConceptButton = std::make_shared<nanogui::Button>(mAddButton->popup(), "Concept");
+	mArtButton = std::make_shared<nanogui::Button>(mAddButton->popup(), "Art");
 	
-	mConceptButton->set_icon(FA_PERSON_BOOTH);
+	mArtButton->set_icon(FA_PERSON_BOOTH);
 	
-	mConceptButton->set_callback([this](){
+	mArtButton->set_callback([this](){
 		mPowerSettingsWindow->set_visible(true);
 		mPowerSettingsWindow->set_modal(true);
 		

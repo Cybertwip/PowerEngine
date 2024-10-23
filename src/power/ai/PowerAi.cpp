@@ -46,7 +46,6 @@ void PowerAi::authenticate_async(const std::string& openai_api_key,
 	
 	// Lambda to check if all authentications are completed
 	auto check_and_callback = [state, callback]() {
-		std::lock_guard<std::mutex> lock(state->mutex);
 		if (state->completed == 3) { // Total number of services
 			callback(state->success, state->error_message);
 		}
