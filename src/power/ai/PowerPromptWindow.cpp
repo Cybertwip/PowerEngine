@@ -162,7 +162,7 @@ void PowerPromptWindow::SubmitPromptAsync() {
 		mStatusLabel->set_caption("Status: Generating image...");
 	}
 	
-	std::string prompt_setup = "Analyze this prompt and return a json with boolean fields generate_image, generate_model, generate_rig, generate_animation, prompt_description, based on its analysis, only set generate_model to true if the prompt includes the word '3d', if the word '3d' is included and generate_animation is true, then generate_rig must also be true, if the prompt does not include the word '3d' then generate_rig must be false, if the prompt does not include the word 'rig', then generate_rig must be false, if the prompt does not include the word '3d' but generate_animation is true, then generate_image must be true and generate_model and generate_rig must be false, parse the prompt and fill prompt_description with the description of the prompt, if nothing matches, all the fields must be set to false and prompt_description must be an empty string, reply only with the json. Prompt: ";
+	std::string prompt_setup = "Analyze this prompt and return a json with boolean fields generate_image, generate_model, generate_rig, generate_animation, prompt_description, based on its analysis, only set generate_model to true if the prompt includes the word '3d', if the word '3d' is included and generate_animation is true, then generate_rig must also be true, if the prompt does not include the word '3d' then generate_rig must be false, if the prompt does not include the word 'rig', then generate_rig must be false, if the prompt does not include the word '3d' but generate_animation is true, then generate_image must be true and generate_model and generate_rig must be false, if the prompt includes the word '3d' but does not include the word 'T-pose' or 'A-pose' then generate_animation and generate_rig must be false, parse the prompt and fill prompt_description with the description of the prompt, if nothing matches, all the fields must be set to false and prompt_description must be an empty string, reply only with the json. Prompt: ";
 	
 	std::string prompt = mInputTextBox->value();
 	
@@ -339,8 +339,8 @@ void PowerPromptWindow::SubmitPromptAsync() {
 				std::lock_guard<std::mutex> lock(mStatusMutex);
 				mStatusLabel->set_caption("Status: Operation not implemented yet.");
 			}
-		} else if (generate_model && !generate_rig && !generate_animation) {
-			mPowerAi.generate_mesh_async(prompt_description, [this](std::stringstream model_stream, const std::string& error){
+		} else if (generate_model) {
+			mPowerAi.generate_mesh_async(prompt_description, generate_rig, generate_animation, [this](std::stringstream model_stream, const std::string& error){
 				
 				mActorPath = "generated_model.fbx";
 				mOutputDirectory = mResourcesPanel.selected_directory_path();
@@ -358,7 +358,6 @@ void PowerPromptWindow::SubmitPromptAsync() {
 				mImageView->set_visible(false);
 				mPreviewCanvas->set_visible(true);
 
-
 				nanogui::async([this]() {
 					std::lock_guard<std::mutex> lock(mStatusMutex);
 					mStatusLabel->set_caption("Status: Model generated successfully.");
@@ -370,13 +369,7 @@ void PowerPromptWindow::SubmitPromptAsync() {
 					perform_layout(screen().nvg_context());
 
 				});
-				
-
 			});
-		} else if (generate_model && generate_rig && !generate_animation) {
-			// I'll do this later
-		} else if (generate_model && generate_rig && generate_animation) {
-			// I'll do this later
 		} else {
 			std::cerr << "Unsupported prompt." << std::endl;
 			{

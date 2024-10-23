@@ -8,11 +8,19 @@
 #include <json/json.h>
 #include <sstream>
 
+// Forward declaration of Json::Value to avoid including json/json.h in the header if not necessary
+// (Optional: Remove if you prefer to keep the include)
+namespace Json {
+class Value;
+}
+
 class TripoAiApiClient {
 public:
 	// Type aliases for callback functions
 	using GenerateModelCallback = std::function<void(const std::string& task_id, const std::string& error_message)>;
 	using ConvertModelCallback = std::function<void(const std::string& convert_task_id, const std::string& error_message)>;
+	using AnimateRigCallback = std::function<void(const std::string& animate_rig_task_id, const std::string& error_message)>;
+	using AnimateRetargetCallback = std::function<void(const std::string& animate_retarget_task_id, const std::string& error_message)>;
 	using StatusCallback = std::function<void(const Json::Value& status, const std::string& error_message)>;
 	using AuthCallback = std::function<void(bool success, const std::string& error_message)>;
 	using DownloadModelCallback = std::function<void(std::stringstream model_stream, const std::string& error_message)>;
@@ -113,29 +121,73 @@ public:
 	 */
 	void convert_model_async(const std::string& original_task_id, const std::string& format, bool quad, int face_limit, ConvertModelCallback callback);
 	
+	// Animation Methods
+	
+	/**
+	 * @brief Animates the rig of a generated 3D model.
+	 *
+	 * @param original_task_id The Task ID of the original model generation task.
+	 * @param format The desired format for animation output (e.g., "FBX").
+	 * @return std::string The Task ID of the animate rig request if successful, empty string otherwise.
+	 */
+	std::string animate_rig(const std::string& original_task_id, const std::string& format);
+	
+	/**
+	 * @brief Asynchronously animates the rig of a generated 3D model.
+	 *
+	 * @param original_task_id The Task ID of the original model generation task.
+	 * @param format The desired format for animation output (e.g., "FBX").
+	 * @param callback The callback function to be invoked upon completion.
+	 */
+	void animate_rig_async(const std::string& original_task_id, const std::string& format, AnimateRigCallback callback);
+	
+	/**
+	 * @brief Retargets animation for a generated 3D model.
+	 *
+	 * @param original_task_id The Task ID of the original model generation task.
+	 * @param format The desired format for animation output (e.g., "FBX").
+	 * @param animation The animation preset to apply (e.g., "preset:run").
+	 * @return std::string The Task ID of the animate retarget request if successful, empty string otherwise.
+	 */
+	std::string animate_retarget(const std::string& original_task_id, const std::string& format, const std::string& animation);
+	
+	/**
+	 * @brief Asynchronously retargets animation for a generated 3D model.
+	 *
+	 * @param original_task_id The Task ID of the original model generation task.
+	 * @param format The desired format for animation output (e.g., "FBX").
+	 * @param animation The animation preset to apply (e.g., "preset:run").
+	 * @param callback The callback function to be invoked upon completion.
+	 */
+	void animate_retarget_async(const std::string& original_task_id, const std::string& format, const std::string& animation, AnimateRetargetCallback callback);
+	
 	// Combined Mesh Generation Methods
 	
 	/**
-	 * @brief Generates a 3D model from a text prompt, polls its status until completion, converts it, and downloads the model.
+	 * @brief Generates a 3D model from a text prompt, polls its status until completion, converts it, optionally rigs and animates it, and downloads the model.
 	 *
 	 * @param prompt The text prompt describing the desired model.
-	 * @param format The desired format for conversion (e.g., "FBX").
+	 * @param format The desired format for conversion and animation (e.g., "FBX").
 	 * @param quad Whether to generate a quad mesh.
 	 * @param face_limit The maximum number of faces allowed in the converted model.
+	 * @param generate_rig Whether to perform rigging on the model.
+	 * @param generate_animation Whether to perform animation retargeting on the model.
 	 * @param callback The callback function to be invoked upon completion with the downloaded model data or an error message.
 	 */
-	void generate_mesh(const std::string& prompt, const std::string& format, bool quad, int face_limit, DownloadModelCallback callback);
+	void generate_mesh(const std::string& prompt, const std::string& format, bool quad, int face_limit, bool generate_rig, bool generate_animation, DownloadModelCallback callback);
 	
 	/**
-	 * @brief Asynchronously generates a 3D model from a text prompt, polls its status until completion, converts it, and downloads the model.
+	 * @brief Asynchronously generates a 3D model from a text prompt, polls its status until completion, converts it, optionally rigs and animates it, and downloads the model.
 	 *
 	 * @param prompt The text prompt describing the desired model.
-	 * @param format The desired format for conversion (e.g., "FBX").
+	 * @param format The desired format for conversion and animation (e.g., "FBX").
 	 * @param quad Whether to generate a quad mesh.
 	 * @param face_limit The maximum number of faces allowed in the converted model.
+	 * @param generate_rig Whether to perform rigging on the model.
+	 * @param generate_animation Whether to perform animation retargeting on the model.
 	 * @param callback The callback function to be invoked upon completion with the downloaded model data or an error message.
 	 */
-	void generate_mesh_async(const std::string& prompt, const std::string& format, bool quad, int face_limit, DownloadModelCallback callback);
+	void generate_mesh_async(const std::string& prompt, const std::string& format, bool quad, int face_limit, bool generate_rig, bool generate_animation, DownloadModelCallback callback);
 	
 	// Job Status Methods
 	
