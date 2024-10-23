@@ -4,6 +4,7 @@
 #include "OpenAiApiClient.hpp"
 
 #include "components/PlaybackComponent.hpp"
+#include "components/TransformComponent.hpp"
 #include "filesystem/ImageUtils.hpp"
 #include "filesystem/MeshActorImporter.hpp"
 #include "filesystem/MeshActorExporter.hpp"
