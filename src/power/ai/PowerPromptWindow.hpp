@@ -70,6 +70,4 @@ public:
 	nanogui::RenderPass& mRenderPass;
 	
 	std::shared_ptr<SharedSelfContainedMeshCanvas> mPreviewCanvas;
-	
-	PowerAi& mPowerAi;
 };
