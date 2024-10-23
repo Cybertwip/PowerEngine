@@ -6,6 +6,7 @@
 
 #include <functional>
 #include <string>
+#include <json/json.h>
 
 /**
  * @brief A high-level AI manager that integrates OpenAI, Tripo3D, and DeepMotion APIs.
@@ -83,6 +84,14 @@ public:
 	 */
 	void generate_3d_animation_async(const std::string& prompt, const std::string& model_id,
 									 std::function<void(const Json::Value& animation_data, const std::string& error_message)> callback);
+	
+
+	void generate_text_async(const std::string& prompt,
+						std::function<void(const std::string& text, const std::string& error_message)> callback);
+	
+	void generate_text_async(const std::string& prompt, const std::vector<uint8_t>& image_data,
+									  std::function<void(const std::string& text, const std::string& error_message)> callback);
+	// Additional Methods and Members as Needed
 	
 private:
 	OpenAiApiClient& mOpenAiApiClient;          /**< Reference to OpenAiApiClient */
