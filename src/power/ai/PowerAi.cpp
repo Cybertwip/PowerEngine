@@ -45,7 +45,7 @@ void PowerAi::authenticate_async(const std::string& openai_api_key,
 	};
 	
 	// Authenticate OpenAI
-	mOpenAiApiClient.authenticate_async(openai_api_key, [&](bool success, const std::string& error_message) {
+	mOpenAiApiClient.authenticate_async(openai_api_key, [check_and_callback](bool success, const std::string& error_message) {
 		std::lock_guard<std::mutex> lock(mAuthState->mutex);
 		if (!success) {
 			mAuthState->success = false;
@@ -56,7 +56,7 @@ void PowerAi::authenticate_async(const std::string& openai_api_key,
 	});
 	
 	// Authenticate Tripo AI
-	mTripoAiApiClient.authenticate_async(tripo_ai_api_key, [&](bool success, const std::string& error_message) {
+	mTripoAiApiClient.authenticate_async(tripo_ai_api_key, [check_and_callback](bool success, const std::string& error_message) {
 		std::lock_guard<std::mutex> lock(mAuthState->mutex);
 		if (!success) {
 			mAuthState->success = false;
@@ -68,7 +68,7 @@ void PowerAi::authenticate_async(const std::string& openai_api_key,
 	
 	// Authenticate DeepMotion
 	mDeepMotionApiClient.authenticate_async(deepmotion_api_base_url, deepmotion_api_base_port, deepmotion_client_id, deepmotion_client_secret,
-											[&](bool success, const std::string& error_message) {
+											[check_and_callback](bool success, const std::string& error_message) {
 		std::lock_guard<std::mutex> lock(mAuthState->mutex);
 		if (!success) {
 			mAuthState->success = false;
