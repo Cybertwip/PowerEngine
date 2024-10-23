@@ -405,6 +405,7 @@ void ResourcesPanel::export_assets() {
 void ResourcesPanel::process_events() {
 	mImportWindow->ProcessEvents();
 	mPromptWindow->ProcessEvents();
+	mPowerPromptWindow->ProcessEvents();
 	mFileView->ProcessEvents();
 	mMeshPicker->ProcessEvents();
 }

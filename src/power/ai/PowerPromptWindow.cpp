@@ -40,7 +40,8 @@
 namespace fs = std::filesystem;
 
 PowerPromptWindow::PowerPromptWindow(nanogui::Screen& parent, ResourcesPanel& resourcesPanel, PowerAi& powerAi, nanogui::RenderPass& renderpass, ShaderManager& shaderManager)
-: nanogui::Window(parent), mResourcesPanel(resourcesPanel), mPowerAi(powerAi), mRenderPass(renderpass), mDummyAnimationTimeProvider(60 * 30) {
+: nanogui::Window(parent), mResourcesPanel(resourcesPanel), mPowerAi(powerAi), mRenderPass(renderpass), mDummyAnimationTimeProvider(60 * 30),
+mRotationAngle(0) {
 	
 	set_fixed_size(nanogui::Vector2i(600, 600)); // Adjusted size for better layout
 	set_layout(std::make_unique<nanogui::BoxLayout>(nanogui::Orientation::Vertical, nanogui::Alignment::Middle, 10, 10));
@@ -141,6 +142,18 @@ void PowerPromptWindow::ProcessEvents() {
 	mDummyAnimationTimeProvider.Update();
 	
 	mPreviewCanvas->process_events();
+	
+	if (mActiveActor != nullptr) {
+		auto& transform = actor.get()->get_component<TransformComponent>();
+		
+		transform.rotate(glm::vec3(0.0f, 1.0f, 0.0f), mRotationAngle);
+		
+		mRotationAngle++;
+		
+		if (mRotationAngle > 360) {
+			mRotationAngle = 0;
+		}
+	}
 }
 
 void PowerPromptWindow::SubmitPromptAsync() {
@@ -345,6 +358,8 @@ void PowerPromptWindow::SubmitPromptAsync() {
 				
 				mMeshActorBuilder->build(*actor, mDummyAnimationTimeProvider, model_stream, mActorPath, mPreviewCanvas->get_mesh_shader(), mPreviewCanvas->get_skinned_mesh_shader());
 				
+				mRotationAngle = 0;
+
 				mPreviewCanvas->set_active_actor(actor);
 				
 				mActiveActor = actor;
