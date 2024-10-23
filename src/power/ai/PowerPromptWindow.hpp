@@ -54,7 +54,7 @@ public:
 	std::shared_ptr<nanogui::Button> mGenerateButton;
 	std::shared_ptr<nanogui::Button> mSaveButton;
 	
-	OpenAiApiClient& mOpenAiApiClient;
+	PowerAi& mPowerAi;
 	
 	// Status Label
 	std::shared_ptr<nanogui::Label> mStatusLabel;

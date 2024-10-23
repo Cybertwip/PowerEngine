@@ -1,12 +1,13 @@
 #include "PowerAi.hpp"
 
-#include "DeepMotionApiClient.hpp"
-#include "OpenAiApiClient.hpp"
-#include "TripoAiApiClient.hpp"
-
 #include <iostream>
 #include <json/json.h>
+#include <mutex>
+#include <memory>
 
+/**
+ * @brief Constructs the PowerAi instance with references to the API clients.
+ */
 PowerAi::PowerAi(OpenAiApiClient& openAiApiClient,
 				 TripoAiApiClient& tripoAiApiClient,
 				 DeepMotionApiClient& deepMotionApiClient)
@@ -16,48 +17,73 @@ mDeepMotionApiClient(deepMotionApiClient) {
 	// Constructor body (if needed)
 }
 
+/**
+ * @brief Destructor for PowerAi.
+ */
 PowerAi::~PowerAi() {
 	// Destructor body (if needed)
 }
 
-void PowerAi::generate_image_async(const std::string& prompt,
-								   std::function<void(const std::string& image_url, const std::string& error_message)> callback) {
-	// Call the OpenAiApiClient's asynchronous generate_image method
-	mOpenAiApiClient.generate_image_async(prompt, [callback](const std::string& image_url, const std::string& error_message) {
-		if (error_message.empty()) {
-			std::cout << "Image generated successfully. URL: " << image_url << std::endl;
-			callback(image_url, "");
-		} else {
-			std::cerr << "Failed to generate image: " << error_message << std::endl;
-			callback("", error_message);
+/**
+ * @brief Asynchronously authenticates with OpenAI, Tripo AI, and DeepMotion using provided credentials.
+ */
+void PowerAi::authenticate_async(const std::string& openai_api_key,
+								 const std::string& tripo_ai_api_key,
+								 const std::string& deepmotion_api_base_url,
+								 int deepmotion_api_base_port,
+								 const std::string& deepmotion_client_id,
+								 const std::string& deepmotion_client_secret,
+								 std::function<void(bool success, const std::string& error_message)> callback) {
+	// Shared state to track authentication results
+	struct AuthState {
+		std::mutex mutex;
+		int completed = 0;
+		bool success = true;
+		std::string error_message;
+	};
+	
+	auto state = std::make_shared<AuthState>();
+	
+	// Lambda to check if all authentications are completed
+	auto check_and_callback = [state, callback]() {
+		std::lock_guard<std::mutex> lock(state->mutex);
+		if (state->completed == 3) { // Total number of services
+			callback(state->success, state->error_message);
 		}
-	});
-}
-
-void PowerAi::generate_mesh_async(const std::string& prompt,
-								  std::function<void(const std::string& task_id, const std::string& error_message)> callback) {
-	// Call the TripoAiApiClient's asynchronous generate_mesh method
-	mTripoAiApiClient.generate_mesh_async(prompt, "FBX", true, 5000, [callback](const std::string& task_id, const std::string& error_message) {
-		if (error_message.empty()) {
-			std::cout << "Mesh generation task submitted successfully. Task ID: " << task_id << std::endl;
-			callback(task_id, "");
-		} else {
-			std::cerr << "Failed to generate mesh: " << error_message << std::endl;
-			callback("", error_message);
+	};
+	
+	// Authenticate OpenAI
+	mOpenAiApiClient.authenticate_async(openai_api_key, [&](bool success, const std::string& error_message) {
+		std::lock_guard<std::mutex> lock(state->mutex);
+		if (!success) {
+			state->success = false;
+			state->error_message += "OpenAI Authentication Failed: " + error_message + "\n";
 		}
+		state->completed++;
+		check_and_callback();
 	});
-}
-
-void PowerAi::generate_3d_animation_async(const std::string& prompt, const std::string& model_id,
-										  std::function<void(const Json::Value& animation_data, const std::string& error_message)> callback) {
-	// Call the DeepMotionApiClient's asynchronous animate_model method
-	mDeepMotionApiClient.animate_model_async(prompt, model_id, [callback](const Json::Value& animation_data, const std::string& error_message) {
-		if (error_message.empty()) {
-			std::cout << "3D Animation generated successfully." << std::endl;
-			callback(animation_data, "");
-		} else {
-			std::cerr << "Failed to generate 3D animation: " << error_message << std::endl;
-			callback(Json::Value(), error_message);
+	
+	// Authenticate Tripo AI
+	mTripoAiApiClient.authenticate_async(tripo_ai_api_key, [&](bool success, const std::string& error_message) {
+		std::lock_guard<std::mutex> lock(state->mutex);
+		if (!success) {
+			state->success = false;
+			state->error_message += "Tripo AI Authentication Failed: " + error_message + "\n";
 		}
+		state->completed++;
+		check_and_callback();
 	});
+	
+	// Authenticate DeepMotion
+	mDeepMotionApiClient.authenticate_async(deepmotion_api_base_url, deepmotion_api_base_port, deepmotion_client_id, deepmotion_client_secret,
+											[&](bool success, const std::string& error_message) {
+		std::lock_guard<std::mutex> lock(state->mutex);
+		if (!success) {
+			state->success = false;
+			state->error_message += "DeepMotion Authentication Failed: " + error_message + "\n";
+		}
+		state->completed++;
+		check_and_callback();
+	}
+											);
 }

@@ -1,16 +1,11 @@
 #pragma once
 
+#include "DeepMotionApiClient.hpp"
+#include "OpenAiApiClient.hpp"
+#include "TripoAiApiClient.hpp"
+
 #include <functional>
 #include <string>
-
-#include <iostream>
-#include <json/json.h>
-
-
-class DeepMotionApiClient;
-class OpenAiApiClient;
-class TripoAiApiClient;
-
 
 /**
  * @brief A high-level AI manager that integrates OpenAI, Tripo3D, and DeepMotion APIs.
@@ -37,6 +32,26 @@ public:
 	~PowerAi();
 	
 	// Asynchronous Methods
+	
+	/**
+	 * @brief Asynchronously authenticates with OpenAI, Tripo AI, and DeepMotion using provided credentials.
+	 *
+	 * @param openai_api_key The API key for OpenAI.
+	 * @param tripo_ai_api_key The API key for Tripo AI.
+	 * @param deepmotion_api_base_url The base URL for DeepMotion API.
+	 * @param deepmotion_api_base_port The base port for DeepMotion API.
+	 * @param deepmotion_client_id The Client ID for DeepMotion authentication.
+	 * @param deepmotion_client_secret The Client Secret for DeepMotion authentication.
+	 * @param callback The callback function to receive the authentication result.
+	 *                 Signature: void(bool success, const std::string& error_message)
+	 */
+	void authenticate_async(const std::string& openai_api_key,
+							const std::string& tripo_ai_api_key,
+							const std::string& deepmotion_api_base_url,
+							int deepmotion_api_base_port,
+							const std::string& deepmotion_client_id,
+							const std::string& deepmotion_client_secret,
+							std::function<void(bool success, const std::string& error_message)> callback);
 	
 	/**
 	 * @brief Asynchronously generates an image based on a text prompt.

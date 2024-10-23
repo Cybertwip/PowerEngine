@@ -64,7 +64,7 @@ mGlobalAnimationTimeProvider(60 * 30)
 
 	mDeepMotionApiClient = std::make_unique<DeepMotionApiClient>();
 	
-	mPowerAi = std::make_unique<PowerAi>(*mOpenAiApiClient, *mTripoAiApiClient, *mOpenAiApiClient);
+	mPowerAi = std::make_unique<PowerAi>(*mOpenAiApiClient, *mTripoAiApiClient, *mDeepMotionApiClient);
 
 }
 

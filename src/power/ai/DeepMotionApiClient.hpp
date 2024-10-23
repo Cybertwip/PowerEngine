@@ -9,6 +9,18 @@
 #include <sstream>
 #include <json/json.h> // Ensure you have a JSON library like jsoncpp
 
+
+
+/**
+ * @brief Struct to hold DeepMotion authentication settings.
+ */
+struct DeepMotionSettings {
+	std::string api_base_url;    /**< The base URL of the DeepMotion API. */
+	int api_base_port;           /**< The port number of the DeepMotion API. */
+	std::string client_id;       /**< The client ID for DeepMotion authentication. */
+	std::string client_secret;   /**< The client secret for DeepMotion authentication. */
+};
+
 /**
  * @brief A client for interacting with the DeepMotion API.
  *
