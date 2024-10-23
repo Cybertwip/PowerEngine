@@ -37,7 +37,7 @@ void PowerAi::generate_image_async(const std::string& prompt,
 void PowerAi::generate_mesh_async(const std::string& prompt,
 								  std::function<void(const std::string& task_id, const std::string& error_message)> callback) {
 	// Call the TripoAiApiClient's asynchronous generate_mesh method
-	mTripoAiApiClient.generate_mesh_async(prompt, [callback](const std::string& task_id, const std::string& error_message) {
+	mTripoAiApiClient.generate_mesh_async(prompt, "FBX", true, 5000, [callback](const std::string& task_id, const std::string& error_message) {
 		if (error_message.empty()) {
 			std::cout << "Mesh generation task submitted successfully. Task ID: " << task_id << std::endl;
 			callback(task_id, "");
