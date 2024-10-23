@@ -46,11 +46,11 @@ class AnimationTimeProvider;
 class BatchUnit;
 class Canvas;
 class CameraManager;
-class OpenAiApiClient;
 class DeepMotionApiClient;
 class GizmoManager;
 class Grid;
 class MeshActorLoader;
+class PowerAi;
 class ScenePanel;
 class SceneTimeBar;
 class ShaderManager;
@@ -76,7 +76,7 @@ public:
 			  AnimationTimeProvider& animationTimeProvider,
 			  CameraManager& cameraManager,
 			  DeepMotionApiClient& deepMotionApiClient,
-			  OpenAiApiClient& OpenAiApiClient,
+			  PowerAi& powerAi,
 			  GizmoManager& gizmoManager,
 			  std::function<void(std::function<void(int, int)>)> applicationClickRegistrator);
 	

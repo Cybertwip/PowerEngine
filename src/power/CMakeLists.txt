@@ -64,8 +64,8 @@ add_executable(PowerEngine
     ${CMAKE_CURRENT_LIST_DIR}/ai/DeepMotionPromptWindow.hpp
     ${CMAKE_CURRENT_LIST_DIR}/ai/DeepMotionPromptWindow.cpp
 
-    ${CMAKE_CURRENT_LIST_DIR}/ai/DallESettingsWindow.hpp
-    ${CMAKE_CURRENT_LIST_DIR}/ai/DallESettingsWindow.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/ai/PowerSettingsWindow.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/ai/PowerSettingsWindow.cpp
     ${CMAKE_CURRENT_LIST_DIR}/ai/OpenAiApiClient.hpp
     ${CMAKE_CURRENT_LIST_DIR}/ai/OpenAiApiClient.cpp
     ${CMAKE_CURRENT_LIST_DIR}/ai/PowerAi.hpp

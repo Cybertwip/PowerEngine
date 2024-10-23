@@ -57,10 +57,12 @@ mGlobalAnimationTimeProvider(60 * 30)
 	mCameraManager = std::make_unique<CameraManager>(*mEntityRegistry);
 	
 	mActorManager  = std::make_unique<ActorManager>(*mEntityRegistry, *mCameraManager);
-	
-	mDeepMotionApiClient = std::make_unique<DeepMotionApiClient>();
 
 	mOpenAiApiClient = std::make_unique<OpenAiApiClient>();
+
+	mDeepMotionApiClient = std::make_unique<DeepMotionApiClient>();
+	
+	mPowerAi = std::make_unique<PowerAi>(*mOpenAiApiClient, *mTripoAiApiClient, *mOpenAiApiClient);
 
 }
 
@@ -106,7 +108,7 @@ void Application::initialize() {
 											 mUiCommon->scene_time_bar(),
 											 mGlobalAnimationTimeProvider,
 											 *mCameraManager,
-											 *mDeepMotionApiClient, *mOpenAiApiClient,
+											 *mDeepMotionApiClient, *mPowerAi,
 											 *mGizmoManager,
 											 [this](std::function<void(int, int)> callback){
 												 auto callbackWrapee = [this, callback](bool down, int width, int height, int x, int y){

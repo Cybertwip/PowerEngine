@@ -29,15 +29,6 @@ class TextBox;
 }
 
 class PowerPromptWindow : public nanogui::Window {
-private:
-	enum EPromptMode {
-		None,
-		Image,
-		Model,
-		Rigging,
-		Animation
-	};
-	
 public:
 	PowerPromptWindow(nanogui::Screen& parent, ResourcesPanel& resourcesPanel, PowerAi& powerAi, nanogui::RenderPass& renderpass, ShaderManager& shaderManager);
 	

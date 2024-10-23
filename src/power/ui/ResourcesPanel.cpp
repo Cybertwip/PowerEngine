@@ -2,7 +2,7 @@
 
 #include "ai/OpenAiApiClient.hpp"
 #include "ai/PowerPromptWindow.hpp"
-#include "ai/DallESettingsWindow.hpp"
+#include "ai/PowerSettingsWindow.hpp"
 #include "ai/DeepMotionSettingsWindow.hpp"
 #include "ai/DeepMotionPromptWindow.hpp"
 #include "actors/IActorSelectedRegistry.hpp"
@@ -116,7 +116,7 @@ const DirectoryNode* FindNodeByPath(const DirectoryNode& currentNode, const std:
 }
 
 
-ResourcesPanel::ResourcesPanel(nanogui::Widget& parent, nanogui::Screen& screen, DirectoryNode& root_directory_node, std::shared_ptr<IActorVisualManager> actorVisualManager, std::shared_ptr<SceneTimeBar> sceneTimeBar, AnimationTimeProvider& animationTimeProvider, MeshActorLoader& meshActorLoader, ShaderManager& shaderManager, DeepMotionApiClient& deepMotionApiClient, OpenAiApiClient& OpenAiApiClient, UiManager& uiManager)
+ResourcesPanel::ResourcesPanel(nanogui::Widget& parent, nanogui::Screen& screen, DirectoryNode& root_directory_node, std::shared_ptr<IActorVisualManager> actorVisualManager, std::shared_ptr<SceneTimeBar> sceneTimeBar, AnimationTimeProvider& animationTimeProvider, MeshActorLoader& meshActorLoader, ShaderManager& shaderManager, DeepMotionApiClient& deepMotionApiClient, PowerAi& powerAi, UiManager& uiManager)
 : Panel(parent, "Resources"),
 mRootDirectoryNode(root_directory_node),
 mActorVisualManager(actorVisualManager),
@@ -127,7 +127,7 @@ mSceneTimeBar(sceneTimeBar),
 mGlobalAnimationTimeProvider(animationTimeProvider),
 mUiManager(uiManager),
 mDeepMotionApiClient(deepMotionApiClient),
-mOpenAiApiClient(OpenAiApiClient),
+mPowerAi(powerAi),
 mShaderManager(shaderManager)
 {
 	// Set the layout
@@ -161,9 +161,9 @@ mShaderManager(shaderManager)
 	});
 	
 	
-	mPowerPromptWindow = std::make_shared<PowerPromptWindow>(screen, *this, mOpenAiApiClient, mShaderManager.render_pass(), mShaderManager);
+	mPowerPromptWindow = std::make_shared<PowerPromptWindow>(screen, *this, mPowerAi, mShaderManager.render_pass(), mShaderManager);
 	
-	mDallESettingsWindow = std::make_shared<DallESettingsWindow>(screen, mOpenAiApiClient, [this](){
+	mPowerSettingsWindow = std::make_shared<PowerSettingsWindow>(screen, mPowerAi, [this](){
 		mPowerPromptWindow->set_visible(true);
 		mPowerPromptWindow->set_modal(true);
 	});
@@ -192,8 +192,8 @@ mShaderManager(shaderManager)
 	mConceptButton->set_icon(FA_PERSON_BOOTH);
 	
 	mConceptButton->set_callback([this](){
-		mDallESettingsWindow->set_visible(true);
-		mDallESettingsWindow->set_modal(true);
+		mPowerSettingsWindow->set_visible(true);
+		mPowerSettingsWindow->set_modal(true);
 		
 		mAddButton->set_pushed(false);
 		mAddButton->popup().set_visible(false);

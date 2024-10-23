@@ -209,10 +209,12 @@ class GizmoManager;
 class MeshActor;
 class MeshActorLoader;
 class MeshBatch;
+class PowerAi;
 class RenderCommon;
 class ShaderManager;
 class ShaderWrapper;
 class SkinnedMeshBatch;
+class TripoAiApiClient;
 class UiCommon;
 class UiManager;
 
@@ -259,8 +261,10 @@ class Application : public nanogui::DraggableScreen
 	std::unique_ptr<SkinnedMeshBatch> mGizmoSkinnedMeshBatch;
 	std::shared_ptr<RenderCommon> mRenderCommon;
 	std::shared_ptr<UiCommon> mUiCommon;
-	std::unique_ptr<DeepMotionApiClient> mDeepMotionApiClient;
+	std::unique_ptr<PowerAi> mPowerAi;
 	std::unique_ptr<OpenAiApiClient> mOpenAiApiClient;
+	std::unique_ptr<TripoAiApiClient> mTripoAiApiClient;
+	std::unique_ptr<DeepMotionApiClient> mDeepMotionApiClient;
 	std::unique_ptr<ActorManager> mActorManager;
 	std::unique_ptr<CameraManager> mCameraManager;
 	std::unique_ptr<entt::registry> mEntityRegistry;
