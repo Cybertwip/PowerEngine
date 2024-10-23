@@ -195,3 +195,29 @@ void SelfContainedMeshCanvas::clear() {
 void SelfContainedMeshCanvas::set_aspect_ratio(float ratio) {
 	mCamera.get_component<CameraComponent>().set_aspect_ratio(ratio);
 }
+
+void SelfContainedMeshCanvas::rotate(const glm::vec3& axis, float angleDegrees) {
+	// Normalize the rotation axis to ensure consistent rotation
+	glm::vec3 normalizedAxis = glm::normalize(axis);
+	
+	// Convert angle from degrees to radians as glm::angleAxis expects radians
+	float angleRadians = glm::radians(angleDegrees);
+	
+	// Create a quaternion representing the rotation
+	glm::quat rotationQuat = glm::angleAxis(angleRadians, normalizedAxis);
+	
+	// Convert the quaternion to a rotation matrix
+	glm::mat4 rotationMatrix = glm::toMat4(rotationQuat);
+	
+	// Apply the rotation to the model matrix
+	// You can choose the order based on your rotation requirements
+	// Pre-multiplying applies the rotation in world space
+	// Post-multiplying applies the rotation in local space
+	// Here, we'll post-multiply to rotate the model in its local space
+	mModelMatrix = mModelMatrix * rotationMatrix;
+	
+	// Alternatively, using quaternion multiplication:
+	// glm::quat currentQuat = glm::quat_cast(mModelMatrix);
+	// currentQuat = rotationQuat * currentQuat; // Note the order
+	// mModelMatrix = glm::toMat4(currentQuat);
+}

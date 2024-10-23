@@ -145,9 +145,8 @@ void PowerPromptWindow::ProcessEvents() {
 	mPreviewCanvas->process_events();
 	
 	if (mActiveActor != nullptr) {
-		auto& transform = mActiveActor.get()->get_component<TransformComponent>();
 		
-		transform.rotate(glm::vec3(0.0f, 1.0f, 0.0f), mRotationAngle);
+		mPreviewCanvas->rotate(glm::vec3(0.0f, 1.0f, 0.0f), mRotationAngle);
 		
 		mRotationAngle++;
 		

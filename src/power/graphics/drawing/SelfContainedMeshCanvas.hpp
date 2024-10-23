@@ -49,6 +49,8 @@ public:
 	
 	void set_aspect_ratio(float ratio);
 	
+	void rotate(const glm::vec3& axis, float angle);
+	
 	ShaderWrapper& get_mesh_shader() {
 		return *mMeshPreviewShader;
 	}
