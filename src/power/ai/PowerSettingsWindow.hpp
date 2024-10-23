@@ -25,6 +25,8 @@ public:
 	 */
 	PowerSettingsWindow(nanogui::Screen& parent, PowerAi& powerAi, std::function<void()> successCallback);
 	
+	~PowerSettingsWindow() = default;
+	
 private:
 	/**
 	 * @brief Handles the synchronization/authentication process.
