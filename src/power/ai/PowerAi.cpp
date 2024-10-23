@@ -85,7 +85,7 @@ void PowerAi::authenticate_async(const std::string& openai_api_key,
 void PowerAi::generate_image_async(const std::string& prompt,
 								   std::function<void((std::stringstream image_stream, const std::string& error))> callback) {
 	// Delegate to OpenAiApiClient
-	mOpenAiApiClient.generate_image_download_async(prompt, [callback](std::stringstream image_stream, const std::string& error_message))> callback) {
+	mOpenAiApiClient.generate_image_download_async(prompt, [callback](std::stringstream image_stream, const std::string& error_message) {
 		if (error_message.empty()) {
 			std::cout << "Image generated successfully" << std::endl;
 			callback(std::move(image_stream), "");

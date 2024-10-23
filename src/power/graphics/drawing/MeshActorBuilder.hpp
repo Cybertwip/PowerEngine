@@ -5,6 +5,7 @@
 #include "graphics/drawing/Mesh.hpp"
 
 #include <memory>
+#include <sstream>
 #include <string>
 #include <unordered_map>
 
@@ -23,7 +24,9 @@ public:
 	MeshActorBuilder(BatchUnit& batches);
 
 	Actor& build(Actor& actor, AnimationTimeProvider& timeProvider, const std::string& path, ShaderWrapper& meshShader, ShaderWrapper& skinnedShader);
-	
+
+	Actor& build(Actor& actor, AnimationTimeProvider& timeProvider, std::stringstream& fbxStream, const std::string& actorName, ShaderWrapper& meshShader, ShaderWrapper& skinnedShader);
+
 	Actor& build_mesh(Actor& actor, AnimationTimeProvider& timeProvider, const std::string& actorName, CompressedSerialization::Deserializer& deserializer, ShaderWrapper& meshShader, ShaderWrapper& skinnedShader);
 
 	Actor& build_skinned(Actor& actor, AnimationTimeProvider& timeProvider, const std::string& actorName, CompressedSerialization::Deserializer& deserializer, ShaderWrapper& meshShader, ShaderWrapper& skinnedShader);

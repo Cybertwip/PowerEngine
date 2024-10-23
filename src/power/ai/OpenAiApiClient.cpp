@@ -295,7 +295,7 @@ std::string OpenAiApiClient::generate_text(const std::string& prompt, const std:
 	
 	// Encode image data to Base64
 	std::string image_str(image_data.begin(), image_data.end());
-	std::string base64_image = HttpUtils::base64_encode(image_str);
+	std::string base64_image = httplib::detail::base64_encode(image_str);
 	
 	// Construct the JSON payload
 	Json::Value post_json_data;

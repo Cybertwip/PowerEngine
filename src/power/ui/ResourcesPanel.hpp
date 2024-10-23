@@ -42,6 +42,10 @@ public:
 	int get_icon_for_file(const DirectoryNode& node);
 	void refresh();
 	
+	const std::string& selected_directory_path() const {
+		return mSelectedDirectoryPath;
+	}
+	
 	//virtual bool keyboard_event(int key, int scancode, int action, int modifiers) override;
 	
 	void process_events();

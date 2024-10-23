@@ -26,9 +26,16 @@ class Button;
 class Label;
 class ImageView;
 class TextBox;
+class Texture;
 }
 
 class PowerPromptWindow : public nanogui::Window {
+private:
+	enum EPowerMode {
+		Image,
+		Mesh
+	};
+	
 public:
 	PowerPromptWindow(nanogui::Screen& parent, ResourcesPanel& resourcesPanel, PowerAi& powerAi, nanogui::RenderPass& renderpass, ShaderManager& shaderManager);
 	
@@ -46,6 +53,7 @@ public:
 	std::shared_ptr<nanogui::Widget> mButtonsPanel;
 	std::shared_ptr<nanogui::Widget> mImageContainer;
 	
+	std::shared_ptr<nanogui::Texture> mImageContent;
 	std::shared_ptr<nanogui::ImageView> mImageView;
 
 	std::shared_ptr<nanogui::Label> mInputLabel;
@@ -69,5 +77,34 @@ public:
 	
 	nanogui::RenderPass& mRenderPass;
 	
+	std::unique_ptr<IMeshBatch> mMeshBatch;
+	std::unique_ptr<ISkinnedMeshBatch> mSkinnedMeshBatch;
+	
+	std::unique_ptr<BatchUnit> mBatchUnit;
+	
+	std::unique_ptr<MeshActorBuilder> mMeshActorBuilder;
+	
+
 	std::shared_ptr<SharedSelfContainedMeshCanvas> mPreviewCanvas;
+	
+	entt::registry mDummyRegistry;
+	
+	AnimationTimeProvider mDummyAnimationTimeProvider;
+	
+	std::unique_ptr<MeshActorImporter> mMeshActorImporter;
+	
+	std::unique_ptr<MeshActorImporter::CompressedMeshActor> mCompressedMeshData;
+	
+	std::string mActorPath;
+	std::string mOutputDirectory;
+	uint64_t mHashId[2] = { 0, 0 };
+	
+	std::unique_ptr<MeshActorExporter> mMeshActorExporter;
+	
+	std::optional<std::unique_ptr<CompressedSerialization::Serializer>> mSerializedPrompt;
+
+
+	std::shared_ptr<Actor> mActiveActor;
+	
+	EPowerMode mPowerMode;
 };

@@ -3,9 +3,20 @@
 #include "ShaderManager.hpp"
 #include "OpenAiApiClient.hpp"
 
+#include "components/PlaybackComponent.hpp"
 #include "filesystem/ImageUtils.hpp"
+#include "filesystem/MeshActorImporter.hpp"
+#include "filesystem/MeshActorExporter.hpp"
+#include "graphics/drawing/BatchUnit.hpp"
+#include "graphics/drawing/MeshActorBuilder.hpp"
+#include "graphics/drawing/SelfContainedMeshBatch.hpp"
+#include "graphics/drawing/SharedSelfContainedMeshCanvas.hpp"
+#include "graphics/drawing/SelfContainedSkinnedMeshBatch.hpp"
+
 #include "graphics/drawing/SharedSelfContainedMeshCanvas.hpp"
 #include "ui/ResourcesPanel.hpp"
+
+
 
 #include <nanogui/layout.h>
 #include <nanogui/screen.h>
@@ -29,7 +40,7 @@
 namespace fs = std::filesystem;
 
 PowerPromptWindow::PowerPromptWindow(nanogui::Screen& parent, ResourcesPanel& resourcesPanel, PowerAi& powerAi, nanogui::RenderPass& renderpass, ShaderManager& shaderManager)
-: nanogui::Window(parent), mResourcesPanel(resourcesPanel), mPowerAi(powerAi), mRenderPass(renderpass) {
+: nanogui::Window(parent), mResourcesPanel(resourcesPanel), mPowerAi(powerAi), mRenderPass(renderpass), mDummyAnimationTimeProvider(60 * 30) {
 	
 	set_fixed_size(nanogui::Vector2i(600, 600)); // Adjusted size for better layout
 	set_layout(std::make_unique<nanogui::BoxLayout>(nanogui::Orientation::Vertical, nanogui::Alignment::Middle, 10, 10));
@@ -43,6 +54,15 @@ PowerPromptWindow::PowerPromptWindow(nanogui::Screen& parent, ResourcesPanel& re
 		this->set_modal(false);
 	});
 	
+	// cached texture
+	
+	mImageContent = std::make_shared<nanogui::Texture>(
+													   nanogui::Texture::PixelFormat::RGBA,       // Set pixel format to RGBA
+													   nanogui::Texture::ComponentFormat::UInt8,  // Use unsigned 8-bit components for each channel
+													   nanogui::Vector2i(2048, 2048),
+													   nanogui::Texture::InterpolationMode::Bilinear,
+													   nanogui::Texture::InterpolationMode::Nearest,
+													   nanogui::Texture::WrapMode::ClampToEdge);
 	
 	// **New Centering Container for ImageView**
 	mImageContainer = std::make_shared<nanogui::Widget>(std::make_optional<std::reference_wrapper<nanogui::Widget>>(*this));
@@ -53,15 +73,22 @@ PowerPromptWindow::PowerPromptWindow(nanogui::Screen& parent, ResourcesPanel& re
 	mImageView = std::make_shared<nanogui::ImageView>(*mImageContainer, parent); // Assuming ImageView can take an empty string initially
 	mImageView->set_fixed_size(nanogui::Vector2i(300, 300));
 	mImageView->set_background_color(nanogui::Color(0.0f, 0.0f, 0.0f, 1.0f));
-
+	
 	mImageView->set_visible(false);
-
+	
 	mPreviewCanvas = std::make_shared<SharedSelfContainedMeshCanvas>(*mImageContainer, parent);
 	
 	mPreviewCanvas->set_fixed_size(nanogui::Vector2i(300, 300));
 	mPreviewCanvas->set_background_color(nanogui::Color(0.0f, 0.0f, 0.0f, 1.0f));
 	
 	mPreviewCanvas->set_visible(true);
+	
+	// Mesh and Skinned Mesh Batches
+	mMeshBatch = std::make_unique<SelfContainedMeshBatch>(mRenderPass, mPreviewCanvas->get_mesh_shader());
+	mSkinnedMeshBatch = std::make_unique<SelfContainedSkinnedMeshBatch>(mRenderPass, mPreviewCanvas->get_skinned_mesh_shader());
+	mBatchUnit = std::make_unique<BatchUnit>(*mMeshBatch, *mSkinnedMeshBatch);
+	mMeshActorBuilder = std::make_unique<MeshActorBuilder>(*mBatchUnit);
+	mMeshActorImporter = std::make_unique<MeshActorImporter>();
 	
 	// Input Panel for Prompt
 	mInputPanel = std::make_shared<nanogui::Widget>(std::make_optional<std::reference_wrapper<nanogui::Widget>>(*this));
@@ -95,7 +122,7 @@ PowerPromptWindow::PowerPromptWindow(nanogui::Screen& parent, ResourcesPanel& re
 		nanogui::async([this]() { this->SaveImageAsync(); });
 	});
 	mSaveButton->set_tooltip("Save the generated image");
-
+	
 	// Status Label
 	mStatusLabel = std::make_shared<nanogui::Label>(*this, "Status: Idle", "sans-bold");
 	mStatusLabel->set_fixed_height(20);
@@ -246,7 +273,7 @@ void PowerPromptWindow::SubmitPromptAsync() {
 		
 		if (generate_image && !generate_animation) {
 			// Asynchronously generate the image using OpenAiApiClient
-			mPowerAi.generate_image_download_async(prompt_description, [this](std::stringstream image_stream, const std::string& error) {
+			mPowerAi.generate_image_async(prompt_description, [this](std::stringstream image_stream, const std::string& error) {
 				if (!error.empty()) {
 					std::cerr << "Failed to generate or download image: " << error << std::endl;
 					nanogui::async([this]() {
@@ -279,22 +306,19 @@ void PowerPromptWindow::SubmitPromptAsync() {
 				// Update the ImageView with the new texture
 				nanogui::async([this]() {
 					// Assuming ImageUtils::create_texture_from_data exists and works as expected
-					auto texture = ImageUtils::create_texture_from_data(mImageData.data(), mImageData.size());
-					if (texture) {
-						mImageView->set_image(texture);
-						mImageView->set_visible(true);
-						mPreviewCanvas->set_visible(false);
-						
-						// Update Status
-						std::lock_guard<std::mutex> lock(mStatusMutex);
-						mStatusLabel->set_caption("Status: Image generated successfully.");
-						
-						// Enable Save Button
-						mSaveButton->set_enabled(true);
-					} else {
-						std::cerr << "Failed to create texture from image data." << std::endl;
-						mStatusLabel->set_caption("Status: Failed to create image texture.");
-					}
+					
+					nanogui::Texture::decompress_into(mImageData, *mImageContent);
+					
+					mImageView->set_image(mImageContent);
+					mImageView->set_visible(true);
+					mPreviewCanvas->set_visible(false);
+					
+					// Update Status
+					std::lock_guard<std::mutex> lock(mStatusMutex);
+					mStatusLabel->set_caption("Status: Image generated successfully.");
+					
+					// Enable Save Button
+					mSaveButton->set_enabled(true);
 					
 					// Re-enable Generate Button
 					mGenerateButton->set_enabled(true);
@@ -307,7 +331,30 @@ void PowerPromptWindow::SubmitPromptAsync() {
 				mStatusLabel->set_caption("Status: Operation not implemented yet.");
 			}
 		} else if (generate_model && !generate_rig && !generate_animation) {
-			// I'll do this later
+			mPowerAi.generate_mesh_async(prompt_description, [this](std::stringstream model_stream, const std::string& error){
+				
+				mActorPath = "generated_model.fbx";
+				mOutputDirectory = mResourcesPanel.selected_directory_path();
+				
+				auto actorName = std::filesystem::path(mActorPath).stem().string();
+				
+				auto actor = std::make_shared<Actor>(mDummyRegistry);
+				
+				mMeshActorBuilder->build(*actor, mDummyAnimationTimeProvider, model_stream, mActorPath, mPreviewCanvas->get_mesh_shader(), mPreviewCanvas->get_skinned_mesh_shader());
+				
+				mPreviewCanvas->set_active_actor(actor);
+				
+				mActiveActor = actor;
+
+				nanogui::async([this]() {
+					std::lock_guard<std::mutex> lock(mStatusMutex);
+					mStatusLabel->set_caption("Status: Model generated successfully.");
+					mSaveButton->set_enabled(true);
+					
+					// Re-enable Generate Button
+					mGenerateButton->set_enabled(true);
+				});
+			});
 		} else if (generate_model && generate_rig && !generate_animation) {
 			// I'll do this later
 		} else if (generate_model && generate_rig && generate_animation) {

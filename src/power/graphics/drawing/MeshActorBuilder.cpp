@@ -326,3 +326,55 @@ Actor& MeshActorBuilder::build(Actor& actor, AnimationTimeProvider& timeProvider
 	
 	return actor;
 }
+
+
+
+Actor& MeshActorBuilder::build(Actor& actor, AnimationTimeProvider& timeProvider, std::stringstream& fbxStream, const std::string& path, ShaderWrapper& meshShader, ShaderWrapper& skinnedShader) {
+	
+	std::string actorName = std::filesystem::path(path).stem().string();
+	
+	
+	// Create Deserializer
+	CompressedSerialization::Deserializer deserializer;
+	
+	auto compressedMeshActor = mMeshActorImporter->process(fbxStream, actorName, "./dummyDestination/");
+	
+	std::stringstream compressedData;
+	
+	compressedMeshActor->mMesh.mSerializer->get_compressed_data(compressedData);
+	
+	uint64_t hash_id[] = { 0, 0 };
+	
+	Md5::generate_md5_from_compressed_data(compressedData, hash_id);
+	
+	// Write the unique hash identifier to the header
+	compressedMeshActor->mMesh.mSerializer->write_header_raw(hash_id, sizeof(hash_id));
+	
+	
+	// get the compressed data with the header included this time, - should optimize
+	
+	std::stringstream compressedDataHeader;
+	
+	compressedMeshActor->mMesh.mSerializer->get_compressed_data(compressedDataHeader);
+	
+	
+	if (!deserializer.initialize(compressedDataHeader)) {
+		std::cerr << "Failed to load serialized file: " << path << "\n";
+		return actor;
+	}
+	
+	
+	auto filePath = std::filesystem::path(compressedMeshActor->mMesh.mPrecomputedPath);
+	auto extension = filePath.extension().string();
+	
+	if (extension == ".psk") {
+		return build_skinned(actor, timeProvider, actorName, deserializer, meshShader, skinnedShader);
+	} else if (extension == ".pma") {
+		return build_mesh(actor, timeProvider, actorName, deserializer, meshShader, skinnedShader);
+	} else {
+		std::cerr << "Unsupported file extension: " << extension << "\n";
+		return actor;
+	}
+	
+	return actor;
+}
