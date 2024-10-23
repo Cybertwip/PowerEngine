@@ -157,9 +157,6 @@ mPowerAi(powerAi)
 		deepmotion_port_box_->set_value(deepmotion_api_base_port_);
 		deepmotion_client_id_box_->set_value(deepmotion_client_id_);
 		deepmotion_client_secret_box_->set_value(deepmotion_client_secret_);
-		
-		// Perform authentication
-		on_sync();
 	}
 }
 

@@ -168,6 +168,12 @@ mShaderManager(shaderManager)
 		mPowerPromptWindow->set_modal(true);
 	});
 	
+	mPowerSettingsWindow->set_visible(false);
+	mPowerSettingsWindow->set_modal(false);
+	
+	mPowerPromptWindow->set_visible(false);
+	mPowerPromptWindow->set_modal(false);
+	
 	mDeepMotionSettings->set_visible(false);
 	mDeepMotionSettings->set_modal(false);
 	
