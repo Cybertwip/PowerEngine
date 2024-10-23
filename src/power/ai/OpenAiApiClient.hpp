@@ -9,27 +9,24 @@
 #include <sstream>
 #include <json/json.h>
 
-/**
- * @brief A client for interacting with the OpenAI DALL-E API.
- *
- * This class provides methods to authenticate, generate images from text prompts,
- * list available models, and handle responses asynchronously using callbacks.
- */
-class DallEApiClient {
+class OpenAiApiClient {
 public:
 	// Type aliases for callback functions
 	using GenerateImageCallback = std::function<void(const std::string& image_url, const std::string& error_message)>;
 	using ListModelsCallback = std::function<void(const Json::Value& models, const std::string& error_message)>;
 	
-	/**
-	 * @brief Constructs the DallEApiClient.
-	 */
-	DallEApiClient();
+	// Type alias for text generation callback
+	using GenerateTextCallback = std::function<void(const std::string& text, const std::string& error_message)>;
 	
 	/**
-	 * @brief Destructor for DallEApiClient.
+	 * @brief Constructs the OpenAiApiClient.
 	 */
-	~DallEApiClient();
+	OpenAiApiClient();
+	
+	/**
+	 * @brief Destructor for OpenAiApiClient.
+	 */
+	~OpenAiApiClient();
 	
 	// Authentication Methods
 	
@@ -90,6 +87,23 @@ public:
 	 */
 	void list_models_async(ListModelsCallback callback);
 	
+	/**
+	 * @brief Asynchronously generates text using the vision module by providing a prompt and an image.
+	 *
+	 * @param prompt The text prompt for the model.
+	 * @param image_data The raw PNG image data as a vector of bytes.
+	 * @param callback The callback function to be invoked upon completion.
+	 */
+	void generate_text_async(const std::string& prompt, const std::vector<uint8_t>& image_data, GenerateTextCallback callback);
+	
+	/**
+	 * @brief Asynchronously generates text based solely on a text prompt.
+	 *
+	 * @param prompt The text prompt for the model.
+	 * @param callback The callback function to be invoked upon completion.
+	 */
+	void generate_text_async(const std::string& prompt, GenerateTextCallback callback);
+	
 	// Synchronous Methods
 	
 	/**
@@ -106,6 +120,23 @@ public:
 	 * @return Json::Value The JSON response containing the list of models.
 	 */
 	Json::Value list_models();
+	
+	/**
+	 * @brief Generates text using the vision module by providing a prompt and an image.
+	 *
+	 * @param prompt The text prompt for the model.
+	 * @param image_data The raw PNG image data as a vector of bytes.
+	 * @return std::string The generated text if successful, empty string otherwise.
+	 */
+	std::string generate_text(const std::string& prompt, const std::vector<uint8_t>& image_data);
+	
+	/**
+	 * @brief Generates text based solely on a text prompt.
+	 *
+	 * @param prompt The text prompt for the model.
+	 * @return std::string The generated text if successful, empty string otherwise.
+	 */
+	std::string generate_text(const std::string& prompt);
 	
 private:
 	/**

@@ -3,6 +3,7 @@
 #include "ShaderManager.hpp"
 #include "SkinnedMesh.hpp"
 #include "graphics/shading/MaterialProperties.hpp"
+#include "graphics/drawing/SelfContainedMeshBatch.hpp"
 #include "components/CameraComponent.hpp"
 #include "components/TransformComponent.hpp"
 #include "components/DrawableComponent.hpp"

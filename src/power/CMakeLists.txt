@@ -66,10 +66,14 @@ add_executable(PowerEngine
 
     ${CMAKE_CURRENT_LIST_DIR}/ai/DallESettingsWindow.hpp
     ${CMAKE_CURRENT_LIST_DIR}/ai/DallESettingsWindow.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/ai/DallEApiClient.hpp
-    ${CMAKE_CURRENT_LIST_DIR}/ai/DallEApiClient.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/ai/DallEPromptWindow.hpp
-    ${CMAKE_CURRENT_LIST_DIR}/ai/DallEPromptWindow.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/ai/OpenAiApiClient.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/ai/OpenAiApiClient.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/ai/PowerAi.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/ai/PowerAi.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/ai/PowerPromptWindow.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/ai/PowerPromptWindow.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/ai/TripoAiApiClient.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/ai/TripoAiApiClient.cpp
 
 ${CMAKE_CURRENT_LIST_DIR}/actors/IActorManager.hpp
     ${CMAKE_CURRENT_LIST_DIR}/actors/IActorSelectedCallback.hpp

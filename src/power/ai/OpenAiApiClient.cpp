@@ -1,4 +1,4 @@
-#include "DallEApiClient.hpp"
+#include "OpenAiApiClient.hpp"
 
 #include <cctype>
 #include <algorithm>
@@ -29,16 +29,16 @@ inline bool is_base64(uint8_t c) {
 
 }
 
-DallEApiClient::DallEApiClient()
+OpenAiApiClient::OpenAiApiClient()
 : api_key_(""), client_(nullptr) {
 	// Default constructor does not initialize the client
 }
 
-DallEApiClient::~DallEApiClient() {
+OpenAiApiClient::~OpenAiApiClient() {
 	// Destructor can be used to clean up resources if needed
 }
 
-std::string DallEApiClient::base64_encode(const std::string& input) const {
+std::string OpenAiApiClient::base64_encode(const std::string& input) const {
 	std::string ret;
 	int i = 0;
 	int j = 0;
@@ -85,7 +85,7 @@ std::string DallEApiClient::base64_encode(const std::string& input) const {
 	return ret;
 }
 
-bool DallEApiClient::save_api_key(const std::string& file_path) const {
+bool OpenAiApiClient::save_api_key(const std::string& file_path) const {
 	std::lock_guard<std::mutex> lock(client_mutex_);
 	
 	if (api_key_.empty()) {
@@ -106,7 +106,7 @@ bool DallEApiClient::save_api_key(const std::string& file_path) const {
 	return true;
 }
 
-bool DallEApiClient::load_api_key(const std::string& file_path) {
+bool OpenAiApiClient::load_api_key(const std::string& file_path) {
 	std::lock_guard<std::mutex> lock(client_mutex_);
 	
 	std::ifstream ifs(file_path, std::ios::in);
@@ -132,7 +132,7 @@ bool DallEApiClient::load_api_key(const std::string& file_path) {
 	return true;
 }
 
-void DallEApiClient::initialize_client(const std::string& api_key) {
+void OpenAiApiClient::initialize_client(const std::string& api_key) {
 	client_ = std::make_unique<httplib::SSLClient>("api.openai.com", 443);
 	client_->set_default_headers({
 		{ "Authorization", "Bearer " + api_key },
@@ -140,7 +140,7 @@ void DallEApiClient::initialize_client(const std::string& api_key) {
 	});
 }
 
-bool DallEApiClient::authenticate(const std::string& api_key) {	
+bool OpenAiApiClient::authenticate(const std::string& api_key) {
 	if (api_key.empty()) {
 		std::cerr << "API key is empty. Cannot authenticate." << std::endl;
 		return false;
@@ -154,7 +154,7 @@ bool DallEApiClient::authenticate(const std::string& api_key) {
 	return !models.empty();
 }
 
-void DallEApiClient::authenticate_async(const std::string& api_key, AuthCallback callback) {
+void OpenAiApiClient::authenticate_async(const std::string& api_key, AuthCallback callback) {
 	// Launch asynchronous task
 	std::thread([this, api_key, callback]() {
 		bool success = authenticate(api_key);
@@ -168,7 +168,7 @@ void DallEApiClient::authenticate_async(const std::string& api_key, AuthCallback
 	}).detach();
 }
 
-std::string DallEApiClient::generate_image(const std::string& prompt) {
+std::string OpenAiApiClient::generate_image(const std::string& prompt) {
 	std::lock_guard<std::mutex> lock(client_mutex_);
 	
 	if (api_key_.empty()) {
@@ -219,7 +219,7 @@ std::string DallEApiClient::generate_image(const std::string& prompt) {
 	return "";
 }
 
-void DallEApiClient::generate_image_async(const std::string& prompt, GenerateImageCallback callback) {
+void OpenAiApiClient::generate_image_async(const std::string& prompt, GenerateImageCallback callback) {
 	// Launch asynchronous task
 	std::thread([this, prompt, callback]() {
 		std::string image_url = generate_image(prompt);
@@ -231,7 +231,7 @@ void DallEApiClient::generate_image_async(const std::string& prompt, GenerateIma
 	}).detach();
 }
 
-Json::Value DallEApiClient::list_models() {
+Json::Value OpenAiApiClient::list_models() {
 	std::lock_guard<std::mutex> lock(client_mutex_);
 	
 	if (api_key_.empty()) {
@@ -270,7 +270,7 @@ Json::Value DallEApiClient::list_models() {
 	return Json::Value(); // Return empty JSON value on failure
 }
 
-void DallEApiClient::list_models_async(ListModelsCallback callback) {
+void OpenAiApiClient::list_models_async(ListModelsCallback callback) {
 	// Launch asynchronous task
 	std::thread([this, callback]() {
 		Json::Value models = list_models();
@@ -282,3 +282,174 @@ void DallEApiClient::list_models_async(ListModelsCallback callback) {
 	}).detach();
 }
 
+std::string OpenAiApiClient::generate_text(const std::string& prompt, const std::vector<uint8_t>& image_data) {
+	std::lock_guard<std::mutex> lock(client_mutex_);
+	
+	if (api_key_.empty()) {
+		std::cerr << "API key is not set. Please authenticate first." << std::endl;
+		return "";
+	}
+	
+	// Encode image data to Base64
+	std::string image_str(image_data.begin(), image_data.end());
+	std::string base64_image = base64_encode(image_str);
+	
+	// Construct the JSON payload
+	Json::Value post_json_data;
+	post_json_data["model"] = "gpt-4o-mini";
+	
+	Json::Value message;
+	message["role"] = "user";
+	
+	Json::Value content;
+	
+	// Add text content
+	Json::Value text_content;
+	text_content["type"] = "text";
+	text_content["text"] = prompt;
+	content.append(text_content);
+	
+	// Add image URL content
+	Json::Value image_content;
+	image_content["type"] = "image_url";
+	Json::Value image_url_obj;
+	image_url_obj["url"] = "data:image/png;base64," + base64_image;
+	image_content["image_url"] = image_url_obj;
+	content.append(image_content);
+	
+	message["content"] = content;
+	
+	Json::Value messages;
+	messages.append(message);
+	
+	post_json_data["messages"] = messages;
+	
+	Json::StreamWriterBuilder writer;
+	std::string json_payload = Json::writeString(writer, post_json_data);
+	
+	// Send POST request to /v1/chat/completions
+	auto res = client_->Post("/v1/chat/completions", json_payload, "application/json");
+	
+	if (res) {
+		if (res->status == 200) {
+			// Parse JSON response to extract generated text
+			Json::CharReaderBuilder reader_builder;
+			std::unique_ptr<Json::CharReader> reader(reader_builder.newCharReader());
+			Json::Value json_data;
+			std::string errors;
+			
+			bool parsing_successful = reader->parse(res->body.c_str(),
+													res->body.c_str() + res->body.size(),
+													&json_data,
+													&errors);
+			if (parsing_successful && json_data.isMember("choices")) {
+				const Json::Value& choices = json_data["choices"];
+				if (choices.isArray() && choices.size() > 0 && choices[0].isMember("message") && choices[0]["message"].isMember("content")) {
+					return choices[0]["message"]["content"].asString();
+				}
+			}
+			std::cerr << "Failed to parse JSON response or 'content' not found. Errors: " << errors << std::endl;
+		} else if (res->status == 401) {
+			std::cerr << "Authentication failed: Invalid API key." << std::endl;
+		} else {
+			std::cerr << "Failed to generate text. HTTP Status: " << res->status << std::endl;
+			std::cerr << "Response Body: " << res->body << std::endl;
+		}
+	} else {
+		std::cerr << "Failed to generate text. No response from server." << std::endl;
+	}
+	
+	return "";
+}
+
+void OpenAiApiClient::generate_text_async(const std::string& prompt, const std::vector<uint8_t>& image_data, GenerateTextCallback callback) {
+	// Launch asynchronous task
+	std::thread([this, prompt, image_data, callback]() {
+		std::string generated_text = generate_text(prompt, image_data);
+		if (!generated_text.empty()) {
+			callback(generated_text, "");
+		} else {
+			callback("", "Failed to generate text.");
+		}
+	}).detach();
+}
+
+std::string OpenAiApiClient::generate_text(const std::string& prompt) {
+	std::lock_guard<std::mutex> lock(client_mutex_);
+	
+	if (api_key_.empty()) {
+		std::cerr << "API key is not set. Please authenticate first." << std::endl;
+		return "";
+	}
+	
+	// Construct the JSON payload for text-only generation
+	Json::Value post_json_data;
+	post_json_data["model"] = "gpt-4o-mini";
+	
+	Json::Value message;
+	message["role"] = "user";
+	
+	Json::Value content;
+	
+	// Add text content
+	Json::Value text_content;
+	text_content["type"] = "text";
+	text_content["text"] = prompt;
+	content.append(text_content);
+	
+	message["content"] = content;
+	
+	Json::Value messages;
+	messages.append(message);
+	
+	post_json_data["messages"] = messages;
+	
+	Json::StreamWriterBuilder writer;
+	std::string json_payload = Json::writeString(writer, post_json_data);
+	
+	// Send POST request to /v1/chat/completions
+	auto res = client_->Post("/v1/chat/completions", json_payload, "application/json");
+	
+	if (res) {
+		if (res->status == 200) {
+			// Parse JSON response to extract generated text
+			Json::CharReaderBuilder reader_builder;
+			std::unique_ptr<Json::CharReader> reader(reader_builder.newCharReader());
+			Json::Value json_data;
+			std::string errors;
+			
+			bool parsing_successful = reader->parse(res->body.c_str(),
+													res->body.c_str() + res->body.size(),
+													&json_data,
+													&errors);
+			if (parsing_successful && json_data.isMember("choices")) {
+				const Json::Value& choices = json_data["choices"];
+				if (choices.isArray() && choices.size() > 0 && choices[0].isMember("message") && choices[0]["message"].isMember("content")) {
+					return choices[0]["message"]["content"].asString();
+				}
+			}
+			std::cerr << "Failed to parse JSON response or 'content' not found. Errors: " << errors << std::endl;
+		} else if (res->status == 401) {
+			std::cerr << "Authentication failed: Invalid API key." << std::endl;
+		} else {
+			std::cerr << "Failed to generate text. HTTP Status: " << res->status << std::endl;
+			std::cerr << "Response Body: " << res->body << std::endl;
+		}
+	} else {
+		std::cerr << "Failed to generate text. No response from server." << std::endl;
+	}
+	
+	return "";
+}
+
+void OpenAiApiClient::generate_text_async(const std::string& prompt, GenerateTextCallback callback) {
+	// Launch asynchronous task
+	std::thread([this, prompt, callback]() {
+		std::string generated_text = generate_text(prompt);
+		if (!generated_text.empty()) {
+			callback(generated_text, "");
+		} else {
+			callback("", "Failed to generate text.");
+		}
+	}).detach();
+}

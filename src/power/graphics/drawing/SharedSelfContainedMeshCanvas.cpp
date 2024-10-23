@@ -2,6 +2,8 @@
 
 #include "filesystem/ImageUtils.hpp"
 
+#include <nanogui/screen.h>
+
 #if defined(NANOGUI_USE_METAL)
 #include <nanogui/metal.h>
 #include "MetalHelper.hpp"

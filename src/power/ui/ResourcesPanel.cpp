@@ -1,7 +1,7 @@
 #include "ui/ResourcesPanel.hpp"
 
-#include "ai/DallEApiClient.hpp"
-#include "ai/DallEPromptWindow.hpp"
+#include "ai/OpenAiApiClient.hpp"
+#include "ai/PowerPromptWindow.hpp"
 #include "ai/DallESettingsWindow.hpp"
 #include "ai/DeepMotionSettingsWindow.hpp"
 #include "ai/DeepMotionPromptWindow.hpp"
@@ -116,7 +116,7 @@ const DirectoryNode* FindNodeByPath(const DirectoryNode& currentNode, const std:
 }
 
 
-ResourcesPanel::ResourcesPanel(nanogui::Widget& parent, nanogui::Screen& screen, DirectoryNode& root_directory_node, std::shared_ptr<IActorVisualManager> actorVisualManager, std::shared_ptr<SceneTimeBar> sceneTimeBar, AnimationTimeProvider& animationTimeProvider, MeshActorLoader& meshActorLoader, ShaderManager& shaderManager, DeepMotionApiClient& deepMotionApiClient, DallEApiClient& dallEApiClient, UiManager& uiManager)
+ResourcesPanel::ResourcesPanel(nanogui::Widget& parent, nanogui::Screen& screen, DirectoryNode& root_directory_node, std::shared_ptr<IActorVisualManager> actorVisualManager, std::shared_ptr<SceneTimeBar> sceneTimeBar, AnimationTimeProvider& animationTimeProvider, MeshActorLoader& meshActorLoader, ShaderManager& shaderManager, DeepMotionApiClient& deepMotionApiClient, OpenAiApiClient& OpenAiApiClient, UiManager& uiManager)
 : Panel(parent, "Resources"),
 mRootDirectoryNode(root_directory_node),
 mActorVisualManager(actorVisualManager),
@@ -127,7 +127,7 @@ mSceneTimeBar(sceneTimeBar),
 mGlobalAnimationTimeProvider(animationTimeProvider),
 mUiManager(uiManager),
 mDeepMotionApiClient(deepMotionApiClient),
-mDallEApiClient(dallEApiClient),
+mOpenAiApiClient(OpenAiApiClient),
 mShaderManager(shaderManager)
 {
 	// Set the layout
@@ -161,11 +161,11 @@ mShaderManager(shaderManager)
 	});
 	
 	
-	mDallEPromptWindow = std::make_shared<DallEPromptWindow>(screen, *this, mDallEApiClient, mShaderManager.render_pass(), mShaderManager);
+	mPowerPromptWindow = std::make_shared<PowerPromptWindow>(screen, *this, mOpenAiApiClient, mShaderManager.render_pass(), mShaderManager);
 	
-	mDallESettingsWindow = std::make_shared<DallESettingsWindow>(screen, mDallEApiClient, [this](){
-		mDallEPromptWindow->set_visible(true);
-		mDallEPromptWindow->set_modal(true);
+	mDallESettingsWindow = std::make_shared<DallESettingsWindow>(screen, mOpenAiApiClient, [this](){
+		mPowerPromptWindow->set_visible(true);
+		mPowerPromptWindow->set_modal(true);
 	});
 	
 	

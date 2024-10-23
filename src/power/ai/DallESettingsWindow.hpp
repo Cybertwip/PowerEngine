@@ -11,8 +11,8 @@
 #include <functional>
 #include <memory>
 
-// Forward declaration of DallEApiClient to reduce compilation dependencies
-class DallEApiClient;
+// Forward declaration of OpenAiApiClient to reduce compilation dependencies
+class OpenAiApiClient;
 
 /**
  * @brief A settings window for configuring and authenticating with the OpenAI DALL-E API.
@@ -23,10 +23,10 @@ public:
 	 * @brief Constructs the DallESettingsWindow.
 	 *
 	 * @param parent Reference to the parent nanogui::Screen.
-	 * @param dalleClient Reference to an instance of DallEApiClient.
+	 * @param dalleClient Reference to an instance of OpenAiApiClient.
 	 * @param successCallback Callback function to be invoked upon successful authentication.
 	 */
-	DallESettingsWindow(nanogui::Screen& parent, DallEApiClient& dalleClient, std::function<void()> successCallback);
+	DallESettingsWindow(nanogui::Screen& parent, OpenAiApiClient& dalleClient, std::function<void()> successCallback);
 	
 private:
 	// UI Components
@@ -43,8 +43,8 @@ private:
 	// Callback upon successful authentication
 	std::function<void()> mSuccessCallback;
 	
-	// Reference to the DallEApiClient
-	DallEApiClient& mDallEApiClient;
+	// Reference to the OpenAiApiClient
+	OpenAiApiClient& mOpenAiApiClient;
 	
 	/**
 	 * @brief Handles the synchronization (authentication) process when the "Sync" button is clicked.

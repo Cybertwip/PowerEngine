@@ -13,7 +13,7 @@
  * @brief A client for interacting with the DeepMotion API.
  *
  * This class provides methods to authenticate, process text to motion, manage models,
- * and handle job statuses asynchronously using callbacks.
+ * handle job statuses, and animate models both synchronously and asynchronously using callbacks.
  */
 class DeepMotionApiClient {
 public:
@@ -24,6 +24,7 @@ public:
 	using StatusCallback = std::function<void(const Json::Value& status, const std::string& error_message)>;
 	using DownloadCallback = std::function<void(const Json::Value& results, const std::string& error_message)>;
 	using ModelsListCallback = std::function<void(const Json::Value& models, const std::string& error_message)>;
+	using AnimateModelCallback = std::function<void(const Json::Value& animation_data, const std::string& error_message)>;
 	
 	/**
 	 * @brief Constructs the DeepMotionApiClient.
@@ -93,6 +94,21 @@ public:
 	 * @param callback The callback function to be invoked upon completion.
 	 */
 	void list_models_async(ModelsListCallback callback);
+	
+	/**
+	 * @brief Asynchronously animates a model based on a text prompt.
+	 *
+	 * This method handles the entire workflow:
+	 * 1. Processes the text to motion.
+	 * 2. Polls the job status until completion.
+	 * 3. Downloads the animation results.
+	 *
+	 * @param prompt The text prompt for animation.
+	 * @param model_id The model ID to use for animation.
+	 * @param callback The callback function to receive the final animation data or error.
+	 */
+	void animate_model_async(const std::string& prompt, const std::string& model_id,
+							 AnimateModelCallback callback);
 	
 	// Synchronous Methods (optional to retain for synchronous use)
 	
@@ -211,6 +227,14 @@ private:
 	 * @return std::string The model ID if successful, empty string otherwise.
 	 */
 	std::string store_model_internal(const std::string& model_url, const std::string& model_name);
+	
+	/**
+	 * @brief Helper function to convert a string to uppercase.
+	 *
+	 * @param input The input string.
+	 * @return std::string The uppercase version of the input string.
+	 */
+	std::string to_uppercase(const std::string& input) const;
 	
 	// Member variables
 	std::unique_ptr<httplib::SSLClient> client_; /**< HTTP client for API communication */

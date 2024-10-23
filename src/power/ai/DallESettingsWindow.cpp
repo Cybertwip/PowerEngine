@@ -1,5 +1,5 @@
 #include "DallESettingsWindow.hpp"
-#include "DallEApiClient.hpp" // Ensure this includes the updated DallEApiClient
+#include "OpenAiApiClient.hpp" 
 
 #include <nanogui/layout.h>
 #include <nanogui/theme.h>
@@ -11,11 +11,11 @@
 #include <iostream>
 #include <regex>
 
-DallESettingsWindow::DallESettingsWindow(nanogui::Screen& parent, DallEApiClient& dalleClient, std::function<void()> successCallback)
+DallESettingsWindow::DallESettingsWindow(nanogui::Screen& parent, OpenAiApiClient& dalleClient, std::function<void()> successCallback)
 : nanogui::Window(parent, "DALL-E Settings"),
 data_saved_(false),
 mSuccessCallback(successCallback),
-mDallEApiClient(dalleClient)
+mOpenAiApiClient(dalleClient)
 {
 	// Configure window properties
 	set_position(nanogui::Vector2i(10, 10));
@@ -69,7 +69,7 @@ mDallEApiClient(dalleClient)
 	
 	// Attempt to load existing API key and authenticate
 	if (load_from_file("dalle_api_key.dat")) {
-		api_key_box_->set_value(mDallEApiClient.get_api_key()); // Assuming DallEApiClient has get_api_key()
+		api_key_box_->set_value(mOpenAiApiClient.get_api_key()); // Assuming OpenAiApiClient has get_api_key()
 		on_sync(); // Automatically authenticate
 	}
 }
@@ -89,7 +89,7 @@ void DallESettingsWindow::on_sync() {
 	status_label_->set_color(nanogui::Color(255, 255, 0, 255)); // Yellow
 	
 	// Call authenticate asynchronously
-	mDallEApiClient.authenticate_async(api_key_input, [&](bool success, const std::string& error_message) {
+	mOpenAiApiClient.authenticate_async(api_key_input, [&](bool success, const std::string& error_message) {
 		// Ensure UI updates are performed on the main thread
 		nanogui::async([this, success, error_message, api_key_input]() {
 			if (success) {
@@ -135,9 +135,9 @@ bool DallESettingsWindow::load_from_file(const std::string& filename) {
 		return false;
 	}
 	
-	// Assuming DallEApiClient has a method to set the API key directly
+	// Assuming OpenAiApiClient has a method to set the API key directly
 	// Alternatively, you can authenticate here
-	return mDallEApiClient.authenticate(api_key);
+	return mOpenAiApiClient.authenticate(api_key);
 }
 
 bool DallESettingsWindow::save_to_file(const std::string& filename, const std::string& api_key) {

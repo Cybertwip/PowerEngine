@@ -4,7 +4,6 @@
 #include "graphics/drawing/Batch.hpp"
 
 #include "graphics/drawing/BatchUnit.hpp"
-#include "graphics/drawing/SelfContainedMeshBatch.hpp"
 #include "graphics/drawing/SelfContainedSkinnedMeshBatch.hpp"
 
 #if defined(NANOGUI_USE_METAL)

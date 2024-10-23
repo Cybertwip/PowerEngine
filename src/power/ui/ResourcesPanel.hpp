@@ -10,9 +10,9 @@
 #include <entt/entt.hpp>
 
 class IActorVisualManager;
-class DallEApiClient;
+class OpenAiApiClient;
 class DallESettingsWindow;
-class DallEPromptWindow;
+class PowerPromptWindow;
 class DeepMotionApiClient;
 class DeepMotionSettingsWindow;
 class FileView;
@@ -34,7 +34,7 @@ public:
 	ResourcesPanel(nanogui::Widget& parent, nanogui::Screen& screen,
 				   DirectoryNode& root_directory_node, std::shared_ptr<IActorVisualManager> actorVisualManager,
 				   std::shared_ptr<SceneTimeBar> sceneTimeBar,
-				   AnimationTimeProvider& animationTimeProvider, MeshActorLoader& meshActorLoader, ShaderManager& shaderManager, DeepMotionApiClient& deepMotionApiClient, DallEApiClient& dallEApiClient, UiManager& uiManager);
+				   AnimationTimeProvider& animationTimeProvider, MeshActorLoader& meshActorLoader, ShaderManager& shaderManager, DeepMotionApiClient& deepMotionApiClient, OpenAiApiClient& OpenAiApiClient, UiManager& uiManager);
 	
 	~ResourcesPanel();
 	
@@ -84,7 +84,7 @@ private:
 
 	std::shared_ptr<DallESettingsWindow> mDallESettingsWindow;
 
-	std::shared_ptr<DallEPromptWindow> mDallEPromptWindow;
+	std::shared_ptr<PowerPromptWindow> mPowerPromptWindow;
 
 	std::shared_ptr<nanogui::Button> mConceptButton;
 	std::shared_ptr<nanogui::Button> mModelButton;
@@ -100,6 +100,6 @@ private:
 	UiManager& mUiManager;
 	
 	DeepMotionApiClient& mDeepMotionApiClient;
-	DallEApiClient& mDallEApiClient;
+	OpenAiApiClient& mOpenAiApiClient;
 	ShaderManager& mShaderManager;
 };

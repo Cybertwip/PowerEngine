@@ -17,8 +17,9 @@
 #include <vector>
 
 // Forward Declarations
-class DallEApiClient;
+class OpenAiApiClient;
 class ResourcesPanel;
+class SharedSelfContainedMeshCanvas;
 
 namespace nanogui {
 class Button;
@@ -27,9 +28,18 @@ class ImageView;
 class TextBox;
 }
 
-class DallEPromptWindow : public nanogui::Window {
+class PowerPromptWindow : public nanogui::Window {
+private:
+	enum EPromptMode {
+		None,
+		Image,
+		Model,
+		Rigging,
+		Animation
+	};
+	
 public:
-	DallEPromptWindow(nanogui::Screen& parent, ResourcesPanel& resourcesPanel, DallEApiClient& dallEApiClient, nanogui::RenderPass& renderpass, ShaderManager& shaderManager);
+	PowerPromptWindow(nanogui::Screen& parent, ResourcesPanel& resourcesPanel, OpenAiApiClient& OpenAiApiClient, nanogui::RenderPass& renderpass, ShaderManager& shaderManager);
 	
 	void ProcessEvents();
 	
@@ -53,7 +63,7 @@ public:
 	std::shared_ptr<nanogui::Button> mGenerateButton;
 	std::shared_ptr<nanogui::Button> mSaveButton;
 	
-	DallEApiClient& mDallEApiClient;
+	OpenAiApiClient& mOpenAiApiClient;
 	
 	// Status Label
 	std::shared_ptr<nanogui::Label> mStatusLabel;
@@ -67,4 +77,8 @@ public:
 	std::unique_ptr<httplib::SSLClient> mDownloadClient; // Added member
 	
 	nanogui::RenderPass& mRenderPass;
+	
+	std::shared_ptr<SharedSelfContainedMeshCanvas> mPreviewCanvas;
+
+	EPromptMode mPromptMode;
 };

@@ -27,7 +27,7 @@ inline bool is_base64(uint8_t c) {
 	return (std::isalnum(c) || (c == '+') || (c == '/'));
 }
 
-}
+} // namespace DeepMotionUtils
 
 DeepMotionApiClient::DeepMotionApiClient()
 : client_(nullptr), authenticated_(false) {}
@@ -111,6 +111,13 @@ bool DeepMotionApiClient::read_file(const std::string& file_path, std::vector<ch
 	
 	file.close();
 	return true;
+}
+
+std::string DeepMotionApiClient::to_uppercase(const std::string& input) const {
+	std::string result = input;
+	std::transform(result.begin(), result.end(), result.begin(),
+				   [](unsigned char c) { return std::toupper(c); });
+	return result;
 }
 
 std::string DeepMotionApiClient::store_model_internal(const std::string& model_url, const std::string& model_name) {
@@ -427,99 +434,6 @@ Json::Value DeepMotionApiClient::list_models() {
 	return empty_response;
 }
 
-std::string DeepMotionApiClient::upload_model(std::stringstream& model_stream, const std::string& model_name, const std::string& model_ext) {
-	std::unique_lock<std::mutex> lock(client_mutex_);
-	
-	if (!authenticated_) {
-		std::cerr << "Client not authenticated. Please authenticate before uploading models." << std::endl;
-		return "";
-	}
-	
-	// Validate model data
-	if (model_stream.str().empty()) {
-		std::cerr << "Model data is empty." << std::endl;
-		return "";
-	}
-	
-	// Validate model extension
-	if (model_ext.empty()) {
-		std::cerr << "Model extension is empty." << std::endl;
-		return "";
-	}
-	
-	lock.unlock();
-	// Step 1: Get the model upload URL
-	std::string upload_url = get_model_upload_url(false, model_ext);
-	
-	lock.lock();
-	
-	if (upload_url.empty()) {
-		std::cerr << "Failed to obtain model upload URL." << std::endl;
-		return "";
-	}
-	
-	// Step 2: Parse the upload URL to get host and path
-	std::string protocol, host, upload_path;
-	std::size_t protocol_pos = upload_url.find("://");
-	if (protocol_pos != std::string::npos) {
-		protocol = upload_url.substr(0, protocol_pos);
-		protocol_pos += 3; // Move past "://"
-	} else {
-		std::cerr << "Invalid upload URL format: " << upload_url << std::endl;
-		return "";
-	}
-	
-	std::size_t host_pos = upload_url.find("/", protocol_pos);
-	if (host_pos != std::string::npos) {
-		host = upload_url.substr(protocol_pos, host_pos - protocol_pos);
-		upload_path = upload_url.substr(host_pos);
-	} else {
-		host = upload_url.substr(protocol_pos);
-		upload_path = "/";
-	}
-	
-	// Step 3: Upload the model via PUT request
-	// Determine the port based on the protocol
-	int port = 443; // Default HTTPS port
-	if (protocol == "http") {
-		port = 80;
-	}
-	
-	httplib::SSLClient upload_client(host.c_str(), port);
-	upload_client.set_compress(false);
-	
-	std::string content_type = "application/octet-stream";
-	
-	std::string model_data_str = model_stream.str();
-	auto res = upload_client.Put(upload_path.c_str(),
-								 model_data_str.c_str(),
-								 model_data_str.size(),
-								 content_type.c_str());
-	
-	if (!res) {
-		std::cerr << "Failed to upload model. Network error." << std::endl;
-		return "";
-	}
-	
-	if (res->status != 200 && res->status != 201) {
-		std::cerr << "Failed to upload model. HTTP Status: " << res->status << std::endl;
-		return "";
-	}
-	
-	lock.unlock();
-	// Step 4: Store the model using the API
-	std::string modelId = store_model_internal(upload_url, model_name);
-	lock.lock();
-	
-	if (modelId.empty()) {
-		std::cerr << "Failed to store the uploaded model." << std::endl;
-		return "";
-	}
-	
-	std::cout << "Model uploaded and stored successfully: " << model_name << std::endl;
-	return modelId;
-}
-
 // ---------------------
 // Asynchronous Methods Implementation
 // ---------------------
@@ -609,5 +523,152 @@ void DeepMotionApiClient::list_models_async(ModelsListCallback callback) {
 				callback(models, "Failed to list models.");
 			}
 		}
+	}).detach();
+}
+
+void DeepMotionApiClient::animate_model_async(const std::string& prompt, const std::string& model_id,
+											  AnimateModelCallback callback) {
+	// Launch asynchronous task
+	std::thread([this, prompt, model_id, callback]() {
+		// Step 1: Process text to motion
+		process_text_to_motion_async(prompt, model_id, [this, callback](const std::string& request_id, const std::string& error) {
+			if (!request_id.empty()) {
+				std::cout << "Text to motion request submitted. Request ID: " << request_id << std::endl;
+				
+				// Step 2: Poll job status until completion
+				auto poll = [this, request_id, callback]() {
+					// Define a std::function for recursive polling
+					std::function<void()> poll_status;
+					poll_status = [this, request_id, callback, &poll_status]() {
+						check_job_status_async(request_id, [this, request_id, callback, &poll_status](const Json::Value& status, const std::string& error) {
+							if (!error.empty()) {
+								std::cerr << "Failed to check job status: " << error << std::endl;
+								// Retry after a delay
+								std::this_thread::sleep_for(std::chrono::seconds(3));
+								poll_status(); // Recursive call
+								return;
+							}
+							
+							if (status.empty()) {
+								// Retry after a delay
+								std::this_thread::sleep_for(std::chrono::seconds(3));
+								poll_status();
+								return;
+							}
+							
+							// Extract and uppercase the status
+							std::string job_status = status["status"].asString();
+							std::string job_status_upper = to_uppercase(job_status);
+							int progress = status.get("progress", 0).asInt();
+							
+							std::cout << "Job Status: " << job_status_upper << " (" << progress << "%)" << std::endl;
+							
+							if (job_status_upper == "SUCCESS") {
+								// Step 3: Download job results
+								download_job_results_async(request_id, [this, callback](const Json::Value& results, const std::string& error) {
+									if (!error.empty()) {
+										std::cerr << "Failed to download job results: " << error << std::endl;
+										callback(Json::Value(), "Failed to download job results.");
+										return;
+									}
+									
+									// Assuming 'results' contains the animation data
+									callback(results, "");
+								});
+							} else if (job_status_upper == "FAILURE") {
+								std::cerr << "Job failed." << std::endl;
+								callback(Json::Value(), "Job failed.");
+							} else {
+								// Continue polling
+								std::this_thread::sleep_for(std::chrono::seconds(3));
+								poll_status();
+							}
+						});
+					};
+					
+					// Start polling
+					poll_status();
+				};
+				
+				// Start polling in a separate thread
+				std::thread(poll).detach();
+			} else {
+				std::cerr << "Failed to process text to motion: " << error << std::endl;
+				callback(Json::Value(), "Failed to process text to motion.");
+			}
+		});
+	}).detach();
+}
+void DeepMotionApiClient::animate_model_async(const std::string& prompt, const std::string& model_id,
+											  AnimateModelCallback callback) {
+	// Launch asynchronous task
+	std::thread([this, prompt, model_id, callback]() {
+		// Step 1: Process text to motion
+		process_text_to_motion_async(prompt, model_id, [this, callback](const std::string& request_id, const std::string& error) {
+			if (!request_id.empty()) {
+				std::cout << "Text to motion request submitted. Request ID: " << request_id << std::endl;
+				
+				// Step 2: Poll job status until completion
+				auto poll = [this, request_id, callback]() {
+					// Define a std::function for recursive polling
+					std::function<void()> poll_status;
+					poll_status = [this, request_id, callback, &poll_status]() {
+						check_job_status_async(request_id, [this, request_id, callback, &poll_status](const Json::Value& status, const std::string& error) {
+							if (!error.empty()) {
+								std::cerr << "Failed to check job status: " << error << std::endl;
+								// Retry after a delay
+								std::this_thread::sleep_for(std::chrono::seconds(3));
+								poll_status(); // Recursive call
+								return;
+							}
+							
+							if (status.empty()) {
+								// Retry after a delay
+								std::this_thread::sleep_for(std::chrono::seconds(3));
+								poll_status();
+								return;
+							}
+							
+							// Extract and uppercase the status
+							std::string job_status = status["status"].asString();
+							std::string job_status_upper = to_uppercase(job_status);
+							int progress = status.get("progress", 0).asInt();
+							
+							std::cout << "Job Status: " << job_status_upper << " (" << progress << "%)" << std::endl;
+							
+							if (job_status_upper == "SUCCESS") {
+								// Step 3: Download job results
+								download_job_results_async(request_id, [this, callback](const Json::Value& results, const std::string& error) {
+									if (!error.empty()) {
+										std::cerr << "Failed to download job results: " << error << std::endl;
+										callback(Json::Value(), "Failed to download job results.");
+										return;
+									}
+									
+									// Assuming 'results' contains the animation data
+									callback(results, "");
+								});
+							} else if (job_status_upper == "FAILURE") {
+								std::cerr << "Job failed." << std::endl;
+								callback(Json::Value(), "Job failed.");
+							} else {
+								// Continue polling
+								std::this_thread::sleep_for(std::chrono::seconds(3));
+								poll_status();
+							}
+						});
+					};
+					
+					// Start polling
+					poll_status();
+				};
+				
+				// Start polling in a separate thread
+				std::thread(poll).detach();
+			} else {
+				std::cerr << "Failed to process text to motion: " << error << std::endl;
+				callback(Json::Value(), "Failed to process text to motion.");
+			}
+		});
 	}).detach();
 }
