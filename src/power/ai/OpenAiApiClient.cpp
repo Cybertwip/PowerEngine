@@ -234,19 +234,12 @@ bool OpenAiApiClient::download_file(const std::string& url, std::stringstream& d
 	if (url.find("https://") == 0) {
 		is_https = true;
 	} else if (url.find("http://") == 0) {
-		is_https = false;
-	} else {
 		std::cerr << "Unsupported URL scheme in URL: " << url << std::endl;
 		return false;
 	}
 	
 	// Create an HTTP or HTTPS client based on the URL scheme
-	std::unique_ptr<httplib::Client> http_client;
-	if (is_https) {
-		http_client = std::make_unique<httplib::SSLClient>(host.c_str(), 443);
-	} else {
-		http_client = std::make_unique<httplib::Client>(host.c_str(), 80);
-	}
+	std::unique_ptr<httplib::SSLClient> http_client = std::make_unique<httplib::SSLClient>(host.c_str(), 443);
 	
 	// Optional: Set timeout or other client settings here
 	
