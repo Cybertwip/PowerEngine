@@ -104,7 +104,7 @@ void PowerAi::generate_mesh_async(const std::string& prompt,
 								  bool generate_animation,
 								  std::function<void((std::stringstream model_stream, const std::string& error_message))> callback) {
 	// Delegate to TripoAiApiClient
-	mTripoAiApiClient.generate_mesh_async(prompt, "FBX", false, 10000, generate_rig, generate_animation, [callback](std::stringstream model_stream, const std::string& error_message) {
+	mTripoAiApiClient.generate_mesh_async(prompt, "fbx", false, 10000, generate_rig, generate_animation, [callback](std::stringstream model_stream, const std::string& error_message) {
 		if (error_message.empty()) {
 			std::cout << "Mesh generation successful" << std::endl;
 			callback(std::move(model_stream), "");
