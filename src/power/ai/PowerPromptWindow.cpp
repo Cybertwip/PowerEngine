@@ -350,8 +350,6 @@ void PowerPromptWindow::SubmitPromptAsync() {
 				auto actor = std::make_shared<Actor>(mDummyRegistry);
 				
 				mMeshActorBuilder->build(*actor, mDummyAnimationTimeProvider, model_stream, mActorPath, mPreviewCanvas->get_mesh_shader(), mPreviewCanvas->get_skinned_mesh_shader());
-				
-				mRotationAngle = 0;
 
 				mPreviewCanvas->set_active_actor(actor);
 				
