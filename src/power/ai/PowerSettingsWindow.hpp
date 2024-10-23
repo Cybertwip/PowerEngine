@@ -25,11 +25,6 @@ public:
 	 */
 	PowerSettingsWindow(nanogui::Screen& parent, PowerAi& powerAi, std::function<void()> successCallback);
 	
-	/**
-	 * @brief Destructor for PowerSettingsWindow.
-	 */
-	~PowerSettingsWindow();
-	
 private:
 	/**
 	 * @brief Handles the synchronization/authentication process.
