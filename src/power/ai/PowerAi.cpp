@@ -83,15 +83,15 @@ void PowerAi::authenticate_async(const std::string& openai_api_key,
  * @brief Asynchronously generates an image based on a text prompt.
  */
 void PowerAi::generate_image_async(const std::string& prompt,
-								   std::function<void(const std::string& image_url, const std::string& error_message)> callback) {
+								   std::function<void((std::stringstream image_stream, const std::string& error))> callback) {
 	// Delegate to OpenAiApiClient
-	mOpenAiApiClient.generate_image_async(prompt, [callback](const std::string& image_url, const std::string& error_message) {
+	mOpenAiApiClient.generate_image_download_async(prompt, [callback](std::stringstream image_stream, const std::string& error_message))> callback) {
 		if (error_message.empty()) {
-			std::cout << "Image generated successfully. URL: " << image_url << std::endl;
-			callback(image_url, "");
+			std::cout << "Image generated successfully" << std::endl;
+			callback(std::move(image_stream), "");
 		} else {
 			std::cerr << "Failed to generate image: " << error_message << std::endl;
-			callback("", error_message);
+			callback({}, error_message);
 		}
 	});
 }
@@ -104,7 +104,7 @@ void PowerAi::generate_mesh_async(const std::string& prompt,
 	// Delegate to TripoAiApiClient
 	mTripoAiApiClient.generate_mesh_async(prompt, "FBX", true, 5000, [callback](std::stringstream model_stream, const std::string& error_message) {
 		if (error_message.empty()) {
-			std::cout << "Mesh generation task submitted successfully. Task ID: " << task_id << std::endl;
+			std::cout << "Mesh generation successful" << std::endl;
 			callback(std::move(model_stream), "");
 		} else {
 			std::cerr << "Failed to generate mesh: " << error_message << std::endl;

@@ -72,7 +72,7 @@ public:
 	 *                 Signature: void(const std::string& image_url, const std::string& error_message)
 	 */
 	void generate_image_async(const std::string& prompt,
-							  std::function<void(const std::string& image_url, const std::string& error_message)> callback);
+							  std::function<void((std::stringstream image_stream, const std::string& error))> callback);
 	
 	/**
 	 * @brief Asynchronously generates a 3D mesh based on a text prompt.
