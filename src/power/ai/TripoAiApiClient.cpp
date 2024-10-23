@@ -551,7 +551,7 @@ void TripoAiApiClient::generate_mesh(const std::string& prompt, const std::strin
 													if (final_status == "SUCCESS") {
 														// Step 7: Optional Animation Retargeting
 														if (generate_animation) {
-															animate_retarget_async(model_task_id, format, "preset:run", [this, animate_rig_task_id, callback](const std::string& animate_retarget_task_id, const std::string& retarget_error) {
+															animate_retarget_async(animate_rig_task_id, format, "preset:run", [this, animate_rig_task_id, callback](const std::string& animate_retarget_task_id, const std::string& retarget_error) {
 																if (!animate_retarget_task_id.empty()) {
 																	std::cout << "Animate Retarget task ID: " << animate_retarget_task_id << std::endl;
 																	
