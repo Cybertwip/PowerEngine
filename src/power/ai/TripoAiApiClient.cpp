@@ -360,6 +360,7 @@ bool TripoAiApiClient::download_file(const std::string& url, std::stringstream& 
 	}
 }
 
+
 void TripoAiApiClient::generate_mesh(const std::string& prompt, const std::string& format, bool quad, int face_limit, DownloadModelCallback callback) {
 	// Step 1: Generate the model
 	generate_model_async(prompt, [this, format, quad, face_limit, callback](const std::string& model_task_id, const std::string& error) {
@@ -450,8 +451,8 @@ void TripoAiApiClient::generate_mesh(const std::string& prompt, const std::strin
 								
 								if (final_status == "SUCCESS") {
 									// Step 5: Download the model
-									if (conversion_response.isMember("model")) {
-										std::string model_url = conversion_response["model"].asString();
+									if (conversion_response.isMember("output") && conversion_response["output"].isMember("model")) {
+										std::string model_url = conversion_response["output"]["model"].asString();
 										std::cout << "Model URL: " << model_url << std::endl;
 										
 										std::stringstream model_stream;
@@ -463,8 +464,8 @@ void TripoAiApiClient::generate_mesh(const std::string& prompt, const std::strin
 											callback(std::stringstream(), "Failed to download the model.");
 										}
 									} else {
-										std::cerr << "'model' URL not found in conversion response." << std::endl;
-										callback(std::stringstream(), "'model' URL not found in conversion response.");
+										std::cerr << "'model' URL not found inside 'output' in conversion response." << std::endl;
+										callback(std::stringstream(), "'model' URL not found inside 'output' in conversion response.");
 									}
 								} else if (final_status == "FAILURE") {
 									std::cerr << "Model conversion task failed for task ID: " << convert_task_id << std::endl;
