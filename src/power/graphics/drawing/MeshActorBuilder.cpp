@@ -368,7 +368,34 @@ Actor& MeshActorBuilder::build(Actor& actor, AnimationTimeProvider& timeProvider
 	auto extension = filePath.extension().string();
 	
 	if (extension == ".psk") {
-		return build_skinned(actor, timeProvider, actorName, deserializer, meshShader, skinnedShader);
+		auto& skinned_actor = build_skinned(actor, timeProvider, actorName, deserializer, meshShader, skinnedShader);
+		
+		if (compressedMeshActor->mAnimations.has_value()) {
+			auto serializedPrompt = std::move(compressedMeshActor->mAnimations.value()[0].mSerializer);
+			
+			std::stringstream animationCompressedData;
+			
+			serializedPrompt->get_compressed_data(animationCompressedData);
+			
+			CompressedSerialization::Deserializer animationDeserializer;
+			
+			animationDeserializer.initialize(animationCompressedData);
+			
+			
+			auto animation = std::make_unique<Animation>();
+			
+			animation->deserialize(animationDeserializer);
+			
+			auto& playbackComponent = skinned_actor.get_component<PlaybackComponent>();
+			
+			auto playbackData = std::make_shared<PlaybackData>(playbackComponent.getPlaybackData()->get_skeleton(), std::move(animation));
+			
+			playbackComponent.setPlaybackData(playbackData);
+		}
+
+		
+		return skinned_actor;
+		
 	} else if (extension == ".pma") {
 		return build_mesh(actor, timeProvider, actorName, deserializer, meshShader, skinnedShader);
 	} else {
