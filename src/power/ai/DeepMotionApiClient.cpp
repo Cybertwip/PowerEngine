@@ -469,6 +469,101 @@ void DeepMotionApiClient::process_text_to_motion_async(const std::string& prompt
 	}).detach();
 }
 
+
+std::string DeepMotionApiClient::upload_model(std::stringstream& model_stream, const std::string& model_name, const std::string& model_ext) {
+	std::unique_lock<std::mutex> lock(client_mutex_);
+	
+	if (!authenticated_) {
+		std::cerr << "Client not authenticated. Please authenticate before uploading models." << std::endl;
+		return "";
+	}
+	
+	// Validate model data
+	if (model_stream.str().empty()) {
+		std::cerr << "Model data is empty." << std::endl;
+		return "";
+	}
+	
+	// Validate model extension
+	if (model_ext.empty()) {
+		std::cerr << "Model extension is empty." << std::endl;
+		return "";
+	}
+	
+	lock.unlock();
+	// Step 1: Get the model upload URL
+	std::string upload_url = get_model_upload_url(false, model_ext);
+	
+	lock.lock();
+	
+	if (upload_url.empty()) {
+		std::cerr << "Failed to obtain model upload URL." << std::endl;
+		return "";
+	}
+	
+	// Step 2: Parse the upload URL to get host and path
+	std::string protocol, host, upload_path;
+	std::size_t protocol_pos = upload_url.find("://");
+	if (protocol_pos != std::string::npos) {
+		protocol = upload_url.substr(0, protocol_pos);
+		protocol_pos += 3; // Move past "://"
+	} else {
+		std::cerr << "Invalid upload URL format: " << upload_url << std::endl;
+		return "";
+	}
+	
+	std::size_t host_pos = upload_url.find("/", protocol_pos);
+	if (host_pos != std::string::npos) {
+		host = upload_url.substr(protocol_pos, host_pos - protocol_pos);
+		upload_path = upload_url.substr(host_pos);
+	} else {
+		host = upload_url.substr(protocol_pos);
+		upload_path = "/";
+	}
+	
+	// Step 3: Upload the model via PUT request
+	// Determine the port based on the protocol
+	int port = 443; // Default HTTPS port
+	if (protocol == "http") {
+		port = 80;
+	}
+	
+	httplib::SSLClient upload_client(host.c_str(), port);
+	upload_client.set_compress(false);
+	
+	std::string content_type = "application/octet-stream";
+	
+	std::string model_data_str = model_stream.str();
+	auto res = upload_client.Put(upload_path.c_str(),
+								 model_data_str.c_str(),
+								 model_data_str.size(),
+								 content_type.c_str());
+	
+	if (!res) {
+		std::cerr << "Failed to upload model. Network error." << std::endl;
+		return "";
+	}
+	
+	if (res->status != 200 && res->status != 201) {
+		std::cerr << "Failed to upload model. HTTP Status: " << res->status << std::endl;
+		return "";
+	}
+	
+	lock.unlock();
+	// Step 4: Store the model using the API
+	std::string modelId = store_model_internal(upload_url, model_name);
+	lock.lock();
+	
+	if (modelId.empty()) {
+		std::cerr << "Failed to store the uploaded model." << std::endl;
+		return "";
+	}
+	
+	std::cout << "Model uploaded and stored successfully: " << model_name << std::endl;
+	return modelId;
+}
+
+
 void DeepMotionApiClient::upload_model_async(std::stringstream model_stream, const std::string& model_name,
 											 const std::string& model_ext, UploadModelCallback callback) {
 	// Launch asynchronous task

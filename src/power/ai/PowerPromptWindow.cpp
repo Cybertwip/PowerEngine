@@ -28,8 +28,8 @@
 
 namespace fs = std::filesystem;
 
-PowerPromptWindow::PowerPromptWindow(nanogui::Screen& parent, ResourcesPanel& resourcesPanel, OpenAiApiClient& OpenAiApiClient, nanogui::RenderPass& renderpass, ShaderManager& shaderManager)
-: nanogui::Window(parent), mResourcesPanel(resourcesPanel), mOpenAiApiClient(OpenAiApiClient), mRenderPass(renderpass), mPromptMode(EPromptMode::None) {
+PowerPromptWindow::PowerPromptWindow(nanogui::Screen& parent, ResourcesPanel& resourcesPanel, PowerAi& powerAi, nanogui::RenderPass& renderpass, ShaderManager& shaderManager)
+: nanogui::Window(parent), mResourcesPanel(resourcesPanel), mPowerAi(powerAi), mRenderPass(renderpass) {
 	
 	set_fixed_size(nanogui::Vector2i(600, 600)); // Adjusted size for better layout
 	set_layout(std::make_unique<nanogui::BoxLayout>(nanogui::Orientation::Vertical, nanogui::Alignment::Middle, 10, 10));
@@ -236,7 +236,7 @@ void PowerPromptWindow::SubmitPromptAsync() {
 		
 		if (generate_image && !generate_animation) {
 			// Asynchronously generate the image using OpenAiApiClient
-			mOpenAiApiClient.generate_image_async(prompt_description, [this](const std::string& image_url, const std::string& error) {
+			mPowerAi.generate_image_async(prompt_description, [this](const std::string& image_url, const std::string& error) {
 				if (!error.empty()) {
 					std::cerr << "Failed to generate image: " << error << std::endl;
 					nanogui::async([this]() {

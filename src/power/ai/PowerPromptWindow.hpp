@@ -17,7 +17,7 @@
 #include <vector>
 
 // Forward Declarations
-class OpenAiApiClient;
+class PowerAi;
 class ResourcesPanel;
 class SharedSelfContainedMeshCanvas;
 
@@ -39,7 +39,7 @@ private:
 	};
 	
 public:
-	PowerPromptWindow(nanogui::Screen& parent, ResourcesPanel& resourcesPanel, OpenAiApiClient& OpenAiApiClient, nanogui::RenderPass& renderpass, ShaderManager& shaderManager);
+	PowerPromptWindow(nanogui::Screen& parent, ResourcesPanel& resourcesPanel, PowerAi& powerAi, nanogui::RenderPass& renderpass, ShaderManager& shaderManager);
 	
 	void ProcessEvents();
 	
@@ -79,6 +79,6 @@ public:
 	nanogui::RenderPass& mRenderPass;
 	
 	std::shared_ptr<SharedSelfContainedMeshCanvas> mPreviewCanvas;
-
-	EPromptMode mPromptMode;
+	
+	PowerAi& mPowerAi;
 };
