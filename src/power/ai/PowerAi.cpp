@@ -110,7 +110,7 @@ void PowerAi::generate_mesh_async(const std::string& prompt,
 			std::cout << "Mesh generation successful" << std::endl;
 
 			if (generate_rig && generate_animation) {
-				mDeepMotionApiClient.generate_animation_async(std::move(model_stream), "DummyModel", "fbx", animation_prompt, [this, callback, generate_rig, generate_animation](std::stringstream& model_stream, const std::string& error_message){
+				mDeepMotionApiClient.generate_animation_async(model_stream, "DummyModel", "fbx", animation_prompt, [this, callback, generate_rig, generate_animation](std::stringstream& model_stream, const std::string& error_message){
 					if (error_message.empty()) {
 						std::cout << "Mesh generation successful" << std::endl;
 						

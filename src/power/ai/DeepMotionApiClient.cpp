@@ -567,7 +567,7 @@ std::string DeepMotionApiClient::upload_model(std::stringstream& model_stream, c
 	return modelId;
 }
 
-void DeepMotionApiClient::upload_model_async(std::stringstream model_stream, const std::string& model_name,
+void DeepMotionApiClient::upload_model_async(std::stringstream& model_stream, const std::string& model_name,
 											 const std::string& model_ext, UploadModelCallback callback) {
 	// Launch asynchronous task
 	std::thread([this, stream = std::move(model_stream), model_name, model_ext, callback]() mutable {

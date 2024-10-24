@@ -268,7 +268,7 @@ void PromptWindow::SubmitPromptAsync() {
 		});
 		
 		// Asynchronously upload the model
-		mDeepMotionApiClient.upload_model_async(std::move(*modelData), unique_model_name, "fbx",
+		mDeepMotionApiClient.upload_model_async(*modelData, unique_model_name, "fbx",
 												[this, prompt](const std::string& modelId, const std::string& error) {
 			if (!error.empty()) {
 				std::cerr << "Failed to upload model: " << error << std::endl;
