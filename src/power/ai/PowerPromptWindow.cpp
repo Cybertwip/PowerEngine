@@ -162,7 +162,7 @@ void PowerPromptWindow::SubmitPromptAsync() {
 		mStatusLabel->set_caption("Status: Generating image...");
 	}
 	
-	std::string prompt_setup = "Analyze this prompt and return a json with boolean fields generate_image, generate_model, generate_rig, generate_animation, pose_type, prompt_description, animation_description, based on its analysis. If it's 2d generate_image must be true, if it's 3d generate_image must be false and generate_model must be true, prompt_description must not include actions, animation_description should include the actions and must be at least 3 words  Only reply with the json object and remove 'A-pose' or 'T-pose' words from descriptions and mark either 'A-pose' or 'T-pose' into pose_type, if generate_model and generate_animation are true, generate_rig must be true. Prompt: ";
+	std::string prompt_setup = "Analyze this prompt and return a json with boolean fields generate_image, generate_model, generate_rig, generate_animation, pose_type, prompt_description, animation_description, based on its analysis. If it's 2d generate_image must be true, if it's 3d generate_image must be false and generate_model must be true, prompt_description must not include actions, animation_description should include the actions and must be at least 3 words  Only reply with the json object and remove 'A-pose' or 'T-pose' words from descriptions and set pose_type to 'T-pose', if generate_model and generate_animation are true, generate_rig must be true. Prompt: ";
 	
 	std::string prompt = mInputTextBox->value();
 	
