@@ -286,7 +286,7 @@ void PowerPromptWindow::SubmitPromptAsync() {
 			std::cerr << "JSON Parsing Warning: 'prompt_description' field is missing or not a string." << std::endl;
 		}
 		
-		if (!animation_description.empty() && generate_model && generate_animation) {
+		if (!animation_description.empty() && generate_model && generate_animation && !pose_type.empty()) {
 			prompt_description += ", " + pose_type;
 		}
 
