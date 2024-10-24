@@ -100,16 +100,26 @@ void PowerAi::generate_image_async(const std::string& prompt,
  * @brief Asynchronously generates a 3D mesh based on a text prompt.
  */
 void PowerAi::generate_mesh_async(const std::string& prompt,
+								  const std::string& animation_prompt,
 								  bool generate_rig,
 								  bool generate_animation,
 								  std::function<void((std::stringstream model_stream, const std::string& error_message))> callback) {
 	// Delegate to TripoAiApiClient
-	mTripoAiApiClient.generate_mesh_async(prompt, "fbx", false, 10000, generate_rig, [this, prompt, callback, generate_rig, generate_animation](std::stringstream model_stream, const std::string& error_message) {
+	mTripoAiApiClient.generate_mesh_async(prompt, "fbx", false, 10000, generate_rig, [this, prompt, animation_prompt, callback, generate_rig, generate_animation](std::stringstream model_stream, const std::string& error_message) {
 		if (error_message.empty()) {
 			std::cout << "Mesh generation successful" << std::endl;
 
 			if (generate_rig && generate_animation) {
-				mDeepMotionApiClient.generate_animation_async(std::move(model_stream), "DummyModel", "fbx", prompt, callback);
+				mDeepMotionApiClient.generate_animation_async(std::move(model_stream), "DummyModel", "fbx", animation_prompt, [this, callback, generate_rig, generate_animation](std::stringstream& model_stream, const std::string& error_message){
+					if (error_message.empty()) {
+						std::cout << "Mesh generation successful" << std::endl;
+						
+						callback(std::move(model_stream), "");
+
+					} else {
+						callback(std::move(model_stream), "");
+					}
+				});
 			} else {
 				callback(std::move(model_stream), "");
 			}

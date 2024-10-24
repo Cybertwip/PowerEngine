@@ -82,6 +82,7 @@ public:
 	 *                 Signature: void(const std::string& task_id, const std::string& error_message)
 	 */
 	void generate_mesh_async(const std::string& prompt,
+							 const std::string& animation_prompt,
 							 bool generate_rig,
 							 bool generate_animation,
 							 std::function<void((std::stringstream model_stream, const std::string& error))> callback);

@@ -550,7 +550,6 @@ void TripoAiApiClient::generate_mesh(const std::string& prompt, const std::strin
 													}
 													
 													if (final_status == "SUCCESS") {
-														// Step 7: Optional Animation Retargeting
 														
 														// If no animation, proceed to download the rigged model
 														if (conversion_response.isMember("output") && conversion_response["output"].isMember("model")) {

@@ -162,7 +162,7 @@ void PowerPromptWindow::SubmitPromptAsync() {
 		mStatusLabel->set_caption("Status: Generating image...");
 	}
 	
-	std::string prompt_setup = "Analyze this prompt and return a json with boolean fields generate_image, generate_model, generate_rig, generate_animation, prompt_description, based on its analysis, only set generate_model to true if the prompt includes the word '3d', if the word '3d' is included and generate_animation is true, then generate_rig must also be true, if the prompt does not include the word '3d' then generate_rig must be false, if the prompt does not include the word 'rig', then generate_rig must be false, if the prompt does not include the word '3d' but generate_animation is true, then generate_image must be true and generate_model and generate_rig must be false, if the prompt includes the word '3d' but does not include the word 'T-pose' or 'A-pose' then generate_animation and generate_rig must be false, parse the prompt and fill prompt_description with the description of the prompt, if nothing matches, all the fields must be set to false and prompt_description must be an empty string, reply only with the json. Prompt: ";
+	std::string prompt_setup = "Analyze this prompt and return a json with boolean fields generate_image, generate_model, generate_rig, generate_animation, prompt_description, based on its analysis, only set generate_model to true if the prompt includes the word '3d', if the word '3d' is included and generate_animation is true, then generate_rig must also be true, if the prompt does not include the word '3d' then generate_rig must be false, if the prompt does not include the word 'rig', then generate_rig must be false, if the prompt does not include the word '3d' but generate_animation is true, then generate_image must be true and generate_model and generate_rig must be false, if the prompt includes the word '3d' but does not include the word 'T-pose' or 'A-pose' then generate_animation and generate_rig must be false, parse the prompt, split it and fill prompt_description with the description of the prompt and rig, and fill animation_description with the description of the animation prompt if generate_animation is true, if nothing matches, all the fields must be set to false and prompt_description must be an empty string, reply only with the json. Prompt: ";
 	
 	std::string prompt = mInputTextBox->value();
 	
@@ -230,6 +230,7 @@ void PowerPromptWindow::SubmitPromptAsync() {
 		bool generate_rig = false;
 		bool generate_animation = false;
 		std::string prompt_description;
+		std::string animation_description;
 		
 		// Validate and extract 'generate_image'
 		if (root.isMember("generate_image") && root["generate_image"].isBool()) {
@@ -266,6 +267,14 @@ void PowerPromptWindow::SubmitPromptAsync() {
 			std::cerr << "JSON Parsing Warning: 'prompt_description' field is missing or not a string." << std::endl;
 		}
 		
+		// Validate and extract 'prompt_description'
+		if (root.isMember("animation_description") && root["animation_description"].isString()) {
+			prompt_description = root["animation_description"].asString();
+		} else {
+			std::cerr << "JSON Parsing Warning: 'prompt_description' field is missing or not a string." << std::endl;
+		}
+
+		
 		// For debugging purposes, you can print the extracted values
 		std::cout << "Parsed JSON:" << std::endl;
 		std::cout << "generate_image: " << generate_image << std::endl;
@@ -273,7 +282,8 @@ void PowerPromptWindow::SubmitPromptAsync() {
 		std::cout << "generate_rig: " << generate_rig << std::endl;
 		std::cout << "generate_animation: " << generate_animation << std::endl;
 		std::cout << "prompt_description: " << prompt_description << std::endl;
-				
+		std::cout << "animation_description: " << animation_description << std::endl;
+
 		if (generate_image && !generate_animation) {
 			// Asynchronously generate the image using OpenAiApiClient
 			mPowerAi.generate_image_async(prompt_description, [this](std::stringstream image_stream, const std::string& error) {
@@ -340,7 +350,7 @@ void PowerPromptWindow::SubmitPromptAsync() {
 				mStatusLabel->set_caption("Status: Operation not implemented yet.");
 			}
 		} else if (generate_model) {
-			mPowerAi.generate_mesh_async(prompt_description, generate_rig, generate_animation, [this](std::stringstream model_stream, const std::string& error){
+			mPowerAi.generate_mesh_async(prompt_description, animation_description, generate_rig, generate_animation, [this](std::stringstream model_stream, const std::string& error){
 				
 				if (!error.empty()) {
 					std::cerr << "Failed to generate or download model: " << error << std::endl;

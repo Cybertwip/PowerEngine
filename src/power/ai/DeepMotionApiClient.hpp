@@ -39,7 +39,7 @@ public:
 	/**
 	 * @brief Struct to hold the final animation callback.
 	 */
-	using GenerateAnimationCallback = std::function<void(std::stringstream fbx_stream, const std::string& error_message)>;
+	using GenerateAnimationCallback = std::function<void(std::stringstream& fbx_stream, const std::string& error_message)>;
 	
 	// Existing Methods
 	DeepMotionApiClient();
@@ -53,7 +53,7 @@ public:
 	void process_text_to_motion_async(const std::string& prompt, const std::string& model_id,
 									  ProcessMotionCallback callback);
 	
-	void upload_model_async(std::stringstream model_stream, const std::string& model_name,
+	void upload_model_async(std::stringstream& model_stream, const std::string& model_name,
 							const std::string& model_ext, UploadModelCallback callback);
 	
 	void check_job_status_async(const std::string& request_id, StatusCallback callback);
@@ -76,7 +76,7 @@ public:
 	 * @param prompt The text prompt for animation generation.
 	 * @param callback The callback function to receive the FBX stream or an error message.
 	 */
-	void generate_animation_async(std::stringstream model_stream, const std::string& model_name, const std::string& model_ext,
+	void generate_animation_async(std::stringstream& model_stream, const std::string& model_name, const std::string& model_ext,
 								  const std::string& prompt, GenerateAnimationCallback callback);
 	
 	// Synchronous Methods (optional to retain for synchronous use)
