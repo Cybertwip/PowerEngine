@@ -424,7 +424,6 @@ void TripoAiApiClient::generate_mesh(const std::string& prompt, const std::strin
 			std::cout << "Model generation task ID: " << model_task_id << std::endl;
 			
 			// Step 2: Poll the status until completion
-			// Implement a simple polling mechanism with a fixed interval and maximum retries
 			const int polling_interval_seconds = 3;
 			const int max_retries = 100; // Adjust as needed
 			
@@ -433,9 +432,11 @@ void TripoAiApiClient::generate_mesh(const std::string& prompt, const std::strin
 				bool completed = false;
 				std::string final_status;
 				
+				Json::Value status;
+				
 				while (retries < max_retries && !completed) {
 					std::this_thread::sleep_for(std::chrono::seconds(polling_interval_seconds));
-					Json::Value status = check_job_status(model_task_id);
+					status = check_job_status(model_task_id);
 					
 					if (status.empty()) {
 						std::cerr << "Failed to retrieve status for task ID: " << model_task_id << std::endl;
@@ -444,7 +445,6 @@ void TripoAiApiClient::generate_mesh(const std::string& prompt, const std::strin
 					}
 					
 					std::string task_status = status["status"].asString();
-					// Convert status to uppercase to handle case sensitivity
 					std::string task_status_upper = to_uppercase(task_status);
 					int progress = status.get("progress", 0).asInt();
 					
@@ -463,7 +463,7 @@ void TripoAiApiClient::generate_mesh(const std::string& prompt, const std::strin
 				
 				if (final_status == "SUCCESS") {
 					// Step 3: Convert the model
-					convert_model_async(model_task_id, format, quad, face_limit, [this, model_task_id, format, quad, face_limit, generate_rig, callback](const std::string& convert_task_id, const std::string& convert_error) {
+					convert_model_async(model_task_id, format, quad, face_limit, [this, model_task_id, format, quad, face_limit, generate_rig, status, callback](const std::string& convert_task_id, const std::string& convert_error) {
 						if (!convert_task_id.empty()) {
 							std::cout << "Model conversion task ID: " << convert_task_id << std::endl;
 							
@@ -471,7 +471,7 @@ void TripoAiApiClient::generate_mesh(const std::string& prompt, const std::strin
 							const int polling_interval_seconds = 3;
 							const int max_retries = 100; // Adjust as needed
 							
-							std::thread([this, model_task_id, format, convert_task_id, generate_rig, callback,  polling_interval_seconds, max_retries]() {
+							std::thread([this, model_task_id, format, convert_task_id, generate_rig, status, callback, polling_interval_seconds, max_retries]() {
 								int retries = 0;
 								bool completed = false;
 								std::string final_status;
@@ -488,7 +488,6 @@ void TripoAiApiClient::generate_mesh(const std::string& prompt, const std::strin
 									}
 									
 									std::string task_status = conversion_response["status"].asString();
-									// Convert status to uppercase to handle case sensitivity
 									std::string task_status_upper = to_uppercase(task_status);
 									int progress = conversion_response.get("progress", 0).asInt();
 									
@@ -508,7 +507,7 @@ void TripoAiApiClient::generate_mesh(const std::string& prompt, const std::strin
 								if (final_status == "SUCCESS") {
 									// Step 5: Optional Rigging
 									if (generate_rig) {
-										animate_rig_async(model_task_id, format, [this, model_task_id, format, conversion_response, callback](const std::string& animate_rig_task_id, const std::string& rig_error) {
+										animate_rig_async(model_task_id, format, [this, model_task_id, format, status, callback](const std::string& animate_rig_task_id, const std::string& rig_error) {
 											if (!animate_rig_task_id.empty()) {
 												std::cout << "Animate Rig task ID: " << animate_rig_task_id << std::endl;
 												
@@ -516,7 +515,7 @@ void TripoAiApiClient::generate_mesh(const std::string& prompt, const std::strin
 												const int polling_interval_seconds = 3;
 												const int max_retries = 100; // Adjust as needed
 												
-												std::thread([this, model_task_id, format, animate_rig_task_id, conversion_response, callback, polling_interval_seconds, max_retries]() {
+												std::thread([this, model_task_id, format, animate_rig_task_id, status, callback, polling_interval_seconds, max_retries]() {
 													int retries = 0;
 													bool completed = false;
 													std::string final_status;
@@ -525,8 +524,6 @@ void TripoAiApiClient::generate_mesh(const std::string& prompt, const std::strin
 														std::this_thread::sleep_for(std::chrono::seconds(polling_interval_seconds));
 														Json::Value status = check_job_status(animate_rig_task_id);
 														
-														
-														conversion_response = status;
 														if (status.empty()) {
 															std::cerr << "Failed to retrieve status for animate rig task ID: " << animate_rig_task_id << std::endl;
 															retries++;
@@ -534,7 +531,6 @@ void TripoAiApiClient::generate_mesh(const std::string& prompt, const std::strin
 														}
 														
 														std::string task_status = status["status"].asString();
-														// Convert status to uppercase to handle case sensitivity
 														std::string task_status_upper = to_uppercase(task_status);
 														int progress = status.get("progress", 0).asInt();
 														
@@ -553,9 +549,9 @@ void TripoAiApiClient::generate_mesh(const std::string& prompt, const std::strin
 													
 													if (final_status == "SUCCESS") {
 														
-														// If no animation, proceed to download the rigged model
-														if (conversion_response.isMember("output") && conversion_response["output"].isMember("model")) {
-															std::string model_url = conversion_response["output"]["model"].asString();
+														// Accessing 'output["model"]' from 'status' during Animate Rig
+														if (status.isMember("output") && status["output"].isMember("model")) {
+															std::string model_url = status["output"]["model"].asString();
 															std::cout << "Converted Model URL: " << model_url << std::endl;
 															
 															std::stringstream model_stream;
@@ -567,8 +563,8 @@ void TripoAiApiClient::generate_mesh(const std::string& prompt, const std::strin
 																callback(std::stringstream(), "Failed to download the converted model.");
 															}
 														} else {
-															std::cerr << "'model' URL not found inside 'output' in conversion response." << std::endl;
-															callback(std::stringstream(), "'model' URL not found inside 'output' in conversion response.");
+															std::cerr << "'model' URL not found inside 'output' in animate rig status." << std::endl;
+															callback(std::stringstream(), "'model' URL not found inside 'output' in animate rig status.");
 														}
 														
 													} else if (final_status == "FAILURE") {
@@ -585,7 +581,7 @@ void TripoAiApiClient::generate_mesh(const std::string& prompt, const std::strin
 											}
 										});
 									} else {
-										// If neither rigging nor animation is required, proceed to download the converted model
+										// If rigging is not required, proceed to download the converted model
 										if (conversion_response.isMember("output") && conversion_response["output"].isMember("model")) {
 											std::string model_url = conversion_response["output"]["model"].asString();
 											std::cout << "Converted Model URL: " << model_url << std::endl;
