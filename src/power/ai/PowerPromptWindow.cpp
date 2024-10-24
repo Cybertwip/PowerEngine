@@ -296,6 +296,7 @@ void PowerPromptWindow::SubmitPromptAsync() {
 		std::cout << "generate_model: " << generate_model << std::endl;
 		std::cout << "generate_rig: " << generate_rig << std::endl;
 		std::cout << "generate_animation: " << generate_animation << std::endl;
+		std::cout << "pose_type: " << pose_type << std::endl;
 		std::cout << "prompt_description: " << prompt_description << std::endl;
 		std::cout << "animation_description: " << animation_description << std::endl;
 
