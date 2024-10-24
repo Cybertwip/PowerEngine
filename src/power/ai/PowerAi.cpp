@@ -165,7 +165,7 @@ void PowerAi::generate_mesh_async(const std::string& prompt,
 //				callback(std::move(model_stream), "");
 //			}
 			
-			callback(std::move(model_stream), "");
+			callback(std::move(container->stream), "");
 			
 		} else {
 			
