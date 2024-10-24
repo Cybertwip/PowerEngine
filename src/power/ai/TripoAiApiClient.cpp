@@ -462,79 +462,77 @@ void TripoAiApiClient::generate_mesh(const std::string& prompt, const std::strin
 				}
 				
 				if (final_status == "SUCCESS") {
-					// Step 3: Convert the model
-					convert_model_async(model_task_id, format, quad, face_limit, [this, model_task_id, format, quad, face_limit, generate_rig, status, callback](const std::string& convert_task_id, const std::string& convert_error) {
-						if (!convert_task_id.empty()) {
-							std::cout << "Model conversion task ID: " << convert_task_id << std::endl;
-							
-							// Step 4: Poll the conversion status until completion
-							const int polling_interval_seconds = 3;
-							const int max_retries = 100; // Adjust as needed
-							
-							std::thread([this, model_task_id, format, convert_task_id, generate_rig, status, callback, polling_interval_seconds, max_retries]() {
-								int retries = 0;
-								bool completed = false;
-								std::string final_status;
-								Json::Value conversion_response;
+					if (generate_rig) {
+						// Step 3: Generate Rig
+						animate_rig_async(model_task_id, format, [this, model_task_id, format, quad, face_limit, callback, polling_interval_seconds, max_retries](const std::string& rig_task_id, const std::string& rig_error) {
+							if (!rig_task_id.empty()) {
+								std::cout << "Animate Rig task ID: " << rig_task_id << std::endl;
 								
-								while (retries < max_retries && !completed) {
-									std::this_thread::sleep_for(std::chrono::seconds(polling_interval_seconds));
-									conversion_response = check_job_status(convert_task_id);
+								// Step 4: Poll the rig status until completion
+								std::thread([this, rig_task_id, format, quad, face_limit, callback, polling_interval_seconds, max_retries]() {
+									int retries = 0;
+									bool completed = false;
+									std::string final_status;
+									Json::Value rig_status;
 									
-									if (conversion_response.empty()) {
-										std::cerr << "Failed to retrieve status for conversion task ID: " << convert_task_id << std::endl;
+									while (retries < max_retries && !completed) {
+										std::this_thread::sleep_for(std::chrono::seconds(polling_interval_seconds));
+										rig_status = check_job_status(rig_task_id);
+										
+										if (rig_status.empty()) {
+											std::cerr << "Failed to retrieve status for rig task ID: " << rig_task_id << std::endl;
+											retries++;
+											continue;
+										}
+										
+										std::string task_status = rig_status["status"].asString();
+										std::string task_status_upper = to_uppercase(task_status);
+										int progress = rig_status.get("progress", 0).asInt();
+										
+										std::cout << "Animate Rig Status: " << task_status_upper << " (" << progress << "%)" << std::endl;
+										
+										if (task_status_upper == "SUCCESS") {
+											completed = true;
+											final_status = "SUCCESS";
+										} else if (task_status_upper == "FAILURE") {
+											completed = true;
+											final_status = "FAILURE";
+										}
+										
 										retries++;
-										continue;
 									}
 									
-									std::string task_status = conversion_response["status"].asString();
-									std::string task_status_upper = to_uppercase(task_status);
-									int progress = conversion_response.get("progress", 0).asInt();
-									
-									std::cout << "Model Conversion Status: " << task_status_upper << " (" << progress << "%)" << std::endl;
-									
-									if (task_status_upper == "SUCCESS") {
-										completed = true;
-										final_status = "SUCCESS";
-									} else if (task_status_upper == "FAILURE") {
-										completed = true;
-										final_status = "FAILURE";
-									}
-									
-									retries++;
-								}
-								
-								if (final_status == "SUCCESS") {
-									// Step 5: Optional Rigging
-									if (generate_rig) {
-										animate_rig_async(model_task_id, format, [this, model_task_id, format, status, callback](const std::string& animate_rig_task_id, const std::string& rig_error) {
-											if (!animate_rig_task_id.empty()) {
-												std::cout << "Animate Rig task ID: " << animate_rig_task_id << std::endl;
+									if (final_status == "SUCCESS") {
+										// Step 5: Convert the rigged model using rig_task_id
+										convert_model_async(rig_task_id, format, quad, face_limit, [this, rig_task_id, format, quad, face_limit, callback](const std::string& convert_task_id, const std::string& convert_error) {
+											if (!convert_task_id.empty()) {
+												std::cout << "Model conversion task ID: " << convert_task_id << std::endl;
 												
-												// Step 6: Poll the animate rig status until completion
+												// Step 6: Poll the conversion status until completion
 												const int polling_interval_seconds = 3;
 												const int max_retries = 100; // Adjust as needed
 												
-												std::thread([this, model_task_id, format, animate_rig_task_id, status, callback, polling_interval_seconds, max_retries]() {
+												std::thread([this, convert_task_id, callback, polling_interval_seconds, max_retries]() {
 													int retries = 0;
 													bool completed = false;
 													std::string final_status;
+													Json::Value conversion_response;
 													
 													while (retries < max_retries && !completed) {
 														std::this_thread::sleep_for(std::chrono::seconds(polling_interval_seconds));
-														Json::Value status = check_job_status(animate_rig_task_id);
+														conversion_response = check_job_status(convert_task_id);
 														
-														if (status.empty()) {
-															std::cerr << "Failed to retrieve status for animate rig task ID: " << animate_rig_task_id << std::endl;
+														if (conversion_response.empty()) {
+															std::cerr << "Failed to retrieve status for conversion task ID: " << convert_task_id << std::endl;
 															retries++;
 															continue;
 														}
 														
-														std::string task_status = status["status"].asString();
+														std::string task_status = conversion_response["status"].asString();
 														std::string task_status_upper = to_uppercase(task_status);
-														int progress = status.get("progress", 0).asInt();
+														int progress = conversion_response.get("progress", 0).asInt();
 														
-														std::cout << "Animate Rig Status: " << task_status_upper << " (" << progress << "%)" << std::endl;
+														std::cout << "Model Conversion Status: " << task_status_upper << " (" << progress << "%)" << std::endl;
 														
 														if (task_status_upper == "SUCCESS") {
 															completed = true;
@@ -548,10 +546,9 @@ void TripoAiApiClient::generate_mesh(const std::string& prompt, const std::strin
 													}
 													
 													if (final_status == "SUCCESS") {
-														
-														// Accessing 'output["model"]' from 'status' during Animate Rig
-														if (status.isMember("output") && status["output"].isMember("model")) {
-															std::string model_url = status["output"]["model"].asString();
+														// Step 7: Download the converted model
+														if (conversion_response.isMember("output") && conversion_response["output"].isMember("model")) {
+															std::string model_url = conversion_response["output"]["model"].asString();
 															std::cout << "Converted Model URL: " << model_url << std::endl;
 															
 															std::stringstream model_stream;
@@ -563,25 +560,80 @@ void TripoAiApiClient::generate_mesh(const std::string& prompt, const std::strin
 																callback(std::stringstream(), "Failed to download the converted model.");
 															}
 														} else {
-															std::cerr << "'model' URL not found inside 'output' in animate rig status." << std::endl;
-															callback(std::stringstream(), "'model' URL not found inside 'output' in animate rig status.");
+															std::cerr << "'model' URL not found inside 'output' in conversion response." << std::endl;
+															callback(std::stringstream(), "'model' URL not found inside 'output' in conversion response.");
 														}
-														
 													} else if (final_status == "FAILURE") {
-														std::cerr << "Animate Rig task failed for task ID: " << animate_rig_task_id << std::endl;
-														callback(std::stringstream(), "Animate Rig task failed.");
+														std::cerr << "Model conversion task failed for task ID: " << convert_task_id << std::endl;
+														callback(std::stringstream(), "Model conversion task failed.");
 													} else {
-														std::cerr << "Animate Rig task did not complete within the expected time for task ID: " << animate_rig_task_id << std::endl;
-														callback(std::stringstream(), "Animate Rig task timed out.");
+														std::cerr << "Model conversion task did not complete within the expected time for task ID: " << convert_task_id << std::endl;
+														callback(std::stringstream(), "Model conversion task timed out.");
 													}
 												}).detach();
 											} else {
-												std::cerr << "Animate Rig failed: " << rig_error << std::endl;
-												callback(std::stringstream(), "Animate Rig failed.");
+												std::cerr << "Model conversion failed: " << convert_error << std::endl;
+												callback(std::stringstream(), "Model conversion failed.");
 											}
 										});
+									} else if (final_status == "FAILURE") {
+										std::cerr << "Animate Rig task failed for task ID: " << rig_task_id << std::endl;
+										callback(std::stringstream(), "Animate Rig task failed.");
 									} else {
-										// If rigging is not required, proceed to download the converted model
+										std::cerr << "Animate Rig task did not complete within the expected time for task ID: " << rig_task_id << std::endl;
+										callback(std::stringstream(), "Animate Rig task timed out.");
+									}
+								}).detach();
+							} else {
+								std::cerr << "Animate Rig failed: " << rig_error << std::endl;
+								callback(std::stringstream(), "Animate Rig failed.");
+							}
+						});
+					} else {
+						// Step 3: Convert the model using model_task_id
+						convert_model_async(model_task_id, format, quad, face_limit, [this, model_task_id, format, quad, face_limit, callback](const std::string& convert_task_id, const std::string& convert_error) {
+							if (!convert_task_id.empty()) {
+								std::cout << "Model conversion task ID: " << convert_task_id << std::endl;
+								
+								// Step 4: Poll the conversion status until completion
+								const int polling_interval_seconds = 3;
+								const int max_retries = 100; // Adjust as needed
+								
+								std::thread([this, convert_task_id, callback, polling_interval_seconds, max_retries]() {
+									int retries = 0;
+									bool completed = false;
+									std::string final_status;
+									Json::Value conversion_response;
+									
+									while (retries < max_retries && !completed) {
+										std::this_thread::sleep_for(std::chrono::seconds(polling_interval_seconds));
+										conversion_response = check_job_status(convert_task_id);
+										
+										if (conversion_response.empty()) {
+											std::cerr << "Failed to retrieve status for conversion task ID: " << convert_task_id << std::endl;
+											retries++;
+											continue;
+										}
+										
+										std::string task_status = conversion_response["status"].asString();
+										std::string task_status_upper = to_uppercase(task_status);
+										int progress = conversion_response.get("progress", 0).asInt();
+										
+										std::cout << "Model Conversion Status: " << task_status_upper << " (" << progress << "%)" << std::endl;
+										
+										if (task_status_upper == "SUCCESS") {
+											completed = true;
+											final_status = "SUCCESS";
+										} else if (task_status_upper == "FAILURE") {
+											completed = true;
+											final_status = "FAILURE";
+										}
+										
+										retries++;
+									}
+									
+									if (final_status == "SUCCESS") {
+										// Step 5: Download the converted model
 										if (conversion_response.isMember("output") && conversion_response["output"].isMember("model")) {
 											std::string model_url = conversion_response["output"]["model"].asString();
 											std::cout << "Converted Model URL: " << model_url << std::endl;
@@ -598,20 +650,20 @@ void TripoAiApiClient::generate_mesh(const std::string& prompt, const std::strin
 											std::cerr << "'model' URL not found inside 'output' in conversion response." << std::endl;
 											callback(std::stringstream(), "'model' URL not found inside 'output' in conversion response.");
 										}
+									} else if (final_status == "FAILURE") {
+										std::cerr << "Model conversion task failed for task ID: " << convert_task_id << std::endl;
+										callback(std::stringstream(), "Model conversion task failed.");
+									} else {
+										std::cerr << "Model conversion task did not complete within the expected time for task ID: " << convert_task_id << std::endl;
+										callback(std::stringstream(), "Model conversion task timed out.");
 									}
-								} else if (final_status == "FAILURE") {
-									std::cerr << "Model conversion task failed for task ID: " << convert_task_id << std::endl;
-									callback(std::stringstream(), "Model conversion task failed.");
-								} else {
-									std::cerr << "Model conversion task did not complete within the expected time for task ID: " << convert_task_id << std::endl;
-									callback(std::stringstream(), "Model conversion task timed out.");
-								}
-							}).detach();
-						} else {
-							std::cerr << "Model conversion failed: " << convert_error << std::endl;
-							callback(std::stringstream(), "Model conversion failed.");
-						}
-					});
+								}).detach();
+							} else {
+								std::cerr << "Model conversion failed: " << convert_error << std::endl;
+								callback(std::stringstream(), "Model conversion failed.");
+							}
+						});
+					}
 				} else if (final_status == "FAILURE") {
 					std::cerr << "Model generation task failed for task ID: " << model_task_id << std::endl;
 					callback(std::stringstream(), "Model generation task failed.");
@@ -626,6 +678,7 @@ void TripoAiApiClient::generate_mesh(const std::string& prompt, const std::strin
 		}
 	});
 }
+
 
 void TripoAiApiClient::generate_mesh_async(const std::string& prompt, const std::string& format, bool quad, int face_limit, bool generate_rig, DownloadModelCallback callback) {
 	// Launch asynchronous task
