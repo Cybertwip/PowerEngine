@@ -125,7 +125,13 @@ PowerPromptWindow::PowerPromptWindow(nanogui::Screen& parent, ResourcesPanel& re
 	mSaveButton->set_fixed_size(nanogui::Vector2i(100, 40));
 	mSaveButton->set_enabled(false);
 	mSaveButton->set_callback([this]() {
-		nanogui::async([this]() { this->SaveImageAsync(); });
+		nanogui::async([this]() {
+			if (mPowerMode == EPowerMode::Image){
+				this->SaveImageAsync();
+			} else if (mPowerMode == EPowerMode::Model) {
+				this->SaveModelAsync();
+			}
+		});
 	});
 	mSaveButton->set_tooltip("Save the generated image");
 	
@@ -350,6 +356,8 @@ void PowerPromptWindow::SubmitPromptAsync() {
 						mStatusLabel->set_caption("Status: Model generated successfully.");
 						mSaveButton->set_enabled(true);
 						
+						mPowerMode = EPowerMode::Image;
+						
 						// Re-enable Generate Button
 						mGenerateButton->set_enabled(true);
 						
@@ -386,6 +394,8 @@ void PowerPromptWindow::SubmitPromptAsync() {
 				
 				auto actor = std::make_shared<Actor>(mDummyRegistry);
 				
+				mGeneratedMeshData = mMeshActorImporter->process(model_stream, "generated_model", mOutputDirectory);
+
 				mMeshActorBuilder->build(*actor, mDummyAnimationTimeProvider, model_stream, mActorPath, mPreviewCanvas->get_mesh_shader(), mPreviewCanvas->get_skinned_mesh_shader());
 
 				mPreviewCanvas->set_active_actor(actor);
@@ -399,6 +409,8 @@ void PowerPromptWindow::SubmitPromptAsync() {
 					std::lock_guard<std::mutex> lock(mStatusMutex);
 					mStatusLabel->set_caption("Status: Model generated successfully.");
 					mSaveButton->set_enabled(true);
+					
+					mPowerMode = EPowerMode::Model;
 					
 					// Re-enable Generate Button
 					mGenerateButton->set_enabled(true);
@@ -478,6 +490,71 @@ void PowerPromptWindow::SaveImageAsync() {
 			std::lock_guard<std::mutex> lock(mStatusMutex);
 			mStatusLabel->set_caption("Status: Image saved successfully.");
 		}
+		
+		set_visible(false);
+		set_modal(false);
+
+	}
+}
+
+void PowerPromptWindow::SaveModelAsync() {
+	if (mActiveActor != nullptr) {
+		
+		mPreviewCanvas->take_snapshot([this](std::vector<uint8_t>& pixels) {
+			auto& serializer = mCompressedMeshData->mMesh.mSerializer;
+			
+			std::stringstream compressedData;
+			
+			serializer->get_compressed_data(compressedData);
+			
+			// Generate the unique hash identifier from the compressed data
+			
+			uint64_t hash_id[] = { 0, 0 };
+			
+			Md5::generate_md5_from_compressed_data(compressedData, hash_id);
+			
+			// Write the unique hash identifier to the header
+			serializer->write_header_raw(hash_id, sizeof(hash_id));
+			
+			// Proceed with serialization
+			serializer->write_header_uint64(pixels.size());
+			
+			serializer->write_header_raw(pixels.data(), pixels.size());
+			
+			mCompressedMeshData->persist_mesh();
+			
+			if (mCompressedMeshData->mAnimations.has_value()) {
+				
+				for (auto& data : *mCompressedMeshData->mAnimations) {
+					auto& serializer = data.mSerializer;
+					std::stringstream compressedData;
+					
+					serializer->get_compressed_data(compressedData);
+					
+					uint64_t hash_id[] = { 0, 0 };
+					
+					Md5::generate_md5_from_compressed_data(compressedData, hash_id);
+					
+					// Write the unique hash identifier to the header
+					serializer->write_header_raw(hash_id, sizeof(hash_id));
+					
+					serializer->write_header_uint64(0);
+					
+				}
+
+				mCompressedMeshData->persist_animations();
+			}
+			
+			nanogui::async([this](){
+				mResourcesPanel.refresh_file_view();
+			});
+			
+			mPreviewCanvas->set_update(false);
+			mPreviewCanvas->set_active_actor(nullptr);
+			
+			set_visible(false);
+			set_modal(false);
+		});
 	}
 }
 

@@ -245,6 +245,7 @@ std::string TripoAiApiClient::convert_model(const std::string& original_task_id,
 	post_json_data["original_model_task_id"] = original_task_id;
 	post_json_data["quad"] = quad;
 	post_json_data["face_limit"] = face_limit;
+	post_json_data["pivot_to_center_bottom"] = true;
 	
 	Json::StreamWriterBuilder writer;
 	std::string json_payload = Json::writeString(writer, post_json_data);
@@ -464,7 +465,7 @@ void TripoAiApiClient::generate_mesh(const std::string& prompt, const std::strin
 				if (final_status == "SUCCESS") {
 					if (generate_rig) {
 						// Step 3: Generate Rig
-						animate_rig_async(model_task_id, "glb", [this, model_task_id, quad, face_limit, callback, polling_interval_seconds, max_retries](const std::string& rig_task_id, const std::string& rig_error) {
+						animate_rig_async(model_task_id, format, [this, model_task_id, quad, face_limit, callback, polling_interval_seconds, max_retries](const std::string& rig_task_id, const std::string& rig_error) {
 							if (!rig_task_id.empty()) {
 								std::cout << "Animate Rig task ID: " << rig_task_id << std::endl;
 								

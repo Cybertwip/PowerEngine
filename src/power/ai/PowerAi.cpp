@@ -150,20 +150,22 @@ void PowerAi::generate_mesh_async(const std::string& prompt,
 
 			container->stream = std::move(model_stream);
 
-			if (generate_rig && generate_animation) {
-				mDeepMotionApiClient.generate_animation_async(std::move(original_model_stream), "DummyModel", "fbx", animation_prompt, [this, container, callback, generate_rig, generate_animation](std::stringstream animated_model_stream, const std::string& error_message) {
-					if (error_message.empty()) {
-						std::cout << "Mesh animation successful" << std::endl;
-						
-						callback(std::move(animated_model_stream), "");
-						
-					} else {
-						callback(std::move(container->stream), "");
-					}
-				});
-			} else {
-				callback(std::move(model_stream), "");
-			}
+//			if (generate_rig && generate_animation) {
+//				mDeepMotionApiClient.generate_animation_async(std::move(original_model_stream), "DummyModel", "fbx", animation_prompt, [this, container, callback, generate_rig, generate_animation](std::stringstream animated_model_stream, const std::string& error_message) {
+//					if (error_message.empty()) {
+//						std::cout << "Mesh animation successful" << std::endl;
+//						
+//						callback(std::move(animated_model_stream), "");
+//						
+//					} else {
+//						callback(std::move(container->stream), "");
+//					}
+//				});
+//			} else {
+//				callback(std::move(model_stream), "");
+//			}
+			
+			callback(std::move(model_stream), "");
 			
 		} else {
 			

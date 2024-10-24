@@ -2,6 +2,8 @@
 
 #include "animation/AnimationTimeProvider.hpp"
 
+#include "filesystem/MeshActorImporter.hpp"
+
 #include <entt/entt.hpp>
 
 #include <nanogui/window.h>
@@ -33,7 +35,7 @@ class PowerPromptWindow : public nanogui::Window {
 private:
 	enum EPowerMode {
 		Image,
-		Mesh
+		Model
 	};
 	
 public:
@@ -45,6 +47,7 @@ public:
 	// Asynchronous Methods
 	void SubmitPromptAsync();
 	void SaveImageAsync();
+	void SaveModelAsync();
 	
 	// UI Components
 	ResourcesPanel& mResourcesPanel;
@@ -103,8 +106,9 @@ public:
 	
 	std::optional<std::unique_ptr<CompressedSerialization::Serializer>> mSerializedPrompt;
 
-
 	std::shared_ptr<Actor> mActiveActor;
 	
 	EPowerMode mPowerMode;
+	
+	std::unique_ptr<MeshActorImporter::CompressedMeshActor> mGeneratedMeshData;
 };
