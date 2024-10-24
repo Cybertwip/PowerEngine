@@ -504,6 +504,7 @@ void TripoAiApiClient::generate_mesh(const std::string& prompt, const std::strin
 									
 									if (final_status == "SUCCESS") {
 										
+										
 										// Step 7: Download the converted model
 										if (rig_status.isMember("output") && rig_status["output"].isMember("model")) {
 											std::string model_url = rig_status["output"]["model"].asString();
@@ -513,7 +514,7 @@ void TripoAiApiClient::generate_mesh(const std::string& prompt, const std::strin
 											if (download_file(model_url, model_stream)) {
 												// Call the callback with the downloaded model
 												callback(std::move(model_stream), "");
-
+										
 									} else if (final_status == "FAILURE") {
 										std::cerr << "Animate Rig task failed for task ID: " << rig_task_id << std::endl;
 										callback(std::stringstream(), "Animate Rig task failed.");
