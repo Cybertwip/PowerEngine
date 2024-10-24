@@ -342,6 +342,17 @@ void PowerPromptWindow::SubmitPromptAsync() {
 		} else if (generate_model) {
 			mPowerAi.generate_mesh_async(prompt_description, generate_rig, generate_animation, [this](std::stringstream model_stream, const std::string& error){
 				
+				if (!error.empty()) {
+					std::cerr << "Failed to generate or download model: " << error << std::endl;
+					nanogui::async([this]() {
+						std::lock_guard<std::mutex> lock(mStatusMutex);
+						mStatusLabel->set_caption("Status: Failed to generate or download model.");
+						mGenerateButton->set_enabled(true);
+					});
+					return;
+				}
+
+				
 				mActorPath = "generated_model.fbx";
 				mOutputDirectory = mResourcesPanel.selected_directory_path();
 				

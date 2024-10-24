@@ -368,6 +368,7 @@ std::string TripoAiApiClient::animate_retarget(const std::string& original_task_
 	post_json_data["original_model_task_id"] = original_task_id;
 	post_json_data["out_format"] = format;
 	post_json_data["animation"] = animation;
+	post_json_data["bake_animation"] = true;
 	
 	Json::StreamWriterBuilder writer;
 	std::string json_payload = Json::writeString(writer, post_json_data);
@@ -416,9 +417,9 @@ void TripoAiApiClient::animate_retarget_async(const std::string& original_task_i
 	}).detach();
 }
 
-void TripoAiApiClient::generate_mesh(const std::string& prompt, const std::string& format, bool quad, int face_limit, bool generate_rig, bool generate_animation, DownloadModelCallback callback) {
+void TripoAiApiClient::generate_mesh(const std::string& prompt, const std::string& format, bool quad, int face_limit, bool generate_rig, DownloadModelCallback callback) {
 	// Step 1: Generate the model
-	generate_model_async(prompt, [this, format, quad, face_limit, generate_rig, generate_animation, callback](const std::string& model_task_id, const std::string& error) {
+	generate_model_async(prompt, [this, format, quad, face_limit, generate_rig, callback](const std::string& model_task_id, const std::string& error) {
 		if (!model_task_id.empty()) {
 			std::cout << "Model generation task ID: " << model_task_id << std::endl;
 			
@@ -427,7 +428,7 @@ void TripoAiApiClient::generate_mesh(const std::string& prompt, const std::strin
 			const int polling_interval_seconds = 3;
 			const int max_retries = 100; // Adjust as needed
 			
-			std::thread([this, model_task_id, format, quad, face_limit, generate_rig, generate_animation, callback, polling_interval_seconds, max_retries]() {
+			std::thread([this, model_task_id, format, quad, face_limit, generate_rig, callback, polling_interval_seconds, max_retries]() {
 				int retries = 0;
 				bool completed = false;
 				std::string final_status;
@@ -462,7 +463,7 @@ void TripoAiApiClient::generate_mesh(const std::string& prompt, const std::strin
 				
 				if (final_status == "SUCCESS") {
 					// Step 3: Convert the model
-					convert_model_async(model_task_id, format, quad, face_limit, [this, model_task_id, format, quad, face_limit, generate_rig, generate_animation, callback](const std::string& convert_task_id, const std::string& convert_error) {
+					convert_model_async(model_task_id, format, quad, face_limit, [this, model_task_id, format, quad, face_limit, generate_rig, callback](const std::string& convert_task_id, const std::string& convert_error) {
 						if (!convert_task_id.empty()) {
 							std::cout << "Model conversion task ID: " << convert_task_id << std::endl;
 							
@@ -470,7 +471,7 @@ void TripoAiApiClient::generate_mesh(const std::string& prompt, const std::strin
 							const int polling_interval_seconds = 3;
 							const int max_retries = 100; // Adjust as needed
 							
-							std::thread([this, model_task_id, format, convert_task_id, generate_rig, generate_animation, callback,  polling_interval_seconds, max_retries]() {
+							std::thread([this, model_task_id, format, convert_task_id, generate_rig, callback,  polling_interval_seconds, max_retries]() {
 								int retries = 0;
 								bool completed = false;
 								std::string final_status;
@@ -507,7 +508,7 @@ void TripoAiApiClient::generate_mesh(const std::string& prompt, const std::strin
 								if (final_status == "SUCCESS") {
 									// Step 5: Optional Rigging
 									if (generate_rig) {
-										animate_rig_async(model_task_id, format, [this, model_task_id, format, conversion_response, generate_animation, callback](const std::string& animate_rig_task_id, const std::string& rig_error) {
+										animate_rig_async(model_task_id, format, [this, model_task_id, format, conversion_response, callback](const std::string& animate_rig_task_id, const std::string& rig_error) {
 											if (!animate_rig_task_id.empty()) {
 												std::cout << "Animate Rig task ID: " << animate_rig_task_id << std::endl;
 												
@@ -515,7 +516,7 @@ void TripoAiApiClient::generate_mesh(const std::string& prompt, const std::strin
 												const int polling_interval_seconds = 3;
 												const int max_retries = 100; // Adjust as needed
 												
-												std::thread([this, model_task_id, format, animate_rig_task_id, generate_animation, conversion_response, callback, polling_interval_seconds, max_retries]() {
+												std::thread([this, model_task_id, format, animate_rig_task_id, conversion_response, callback, polling_interval_seconds, max_retries]() {
 													int retries = 0;
 													bool completed = false;
 													std::string final_status;
@@ -550,99 +551,25 @@ void TripoAiApiClient::generate_mesh(const std::string& prompt, const std::strin
 													
 													if (final_status == "SUCCESS") {
 														// Step 7: Optional Animation Retargeting
-														if (generate_animation) {
-															animate_retarget_async(animate_rig_task_id, format, "preset:run", [this, animate_rig_task_id, callback](const std::string& animate_retarget_task_id, const std::string& retarget_error) {
-																if (!animate_retarget_task_id.empty()) {
-																	std::cout << "Animate Retarget task ID: " << animate_retarget_task_id << std::endl;
-																	
-																	// Step 8: Poll the animate retarget status until completion
-																	const int polling_interval_seconds = 3;
-																	const int max_retries = 100; // Adjust as needed
-																	
-																	std::thread([this, animate_retarget_task_id, callback, polling_interval_seconds, max_retries]() {
-																		int retries = 0;
-																		bool completed = false;
-																		std::string final_status;
-																		Json::Value retarget_response;
-																		
-																		while (retries < max_retries && !completed) {
-																			std::this_thread::sleep_for(std::chrono::seconds(polling_interval_seconds));
-																			retarget_response = check_job_status(animate_retarget_task_id);
-																			
-																			if (retarget_response.empty()) {
-																				std::cerr << "Failed to retrieve status for animate retarget task ID: " << animate_retarget_task_id << std::endl;
-																				retries++;
-																				continue;
-																			}
-																			
-																			std::string task_status = retarget_response["status"].asString();
-																			// Convert status to uppercase to handle case sensitivity
-																			std::string task_status_upper = to_uppercase(task_status);
-																			int progress = retarget_response.get("progress", 0).asInt();
-																			
-																			std::cout << "Animate Retarget Status: " << task_status_upper << " (" << progress << "%)" << std::endl;
-																			
-																			if (task_status_upper == "SUCCESS") {
-																				completed = true;
-																				final_status = "SUCCESS";
-																			} else if (task_status_upper == "FAILURE") {
-																				completed = true;
-																				final_status = "FAILURE";
-																			}
-																			
-																			retries++;
-																		}
-																		
-																		if (final_status == "SUCCESS") {
-																			// Step 9: Download the animated retarget model
-																			if (retarget_response.isMember("output") && retarget_response["output"].isMember("model")) {
-																				std::string model_url = retarget_response["output"]["model"].asString();
-																				std::cout << "Animated Retarget Model URL: " << model_url << std::endl;
-																				
-																				std::stringstream model_stream;
-																				if (download_file(model_url, model_stream)) {
-																					// Call the callback with the downloaded model
-																					callback(std::move(model_stream), "");
-																				} else {
-																					std::cerr << "Failed to download the animated retarget model from URL: " << model_url << std::endl;
-																					callback(std::stringstream(), "Failed to download the animated retarget model.");
-																				}
-																			} else {
-																				std::cerr << "'model' URL not found inside 'output' in animate retarget response." << std::endl;
-																				callback(std::stringstream(), "'model' URL not found inside 'output' in animate retarget response.");
-																			}
-																		} else if (final_status == "FAILURE") {
-																			std::cerr << "Animate Retarget task failed for task ID: " << animate_retarget_task_id << std::endl;
-																			callback(std::stringstream(), "Animate Retarget task failed.");
-																		} else {
-																			std::cerr << "Animate Retarget task did not complete within the expected time for task ID: " << animate_retarget_task_id << std::endl;
-																			callback(std::stringstream(), "Animate Retarget task timed out.");
-																		}
-																	}).detach();
-																} else {
-																	std::cerr << "Animate Retarget failed: " << retarget_error << std::endl;
-																	callback(std::stringstream(), "Animate Retarget failed.");
-																}
-															});
-														} else {
-															// If no animation, proceed to download the rigged model
-															if (conversion_response.isMember("output") && conversion_response["output"].isMember("model")) {
-																std::string model_url = conversion_response["output"]["model"].asString();
-																std::cout << "Converted Model URL: " << model_url << std::endl;
-																
-																std::stringstream model_stream;
-																if (download_file(model_url, model_stream)) {
-																	// Call the callback with the downloaded model
-																	callback(std::move(model_stream), "");
-																} else {
-																	std::cerr << "Failed to download the converted model from URL: " << model_url << std::endl;
-																	callback(std::stringstream(), "Failed to download the converted model.");
-																}
+														
+														// If no animation, proceed to download the rigged model
+														if (conversion_response.isMember("output") && conversion_response["output"].isMember("model")) {
+															std::string model_url = conversion_response["output"]["model"].asString();
+															std::cout << "Converted Model URL: " << model_url << std::endl;
+															
+															std::stringstream model_stream;
+															if (download_file(model_url, model_stream)) {
+																// Call the callback with the downloaded model
+																callback(std::move(model_stream), "");
 															} else {
-																std::cerr << "'model' URL not found inside 'output' in conversion response." << std::endl;
-																callback(std::stringstream(), "'model' URL not found inside 'output' in conversion response.");
+																std::cerr << "Failed to download the converted model from URL: " << model_url << std::endl;
+																callback(std::stringstream(), "Failed to download the converted model.");
 															}
+														} else {
+															std::cerr << "'model' URL not found inside 'output' in conversion response." << std::endl;
+															callback(std::stringstream(), "'model' URL not found inside 'output' in conversion response.");
 														}
+														
 													} else if (final_status == "FAILURE") {
 														std::cerr << "Animate Rig task failed for task ID: " << animate_rig_task_id << std::endl;
 														callback(std::stringstream(), "Animate Rig task failed.");
@@ -654,81 +581,6 @@ void TripoAiApiClient::generate_mesh(const std::string& prompt, const std::strin
 											} else {
 												std::cerr << "Animate Rig failed: " << rig_error << std::endl;
 												callback(std::stringstream(), "Animate Rig failed.");
-											}
-										});
-									} else if (generate_animation) {
-										// If rigging is not required but animation is, we need to animate retarget directly from conversion
-										animate_retarget_async(convert_task_id, format, "preset:run", [this, convert_task_id, callback](const std::string& animate_retarget_task_id, const std::string& retarget_error) {
-											if (!animate_retarget_task_id.empty()) {
-												std::cout << "Animate Retarget task ID: " << animate_retarget_task_id << std::endl;
-												
-												// Poll the animate retarget status until completion
-												const int polling_interval_seconds = 3;
-												const int max_retries = 100; // Adjust as needed
-												
-												std::thread([this, animate_retarget_task_id, callback, polling_interval_seconds, max_retries]() {
-													int retries = 0;
-													bool completed = false;
-													std::string final_status;
-													Json::Value retarget_response;
-													
-													while (retries < max_retries && !completed) {
-														std::this_thread::sleep_for(std::chrono::seconds(polling_interval_seconds));
-														retarget_response = check_job_status(animate_retarget_task_id);
-														
-														if (retarget_response.empty()) {
-															std::cerr << "Failed to retrieve status for animate retarget task ID: " << animate_retarget_task_id << std::endl;
-															retries++;
-															continue;
-														}
-														
-														std::string task_status = retarget_response["status"].asString();
-														// Convert status to uppercase to handle case sensitivity
-														std::string task_status_upper = to_uppercase(task_status);
-														int progress = retarget_response.get("progress", 0).asInt();
-														
-														std::cout << "Animate Retarget Status: " << task_status_upper << " (" << progress << "%)" << std::endl;
-														
-														if (task_status_upper == "SUCCESS") {
-															completed = true;
-															final_status = "SUCCESS";
-														} else if (task_status_upper == "FAILURE") {
-															completed = true;
-															final_status = "FAILURE";
-														}
-														
-														retries++;
-													}
-													
-													if (final_status == "SUCCESS") {
-														// Step 6: Download the animated retarget model
-														if (retarget_response.isMember("output") && retarget_response["output"].isMember("model")) {
-															std::string model_url = retarget_response["output"]["model"].asString();
-															std::cout << "Animated Retarget Model URL: " << model_url << std::endl;
-															
-															std::stringstream model_stream;
-															if (download_file(model_url, model_stream)) {
-																// Call the callback with the downloaded model
-																callback(std::move(model_stream), "");
-															} else {
-																std::cerr << "Failed to download the animated retarget model from URL: " << model_url << std::endl;
-																callback(std::stringstream(), "Failed to download the animated retarget model.");
-															}
-														} else {
-															std::cerr << "'model' URL not found inside 'output' in animate retarget response." << std::endl;
-															callback(std::stringstream(), "'model' URL not found inside 'output' in animate retarget response.");
-														}
-													} else if (final_status == "FAILURE") {
-														std::cerr << "Animate Retarget task failed for task ID: " << animate_retarget_task_id << std::endl;
-														callback(std::stringstream(), "Animate Retarget task failed.");
-													} else {
-														std::cerr << "Animate Retarget task did not complete within the expected time for task ID: " << animate_retarget_task_id << std::endl;
-														callback(std::stringstream(), "Animate Retarget task timed out.");
-													}
-												}).detach();
-											} else {
-												std::cerr << "Animate Retarget failed: " << retarget_error << std::endl;
-												callback(std::stringstream(), "Animate Retarget failed.");
 											}
 										});
 									} else {
@@ -778,10 +630,10 @@ void TripoAiApiClient::generate_mesh(const std::string& prompt, const std::strin
 	});
 }
 
-void TripoAiApiClient::generate_mesh_async(const std::string& prompt, const std::string& format, bool quad, int face_limit, bool generate_rig, bool generate_animation, DownloadModelCallback callback) {
+void TripoAiApiClient::generate_mesh_async(const std::string& prompt, const std::string& format, bool quad, int face_limit, bool generate_rig, DownloadModelCallback callback) {
 	// Launch asynchronous task
-	std::thread([this, prompt, format, quad, face_limit, generate_rig, generate_animation, callback]() {
-		generate_mesh(prompt, format, quad, face_limit, generate_rig, generate_animation, callback);
+	std::thread([this, prompt, format, quad, face_limit, generate_rig, callback]() {
+		generate_mesh(prompt, format, quad, face_limit, generate_rig, callback);
 	}).detach();
 }
 

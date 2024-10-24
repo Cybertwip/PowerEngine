@@ -14,6 +14,9 @@ namespace Json {
 class Value;
 }
 
+class DeepMotionApiClient;
+
+
 class TripoAiApiClient {
 public:
 	// Type aliases for callback functions
@@ -174,7 +177,7 @@ public:
 	 * @param generate_animation Whether to perform animation retargeting on the model.
 	 * @param callback The callback function to be invoked upon completion with the downloaded model data or an error message.
 	 */
-	void generate_mesh(const std::string& prompt, const std::string& format, bool quad, int face_limit, bool generate_rig, bool generate_animation, DownloadModelCallback callback);
+	void generate_mesh(const std::string& prompt, const std::string& format, bool quad, int face_limit, bool generate_rig, DownloadModelCallback callback);
 	
 	/**
 	 * @brief Asynchronously generates a 3D model from a text prompt, polls its status until completion, converts it, optionally rigs and animates it, and downloads the model.
@@ -187,7 +190,7 @@ public:
 	 * @param generate_animation Whether to perform animation retargeting on the model.
 	 * @param callback The callback function to be invoked upon completion with the downloaded model data or an error message.
 	 */
-	void generate_mesh_async(const std::string& prompt, const std::string& format, bool quad, int face_limit, bool generate_rig, bool generate_animation, DownloadModelCallback callback);
+	void generate_mesh_async(const std::string& prompt, const std::string& format, bool quad, int face_limit, bool generate_rig, DownloadModelCallback callback);
 	
 	// Job Status Methods
 	
@@ -213,6 +216,7 @@ public:
 	 * @return Json::Value The JSON response containing the balance information.
 	 */
 	Json::Value check_user_balance();
+	
 	
 private:
 	/**

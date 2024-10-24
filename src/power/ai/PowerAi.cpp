@@ -104,11 +104,18 @@ void PowerAi::generate_mesh_async(const std::string& prompt,
 								  bool generate_animation,
 								  std::function<void((std::stringstream model_stream, const std::string& error_message))> callback) {
 	// Delegate to TripoAiApiClient
-	mTripoAiApiClient.generate_mesh_async(prompt, "fbx", false, 10000, generate_rig, generate_animation, [callback](std::stringstream model_stream, const std::string& error_message) {
+	mTripoAiApiClient.generate_mesh_async(prompt, "fbx", false, 10000, generate_rig, [this, prompt, callback, generate_rig, generate_animation](std::stringstream model_stream, const std::string& error_message) {
 		if (error_message.empty()) {
 			std::cout << "Mesh generation successful" << std::endl;
-			callback(std::move(model_stream), "");
+
+			if (generate_rig && generate_animation) {
+				mDeepMotionApiClient.generate_animation_async(std::move(model_stream), "DummyModel", "fbx", prompt, callback);
+			} else {
+				callback(std::move(model_stream), "");
+			}
+			
 		} else {
+
 			std::cerr << "Failed to generate mesh: " << error_message << std::endl;
 			callback({}, error_message);
 		}

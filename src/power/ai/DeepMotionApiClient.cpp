@@ -8,7 +8,13 @@
 #include <filesystem>
 #include <future>
 #include <thread>
+#include <functional>
 
+// Include other necessary headers
+#include <httplib.h>
+#include <json/json.h>
+
+// Namespace for helper functions and constants
 namespace DeepMotionUtils {
 // Base64 encoding table
 const std::string base64_chars =
@@ -26,7 +32,6 @@ const std::string base64_chars =
 inline bool is_base64(uint8_t c) {
 	return (std::isalnum(c) || (c == '+') || (c == '/'));
 }
-
 } // namespace DeepMotionUtils
 
 DeepMotionApiClient::DeepMotionApiClient()
@@ -469,7 +474,6 @@ void DeepMotionApiClient::process_text_to_motion_async(const std::string& prompt
 	}).detach();
 }
 
-
 std::string DeepMotionApiClient::upload_model(std::stringstream& model_stream, const std::string& model_name, const std::string& model_ext) {
 	std::unique_lock<std::mutex> lock(client_mutex_);
 	
@@ -563,7 +567,6 @@ std::string DeepMotionApiClient::upload_model(std::stringstream& model_stream, c
 	return modelId;
 }
 
-
 void DeepMotionApiClient::upload_model_async(std::stringstream model_stream, const std::string& model_name,
 											 const std::string& model_ext, UploadModelCallback callback) {
 	// Launch asynchronous task
@@ -627,70 +630,234 @@ void DeepMotionApiClient::animate_model_async(const std::string& prompt, const s
 	std::thread([this, prompt, model_id, callback]() {
 		// Step 1: Process text to motion
 		process_text_to_motion_async(prompt, model_id, [this, callback](const std::string& request_id, const std::string& error) {
-			if (!request_id.empty()) {
-				std::cout << "Text to motion request submitted. Request ID: " << request_id << std::endl;
-				
-				// Step 2: Poll job status until completion
-				auto poll = [this, request_id, callback]() {
-					// Define a std::function for recursive polling
-					std::function<void()> poll_status;
-					poll_status = [this, request_id, callback, &poll_status]() {
-						check_job_status_async(request_id, [this, request_id, callback, &poll_status](const Json::Value& status, const std::string& error) {
-							if (!error.empty()) {
-								std::cerr << "Failed to check job status: " << error << std::endl;
-								// Retry after a delay
-								std::this_thread::sleep_for(std::chrono::seconds(3));
-								poll_status(); // Recursive call
-								return;
-							}
-							
-							if (status.empty()) {
-								// Retry after a delay
-								std::this_thread::sleep_for(std::chrono::seconds(3));
-								poll_status();
-								return;
-							}
-							
-							// Extract and uppercase the status
-							std::string job_status = status["status"].asString();
-							std::string job_status_upper = to_uppercase(job_status);
-							int progress = status.get("progress", 0).asInt();
-							
-							std::cout << "Job Status: " << job_status_upper << " (" << progress << "%)" << std::endl;
-							
-							if (job_status_upper == "SUCCESS") {
-								// Step 3: Download job results
-								download_job_results_async(request_id, [this, callback](const Json::Value& results, const std::string& error) {
-									if (!error.empty()) {
-										std::cerr << "Failed to download job results: " << error << std::endl;
-										callback(Json::Value(), "Failed to download job results.");
-										return;
-									}
-									
-									// Assuming 'results' contains the animation data
-									callback(results, "");
-								});
-							} else if (job_status_upper == "FAILURE") {
-								std::cerr << "Job failed." << std::endl;
-								callback(Json::Value(), "Job failed.");
-							} else {
-								// Continue polling
-								std::this_thread::sleep_for(std::chrono::seconds(3));
-								poll_status();
-							}
-						});
-					};
-					
-					// Start polling
-					poll_status();
-				};
-				
-				// Start polling in a separate thread
-				std::thread(poll).detach();
-			} else {
+			if (!error.empty()) {
 				std::cerr << "Failed to process text to motion: " << error << std::endl;
 				callback(Json::Value(), "Failed to process text to motion.");
+				return;
 			}
+			
+			std::cout << "Text to motion request submitted. Request ID: " << request_id << std::endl;
+			
+			// Step 2: Poll job status
+			std::function<void()> poll_status;
+			poll_status = [this, request_id, callback, &poll_status]() {
+				check_job_status_async(request_id, [this, request_id, callback, &poll_status](const Json::Value& status, const std::string& error) {
+					if (!error.empty()) {
+						std::cerr << "Failed to check job status: " << error << std::endl;
+						// Retry after delay
+						std::this_thread::sleep_for(std::chrono::seconds(3));
+						poll_status();
+						return;
+					}
+					
+					if (status.empty()) {
+						// Retry after delay
+						std::this_thread::sleep_for(std::chrono::seconds(3));
+						poll_status();
+						return;
+					}
+					
+					// Extract and uppercase the status
+					std::string job_status = status["status"].asString();
+					std::string job_status_upper = to_uppercase(job_status);
+					int progress = status.get("progress", 0).asInt();
+					
+					std::cout << "Job Status: " << job_status_upper << " (" << progress << "%)" << std::endl;
+					
+					if (job_status_upper == "SUCCESS") {
+						// Step 3: Download job results
+						download_job_results_async(request_id, [this, callback](const Json::Value& results, const std::string& error) {
+							if (!error.empty()) {
+								std::cerr << "Failed to download job results: " << error << std::endl;
+								callback(Json::Value(), "Failed to download job results.");
+								return;
+							}
+							
+							// Assuming 'results' contains the animation data
+							callback(results, "");
+						});
+					} else if (job_status_upper == "FAILURE") {
+						std::cerr << "Job failed." << std::endl;
+						callback(Json::Value(), "Job failed.");
+					} else {
+						// Continue polling after delay
+						std::this_thread::sleep_for(std::chrono::seconds(3));
+						poll_status();
+					}
+				});
+			};
+			
+			// Start polling
+			std::thread(poll_status).detach();
 		});
 	}).detach();
+}
+
+// ---------------------
+// New Asynchronous Method Implementation
+// ---------------------
+
+void DeepMotionApiClient::generate_animation_async(std::stringstream model_stream, const std::string& model_name, const std::string& model_ext,
+												   const std::string& prompt, GenerateAnimationCallback callback) {
+	// Step 1: Upload the model asynchronously
+	upload_model_async(std::move(model_stream), model_name, model_ext,
+					   [this, prompt, callback](const std::string& model_id, const std::string& error) {
+		if (!error.empty()) {
+			std::cerr << "Model upload failed: " << error << std::endl;
+			if (callback) {
+				callback(std::stringstream(), "Model upload failed: " + error);
+			}
+			return;
+		}
+		
+		std::cout << "Model uploaded successfully. Model ID: " << model_id << std::endl;
+		
+		// Step 2: Process text to motion asynchronously
+		process_text_to_motion_async(prompt, model_id, [this, callback](const std::string& request_id, const std::string& error) {
+			if (!error.empty()) {
+				std::cerr << "Text to motion processing failed: " << error << std::endl;
+				if (callback) {
+					callback(std::stringstream(), "Text to motion processing failed: " + error);
+				}
+				return;
+			}
+			
+			std::cout << "Text to motion request submitted. Request ID: " << request_id << std::endl;
+			
+			// Step 3: Poll job status asynchronously
+			std::function<void()> poll_status;
+			poll_status = [this, request_id, callback, &poll_status]() {
+				check_job_status_async(request_id, [this, request_id, callback, &poll_status](const Json::Value& status, const std::string& error) {
+					if (!error.empty()) {
+						std::cerr << "Failed to check job status: " << error << std::endl;
+						// Retry after delay
+						std::this_thread::sleep_for(std::chrono::seconds(3));
+						poll_status();
+						return;
+					}
+					
+					if (status.empty()) {
+						// Retry after delay
+						std::this_thread::sleep_for(std::chrono::seconds(3));
+						poll_status();
+						return;
+					}
+					
+					// Extract and uppercase the status
+					std::string job_status = status["status"].asString();
+					std::string job_status_upper = to_uppercase(job_status);
+					int progress = status.get("progress", 0).asInt();
+					
+					std::cout << "Job Status: " << job_status_upper << " (" << progress << "%)" << std::endl;
+					
+					if (job_status_upper == "SUCCESS") {
+						// Step 4: Download job results asynchronously
+						download_job_results_async(request_id, [this, callback](const Json::Value& results, const std::string& error) {
+							if (!error.empty()) {
+								std::cerr << "Failed to download job results: " << error << std::endl;
+								if (callback) {
+									callback(std::stringstream(), "Failed to download job results: " + error);
+								}
+								return;
+							}
+							
+							// Assuming 'results' contains the animation data
+							if (results.isMember("links")) {
+								std::stringstream fbx_stream;
+								
+								// Iterate over links to find FBX URL
+								for (const auto& url : results["links"]) {
+									if (url.isMember("urls")) {
+										for (const auto& file : url["urls"]["files"]) {
+											if (file.isMember("fbx")) {
+												std::string download_url = file["fbx"].asString();
+												
+												std::cout << "Download URL: " << download_url << std::endl;
+												
+												// Parse the download URL
+												std::string protocol, host, path;
+												std::size_t protocol_pos = download_url.find("://");
+												if (protocol_pos != std::string::npos) {
+													protocol = download_url.substr(0, protocol_pos);
+													protocol_pos += 3;
+												} else {
+													std::cerr << "Invalid download URL format: " << download_url << std::endl;
+													if (callback) {
+														callback(std::stringstream(), "Invalid download URL format.");
+													}
+													return;
+												}
+												
+												std::size_t host_pos = download_url.find("/", protocol_pos);
+												if (host_pos != std::string::npos) {
+													host = download_url.substr(protocol_pos, host_pos - protocol_pos);
+													path = download_url.substr(host_pos);
+												} else {
+													host = download_url.substr(protocol_pos);
+													path = "/";
+												}
+												
+												// Determine port
+												int port = 443; // Default HTTPS
+												if (protocol == "http") {
+													port = 80;
+												}
+												
+												// Initialize HTTP client for download
+												httplib::SSLClient download_client(host.c_str(), port);
+												download_client.set_compress(false);
+												
+												// Perform GET request
+												auto res_download = download_client.Get(path.c_str());
+												if (res_download && res_download->status == 200) {
+													// Assuming the response body contains FBX data
+													std::string fbx_data = res_download->body;
+													fbx_stream << fbx_data;
+													
+													if (callback) {
+														callback(std::move(fbx_stream), "");
+													}
+													return;
+												} else {
+													std::cerr << "Failed to download FBX file. HTTP Status: "
+													<< (res_download ? std::to_string(res_download->status) : "No Response") << std::endl;
+													if (callback) {
+														callback(std::stringstream(), "Failed to download FBX file.");
+													}
+													return;
+												}
+											}
+										}
+									}
+								}
+								
+								// If no FBX file found
+								std::cerr << "No FBX file found in job results." << std::endl;
+								if (callback) {
+									callback(std::stringstream(), "No FBX file found in job results.");
+								}
+							} else {
+								std::cerr << "Invalid job results format." << std::endl;
+								if (callback) {
+									callback(std::stringstream(), "Invalid job results format.");
+								}
+							}
+						});
+					} else if (job_status_upper == "FAILURE") {
+						std::cerr << "Job failed." << std::endl;
+						if (callback) {
+							callback(std::stringstream(), "Job failed.");
+						}
+					} else {
+						// Continue polling after delay
+						std::this_thread::sleep_for(std::chrono::seconds(3));
+						poll_status();
+					}
+				});
+			};
+			
+			// Start polling in a separate thread
+			std::thread(poll_status).detach();
+		});
+	});
 }
