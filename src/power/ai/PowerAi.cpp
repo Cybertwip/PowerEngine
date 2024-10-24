@@ -6,7 +6,7 @@
 #include <memory>
 
 namespace PowerAiTools {
-std::stringstream duplicateStringStream(const std::stringstream& original) {
+std::stringstream duplicateStringStream(std::stringstream& original) {
 	// Create a new stringstream
 	std::stringstream copy;
 	
@@ -133,23 +133,25 @@ void PowerAi::generate_mesh_async(const std::string& prompt,
 								  const std::string& animation_prompt,
 								  bool generate_rig,
 								  bool generate_animation,
-								  std::function<void((std::stringstream model_stream, const std::string& error_message))> callback) {
+								  std::function<void(std::stringstream, const std::string&)> callback) {
 	// Delegate to TripoAiApiClient
 	mTripoAiApiClient.generate_mesh_async(prompt, "fbx", false, 10000, generate_rig, [this, prompt, animation_prompt, callback, generate_rig, generate_animation](std::stringstream model_stream, const std::string& error_message) {
 		if (error_message.empty()) {
 			std::cout << "Mesh generation successful" << std::endl;
 			
+			std::stringstream original_model_stream = PowerAiTools::duplicateStringStream(model_stream);
+			
 			std::stringstream model_stream_copy = PowerAiTools::duplicateStringStream(model_stream);
-
+			
 			if (generate_rig && generate_animation) {
-				mDeepMotionApiClient.generate_animation_async(std::move(model_stream_copy), "DummyModel", "fbx", animation_prompt, [this, callback, model_stream, generate_rig, generate_animation](std::stringstream& animated_model_stream, const std::string& error_message){
+				mDeepMotionApiClient.generate_animation_async(std::move(model_stream_copy), "DummyModel", "fbx", animation_prompt, [this, stream = std::move(original_model_stream), callback, generate_rig, generate_animation](std::stringstream animated_model_stream, const std::string& error_message) {
 					if (error_message.empty()) {
 						std::cout << "Mesh animation successful" << std::endl;
 						
 						callback(std::move(animated_model_stream), "");
-
+						
 					} else {
-						callback(std::move(model_stream), "");
+						callback(std::move(stream), "");
 					}
 				});
 			} else {
@@ -157,12 +159,13 @@ void PowerAi::generate_mesh_async(const std::string& prompt,
 			}
 			
 		} else {
-
+			
 			std::cerr << "Failed to generate mesh: " << error_message << std::endl;
 			callback({}, error_message);
 		}
 	});
 }
+
 
 /**
  * @brief Asynchronously generates a 3D animation based on a text prompt and a model ID.
