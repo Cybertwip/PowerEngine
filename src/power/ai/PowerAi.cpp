@@ -134,24 +134,31 @@ void PowerAi::generate_mesh_async(const std::string& prompt,
 								  bool generate_rig,
 								  bool generate_animation,
 								  std::function<void(std::stringstream, const std::string&)> callback) {
+	
+	struct StreamContainer {
+		std::stringstream stream;
+	};
+	
+	auto container = std::make_shared<StreamContainer>();
+		
 	// Delegate to TripoAiApiClient
-	mTripoAiApiClient.generate_mesh_async(prompt, "fbx", false, 10000, generate_rig, [this, prompt, animation_prompt, callback, generate_rig, generate_animation](std::stringstream model_stream, const std::string& error_message) {
+	mTripoAiApiClient.generate_mesh_async(prompt, "fbx", false, 10000, generate_rig, [this, prompt, animation_prompt, callback, generate_rig, generate_animation, container](std::stringstream model_stream, const std::string& error_message) {
 		if (error_message.empty()) {
 			std::cout << "Mesh generation successful" << std::endl;
 			
 			std::stringstream original_model_stream = PowerAiTools::duplicateStringStream(model_stream);
-			
-			std::stringstream model_stream_copy = PowerAiTools::duplicateStringStream(model_stream);
-			
+
+			container->stream = std::move(model_stream);
+
 			if (generate_rig && generate_animation) {
-				mDeepMotionApiClient.generate_animation_async(std::move(model_stream_copy), "DummyModel", "fbx", animation_prompt, [this, stream = std::move(original_model_stream), callback, generate_rig, generate_animation](std::stringstream animated_model_stream, const std::string& error_message) {
+				mDeepMotionApiClient.generate_animation_async(std::move(original_model_stream), "DummyModel", "fbx", animation_prompt, [this, container, callback, generate_rig, generate_animation](std::stringstream animated_model_stream, const std::string& error_message) {
 					if (error_message.empty()) {
 						std::cout << "Mesh animation successful" << std::endl;
 						
 						callback(std::move(animated_model_stream), "");
 						
 					} else {
-						callback(std::move(stream), "");
+						callback(std::move(container->stream), "");
 					}
 				});
 			} else {
