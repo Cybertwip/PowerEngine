@@ -552,8 +552,8 @@ void TripoAiApiClient::generate_mesh(const std::string& prompt, const std::strin
 													if (final_status == "SUCCESS") {
 														
 														// If no animation, proceed to download the rigged model
-														if (conversion_response.isMember("output") && conversion_response["output"].isMember("model")) {
-															std::string model_url = conversion_response["output"]["model"].asString();
+														if (status.isMember("output") && status["output"].isMember("model")) {
+															std::string model_url = status["output"]["model"].asString();
 															std::cout << "Converted Model URL: " << model_url << std::endl;
 															
 															std::stringstream model_stream;
