@@ -525,6 +525,8 @@ void TripoAiApiClient::generate_mesh(const std::string& prompt, const std::strin
 														std::this_thread::sleep_for(std::chrono::seconds(polling_interval_seconds));
 														Json::Value status = check_job_status(animate_rig_task_id);
 														
+														
+														conversion_response = status;
 														if (status.empty()) {
 															std::cerr << "Failed to retrieve status for animate rig task ID: " << animate_rig_task_id << std::endl;
 															retries++;
@@ -552,8 +554,8 @@ void TripoAiApiClient::generate_mesh(const std::string& prompt, const std::strin
 													if (final_status == "SUCCESS") {
 														
 														// If no animation, proceed to download the rigged model
-														if (status.isMember("output") && status["output"].isMember("model")) {
-															std::string model_url = status["output"]["model"].asString();
+														if (conversion_response.isMember("output") && conversion_response["output"].isMember("model")) {
+															std::string model_url = conversion_response["output"]["model"].asString();
 															std::cout << "Converted Model URL: " << model_url << std::endl;
 															
 															std::stringstream model_stream;
