@@ -162,7 +162,7 @@ void PowerPromptWindow::SubmitPromptAsync() {
 		mStatusLabel->set_caption("Status: Generating image...");
 	}
 	
-	std::string prompt_setup = "Analyze this prompt and return a json with boolean fields generate_image, generate_model, generate_rig, generate_animation, prompt_description, animation_description, based on its analysis, only set generate_model to true if the prompt includes the word '3d', if the word '3d' is included and generate_animation is true, then generate_rig must also be true, if the prompt does not include the word '3d' then generate_rig must be false, if the prompt does not include the word 'rig', then generate_rig must be false, if the prompt does not include the word '3d' but generate_animation is true, then generate_image must be true and generate_model and generate_rig must be false, if the prompt includes the word '3d' but does not include the word 'T-pose' or 'A-pose' then generate_animation and generate_rig must be false, parse the prompt, split it and fill prompt_description with the description of the prompt without the word 'rig' or related, if generate_animation is true and prompt_description does not include the word 'T-pose' or 'A-pose' add the word 'T-pose' otherwise, if 'T-pose' or 'A-pose' are written differently with different casing or withouth the dash, correct it, ensure prompt_description does not include animation action or verbs, if the prompt contains actions or verbs, disregarding everything, follow the rules and enforce generate_animation is true, if this is true, also follow the 'A-pose' and 'T-pose' rules only if generate_model is true, if generate_image is true don't add 'A-pose' or 'T-pose', fill animation_description with the description of the animation prompt if generate_animation is true, enforce animation_description is at least 3 words, if nothing matches, all the fields must be set to false and prompt_description must be an empty string, reply only with the json. Don't add 'A-pose' or 'T-pose' to animation_description. Prompt: ";
+	std::string prompt_setup = "Analyze this prompt and return a json with boolean fields generate_image, generate_model, generate_rig, generate_animation, pose_type, prompt_description, animation_description, based on its analysis. If it's 2d generate_image must be true, if it's 3d generate_image must be false and generate_model must be true, prompt_description must not include actions, animation_description should include the actions and must be at least 3 words  Only reply with the json object and remove 'A-pose' or 'T-pose' words from descriptions and mark either 'A-pose' or 'T-pose' into pose_type. Prompt: ";
 	
 	std::string prompt = mInputTextBox->value();
 	
@@ -229,6 +229,7 @@ void PowerPromptWindow::SubmitPromptAsync() {
 		bool generate_model = false;
 		bool generate_rig = false;
 		bool generate_animation = false;
+		std::string pose_type;
 		std::string prompt_description;
 		std::string animation_description;
 		
@@ -260,6 +261,17 @@ void PowerPromptWindow::SubmitPromptAsync() {
 			std::cerr << "JSON Parsing Warning: 'generate_animation' field is missing or not a boolean." << std::endl;
 		}
 		
+		// Validate and extract 'pose_type'
+		if (root.isMember("pose_type") && root["pose_type"].isString()) {
+			pose_type = root["pose_type"].asString();
+		} else {
+			std::cerr << "JSON Parsing Warning: 'prompt_description' field is missing or not a string." << std::endl;
+		}
+		
+		if (pose_type.empty() && generate_model && generate_animation) {
+			pose_type = "T-pose";
+		}
+
 		// Validate and extract 'prompt_description'
 		if (root.isMember("prompt_description") && root["prompt_description"].isString()) {
 			prompt_description = root["prompt_description"].asString();
@@ -272,6 +284,10 @@ void PowerPromptWindow::SubmitPromptAsync() {
 			animation_description = root["animation_description"].asString();
 		} else {
 			std::cerr << "JSON Parsing Warning: 'prompt_description' field is missing or not a string." << std::endl;
+		}
+		
+		if (!animation_description.empty() && generate_model && generate_animation) {
+			prompt_description += ", " pose_type;
 		}
 
 		
