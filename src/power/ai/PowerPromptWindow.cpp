@@ -287,10 +287,9 @@ void PowerPromptWindow::SubmitPromptAsync() {
 		}
 		
 		if (!animation_description.empty() && generate_model && generate_animation) {
-			prompt_description += ", " pose_type;
+			prompt_description += ", " + pose_type;
 		}
 
-		
 		// For debugging purposes, you can print the extracted values
 		std::cout << "Parsed JSON:" << std::endl;
 		std::cout << "generate_image: " << generate_image << std::endl;
