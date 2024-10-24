@@ -299,7 +299,7 @@ std::string OpenAiApiClient::generate_text(const std::string& prompt, const std:
 	
 	// Construct the JSON payload
 	Json::Value post_json_data;
-	post_json_data["model"] = "gpt-4o-mini";
+	post_json_data["model"] = "gpt-4o";
 	
 	Json::Value message;
 	message["role"] = "user";
