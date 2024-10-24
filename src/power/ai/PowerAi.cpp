@@ -5,6 +5,36 @@
 #include <mutex>
 #include <memory>
 
+namespace PowerAiTools {
+std::stringstream duplicateStringStream(const std::stringstream& original) {
+	// Create a new stringstream
+	std::stringstream copy;
+	
+	// Copy the string content
+	copy.str(original.str());
+	
+	// Copy formatting flags
+	copy.copyfmt(original);
+	
+	// Copy the state flags
+	copy.clear(original.rdstate());
+	
+	// Copy the get (read) position
+	std::streampos original_get_pos = original.tellg();
+	if (original_get_pos != -1) { // Check if tellg() succeeded
+		copy.seekg(original_get_pos);
+	}
+	
+	// Copy the put (write) position
+	std::streampos original_put_pos = original.tellp();
+	if (original_put_pos != -1) { // Check if tellp() succeeded
+		copy.seekp(original_put_pos);
+	}
+	
+	return copy;
+}
+}
+
 /**
  * @brief Constructs the PowerAi instance with references to the API clients.
  */
@@ -108,13 +138,15 @@ void PowerAi::generate_mesh_async(const std::string& prompt,
 	mTripoAiApiClient.generate_mesh_async(prompt, "fbx", false, 10000, generate_rig, [this, prompt, animation_prompt, callback, generate_rig, generate_animation](std::stringstream model_stream, const std::string& error_message) {
 		if (error_message.empty()) {
 			std::cout << "Mesh generation successful" << std::endl;
+			
+			std::stringstream model_stream_copy = PowerAiTools::duplicateStringStream(model_stream);
 
 			if (generate_rig && generate_animation) {
-				mDeepMotionApiClient.generate_animation_async(model_stream, "DummyModel", "fbx", animation_prompt, [this, callback, generate_rig, generate_animation](std::stringstream& model_stream, const std::string& error_message){
+				mDeepMotionApiClient.generate_animation_async(std::move(model_stream_copy), "DummyModel", "fbx", animation_prompt, [this, callback, model_stream, generate_rig, generate_animation](std::stringstream& animated_model_stream, const std::string& error_message){
 					if (error_message.empty()) {
-						std::cout << "Mesh generation successful" << std::endl;
+						std::cout << "Mesh animation successful" << std::endl;
 						
-						callback(std::move(model_stream), "");
+						callback(std::move(animated_model_stream), "");
 
 					} else {
 						callback(std::move(model_stream), "");
