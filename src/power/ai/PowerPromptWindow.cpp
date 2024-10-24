@@ -394,7 +394,7 @@ void PowerPromptWindow::SubmitPromptAsync() {
 				
 				auto actor = std::make_shared<Actor>(mDummyRegistry);
 				
-				mGeneratedMeshData = mMeshActorImporter->process(model_stream, "generated_model", mOutputDirectory);
+				mCompressedMeshData = mMeshActorImporter->process(model_stream, "generated_model", mOutputDirectory);
 
 				mMeshActorBuilder->build(*actor, mDummyAnimationTimeProvider, model_stream, mActorPath, mPreviewCanvas->get_mesh_shader(), mPreviewCanvas->get_skinned_mesh_shader());
 

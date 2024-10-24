@@ -109,6 +109,4 @@ public:
 	std::shared_ptr<Actor> mActiveActor;
 	
 	EPowerMode mPowerMode;
-	
-	std::unique_ptr<MeshActorImporter::CompressedMeshActor> mGeneratedMeshData;
 };
