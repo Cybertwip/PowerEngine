@@ -98,7 +98,6 @@ void SkinnedMeshBatch::clear() {
 	mBatchMaterials.clear();
 	mMeshStartIndices.clear();
 	mMeshVertexStartIndices.clear();
-	mVertexIndexingMap.clear();
 }
 
 void SkinnedMeshBatch::append(std::reference_wrapper<SkinnedMesh> meshRef) {
