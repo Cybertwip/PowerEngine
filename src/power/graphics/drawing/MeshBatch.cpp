@@ -96,13 +96,13 @@ void MeshBatch::append(std::reference_wrapper<Mesh> meshRef) {
 	auto& shader = mesh.get_shader();
 	int identifier = shader.identifier();
 		
-	auto& indexer = mVertexIndexingMap[identifier];
+	auto& indexer = mVertexIndexingMap[instanceId];
 	
 	size_t vertexOffset = indexer.mVertexOffset;
 	size_t indexOffset = indexer.mIndexOffset;
 	
 	mMeshStartIndices[instanceId].push_back(indexOffset);
-	mMeshVertexStartIndices[identifier].push_back(vertexOffset);
+	mMeshVertexStartIndices[instanceId].push_back(vertexOffset);
 	
 	// Append vertex data using getters
 	mBatchPositions[identifier].insert(mBatchPositions[identifier].end(),
@@ -177,7 +177,7 @@ void MeshBatch::remove(std::reference_wrapper<Mesh> meshRef) {
 		size_t indexStartIdx = mMeshStartIndices[instanceId][meshIndex];
 		size_t indexCount = mesh.get_mesh_data().get_indices().size();
 		
-		size_t vertexStartIdx = mMeshVertexStartIndices[identifier][meshIndex];
+		size_t vertexStartIdx = mMeshVertexStartIndices[instanceId][meshIndex];
 		size_t vertexCount = mesh.get_mesh_data().get_vertices().size();
 		size_t vertexEndIdx = vertexStartIdx + vertexCount;
 
@@ -211,16 +211,16 @@ void MeshBatch::remove(std::reference_wrapper<Mesh> meshRef) {
 		
 		// Remove from mMeshStartIndices and mMeshVertexStartIndices
 		mMeshStartIndices[instanceId].erase(mMeshStartIndices[instanceId].begin() + meshIndex);
-		mMeshVertexStartIndices[identifier].erase(mMeshVertexStartIndices[identifier].begin() + meshIndex);
+		mMeshVertexStartIndices[instanceId].erase(mMeshVertexStartIndices[instanceId].begin() + meshIndex);
 		
 		// Adjust subsequent start indices
 		for (size_t i = meshIndex; i < mMeshStartIndices[instanceId].size(); ++i) {
 			mMeshStartIndices[instanceId][i] -= indexCount;
-			mMeshVertexStartIndices[identifier][i] -= vertexCount;
+			mMeshVertexStartIndices[instanceId][i] -= vertexCount;
 		}
 		
 		// Update indexer
-		auto& indexer = mVertexIndexingMap[identifier];
+		auto& indexer = mVertexIndexingMap[instanceId];
 		indexer.mIndexOffset -= indexCount;
 		indexer.mVertexOffset -= vertexCount;
 		

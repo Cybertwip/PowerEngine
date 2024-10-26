@@ -285,7 +285,9 @@ void mainloop() {
 			// Directly access the single screen
 			if (screen1 && screen1->visible()) {
 				if (glfwWindowShouldClose(window1)) {
-					screen1->set_visible(false);
+					nanogui::async([](){
+						screen1->set_visible(false);
+					});
 				} else {
 #if defined(EMSCRIPTEN)
 					if (emscripten_redraw || screen1->tooltip_fade_in_progress())

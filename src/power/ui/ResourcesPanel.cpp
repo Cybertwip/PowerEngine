@@ -147,7 +147,7 @@ mShaderManager(shaderManager)
 		mPromptWindow->set_visible(true);
 		mPromptWindow->set_modal(true);
 		nanogui::async([this, node](){
-						mPromptWindow->Preview(node->FullPath, mSelectedDirectoryPath);
+			mPromptWindow->Preview(node->FullPath, mSelectedDirectoryPath);
 		});
 	});
 	
@@ -202,9 +202,9 @@ mShaderManager(shaderManager)
 		
 		mAddButton->set_pushed(false);
 		mAddButton->popup().set_visible(false);
-
+		
 	});
-
+	
 	mAnimationButton = std::make_shared<nanogui::Button>(mAddButton->popup(), "Animation");
 	
 	mAnimationButton->set_icon(FA_RUNNING);
@@ -221,7 +221,7 @@ mShaderManager(shaderManager)
 	
 	mAddButton->perform_layout(screen.nvg_context());
 	mAddButton->popup().perform_layout(screen.nvg_context());
-
+	
 	mDeepMotionSettings->perform_layout(screen.nvg_context());
 	
 	// Add the Import Assets button with a "+" icon
@@ -261,7 +261,7 @@ mShaderManager(shaderManager)
 	mFileView = std::make_shared<FileView>(*this, mRootDirectoryNode, false, [this](std::shared_ptr<DirectoryNode> node){
 		mSelectedNode = node;
 	}, [this](std::shared_ptr<DirectoryNode> node){
-		 mSelectedNode = node;
+		mSelectedNode = node;
 		
 		auto filename = node->FullPath;
 		
@@ -324,7 +324,7 @@ void ResourcesPanel::refresh() {
 //									  GLFW_MOD_CONTROL
 //#endif
 //									  );
-//		
+//
 //		if (isCommand && key == GLFW_KEY_UP) {
 //			navigate_up_to_cwd();
 //			return true; // Event handled
@@ -336,69 +336,77 @@ void ResourcesPanel::refresh() {
 
 void ResourcesPanel::import_assets() {
 	// Open a file dialog to select files to import
-	nanogui::file_dialog_async(
-							   { {"fbx", "All Files"} }, false, false, [this](const std::vector<std::string>& files){
-								   
-								   for (const auto& file : files) {
+	nanogui::async([this](){
+		nanogui::file_dialog_async(
+								   { {"fbx", "All Files"} }, false, false, [this](const std::vector<std::string>& files){
 									   
-									   try {
-										   // Copy the selected file to the current directory
+									   for (const auto& file : files) {
 										   
-										   mImportWindow->Preview(file, mSelectedDirectoryPath);
-										   
-									   } catch (const std::exception& e) {
-										   std::cerr << "Error importing asset: " << e.what() << std::endl;
+										   try {
+											   // Copy the selected file to the current directory
+											   
+											   mImportWindow->Preview(file, mSelectedDirectoryPath);
+											   
+										   } catch (const std::exception& e) {
+											   std::cerr << "Error importing asset: " << e.what() << std::endl;
+										   }
 									   }
-								   }
-								   
-								   // Refresh the file view to display the newly imported assets
-								   nanogui::async([this](){
-									   refresh_file_view();
+									   
+									   // Refresh the file view to display the newly imported assets
+									   nanogui::async([this](){
+										   refresh_file_view();
+									   });
+									   
 								   });
-								   
-							   });
+	});
+	
 	
 }
 
 void ResourcesPanel::export_assets() {
 	if (mSelectedNode != nullptr) {
 		// Open a file dialog to select the destination directory
-		nanogui::file_dialog_async(
-								   { {"fbx", "All Files"} }, true, false, [this](const std::vector<std::string>& files){
-									   if (files.empty()) {
-										   return; // User canceled
-									   }
-									   
-									   std::string destinationFile = files.front();
-									   
-									   try {
-										   // Copy files or directories
-										   CompressedSerialization::Deserializer deserializer;
-										   
-										   // Load the serialized file
-										   if (!deserializer.load_from_file(mSelectedNode->FullPath)) {
-											   std::cerr << "Failed to load serialized file: " << mSelectedNode->FullPath << "\n";
-											   return;
+		nanogui::async([this](){
+			nanogui::file_dialog_async(
+									   { {"fbx", "All Files"} }, true, false, [this](const std::vector<std::string>& files){
+										   if (files.empty()) {
+											   return; // User canceled
 										   }
 										   
-										   mMeshActorExporter->exportToFile(deserializer, mSelectedNode->FullPath, destinationFile);
+										   std::string destinationFile = files.front();
 										   
-										   std::cout << "Assets exported to: " << destinationFile << std::endl;
-									   } catch (const fs::filesystem_error& e) {
-										   std::cerr << "Error exporting assets: " << e.what() << std::endl;
-									   }
-								   });
+										   try {
+											   // Copy files or directories
+											   CompressedSerialization::Deserializer deserializer;
+											   
+											   // Load the serialized file
+											   if (!deserializer.load_from_file(mSelectedNode->FullPath)) {
+												   std::cerr << "Failed to load serialized file: " << mSelectedNode->FullPath << "\n";
+												   return;
+											   }
+											   
+											   mMeshActorExporter->exportToFile(deserializer, mSelectedNode->FullPath, destinationFile);
+											   
+											   std::cout << "Assets exported to: " << destinationFile << std::endl;
+										   } catch (const fs::filesystem_error& e) {
+											   std::cerr << "Error exporting assets: " << e.what() << std::endl;
+										   }
+									   });
+		});
 	} else {
-		nanogui::file_dialog_async(
-								   { {"mp4", "All Files"} }, true, false, [this](const std::vector<std::string>& files){
-									   if (files.empty()) {
-										   return; // User canceled
-									   }
-									   
-									   std::string destinationFile = files.front();
-									   
-									   mUiManager.export_movie(destinationFile);
-								   });
+		nanogui::async([this](){
+			nanogui::file_dialog_async(
+									   { {"mp4", "All Files"} }, true, false, [this](const std::vector<std::string>& files){
+										   if (files.empty()) {
+											   return; // User canceled
+										   }
+										   
+										   std::string destinationFile = files.front();
+										   
+										   mUiManager.export_movie(destinationFile);
+									   });
+			
+		});
 	}
 }
 

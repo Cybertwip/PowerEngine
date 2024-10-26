@@ -109,13 +109,13 @@ void SkinnedMeshBatch::append(std::reference_wrapper<SkinnedMesh> meshRef) {
 	auto& shader = mesh.get_shader();
 	int identifier = shader.identifier();
 	
-	auto& indexer = mVertexIndexingMap[identifier];
+	auto& indexer = mVertexIndexingMap[instanceId];
 	
 	size_t vertexOffset = indexer.mVertexOffset;
 	size_t indexOffset = indexer.mIndexOffset;
 	
 	mMeshStartIndices[instanceId].push_back(indexOffset);
-	mMeshVertexStartIndices[identifier].push_back(vertexOffset);
+	mMeshVertexStartIndices[instanceId].push_back(vertexOffset);
 
 	// Append vertex data using getters
 	mBatchPositions[identifier].insert(mBatchPositions[identifier].end(),
@@ -233,7 +233,7 @@ void SkinnedMeshBatch::remove(std::reference_wrapper<SkinnedMesh> meshRef) {
 		
 		// Remove from mMeshStartIndices and mMeshVertexStartIndices
 		mMeshStartIndices[instanceId].erase(mMeshStartIndices[instanceId].begin() + meshIndex);
-		mMeshVertexStartIndices[identifier].erase(mMeshVertexStartIndices[identifier].begin() + meshIndex);
+		mMeshVertexStartIndices[instanceId].erase(mMeshVertexStartIndices[instanceId].begin() + meshIndex);
 		
 		// Adjust subsequent start indices
 		for (size_t i = meshIndex; i < mMeshStartIndices[instanceId].size(); ++i) {
@@ -242,7 +242,7 @@ void SkinnedMeshBatch::remove(std::reference_wrapper<SkinnedMesh> meshRef) {
 		}
 		
 		// Update indexer
-		auto& indexer = mVertexIndexingMap[identifier];
+		auto& indexer = mVertexIndexingMap[instanceId];
 		indexer.mIndexOffset -= indexCount;
 		indexer.mVertexOffset -= vertexCount;
 		
