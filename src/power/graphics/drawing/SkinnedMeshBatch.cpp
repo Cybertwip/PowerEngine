@@ -188,7 +188,7 @@ void SkinnedMeshBatch::remove(std::reference_wrapper<SkinnedMesh> meshRef) {
 	// If no meshes left, clean up
 	if (mesh_vector.empty()) {
 		// Get starting indices
-		size_t indexStartIdx = mMeshStartIndices[instanceId][meshIndex];
+		size_t indexStartIdx = mMeshStartIndices[instanceId][instanceId];
 		size_t indexCount = mesh.get_mesh_data().get_indices().size();
 		
 		size_t vertexStartIdx = mMeshVertexStartIndices[identifier][instanceId];
@@ -202,7 +202,6 @@ void SkinnedMeshBatch::remove(std::reference_wrapper<SkinnedMesh> meshRef) {
 		indexStartIdx = mBatchIndexOffset;
 		vertexStartIdx = mBatchVertexOffset;
 		
-
 		// Remove indices
 		mBatchIndices[identifier].erase(mBatchIndices[identifier].begin() + indexStartIdx,
 										mBatchIndices[identifier].begin() + indexStartIdx + indexCount);
