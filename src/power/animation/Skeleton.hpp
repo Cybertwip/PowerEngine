@@ -151,11 +151,11 @@ public:
 	
 	void add_bone(const std::string& name, const glm::mat4& offset, const glm::mat4& bindpose, int parent_index) {
 		int new_bone_index = static_cast<int>(m_bones.size());
-		m_bones.emplace_back(name, new_bone_index, parent_index, offset, bindpose, glm::identity<glm::mat4>());
+		m_bones.emplace_back(std::make_unique<Bone>(name, new_bone_index, parent_index, offset, bindpose, glm::identity<glm::mat4>()));
 		
 		if (parent_index != -1) {
 			assert(parent_index >= 0 && parent_index < new_bone_index);
-			m_bones[parent_index].children.push_back(new_bone_index);
+			m_bones[parent_index]->children.push_back(new_bone_index);
 		}
 	}
 	
@@ -167,20 +167,20 @@ public:
 	// Get bone by index
 	const IBone& get_bone(int index) const {
 		assert(index >= 0 && index < num_bones());
-		return m_bones[index];
+		return *m_bones[index];
 	}
 		
 	// Get mutable bone by index
 	IBone& get_bone(int index) {
 		assert(index >= 0 && index < num_bones());
-		return m_bones[index];
+		return *m_bones[index];
 	}
 	
 	// Find bone by name
 	IBone* find_bone(const std::string& name) {
 		for (auto& bone : m_bones) {
-			if (bone.name == name) {
-				return &bone;
+			if (bone->name == name) {
+				return bone.get();
 			}
 		}
 		return nullptr;
@@ -188,16 +188,16 @@ public:
 	
 	glm::mat4 get_bone_bindpose(int index) {
 		assert(index >= 0 && index < num_bones());
-		return m_bones[index].bindpose;
+		return m_bones[index]->bindpose;
 	}
 	
 	void compute_offsets(const std::vector<glm::mat4>& withAnimation) {
 		if (m_bones.empty()) return;
 		
-		for (Bone& bone : m_bones) {
-			if (bone.parent_index == -1) {
+		for (auto& bone : m_bones) {
+			if (bone->parent_index == -1) {
 				glm::mat4 identity = glm::mat4(1.0f);
-				compute_global_and_transform(bone, identity, withAnimation);
+				compute_global_and_transform(*bone, identity, withAnimation);
 			}
 		}
 	}
@@ -213,7 +213,7 @@ public:
 		
 		// Serialize each bone
 		for (const auto& bone : m_bones) {
-			bone.serialize(serializer);
+			bone->serialize(serializer);
 		}
 	}
 	
@@ -234,13 +234,12 @@ public:
 		m_bones.reserve(numBones);
 		
 		// Temporary storage for bones to allow setting up children after all bones are read
-		std::vector<Bone> tempBones(numBones);
+		std::vector<std::unique_ptr<Bone>> tempBones(numBones);
 		
 		// Deserialize each bone
 		for (uint32_t i = 0; i < numBones; ++i) {
-			Bone bone;
-			if (!bone.deserialize(deserializer)) return false;
-			tempBones[i] = bone;
+			auto& bone = tempBones.emplace_back(std::make_unique<Bone>());
+			if (!bone->deserialize(deserializer)) return false;
 		}
 		
 		// Assign deserialized bones to m_bones
@@ -252,12 +251,12 @@ public:
 		return true;
 	}
 
-	const std::vector<Bone>& get_bones() {
+	const std::vector<unique_ptr<Bone>>& get_bones() {
 		return m_bones;
 	}
 	
 private:
-	std::vector<Bone> m_bones;
+	std::vector<std::unique_ptr<Bone>> m_bones;
 	
 	void compute_global_and_transform(Bone& bone, const glm::mat4& parentGlobal, const std::vector<glm::mat4>& withAnimation) {
 		
@@ -282,8 +281,14 @@ private:
 		bone.global = global * bone.offset;
 		
 		for (int childIndex : bone.children) {
-			compute_global_and_transform(m_bones[childIndex], global, withAnimation);
+			compute_global_and_transform(*m_bones[childIndex], global, withAnimation);
 		}
 	}
+	
+};
+
+class SkeletonComponent {
+public:
+private:
 	
 };
