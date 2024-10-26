@@ -238,7 +238,7 @@ void SkinnedMeshBatch::remove(std::reference_wrapper<SkinnedMesh> meshRef) {
 		// Adjust subsequent start indices
 		for (size_t i = meshIndex; i < mMeshStartIndices[instanceId].size(); ++i) {
 			mMeshStartIndices[instanceId][i] -= indexCount;
-			mMeshVertexStartIndices[identifier][i] -= vertexCount;
+			mMeshVertexStartIndices[instanceId][i] -= vertexCount;
 		}
 		
 		// Update indexer
