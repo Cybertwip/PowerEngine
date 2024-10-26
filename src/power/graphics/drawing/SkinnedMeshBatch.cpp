@@ -141,7 +141,7 @@ void SkinnedMeshBatch::append(std::reference_wrapper<SkinnedMesh> meshRef) {
 	// Adjust and append indices
 	auto& indices = mesh.get_mesh_data().get_indices();
 	for (auto index : indices) {
-		mBatchIndices[identifier].push_back(index + vertexOffset);
+		mBatchIndices[identifier].push_back(index + mBatchVertexOffset);
 	}
 	
 	mBatchIndexOffset += indices.size();
