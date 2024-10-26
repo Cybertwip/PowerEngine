@@ -2,6 +2,8 @@
 
 #include "filesystem/CompressedSerialization.hpp"
 
+#include <components/TransformComponent.hpp>
+
 #include <string>
 #include <vector>
 #include <glm/glm.hpp>
@@ -14,16 +16,43 @@
 #include <zlib.h>
 #include <iostream> // For error messages
 
+class IBone {
+public:
+	IBone() {
+		
+	}
+	
+	virtual ~IBone() = default;
+
+	virtual std::string get_name() = 0;
+	virtual int get_parent_index() = 0;
+
+	
+	virtual void set_translation(const glm::vec3& translation) = 0;
+	virtual void set_rotation(const glm::quat& rotation) = 0;
+	virtual void set_scale(const glm::vec3& scale) = 0;
+	
+	virtual glm::vec3 get_translation() const = 0;
+	virtual glm::quat get_rotation() const = 0;
+	virtual glm::vec3 get_scale() const = 0;
+	
+	virtual glm::mat4 get_transform_matrix() const = 0;
+	
+private:
+};
+
+
 class Skeleton {
 public:
-	struct Bone {
+	class Bone : public IBone {
+	public:
 		std::string name;
 		int index;  // -1 if root
 		int parent_index;  // -1 if root
 		glm::mat4 offset;
 		glm::mat4 bindpose;
-		glm::mat4 local;
-		glm::mat4 transform;
+		TransformComponent transform;
+		glm::mat4 global;
 		std::vector<int> children;
 		
 		Bone(){
@@ -31,7 +60,9 @@ public:
 		}
 
 		Bone(const std::string& name, int index, int parent_index, const glm::mat4& offset, const glm::mat4& bindpose, const glm::mat4& local)
-		: name(name), index(index), parent_index(parent_index), offset(offset), bindpose(bindpose), local(local), transform(1.0f) {}
+		: name(name), index(index), parent_index(parent_index), offset(offset), bindpose(bindpose), transform(local), global(1.0f) {}
+		
+		~Bone() = default;
 		
 		// Serialize method for Bone
 		void serialize(CompressedSerialization::Serializer& serializer) const {
@@ -40,8 +71,7 @@ public:
 			serializer.write_int32(parent_index);
 			serializer.write_mat4(offset);
 			serializer.write_mat4(bindpose);
-			serializer.write_mat4(local);
-			serializer.write_mat4(transform);
+			serializer.write_mat4(get_transform_matrix());
 			
 			// Serialize number of children
 			uint32_t numChildren = static_cast<uint32_t>(children.size());
@@ -60,8 +90,9 @@ public:
 			if (!deserializer.read_int32(parent_index)) return false;
 			if (!deserializer.read_mat4(offset)) return false;
 			if (!deserializer.read_mat4(bindpose)) return false;
-			if (!deserializer.read_mat4(local)) return false;
-			if (!deserializer.read_mat4(transform)) return false;
+			glm::mat4 transformation;
+			if (!deserializer.read_mat4(transformation)) return false;
+			transform = TransformComponent(transformation);
 			
 			// Deserialize number of children
 			uint32_t numChildren = 0;
@@ -74,6 +105,43 @@ public:
 			}
 			
 			return true;
+		}
+		
+		std::string get_name() override {
+			return name;
+		}
+		
+		int get_parent_index() override {
+			return parent_index;
+		}
+
+		void set_translation(const glm::vec3& translation) override {
+			transform.set_translation(translation);
+		}
+		
+		void set_rotation(const glm::quat& rotation) override {
+			transform.set_rotation(rotation);
+		}
+		
+		void set_scale(const glm::vec3& scale) override {
+			transform.set_scale(scale);
+		}
+		
+		glm::vec3 get_translation() const override {
+			return transform.get_translation();
+		}
+		
+		glm::vec3 get_scale() const override {
+			return transform.get_scale();
+		}
+		
+		glm::quat get_rotation() const override {
+			return transform.get_rotation();
+		}
+		
+		
+		glm::mat4 get_transform_matrix() const override {
+			return transform.get_matrix();
 		}
 
 	};
@@ -97,27 +165,30 @@ public:
 	}
 	
 	// Get bone by index
-	const Bone& get_bone(int index) const {
+	const IBone& get_bone(int index) const {
 		assert(index >= 0 && index < num_bones());
 		return m_bones[index];
 	}
-	
-	
-	
+		
 	// Get mutable bone by index
-	Bone& get_bone(int index) {
+	IBone& get_bone(int index) {
 		assert(index >= 0 && index < num_bones());
 		return m_bones[index];
 	}
 	
 	// Find bone by name
-	Bone* find_bone(const std::string& name) {
+	IBone* find_bone(const std::string& name) {
 		for (auto& bone : m_bones) {
 			if (bone.name == name) {
 				return &bone;
 			}
 		}
 		return nullptr;
+	}
+	
+	glm::mat4 get_bone_bindpose(int index) {
+		assert(index >= 0 && index < num_bones());
+		return m_bones[index].bindpose;
 	}
 	
 	void compute_offsets(const std::vector<glm::mat4>& withAnimation) {
@@ -206,9 +277,9 @@ private:
 			}
 		}
 				
-		global *= bone.local * transformation;
+		global *= bone.get_transform_matrix() * transformation;
 		
-		bone.transform = global * bone.offset;
+		bone.global = global * bone.offset;
 		
 		for (int childIndex : bone.children) {
 			compute_global_and_transform(m_bones[childIndex], global, withAnimation);

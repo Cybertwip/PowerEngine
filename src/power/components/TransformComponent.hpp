@@ -5,6 +5,7 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/quaternion.hpp>
 #include <glm/gtc/type_ptr.hpp>
+#include <glm/gtx/matrix_decompose.hpp>
 
 #include <nanogui/vector.h>
 #include <functional>
@@ -27,11 +28,26 @@ static glm::mat4 nanogui_to_glm(const nanogui::Matrix4f& nanoguiMatrix) {
 	return glmMatrix;
 }
 
+
+//@TODO Interface this
 class TransformComponent {
 public:
 	using TransformChangedCallback = std::function<void(const TransformComponent&)>;
 	
 	Transform transform;
+	
+	TransformComponent(const glm::mat4& matrix) {
+		glm::vec3 scale;
+		glm::quat rotation;
+		glm::vec3 translation;
+		glm::vec3 skew;
+		glm::vec4 perspective;
+		glm::decompose(matrix, scale, rotation, translation, skew, perspective);
+		transform.translation = translation;
+		transform.rotation = rotation;
+		transform.scale = scale;
+	}
+
 	
 	TransformComponent() {
 		transform.translation = glm::vec3(0.0f, 0.0f, 0.0f);

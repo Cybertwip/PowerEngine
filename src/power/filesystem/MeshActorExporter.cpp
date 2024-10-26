@@ -119,8 +119,8 @@ bool MeshActorExporter::setupScene(CompressedSerialization::Deserializer& deseri
 		
 		// Step 1: Create FbxNode nodes for each bone
 		for (int boneIndex = 0; boneIndex < skeletonData.num_bones(); ++boneIndex) {
-			std::string boneName = skeletonData.get_bone(boneIndex).name;
-			int parentIndex = skeletonData.get_bone(boneIndex).parent_index;
+			std::string boneName = skeletonData.get_bone(boneIndex).get_name();
+			int parentIndex = skeletonData.get_bone(boneIndex).get_parent_index();
 			
 			// Create a new Skeleton node for the bone
 			FbxSkeleton* fbxSkeleton = FbxSkeleton::Create(scene, boneName.c_str());
@@ -130,7 +130,7 @@ bool MeshActorExporter::setupScene(CompressedSerialization::Deserializer& deseri
 			boneNode->SetNodeAttribute(fbxSkeleton);
 			
 			// Step 2: Set bone's local transformations
-			glm::mat4 poseMatrix = skeletonData.get_bone(boneIndex).bindpose;
+			glm::mat4 poseMatrix = skeletonData.get_bone_bindpose(boneIndex);
 			
 			glm::vec3 translation, scale;
 			glm::quat rotation;
@@ -147,7 +147,7 @@ bool MeshActorExporter::setupScene(CompressedSerialization::Deserializer& deseri
 		
 		// Step 3: Establish parent-child relationships
 		for (int boneIndex = 0; boneIndex < skeletonData.num_bones(); ++boneIndex) {
-			int parentIndex = skeletonData.get_bone(boneIndex).parent_index;
+			int parentIndex = skeletonData.get_bone(boneIndex).get_parent_index();
 			FbxNode* boneNode = boneNodes[boneIndex];
 			
 			if (parentIndex == -1) {

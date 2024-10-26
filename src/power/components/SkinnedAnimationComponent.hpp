@@ -160,7 +160,7 @@ public:
 		
 		for (size_t i = 0; i < numBones; ++i) {
 			// Get the bone transform as a glm::mat4
-			glm::mat4 boneTransform = mProvider.get_skeleton().get_bone(i).transform;
+			glm::mat4 boneTransform = mProvider.get_skeleton().get_bone(i).get_transform_matrix();
 			
 			// Reference to the BoneCPU structure
 			BoneCPU& boneCPU = bonesCPU[i];
