@@ -99,7 +99,7 @@ void AnimationPanel::parse_file(const std::string& path) {
 
 			auto& playbackComponent = mActiveActor->get().get_component<PlaybackComponent>();
 
-			auto playbackData = std::make_shared<PlaybackData>(playbackComponent.getPlaybackData()->get_skeleton(), std::move(animation));
+			auto playbackData = std::make_shared<PlaybackData>(std::move(animation));
 			
 			playbackComponent.setPlaybackData(playbackData);
 			

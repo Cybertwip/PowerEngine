@@ -6,16 +6,11 @@
 #include <unordered_map>
 
 class Animation;
-class Skeleton;
 
 struct PlaybackData {
-	PlaybackData(std::shared_ptr<Skeleton> skeleton, std::unique_ptr<Animation> animation) : mSkeleton(std::move(skeleton)), mAnimation(std::move(animation)) {
+	PlaybackData(std::unique_ptr<Animation> animation) : mAnimation(std::move(animation)) {
 		
 		assert(mAnimation != nullptr);
-	}
-	
-	void set_skeleton(std::shared_ptr<Skeleton> skeleton) {
-		mSkeleton = skeleton;
 	}
 	
 	void set_animation(std::unique_ptr<Animation> animation) {
@@ -25,18 +20,12 @@ struct PlaybackData {
 		mAnimation = std::move(animation);
 	}
 	
-	std::shared_ptr<Skeleton> get_skeleton() {
-		return mSkeleton;
-	}
-	
 	Animation& get_animation() {
 		return *mAnimation;
-	}
-	
+	}	
 	
 private:
 	PlaybackData();
-	std::shared_ptr<Skeleton> mSkeleton;
 	std::unique_ptr<Animation> mAnimation;
 };
 
@@ -146,7 +135,7 @@ public:
 		   PlaybackState::Pause,
 		   PlaybackModifier::Forward,
 		   PlaybackTrigger::None,
-		   std::make_shared<PlaybackData>(std::make_unique<Skeleton>(), std::make_unique<Animation>())) {
+		   std::make_shared<PlaybackData>(std::make_unique<Animation>())) {
 		
 	}
 	
@@ -212,10 +201,6 @@ public:
 
 	Animation& get_animation() const {
 		return mState.getPlaybackData()->get_animation();
-	}
-	
-	Skeleton& get_skeleton() const {
-		return *mState.getPlaybackData()->get_skeleton();
 	}
 	
 	void update_state(PlaybackState state, PlaybackModifier modifier, PlaybackTrigger trigger, std::shared_ptr<PlaybackData> playbackData) {

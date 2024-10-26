@@ -36,11 +36,11 @@ private:
 	SkinnedAnimationComponent();
 	
 public:
-	SkinnedAnimationComponent(PlaybackComponent& provider, AnimationTimeProvider& animationTimeProvider)
-	: mProvider(provider), mAnimationTimeProvider(animationTimeProvider), mRegistrationId(-1), mFrozen(false)
+	SkinnedAnimationComponent(PlaybackComponent& provider, SkeletonComponent& skeletonComponent, AnimationTimeProvider& animationTimeProvider)
+	: mProvider(provider), mSkeletonComponent(skeletonComponent), mAnimationTimeProvider(animationTimeProvider), mRegistrationId(-1), mFrozen(false)
 	, mAnimationOffset(0.0f) {
 		// Initialize the pose buffers
-		size_t numBones = provider.get_skeleton().num_bones();
+		size_t numBones = mSkeletonComponent.get_skeleton().num_bones();
 		mModelPose.resize(numBones);
 		
 		std::fill(mModelPose.begin(), mModelPose.end(), glm::identity<glm::mat4>());
@@ -154,13 +154,13 @@ public:
 	// Retrieve the bones for rendering
 	std::vector<BoneCPU> get_bones() {
 		// Ensure we have a valid number of bones
-		size_t numBones = mProvider.get_skeleton().num_bones();
+		size_t numBones = mSkeletonComponent.get_skeleton().num_bones();
 		
 		std::vector<BoneCPU> bonesCPU(numBones);
 		
 		for (size_t i = 0; i < numBones; ++i) {
 			// Get the bone transform as a glm::mat4
-			glm::mat4 boneTransform = mProvider.get_skeleton().get_bone(i).get_transform_matrix();
+			glm::mat4 boneTransform = mSkeletonComponent.get_skeleton().get_bone(i).get_transform_matrix();
 			
 			// Reference to the BoneCPU structure
 			BoneCPU& boneCPU = bonesCPU[i];
@@ -247,6 +247,7 @@ public:
 	}
 private:
 	PlaybackComponent& mProvider;
+	SkeletonComponent& mSkeletonComponent;
 	AnimationTimeProvider& mAnimationTimeProvider;
 	int mRegistrationId;
 	bool mFrozen;
@@ -512,12 +513,12 @@ private:
 	}
 	
 	void apply_pose_to_skeleton() {
-		Skeleton& skeleton = mProvider.get_skeleton();
+		Skeleton& skeleton = static_cast<Skeleton&>(mSkeletonComponent.get_skeleton());
 		skeleton.compute_offsets(mModelPose);
 	}
 	
 	void apply_pose_to_skeleton(std::vector<glm::mat4>& modelPose) {
-		Skeleton& skeleton = mProvider.get_skeleton();
+		Skeleton& skeleton = static_cast<Skeleton&>(mSkeletonComponent.get_skeleton());
 		skeleton.compute_offsets(modelPose);
 	}
 	
@@ -618,7 +619,7 @@ private:
 		Animation& animationB = next.getPlaybackData()->get_animation();
 		
 		// Get the total number of bones from the skeleton
-		size_t numBones = mProvider.get_skeleton().num_bones();
+		size_t numBones = mSkeletonComponent.get_skeleton().num_bones();
 		
 		// Initialize blended pose
 		std::vector<glm::mat4> blendedPose(numBones, glm::mat4(1.0f));

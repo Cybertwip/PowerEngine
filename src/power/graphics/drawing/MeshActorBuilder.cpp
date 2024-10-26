@@ -200,7 +200,7 @@ Actor& MeshActorBuilder::build_skinned(Actor& actor, AnimationTimeProvider& time
 		std::vector<std::unique_ptr<SkinnedMesh>> skinnedMeshComponentData; // Corrected type to SkinnedMesh
 		
 		// Create SkinnedAnimationPdo with deserialized skeleton
-		auto playbackData = std::make_shared<PlaybackData>(std::move(model->GetSkeleton()), std::move(std::make_unique<Animation>())); // one animation per fbx at the moment
+		auto playbackData = std::make_shared<PlaybackData>( std::move(std::make_unique<Animation>())); // one animation per fbx at the moment
 		
 		// Add PlaybackComponent
 		auto& playbackComponent = actor.add_component<PlaybackComponent>();
@@ -208,8 +208,10 @@ Actor& MeshActorBuilder::build_skinned(Actor& actor, AnimationTimeProvider& time
 		playbackComponent.setPlaybackData(playbackData);
 
 		
+		auto& skeletonComponent = actor.add_component<SkeletonComponent>(std::move(model->GetSkeleton()));
+
 		// Add SkinnedAnimationComponent
-		auto& skinnedComponent = actor.add_component<SkinnedAnimationComponent>(playbackComponent, timeProvider);
+		auto& skinnedComponent = actor.add_component<SkinnedAnimationComponent>(playbackComponent, skeletonComponent, timeProvider);
 				
 		// Create SkinnedMesh instances from deserialized data
 		for (auto& skinnedMeshData : model->GetSkinnedMeshData()) {
@@ -387,8 +389,8 @@ Actor& MeshActorBuilder::build(Actor& actor, AnimationTimeProvider& timeProvider
 			animation->deserialize(animationDeserializer);
 			
 			auto& playbackComponent = skinned_actor.get_component<PlaybackComponent>();
-			
-			auto playbackData = std::make_shared<PlaybackData>(playbackComponent.getPlaybackData()->get_skeleton(), std::move(animation));
+
+			auto playbackData = std::make_shared<PlaybackData>(std::move(animation));
 			
 			playbackComponent.setPlaybackData(playbackData);
 		}
