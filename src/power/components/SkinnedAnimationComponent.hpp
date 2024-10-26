@@ -42,11 +42,23 @@ public:
 		// Initialize the pose buffers
 		size_t numBones = mSkeletonComponent.get_skeleton().num_bones();
 		mModelPose.resize(numBones);
+		mDefaultPose.resize(numBones);
 		
-		std::fill(mModelPose.begin(), mModelPose.end(), glm::identity<glm::mat4>());
+		glm::vec3 t;
+		glm::quat r;
+		glm::vec3 s = glm::vec3(1.0f, 1.0f, 1.0f);
 		
-		mDefaultPose = mModelPose;
-		
+		for (size_t i = 0; i < numBones; ++i) {
+			
+			glm::mat4 translationMatrix = glm::translate(glm::mat4(1.0f), t);
+			glm::mat4 rotationMatrix = glm::mat4_cast(r);
+			glm::mat4 scaleMatrix = glm::scale(glm::mat4(1.0f), s);
+			
+			mModelPose[i] = translationMatrix * rotationMatrix * scaleMatrix;
+			
+			mDefaultPose[i] = mModelPose[i];
+		}
+
 		apply_pose_to_skeleton();
 	}
 	
