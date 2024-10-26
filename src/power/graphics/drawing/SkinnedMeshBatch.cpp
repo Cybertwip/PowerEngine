@@ -204,7 +204,7 @@ void SkinnedMeshBatch::remove(std::reference_wrapper<SkinnedMesh> meshRef) {
 		
 		// Remove indices
 		mBatchIndices[identifier].erase(mBatchIndices[identifier].begin() + indexStartIdx,
-										mBatchIndices[identifier].begin() + indexStartIdx + indexCount);
+										mBatchIndices[identifier].begin() + indexStartIdx + vertexCount);
 
 		// Adjust indices after the removed indices
 		for (size_t i = 0; i < mBatchIndices[identifier].size(); ++i) {
