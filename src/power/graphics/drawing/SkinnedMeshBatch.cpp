@@ -236,10 +236,6 @@ void SkinnedMeshBatch::remove(std::reference_wrapper<SkinnedMesh> meshRef) {
 		mMeshStartIndices[identifier].erase(instanceId);
 		mMeshVertexStartIndices[identifier].erase(instanceId);
 
-		// Update indexer
-		mBatchIndexOffset -= indexCount;
-		mBatchVertexOffset -= vertexCount;
-		
 		mMeshes.erase(mesh_it);
 	} else {
 		// Re-upload updated vertex and index data to the GPU
