@@ -108,7 +108,7 @@ bool MeshActorExporter::setupScene(CompressedSerialization::Deserializer& deseri
 	}
 	
 	// Step 4: Build skeleton
-	auto skeleton = mMeshDeserializer->get_skeleton();
+	auto skeleton = dynamic_cast<Skeleton*>(mMeshDeserializer->get_skeleton());
 	
 	if (skeleton != nullptr) {
 		// Get the actual Skeleton object

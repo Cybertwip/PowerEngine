@@ -143,10 +143,9 @@ std::vector<std::unique_ptr<MeshData>> MeshDeserializer::get_meshes() {
 	return std::move(m_meshes);
 }
 
-Skeleton* MeshDeserializer::get_skeleton() {
+ISkeleton* MeshDeserializer::get_skeleton() {
 	return m_skeleton.get();
 }
-
 
 void MeshDeserializer::clear() {
 	m_meshes.clear();

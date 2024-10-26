@@ -27,7 +27,6 @@ public:
 	virtual std::string get_name() = 0;
 	virtual int get_parent_index() = 0;
 
-	
 	virtual void set_translation(const glm::vec3& translation) = 0;
 	virtual void set_rotation(const glm::quat& rotation) = 0;
 	virtual void set_scale(const glm::vec3& scale) = 0;
@@ -37,19 +36,23 @@ public:
 	virtual glm::vec3 get_scale() const = 0;
 	
 	virtual glm::mat4 get_transform_matrix() const = 0;
-	
-private:
 };
 
-
-class SkeletonComponent {
+class ISkeleton {
 public:
-private:
+	ISkeleton() {
+		
+	}
 	
+	virtual ~ISkeleton() = default;
+	
+	// Get the number of bones
+	virtual int num_bones() const = 0;
+	// Get mutable bone by index
+	virtual IBone& get_bone(int index) = 0;
 };
 
-
-class Skeleton {
+class Skeleton : public ISkeleton {
 public:
 	class Bone : public IBone {
 	public:
@@ -156,8 +159,8 @@ public:
 
 	};
 	
-	
 	Skeleton() = default;
+	~Skeleton() = default;
 	
 	void add_bone(const std::string& name, const glm::mat4& offset, const glm::mat4& bindpose, int parent_index) {
 		int new_bone_index = static_cast<int>(m_bones.size());
@@ -170,18 +173,12 @@ public:
 	}
 	
 	// Get the number of bones
-	int num_bones() const {
+	int num_bones() const override {
 		return static_cast<int>(m_bones.size());
-	}
-	
-	// Get bone by index
-	const IBone& get_bone(int index) const {
-		assert(index >= 0 && index < num_bones());
-		return *m_bones[index];
 	}
 		
 	// Get mutable bone by index
-	IBone& get_bone(int index) {
+	IBone& get_bone(int index) override {
 		assert(index >= 0 && index < num_bones());
 		return *m_bones[index];
 	}
@@ -294,6 +291,4 @@ private:
 			compute_global_and_transform(*m_bones[childIndex], global, withAnimation);
 		}
 	}
-	
 };
-
