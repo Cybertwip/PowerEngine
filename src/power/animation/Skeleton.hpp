@@ -79,7 +79,8 @@ public:
 			serializer.write_mat4(offset);
 			serializer.write_mat4(bindpose);
 			serializer.write_mat4(get_transform_matrix());
-			
+			serializer.write_mat4(global);
+
 			// Serialize number of children
 			uint32_t numChildren = static_cast<uint32_t>(children.size());
 			serializer.write_uint32(numChildren);
@@ -101,6 +102,8 @@ public:
 			if (!deserializer.read_mat4(transformation)) return false;
 			transform = TransformComponent(transformation);
 			
+			if (!deserializer.read_mat4(global)) return false;
+
 			// Deserialize number of children
 			uint32_t numChildren = 0;
 			if (!deserializer.read_uint32(numChildren)) return false;
