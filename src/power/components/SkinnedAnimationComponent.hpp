@@ -41,7 +41,6 @@ public:
 	, mAnimationOffset(0.0f) {
 		// Initialize the pose buffers
 		size_t numBones = mSkeletonComponent.get_skeleton().num_bones();
-		auto& bones = num_bones();
 		mModelPose.resize(numBones);
 		mDefaultPose.resize(numBones);
 		
