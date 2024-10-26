@@ -42,6 +42,13 @@ private:
 };
 
 
+class SkeletonComponent {
+public:
+private:
+	
+};
+
+
 class Skeleton {
 public:
 	class Bone : public IBone {
@@ -287,8 +294,3 @@ private:
 	
 };
 
-class SkeletonComponent {
-public:
-private:
-	
-};

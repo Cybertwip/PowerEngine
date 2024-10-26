@@ -110,7 +110,7 @@ bool MeshActorExporter::setupScene(CompressedSerialization::Deserializer& deseri
 	// Step 4: Build skeleton
 	auto skeleton = mMeshDeserializer->get_skeleton();
 	
-	if (skeleton != std::nullopt) {
+	if (skeleton != nullptr) {
 		// Get the actual Skeleton object
 		auto& skeletonData = *skeleton;
 		

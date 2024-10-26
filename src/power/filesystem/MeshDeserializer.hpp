@@ -46,7 +46,7 @@ public:
 	 */
 	std::vector<std::unique_ptr<MeshData>> get_meshes();
 	
-	std::optional<Skeleton> get_skeleton();
+	Skeleton* get_skeleton();
 
 	/**
 	 * @brief Clears all loaded mesh data.
@@ -75,8 +75,6 @@ private:
 	 */
 	bool deserialize_psk(CompressedSerialization::Deserializer& deserializer);
 	
-	
-	std::optional<Skeleton> m_skeleton;
-
+	std::unique_ptr<Skeleton> m_skeleton;
 };
 
