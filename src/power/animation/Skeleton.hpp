@@ -251,7 +251,7 @@ public:
 		return true;
 	}
 
-	const std::vector<unique_ptr<Bone>>& get_bones() {
+	const std::vector<std::unique_ptr<Bone>>& get_bones() {
 		return m_bones;
 	}
 	
