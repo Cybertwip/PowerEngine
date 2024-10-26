@@ -124,8 +124,10 @@ bool MeshDeserializer::deserialize_psk(CompressedSerialization::Deserializer& de
 	
 	m_skeleton = std::make_unique<Skeleton>();
 	
+	skeleton = dynamic_cast<Skeleton*>(m_skeleton.get());
+	
 	// Deserialize the skeleton
-	if (!m_skeleton->deserialize(deserializer)) {
+	if (!skeleton->deserialize(deserializer)) {
 		
 		m_skeleton = nullptr;
 		
