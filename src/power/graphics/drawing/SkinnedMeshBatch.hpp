@@ -62,8 +62,8 @@ private:
 
 	std::unordered_map<int, std::vector<size_t>> mMeshVertexStartIndices;
 
-	int mBatchIndexOffset;
-	int mBatchVertexOffset;
+	size_t mBatchIndexOffset;
+	size_t mBatchVertexOffset;
 
 	nanogui::RenderPass& mRenderPass;
 };
