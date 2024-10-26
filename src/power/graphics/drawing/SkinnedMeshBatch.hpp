@@ -58,9 +58,9 @@ private:
 	std::unordered_map<int, std::vector<float>> mBatchColors;
 	std::vector<std::shared_ptr<MaterialProperties>> mBatchMaterials;
 	
-	std::map<int, std::vector<size_t>> mMeshStartIndices;
-
-	std::unordered_map<int, std::vector<size_t>> mMeshVertexStartIndices;
+	std::map<int, std::map<int, size_t>> mMeshStartIndices;
+	
+	std::unordered_map<int, std::map<int, size_t>> mMeshVertexStartIndices;
 
 	size_t mBatchIndexOffset;
 	size_t mBatchVertexOffset;

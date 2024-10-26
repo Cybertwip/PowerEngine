@@ -95,8 +95,8 @@ void MeshBatch::append(std::reference_wrapper<Mesh> meshRef) {
 	auto& shader = mesh.get_shader();
 	int identifier = shader.identifier();
 			
-	mMeshStartIndices[instanceId].push_back(mBatchIndexOffset);
-	mMeshVertexStartIndices[instanceId].push_back(mBatchVertexOffset);
+	mMeshStartIndices[identifier][instanceId] = mBatchIndexOffset;
+	mMeshVertexStartIndices[identifier][instanceId] =  mBatchVertexOffset;
 	
 	// Append vertex data using getters
 	mBatchPositions[identifier].insert(mBatchPositions[identifier].end(),
@@ -168,12 +168,19 @@ void MeshBatch::remove(std::reference_wrapper<Mesh> meshRef) {
 	if (mesh_vector.empty()) {
 		
 		// Get starting indices
-		size_t indexStartIdx = mMeshStartIndices[instanceId][meshIndex];
+		size_t indexStartIdx = mMeshStartIndices[identifier][instanceId];
 		size_t indexCount = mesh.get_mesh_data().get_indices().size();
 		
-		size_t vertexStartIdx = mMeshVertexStartIndices[instanceId][meshIndex];
+		size_t vertexStartIdx = mMeshVertexStartIndices[identifier][instanceId];
 		size_t vertexCount = mesh.get_mesh_data().get_vertices().size();
 		size_t vertexEndIdx = vertexStartIdx + vertexCount;
+
+		// Update indexer
+		mBatchIndexOffset -= indexCount;
+		mBatchVertexOffset -= vertexCount;
+		
+		indexStartIdx = mBatchIndexOffset;
+		vertexStartIdx = mBatchVertexOffset;
 
 		// Remove indices
 		mBatchIndices[identifier].erase(mBatchIndices[identifier].begin() + indexStartIdx,
@@ -203,20 +210,10 @@ void MeshBatch::remove(std::reference_wrapper<Mesh> meshRef) {
 		removeRange(mBatchMaterialIds[identifier], vertexStartIdx, vertexCount, 1);
 		removeRange(mBatchColors[identifier], vertexStartIdx, vertexCount, 4);
 		
-		// Remove from mMeshStartIndices and mMeshVertexStartIndices
-		mMeshStartIndices[instanceId].erase(mMeshStartIndices[instanceId].begin() + meshIndex);
-		mMeshVertexStartIndices[instanceId].erase(mMeshVertexStartIndices[instanceId].begin() + meshIndex);
-		
-		// Adjust subsequent start indices
-		for (size_t i = meshIndex; i < mMeshStartIndices[instanceId].size(); ++i) {
-			mMeshStartIndices[instanceId][i] -= indexCount;
-			mMeshVertexStartIndices[instanceId][i] -= vertexCount;
-		}
-		
-		// Update indexer
-		mBatchIndexOffset -= indexCount;
-		mBatchVertexOffset -= vertexCount;
-		
+		// Remove instance from shader
+		mMeshStartIndices[identifier].erase(instanceId);
+		mMeshVertexStartIndices[identifier].erase(instanceId);
+				
 		mMeshes.erase(mesh_it);
 	} else {
 		// Re-upload updated vertex and index data to the GPU
@@ -278,7 +275,7 @@ void MeshBatch::draw_content(const nanogui::Matrix4f& view,
 			int shader_id = shader.identifier();
 
 			// Calculate the range of indices to draw for this mesh
-			size_t startIdx = mMeshStartIndices[instance_id][0];
+			size_t startIdx = mMeshStartIndices[shader_id][instance_id];
 			
 			// By default, assume the end index is the size of the batch indices
 			size_t count = mesh.get_mesh_data().get_indices().size();
