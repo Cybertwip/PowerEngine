@@ -244,7 +244,7 @@ public:
 		m_bones.reserve(numBones);
 		
 		// Temporary storage for bones to allow setting up children after all bones are read
-		std::vector<std::unique_ptr<Bone>> tempBones(numBones);
+		std::vector<std::unique_ptr<Bone>> tempBones;
 		
 		// Deserialize each bone
 		for (uint32_t i = 0; i < numBones; ++i) {
