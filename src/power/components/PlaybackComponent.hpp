@@ -12,7 +12,6 @@ struct PlaybackData {
 	PlaybackData(std::shared_ptr<Skeleton> skeleton, std::unique_ptr<Animation> animation) : mSkeleton(std::move(skeleton)), mAnimation(std::move(animation)) {
 		
 		assert(mAnimation != nullptr);
-		
 	}
 	
 	void set_skeleton(std::shared_ptr<Skeleton> skeleton) {

@@ -59,7 +59,7 @@ void MeshBatch::upload_material_data(ShaderWrapper& shader, const std::vector<st
 	}
 }
 
-MeshBatch::MeshBatch(nanogui::RenderPass& renderPass) : mRenderPass(renderPass) {
+MeshBatch::MeshBatch(nanogui::RenderPass& renderPass) : mRenderPass(renderPass), mBatchIndexOffset(0), mBatchVertexOffset(0) {
 }
 
 void MeshBatch::add_mesh(std::reference_wrapper<Mesh> mesh) {
@@ -85,7 +85,6 @@ void MeshBatch::clear() {
 	mBatchMaterials.clear();
 	mMeshStartIndices.clear();
 	mMeshVertexStartIndices.clear();
-	mVertexIndexingMap.clear();
 }
 
 void MeshBatch::append(std::reference_wrapper<Mesh> meshRef) {
@@ -95,14 +94,9 @@ void MeshBatch::append(std::reference_wrapper<Mesh> meshRef) {
 		
 	auto& shader = mesh.get_shader();
 	int identifier = shader.identifier();
-		
-	auto& indexer = mVertexIndexingMap[instanceId];
-	
-	size_t vertexOffset = indexer.mVertexOffset;
-	size_t indexOffset = indexer.mIndexOffset;
-	
-	mMeshStartIndices[instanceId].push_back(indexOffset);
-	mMeshVertexStartIndices[instanceId].push_back(vertexOffset);
+			
+	mMeshStartIndices[instanceId].push_back(mBatchIndexOffset);
+	mMeshVertexStartIndices[instanceId].push_back(mBatchVertexOffset);
 	
 	// Append vertex data using getters
 	mBatchPositions[identifier].insert(mBatchPositions[identifier].end(),
@@ -127,11 +121,11 @@ void MeshBatch::append(std::reference_wrapper<Mesh> meshRef) {
 	// Adjust and append indices
 	auto& indices = mesh.get_mesh_data().get_indices();
 	for (auto index : indices) {
-		mBatchIndices[identifier].push_back(index + vertexOffset);
+		mBatchIndices[identifier].push_back(index + mBatchVertexOffset);
 	}
 	
-	indexer.mIndexOffset += indices.size();
-	indexer.mVertexOffset += mesh.get_mesh_data().get_vertices().size();
+	mBatchIndexOffset += indices.size();
+	mBatchVertexOffset += mesh.get_mesh_data().get_vertices().size();
 	
 	upload_vertex_data(shader, identifier);
 }
@@ -220,9 +214,8 @@ void MeshBatch::remove(std::reference_wrapper<Mesh> meshRef) {
 		}
 		
 		// Update indexer
-		auto& indexer = mVertexIndexingMap[instanceId];
-		indexer.mIndexOffset -= indexCount;
-		indexer.mVertexOffset -= vertexCount;
+		mBatchIndexOffset -= indexCount;
+		mBatchVertexOffset -= vertexCount;
 		
 		mMeshes.erase(mesh_it);
 	} else {

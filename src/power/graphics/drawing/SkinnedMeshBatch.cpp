@@ -70,7 +70,7 @@ void SkinnedMeshBatch::upload_material_data(ShaderWrapper& shader, const std::ve
 }
 
 
-SkinnedMeshBatch::SkinnedMeshBatch(nanogui::RenderPass& renderPass) : mRenderPass(renderPass) {
+SkinnedMeshBatch::SkinnedMeshBatch(nanogui::RenderPass& renderPass) : mRenderPass(renderPass), mBatchIndexOffset(0), mBatchVertexOffset(0) {
 }
 
 
@@ -109,13 +109,8 @@ void SkinnedMeshBatch::append(std::reference_wrapper<SkinnedMesh> meshRef) {
 	auto& shader = mesh.get_shader();
 	int identifier = shader.identifier();
 	
-	auto& indexer = mVertexIndexingMap[instanceId];
-	
-	size_t vertexOffset = indexer.mVertexOffset;
-	size_t indexOffset = indexer.mIndexOffset;
-	
-	mMeshStartIndices[instanceId].push_back(indexOffset);
-	mMeshVertexStartIndices[instanceId].push_back(vertexOffset);
+	mMeshStartIndices[instanceId].push_back(mBatchIndexOffset);
+	mMeshVertexStartIndices[instanceId].push_back(mBatchVertexOffset);
 
 	// Append vertex data using getters
 	mBatchPositions[identifier].insert(mBatchPositions[identifier].end(),
@@ -149,8 +144,8 @@ void SkinnedMeshBatch::append(std::reference_wrapper<SkinnedMesh> meshRef) {
 		mBatchIndices[identifier].push_back(index + vertexOffset);
 	}
 	
-	indexer.mIndexOffset += indices.size();
-	indexer.mVertexOffset += mesh.get_mesh_data().get_vertices().size();
+	mBatchIndexOffset += indices.size();
+	mBatchVertexOffset += mesh.get_mesh_data().get_vertices().size();
 	
 	upload_vertex_data(shader, identifier);
 }
@@ -242,9 +237,8 @@ void SkinnedMeshBatch::remove(std::reference_wrapper<SkinnedMesh> meshRef) {
 		}
 		
 		// Update indexer
-		auto& indexer = mVertexIndexingMap[instanceId];
-		indexer.mIndexOffset -= indexCount;
-		indexer.mVertexOffset -= vertexCount;
+		mBatchIndexOffset -= indexCount;
+		mBatchVertexOffset -= vertexCount;
 		
 		mMeshes.erase(mesh_it);
 	} else {
