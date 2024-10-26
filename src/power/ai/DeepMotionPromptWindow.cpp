@@ -471,7 +471,7 @@ void PromptWindow::PollJobStatusAsync(const std::string& request_id) {
 													
 													auto& playbackComponent = mActiveActor->get_component<PlaybackComponent>();
 													
-													auto playbackData = std::make_shared<PlaybackData>(playbackComponent.getPlaybackData()->get_skeleton(), std::move(animation));
+													auto playbackData = std::make_shared<PlaybackData>( std::move(animation));
 													
 													playbackComponent.setPlaybackData(playbackData);
 

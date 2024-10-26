@@ -159,8 +159,10 @@ public:
 		std::vector<BoneCPU> bonesCPU(numBones);
 		
 		for (size_t i = 0; i < numBones; ++i) {
+			Skeleton::Bone& bone = static_cast<Skeleton::Bone&>(mSkeletonComponent.get_skeleton().get_bone(i));
+			
 			// Get the bone transform as a glm::mat4
-			glm::mat4 boneTransform = mSkeletonComponent.get_skeleton().get_bone(i).get_transform_matrix();
+			glm::mat4 boneTransform = bone.global;
 			
 			// Reference to the BoneCPU structure
 			BoneCPU& boneCPU = bonesCPU[i];

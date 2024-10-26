@@ -273,12 +273,11 @@ private:
 		// Apply the bone's bind pose first
 		global *= bone.bindpose;
 		
-		// Only apply the special rotation to bone index 3
 		glm::mat4 transformation = glm::mat4(1.0f);
 
 		if (!withAnimation.empty()) {
 			
-			if (bone.index < withAnimation.size()) {
+			if (bone.index < withAnimation.size() && bone.index >= 0) {
 				transformation = withAnimation[bone.index];
 			}
 		}
