@@ -273,7 +273,7 @@ private:
 		// Apply the bone's bind pose first
 		global *= bone.bindpose;
 		
-		glm::mat4 transformation = glm::mat4(1.0f);
+		glm::mat4 transformation = bone.get_transform_matrix();
 
 		if (!withAnimation.empty()) {
 			
@@ -282,7 +282,7 @@ private:
 			}
 		}
 				
-		global *= bone.get_transform_matrix() * transformation;
+		global *= transformation;
 		
 		bone.global = global * bone.offset;
 		
