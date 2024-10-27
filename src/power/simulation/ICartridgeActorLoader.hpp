@@ -11,5 +11,5 @@ public:
 	ICartridgeActorLoader() = default;
 	virtual ~ICartridgeActorLoader() = default;
 	virtual Actor& create_actor(const std::string& actorName, PrimitiveShape primitiveShape) = 0;
-	virtual Actor& create_actor(const std::string& actorName, const std::string& filePath) = 0;
+	virtual Actor& create_actor(const std::string& filePath) = 0;
 };

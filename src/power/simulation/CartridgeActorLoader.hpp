@@ -13,7 +13,7 @@ public:
 	CartridgeActorLoader(MeshActorLoader& meshActorLoader, IActorManager& actorManager, IActorVisualManager& actorVisualManager, AnimationTimeProvider& animationTimeProvider, ShaderWrapper& meshShader, ShaderWrapper& skinnedMeshShader);
 	Actor& create_actor(const std::string& actorName, PrimitiveShape primitiveShape) override;
 	
-	Actor& create_actor(const std::string& actorName, const std::string& filePath) override;
+	Actor& create_actor(const std::string& filePath) override;
 	
 	void cleanup();
 	

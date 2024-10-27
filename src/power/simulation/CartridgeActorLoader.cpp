@@ -21,8 +21,8 @@ void CartridgeActorLoader::cleanup() {
 	mLoadedActors.clear();
 }
 
-Actor& CartridgeActorLoader::create_actor(const std::string& actorName, const std::string& filePath) {
-	Actor& actor = mMeshActorLoader.create_actor(actorName, filePath, mAnimationTimeProvider, mMeshShader, mSkinnedMeshShader);
+Actor& CartridgeActorLoader::create_actor(const std::string& filePath) {
+	Actor& actor = mMeshActorLoader.create_actor(filePath, mAnimationTimeProvider, mMeshShader, mSkinnedMeshShader);
 	
 	mActorVisualManager.add_actor(actor);
 	
