@@ -69,5 +69,4 @@ private:
 	void ProcessMesh(fbxsdk::FbxMesh* mesh, fbxsdk::FbxNode* node);
 	
 	std::string mFBXFilePath;
-
 };

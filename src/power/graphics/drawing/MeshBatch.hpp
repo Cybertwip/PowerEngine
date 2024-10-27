@@ -33,10 +33,6 @@ public:
 	void draw_content(const nanogui::Matrix4f& view,
 					  const nanogui::Matrix4f& projection) override;
 	
-	const std::unordered_map<int, std::vector<float>>& get_batch_positions() {
-		return mBatchPositions;;
-	}
-	
 private:
 	void append(std::reference_wrapper<Mesh> meshRef) override;
 

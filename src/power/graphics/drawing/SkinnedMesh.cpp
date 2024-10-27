@@ -29,13 +29,15 @@ SkinnedMesh::SkinnedMesh(
 						 ISkinnedMeshBatch& meshBatch,
 						 MetadataComponent& metadataComponent,
 						 ColorComponent& colorComponent,
-						 SkinnedAnimationComponent& skinnedComponent)
+						 SkinnedAnimationComponent& skinnedComponent,
+						 SkeletonComponent& skeletonComponent)
 : mSkinnedMeshData(std::move(skinnedMeshData)),
 mShader(shader),
 mMeshBatch(meshBatch),
 mMetadataComponent(metadataComponent),
 mColorComponent(colorComponent),
 mSkinnedComponent(skinnedComponent),
+mSkeletonComponent(skeletonComponent),
 mModelMatrix(nanogui::Matrix4f::identity()) {
 	
 	size_t numVertices = mSkinnedMeshData->get_vertices().size();

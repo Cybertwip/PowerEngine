@@ -2,6 +2,8 @@
 #include "components/SkinnedMeshComponent.hpp"
 #include "components/MeshComponent.hpp"
 #include "graphics/drawing/Batch.hpp"
+#include "graphics/drawing/Mesh.hpp"
+#include "graphics/drawing/SkinnedMesh.hpp"
 
 #include "graphics/drawing/BatchUnit.hpp"
 #include "graphics/drawing/SelfContainedSkinnedMeshBatch.hpp"
@@ -69,7 +71,33 @@ void SelfContainedMeshCanvas::set_active_actor(std::optional<std::reference_wrap
 			// Successfully cast to SkinnedMeshComponent
 			for (auto& skinnedData : skinnedMeshComponent->get_skinned_mesh_data()) {
 				mSkinnedMeshBatch->add_mesh(*skinnedData);
-				mBatchPositions = mSkinnedMeshBatch->get_batch_positions();
+				auto& vertices = skinnedData->get_mesh_data().get_vertices();
+
+				// Initialize min and max bounds with extreme values
+				mModelMinimumBounds = glm::vec3(std::numeric_limits<float>::max());
+				mModelMaximumBounds = glm::vec3(std::numeric_limits<float>::lowest());
+				
+				for (size_t i = 0; i < vertices.size(); i += 3) {
+					auto& vertex = vertices[i];
+					
+					mModelMinimumBounds = glm::min(mModelMinimumBounds, vertex->get_position());
+					mModelMaximumBounds = glm::max(mModelMaximumBounds, vertex->get_position());
+				}
+				
+				auto& skeletonComponent = skinnedData->get_skeleton_component();
+				
+				size_t numBones = skeletonComponent.get_skeleton().num_bones();
+				
+				for (size_t i = 0; i < numBones; ++i) {
+					auto& bone = skeletonComponent.get_skeleton().get_bone(i);
+					
+					auto t = bone.get_translation();
+					auto r = bone.get_rotation();
+					auto s = bone.get_scale();
+					
+					mModelMinimumBounds = glm::min(mModelMinimumBounds, t * s);
+					mModelMaximumBounds = glm::max(mModelMaximumBounds, t * s);
+				}
 			}
 			
 			update_camera_view();
@@ -83,7 +111,18 @@ void SelfContainedMeshCanvas::set_active_actor(std::optional<std::reference_wrap
 				// Successfully cast to MeshComponent
 				for (auto& meshData : meshComponent->get_mesh_data()) {
 					mMeshBatch->add_mesh(*meshData);
-					mBatchPositions = mMeshBatch->get_batch_positions();
+					auto& vertices = meshData->get_mesh_data().get_vertices();
+					
+					// Initialize min and max bounds with extreme values
+					mModelMinimumBounds = glm::vec3(std::numeric_limits<float>::max());
+					mModelMaximumBounds = glm::vec3(std::numeric_limits<float>::lowest());
+
+					for (size_t i = 0; i < vertices.size(); i += 3) {
+						auto& vertex = vertices[i];
+						
+						mModelMinimumBounds = glm::min(mModelMinimumBounds, vertex->get_position());
+						mModelMaximumBounds = glm::max(mModelMaximumBounds, vertex->get_position());
+					}
 				}
 				
 				update_camera_view();
@@ -105,23 +144,12 @@ void SelfContainedMeshCanvas::set_active_actor(std::optional<std::reference_wrap
 
 void SelfContainedMeshCanvas::update_camera_view() {
 	
-	auto& batchPositions = mBatchPositions;
-	if (!batchPositions.empty()) {
+	if (!mPreviewActor.has_value()) {
 		auto& camera = mCamera.get_component<CameraComponent>();
 		
-		// Initialize min and max bounds with extreme values
-		glm::vec3 minBounds(std::numeric_limits<float>::max());
-		glm::vec3 maxBounds(std::numeric_limits<float>::lowest());
-		
-		for (size_t i = 0; i < batchPositions.size(); i += 3) {
-			glm::vec3 pos(batchPositions[i], batchPositions[i + 1], batchPositions[i + 2]);
-			minBounds = glm::min(minBounds, pos);
-			maxBounds = glm::max(maxBounds, pos);
-		}
-		
 		// Calculate center and size of the bounding box
-		glm::vec3 center = (minBounds + maxBounds) * 0.5f;
-		glm::vec3 size = maxBounds - minBounds;
+		glm::vec3 center = (mModelMinimumBounds + mModelMaximumBounds) * 0.5f;
+		glm::vec3 size = mModelMinimumBounds - mModelMaximumBounds;
 		float distance = glm::length(size); // Camera distance from object based on size
 		
 		// Set the camera position and view direction

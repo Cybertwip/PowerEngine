@@ -12,6 +12,7 @@
 #include <array>
 
 class ColorComponent;
+class SkeletonComponent;
 class SkinnedAnimationComponent;
 class ISkinnedMeshBatch;
 class ShaderManager;
@@ -19,7 +20,8 @@ class ShaderManager;
 class SkinnedMesh : public Drawable {
 public:
 	SkinnedMesh(std::unique_ptr<SkinnedMeshData> skinnedMeshData, ShaderWrapper& shader, ISkinnedMeshBatch& meshBatch, MetadataComponent& metadataComponent, ColorComponent& colorComponent,
-		SkinnedAnimationComponent& skinnedComponent);
+		SkinnedAnimationComponent& skinnedComponent,
+		SkeletonComponent& skeletonComponent);
 	~SkinnedMesh() override;
 	
 	void draw_content(const nanogui::Matrix4f& model, const nanogui::Matrix4f& view, const nanogui::Matrix4f& projection) override;
@@ -51,7 +53,11 @@ public:
 	SkinnedAnimationComponent& get_skinned_component() const {
 		return mSkinnedComponent;
 	}
-	
+
+	SkeletonComponent& get_skeleton_component() const {
+		return mSkeletonComponent;
+	}
+
 	const nanogui::Matrix4f& get_model_matrix() {
 		return mModelMatrix;
 	}
@@ -75,6 +81,6 @@ private:
 	MetadataComponent& mMetadataComponent;
 	ColorComponent& mColorComponent;
 	SkinnedAnimationComponent& mSkinnedComponent;
-	
+	SkeletonComponent& mSkeletonComponent;
 	nanogui::Matrix4f mModelMatrix;
 };

@@ -277,7 +277,7 @@ private:
 
 		if (!withAnimation.empty()) {
 			
-			if (bone.index < withAnimation.size() && bone.index >= 0) {
+			if (bone.index < withAnimation.size()) {
 				transformation = withAnimation[bone.index];
 			}
 		}

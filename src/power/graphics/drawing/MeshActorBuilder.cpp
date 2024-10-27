@@ -221,7 +221,8 @@ Actor& MeshActorBuilder::build_skinned(Actor& actor, AnimationTimeProvider& time
 																			 mBatchUnit.mSkinnedMeshBatch,
 																			 metadataComponent,
 																			 colorComponent,
-																			 skinnedComponent
+																			 skinnedComponent,
+																			 skeletonComponent
 																			 ));
 		}
 		

@@ -201,10 +201,7 @@ void Fbx::ProcessMesh(fbxsdk::FbxMesh* mesh, fbxsdk::FbxNode* node) {
 	// Retrieve control points (vertices)
 	int controlPointCount = mesh->GetControlPointsCount();
 	FbxVector4* controlPoints = mesh->GetControlPoints();
-	
-	// Get global transform of the node
-	FbxAMatrix globalTransform = node->EvaluateGlobalTransform();
-	
+		
 	// Reserve space for vertices and indices
 	resultMesh->get_vertices().resize(controlPointCount);
 	int polygonCount = mesh->GetPolygonCount();
@@ -228,25 +225,19 @@ void Fbx::ProcessMesh(fbxsdk::FbxMesh* mesh, fbxsdk::FbxNode* node) {
 			// Get position
 			FbxVector4 position = controlPoints[controlPointIndex];
 			
-			// Apply global transform
-			FbxVector4 transformedPosition = globalTransform.MultT(position);
-			
 			// Convert to glm::vec3
-			vertex.set_position({ static_cast<float>(transformedPosition[0]),
-				static_cast<float>(transformedPosition[1]),
-				static_cast<float>(transformedPosition[2]) });
+			vertex.set_position({ static_cast<float>(position[0]),
+				static_cast<float>(position[1]),
+				static_cast<float>(position[2]) });
 			// Now, get normal
 			// Get normal from mesh
 			
 			FbxVector4 normal;
 			if (mesh->GetPolygonVertexNormal(i, j, normal)) {
-				// Apply the global transform to the normal
-				FbxVector4 transformedNormal = globalTransform.MultT(normal);
-				
 				// Convert to glm::vec3
-				vertex.set_normal({ static_cast<float>(transformedNormal[0]),
-					static_cast<float>(transformedNormal[1]),
-					static_cast<float>(transformedNormal[2]) });
+				vertex.set_normal({ static_cast<float>(normal[0]),
+					static_cast<float>(normal[1]),
+					static_cast<float>(normal[2]) });
 			} else {
 				vertex.set_normal({ 0.0f, 1.0f, 0.0f }); // Default normal
 			}

@@ -40,10 +40,6 @@ public:
 	void draw_content(const nanogui::Matrix4f& view,
 					  const nanogui::Matrix4f& projection) override;
 	
-	const std::vector<float>& get_batch_positions() {
-		return mBatchPositions;
-	}
-
 private:
 	void upload_material_data(const std::vector<std::shared_ptr<MaterialProperties>>& materialData);
 	void upload_vertex_data();

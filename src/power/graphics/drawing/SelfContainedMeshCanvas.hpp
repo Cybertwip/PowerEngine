@@ -76,7 +76,8 @@ private:
 	std::optional<ShaderWrapper> mMeshPreviewShader;
 	std::optional<ShaderWrapper> mSkinnedMeshPreviewShader;
 
-	std::vector<float> mBatchPositions;
+	glm::vec3 mModelMinimumBounds;
+	glm::vec3 mModelMaximumBounds;
 
 	glm::mat4 mModelMatrix;
 	

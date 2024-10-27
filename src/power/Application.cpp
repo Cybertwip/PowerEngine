@@ -163,7 +163,9 @@ void Application::initialize() {
 bool Application::keyboard_event(int key, int scancode, int action, int modifiers) {
     if (Screen::keyboard_event(key, scancode, action, modifiers)) return true;
 	if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS) {
-		set_visible(false);
+		nanogui::async([this](){
+			set_visible(false);
+		});
 		return true;
 	}
 	if (key == GLFW_KEY_DELETE && action == GLFW_PRESS) {

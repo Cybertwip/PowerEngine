@@ -246,7 +246,7 @@ std::string TripoAiApiClient::convert_model(const std::string& original_task_id,
 	post_json_data["quad"] = quad;
 	post_json_data["face_limit"] = face_limit;
 	post_json_data["pivot_to_center_bottom"] = true;
-	post_json_data["scale_factor"] = 0.01f;
+	post_json_data["scale_factor"] = 1.0f;
 
 	Json::StreamWriterBuilder writer;
 	std::string json_payload = Json::writeString(writer, post_json_data);
