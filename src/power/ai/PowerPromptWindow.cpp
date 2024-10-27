@@ -453,7 +453,7 @@ void PowerPromptWindow::SubmitPromptAsync() {
 							
 							std::stringstream animationCompressedData;
 							
-							serializedPrompt->()->get_compressed_data(animationCompressedData);
+							serializedPrompt->get_compressed_data(animationCompressedData);
 							
 							CompressedSerialization::Deserializer animationDeserializer;
 							
