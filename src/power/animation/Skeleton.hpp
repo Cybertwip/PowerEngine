@@ -28,7 +28,6 @@ public:
 		int index;  // -1 if root
 		int parent_index;  // -1 if root
 		glm::mat4 offset;
-		glm::mat4 bindpose;
 		TransformComponent transform;
 		glm::mat4 global;
 		std::vector<int> children;
@@ -37,8 +36,8 @@ public:
 			
 		}
 
-		Bone(const std::string& name, int index, int parent_index, const glm::mat4& offset, const glm::mat4& bindpose, const glm::mat4& local)
-		: name(name), index(index), parent_index(parent_index), offset(offset), bindpose(bindpose), transform(local), global(1.0f) {}
+		Bone(const std::string& name, int index, int parent_index, const glm::mat4& offset, const glm::mat4& local)
+		: name(name), index(index), parent_index(parent_index), offset(offset), transform(local), global(1.0f) {}
 		
 		~Bone() = default;
 		
@@ -48,7 +47,7 @@ public:
 			serializer.write_int32(index);
 			serializer.write_int32(parent_index);
 			serializer.write_mat4(offset);
-			serializer.write_mat4(bindpose);
+			serializer.write_mat4(get_transform_matrix());
 			serializer.write_mat4(get_transform_matrix());
 			serializer.write_mat4(global);
 
@@ -68,8 +67,9 @@ public:
 			if (!deserializer.read_int32(index)) return false;
 			if (!deserializer.read_int32(parent_index)) return false;
 			if (!deserializer.read_mat4(offset)) return false;
-			if (!deserializer.read_mat4(bindpose)) return false;
+			
 			glm::mat4 transformation;
+			if (!deserializer.read_mat4(transformation)) return false;
 			if (!deserializer.read_mat4(transformation)) return false;
 			transform = TransformComponent(transformation);
 			
@@ -120,7 +120,6 @@ public:
 			return transform.get_rotation();
 		}
 		
-		
 		glm::mat4 get_transform_matrix() const override {
 			return transform.get_matrix();
 		}
@@ -132,7 +131,7 @@ public:
 	
 	void add_bone(const std::string& name, const glm::mat4& offset, const glm::mat4& bindpose, int parent_index) {
 		int new_bone_index = static_cast<int>(m_bones.size());
-		m_bones.emplace_back(std::make_unique<Bone>(name, new_bone_index, parent_index, offset, bindpose, glm::identity<glm::mat4>()));
+		m_bones.emplace_back(std::make_unique<Bone>(name, new_bone_index, parent_index, offset, bindpose));
 		
 		if (parent_index != -1) {
 			assert(parent_index >= 0 && parent_index < new_bone_index);
@@ -163,7 +162,7 @@ public:
 	
 	glm::mat4 get_bone_bindpose(int index) {
 		assert(index >= 0 && index < num_bones());
-		return m_bones[index]->bindpose;
+		return m_bones[index]->get_transform_matrix();
 	}
 	
 	void compute_offsets(const std::vector<glm::mat4>& withAnimation) {
@@ -239,7 +238,7 @@ private:
 		glm::mat4 global = parentGlobal;
 		
 		// Apply the bone's bind pose first
-		global *= bone.bindpose;
+		global *= bone.get_transform_matrix();
 		
 		glm::mat4 transformation = glm::mat4(1.0f);
 		
@@ -250,7 +249,7 @@ private:
 			}
 		}
 		
-		global *= bone.get_transform_matrix() * transformation;
+		global *= transformation;
 
 		bone.global = global * bone.offset;
 		
