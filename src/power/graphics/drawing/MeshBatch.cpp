@@ -184,7 +184,7 @@ void MeshBatch::remove(std::reference_wrapper<Mesh> meshRef) {
 
 		// Remove indices
 		mBatchIndices[identifier].erase(mBatchIndices[identifier].begin() + indexStartIdx,
-										mBatchIndices[identifier].begin() + indexStartIdx + vertexCount);
+										mBatchIndices[identifier].begin() + indexStartIdx + indexCount);
 		
 		// Adjust indices after the removed indices
 		for (size_t i = 0; i < mBatchIndices[identifier].size(); ++i) {
