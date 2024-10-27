@@ -227,30 +227,33 @@ public:
 		
 		return *currentKeyframeIt;
 	}
-	
 	void evaluate_provider(float time, PlaybackModifier modifier) {
 		
 		Animation& animation = mProvider.get_animation();
 		
-		float duration = static_cast<float>(animation.get_duration());
-		
-		bool reverse = modifier == PlaybackModifier::Reverse;
-		
-		float animationTime = 0.0f;
-		
-		// Handle reverse playback
-		if (reverse) {
-			animationTime = fmod(duration - time, duration);
-		} else {
-			animationTime = fmod(time, duration);
+		if (animation.get_duration() > 0) {
+			
+			float duration = static_cast<float>(animation.get_duration());
+			
+			bool reverse = modifier == PlaybackModifier::Reverse;
+			
+			float animationTime = 0.0f;
+			
+			// Handle reverse playback
+			if (reverse) {
+				animationTime = fmod(duration - time, duration);
+			} else {
+				animationTime = fmod(time, duration);
+			}
+			
+			// Evaluate the animation at the adjusted time
+			evaluate_animation(animation, animationTime);
+			
+			// Update the skeleton with the new transforms
+			apply_pose_to_skeleton();
 		}
-		
-		// Evaluate the animation at the adjusted time
-		evaluate_animation(animation, animationTime);
-		
-		// Update the skeleton with the new transforms
-		apply_pose_to_skeleton();
 	}
+
 private:
 	PlaybackComponent& mProvider;
 	SkeletonComponent& mSkeletonComponent;

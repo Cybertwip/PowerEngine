@@ -89,14 +89,19 @@ void SelfContainedMeshCanvas::set_active_actor(std::optional<std::reference_wrap
 				size_t numBones = skeletonComponent.get_skeleton().num_bones();
 				
 				for (size_t i = 0; i < numBones; ++i) {
-					auto& bone = skeletonComponent.get_skeleton().get_bone(i);
+					Skeleton::Bone& bone = static_cast<Skeleton::Bone&>(skeletonComponent.get_skeleton().get_bone(i));
 					
-					auto t = bone.get_translation();
-					auto r = bone.get_rotation();
-					auto s = bone.get_scale();
+					auto transform = bone.global * glm::inverse(bone.offset);
 					
-					mModelMinimumBounds = glm::min(mModelMinimumBounds, t * s);
-					mModelMaximumBounds = glm::max(mModelMaximumBounds, t * s);
+					glm::vec3 scale;
+					glm::quat rotation;
+					glm::vec3 translation;
+					glm::vec3 skew;
+					glm::vec4 perspective;
+					glm::decompose(transform, scale, rotation, translation, skew, perspective);
+
+					mModelMinimumBounds = glm::min(mModelMinimumBounds, translation);
+					mModelMaximumBounds = glm::max(mModelMaximumBounds, translation);
 				}
 			}
 			
@@ -144,7 +149,7 @@ void SelfContainedMeshCanvas::set_active_actor(std::optional<std::reference_wrap
 
 void SelfContainedMeshCanvas::update_camera_view() {
 	
-	if (!mPreviewActor.has_value()) {
+	if (mPreviewActor.has_value()) {
 		auto& camera = mCamera.get_component<CameraComponent>();
 		
 		// Calculate center and size of the bounding box
