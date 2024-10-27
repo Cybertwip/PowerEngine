@@ -140,30 +140,15 @@ void PowerAi::generate_mesh_async(const std::string& prompt,
 	};
 	
 	auto container = std::make_shared<StreamContainer>();
-		
+	
 	// Delegate to TripoAiApiClient
 	mTripoAiApiClient.generate_mesh_async(prompt, "fbx", false, 10000, generate_rig, [this, prompt, animation_prompt, callback, generate_rig, generate_animation, container](std::stringstream model_stream, const std::string& error_message) {
 		if (error_message.empty()) {
 			std::cout << "Mesh generation successful" << std::endl;
 			
 			std::stringstream original_model_stream = PowerAiTools::duplicateStringStream(model_stream);
-
+			
 			container->stream = std::move(model_stream);
-
-//			if (generate_rig && generate_animation) {
-//				mDeepMotionApiClient.generate_animation_async(std::move(original_model_stream), "DummyModel", "fbx", animation_prompt, [this, container, callback, generate_rig, generate_animation](std::stringstream animated_model_stream, const std::string& error_message) {
-//					if (error_message.empty()) {
-//						std::cout << "Mesh animation successful" << std::endl;
-//						
-//						callback(std::move(animated_model_stream), "");
-//						
-//					} else {
-//						callback(std::move(container->stream), "");
-//					}
-//				});
-//			} else {
-//				callback(std::move(model_stream), "");
-//			}
 			
 			callback(std::move(container->stream), "");
 			
@@ -179,16 +164,25 @@ void PowerAi::generate_mesh_async(const std::string& prompt,
 /**
  * @brief Asynchronously generates a 3D animation based on a text prompt and a model ID.
  */
-void PowerAi::generate_3d_animation_async(const std::string& prompt, const std::string& model_id,
-										  std::function<void(const Json::Value& animation_data, const std::string& error_message)> callback) {
-	// Delegate to DeepMotionApiClient
-	mDeepMotionApiClient.animate_model_async(prompt, model_id, [callback](const Json::Value& animation_data, const std::string& error_message) {
+void PowerAi::generate_animation_async(std::stringstream model_stream, const std::string& model_name, const std::string& model_ext,
+									   const std::string& prompt, std::function<void(std::stringstream fbx_stream, const std::string& error_message)> callback) {
+	
+	struct StreamContainer {
+		std::stringstream stream;
+	};
+	
+	auto container = std::make_shared<StreamContainer>();
+
+	container->stream = PowerAiTools::duplicateStringStream(model_stream);
+	
+	mDeepMotionApiClient.generate_animation_async(std::move(model_stream), model_name, model_ext, prompt, [this, container, callback](std::stringstream animated_model_stream, const std::string& error_message) {
 		if (error_message.empty()) {
-			std::cout << "3D Animation generated successfully." << std::endl;
-			callback(animation_data, "");
+			std::cout << "Mesh animation successful" << std::endl;
+			
+			callback(std::move(animated_model_stream), "");
+			
 		} else {
-			std::cerr << "Failed to generate 3D animation: " << error_message << std::endl;
-			callback(Json::Value(), error_message);
+			callback(std::move(container->stream), "");
 		}
 	});
 }

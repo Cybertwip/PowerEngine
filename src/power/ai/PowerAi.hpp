@@ -95,8 +95,8 @@ public:
 	 * @param callback The callback function to receive the animation data or an error message.
 	 *                 Signature: void(const Json::Value& animation_data, const std::string& error_message)
 	 */
-	void generate_3d_animation_async(const std::string& prompt, const std::string& model_id,
-									 std::function<void(const Json::Value& animation_data, const std::string& error_message)> callback);
+	void generate_animation_async(std::stringstream model_stream, const std::string& model_name, const std::string& model_ext,
+									 const std::string& prompt, std::function<void(std::stringstream fbx_stream, const std::string& error_message)> callback);
 	
 
 	void generate_text_async(const std::string& prompt,

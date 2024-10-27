@@ -527,3 +527,239 @@ void MeshActorExporter::exportToStreamAsync(std::unique_ptr<CompressedSerializat
 		}
 	}).detach();
 }
+
+bool MeshActorExporter::exportSkeleton(Skeleton& skeleton, const std::string& exportPath) {
+	// Initialize the FBX Manager and Scene
+	FbxManager* fbxManager = FbxManager::Create();
+	if (!fbxManager) {
+		std::cerr << "Error: Unable to create FBX Manager!" << std::endl;
+		return false;
+	}
+	
+	FbxIOSettings* ios = FbxIOSettings::Create(fbxManager, IOSROOT);
+	fbxManager->SetIOSettings(ios);
+	
+	FbxScene* scene = FbxScene::Create(fbxManager, "SkeletonScene");
+	
+	if (!scene) {
+		std::cerr << "Error: Unable to create FBX scene!" << std::endl;
+		fbxManager->Destroy();
+		return false;
+	}
+	
+	// Step 1: Build the skeleton in the FBX scene
+	FbxNode* rootNode = scene->GetRootNode();
+	
+	// Map to store bone index to FbxNode
+	std::map<int, FbxNode*> boneNodes;
+	
+	// Create FbxNode nodes for each bone
+	for (int boneIndex = 0; boneIndex < skeleton.num_bones(); ++boneIndex) {
+		std::string boneName = skeleton.get_bone(boneIndex).get_name();
+		int parentIndex = skeleton.get_bone(boneIndex).get_parent_index();
+		
+		// Create a new Skeleton node for the bone
+		FbxSkeleton* fbxSkeleton = FbxSkeleton::Create(scene, boneName.c_str());
+		fbxSkeleton->SetSkeletonType(FbxSkeleton::eLimbNode);
+		
+		FbxNode* boneNode = FbxNode::Create(scene, boneName.c_str());
+		boneNode->SetNodeAttribute(fbxSkeleton);
+		
+		// Set bone's local transformations
+		glm::mat4 poseMatrix = skeleton.get_bone_bindpose(boneIndex);
+		
+		glm::vec3 translation, scale;
+		glm::quat rotation;
+		std::tie(translation, rotation, scale) = ExporterUtil::DecomposeTransform(poseMatrix);
+		
+		boneNode->LclTranslation.Set(ExporterUtil::GlmVec3ToFbxDouble3(translation));
+		glm::vec3 eulerAngles = ExporterUtil::ExtractEulerAngles(rotation);
+		boneNode->LclRotation.Set(ExporterUtil::GlmVec3ToFbxDouble3(eulerAngles));
+		boneNode->LclScaling.Set(ExporterUtil::GlmVec3ToFbxDouble3(scale));
+		
+		// Store the bone node in the map
+		boneNodes[boneIndex] = boneNode;
+	}
+	
+	// Establish parent-child relationships
+	for (int boneIndex = 0; boneIndex < skeleton.num_bones(); ++boneIndex) {
+		int parentIndex = skeleton.get_bone(boneIndex).get_parent_index();
+		FbxNode* boneNode = boneNodes[boneIndex];
+		
+		if (parentIndex == -1) {
+			// Root bone: attach to the root node
+			rootNode->AddChild(boneNode);
+		} else {
+			// Child bone: attach to its parent bone
+			FbxNode* parentNode = boneNodes[parentIndex];
+			parentNode->AddChild(boneNode);
+		}
+	}
+	
+	// Step 2: Export the Scene to a file
+	FbxExporter* exporter = FbxExporter::Create(fbxManager, "");
+	
+	if (!exporter->Initialize(exportPath.c_str(), -1, fbxManager->GetIOSettings())) {
+		std::cerr << "Error: Failed to initialize FBX exporter." << std::endl;
+		exporter->Destroy();
+		fbxManager->Destroy();
+		return false;
+	}
+	
+	if (!exporter->Export(scene)) {
+		std::cerr << "Error: Failed to export FBX scene." << std::endl;
+		exporter->Destroy();
+		fbxManager->Destroy();
+		return false;
+	}
+	
+	exporter->Destroy();
+	fbxManager->Destroy();
+	
+	std::cout << "Successfully exported skeleton to " << exportPath << std::endl;
+	return true;
+}
+
+bool MeshActorExporter::exportSkeleton(Skeleton& skeleton, std::ostream& outStream) {
+	// Initialize the FBX Manager and Scene
+	FbxManager* fbxManager = FbxManager::Create();
+	if (!fbxManager) {
+		std::cerr << "Error: Unable to create FBX Manager!" << std::endl;
+		return false;
+	}
+	
+	FbxIOSettings* ios = FbxIOSettings::Create(fbxManager, IOSROOT);
+	fbxManager->SetIOSettings(ios);
+	
+	FbxScene* scene = FbxScene::Create(fbxManager, "SkeletonScene");
+	
+	if (!scene) {
+		std::cerr << "Error: Unable to create FBX scene!" << std::endl;
+		fbxManager->Destroy();
+		return false;
+	}
+	
+	// Step 1: Build the skeleton in the FBX scene
+	FbxNode* rootNode = scene->GetRootNode();
+	
+	// Map to store bone index to FbxNode
+	std::map<int, FbxNode*> boneNodes;
+	
+	// Create FbxNode nodes for each bone
+	for (int boneIndex = 0; boneIndex < skeleton.num_bones(); ++boneIndex) {
+		std::string boneName = skeleton.get_bone(boneIndex).get_name();
+		int parentIndex = skeleton.get_bone(boneIndex).get_parent_index();
+		
+		// Create a new Skeleton node for the bone
+		FbxSkeleton* fbxSkeleton = FbxSkeleton::Create(scene, boneName.c_str());
+		fbxSkeleton->SetSkeletonType(FbxSkeleton::eLimbNode);
+		
+		FbxNode* boneNode = FbxNode::Create(scene, boneName.c_str());
+		boneNode->SetNodeAttribute(fbxSkeleton);
+		
+		// Set bone's local transformations
+		glm::mat4 poseMatrix = skeleton.get_bone_bindpose(boneIndex);
+		
+		glm::vec3 translation, scale;
+		glm::quat rotation;
+		std::tie(translation, rotation, scale) = ExporterUtil::DecomposeTransform(poseMatrix);
+		
+		boneNode->LclTranslation.Set(ExporterUtil::GlmVec3ToFbxDouble3(translation));
+		glm::vec3 eulerAngles = ExporterUtil::ExtractEulerAngles(rotation);
+		boneNode->LclRotation.Set(ExporterUtil::GlmVec3ToFbxDouble3(eulerAngles));
+		boneNode->LclScaling.Set(ExporterUtil::GlmVec3ToFbxDouble3(scale));
+		
+		// Store the bone node in the map
+		boneNodes[boneIndex] = boneNode;
+	}
+	
+	// Establish parent-child relationships
+	for (int boneIndex = 0; boneIndex < skeleton.num_bones(); ++boneIndex) {
+		int parentIndex = skeleton.get_bone(boneIndex).get_parent_index();
+		FbxNode* boneNode = boneNodes[boneIndex];
+		
+		if (parentIndex == -1) {
+			// Root bone: attach to the root node
+			rootNode->AddChild(boneNode);
+		} else {
+			// Child bone: attach to its parent bone
+			FbxNode* parentNode = boneNodes[parentIndex];
+			parentNode->AddChild(boneNode);
+		}
+	}
+	
+	// Step 2: Export the Scene to the output stream
+	FbxExporter* exporter = FbxExporter::Create(fbxManager, "");
+		
+	// Implement a custom stream class that uses the provided std::ostream
+	class OStreamWrapper : public FbxStream {
+	public:
+		OStreamWrapper(std::ostream& stream) : mStream(stream) {}
+		virtual ~OStreamWrapper() {}
+		
+		virtual EState GetState() override { return mStream.good() ? eOpen : eClosed; }
+		virtual bool Open(void* /*pStreamData*/) override {
+			return true;
+		}
+		virtual bool Close() override { return true; }
+		virtual bool Flush() override { mStream.flush(); return true; }
+		virtual size_t Write(const void* pData, FbxUInt64 pSize) override {
+			mStream.write(static_cast<const char*>(pData), pSize);
+			return pSize;
+		}
+		virtual size_t Read(void* /*pData*/, FbxUInt64 /*pSize*/) const override { return 0; }
+		virtual int GetReaderID() const override { return -1; }
+		virtual int GetWriterID() const override { return 0; }
+		virtual void Seek(const FbxInt64& pOffset, const FbxFile::ESeekPos& pSeekPos) override {
+			std::ios_base::seekdir dir;
+			switch (pSeekPos) {
+				case FbxFile::eBegin:
+					dir = std::ios_base::beg;
+					break;
+				case FbxFile::eCurrent:
+					dir = std::ios_base::cur;
+					break;
+				case FbxFile::eEnd:
+					dir = std::ios_base::end;
+					break;
+				default:
+					dir = std::ios_base::beg;
+					break;
+			}
+			mStream.seekp(static_cast<std::streamoff>(pOffset), dir);
+		}
+		virtual FbxInt64 GetPosition() const override {
+			return static_cast<FbxInt64>(mStream.tellp());
+		}
+		virtual void SetPosition(FbxInt64 pPosition) override {
+			mStream.seekp(static_cast<std::streamoff>(pPosition), std::ios_base::beg);
+		}
+		virtual int GetError() const override { return 0; }
+		virtual void ClearError() override {}
+	private:
+		std::ostream& mStream;
+	};
+	
+	OStreamWrapper customStream(outStream);
+	
+	// Initialize the exporter with the custom stream
+	if (!exporter->Initialize(&customStream, nullptr, -1, fbxManager->GetIOSettings())) {
+		std::cerr << "Error: Failed to initialize FBX exporter with custom stream." << std::endl;
+		exporter->Destroy();
+		fbxManager->Destroy();
+		return false;
+	}
+	
+	if (!exporter->Export(scene)) {
+		std::cerr << "Error: Failed to export FBX scene." << std::endl;
+		exporter->Destroy();
+		fbxManager->Destroy();
+		return false;
+	}
+	
+	exporter->Destroy();
+	fbxManager->Destroy();
+	
+	std::cout << "Successfully exported skeleton to output stream." << std::endl;
+	return true;
+}

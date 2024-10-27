@@ -45,6 +45,10 @@ public:
 							 std::ostream& outStream,
 							 std::function<void(bool success)> callback);
 	
+	bool exportSkeleton(Skeleton& skeleton, const std::string& exportPath);
+	
+	bool exportSkeleton(Skeleton& skeleton, std::ostream& outStream);
+
 private:
 	
 	bool setupScene(CompressedSerialization::Deserializer& deserializer,

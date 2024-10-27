@@ -3,6 +3,9 @@
 #include "ShaderManager.hpp"
 #include "OpenAiApiClient.hpp"
 
+#include "animation/HeuristicSkeletonPoser.hpp"
+#include "animation/IBone.hpp"
+#include "animation/ISkeleton.hpp"
 #include "components/PlaybackComponent.hpp"
 #include "components/SkeletonComponent.hpp"
 #include "components/TransformComponent.hpp"
@@ -143,6 +146,8 @@ PowerPromptWindow::PowerPromptWindow(nanogui::Screen& parent, ResourcesPanel& re
 	
 	// Initialize the download client as nullptr
 	mDownloadClient = nullptr;
+	
+	mMeshActorExporter = std::make_unique<MeshActorExporter>();
 }
 
 void PowerPromptWindow::ProcessEvents() {
@@ -377,7 +382,7 @@ void PowerPromptWindow::SubmitPromptAsync() {
 				mStatusLabel->set_caption("Status: Operation not implemented yet.");
 			}
 		} else if (generate_model) {
-			mPowerAi.generate_mesh_async(prompt_description, animation_description, generate_rig, generate_animation, [this](std::stringstream model_stream, const std::string& error){
+			mPowerAi.generate_mesh_async(prompt_description, animation_description, generate_rig, generate_animation, [this, generate_rig, generate_animation, animation_description](std::stringstream model_stream, const std::string& error){
 				
 				if (!error.empty()) {
 					std::cerr << "Failed to generate or download model: " << error << std::endl;
@@ -405,22 +410,99 @@ void PowerPromptWindow::SubmitPromptAsync() {
 				
 				mActiveActor = actor;
 				
+				if (generate_rig) {
+					auto& skeletonComponent = mActiveActor->get_component<SkeletonComponent>();
+					
+					auto& skeleton = static_cast<Skeleton&>(skeletonComponent.get_skeleton());
+					
+					HeuristicSkeletonPoser poser(skeleton);
+					
+					poser.apply();
+
+				}
+				
+				if (generate_rig && generate_animation) {
+					if (mActiveActor && mActiveActor->find_component<SkeletonComponent>()) {
+						auto& skeletonComponent = mActiveActor->get_component<SkeletonComponent>();
+						
+						auto& skeleton = static_cast<Skeleton&>(skeletonComponent.get_skeleton());
+						
+						
+						std::stringstream skeletonStream;
+						
+						mMeshActorExporter->exportSkeleton(skeleton, skeletonStream);
+						
+						mPowerAi.generate_animation_async(std::move(skeletonStream), "DummyModel", "fbx", animation_description, [this](std::stringstream animated_model_stream, const std::string& error_message) {
+							
+							if (!error_message.empty()) {
+								std::cerr << "Failed to generate or download animation: " << errerror_messageor << std::endl;
+								nanogui::async([this]() {
+									std::lock_guard<std::mutex> lock(mStatusMutex);
+									mStatusLabel->set_caption("Status: Failed to generate or download animation.");
+									mGenerateButton->set_enabled(true);
+								});
+								return;
+							}
+
+							std::cout << "Animation successful" << std::endl;
+							
+							
+							auto modelData = mMeshActorImporter->process(animated_model_stream, "generated_model", mOutputDirectory);
+							
+							auto serializedPrompt = std::move(modelData->mAnimations.value()[0].mSerializer);
+							
+							std::stringstream animationCompressedData;
+							
+							serializedPrompt->()->get_compressed_data(animationCompressedData);
+							
+							CompressedSerialization::Deserializer animationDeserializer;
+							
+							animationDeserializer.initialize(animationCompressedData);
+							
+							auto animation = std::make_unique<Animation>();
+							
+							animation->deserialize(animationDeserializer);
+							
+							auto& playbackComponent = mActiveActor->get_component<PlaybackComponent>();
+							
+							auto playbackData = std::make_shared<PlaybackData>(std::move(animation));
+							
+							playbackComponent.setPlaybackData(playbackData);
+
+							nanogui::async([this]() {
+								std::lock_guard<std::mutex> lock(mStatusMutex);
+								mStatusLabel->set_caption("Status: Model generated successfully.");
+								mSaveButton->set_enabled(true);
+								
+								mPowerMode = EPowerMode::Model;
+								
+								// Re-enable Generate Button
+								mGenerateButton->set_enabled(true);
+								
+								perform_layout(screen().nvg_context());
+								
+							});
+						});
+					}
+				}
+				else {
+					nanogui::async([this]() {
+						std::lock_guard<std::mutex> lock(mStatusMutex);
+						mStatusLabel->set_caption("Status: Model generated successfully.");
+						mSaveButton->set_enabled(true);
+						
+						mPowerMode = EPowerMode::Model;
+						
+						// Re-enable Generate Button
+						mGenerateButton->set_enabled(true);
+						
+						perform_layout(screen().nvg_context());
+						
+					});
+
+				}
 				mImageView->set_visible(false);
 				mPreviewCanvas->set_visible(true);
-
-				nanogui::async([this]() {
-					std::lock_guard<std::mutex> lock(mStatusMutex);
-					mStatusLabel->set_caption("Status: Model generated successfully.");
-					mSaveButton->set_enabled(true);
-					
-					mPowerMode = EPowerMode::Model;
-					
-					// Re-enable Generate Button
-					mGenerateButton->set_enabled(true);
-					
-					perform_layout(screen().nvg_context());
-
-				});
 			});
 		} else {
 			std::cerr << "Unsupported prompt." << std::endl;
