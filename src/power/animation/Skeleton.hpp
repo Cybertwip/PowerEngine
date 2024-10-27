@@ -241,17 +241,17 @@ private:
 		// Apply the bone's bind pose first
 		global *= bone.bindpose;
 		
-		glm::mat4 transformation = bone.get_transform_matrix();
-
+		glm::mat4 transformation = glm::mat4(1.0f);
+		
 		if (!withAnimation.empty()) {
 			
-			if (bone.index < withAnimation.size()) {
+			if (bone.index < withAnimation.size() && bone.index >= 0) {
 				transformation = withAnimation[bone.index];
 			}
 		}
-				
-		global *= transformation;
 		
+		global *= bone.get_transform_matrix() * transformation;
+
 		bone.global = global * bone.offset;
 		
 		for (int childIndex : bone.children) {
