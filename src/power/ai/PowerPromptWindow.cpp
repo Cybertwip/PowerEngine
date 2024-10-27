@@ -435,7 +435,7 @@ void PowerPromptWindow::SubmitPromptAsync() {
 						mPowerAi.generate_animation_async(std::move(skeletonStream), "DummyModel", "fbx", animation_description, [this](std::stringstream animated_model_stream, const std::string& error_message) {
 							
 							if (!error_message.empty()) {
-								std::cerr << "Failed to generate or download animation: " << errerror_messageor << std::endl;
+								std::cerr << "Failed to generate or download animation: " << error_message << std::endl;
 								nanogui::async([this]() {
 									std::lock_guard<std::mutex> lock(mStatusMutex);
 									mStatusLabel->set_caption("Status: Failed to generate or download animation.");
