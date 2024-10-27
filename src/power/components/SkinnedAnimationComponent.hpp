@@ -45,7 +45,7 @@ public:
 		mDefaultPose.resize(numBones);
 		
 		for (size_t i = 0; i < numBones; ++i) {
-			auto defaultTransform = mSkeletonComponent.get_skeleton().get_bone(i).get_transform_matrix();
+			auto defaultTransform = glm::identity<glm::mat4>();
 			
 			mModelPose[i] = defaultTransform;
 			mDefaultPose[i] = defaultTransform;
