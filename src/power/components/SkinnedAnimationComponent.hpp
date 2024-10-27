@@ -2,6 +2,7 @@
 
 #include "AnimationComponent.hpp"
 #include "PlaybackComponent.hpp"
+#include "SkeletonComponent.hpp"
 
 #include "animation/Animation.hpp"
 #include "animation/AnimationTimeProvider.hpp"
