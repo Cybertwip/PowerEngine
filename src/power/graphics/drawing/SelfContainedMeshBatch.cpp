@@ -1,5 +1,6 @@
 #include "SelfContainedMeshBatch.hpp"
 
+#include "components/TransformComponent.hpp"
 #include "components/ColorComponent.hpp"
 #include "graphics/drawing/Mesh.hpp"
 #include "graphics/shading/ShaderWrapper.hpp"

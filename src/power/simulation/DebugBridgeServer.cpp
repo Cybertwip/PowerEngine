@@ -336,7 +336,7 @@ void CartridgeBridge::initialize_disk() {
 #elif defined(__APPLE__)
 	if (m_ram_disk_path.empty()) { // Check if RAM disk is already created
 		// Create a RAM disk as before
-		const int ram_disk_size_mb = 10;
+		const int ram_disk_size_mb = 20;
 		const int sectors = ram_disk_size_mb * 2048; // 1 sector = 512 bytes
 		
 		std::string create_ram_disk_cmd = "hdiutil attach -nomount ram://" + std::to_string(sectors);

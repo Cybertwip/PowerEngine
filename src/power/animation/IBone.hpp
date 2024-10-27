@@ -16,6 +16,7 @@ public:
 	
 	virtual std::string get_name() = 0;
 	virtual int get_parent_index() = 0;
+	virtual const std::vector<int> get_child_indices() const = 0;
 	
 	virtual void set_translation(const glm::vec3& translation) = 0;
 	virtual void set_rotation(const glm::quat& rotation) = 0;

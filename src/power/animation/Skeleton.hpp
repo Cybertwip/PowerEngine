@@ -47,8 +47,8 @@ public:
 			serializer.write_int32(index);
 			serializer.write_int32(parent_index);
 			serializer.write_mat4(offset);
-			serializer.write_mat4(get_transform_matrix());
-			serializer.write_mat4(get_transform_matrix());
+			serializer.write_mat4(transform.get_matrix());
+			serializer.write_mat4(transform.get_matrix());
 			serializer.write_mat4(global);
 
 			// Serialize number of children
@@ -98,6 +98,10 @@ public:
 		
 		int get_parent_index() override {
 			return parent_index;
+		}
+		
+		virtual const std::vector<int> get_child_indices() const override {
+			return children;
 		}
 
 		void set_translation(const glm::vec3& translation) override {

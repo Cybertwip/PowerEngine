@@ -47,7 +47,6 @@ public:
 		transform.rotation = rotation;
 		transform.scale = scale;
 	}
-
 	
 	TransformComponent() {
 		transform.translation = glm::vec3(0.0f, 0.0f, 0.0f);

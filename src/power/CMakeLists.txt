@@ -85,6 +85,8 @@ ${CMAKE_CURRENT_LIST_DIR}/actors/IActorManager.hpp
     
     ${CMAKE_CURRENT_LIST_DIR}/animation/Animation.hpp
     ${CMAKE_CURRENT_LIST_DIR}/animation/AnimationTimeProvider.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/animation/HeuristicSkeletonPoser.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/animation/HeuristicSkeletonPoser.cpp
     ${CMAKE_CURRENT_LIST_DIR}/animation/IBone.hpp
     ${CMAKE_CURRENT_LIST_DIR}/animation/ISkeleton.hpp
     ${CMAKE_CURRENT_LIST_DIR}/animation/Skeleton.hpp
