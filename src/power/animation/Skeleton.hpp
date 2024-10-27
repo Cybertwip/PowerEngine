@@ -36,8 +36,8 @@ public:
 			
 		}
 
-		Bone(const std::string& name, int index, int parent_index, const glm::mat4& offset, const glm::mat4& local)
-		: name(name), index(index), parent_index(parent_index), offset(offset), transform(local), global(1.0f) {}
+		Bone(const std::string& name, int index, int parent_index, const glm::mat4& offset, const glm::mat4& bindpose)
+		: name(name), index(index), parent_index(parent_index), offset(offset), transform(bindpose), global(1.0f) {}
 		
 		~Bone() = default;
 		
@@ -68,11 +68,15 @@ public:
 			if (!deserializer.read_int32(parent_index)) return false;
 			if (!deserializer.read_mat4(offset)) return false;
 			
-			glm::mat4 transformation;
-			if (!deserializer.read_mat4(transformation)) return false;
-			if (!deserializer.read_mat4(transformation)) return false;
-			transform = TransformComponent(transformation);
+			glm::mat4 bindpose;
+			if (!deserializer.read_mat4(bindpose)) return false;
 			
+			glm::mat4 dummy; // @TODO remove
+			if (!deserializer.read_mat4(dummy)) return false;
+			
+			transform = TransformComponent(bindpose);
+			
+			// @TODO remove
 			if (!deserializer.read_mat4(global)) return false;
 
 			// Deserialize number of children
