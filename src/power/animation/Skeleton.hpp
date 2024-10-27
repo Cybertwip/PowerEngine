@@ -1,8 +1,12 @@
 #pragma once
 
+#include "IBone.hpp"
+#include "ISkeleton.hpp"
+
 #include "filesystem/CompressedSerialization.hpp"
 
 #include <components/TransformComponent.hpp>
+
 
 #include <string>
 #include <vector>
@@ -15,42 +19,6 @@
 #include <cstring> // For memcpy
 #include <zlib.h>
 #include <iostream> // For error messages
-
-class IBone {
-public:
-	IBone() {
-		
-	}
-	
-	virtual ~IBone() = default;
-
-	virtual std::string get_name() = 0;
-	virtual int get_parent_index() = 0;
-
-	virtual void set_translation(const glm::vec3& translation) = 0;
-	virtual void set_rotation(const glm::quat& rotation) = 0;
-	virtual void set_scale(const glm::vec3& scale) = 0;
-	
-	virtual glm::vec3 get_translation() const = 0;
-	virtual glm::quat get_rotation() const = 0;
-	virtual glm::vec3 get_scale() const = 0;
-	
-	virtual glm::mat4 get_transform_matrix() const = 0;
-};
-
-class ISkeleton {
-public:
-	ISkeleton() {
-		
-	}
-	
-	virtual ~ISkeleton() = default;
-	
-	// Get the number of bones
-	virtual int num_bones() const = 0;
-	// Get mutable bone by index
-	virtual IBone& get_bone(int index) = 0;
-};
 
 class Skeleton : public ISkeleton {
 public:
@@ -290,18 +258,4 @@ private:
 			compute_global_and_transform(*m_bones[childIndex], global, withAnimation);
 		}
 	}
-};
-
-class SkeletonComponent {
-public:
-	SkeletonComponent(std::unique_ptr<ISkeleton> skeleton) : mSkeleton(std::move(skeleton)) {
-		
-	}
-	
-	ISkeleton& get_skeleton() const {
-		return *mSkeleton;
-	}
-	
-private:	
-	std::unique_ptr<ISkeleton> mSkeleton;
 };

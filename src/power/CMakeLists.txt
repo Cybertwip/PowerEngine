@@ -85,6 +85,8 @@ ${CMAKE_CURRENT_LIST_DIR}/actors/IActorManager.hpp
     
     ${CMAKE_CURRENT_LIST_DIR}/animation/Animation.hpp
     ${CMAKE_CURRENT_LIST_DIR}/animation/AnimationTimeProvider.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/animation/IBone.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/animation/ISkeleton.hpp
     ${CMAKE_CURRENT_LIST_DIR}/animation/Skeleton.hpp
     ${CMAKE_CURRENT_LIST_DIR}/animation/StackableAnimationTimeProvider.hpp
     ${CMAKE_CURRENT_LIST_DIR}/animation/Transform.hpp
@@ -93,6 +95,7 @@ ${CMAKE_CURRENT_LIST_DIR}/actors/IActorManager.hpp
     ${CMAKE_CURRENT_LIST_DIR}/components/PrimitiveComponent.hpp
     ${CMAKE_CURRENT_LIST_DIR}/components/PrimitiveComponent.cpp
     ${CMAKE_CURRENT_LIST_DIR}/components/SkinnedAnimationComponent.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/components/SkeletonComponent.hpp
     ${CMAKE_CURRENT_LIST_DIR}/components/TransformAnimationComponent.hpp
     ${CMAKE_CURRENT_LIST_DIR}/components/TimelineComponent.hpp
     ${CMAKE_CURRENT_LIST_DIR}/components/CameraComponent.cpp

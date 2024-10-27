@@ -4,6 +4,7 @@
 #include "OpenAiApiClient.hpp"
 
 #include "components/PlaybackComponent.hpp"
+#include "components/SkeletonComponent.hpp"
 #include "components/TransformComponent.hpp"
 #include "filesystem/ImageUtils.hpp"
 #include "filesystem/MeshActorImporter.hpp"
@@ -151,7 +152,9 @@ void PowerPromptWindow::ProcessEvents() {
 	
 	if (mActiveActor != nullptr) {
 		
-		mPreviewCanvas->rotate(glm::vec3(0.0f, 1.0f, 0.0f), 1.0f);
+		if (!mActiveActor->find_component<SkeletonComponent>()) {
+			mPreviewCanvas->rotate(glm::vec3(0.0f, 1.0f, 0.0f), 1.0f);
+		}
 	}
 }
 
