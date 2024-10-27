@@ -301,7 +301,7 @@ void PowerPromptWindow::SubmitPromptAsync() {
 		}
 		
 		if (generate_model && generate_rig && !pose_type.empty()) {
-			prompt_description += ", " + pose_type;
+			prompt_description += ", " + pose_type + ":1:1:1:1:1";
 		}
 
 		// For debugging purposes, you can print the extracted values
@@ -431,7 +431,9 @@ void PowerPromptWindow::SubmitPromptAsync() {
 						std::stringstream skeletonStream;
 						
 						mMeshActorExporter->exportSkeleton(skeleton, skeletonStream);
-						
+
+						mMeshActorExporter->exportSkeleton(skeleton, "Skeleton.fbx");
+
 						mPowerAi.generate_animation_async(std::move(skeletonStream), "DummyModel", "fbx", animation_description, [this](std::stringstream animated_model_stream, const std::string& error_message) {
 							
 							if (!error_message.empty()) {
@@ -449,39 +451,51 @@ void PowerPromptWindow::SubmitPromptAsync() {
 							
 							auto modelData = mMeshActorImporter->process(animated_model_stream, "generated_model", mOutputDirectory);
 							
-							auto serializedPrompt = std::move(modelData->mAnimations.value()[0].mSerializer);
-							
-							std::stringstream animationCompressedData;
-							
-							serializedPrompt->get_compressed_data(animationCompressedData);
-							
-							CompressedSerialization::Deserializer animationDeserializer;
-							
-							animationDeserializer.initialize(animationCompressedData);
-							
-							auto animation = std::make_unique<Animation>();
-							
-							animation->deserialize(animationDeserializer);
-							
-							auto& playbackComponent = mActiveActor->get_component<PlaybackComponent>();
-							
-							auto playbackData = std::make_shared<PlaybackData>(std::move(animation));
-							
-							playbackComponent.setPlaybackData(playbackData);
+							if (modelData->mAnimations.has_value()) {
+								auto serializedPrompt = std::move(modelData->mAnimations.value()[0].mSerializer);
+								
+								std::stringstream animationCompressedData;
+								
+								serializedPrompt->get_compressed_data(animationCompressedData);
+								
+								CompressedSerialization::Deserializer animationDeserializer;
+								
+								animationDeserializer.initialize(animationCompressedData);
+								
+								auto animation = std::make_unique<Animation>();
+								
+								animation->deserialize(animationDeserializer);
+								
+								auto& playbackComponent = mActiveActor->get_component<PlaybackComponent>();
+								
+								auto playbackData = std::make_shared<PlaybackData>(std::move(animation));
+								
+								playbackComponent.setPlaybackData(playbackData);
+								
+								nanogui::async([this]() {
+									std::lock_guard<std::mutex> lock(mStatusMutex);
+									mStatusLabel->set_caption("Status: Model generated successfully.");
+									mSaveButton->set_enabled(true);
+									
+									mPowerMode = EPowerMode::Model;
+									
+									// Re-enable Generate Button
+									mGenerateButton->set_enabled(true);
+									
+									perform_layout(screen().nvg_context());
+									
+								});
+							} else {
+								std::cerr << "Failed to generate or download animation: " << error_message << std::endl;
+								nanogui::async([this]() {
+									std::lock_guard<std::mutex> lock(mStatusMutex);
+									mStatusLabel->set_caption("Status: Failed to generate or download animation.");
+									mGenerateButton->set_enabled(true);
+								});
+								return;
 
-							nanogui::async([this]() {
-								std::lock_guard<std::mutex> lock(mStatusMutex);
-								mStatusLabel->set_caption("Status: Model generated successfully.");
-								mSaveButton->set_enabled(true);
-								
-								mPowerMode = EPowerMode::Model;
-								
-								// Re-enable Generate Button
-								mGenerateButton->set_enabled(true);
-								
-								perform_layout(screen().nvg_context());
-								
-							});
+							}
+
 						});
 					}
 				}

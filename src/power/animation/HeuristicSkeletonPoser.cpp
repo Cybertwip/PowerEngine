@@ -477,7 +477,7 @@ void HeuristicSkeletonPoser::ApplyTPose(const std::vector<ClassifiedBone>& class
 				
 				desiredRotation = glm::quat(eulerAngles);
 			}
-				break;
+			break;
 				
 			case BoneType::LeftLowerArm:
 			case BoneType::RightLowerArm:
