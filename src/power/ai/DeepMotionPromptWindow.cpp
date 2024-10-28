@@ -326,6 +326,240 @@ void PromptWindow::SubmitPromptAsync() {
 	});
 }
 
+void PromptWindow::PollJobStatusAsync(const std::string& request_id) {
+	// Start polling
+	auto poll = [this, request_id]() {
+		// Asynchronously check job status
+		mDeepMotionApiClient.check_job_status_async(request_id,
+													[this, request_id](const Json::Value& status, const std::string& error) {
+			if (!error.empty()) {
+				std::cerr << "Failed to check job status: " << error << std::endl;
+				// Retry after a delay
+				std::this_thread::sleep_for(std::chrono::seconds(3));
+				PollJobStatusAsync(request_id);
+				return;
+			}
+			
+			if (status.empty()) {
+				// Retry after a delay
+				std::this_thread::sleep_for(std::chrono::seconds(3));
+				PollJobStatusAsync(request_id);
+				return;
+			}
+			
+			int status_count = status["count"].asInt();
+			
+			if (status_count > 0) {
+				for (auto& json : status["status"]) {
+					auto job_status = json["status"].asString();
+					
+					std::cout << "Job Status: " << job_status << std::endl;
+					
+					if (job_status == "SUCCESS") {
+						// Asynchronously download results
+						mDeepMotionApiClient.download_job_results_async(request_id,
+																		[this](const Json::Value& results, const std::string& error) {
+							if (!error.empty()) {
+								std::cerr << "Failed to download animations: " << error << std::endl;
+								nanogui::async([this]() {
+									std::lock_guard<std::mutex> lock(mStatusMutex);
+									mStatusLabel->set_caption("Status: Failed to download animations.");
+									mSubmitButton->set_enabled(true); // Re-enable Submit button
+								});
+								return;
+							}
+							
+							// Process the results
+							if (results.isMember("links")) {
+								Json::Value urls = results["links"][0]["urls"];
+								
+								for (auto& url : urls) {
+									for (auto& file : url["files"]) {
+										
+										if (file.isMember("fbx")) {
+											auto download_url = file["fbx"].asString();
+											
+											std::cout << "Download URL: " << download_url << std::endl;
+											
+											// Parse the download URL
+											std::string protocol, host, path;
+											std::string::size_type protocol_pos = download_url.find("://");
+											if (protocol_pos != std::string::npos) {
+												protocol = download_url.substr(0, protocol_pos);
+												protocol_pos += 3;
+											} else {
+												std::cerr << "Invalid download URL format: " << download_url << std::endl;
+												nanogui::async([this]() {
+													std::lock_guard<std::mutex> lock(mStatusMutex);
+													mStatusLabel->set_caption("Status: Invalid download URL.");
+												});
+												return;
+											}
+											
+											std::string::size_type host_pos = download_url.find("/", protocol_pos);
+											if (host_pos != std::string::npos) {
+												host = download_url.substr(protocol_pos, host_pos - protocol_pos);
+												path = download_url.substr(host_pos);
+											} else {
+												host = download_url.substr(protocol_pos);
+												path = "/";
+											}
+											
+											// Determine port
+											int port = 443; // Default HTTPS
+											if (protocol == "http") {
+												port = 80;
+											}
+											
+											// Initialize HTTP client for download
+											httplib::SSLClient download_client(host.c_str(), port);
+											download_client.set_compress(false);
+											
+											// Perform GET request
+											auto res_download = download_client.Get(path.c_str());
+											if (res_download && res_download->status == 200) {
+												// Assuming the response body contains ZIP data
+												std::vector<unsigned char> zip_data(res_download->body.begin(), res_download->body.end());
+												
+												// Decompress ZIP data (use your existing decompress_zip_data function)
+												std::vector<std::stringstream> animation_files = Zip::decompress(zip_data);
+												
+												// Process the extracted animation files as needed
+												
+												std::filesystem::path filepath(mActorPath);
+												
+												auto actorName = filepath.stem().string();
+												
+												for (auto& stream : animation_files) {
+													
+													auto modelData = mMeshActorImporter->process(stream, actorName, mOutputDirectory);
+													
+													auto& serializer = modelData->mMesh.mSerializer;
+													
+													// Generate the unique hash identifier from the compressed data
+													
+													std::stringstream compressedData;
+													
+													serializer->get_compressed_data(compressedData);
+													
+													uint64_t hash_id[] = { 0, 0 };
+													
+													Md5::generate_md5_from_compressed_data(compressedData, hash_id);
+													
+													// Write the unique hash identifier to the header
+													serializer->write_header_raw(hash_id, sizeof(hash_id));
+													
+													// Proceed with serialization
+													
+													// No thumbnails yet as this will be animated, then re-serialized in the import method
+													serializer->write_header_uint64(0);
+													
+													CompressedSerialization::Deserializer deserializer;
+													
+													if (!deserializer.initialize(compressedData)) {
+														
+														nanogui::async([this]() {
+															mStatusLabel->set_caption("Status: Unable to deserialize model.");
+															mResourcesPanel.refresh_file_view();
+														});
+														
+														return;
+													}
+													
+													mSerializedPrompt = std::move(modelData->mAnimations.value()[0].mSerializer);
+													
+													std::stringstream animationCompressedData;
+													
+													mSerializedPrompt.value()->get_compressed_data(animationCompressedData);
+													
+													CompressedSerialization::Deserializer animationDeserializer;
+													
+													animationDeserializer.initialize(animationCompressedData);
+													
+													auto animation = std::make_unique<Animation>();
+													
+													animation->deserialize(animationDeserializer);
+													
+													auto& playbackComponent = mActiveActor->get_component<PlaybackComponent>();
+													
+													auto playbackData = std::make_shared<PlaybackData>( std::move(animation));
+													
+													playbackComponent.setPlaybackData(playbackData);
+
+													break;
+												}
+												
+												nanogui::async([this]() {
+													std::lock_guard<std::mutex> lock(mStatusMutex);
+													mStatusLabel->set_caption("Status: Animations Imported.");
+													mImportButton->set_enabled(true);
+													mSubmitButton->set_enabled(true);
+												});
+												
+												return;
+											} else {
+												std::cerr << "Failed to download animations. HTTP Status: "
+												<< (res_download ? std::to_string(res_download->status) : "No Response") << std::endl;
+												nanogui::async([this]() {
+													std::lock_guard<std::mutex> lock(mStatusMutex);
+													mStatusLabel->set_caption("Status: Failed to download animations.");
+												});
+												return;
+											}
+										}
+									}
+								}
+							}
+						}
+																		);
+						// Do not schedule next poll; job is complete
+						return;
+					} else if (job_status == "FAILURE") {
+						std::cerr << "Job failed." << std::endl;
+						
+						std::string message = json["details"]["exc_message"].asString();
+						std::string type = json["details"]["exc_type"].asString();
+						
+						std::cerr << "Failure: " << message << std::endl;
+						std::cerr << "Exception: " << type << std::endl;
+						
+						nanogui::async([this]() {
+							std::lock_guard<std::mutex> lock(mStatusMutex);
+							mStatusLabel->set_caption("Status: Job failed.");
+						});
+						// Do not schedule next poll; job is complete
+						return;
+					} else if (job_status == "PROGRESS") {
+						float total = json["details"]["total"].asFloat();
+						float current = json["details"]["step"].asFloat();
+						if (current > total) {
+							current = total;
+						}
+						float percentage = (current * 100.0f) / total;
+						nanogui::async([this, percentage]() {
+							std::lock_guard<std::mutex> lock(mStatusMutex);
+							mStatusLabel->set_caption("Status: In Progress (" + std::to_string(static_cast<int>(percentage)) + "%)");
+						});
+					} else {
+						nanogui::async([this, job_status]() {
+							std::lock_guard<std::mutex> lock(mStatusMutex);
+							mStatusLabel->set_caption("Status: " + job_status);
+						});
+					}
+				}
+			}
+			
+			// Schedule next poll after delay
+			std::this_thread::sleep_for(std::chrono::seconds(3));
+			PollJobStatusAsync(request_id);
+		}
+													);
+	};
+	
+	// Launch polling
+	std::thread(poll).detach();
+}
+
 
 void PromptWindow::ImportIntoProjectAsync() {
 	//	std::string animationName = mInputTextBox->value();

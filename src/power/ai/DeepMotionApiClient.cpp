@@ -787,10 +787,12 @@ void DeepMotionApiClient::poll_status_generate_animation(const std::string& requ
 				if (results.isMember("links")) {
 					std::stringstream fbx_stream;
 					
+					Json::Value urls = results["links"][0]["urls"];
+
 					// Iterate over links to find FBX URL
-					for (const auto& url : results["links"]) {
+					for (const auto& url : urls) {
 						if (url.isMember("urls")) {
-							for (const auto& file : url["urls"]["files"]) {
+							for (const auto& file : url["files"]) {
 								if (file.isMember("fbx")) {
 									std::string download_url = file["fbx"].asString();
 									
