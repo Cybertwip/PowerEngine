@@ -775,8 +775,16 @@ void DeepMotionApiClient::poll_status_generate_animation(const std::string& requ
 		}
 		// Extract and uppercase the status
 		std::string job_status_upper = to_uppercase(job_status);
-		int progress = status.get("progress", 0).asInt();
 		
+		float total = status["details"]["total"].asFloat();
+		float current = status["details"]["step"].asFloat();
+		
+		if (current > total) {
+			current = total;
+		}
+		
+		int progress = (current * 100.0f) / total;
+
 		std::cout << "Job Status: " << job_status_upper << " (" << progress << "%)" << std::endl;
 		
 		if (job_status_upper == "SUCCESS") {
