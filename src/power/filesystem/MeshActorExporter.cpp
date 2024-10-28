@@ -839,45 +839,45 @@ void MeshActorExporter::exportSkinnedFbxToStream(SkinnedFbx& skinnedFbx, std::os
 		}
 		
 		// Create layer elements for normals, UVs, colors, etc.
-		
-		// Normals
-		FbxLayerElementNormal* layerElementNormal = FbxLayerElementNormal::Create(fbxMesh, "");
-		layerElementNormal->SetMappingMode(FbxLayerElement::eByControlPoint);
-		layerElementNormal->SetReferenceMode(FbxLayerElement::eDirect);
-		for (auto& vertexPtr : meshData.get_vertices()) {
-			const auto& vertex = *vertexPtr;
-			const auto& normal = vertex.get_normal();
-			layerElementNormal->GetDirectArray().Add(FbxVector4(normal.x, normal.y, normal.z));
-		}
-		fbxMesh->GetLayer(0)->SetNormals(layerElementNormal);
-		
-		// UVs
-		FbxLayerElementUV* layerElementUV = FbxLayerElementUV::Create(fbxMesh, "UVChannel_1");
-		layerElementUV->SetMappingMode(FbxLayerElement::eByControlPoint);
-		layerElementUV->SetReferenceMode(FbxLayerElement::eDirect);
-		for (const auto& vertexPtr : meshData.get_vertices()) {
-			const auto& vertex = *vertexPtr;
-			const auto& uv = vertex.get_tex_coords1();
-			layerElementUV->GetDirectArray().Add(FbxVector2(uv.x, uv.y));
-		}
-		fbxMesh->GetLayer(0)->SetUVs(layerElementUV);
-		
-		// Colors
-		FbxLayerElementVertexColor* layerElementColor = FbxLayerElementVertexColor::Create(fbxMesh, "");
-		layerElementColor->SetMappingMode(FbxLayerElement::eByControlPoint);
-		layerElementColor->SetReferenceMode(FbxLayerElement::eDirect);
-		for (const auto& vertexPtr : meshData.get_vertices()) {
-			const auto& vertex = *vertexPtr;
-			const auto& color = vertex.get_color();
-			layerElementColor->GetDirectArray().Add(FbxColor(color.r, color.g, color.b, color.a));
-		}
-		fbxMesh->GetLayer(0)->SetVertexColors(layerElementColor);
-		
-		// Material mapping
-		FbxLayerElementMaterial* layerElementMaterial = FbxLayerElementMaterial::Create(fbxMesh, "");
-		layerElementMaterial->SetMappingMode(FbxLayerElement::eByPolygon);
-		layerElementMaterial->SetReferenceMode(FbxLayerElement::eIndexToDirect);
-		fbxMesh->GetLayer(0)->SetMaterials(layerElementMaterial);
+//		
+//		// Normals
+//		FbxLayerElementNormal* layerElementNormal = FbxLayerElementNormal::Create(fbxMesh, "");
+//		layerElementNormal->SetMappingMode(FbxLayerElement::eByControlPoint);
+//		layerElementNormal->SetReferenceMode(FbxLayerElement::eDirect);
+//		for (auto& vertexPtr : meshData.get_vertices()) {
+//			const auto& vertex = *vertexPtr;
+//			const auto& normal = vertex.get_normal();
+//			layerElementNormal->GetDirectArray().Add(FbxVector4(normal.x, normal.y, normal.z));
+//		}
+//		fbxMesh->GetLayer(0)->SetNormals(layerElementNormal);
+//		
+//		// UVs
+//		FbxLayerElementUV* layerElementUV = FbxLayerElementUV::Create(fbxMesh, "UVChannel_1");
+//		layerElementUV->SetMappingMode(FbxLayerElement::eByControlPoint);
+//		layerElementUV->SetReferenceMode(FbxLayerElement::eDirect);
+//		for (const auto& vertexPtr : meshData.get_vertices()) {
+//			const auto& vertex = *vertexPtr;
+//			const auto& uv = vertex.get_tex_coords1();
+//			layerElementUV->GetDirectArray().Add(FbxVector2(uv.x, uv.y));
+//		}
+//		fbxMesh->GetLayer(0)->SetUVs(layerElementUV);
+//		
+//		// Colors
+//		FbxLayerElementVertexColor* layerElementColor = FbxLayerElementVertexColor::Create(fbxMesh, "");
+//		layerElementColor->SetMappingMode(FbxLayerElement::eByControlPoint);
+//		layerElementColor->SetReferenceMode(FbxLayerElement::eDirect);
+//		for (const auto& vertexPtr : meshData.get_vertices()) {
+//			const auto& vertex = *vertexPtr;
+//			const auto& color = vertex.get_color();
+//			layerElementColor->GetDirectArray().Add(FbxColor(color.r, color.g, color.b, color.a));
+//		}
+//		fbxMesh->GetLayer(0)->SetVertexColors(layerElementColor);
+//		
+//		// Material mapping
+//		FbxLayerElementMaterial* layerElementMaterial = FbxLayerElementMaterial::Create(fbxMesh, "");
+//		layerElementMaterial->SetMappingMode(FbxLayerElement::eByPolygon);
+//		layerElementMaterial->SetReferenceMode(FbxLayerElement::eIndexToDirect);
+//		fbxMesh->GetLayer(0)->SetMaterials(layerElementMaterial); //skip for now
 		
 		// Indices (polygons)
 		const auto& indices = meshData.get_indices();
@@ -887,7 +887,7 @@ void MeshActorExporter::exportSkinnedFbxToStream(SkinnedFbx& skinnedFbx, std::os
 			
 			// Assign material to the polygon
 			int materialIndex = meshData.get_vertices()[indices[pi * 3]]->get_material_id();
-			layerElementMaterial->GetIndexArray().Add(materialIndex);
+			//layerElementMaterial->GetIndexArray().Add(materialIndex); // skip for now
 			
 			fbxMesh->AddPolygon(indices[pi * 3]);
 			fbxMesh->AddPolygon(indices[pi * 3 + 1]);
