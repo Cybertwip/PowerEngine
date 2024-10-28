@@ -18,7 +18,7 @@ class ShaderManager;
 
 class Mesh : public Drawable {
 public:
-	Mesh(std::unique_ptr<MeshData> meshData, ShaderWrapper& shader, IMeshBatch& meshBatch, MetadataComponent& metadataComponent, ColorComponent& colorComponent);
+	Mesh(MeshData& meshData, ShaderWrapper& shader, IMeshBatch& meshBatch, MetadataComponent& metadataComponent, ColorComponent& colorComponent);
 	~Mesh() override;
     
     void draw_content(const nanogui::Matrix4f& model, const nanogui::Matrix4f& view, const nanogui::Matrix4f& projection) override;
@@ -34,7 +34,7 @@ public:
 	const std::vector<float>& get_flattened_colors() const { return mFlattenedColors; }
 
 	MeshData& get_mesh_data() {
-		return *mMeshData;
+		return mMeshData;
 	}
 	
 	MetadataComponent& get_metadata_component() const {
@@ -50,7 +50,7 @@ public:
 	}
 	
 private:
-	std::unique_ptr<MeshData> mMeshData;
+	MeshData& mMeshData;
 
     ShaderWrapper& mShader;
 	

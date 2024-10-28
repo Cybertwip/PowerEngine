@@ -23,14 +23,14 @@
 #include <cmath>
 #include <algorithm>
 
-Mesh::Mesh(std::unique_ptr<MeshData> meshData, ShaderWrapper& shader, IMeshBatch& meshBatch, MetadataComponent& metadataComponent, ColorComponent& colorComponent)
-: mMeshData(std::move(meshData)), mShader(shader), mMeshBatch(meshBatch), mMetadataComponent(metadataComponent), mColorComponent(colorComponent), mModelMatrix(nanogui::Matrix4f::identity()) {
+Mesh::Mesh(MeshData& meshData, ShaderWrapper& shader, IMeshBatch& meshBatch, MetadataComponent& metadataComponent, ColorComponent& colorComponent)
+: mMeshData(meshData), mShader(shader), mMeshBatch(meshBatch), mMetadataComponent(metadataComponent), mColorComponent(colorComponent), mModelMatrix(nanogui::Matrix4f::identity()) {
 	
 	if (!mMeshData) {
 		throw std::invalid_argument("MeshData cannot be null.");
 	}
 	
-	size_t numVertices = mMeshData->get_vertices().size();
+	size_t numVertices = mMeshData.get_vertices().size();
 	
 	// Pre-allocate flattened data vectors
 	mFlattenedPositions.resize(numVertices * 3);
@@ -44,7 +44,7 @@ Mesh::Mesh(std::unique_ptr<MeshData> meshData, ShaderWrapper& shader, IMeshBatch
 	
 	// Flatten the vertex data
 	for (size_t i = 0; i < numVertices; ++i) {
-		const auto& vertexPtr = mMeshData->get_vertices()[i];
+		const auto& vertexPtr = mMeshData.get_vertices()[i];
 		if (!vertexPtr) {
 			throw std::runtime_error("Vertex pointer is null.");
 		}

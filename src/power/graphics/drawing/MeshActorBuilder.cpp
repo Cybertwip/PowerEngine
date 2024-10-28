@@ -99,7 +99,7 @@ Actor& MeshActorBuilder::build_mesh(Actor& actor, AnimationTimeProvider& timePro
 	
 	for (auto& meshDataItem : model->GetMeshData()) {
 		meshComponentData.push_back(std::make_unique<Mesh>(
-														   std::move(meshDataItem),
+														   *meshDataItem,
 														   meshShader,
 														   mBatchUnit.mMeshBatch,
 														   metadataComponent,
@@ -216,7 +216,7 @@ Actor& MeshActorBuilder::build_skinned(Actor& actor, AnimationTimeProvider& time
 		// Create SkinnedMesh instances from deserialized data
 		for (auto& skinnedMeshData : model->GetSkinnedMeshData()) {
 			skinnedMeshComponentData.push_back(std::make_unique<SkinnedMesh>(
-																			 std::move(skinnedMeshData),
+																			 *skinnedMeshData,
 																			 skinnedShader,
 																			 mBatchUnit.mSkinnedMeshBatch,
 																			 metadataComponent,
@@ -234,7 +234,7 @@ Actor& MeshActorBuilder::build_skinned(Actor& actor, AnimationTimeProvider& time
 		
 		for (auto& meshData : model->GetMeshData()) {
 			meshComponentData.push_back(std::make_unique<Mesh>(
-															   std::move(meshData),
+															   *meshData,
 															   meshShader,
 															   mBatchUnit.mMeshBatch,
 															   metadataComponent,

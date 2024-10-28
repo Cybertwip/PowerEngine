@@ -24,14 +24,14 @@
 #include <algorithm>
 
 SkinnedMesh::SkinnedMesh(
-						 std::unique_ptr<SkinnedMeshData> skinnedMeshData,
+						 SkinnedMeshData& skinnedMeshData,
 						 ShaderWrapper& shader,
 						 ISkinnedMeshBatch& meshBatch,
 						 MetadataComponent& metadataComponent,
 						 ColorComponent& colorComponent,
 						 SkinnedAnimationComponent& skinnedComponent,
 						 SkeletonComponent& skeletonComponent)
-: mSkinnedMeshData(std::move(skinnedMeshData)),
+: mSkinnedMeshData(skinnedMeshData),
 mShader(shader),
 mMeshBatch(meshBatch),
 mMetadataComponent(metadataComponent),
@@ -40,7 +40,7 @@ mSkinnedComponent(skinnedComponent),
 mSkeletonComponent(skeletonComponent),
 mModelMatrix(nanogui::Matrix4f::identity()) {
 	
-	size_t numVertices = mSkinnedMeshData->get_vertices().size();
+	size_t numVertices = mSkinnedMeshData.get_vertices().size();
 	
 	// Pre-allocate flattened data vectors
 	mFlattenedPositions.resize(numVertices * 3);
@@ -56,7 +56,7 @@ mModelMatrix(nanogui::Matrix4f::identity()) {
 	
 	// Flatten the vertex data
 	for (size_t i = 0; i < numVertices; ++i) {
-		auto& vertex = static_cast<SkinnedMeshVertex&>(*mSkinnedMeshData->get_vertices()[i]);
+		auto& vertex = static_cast<SkinnedMeshVertex&>(*mSkinnedMeshData.get_vertices()[i]);
 		
 		// Positions
 		mFlattenedPositions[i * 3 + 0] = vertex.get_position().x;
