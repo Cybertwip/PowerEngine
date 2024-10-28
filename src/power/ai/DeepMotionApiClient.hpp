@@ -102,6 +102,9 @@ public:
 	bool is_authenticated() const;
 	
 private:
+	void poll_status_animate_model(const std::string& request_id, AnimateModelCallback callback);
+	void poll_status_generate_animation(const std::string& request_id, GenerateAnimationCallback callback);
+
 	// Private Helper Methods
 	std::string base64_encode(const std::string& input) const;
 	bool read_file(const std::string& file_path, std::vector<char>& data) const;

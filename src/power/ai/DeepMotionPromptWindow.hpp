@@ -48,7 +48,6 @@ private:
 	// Asynchronous Methods
 	void SubmitPromptAsync();
 	void ImportIntoProjectAsync();
-	void PollJobStatusAsync(const std::string& request_id);
 	
 	// Existing Private Methods
 	void SubmitPrompt(); // May be removed if entirely replaced by SubmitPromptAsync
