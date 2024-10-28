@@ -401,6 +401,7 @@ bool HeuristicSkeletonPoser::IsLikelyArm(IBone* bone, const std::unordered_map<I
 std::string HeuristicSkeletonPoser::BoneTypeToString(BoneType type) const {
 	switch (type) {
 		case BoneType::Root: return "Root";
+		case BoneType::RootChain: return "RootChain";
 		case BoneType::Pelvis: return "Pelvis";
 		case BoneType::Hips: return "Hips";
 		case BoneType::Spine: return "Spine";
@@ -417,6 +418,7 @@ std::string HeuristicSkeletonPoser::BoneTypeToString(BoneType type) const {
 		case BoneType::RightUpperLeg: return "RightUpperLeg";
 		case BoneType::RightLowerLeg: return "RightLowerLeg";
 		case BoneType::RightFoot: return "RightFoot";
+		case BoneType::Unclassified: return "Unclassified";
 		default: return "Unknown";
 	}
 }
@@ -437,6 +439,8 @@ void HeuristicSkeletonPoser::ApplyTPose(const std::vector<ClassifiedBone>& class
 		
 		switch (cb.type) {
 			case BoneType::Root:
+				desiredRotation = glm::quat(glm::radians(glm::vec3(-90.0f, 0.0f, 0.0f)));
+				break;
 			case BoneType::RootChain:
 				desiredRotation = glm::quat(glm::vec3(0.0f, 0.0f, 0.0f)); // reset root bone orientation
 				break;
@@ -490,14 +494,20 @@ void HeuristicSkeletonPoser::ApplyTPose(const std::vector<ClassifiedBone>& class
 				
 			case BoneType::LeftUpperLeg:
 			case BoneType::RightUpperLeg:
+				// legs must be left as is
+				continue;
+
 				// Legs should be slightly outward or straight; minimal rotation
-				desiredRotation = glm::quat(glm::vec3(0.0f, 0.0f, 0.0f));
+//				desiredRotation = glm::quat(glm::vec3(0.0f, 0.0f, 0.0f));
 				break;
 				
 			case BoneType::LeftLowerLeg:
 			case BoneType::RightLowerLeg:
+				// legs must be left as is
+				continue;
+
 				// Keep lower legs and feet straight
-				desiredRotation = glm::quat(glm::vec3(0.0f, 0.0f, 0.0f));
+//				desiredRotation = glm::quat(glm::vec3(0.0f, 0.0f, 0.0f));
 				break;
 				
 			case BoneType::LeftFoot:

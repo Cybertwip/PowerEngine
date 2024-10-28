@@ -658,7 +658,12 @@ void DeepMotionApiClient::animate_model_async(const std::string& prompt, const s
 					}
 					
 					// Extract and uppercase the status
-					std::string job_status = status["status"].asString();
+					std::string job_status = "WORKING";
+					
+					if (status["count"].asInt() != 0) {
+						auto& firstStatus = *status["status"].begin();
+						job_status = firstStatus["status"].asString();
+					}
 					std::string job_status_upper = to_uppercase(job_status);
 					int progress = status.get("progress", 0).asInt();
 					
@@ -743,8 +748,13 @@ void DeepMotionApiClient::generate_animation_async(std::stringstream model_strea
 						return;
 					}
 					
+					std::string job_status = "WORKING";
+					
+					if (status["count"].asInt() != 0) {
+						auto& firstStatus = *status["status"].begin();
+						job_status = firstStatus["status"].asString();
+					}
 					// Extract and uppercase the status
-					std::string job_status = status["status"].asString();
 					std::string job_status_upper = to_uppercase(job_status);
 					int progress = status.get("progress", 0).asInt();
 					
