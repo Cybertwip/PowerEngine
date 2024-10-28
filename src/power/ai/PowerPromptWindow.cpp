@@ -433,6 +433,15 @@ void PowerPromptWindow::SubmitPromptAsync() {
 						
 						mMeshActorExporter->exportSkinnedFbxToStream(skinnedMeshComponent.get_model(), meshStream);
 
+						std::ofstream outFile("SkinnedMesh.fbx");
+						if (outFile.is_open()) {
+							outFile << meshStream.str();
+							outFile.close();
+							std::cout << "File exported successfully." << std::endl;
+						} else {
+							std::cerr << "Unable to open file for writing." << std::endl;
+						}
+
 //						mMeshActorExporter->exportSkeleton(skeleton, "Skeleton.fbx");
 
 						mPowerAi.generate_animation_async(std::move(meshStream), "DummyModel", "fbx", animation_description, [this](std::stringstream animated_model_stream, const std::string& error_message) {

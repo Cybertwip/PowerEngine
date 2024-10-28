@@ -273,7 +273,7 @@ Actor& PrimitiveBuilder::build(Actor& actor, const std::string& actorName, Primi
 		
 	// Create Mesh
 	std::unique_ptr<Mesh> mesh = std::make_unique<Mesh>(
-														std::move(meshData),
+														*meshData,
 														meshShader,
 														mMeshBatch,
 														metadataComponent,

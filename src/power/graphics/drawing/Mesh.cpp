@@ -26,10 +26,6 @@
 Mesh::Mesh(MeshData& meshData, ShaderWrapper& shader, IMeshBatch& meshBatch, MetadataComponent& metadataComponent, ColorComponent& colorComponent)
 : mMeshData(meshData), mShader(shader), mMeshBatch(meshBatch), mMetadataComponent(metadataComponent), mColorComponent(colorComponent), mModelMatrix(nanogui::Matrix4f::identity()) {
 	
-	if (!mMeshData) {
-		throw std::invalid_argument("MeshData cannot be null.");
-	}
-	
 	size_t numVertices = mMeshData.get_vertices().size();
 	
 	// Pre-allocate flattened data vectors
