@@ -640,20 +640,20 @@ void DeepMotionApiClient::animate_model_async(const std::string& prompt, const s
 			
 			// Step 2: Poll job status
 			auto poll_status = std::make_shared<std::function<void()>>();
-			*poll_status = [this, request_id, callback, poll_status]() {
+			(*poll_status) = [this, request_id, callback, poll_status]() {
 				check_job_status_async(request_id, [this, request_id, callback, &poll_status](const Json::Value& status, const std::string& error) {
 					if (!error.empty()) {
 						std::cerr << "Failed to check job status: " << error << std::endl;
 						// Retry after delay
 						std::this_thread::sleep_for(std::chrono::seconds(3));
-						poll_status();
+						(*poll_status)();
 						return;
 					}
 					
 					if (status.empty()) {
 						// Retry after delay
 						std::this_thread::sleep_for(std::chrono::seconds(3));
-						poll_status();
+						(*poll_status)();
 						return;
 					}
 					
@@ -688,14 +688,14 @@ void DeepMotionApiClient::animate_model_async(const std::string& prompt, const s
 						// Continue polling after delay
 						std::this_thread::sleep_for(std::chrono::seconds(3));
 						nanogui::async([poll_status](){
-							*poll_status();
+							(*poll_status)();
 						});
 					}
 				});
 			};
 			
 			// Start polling
-			std::thread(*poll_status).detach();
+			std::thread((*poll_status)).detach();
 		});
 	}).detach();
 }
@@ -733,20 +733,20 @@ void DeepMotionApiClient::generate_animation_async(std::stringstream model_strea
 			
 			// Step 3: Poll job status asynchronously
 			auto poll_status = std::make_shared<std::function<void()>>();
-			*poll_status = [this, request_id, callback, poll_status]() {
+			(*poll_status) = [this, request_id, callback, poll_status]() {
 				check_job_status_async(request_id, [this, request_id, callback, &poll_status](const Json::Value& status, const std::string& error) {
 					if (!error.empty()) {
 						std::cerr << "Failed to check job status: " << error << std::endl;
 						// Retry after delay
 						std::this_thread::sleep_for(std::chrono::seconds(3));
-						poll_status();
+						(*poll_status)();
 						return;
 					}
 					
 					if (status.empty()) {
 						// Retry after delay
 						std::this_thread::sleep_for(std::chrono::seconds(3));
-						poll_status();
+						(*poll_status)();
 						return;
 					}
 					
@@ -864,14 +864,14 @@ void DeepMotionApiClient::generate_animation_async(std::stringstream model_strea
 						// Continue polling after delay
 						std::this_thread::sleep_for(std::chrono::seconds(3));
 						nanogui::async([poll_status](){
-							*poll_status();
+							(*poll_status)();
 						});
 					}
 				});
 			};
 			
 			// Start polling in a separate thread
-			std::thread(*poll_status).detach();
+			std::thread((*poll_status)).detach();
 		});
 	});
 }
