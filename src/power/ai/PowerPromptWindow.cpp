@@ -432,7 +432,7 @@ void PowerPromptWindow::SubmitPromptAsync() {
 												
 						std::stringstream meshStream;
 						
-						mMeshActorExporter->exportSkinnedFbxToStream(SkinnedMeshComponent->get_model(), meshStream);
+						mMeshActorExporter->exportSkinnedFbxToStream(skinnedMeshComponent->get_model(), meshStream);
 
 						mMeshActorExporter->exportSkeleton(skeleton, "Skeleton.fbx");
 
