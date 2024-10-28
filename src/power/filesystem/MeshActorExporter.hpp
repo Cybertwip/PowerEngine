@@ -16,6 +16,7 @@
 class MeshData;
 class MeshDeserializer;
 class SerializableMaterialProperties;
+class SkinnedFbx;
 
 class MeshActorExporter {
 public:
@@ -48,6 +49,8 @@ public:
 	bool exportSkeleton(Skeleton& skeleton, const std::string& exportPath);
 	
 	bool exportSkeleton(Skeleton& skeleton, std::ostream& outStream);
+	
+	void exportSkinnedFbxToStream(SkinnedFbx& skinnedFbx, std::ostream& outStream);
 
 private:
 	

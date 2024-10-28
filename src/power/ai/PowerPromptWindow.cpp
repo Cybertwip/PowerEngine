@@ -8,6 +8,7 @@
 #include "animation/ISkeleton.hpp"
 #include "components/PlaybackComponent.hpp"
 #include "components/SkeletonComponent.hpp"
+#include "components/SkinnedMeshComponent.hpp"
 #include "components/TransformComponent.hpp"
 #include "filesystem/ImageUtils.hpp"
 #include "filesystem/MeshActorImporter.hpp"
@@ -422,19 +423,20 @@ void PowerPromptWindow::SubmitPromptAsync() {
 				}
 				
 				if (generate_rig && generate_animation) {
-					if (mActiveActor && mActiveActor->find_component<SkeletonComponent>()) {
-						auto& skeletonComponent = mActiveActor->get_component<SkeletonComponent>();
+					if (mActiveActor && mActiveActor->find_component<DrawableComponent>()) {
+						DrawableComponent& drawableComponent = mActiveActor->get_component<DrawableComponent>();
+						const Drawable& drawableRef = drawableComponent.drawable();
 						
-						auto& skeleton = static_cast<Skeleton&>(skeletonComponent.get_skeleton());
+						// Attempt to cast to SkinnedMeshComponent
+						const SkinnedMeshComponent* skinnedMeshComponent = dynamic_cast<const SkinnedMeshComponent*>(&drawableRef);
+												
+						std::stringstream meshStream;
 						
-						
-						std::stringstream skeletonStream;
-						
-						mMeshActorExporter->exportSkeleton(skeleton, skeletonStream);
+						mMeshActorExporter->exportSkinnedFbxToStream(SkinnedMeshComponent->get_model(), meshStream);
 
 						mMeshActorExporter->exportSkeleton(skeleton, "Skeleton.fbx");
 
-						mPowerAi.generate_animation_async(std::move(skeletonStream), "DummyModel", "fbx", animation_description, [this](std::stringstream animated_model_stream, const std::string& error_message) {
+						mPowerAi.generate_animation_async(std::move(meshStream), "DummyModel", "fbx", animation_description, [this](std::stringstream animated_model_stream, const std::string& error_message) {
 							
 							if (!error_message.empty()) {
 								std::cerr << "Failed to generate or download animation: " << error_message << std::endl;

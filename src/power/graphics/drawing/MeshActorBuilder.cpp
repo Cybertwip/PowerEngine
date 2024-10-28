@@ -208,7 +208,7 @@ Actor& MeshActorBuilder::build_skinned(Actor& actor, AnimationTimeProvider& time
 		playbackComponent.setPlaybackData(playbackData);
 
 		
-		auto& skeletonComponent = actor.add_component<SkeletonComponent>(std::move(model->GetSkeleton()));
+		auto& skeletonComponent = actor.add_component<SkeletonComponent>((*model->GetSkeleton()));
 
 		// Add SkinnedAnimationComponent
 		auto& skinnedComponent = actor.add_component<SkinnedAnimationComponent>(playbackComponent, skeletonComponent, timeProvider);

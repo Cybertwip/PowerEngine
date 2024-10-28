@@ -19,6 +19,10 @@ public:
 	const std::vector<std::unique_ptr<SkinnedMesh>>& get_skinned_mesh_data() const {
 		return mSkinnedMeshes;
 	}
+	
+	const SkinnedFbx& get_model() {
+		return *mModel;
+	}
     
 private:
     std::vector<std::unique_ptr<SkinnedMesh>> mSkinnedMeshes;

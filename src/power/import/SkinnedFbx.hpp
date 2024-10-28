@@ -28,7 +28,7 @@ public:
 	SkinnedFbx() = default;
 	~SkinnedFbx() = default;
 	
-	std::unique_ptr<Skeleton>& GetSkeleton() {
+	const std::unique_ptr<Skeleton>& GetSkeleton() {
 		return mSkeleton;
 	}
 	

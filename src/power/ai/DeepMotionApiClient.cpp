@@ -669,15 +669,30 @@ void DeepMotionApiClient::poll_status_animate_model(const std::string& request_i
 			return;
 		}
 		
-		// Extract and uppercase the status
-		std::string job_status = "WORKING";
+		std::string job_status_upper;
+		std::string job_status = job_status_upper = "WORKING";
 		
 		if (status["count"].asInt() != 0) {
 			auto& firstStatus = *status["status"].begin();
 			job_status = firstStatus["status"].asString();
+			
+			
+			// Extract and uppercase the status
+			job_status_upper = to_uppercase(job_status);
+			
+			float total = firstStatus["details"]["total"].asFloat();
+			float current = firstStatus["details"]["step"].asFloat();
+			
+			if (current > total) {
+				current = total;
+			}
+			
+			int progress = (current * 100.0f) / total;
+			
+			std::cout << "Job Status: " << job_status_upper << " (" << progress << "%)" << std::endl;
+			
 		}
-		std::string job_status_upper = to_uppercase(job_status);
-		
+
 		float total = status["details"]["total"].asFloat();
 		float current = status["details"]["step"].asFloat();
 		if (current > total) {
@@ -768,26 +783,29 @@ void DeepMotionApiClient::poll_status_generate_animation(const std::string& requ
 			});
 			return;
 		}
-		
-		std::string job_status = "WORKING";
+		std::string job_status_upper;
+		std::string job_status = job_status_upper = "WORKING";
 		
 		if (status["count"].asInt() != 0) {
 			auto& firstStatus = *status["status"].begin();
 			job_status = firstStatus["status"].asString();
-		}
-		// Extract and uppercase the status
-		std::string job_status_upper = to_uppercase(job_status);
-		
-		float total = status["details"]["total"].asFloat();
-		float current = status["details"]["step"].asFloat();
-		
-		if (current > total) {
-			current = total;
-		}
-		
-		int progress = (current * 100.0f) / total;
+			
+			
+			// Extract and uppercase the status
+			job_status_upper = to_uppercase(job_status);
 
-		std::cout << "Job Status: " << job_status_upper << " (" << progress << "%)" << std::endl;
+			float total = firstStatus["details"]["total"].asFloat();
+			float current = firstStatus["details"]["step"].asFloat();
+			
+			if (current > total) {
+				current = total;
+			}
+			
+			int progress = (current * 100.0f) / total;
+			
+			std::cout << "Job Status: " << job_status_upper << " (" << progress << "%)" << std::endl;
+
+		}
 		
 		if (job_status_upper == "SUCCESS") {
 			// Step 4: Download job results asynchronously

@@ -2,6 +2,9 @@
 #include "MeshDeserializer.hpp"
 #include "VectorConversion.hpp"
 
+#include "import/SkinnedFbx.hpp"
+
+
 #include <fbxsdk.h>
 
 #include <glm/glm.hpp>
@@ -192,7 +195,7 @@ bool MeshActorExporter::setupScene(CompressedSerialization::Deserializer& deseri
 					int boneID = boneIDs[j];
 					float weight = weights[j];
 					
-					if (boneID == -1) {
+					if (boneID < 0) {
 						continue;
 					}
 					
@@ -762,4 +765,330 @@ bool MeshActorExporter::exportSkeleton(Skeleton& skeleton, std::ostream& outStre
 	
 	std::cout << "Successfully exported skeleton to output stream." << std::endl;
 	return true;
+}
+
+void MeshActorExporter::exportSkinnedFbxToStream(SkinnedFbx& skinnedFbx, std::ostream& outStream) {
+	// Initialize the FBX Manager and Scene
+	FbxManager* fbxManager = FbxManager::Create();
+	if (!fbxManager) {
+		std::cerr << "Error: Unable to create FBX Manager!" << std::endl;
+		return;
+	}
+	
+	FbxIOSettings* ios = FbxIOSettings::Create(fbxManager, IOSROOT);
+	fbxManager->SetIOSettings(ios);
+	
+	FbxScene* scene = FbxScene::Create(fbxManager, "MyScene");
+	if (!scene) {
+		std::cerr << "Error: Unable to create FBX scene!" << std::endl;
+		fbxManager->Destroy();
+		return;
+	}
+	
+	// Create Materials
+	std::map<int, FbxSurfacePhong*> materialMap;
+	const auto& materialProperties = skinnedFbx.GetMaterialProperties();
+	
+	// Flatten the material properties
+	std::vector<std::shared_ptr<SerializableMaterialProperties>> materials;
+	for (const auto& matList : materialProperties) {
+		for (const auto& matPtr : matList) {
+			materials.push_back(matPtr);
+		}
+	}
+	
+	// Create materials
+	for (size_t i = 0; i < materials.size(); ++i) {
+		const auto& matProps = materials[i];
+		FbxSurfacePhong* material = FbxSurfacePhong::Create(scene, ("Material_" + std::to_string(i)).c_str());
+		
+		// Set material properties
+		material->Ambient.Set(FbxDouble3(matProps->mAmbient.r, matProps->mAmbient.g, matProps->mAmbient.b));
+		material->Diffuse.Set(FbxDouble3(matProps->mDiffuse.r, matProps->mDiffuse.g, matProps->mDiffuse.b));
+		material->Specular.Set(FbxDouble3(matProps->mSpecular.r, matProps->mSpecular.g, matProps->mSpecular.b));
+		material->Shininess.Set(matProps->mShininess);
+		material->TransparencyFactor.Set(1.0 - matProps->mOpacity);
+		
+		// Handle textures if any (omitted for simplicity)
+		materialMap[static_cast<int>(i)] = material;
+	}
+	
+	// Create Meshes and add to the scene
+	FbxNode* rootNode = scene->GetRootNode();
+	auto& skinnedMeshes = skinnedFbx.GetSkinnedMeshData();
+	std::vector<FbxNode*> meshNodes;
+	
+	for (size_t i = 0; i < skinnedMeshes.size(); ++i) {
+		auto& meshData = *skinnedMeshes[i];
+		
+		// Create FbxMesh
+		FbxMesh* fbxMesh = FbxMesh::Create(scene, ("Mesh_" + std::to_string(i)).c_str());
+		FbxNode* meshNode = FbxNode::Create(scene, ("Mesh_Node_" + std::to_string(i)).c_str());
+		meshNode->SetNodeAttribute(fbxMesh);
+		rootNode->AddChild(meshNode);
+		
+		// Set control points (vertices)
+		int vertexCount = static_cast<int>(meshData.get_vertices().size());
+		fbxMesh->InitControlPoints(vertexCount);
+		
+		for (int vi = 0; vi < vertexCount; ++vi) {
+			const auto& vertexPtr = meshData.get_vertices()[vi];
+			const auto& vertex = *vertexPtr;
+			const auto& position = vertex.get_position();
+			fbxMesh->SetControlPointAt(FbxVector4(position.x, position.y, position.z), vi);
+		}
+		
+		// Create layer elements for normals, UVs, colors, etc.
+		
+		// Normals
+		FbxLayerElementNormal* layerElementNormal = FbxLayerElementNormal::Create(fbxMesh, "");
+		layerElementNormal->SetMappingMode(FbxLayerElement::eByControlPoint);
+		layerElementNormal->SetReferenceMode(FbxLayerElement::eDirect);
+		for (auto& vertexPtr : meshData.get_vertices()) {
+			const auto& vertex = *vertexPtr;
+			const auto& normal = vertex.get_normal();
+			layerElementNormal->GetDirectArray().Add(FbxVector4(normal.x, normal.y, normal.z));
+		}
+		fbxMesh->GetLayer(0)->SetNormals(layerElementNormal);
+		
+		// UVs
+		FbxLayerElementUV* layerElementUV = FbxLayerElementUV::Create(fbxMesh, "UVChannel_1");
+		layerElementUV->SetMappingMode(FbxLayerElement::eByControlPoint);
+		layerElementUV->SetReferenceMode(FbxLayerElement::eDirect);
+		for (const auto& vertexPtr : meshData.get_vertices()) {
+			const auto& vertex = *vertexPtr;
+			const auto& uv = vertex.get_tex_coords1();
+			layerElementUV->GetDirectArray().Add(FbxVector2(uv.x, uv.y));
+		}
+		fbxMesh->GetLayer(0)->SetUVs(layerElementUV);
+		
+		// Colors
+		FbxLayerElementVertexColor* layerElementColor = FbxLayerElementVertexColor::Create(fbxMesh, "");
+		layerElementColor->SetMappingMode(FbxLayerElement::eByControlPoint);
+		layerElementColor->SetReferenceMode(FbxLayerElement::eDirect);
+		for (const auto& vertexPtr : meshData.get_vertices()) {
+			const auto& vertex = *vertexPtr;
+			const auto& color = vertex.get_color();
+			layerElementColor->GetDirectArray().Add(FbxColor(color.r, color.g, color.b, color.a));
+		}
+		fbxMesh->GetLayer(0)->SetVertexColors(layerElementColor);
+		
+		// Material mapping
+		FbxLayerElementMaterial* layerElementMaterial = FbxLayerElementMaterial::Create(fbxMesh, "");
+		layerElementMaterial->SetMappingMode(FbxLayerElement::eByPolygon);
+		layerElementMaterial->SetReferenceMode(FbxLayerElement::eIndexToDirect);
+		fbxMesh->GetLayer(0)->SetMaterials(layerElementMaterial);
+		
+		// Indices (polygons)
+		const auto& indices = meshData.get_indices();
+		int polygonCount = static_cast<int>(indices.size() / 3);
+		for (int pi = 0; pi < polygonCount; ++pi) {
+			fbxMesh->BeginPolygon();
+			
+			// Assign material to the polygon
+			int materialIndex = meshData.get_vertices()[indices[pi * 3]]->get_material_id();
+			layerElementMaterial->GetIndexArray().Add(materialIndex);
+			
+			fbxMesh->AddPolygon(indices[pi * 3]);
+			fbxMesh->AddPolygon(indices[pi * 3 + 1]);
+			fbxMesh->AddPolygon(indices[pi * 3 + 2]);
+			
+			fbxMesh->EndPolygon();
+		}
+		
+		// Attach materials to the mesh node
+		for (const auto& [index, material] : materialMap) {
+			meshNode->AddMaterial(material);
+		}
+		
+		// Store the mesh node
+		meshNodes.push_back(meshNode);
+	}
+	
+	// Build skeleton from skinnedFbx.GetSkeleton()
+	const auto& skeletonPtr = skinnedFbx.GetSkeleton();
+	if (skeletonPtr) {
+		auto& skeleton = *skeletonPtr;
+		
+		// Map bone index to FbxNode
+		std::map<int, FbxNode*> boneNodes;
+		
+		// Create FbxNodes for each bone
+		for (int boneIndex = 0; boneIndex < skeleton.num_bones(); ++boneIndex) {
+			auto& bone = skeleton.get_bone(boneIndex);
+			const std::string& boneName = bone.get_name();
+			int parentIndex = bone.get_parent_index();
+			
+			// Create FbxSkeleton
+			FbxSkeleton* fbxSkeleton = FbxSkeleton::Create(scene, boneName.c_str());
+			fbxSkeleton->SetSkeletonType(FbxSkeleton::eLimbNode);
+			
+			FbxNode* boneNode = FbxNode::Create(scene, boneName.c_str());
+			boneNode->SetNodeAttribute(fbxSkeleton);
+			
+			// Set bone's local transformations
+			glm::mat4 bindPoseMatrix = skeleton.get_bone_bindpose(boneIndex);
+			
+			glm::vec3 translation, scale, skew;
+			glm::quat rotation;
+			glm::vec4 perspective;
+			glm::decompose(bindPoseMatrix, scale, rotation, translation, skew, perspective);
+			
+			boneNode->LclTranslation.Set(FbxDouble3(translation.x, translation.y, translation.z));
+			glm::vec3 eulerRotation = glm::degrees(glm::eulerAngles(rotation));
+			boneNode->LclRotation.Set(FbxDouble3(eulerRotation.x, eulerRotation.y, eulerRotation.z));
+			boneNode->LclScaling.Set(FbxDouble3(scale.x, scale.y, scale.z));
+			
+			// Store bone node
+			boneNodes[boneIndex] = boneNode;
+		}
+		
+		// Establish parent-child relationships
+		for (int boneIndex = 0; boneIndex < skeleton.num_bones(); ++boneIndex) {
+			int parentIndex = skeleton.get_bone(boneIndex).get_parent_index();
+			FbxNode* boneNode = boneNodes[boneIndex];
+			if (parentIndex == -1) {
+				// Root bone
+				rootNode->AddChild(boneNode);
+			} else {
+				FbxNode* parentNode = boneNodes[parentIndex];
+				parentNode->AddChild(boneNode);
+			}
+		}
+		
+		// Associate the skeleton with the meshes via skinning
+		for (size_t i = 0; i < skinnedMeshes.size(); ++i) {
+			auto& meshData = *skinnedMeshes[i];
+			FbxNode* meshNode = meshNodes[i];
+			FbxMesh* fbxMesh = meshNode->GetMesh();
+			if (!fbxMesh) {
+				std::cerr << "Error: Mesh node does not have a mesh attribute." << std::endl;
+				continue;
+			}
+			
+			// Create a Skin deformer and add it to the mesh
+			FbxSkin* skin = FbxSkin::Create(scene, ("Skin_" + std::string(meshNode->GetName())).c_str());
+			fbxMesh->AddDeformer(skin);
+			
+			// Map to store bone influences per bone
+			std::map<int, std::vector<std::pair<int, double>>> boneWeights;
+			
+			auto& vertices = meshData.get_vertices();
+			
+			// Collect bone weights from vertices
+			for (int vi = 0; vi < static_cast<int>(vertices.size()); ++vi) {
+				const auto& vertex = static_cast<SkinnedMeshVertex&>(*vertices[vi]);
+				
+				const auto& boneIDs = vertex.get_bone_ids(); // std::vector<int>
+				const auto& weights = vertex.get_weights();  // std::vector<float>
+				
+				for (size_t j = 0; j < boneIDs.size(); ++j) {
+					int boneID = boneIDs[j];
+					float weight = weights[j];
+					if (boneID >= 0 && weight > 0.0f) {
+						boneWeights[boneID].emplace_back(vi, weight);
+					}
+				}
+			}
+			
+			// Create clusters for each bone and associate them with the skin deformer
+			for (const auto& [boneID, weightData] : boneWeights) {
+				FbxCluster* cluster = FbxCluster::Create(scene, ("Cluster_" + std::to_string(boneID)).c_str());
+				skin->AddCluster(cluster);
+				
+				// Set the link node to the corresponding bone node
+				FbxNode* boneNode = boneNodes[boneID];
+				cluster->SetLink(boneNode);
+				
+				// Set the link mode
+				cluster->SetLinkMode(FbxCluster::eNormalize);
+				
+				// Add control point indices and weights
+				for (const auto& [vertexIndex, weight] : weightData) {
+					cluster->AddControlPointIndex(vertexIndex, static_cast<double>(weight));
+				}
+				
+				// Set the transform and transform link matrices
+				FbxAMatrix meshTransformMatrix = meshNode->EvaluateGlobalTransform();
+				cluster->SetTransformMatrix(meshTransformMatrix);
+				
+				FbxAMatrix boneTransformMatrix = boneNode->EvaluateGlobalTransform();
+				cluster->SetTransformLinkMatrix(boneTransformMatrix);
+			}
+		}
+	}
+	
+	// Export the scene to the output stream
+	FbxExporter* exporter = FbxExporter::Create(fbxManager, "");
+	
+	// Implement a custom stream class that uses the provided std::ostream
+	class OStreamWrapper : public FbxStream {
+	public:
+		OStreamWrapper(std::ostream& stream) : mStream(stream) {}
+		virtual ~OStreamWrapper() {}
+		
+		virtual EState GetState() override { return mStream.good() ? eOpen : eClosed; }
+		virtual bool Open(void* /*pStreamData*/) override {
+			return true;
+		}
+		virtual bool Close() override { return true; }
+		virtual bool Flush() override { mStream.flush(); return true; }
+		virtual size_t Write(const void* pData, FbxUInt64 pSize) override {
+			mStream.write(static_cast<const char*>(pData), pSize);
+			return pSize;
+		}
+		virtual size_t Read(void* /*pData*/, FbxUInt64 /*pSize*/) const override { return 0; }
+		virtual int GetReaderID() const override { return -1; }
+		virtual int GetWriterID() const override { return 0; }
+		virtual void Seek(const FbxInt64& pOffset, const FbxFile::ESeekPos& pSeekPos) override {
+			std::ios_base::seekdir dir;
+			switch (pSeekPos) {
+				case FbxFile::eBegin:
+					dir = std::ios_base::beg;
+					break;
+				case FbxFile::eCurrent:
+					dir = std::ios_base::cur;
+					break;
+				case FbxFile::eEnd:
+					dir = std::ios_base::end;
+					break;
+				default:
+					dir = std::ios_base::beg;
+					break;
+			}
+			mStream.seekp(static_cast<std::streamoff>(pOffset), dir);
+		}
+		virtual FbxInt64 GetPosition() const override {
+			return static_cast<FbxInt64>(mStream.tellp());
+		}
+		virtual void SetPosition(FbxInt64 pPosition) override {
+			mStream.seekp(static_cast<std::streamoff>(pPosition), std::ios_base::beg);
+		}
+		virtual int GetError() const override { return 0; }
+		virtual void ClearError() override {}
+	private:
+		std::ostream& mStream;
+	};
+	
+	OStreamWrapper customStream(outStream);
+	
+	// Initialize the exporter with the custom stream
+	if (!exporter->Initialize(&customStream, nullptr, -1, fbxManager->GetIOSettings())) {
+		std::cerr << "Error: Failed to initialize FBX exporter with custom stream." << std::endl;
+		exporter->Destroy();
+		fbxManager->Destroy();
+		return;
+	}
+	
+	if (!exporter->Export(scene)) {
+		std::cerr << "Error: Failed to export FBX scene." << std::endl;
+		exporter->Destroy();
+		fbxManager->Destroy();
+		return;
+	}
+	
+	exporter->Destroy();
+	fbxManager->Destroy();
+	
+	std::cout << "Successfully exported SkinnedFbx to output stream." << std::endl;
 }
