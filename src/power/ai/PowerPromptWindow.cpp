@@ -425,14 +425,14 @@ void PowerPromptWindow::SubmitPromptAsync() {
 				if (generate_rig && generate_animation) {
 					if (mActiveActor && mActiveActor->find_component<DrawableComponent>()) {
 						DrawableComponent& drawableComponent = mActiveActor->get_component<DrawableComponent>();
-						const Drawable& drawableRef = drawableComponent.drawable();
+						auto& drawableRef = drawableComponent.drawable();
 						
 						// Attempt to cast to SkinnedMeshComponent
-						SkinnedMeshComponent* skinnedMeshComponent = dynamic_cast<SkinnedMeshComponent*>(&drawableRef);
+						auto& skinnedMeshComponent = static_cast<SkinnedMeshComponent&>(&drawableRef);
 												
 						std::stringstream meshStream;
 						
-						mMeshActorExporter->exportSkinnedFbxToStream(skinnedMeshComponent->get_model(), meshStream);
+						mMeshActorExporter->exportSkinnedFbxToStream(skinnedMeshComponent.get_model(), meshStream);
 
 //						mMeshActorExporter->exportSkeleton(skeleton, "Skeleton.fbx");
 
