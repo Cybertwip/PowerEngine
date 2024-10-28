@@ -428,7 +428,7 @@ void PowerPromptWindow::SubmitPromptAsync() {
 						const Drawable& drawableRef = drawableComponent.drawable();
 						
 						// Attempt to cast to SkinnedMeshComponent
-						const SkinnedMeshComponent* skinnedMeshComponent = dynamic_cast<const SkinnedMeshComponent*>(&drawableRef);
+						SkinnedMeshComponent* skinnedMeshComponent = dynamic_cast<SkinnedMeshComponent*>(&drawableRef);
 												
 						std::stringstream meshStream;
 						
