@@ -301,7 +301,7 @@ void PowerPromptWindow::SubmitPromptAsync() {
 		}
 		
 		if (generate_model && generate_rig && !pose_type.empty()) {
-			prompt_description += ", " + pose_type + ":1:1:1:1:1";
+			prompt_description += ", " + pose_type + ":1:1:1:1:2";
 		}
 
 		// For debugging purposes, you can print the extracted values

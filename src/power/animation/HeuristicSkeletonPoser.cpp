@@ -437,8 +437,9 @@ void HeuristicSkeletonPoser::ApplyTPose(const std::vector<ClassifiedBone>& class
 		
 		switch (cb.type) {
 			case BoneType::Root:
-				continue;
-				break; // don't modify root
+			case BoneType::RootChain:
+				desiredRotation = glm::quat(glm::vec3(0.0f, 0.0f, 0.0f)); // reset root bone orientation
+				break;
 				
 			case BoneType::Spine:
 			case BoneType::Head:
