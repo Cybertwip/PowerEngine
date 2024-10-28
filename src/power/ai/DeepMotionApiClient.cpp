@@ -695,7 +695,7 @@ void DeepMotionApiClient::animate_model_async(const std::string& prompt, const s
 			};
 			
 			// Start polling
-			std::thread(poll_status).detach();
+			std::thread(*poll_status).detach();
 		});
 	}).detach();
 }
@@ -871,7 +871,7 @@ void DeepMotionApiClient::generate_animation_async(std::stringstream model_strea
 			};
 			
 			// Start polling in a separate thread
-			std::thread(poll_status).detach();
+			std::thread(*poll_status).detach();
 		});
 	});
 }
