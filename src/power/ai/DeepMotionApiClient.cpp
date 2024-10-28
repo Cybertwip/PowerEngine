@@ -675,7 +675,14 @@ void DeepMotionApiClient::poll_status_animate_model(const std::string& request_i
 			job_status = firstStatus["status"].asString();
 		}
 		std::string job_status_upper = to_uppercase(job_status);
-		int progress = status.get("progress", 0).asInt();
+		
+		float total = status["details"]["total"].asFloat();
+		float current = status["details"]["step"].asFloat();
+		if (current > total) {
+			current = total;
+		}
+		
+		int progress = (current * 100.0f) / total;
 		
 		std::cout << "Job Status: " << job_status_upper << " (" << progress << "%)" << std::endl;
 		
@@ -791,7 +798,7 @@ void DeepMotionApiClient::poll_status_generate_animation(const std::string& requ
 
 					// Iterate over links to find FBX URL
 					for (const auto& url : urls) {
-						if (url.isMember("urls")) {
+						if (url.isMember("files")) {
 							for (const auto& file : url["files"]) {
 								if (file.isMember("fbx")) {
 									std::string download_url = file["fbx"].asString();
