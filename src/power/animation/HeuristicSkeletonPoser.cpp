@@ -447,40 +447,45 @@ void HeuristicSkeletonPoser::ApplyTPose(const std::vector<ClassifiedBone>& class
 				
 			case BoneType::Spine:
 			case BoneType::Head:
+				continue;
 				// Keep these bones upright; minimal rotation
-				desiredRotation = glm::quat(glm::vec3(0.0f, 0.0f, 0.0f));
+//				desiredRotation = glm::quat(glm::vec3(0.0f, 0.0f, 0.0f));
 				break;
 				
 			case BoneType::Hips:
+				continue;
 //				desiredRotation = glm::quat(glm::radians(glm::vec3(90.0f, 0.0f, 180.0f)));
 				break;
 				
 			case BoneType::Pelvis:
+				continue;
 //				desiredRotation = glm::quat(glm::radians(glm::vec3(180.0f, 0.0f, 0.0f)));
 				break;
 			case BoneType::LeftUpperArm: {
+				continue;
 				// Rotate left upper arm outward (-90 degrees around Z-axis)
-				glm::quat previousRotation = bone->get_rotation();
-				
-				// Extract the existing rotation around the Y-axis
-				glm::vec3 eulerAngles = glm::eulerAngles(previousRotation);
-				
-				eulerAngles.z = glm::radians(-90.0f);
-				
-				desiredRotation = glm::quat(eulerAngles);
+//				glm::quat previousRotation = bone->get_rotation();
+//				
+//				// Extract the existing rotation around the Y-axis
+//				glm::vec3 eulerAngles = glm::eulerAngles(previousRotation);
+//				
+//				eulerAngles.z = glm::radians(-90.0f);
+//				
+//				desiredRotation = glm::quat(eulerAngles);
 				
 			} break;
 				
 			case BoneType::RightUpperArm: {
+				continue;
 				// Rotate right upper arm outward (90 degrees around Z-axis)
-				glm::quat previousRotation = bone->get_rotation();
-				
-				// Extract the existing rotation around the Y-axis
-				glm::vec3 eulerAngles = glm::eulerAngles(previousRotation);
-				
-				eulerAngles.z = glm::radians(90.0f);
-				
-				desiredRotation = glm::quat(eulerAngles);
+//				glm::quat previousRotation = bone->get_rotation();
+//				
+//				// Extract the existing rotation around the Y-axis
+//				glm::vec3 eulerAngles = glm::eulerAngles(previousRotation);
+//				
+//				eulerAngles.z = glm::radians(90.0f);
+//				
+//				desiredRotation = glm::quat(eulerAngles);
 			}
 			break;
 				
@@ -488,8 +493,9 @@ void HeuristicSkeletonPoser::ApplyTPose(const std::vector<ClassifiedBone>& class
 			case BoneType::RightLowerArm:
 			case BoneType::LeftHand:
 			case BoneType::RightHand:
+				continue;
 				// Keep lower arms and hands straight
-				desiredRotation = glm::quat(glm::vec3(0.0f, 0.0f, 0.0f));
+//				desiredRotation = glm::quat(glm::vec3(0.0f, 0.0f, 0.0f));
 				break;
 				
 			case BoneType::LeftUpperLeg:

@@ -1,5 +1,7 @@
 #include "DeepMotionApiClient.hpp"
 
+#include "filesystem/CompressedSerialization.hpp"
+
 #include <cctype>
 #include <algorithm>
 #include <stdexcept>
@@ -800,7 +802,7 @@ void DeepMotionApiClient::poll_status_generate_animation(const std::string& requ
 				
 				// Assuming 'results' contains the animation data
 				if (results.isMember("links")) {
-					std::stringstream fbx_stream;
+//					std::stringstream fbx_stream;
 					
 					Json::Value urls = results["links"][0]["urls"]; // variants not implemented yet
 
@@ -850,11 +852,16 @@ void DeepMotionApiClient::poll_status_generate_animation(const std::string& requ
 									auto res_download = download_client.Get(path.c_str());
 									if (res_download && res_download->status == 200) {
 										// Assuming the response body contains FBX data
-										std::string fbx_data = res_download->body;
-										fbx_stream << fbx_data;
+										
+										std::vector<unsigned char> zip_data(res_download->body.begin(), res_download->body.end());
+										
+										// Decompress ZIP data (use your existing decompress_zip_data function)
+										std::vector<std::stringstream> animation_files = Zip::decompress(zip_data);
+
+//										fbx_stream = animatio_fles[0];
 										
 										if (callback) {
-											callback(std::move(fbx_stream), "");
+											callback(std::move(animation_files[0]), "");
 										}
 										return;
 									} else {
