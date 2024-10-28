@@ -452,11 +452,11 @@ void HeuristicSkeletonPoser::ApplyTPose(const std::vector<ClassifiedBone>& class
 				break;
 				
 			case BoneType::Hips:
-				desiredRotation = glm::quat(glm::radians(glm::vec3(90.0f, 0.0f, 180.0f)));
+//				desiredRotation = glm::quat(glm::radians(glm::vec3(90.0f, 0.0f, 180.0f)));
 				break;
 				
 			case BoneType::Pelvis:
-				desiredRotation = glm::quat(glm::radians(glm::vec3(180.0f, 0.0f, 0.0f)));
+//				desiredRotation = glm::quat(glm::radians(glm::vec3(180.0f, 0.0f, 0.0f)));
 				break;
 			case BoneType::LeftUpperArm: {
 				// Rotate left upper arm outward (-90 degrees around Z-axis)
