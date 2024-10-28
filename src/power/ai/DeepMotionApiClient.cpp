@@ -639,8 +639,8 @@ void DeepMotionApiClient::animate_model_async(const std::string& prompt, const s
 			std::cout << "Text to motion request submitted. Request ID: " << request_id << std::endl;
 			
 			// Step 2: Poll job status
-			std::function<void()> poll_status;
-			poll_status = [this, request_id, callback, &poll_status]() {
+			auto poll_status = std::make_shared<std::function<void()>>();
+			*poll_status = [this, request_id, callback, poll_status]() {
 				check_job_status_async(request_id, [this, request_id, callback, &poll_status](const Json::Value& status, const std::string& error) {
 					if (!error.empty()) {
 						std::cerr << "Failed to check job status: " << error << std::endl;
@@ -687,7 +687,9 @@ void DeepMotionApiClient::animate_model_async(const std::string& prompt, const s
 					} else {
 						// Continue polling after delay
 						std::this_thread::sleep_for(std::chrono::seconds(3));
-						poll_status();
+						nanogui::async([poll_status](){
+							*poll_status();
+						});
 					}
 				});
 			};
@@ -730,8 +732,8 @@ void DeepMotionApiClient::generate_animation_async(std::stringstream model_strea
 			std::cout << "Text to motion request submitted. Request ID: " << request_id << std::endl;
 			
 			// Step 3: Poll job status asynchronously
-			std::function<void()> poll_status;
-			poll_status = [this, request_id, callback, &poll_status]() {
+			auto poll_status = std::make_shared<std::function<void()>>();
+			*poll_status = [this, request_id, callback, poll_status]() {
 				check_job_status_async(request_id, [this, request_id, callback, &poll_status](const Json::Value& status, const std::string& error) {
 					if (!error.empty()) {
 						std::cerr << "Failed to check job status: " << error << std::endl;
@@ -861,7 +863,9 @@ void DeepMotionApiClient::generate_animation_async(std::stringstream model_strea
 					} else {
 						// Continue polling after delay
 						std::this_thread::sleep_for(std::chrono::seconds(3));
-						poll_status();
+						nanogui::async([poll_status](){
+							*poll_status();
+						});
 					}
 				});
 			};
