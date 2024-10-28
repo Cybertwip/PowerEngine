@@ -14,16 +14,29 @@
 #include "ai/OpenAiApiClient.hpp"
 #include "ai/PowerAi.hpp"
 #include "ai/TripoAiApiClient.hpp"
-#include "components/CameraComponent.hpp"
-#include "components/TransformComponent.hpp"
-#include "gizmo/GizmoManager.hpp"
 
+#include "animation/HeuristicSkeletonPoser.hpp"  // debug
+#include "animation/Skeleton.hpp"  // debug
+
+#include "components/CameraComponent.hpp"
+
+#include "components/DrawableComponent.hpp"  // debug
+
+#include "components/TransformComponent.hpp"
+
+#include "components/SkinnedMeshComponent.hpp"  // debug
+#include "components/SkeletonComponent.hpp"  // debug
+
+#include "gizmo/GizmoManager.hpp"
 #include "graphics/drawing/BatchUnit.hpp"
 #include "graphics/drawing/Mesh.hpp"
 #include "graphics/drawing/MeshBatch.hpp"
 #include "graphics/drawing/MeshActorBuilder.hpp"
 #include "graphics/drawing/SkinnedMesh.hpp"
 #include "graphics/drawing/SkinnedMeshBatch.hpp"
+
+#include "filesystem/MeshActorExporter.hpp" // debug
+
 #include "import/Fbx.hpp"
 #include "simulation/Cartridge.hpp"
 #include "simulation/CartridgeActorLoader.hpp"
@@ -161,11 +174,48 @@ void Application::initialize() {
 }
 
 bool Application::keyboard_event(int key, int scancode, int action, int modifiers) {
-    if (Screen::keyboard_event(key, scancode, action, modifiers)) return true;
+	Screen::keyboard_event(key, scancode, action, modifiers);
+	
 	if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS) {
 		nanogui::async([this](){
 			set_visible(false);
 		});
+		return true;
+	}
+	if (key == GLFW_KEY_ENTER && action == GLFW_PRESS) {
+//		mMeshActorLoader->cleanup();
+		auto& skinnedActor = mMeshActorLoader->create_actor("test.fbx", mGlobalAnimationTimeProvider, *mMeshShader, *mSkinnedShader);
+		
+		auto& skeletonComponent = skinnedActor.get_component<SkeletonComponent>();
+		
+		auto& skeleton = static_cast<Skeleton&>(skeletonComponent.get_skeleton());
+		
+		//HeuristicSkeletonPoser poser(skeleton);
+		
+		//poser.apply();
+
+		DrawableComponent& drawableComponent = skinnedActor.get_component<DrawableComponent>();
+		
+		auto& drawableRef = drawableComponent.drawable();
+		
+		auto& skinnedMeshComponent = static_cast<SkinnedMeshComponent&>(drawableRef);
+
+		MeshActorExporter exporter;
+		
+		std::stringstream meshStream;
+		
+		exporter.exportSkinnedFbxToStream(skinnedMeshComponent.get_model(), meshStream);
+		
+		std::ofstream outFile("SkinnedMesh.fbx");
+		if (outFile.is_open()) {
+			outFile << meshStream.str();
+			outFile.close();
+			std::cout << "File exported successfully." << std::endl;
+		} else {
+			std::cerr << "Unable to open file for writing." << std::endl;
+		}
+
+
 		return true;
 	}
 	if (key == GLFW_KEY_DELETE && action == GLFW_PRESS) {

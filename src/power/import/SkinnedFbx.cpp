@@ -231,27 +231,11 @@ void SkinnedFbx::ProcessBones(FbxMesh* mesh) {
 		FbxNode* parentBone = boneInfo.node->GetParent();
 		if (parentBone) {
 			std::string parentBoneName = parentBone->GetName();
-			int parentId = GetBoneIdByName(parentBoneName);
-			
-			if (parentId != -1) {
-				parentIndex = parentId;
-			} else {
-				// Parent bone may not have been processed yet
-				// Process the parent bone
-				ProcessBoneAndParents(parentBone, boneOffsetMatrices);
-				parentId = GetBoneIdByName(parentBoneName);
-				if (parentId != -1) {
-					parentIndex = parentId;
-				} else {
-					std::cerr << "Warning: Parent bone not found for bone: " << boneName << std::endl;
-				}
-			}
-			
-			
-			// Add bone to skeleton with the correct offset and bind pose matrices
-			skeleton.add_bone(boneName, boneInfo.offset, boneInfo.bindpose, parentIndex);
-
+			parentIndex = GetBoneIdByName(parentBoneName);
 		}
+		
+		// Add bone to skeleton with the correct offset and bind pose matrices
+		skeleton.add_bone(boneName, boneInfo.offset, boneInfo.bindpose, parentIndex);
 	}
 	
 	// Assign the skeleton if it has bones
@@ -271,7 +255,7 @@ std::string SkinnedFbx::GetBoneNameById(int boneId) const {
 int SkinnedFbx::GetBoneIdByName(const std::string& boneName) const {
 	for (const auto& [name, id] : mBoneMapping) {
 		if (name == boneName) {
-			return id - 1;
+			return id;
 		}
 	}
 	return -1;

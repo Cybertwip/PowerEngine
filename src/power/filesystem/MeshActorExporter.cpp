@@ -785,6 +785,18 @@ void MeshActorExporter::exportSkinnedFbxToStream(SkinnedFbx& skinnedFbx, std::os
 		return;
 	}
 	
+	// Set the scene's unit and axis system (optional, for clarity)
+	scene->GetGlobalSettings().SetSystemUnit(FbxSystemUnit::m);
+	scene->GetGlobalSettings().SetAxisSystem(FbxAxisSystem::MayaYUp);
+	
+	// Define the source and target axis systems
+	FbxAxisSystem sourceAxisSystem(FbxAxisSystem::eZAxis, FbxAxisSystem::eParityOdd, FbxAxisSystem::eRightHanded);
+	FbxAxisSystem targetAxisSystem(FbxAxisSystem::eYAxis, FbxAxisSystem::eParityEven, FbxAxisSystem::eRightHanded);
+	
+	// Convert the scene from source to target axis system
+	targetAxisSystem.ConvertScene(scene);
+
+	
 	// Create Materials
 	std::map<int, FbxSurfacePhong*> materialMap;
 	const auto& materialProperties = skinnedFbx.GetMaterialProperties();
@@ -835,49 +847,9 @@ void MeshActorExporter::exportSkinnedFbxToStream(SkinnedFbx& skinnedFbx, std::os
 			const auto& vertexPtr = meshData.get_vertices()[vi];
 			const auto& vertex = *vertexPtr;
 			const auto& position = vertex.get_position();
-			fbxMesh->SetControlPointAt(FbxVector4(position.x, position.y, position.z), vi);
+			FbxVector4 adjustedPosition(position.x, position.z, -position.y); // Since manual Z-up
+			fbxMesh->SetControlPointAt(adjustedPosition, vi);
 		}
-		
-		// Create layer elements for normals, UVs, colors, etc.
-//		
-//		// Normals
-//		FbxLayerElementNormal* layerElementNormal = FbxLayerElementNormal::Create(fbxMesh, "");
-//		layerElementNormal->SetMappingMode(FbxLayerElement::eByControlPoint);
-//		layerElementNormal->SetReferenceMode(FbxLayerElement::eDirect);
-//		for (auto& vertexPtr : meshData.get_vertices()) {
-//			const auto& vertex = *vertexPtr;
-//			const auto& normal = vertex.get_normal();
-//			layerElementNormal->GetDirectArray().Add(FbxVector4(normal.x, normal.y, normal.z));
-//		}
-//		fbxMesh->GetLayer(0)->SetNormals(layerElementNormal);
-//		
-//		// UVs
-//		FbxLayerElementUV* layerElementUV = FbxLayerElementUV::Create(fbxMesh, "UVChannel_1");
-//		layerElementUV->SetMappingMode(FbxLayerElement::eByControlPoint);
-//		layerElementUV->SetReferenceMode(FbxLayerElement::eDirect);
-//		for (const auto& vertexPtr : meshData.get_vertices()) {
-//			const auto& vertex = *vertexPtr;
-//			const auto& uv = vertex.get_tex_coords1();
-//			layerElementUV->GetDirectArray().Add(FbxVector2(uv.x, uv.y));
-//		}
-//		fbxMesh->GetLayer(0)->SetUVs(layerElementUV);
-//		
-//		// Colors
-//		FbxLayerElementVertexColor* layerElementColor = FbxLayerElementVertexColor::Create(fbxMesh, "");
-//		layerElementColor->SetMappingMode(FbxLayerElement::eByControlPoint);
-//		layerElementColor->SetReferenceMode(FbxLayerElement::eDirect);
-//		for (const auto& vertexPtr : meshData.get_vertices()) {
-//			const auto& vertex = *vertexPtr;
-//			const auto& color = vertex.get_color();
-//			layerElementColor->GetDirectArray().Add(FbxColor(color.r, color.g, color.b, color.a));
-//		}
-//		fbxMesh->GetLayer(0)->SetVertexColors(layerElementColor);
-//		
-//		// Material mapping
-//		FbxLayerElementMaterial* layerElementMaterial = FbxLayerElementMaterial::Create(fbxMesh, "");
-//		layerElementMaterial->SetMappingMode(FbxLayerElement::eByPolygon);
-//		layerElementMaterial->SetReferenceMode(FbxLayerElement::eIndexToDirect);
-//		fbxMesh->GetLayer(0)->SetMaterials(layerElementMaterial); //skip for now
 		
 		// Indices (polygons)
 		const auto& indices = meshData.get_indices();

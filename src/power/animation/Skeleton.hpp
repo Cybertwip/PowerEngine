@@ -141,7 +141,7 @@ public:
 		int new_bone_index = static_cast<int>(m_bones.size());
 		m_bones.emplace_back(std::make_unique<Bone>(name, new_bone_index, parent_index, offset, bindpose));
 		
-		if (parent_index != -1) {
+		if (parent_index != -1 && parent_index != new_bone_index) { // root can't have itself as child
 			assert(parent_index >= 0 && parent_index < new_bone_index);
 			m_bones[parent_index]->children.push_back(new_bone_index);
 		}
