@@ -20,7 +20,7 @@ public:
 		return mSkinnedMeshes;
 	}
 	
-	const SkinnedFbx& get_model() {
+	SkinnedFbx& get_model() {
 		return *mModel;
 	}
     
