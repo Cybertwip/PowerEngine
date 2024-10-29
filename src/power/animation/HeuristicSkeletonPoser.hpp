@@ -56,7 +56,6 @@ private:
 	
 	std::vector<IBone*> CollectSkeletonBones(ISkeleton& skeleton);
 	IBone* FindRootBone(const std::vector<IBone*>& bones);
-	IBone* GetParentBone(IBone* bone, const std::vector<IBone*>& bones);
 	
 	glm::mat4 GetBoneGlobalTransform(IBone* bone, const std::unordered_map<IBone*, IBone*>& parentMap);
 	std::tuple<glm::vec3, glm::quat, glm::vec3> DecomposeTransform(const glm::mat4& transform);

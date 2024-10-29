@@ -85,16 +85,6 @@ IBone* HeuristicSkeletonPoser::FindRootBone(const std::vector<IBone*>& bones) {
 	return nullptr; // If not found
 }
 
-IBone* HeuristicSkeletonPoser::GetParentBone(IBone* bone, const std::vector<IBone*>& bones) {
-	int parent_index = bone->get_parent_index();
-	
-	if (parent_index == -1) {
-		return nullptr;
-	} else {
-		return bones[parent_index];
-	}
-}
-
 glm::mat4 HeuristicSkeletonPoser::GetBoneGlobalTransform(IBone* bone, const std::unordered_map<IBone*, IBone*>& parentMap) {
 	glm::mat4 localTransform = bone->get_transform_matrix(); // Assuming this function exists
 	
@@ -201,7 +191,7 @@ std::vector<HeuristicSkeletonPoser::ClassifiedBone> HeuristicSkeletonPoser::Clas
 	
 	// Build the parent map
 	for (auto bone : bones) {
-		IBone* parent = GetParentBone(bone, bones);
+		IBone* parent = bone->get_parent();
 		parentMap[bone] = parent; // parent can be nullptr if bone is the root
 	}
 	
@@ -221,7 +211,7 @@ std::vector<HeuristicSkeletonPoser::ClassifiedBone> HeuristicSkeletonPoser::Clas
 		// Get the children of the bone
 		std::vector<IBone*> children;
 		for (auto childBone : bones) {
-			if (GetParentBone(childBone, bones) == bone) {
+			if (childBone->get_parent() == bone) {
 				children.push_back(childBone);
 			}
 		}

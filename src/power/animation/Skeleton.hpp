@@ -25,6 +25,7 @@ public:
 	class Bone : public IBone {
 	public:
 		std::string name;
+		Bone* parent;
 		int index;  // -1 if root
 		int parent_index;  // -1 if root
 		glm::mat4 offset;
@@ -32,12 +33,12 @@ public:
 		glm::mat4 global;
 		std::vector<int> children;
 		
-		Bone(){
+		Bone() : parent(nullptr), index(-1), parent_index(-1) {
 			
 		}
 
-		Bone(const std::string& name, int index, int parent_index, const glm::mat4& offset, const glm::mat4& bindpose)
-		: name(name), index(index), parent_index(parent_index), offset(offset), transform(bindpose), global(1.0f) {}
+		Bone(const std::string& name, Bone* parent, int index, int parent_index, const glm::mat4& offset, const glm::mat4& bindpose)
+		: name(name), parent(parent), index(index), parent_index(parent_index), offset(offset), transform(bindpose), global(1.0f) {}
 		
 		~Bone() = default;
 		
@@ -92,6 +93,10 @@ public:
 			return true;
 		}
 		
+		IBone* get_parent() override {
+			return parent;
+		}
+		
 		std::string get_name() override {
 			return name;
 		}
@@ -142,7 +147,12 @@ public:
 	
 	void add_bone(const std::string& name, const glm::mat4& offset, const glm::mat4& bindpose, int parent_index) {
 		int new_bone_index = static_cast<int>(m_bones.size());
-		m_bones.emplace_back(std::make_unique<Bone>(name, new_bone_index, parent_index, offset, bindpose));
+		
+		if (parent_index == -1) {
+			m_bones.push_back(std::make_unique<Bone>(name, nullptr, new_bone_index, parent_index, offset, bindpose));
+		} else {
+			m_bones.emplace_back(std::make_unique<Bone>(name, m_bones[parent_index].get(), new_bone_index, parent_index, offset, bindpose));
+		}
 		
 		if (parent_index != -1 && parent_index != new_bone_index) { // root can't have itself as child
 			assert(parent_index >= 0 && parent_index < new_bone_index);

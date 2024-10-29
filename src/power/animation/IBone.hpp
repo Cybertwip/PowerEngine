@@ -14,6 +14,8 @@ public:
 	
 	virtual ~IBone() = default;
 	
+	virtual IBone* get_parent() = 0;
+	
 	virtual std::string get_name() = 0;
 	virtual int get_parent_index() = 0;
 	virtual const std::vector<int> get_child_indices() const = 0;
