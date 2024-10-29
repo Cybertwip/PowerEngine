@@ -185,10 +185,13 @@ public:
 	}
 
 	void trim_bone(IBone& bone) override {
-		// Remove entries from m_bones that point to the same object as &bone
-		std::erase_if(m_bones, [&](const std::unique_ptr<IBone>& ptr) {
-			return ptr.get() == &bone;
-		});
+		// Use remove-erase idiom with remove_if to remove the unique_ptr pointing to &bone
+		m_bones.erase(
+					  std::remove_if(m_bones.begin(), m_bones.end(), [&](const std::unique_ptr<IBone>& ptr) {
+						  return ptr.get() == &bone;
+					  }),
+					  m_bones.end()
+					  );
 	}
 
 	// Find bone by name
