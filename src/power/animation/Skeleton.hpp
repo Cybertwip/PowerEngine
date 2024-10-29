@@ -184,47 +184,13 @@ public:
 		return -1; // Indicating bone not found
 	}
 
-	
-	void remap_bone(int index, int new_parent_index, bool cleanup) override {
-		assert(index >= 0 && index < num_bones());
-		
-		assert(new_parent_index >= -1 && new_parent_index < num_bones());
-		
-		if (m_bones[index]->parent_index != -1) {
-			int parent = m_bones[index]->parent_index;
-			m_bones[parent]->remove_child_index(index);
-			
-			if (cleanup) {
-				if (m_bones[parent]->children.empty()) {
-					m_bones[parent] = nullptr;
-				}
-			}
-		}
-
-		m_bones[index]->parent_index = new_parent_index;
-		
-		if (new_parent_index != -1) {
-			m_bones[new_parent_index]->children.push_back(index);
-		}
-		
-		// Remove any nullptr entries from m_bones
-		m_bones.erase(
-					  std::remove(m_bones.begin(), m_bones.end(), nullptr),
-					  m_bones.end()
-					  );
-
+	void trim_bone(IBone& bone) override {
+		// Remove entries from m_bones that point to the same object as &bone
+		std::erase_if(m_bones, [&](const std::unique_ptr<IBone>& ptr) {
+			return ptr.get() == &bone;
+		});
 	}
-	
-	void trim_bone(int index) override {
-		m_bones[index] = nullptr;
-		
-		// Remove any nullptr entries from m_bones
-		m_bones.erase(
-					  std::remove(m_bones.begin(), m_bones.end(), nullptr),
-					  m_bones.end()
-					  );
-	}
-	
+
 	// Find bone by name
 	IBone* find_bone(const std::string& name) {
 		for (auto& bone : m_bones) {
