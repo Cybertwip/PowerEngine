@@ -37,7 +37,7 @@ void HeuristicSkeletonPoser::apply() {
 	
 	for (auto& cb : classifiedBones) {
 		if (cb.type == BoneType::Hips) {
-			mSkeleton.remap_bone(cb.bone->get_parent_index(), -1);
+			cb.bone->set_parent(nullptr);
 			
 			rootBone = cb.bone->get_parent();
 		}

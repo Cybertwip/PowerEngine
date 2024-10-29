@@ -25,7 +25,7 @@ public:
 	class Bone : public IBone {
 	public:
 		std::string name;
-		Bone* parent;
+		IBone* parent;
 		int index;  // -1 if root
 		int parent_index;  // -1 if root
 		glm::mat4 offset;
@@ -96,7 +96,11 @@ public:
 		IBone* get_parent() override {
 			return parent;
 		}
-		
+
+		void set_parent(IBone* new_parent) override {
+			parent = new_parent;
+		}
+
 		std::string get_name() override {
 			return name;
 		}
@@ -187,13 +191,13 @@ public:
 	void trim_bone(IBone& bone) override {
 		// Use remove-erase idiom with remove_if to remove the unique_ptr pointing to &bone
 		m_bones.erase(
-					  std::remove_if(m_bones.begin(), m_bones.end(), [&](std::unique_ptr<IBone>& ptr) {
+					  std::remove_if(m_bones.begin(), m_bones.end(), [&](const std::unique_ptr<Bone>& ptr) {
 						  return ptr.get() == &bone;
 					  }),
 					  m_bones.end()
 					  );
 	}
-
+	
 	// Find bone by name
 	IBone* find_bone(const std::string& name) {
 		for (auto& bone : m_bones) {
