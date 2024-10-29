@@ -178,7 +178,7 @@ public:
 	void remap_bone(int index, int new_parent_index, bool cleanup) override {
 		assert(index >= 0 && index < num_bones());
 		
-		assert(new_parent_index >= 1 && new_parent_index < num_bones());
+		assert(new_parent_index >= -1 && new_parent_index < num_bones());
 		
 		if (m_bones[index]->parent_index != -1) {
 			int parent = m_bones[index]->parent_index;
