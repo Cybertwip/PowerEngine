@@ -187,7 +187,7 @@ public:
 	void trim_bone(IBone& bone) override {
 		// Use remove-erase idiom with remove_if to remove the unique_ptr pointing to &bone
 		m_bones.erase(
-					  std::remove_if(m_bones.begin(), m_bones.end(), [&](const std::unique_ptr<IBone>& ptr) {
+					  std::remove_if(m_bones.begin(), m_bones.end(), [&](std::unique_ptr<IBone>& ptr) {
 						  return ptr.get() == &bone;
 					  }),
 					  m_bones.end()
