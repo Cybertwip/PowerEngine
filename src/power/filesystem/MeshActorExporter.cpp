@@ -787,15 +787,7 @@ void MeshActorExporter::exportSkinnedFbxToStream(SkinnedFbx& skinnedFbx, std::os
 	
 	// Set the scene's unit and axis system (optional, for clarity)
 	scene->GetGlobalSettings().SetSystemUnit(FbxSystemUnit::m);
-	scene->GetGlobalSettings().SetAxisSystem(FbxAxisSystem::MayaYUp);
-	
-	// Define the source and target axis systems
-	FbxAxisSystem sourceAxisSystem(FbxAxisSystem::eZAxis, FbxAxisSystem::eParityOdd, FbxAxisSystem::eRightHanded);
-	FbxAxisSystem targetAxisSystem(FbxAxisSystem::eYAxis, FbxAxisSystem::eParityEven, FbxAxisSystem::eRightHanded);
-	
-	// Convert the scene from source to target axis system
-	targetAxisSystem.ConvertScene(scene);
-
+	//scene->GetGlobalSettings().SetAxisSystem(FbxAxisSystem::MayaYUp);
 	
 	// Create Materials
 	std::map<int, FbxSurfacePhong*> materialMap;
@@ -847,10 +839,11 @@ void MeshActorExporter::exportSkinnedFbxToStream(SkinnedFbx& skinnedFbx, std::os
 			const auto& vertexPtr = meshData.get_vertices()[vi];
 			const auto& vertex = *vertexPtr;
 			const auto& position = vertex.get_position();
-			FbxVector4 adjustedPosition(position.x, position.z, -position.y); // Since manual Z-up
+			// Rotate positions by –90 degrees around the Y-axis
+			FbxVector4 adjustedPosition(-position.z, position.x, position.y);
 			fbxMesh->SetControlPointAt(adjustedPosition, vi);
 		}
-		
+
 		// Indices (polygons)
 		const auto& indices = meshData.get_indices();
 		int polygonCount = static_cast<int>(indices.size() / 3);
@@ -921,6 +914,8 @@ void MeshActorExporter::exportSkinnedFbxToStream(SkinnedFbx& skinnedFbx, std::os
 			FbxNode* boneNode = boneNodes[boneIndex];
 			if (parentIndex == -1) {
 				// Root bone
+				boneNode->LclRotation.Set(FbxDouble3(0.0, -90.0, 0.0));
+
 				rootNode->AddChild(boneNode);
 			} else {
 				FbxNode* parentNode = boneNodes[parentIndex];
@@ -1051,7 +1046,7 @@ void MeshActorExporter::exportSkinnedFbxToStream(SkinnedFbx& skinnedFbx, std::os
 		fbxManager->Destroy();
 		return;
 	}
-	
+
 	if (!exporter->Export(scene)) {
 		std::cerr << "Error: Failed to export FBX scene." << std::endl;
 		exporter->Destroy();
