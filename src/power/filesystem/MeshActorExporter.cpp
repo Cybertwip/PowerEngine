@@ -839,8 +839,7 @@ void MeshActorExporter::exportSkinnedFbxToStream(SkinnedFbx& skinnedFbx, std::os
 			const auto& vertexPtr = meshData.get_vertices()[vi];
 			const auto& vertex = *vertexPtr;
 			const auto& position = vertex.get_position();
-			// Rotate positions by –90 degrees around the Y-axis
-			FbxVector4 adjustedPosition(-position.z, position.x, position.y);
+			FbxVector4 adjustedPosition(-position.y, -position.x, position.z);
 			fbxMesh->SetControlPointAt(adjustedPosition, vi);
 		}
 
@@ -914,8 +913,6 @@ void MeshActorExporter::exportSkinnedFbxToStream(SkinnedFbx& skinnedFbx, std::os
 			FbxNode* boneNode = boneNodes[boneIndex];
 			if (parentIndex == -1) {
 				// Root bone
-				boneNode->LclRotation.Set(FbxDouble3(0.0, -90.0, 0.0));
-
 				rootNode->AddChild(boneNode);
 			} else {
 				FbxNode* parentNode = boneNodes[parentIndex];

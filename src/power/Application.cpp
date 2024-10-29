@@ -190,9 +190,9 @@ bool Application::keyboard_event(int key, int scancode, int action, int modifier
 		
 		auto& skeleton = static_cast<Skeleton&>(skeletonComponent.get_skeleton());
 		
-		//HeuristicSkeletonPoser poser(skeleton);
+		HeuristicSkeletonPoser poser(skeleton);
 		
-		//poser.apply();
+		poser.apply();
 
 		DrawableComponent& drawableComponent = skinnedActor.get_component<DrawableComponent>();
 		
@@ -200,6 +200,7 @@ bool Application::keyboard_event(int key, int scancode, int action, int modifier
 		
 		auto& skinnedMeshComponent = static_cast<SkinnedMeshComponent&>(drawableRef);
 
+		
 		MeshActorExporter exporter;
 		
 		std::stringstream meshStream;
