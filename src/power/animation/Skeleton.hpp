@@ -132,6 +132,9 @@ public:
 			return transform.get_matrix();
 		}
 
+		void remove_child_index(int child_index){
+			children.erase(std::remove(children.begin(), children.end(), child_index), children.end());
+		}
 	};
 	
 	Skeleton() = default;
@@ -156,6 +159,60 @@ public:
 	IBone& get_bone(int index) override {
 		assert(index >= 0 && index < num_bones());
 		return *m_bones[index];
+	}
+	
+	// Get mutable bone by index
+	int get_bone_index(IBone& bone) override {
+		// Loop through the m_bones vector to find the bone's index
+		for (int i = 0; i < m_bones.size(); ++i) {
+			if (m_bones[i] != nullptr && m_bones[i].get() == &bone) {  // Assuming IBone has an == operator
+				return i;
+			}
+		}
+		
+		// If bone is not found, return an error code or handle appropriately
+		return -1; // Indicating bone not found
+	}
+
+	
+	void remap_bone(int index, int new_parent_index, bool cleanup) override {
+		assert(index >= 0 && index < num_bones());
+		
+		assert(new_parent_index >= 1 && new_parent_index < num_bones());
+		
+		if (m_bones[index]->parent_index != -1) {
+			int parent = m_bones[index]->parent_index;
+			m_bones[parent]->remove_child_index(index);
+			
+			if (cleanup) {
+				if (m_bones[parent]->children.empty()) {
+					m_bones[parent] = nullptr;
+				}
+			}
+		}
+
+		m_bones[index]->parent_index = new_parent_index;
+		
+		if (new_parent_index != -1) {
+			m_bones[new_parent_index]->children.push_back(index);
+		}
+		
+		// Remove any nullptr entries from m_bones
+		m_bones.erase(
+					  std::remove(m_bones.begin(), m_bones.end(), nullptr),
+					  m_bones.end()
+					  );
+
+	}
+	
+	void trim_bone(int index) override {
+		m_bones[index] = nullptr;
+		
+		// Remove any nullptr entries from m_bones
+		m_bones.erase(
+					  std::remove(m_bones.begin(), m_bones.end(), nullptr),
+					  m_bones.end()
+					  );
 	}
 	
 	// Find bone by name

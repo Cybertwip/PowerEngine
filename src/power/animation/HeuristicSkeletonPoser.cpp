@@ -31,7 +31,28 @@ void HeuristicSkeletonPoser::apply() {
 	
 	// Step 2: Classify Bones based on heuristics using global transforms
 	std::vector<ClassifiedBone> classifiedBones = ClassifyBones(bones);
+
+
+	int rootBone = -1;
 	
+	for (auto& cb : classifiedBones) {
+		if (cb.type == BoneType::Hips) {
+			mSkeleton.remap_bone(cb.bone->get_parent_index(), -1);
+			
+			rootBone = cb.bone->get_parent_index();
+		}
+	}
+	
+	for (auto& cb : classifiedBones) {
+		if (cb.type == BoneType::Root || (cb.type == BoneType::RootChain && mSkeleton.get_bone_index(*cb.bone) != rootBone)) {
+			mSkeleton.trim_bone(mSkeleton.get_bone_index(*cb.bone));
+		}
+	}
+
+	// Step 4: Re-classify after cleanup
+	bones = CollectSkeletonBones(mSkeleton);
+	classifiedBones = ClassifyBones(bones);
+
 	// Step 4: Apply T-Pose Rotations
 	ApplyTPose(classifiedBones, mSkeleton);
 }
