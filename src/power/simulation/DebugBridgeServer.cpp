@@ -240,18 +240,20 @@ void CartridgeBridge::execute_shared_object(const std::vector<uint8_t>& data) {
 	}
 	
 #elif defined(__APPLE__)
-	
-	// Use the RAM disk mount point to write the new shared object
+	// Use the existing RAM disk path to write the new shared object
 	if (m_ram_disk_path.empty()) {
-		std::cerr << "RAM disk is not initialized." << std::endl;
+		std::cerr << "RAM PowerDisk is not initialized." << std::endl;
 		return;
 	}
 	
-	// Define a unique temporary filename in the RAM disk
-	char temp_filename_template[] = "/Volumes/RAMDisk/temp_module_XXXXXX.dylib";
-	int fd = mkstemps(temp_filename_template, 6); // 6 for ".dylib"
+	// Define a unique temporary filename
+	char temp_filename_template[] = "/Volumes/PowerDisk/temp_module_XXXXXX.dylib";
+	char temp_filename[sizeof(temp_filename_template)];
+	strcpy(temp_filename, temp_filename_template);
+	
+	int fd = mkstemps(temp_filename, 6); // 6 for ".dylib"
 	if (fd == -1) {
-		std::cerr << "Failed to create temporary dylib file on RAM disk: " << strerror(errno) << std::endl;
+		std::cerr << "Failed to create temporary dylib file on Ram PowerDisk: " << strerror(errno) << std::endl;
 		return;
 	}
 	
@@ -260,7 +262,7 @@ void CartridgeBridge::execute_shared_object(const std::vector<uint8_t>& data) {
 	if (written != static_cast<ssize_t>(so_size)) {
 		std::cerr << "Failed to write all data to temporary dylib: " << strerror(errno) << std::endl;
 		close(fd);
-		std::remove(temp_filename_template);
+		std::remove(temp_filename);
 		return;
 	}
 	
@@ -268,17 +270,12 @@ void CartridgeBridge::execute_shared_object(const std::vector<uint8_t>& data) {
 	close(fd);
 	
 	// Load the shared object
-	mSharedObjectHandle = dlopen(temp_filename_template, RTLD_NOW);
+	mSharedObjectHandle = dlopen(temp_filename, RTLD_NOW);
 	if (!mSharedObjectHandle) {
 		std::cerr << "dlopen failed: " << dlerror() << std::endl;
-		std::remove(temp_filename_template);
+		std::remove(temp_filename);
 		return;
 	}
-	
-	// Optionally, remove the temporary file after loading
-	std::remove(temp_filename_template);
-
-	
 #endif // Platform-specific loading
 	
 	// Clear any existing errors
@@ -342,12 +339,11 @@ void CartridgeBridge::initialize_disk() {
 		// Optionally, set up the memory file as needed
 	}
 #elif defined(__APPLE__)
-	const std::string ram_disk_mount_point = "/Volumes/PowerDisk";
-	const int ram_disk_size_mb = 128;
-	const int sectors = ram_disk_size_mb * 2048; // 1 sector = 512 bytes
 	
-	// Check if the RAM disk is already mounted
-	struct statfs buffer;
+	const std::string ram_disk_mount_point = "/Volumes/PowerDisk";
+
+	// Check if the RAM PowerDisk is already mounted
+		struct statfs buffer;
 	if (statfs(ram_disk_mount_point.c_str(), &buffer) == 0) {
 		// RAM disk is already mounted, clear its contents
 		std::string clear_cmd = "rm -rf " + ram_disk_mount_point + "/*";
@@ -355,54 +351,48 @@ void CartridgeBridge::initialize_disk() {
 		std::cout << "RAM disk already mounted at " << ram_disk_mount_point << ". Contents cleared." << std::endl;
 		m_ram_disk_path = ram_disk_mount_point;
 	} else {
-		// RAM disk is not mounted, create and mount it
-		std::string create_ram_disk_cmd = "hdiutil attach -nomount ram://" + std::to_string(sectors);
-		FILE* pipe = popen(create_ram_disk_cmd.c_str(), "r");
-		if (!pipe) {
-			std::cerr << "Failed to create RAM disk." << std::endl;
-			return;
-		}
-		
-		char ram_disk_dev[256];
-		if (!fgets(ram_disk_dev, sizeof(ram_disk_dev), pipe)) {
-			std::cerr << "Failed to get RAM disk device." << std::endl;
+		if (m_ram_disk_path.empty()) { // Check if RAM disk is already created
+			// Create a RAM disk as before
+			const int ram_disk_size_mb = 128;
+			const int sectors = ram_disk_size_mb * 2048; // 1 sector = 512 bytes
+			
+			std::string create_ram_disk_cmd = "hdiutil attach -nomount ram://" + std::to_string(sectors);
+			FILE* pipe = popen(create_ram_disk_cmd.c_str(), "r");
+			if (!pipe) {
+				std::cerr << "Failed to create initial RAM PowerDisk." << std::endl;
+				return;
+			}
+			
+			char ram_disk_path_buffer[256];
+			if (!fgets(ram_disk_path_buffer, sizeof(ram_disk_path_buffer), pipe)) {
+				std::cerr << "Failed to get initial RAM PowerDisk path." << std::endl;
+				pclose(pipe);
+				return;
+			}
 			pclose(pipe);
-			return;
+			
+			// Remove trailing newline
+			size_t len = strlen(ram_disk_path_buffer);
+			if (len > 0 && ram_disk_path_buffer[len - 1] == '\n') {
+				ram_disk_path_buffer[len - 1] = '\0';
+			}
+			
+			m_ram_disk_path = std::string(ram_disk_path_buffer);
+			
+			// Format the RAM disk as HFS+
+			std::string format_ram_disk_cmd = "diskutil erasevolume HFS+ 'PowerDisk' " + m_ram_disk_path;
+			int ret = system(format_ram_disk_cmd.c_str());
+			if (ret != 0) {
+				std::cerr << "Failed to format initial RAM PowerDisk." << std::endl;
+				// Detach the RAM disk
+				std::string detach_cmd = "hdiutil detach " + m_ram_disk_path;
+				system(detach_cmd.c_str());
+				m_ram_disk_path = "";
+				return;
+			}
 		}
-		pclose(pipe);
-		
-		// Remove trailing newline
-		size_t len = strlen(ram_disk_dev);
-		if (len > 0 && ram_disk_dev[len - 1] == '\n') {
-			ram_disk_dev[len - 1] = '\0';
-		}
-		
-		// Format the RAM disk as HFS+ and mount it at the specified mount point
-		std::string format_cmd = "diskutil erasevolume HFS+ 'RAMDisk' " + std::string(ram_disk_dev) + " > /dev/null";
-		int ret = system(format_cmd.c_str());
-		if (ret != 0) {
-			std::cerr << "Failed to format and mount RAM disk." << std::endl;
-			// Detach the RAM disk
-			std::string detach_cmd = "hdiutil detach " + std::string(ram_disk_dev);
-			system(detach_cmd.c_str());
-			return;
-		}
-		
-		// Mount the RAM disk at the specified mount point
-		std::string mount_cmd = "diskutil mount -mountPoint " + ram_disk_mount_point + " " + std::string(ram_disk_dev) + " > /dev/null";
-		ret = system(mount_cmd.c_str());
-		if (ret != 0) {
-			std::cerr << "Failed to mount RAM disk at " << ram_disk_mount_point << "." << std::endl;
-			// Detach the RAM disk
-			std::string detach_cmd = "hdiutil detach " + std::string(ram_disk_dev);
-			system(detach_cmd.c_str());
-			return;
-		}
-		
-		std::cout << "RAM disk created and mounted at " << ram_disk_mount_point << "." << std::endl;
-		m_ram_disk_path = ram_disk_mount_point;
 	}
-
+	
 #endif
 }
 
@@ -415,21 +405,25 @@ void CartridgeBridge::erase_disk(bool force) {
 		std::cout << "Memory file (disk) erased and closed on Linux." << std::endl;
 	}
 #elif defined(__APPLE__)
-	if (!m_ram_disk_path.empty()) {
-		// Clear the contents of the RAM disk
-		std::string clear_cmd = "rm -rf " + m_ram_disk_path + "/*";
-		system(clear_cmd.c_str());
-		std::cout << "RAM disk contents at " << m_ram_disk_path << " have been cleared." << std::endl;
+	if (!m_ram_disk_path.empty() && force) { // Only detach if forced
+		// Detach the RAM disk
+		std::string detach_cmd = "hdiutil detach " + m_ram_disk_path;
+		int ret = system(detach_cmd.c_str());
+		if (ret != 0) {
+			std::cerr << "Failed to detach RAM PowerDisk: " << m_ram_disk_path << std::endl;
+		} else {
+			std::cout << "RAM PowerDisk detached successfully: " << m_ram_disk_path << std::endl;
+		}
+		m_ram_disk_path = "";
 	}
 #endif
 	
 	// If a cartridge was loaded, reset it
 	if (mLoadedCartridge) {
-		mOnCartridgeInsertedCallback(std::nullopt); // Eject cartridge to prevent updating
+		mOnCartridgeInsertedCallback(std::nullopt); // eject cartridge to prevent updating
 		mActorLoader.cleanup();
-		mLoadedCartridge.reset(); // Release cartridge memory
+		mLoadedCartridge.reset(); // release cartridge memory
 		std::cout << "Loaded cartridge has been ejected." << std::endl;
 	}
 }
-
 

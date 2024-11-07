@@ -245,7 +245,6 @@ class Application : public nanogui::DraggableScreen
 	// Reversed unique_ptr declarations
 	std::unique_ptr<ICartridge> mCartridge;
 	std::unique_ptr<CartridgeActorLoader> mCartridgeActorLoader;
-	std::unique_ptr<CartridgeBridge> mCartridgeBridge;
 	std::unique_ptr<Canvas> mCanvas; // Place appropriately based on actual dependencies
 	std::unique_ptr<UiManager> mUiManager;
 	std::unique_ptr<GizmoManager> mGizmoManager;
@@ -268,7 +267,8 @@ class Application : public nanogui::DraggableScreen
 	std::unique_ptr<ActorManager> mActorManager;
 	std::unique_ptr<CameraManager> mCameraManager;
 	std::unique_ptr<entt::registry> mEntityRegistry;
-	
+	std::unique_ptr<CartridgeBridge> mCartridgeBridge;
+
 
 	std::queue<std::tuple<bool, int, int, int, int>> mClickQueue;
 	std::vector<std::function<void(bool, int, int, int, int)>> mClickCallbacks;
