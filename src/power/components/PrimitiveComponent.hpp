@@ -12,7 +12,7 @@ public:
 	 *
 	 * @param mesh A unique pointer to the Mesh to be managed by this component.
 	 */
-	explicit PrimitiveComponent(std::unique_ptr<Mesh> mesh);
+	explicit PrimitiveComponent(std::unique_ptr<Mesh> mesh, std::unique_ptr<MeshData> meshData);
 	
 	/**
 	 * @brief Destructor for PrimitiveComponent.
@@ -40,5 +40,6 @@ public:
 	}
 	
 private:
+	std::unique_ptr<MeshData> mMeshData;
 	std::unique_ptr<Mesh> mMesh;
 };

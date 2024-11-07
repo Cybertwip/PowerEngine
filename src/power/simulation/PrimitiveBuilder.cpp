@@ -281,7 +281,7 @@ Actor& PrimitiveBuilder::build(Actor& actor, const std::string& actorName, Primi
 														);
 	
 	// Create PrimitiveComponent with the Mesh
-	std::unique_ptr<PrimitiveComponent> primitiveComponent = std::make_unique<PrimitiveComponent>(std::move(mesh));
+	std::unique_ptr<PrimitiveComponent> primitiveComponent = std::make_unique<PrimitiveComponent>(std::move(mesh), std::move(meshData));
 	
 	// Create DrawableComponent and add to Actor
 	// If PrimitiveComponent is a Drawable, it can be wrapped in a DrawableComponent
