@@ -5,6 +5,8 @@
 
 #include <memory>
 
+class MeshData;
+
 class PrimitiveComponent : public Drawable {
 public:
 	/**
