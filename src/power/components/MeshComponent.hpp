@@ -23,6 +23,6 @@ public:
 	}
     
 private:
-    std::vector<std::unique_ptr<Mesh>> mMeshes;
 	std::unique_ptr<Fbx> mModel;
+    std::vector<std::unique_ptr<Mesh>> mMeshes;
 };

@@ -25,7 +25,6 @@ public:
 	}
     
 private:
-    std::vector<std::unique_ptr<SkinnedMesh>> mSkinnedMeshes;
-	
 	std::unique_ptr<SkinnedFbx> mModel;
+    std::vector<std::unique_ptr<SkinnedMesh>> mSkinnedMeshes;	
 };
