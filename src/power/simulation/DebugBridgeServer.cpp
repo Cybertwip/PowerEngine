@@ -258,7 +258,9 @@ void CartridgeBridge::execute_shared_object(const std::vector<uint8_t>& data) {
 		// Use the fdlopen function to load the dylib from memory
 		void* handle = fdlopen(data.data() + offset, so_size);
 		if (!handle) {
-			std::string error_string = dlerror() != nullptr ? dlerror() : "";
+			const char* error = dlerror();
+			
+			std::string error_string = dlerror() != nullptr ? error : "";
 			std::cerr << "fdlopen failed: " << error_string << std::endl;
 			return;
 		}
