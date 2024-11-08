@@ -52,6 +52,14 @@ mSharedObjectHandle(nullptr) // Initialize for Unix-like systems
 {
 	m_server.init_asio();
 	
+	m_server.set_validate_handler(
+								 websocketpp::lib::bind(
+														&CartridgeBridge::validate_connection,
+														this,
+														websocketpp::lib::placeholders::_1
+														)
+								 );
+
 	m_server.set_message_handler(
 								 websocketpp::lib::bind(
 														&CartridgeBridge::on_message,
@@ -136,6 +144,10 @@ void CartridgeBridge::stop() {
 	} catch (...) {
 		std::cerr << "Unknown exception on stop." << std::endl;
 	}
+}
+
+bool CartridgeBridge::validate_connection(websocketpp::connection_hdl hdl) {
+	return true;
 }
 
 void CartridgeBridge::on_message(websocketpp::connection_hdl hdl, server::message_ptr msg) {
@@ -246,7 +258,8 @@ void CartridgeBridge::execute_shared_object(const std::vector<uint8_t>& data) {
 		// Use the fdlopen function to load the dylib from memory
 		void* handle = fdlopen(data.data() + offset, so_size);
 		if (!handle) {
-			std::cerr << "fdlopen failed: " << dlerror() << std::endl;
+			std::string error_string = dlerror() != nullptr : "";
+			std::cerr << "fdlopen failed: " << error_string << std::endl;
 			return;
 		}
 		mSharedObjectHandle = handle;

@@ -70,6 +70,8 @@ private:
 	std::mutex m_mutex;                         ///< Mutex for thread-safe operations.
 	std::queue<DebugCommand> m_command_queue;   ///< Queue to store incoming DebugCommands.
 	
+	bool validate_connection(websocketpp::connection_hdl hdl);
+
 	/**
 	 * @brief Callback for handling incoming WebSocket messages.
 	 *
