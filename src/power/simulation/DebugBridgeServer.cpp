@@ -11,7 +11,7 @@
 #include <iostream>
 #include <stdexcept>
 #include <fstream>
-#include <cstdio>   // For std::remove
+#include <cstdio>   // For std::remove, mkstemp
 #include <cstring>  // For std::memcpy
 
 #ifdef _WIN32
@@ -20,23 +20,19 @@
 #include <dlfcn.h>
 #include <sys/mman.h>
 #include <unistd.h>
-#include <fcntl.h>  // For memfd_create
+#include <fcntl.h>  // For shm_open on macOS
 #include <sys/stat.h>
 #endif
 
-#if __APPLE__
-#include <sys/param.h>
-#include <sys/mount.h>
-#endif
-
 #include <cstdlib>  // For system()
+#include <vector>
 
 CartridgeBridge::CartridgeBridge(uint16_t port, ICartridge& cartridge, CartridgeActorLoader& actorLoader, std::function<void(std::optional<std::reference_wrapper<ILoadedCartridge>>)> onCartridgeInsertedCallback)
 : m_port(port), mCartridge(cartridge), mActorLoader(actorLoader), mOnCartridgeInsertedCallback(onCartridgeInsertedCallback),
 #ifdef __linux__
 m_mem_fd(-1),
 #elif defined(__APPLE__)
-m_ram_disk_path(""),
+m_temp_so_path(""),
 #endif
 mLoadedCartridge(nullptr),
 #ifdef _WIN32
@@ -44,7 +40,6 @@ mSharedObjectHandle(nullptr) // Initialize for Windows
 #else
 mSharedObjectHandle(nullptr) // Initialize for Unix-like systems
 #endif
-
 {
 	m_server.init_asio();
 	
@@ -79,8 +74,8 @@ void CartridgeBridge::run() {
 		
 		std::cout << "DebugBridgeServer is running on port " << m_port << std::endl;
 		
-		// Initialize the disk at server start
-		initialize_disk();
+		// Initialize memory mappings at server start
+		initialize_memory();
 		
 		m_running.store(true);
 		m_thread = std::thread([this]() {
@@ -121,8 +116,8 @@ void CartridgeBridge::stop() {
 			m_thread.join();
 		}
 		
-		// Cleanup the disk when stopping the server
-		erase_disk();
+		// Cleanup memory mappings when stopping the server
+		erase_memory(true); // Force erase
 		
 		std::cout << "DebugBridgeServer has stopped." << std::endl;
 	} catch (const websocketpp::exception& e) {
@@ -147,8 +142,8 @@ void CartridgeBridge::on_message(websocketpp::connection_hdl hdl, server::messag
 		// Check for magic number 'SOLO' at the start (optional)
 		if (data.size() >= 4 && data[0] == 'S' && data[1] == 'O' && data[2] == 'L' && data[3] == 'O') {
 			// Shared Object execution
-			// Before loading a new cartridge, erase/eject the existing disk
-			erase_disk();
+			// Before loading a new cartridge, erase/eject the existing memory mapping
+			erase_memory(true); // Force erase
 			
 			execute_shared_object(data);
 			std::string ack = "Shared object executed successfully.";
@@ -180,9 +175,6 @@ DebugCommand CartridgeBridge::process_command(const DebugCommand& cmd) {
 }
 
 void CartridgeBridge::execute_shared_object(const std::vector<uint8_t>& data) {
-	// Do not erase the disk here. The disk remains persistent.
-	// erase_disk(); // Remove or comment out this line
-	
 	// Existing shared object unloading logic
 	if (mSharedObjectHandle) {
 #ifdef _WIN32
@@ -220,7 +212,7 @@ void CartridgeBridge::execute_shared_object(const std::vector<uint8_t>& data) {
 	}
 	
 	// Overwrite the existing memory file with new shared object data
-	if (ftruncate(m_mem_fd, 0) == -1) {
+	if (ftruncate(m_mem_fd, so_size) == -1) {
 		std::cerr << "Failed to truncate memfd: " << strerror(errno) << std::endl;
 		return;
 	}
@@ -240,41 +232,15 @@ void CartridgeBridge::execute_shared_object(const std::vector<uint8_t>& data) {
 	}
 	
 #elif defined(__APPLE__)
-	// Use the existing RAM disk path to write the new shared object
-	if (m_ram_disk_path.empty()) {
-		std::cerr << "RAM PowerDisk is not initialized." << std::endl;
-		return;
-	}
-	
-	// Define a unique temporary filename
-	char temp_filename_template[] = "/Volumes/PowerDisk/temp_module_XXXXXX.dylib";
-	char temp_filename[sizeof(temp_filename_template)];
-	strcpy(temp_filename, temp_filename_template);
-	
-	int fd = mkstemps(temp_filename, 6); // 6 for ".dylib"
-	if (fd == -1) {
-		std::cerr << "Failed to create temporary dylib file on Ram PowerDisk: " << strerror(errno) << std::endl;
-		return;
-	}
-	
-	// Write the .dylib data to the temporary file
-	ssize_t written = write(fd, data.data() + offset, so_size);
-	if (written != static_cast<ssize_t>(so_size)) {
-		std::cerr << "Failed to write all data to temporary dylib: " << strerror(errno) << std::endl;
-		close(fd);
-		std::remove(temp_filename);
-		return;
-	}
-	
-	// Close the file descriptor
-	close(fd);
-	
-	// Load the shared object
-	mSharedObjectHandle = dlopen(temp_filename, RTLD_NOW);
-	if (!mSharedObjectHandle) {
-		std::cerr << "dlopen failed: " << dlerror() << std::endl;
-		std::remove(temp_filename);
-		return;
+	// Implement fdlopen on macOS by writing to a temporary file and loading it
+	if (!data.empty()) {
+		// Use the fdlopen function to load the dylib from memory
+		void* handle = fdlopen(data.data() + offset, so_size);
+		if (!handle) {
+			std::cerr << "fdlopen failed: " << dlerror() << std::endl;
+			return;
+		}
+		mSharedObjectHandle = handle;
 	}
 #endif // Platform-specific loading
 	
@@ -297,7 +263,11 @@ void CartridgeBridge::execute_shared_object(const std::vector<uint8_t>& data) {
 #ifdef __linux__
 		// Optionally, handle memfd reset if needed
 #elif defined(__APPLE__)
-		// Optionally, remove the temporary dylib if needed
+		// Cleanup temporary file if fdlopen was used
+		if (!m_temp_so_path.empty()) {
+			std::remove(m_temp_so_path.c_str());
+			m_temp_so_path.clear();
+		}
 #endif
 		return;
 	}
@@ -319,7 +289,11 @@ void CartridgeBridge::execute_shared_object(const std::vector<uint8_t>& data) {
 #ifdef __linux__
 			// Optionally, handle memfd reset if needed
 #elif defined(__APPLE__)
-			// Optionally, remove the temporary dylib if needed
+			// Cleanup temporary file if fdlopen was used
+			if (!m_temp_so_path.empty()) {
+				std::remove(m_temp_so_path.c_str());
+				m_temp_so_path.clear();
+			}
 #endif
 		}
 	});
@@ -327,103 +301,96 @@ void CartridgeBridge::execute_shared_object(const std::vector<uint8_t>& data) {
 	// The shared object remains loaded until a new one is loaded or the server stops.
 }
 
-// Initialize the disk when the server starts
-void CartridgeBridge::initialize_disk() {
+void CartridgeBridge::initialize_memory() {
 #ifdef __linux__
 	if (m_mem_fd == -1) { // Check if mem_fd is already created
-		m_mem_fd = memfd_create("initial_disk", MFD_CLOEXEC);
+		m_mem_fd = memfd_create("initial_memory", MFD_CLOEXEC);
 		if (m_mem_fd == -1) {
 			std::cerr << "memfd_create failed: " << strerror(errno) << std::endl;
 			// Handle error as needed
 		}
+		
 		// Optionally, set up the memory file as needed
 	}
 #elif defined(__APPLE__)
-	
-	const std::string ram_disk_mount_point = "/Volumes/PowerDisk";
-
-	// Check if the RAM PowerDisk is already mounted
-		struct statfs buffer;
-	if (statfs(ram_disk_mount_point.c_str(), &buffer) == 0) {
-		// RAM disk is already mounted, clear its contents
-		std::string clear_cmd = "rm -rf " + ram_disk_mount_point + "/*";
-		system(clear_cmd.c_str());
-		std::cout << "RAM disk already mounted at " << ram_disk_mount_point << ". Contents cleared." << std::endl;
-		m_ram_disk_path = ram_disk_mount_point;
-	} else {
-		if (m_ram_disk_path.empty()) { // Check if RAM disk is already created
-			// Create a RAM disk as before
-			const int ram_disk_size_mb = 128;
-			const int sectors = ram_disk_size_mb * 2048; // 1 sector = 512 bytes
-			
-			std::string create_ram_disk_cmd = "hdiutil attach -nomount ram://" + std::to_string(sectors);
-			FILE* pipe = popen(create_ram_disk_cmd.c_str(), "r");
-			if (!pipe) {
-				std::cerr << "Failed to create initial RAM PowerDisk." << std::endl;
-				return;
-			}
-			
-			char ram_disk_path_buffer[256];
-			if (!fgets(ram_disk_path_buffer, sizeof(ram_disk_path_buffer), pipe)) {
-				std::cerr << "Failed to get initial RAM PowerDisk path." << std::endl;
-				pclose(pipe);
-				return;
-			}
-			pclose(pipe);
-			
-			// Remove trailing newline
-			size_t len = strlen(ram_disk_path_buffer);
-			if (len > 0 && ram_disk_path_buffer[len - 1] == '\n') {
-				ram_disk_path_buffer[len - 1] = '\0';
-			}
-			
-			m_ram_disk_path = std::string(ram_disk_path_buffer);
-			
-			// Format the RAM disk as HFS+
-			std::string format_ram_disk_cmd = "diskutil erasevolume HFS+ 'PowerDisk' " + m_ram_disk_path;
-			int ret = system(format_ram_disk_cmd.c_str());
-			if (ret != 0) {
-				std::cerr << "Failed to format initial RAM PowerDisk." << std::endl;
-				// Detach the RAM disk
-				std::string detach_cmd = "hdiutil detach " + m_ram_disk_path;
-				system(detach_cmd.c_str());
-				m_ram_disk_path = "";
-				return;
-			}
-		}
-	}
-	
+	// No initialization needed for temporary files on macOS
 #endif
 }
 
-// Erase and eject the current disk
-void CartridgeBridge::erase_disk(bool force) {
+void CartridgeBridge::erase_memory(bool force) {
+	// If a cartridge was loaded, reset it
+	if (mLoadedCartridge) {
+		mOnCartridgeInsertedCallback(std::nullopt); // Eject cartridge to prevent updating
+		mActorLoader.cleanup();
+		mLoadedCartridge.reset(); // Release cartridge memory
+		std::cout << "Loaded cartridge has been ejected." << std::endl;
+	}
+	
 #ifdef __linux__
 	if (m_mem_fd != -1 && force) { // Only erase if forced
 		close(m_mem_fd);
 		m_mem_fd = -1;
-		std::cout << "Memory file (disk) erased and closed on Linux." << std::endl;
+		std::cout << "Memory file (memfd) erased and closed on Linux." << std::endl;
 	}
 #elif defined(__APPLE__)
-	if (!m_ram_disk_path.empty() && force) { // Only detach if forced
-		// Detach the RAM disk
-		std::string detach_cmd = "hdiutil detach " + m_ram_disk_path;
-		int ret = system(detach_cmd.c_str());
-		if (ret != 0) {
-			std::cerr << "Failed to detach RAM PowerDisk: " << m_ram_disk_path << std::endl;
+	if (!m_temp_so_path.empty() && force) { // Only unlink if forced
+		// Detach and unload the shared object
+		if (dlclose(mSharedObjectHandle)) {
+			std::cerr << "Failed to dlclose shared object: " << dlerror() << std::endl;
 		} else {
-			std::cout << "RAM PowerDisk detached successfully: " << m_ram_disk_path << std::endl;
+			std::cout << "Shared object unloaded successfully: " << m_temp_so_path << std::endl;
 		}
-		m_ram_disk_path = "";
+		
+		// Remove the temporary dylib file
+		if (std::remove(m_temp_so_path.c_str()) != 0) {
+			std::cerr << "Failed to remove temporary dylib file: " << m_temp_so_path << std::endl;
+		} else {
+			std::cout << "Temporary dylib file removed successfully: " << m_temp_so_path << std::endl;
+		}
+		
+		m_temp_so_path.clear();
 	}
 #endif
-	
-	// If a cartridge was loaded, reset it
-	if (mLoadedCartridge) {
-		mOnCartridgeInsertedCallback(std::nullopt); // eject cartridge to prevent updating
-		mActorLoader.cleanup();
-		mLoadedCartridge.reset(); // release cartridge memory
-		std::cout << "Loaded cartridge has been ejected." << std::endl;
-	}
 }
 
+#ifdef __APPLE__
+void* CartridgeBridge::fdlopen(const void* data, size_t size) {
+	if (!data || size == 0) {
+		std::cerr << "Invalid data or size for fdlopen." << std::endl;
+		return nullptr;
+	}
+	
+	// Create a unique temporary file with .dylib extension
+	char temp_filename_template[] = "/tmp/cartridge_bridge_so_XXXXXX.dylib";
+	int temp_fd = mkstemps(temp_filename_template, 6); // 6 for ".dylib"
+	if (temp_fd == -1) {
+		std::cerr << "Failed to create temporary dylib file: " << strerror(errno) << std::endl;
+		return nullptr;
+	}
+	
+	// Write the shared library data to the temporary file
+	ssize_t written = write(temp_fd, data, size);
+	if (written != static_cast<ssize_t>(size)) {
+		std::cerr << "Failed to write all data to temporary dylib: " << strerror(errno) << std::endl;
+		close(temp_fd);
+		std::remove(temp_filename_template);
+		return nullptr;
+	}
+	
+	// Close the file descriptor
+	close(temp_fd);
+	
+	// Load the shared library using dlopen
+	void* handle = dlopen(temp_filename_template, RTLD_NOW);
+	if (!handle) {
+		std::cerr << "dlopen failed: " << dlerror() << std::endl;
+		std::remove(temp_filename_template);
+		return nullptr;
+	}
+	
+	// Store the temporary file path for later cleanup
+	m_temp_so_path = std::string(temp_filename_template);
+	
+	return handle;
+}
+#endif
