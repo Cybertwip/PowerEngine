@@ -16,6 +16,9 @@
 #elif defined(__APPLE__)
 #include <string>
 #include <vector>
+#include <sys/mman.h> // For mmap on macOS
+#include <sys/stat.h> // For shm_open on macOS
+#include <fcntl.h>    // For shm_open on macOS
 #endif
 
 typedef websocketpp::server<websocketpp::config::asio> server;
@@ -102,6 +105,7 @@ private:
 	 */
 	void erase_memory(bool force = false);
 	
+#ifdef __APPLE__
 	/**
 	 * @brief Loads a shared library from a memory buffer.
 	 *
@@ -110,6 +114,7 @@ private:
 	 * @return Handle to the loaded shared library, or nullptr on failure.
 	 */
 	void* fdlopen(const void* data, size_t size);
+#endif
 	
 private:
 	// Callback function invoked when a cartridge is inserted or ejected
@@ -134,6 +139,8 @@ private:
 #ifdef __linux__
 	int m_mem_fd;  ///< File descriptor for memory file (memfd_create) on Linux.
 #elif defined(__APPLE__)
+	int m_mem_fd;                ///< File descriptor for shared memory on macOS.
+	void* m_mapped_memory;       ///< Pointer to the mapped shared memory region on macOS.
 	std::string m_temp_so_path;  ///< Path to the temporary shared object file on macOS.
 #endif
 	

@@ -26,12 +26,21 @@
 
 #include <cstdlib>  // For system()
 #include <vector>
+#include <mutex>
+#include <thread>
+#include <functional>
+#include <optional>
+
+// Define INITIAL_MEMORY_SIZE for shared memory on macOS
+#define INITIAL_MEMORY_SIZE (10 * 1024 * 1024) // 10 MB, adjust as needed
 
 CartridgeBridge::CartridgeBridge(uint16_t port, ICartridge& cartridge, CartridgeActorLoader& actorLoader, std::function<void(std::optional<std::reference_wrapper<ILoadedCartridge>>)> onCartridgeInsertedCallback)
 : m_port(port), mCartridge(cartridge), mActorLoader(actorLoader), mOnCartridgeInsertedCallback(onCartridgeInsertedCallback),
 #ifdef __linux__
 m_mem_fd(-1),
 #elif defined(__APPLE__)
+m_mem_fd(-1),
+m_mapped_memory(nullptr),
 m_temp_so_path(""),
 #endif
 mLoadedCartridge(nullptr),
@@ -313,7 +322,40 @@ void CartridgeBridge::initialize_memory() {
 		// Optionally, set up the memory file as needed
 	}
 #elif defined(__APPLE__)
-	// No initialization needed for temporary files on macOS
+	// Define a unique shared memory name
+	const char* shm_name = "/cartridge_bridge_shm";
+	
+	// Create or open the shared memory object
+	m_mem_fd = shm_open(shm_name, O_CREAT | O_RDWR, 0600);
+	if (m_mem_fd == -1) {
+		std::cerr << "shm_open failed: " << strerror(errno) << std::endl;
+		// Handle error as needed
+		return;
+	}
+	
+	// Set the size of the shared memory object
+	if (ftruncate(m_mem_fd, INITIAL_MEMORY_SIZE) == -1) {
+		std::cerr << "ftruncate failed: " << strerror(errno) << std::endl;
+		close(m_mem_fd);
+		shm_unlink(shm_name);
+		// Handle error as needed
+		return;
+	}
+	
+	// Map the shared memory object into the process's address space
+	m_mapped_memory = mmap(nullptr, INITIAL_MEMORY_SIZE, PROT_READ | PROT_WRITE, MAP_SHARED, m_mem_fd, 0);
+	if (m_mapped_memory == MAP_FAILED) {
+		std::cerr << "mmap failed: " << strerror(errno) << std::endl;
+		close(m_mem_fd);
+		shm_unlink(shm_name);
+		// Handle error as needed
+		return;
+	}
+	
+	// Optionally, initialize the memory region
+	std::memset(m_mapped_memory, 0, INITIAL_MEMORY_SIZE);
+	
+	std::cout << "Shared memory initialized successfully on macOS." << std::endl;
 #endif
 }
 
@@ -333,6 +375,22 @@ void CartridgeBridge::erase_memory(bool force) {
 		std::cout << "Memory file (memfd) erased and closed on Linux." << std::endl;
 	}
 #elif defined(__APPLE__)
+	if (m_mapped_memory && force) { // Only erase if forced
+		if (munmap(m_mapped_memory, INITIAL_MEMORY_SIZE) == -1) {
+			std::cerr << "munmap failed: " << strerror(errno) << std::endl;
+		} else {
+			std::cout << "Shared memory unmapped successfully on macOS." << std::endl;
+		}
+		m_mapped_memory = nullptr;
+	}
+	
+	if (m_mem_fd != -1 && force) {
+		close(m_mem_fd);
+		shm_unlink("/cartridge_bridge_shm"); // Ensure the name matches shm_name in initialize_memory
+		m_mem_fd = -1;
+		std::cout << "Shared memory object unlinked and closed on macOS." << std::endl;
+	}
+	
 	if (!m_temp_so_path.empty() && force) { // Only unlink if forced
 		// Detach and unload the shared object
 		if (dlclose(mSharedObjectHandle)) {
