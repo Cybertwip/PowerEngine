@@ -260,7 +260,7 @@ void CartridgeBridge::execute_shared_object(const std::vector<uint8_t>& data) {
 		if (!handle) {
 			const char* error = dlerror();
 			
-			std::string error_string = dlerror() != nullptr ? error : "";
+			std::string error_string = error != nullptr ? error : "";
 			std::cerr << "fdlopen failed: " << error_string << std::endl;
 			return;
 		}
