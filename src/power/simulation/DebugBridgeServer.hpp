@@ -11,6 +11,8 @@
 #include "DebugBridgeCommon.hpp"
 #include "simulation/Cartridge.hpp"
 
+#include <wasmtime.hh>
+
 #ifdef __linux__
 #include <unistd.h>  // For close()
 #elif defined(__APPLE__)
@@ -146,11 +148,9 @@ private:
 	std::string m_temp_so_path;  ///< Path to the temporary shared object file on macOS.
 #endif
 	
-#ifdef _WIN32
-	HMODULE mSharedObjectHandle; // Handle for Windows DLL
-#else
-	void* mSharedObjectHandle;   // Handle for Unix-like shared objects
-#endif
+	wasmtime::Engine mWasmEngine;
+	wasmtime::Store mStore;
+	std::shared_ptr<wasmtime::Instance> mWasmInstance;
 	
 	// Prevent copying
 	CartridgeBridge(const CartridgeBridge&) = delete;

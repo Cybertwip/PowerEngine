@@ -30,6 +30,7 @@
 #include <thread>
 #include <functional>
 #include <optional>
+#include <span>
 
 // Define INITIAL_MEMORY_SIZE for shared memory on macOS
 #define INITIAL_MEMORY_SIZE (10 * 1024 * 1024) // 10 MB, adjust as needed
@@ -44,11 +45,7 @@ m_mapped_memory(nullptr),
 m_temp_so_path(""),
 #endif
 mLoadedCartridge(nullptr),
-#ifdef _WIN32
-mSharedObjectHandle(nullptr) // Initialize for Windows
-#else
-mSharedObjectHandle(nullptr) // Initialize for Unix-like systems
-#endif
+mStore(mWasmEngine)
 {
 	m_server.init_asio();
 	
@@ -196,17 +193,6 @@ DebugCommand CartridgeBridge::process_command(const DebugCommand& cmd) {
 }
 
 void CartridgeBridge::execute_shared_object(const std::vector<uint8_t>& data) {
-	// Existing shared object unloading logic
-	if (mSharedObjectHandle) {
-#ifdef _WIN32
-		FreeLibrary(mSharedObjectHandle);
-#else
-		dlclose(mSharedObjectHandle);
-#endif
-		mSharedObjectHandle = nullptr;
-		std::cout << "Previous shared object unloaded successfully." << std::endl;
-	}
-	
 	// Platform-specific shared object loading
 #ifdef _WIN32
 	// [Windows-specific loading code remains unchanged]
@@ -225,104 +211,101 @@ void CartridgeBridge::execute_shared_object(const std::vector<uint8_t>& data) {
 	
 #endif
 	
-#ifdef __linux__
-	// Ensure that m_mem_fd is already created and open
-	if (m_mem_fd == -1) {
-		std::cerr << "Memory file is not initialized." << std::endl;
-		return;
-	}
-	
-	// Overwrite the existing memory file with new shared object data
-	if (ftruncate(m_mem_fd, so_size) == -1) {
-		std::cerr << "Failed to truncate memfd: " << strerror(errno) << std::endl;
-		return;
-	}
-	
-	ssize_t written = write(m_mem_fd, data.data() + offset, so_size);
-	if (written != static_cast<ssize_t>(so_size)) {
-		std::cerr << "Failed to write all data to memfd: " << strerror(errno) << std::endl;
-		return;
-	}
-	
-	// Reload the shared object
-	std::string fd_path = "/proc/self/fd/" + std::to_string(m_mem_fd);
-	mSharedObjectHandle = dlopen(fd_path.c_str(), RTLD_NOW);
-	if (!mSharedObjectHandle) {
-		std::cerr << "dlopen failed: " << dlerror() << std::endl;
-		return;
-	}
-	
-#elif defined(__APPLE__)
-	// Implement fdlopen on macOS by writing to a temporary file and loading it
-	if (!data.empty()) {
-		// Use the fdlopen function to load the dylib from memory
-		void* handle = fdlopen(data.data() + offset, so_size);
-		if (!handle) {
-			const char* error = dlerror();
-			
-			std::string error_string = error != nullptr ? error : "";
-			std::cerr << "fdlopen failed: " << error_string << std::endl;
+	auto copiableData = data;
+	wasmtime::Span<uint8_t> span(copiableData.data() + offset, copiableData.size() - offset);
+	try {
+		// Compile the WebAssembly module
+		auto compile_result = wasmtime::Module::compile(mWasmEngine, span);
+		if (!compile_result) {
+			std::cerr << "Failed to compile WebAssembly module" << std::endl;
+			// Handle error as needed
 			return;
 		}
-		mSharedObjectHandle = handle;
-	}
-#endif // Platform-specific loading
-	
-	// Clear any existing errors
-	dlerror();
-	
-	// Get the load_cartridge function
-	typedef ILoadedCartridge* (*LoadCartridgeFunc)(ICartridge& cartridge);
-	LoadCartridgeFunc load_cartridge = (LoadCartridgeFunc)dlsym(mSharedObjectHandle, "load_cartridge");
-	const char* dlsym_error = dlerror();
-	if (dlsym_error) {
-		std::cerr << "Failed to find load_cartridge function: " << dlsym_error << std::endl;
-#ifdef _WIN32
-		FreeLibrary(mSharedObjectHandle);
-#else
-		dlclose(mSharedObjectHandle);
-#endif
-		mSharedObjectHandle = nullptr;
+		wasmtime::Module wasmModule = compile_result.unwrap();
+		std::cout << "Instantiating module...\n";
 		
-#ifdef __linux__
-		// Optionally, handle memfd reset if needed
-#elif defined(__APPLE__)
-		// Cleanup temporary file if fdlopen was used
-		if (!m_temp_so_path.empty()) {
-			std::remove(m_temp_so_path.c_str());
-			m_temp_so_path.clear();
+		// Configure WASI and store it within our `wasmtime_store_t`
+		wasmtime::WasiConfig wasi;
+		wasi.preopen_dir("..", "/");
+		wasi.inherit_argv();
+		wasi.inherit_env();
+		wasi.inherit_stdin();
+		wasi.inherit_stdout();
+		wasi.inherit_stderr();
+		auto wasi_set_result = mStore.context().set_wasi(std::move(wasi));
+		if (!wasi_set_result) {
+			std::cerr << "Failed to set WASI configuration" << std::endl;
+			// Handle error as needed
+			return;
 		}
-#endif
+		
+		// Create our linker and define WASI
+		wasmtime::Linker linker(mWasmEngine);
+		auto define_wasi_result = linker.define_wasi();
+		if (!define_wasi_result) {
+			std::cerr << "Failed to define WASI in linker" << std::endl;
+			// Handle error as needed
+			return;
+		}
+		
+		// Instantiate the module
+		auto instantiate_result = linker.instantiate(mStore, wasmModule);
+		if (!instantiate_result) {
+			std::cerr << "Failed to instantiate module" << std::endl;
+			// Handle error as needed
+			return;
+		}
+		mWasmInstance = std::make_shared<wasmtime::Instance>(std::move(instantiate_result.unwrap()));
+		
+		// Get the 'load_cartridge' function
+		auto load_cartridge_result = mWasmInstance->get(mStore, "load_cartridge");
+		if (!load_cartridge_result) {
+			std::cerr << "Failed to get 'load_cartridge' function from the module." << std::endl;
+			// Handle error as needed
+			return;
+		}
+		
+		if (!load_cartridge_result.has_value()) {
+			std::cerr << "'load_cartridge' is not a function in the module." << std::endl;
+			return;
+		}
+		
+		wasmtime::Func load_cartridge = std::get<wasmtime::Func>(load_cartridge_result.value());
+		
+		// Call the 'load_cartridge' function asynchronously
+		nanogui::async([this, load_cartridge]() {
+			try {
+				
+				wasmtime::ExternRef externref(&mCartridge);
+
+				auto results = load_cartridge.call(mStore, {externref}).unwrap();
+				
+				wasmtime::ExternRef val = *results[0].externref();
+
+				ILoadedCartridge* loadedCartridge = std::any_cast<ILoadedCartridge*>(val.data());
+				
+				mLoadedCartridge = std::unique_ptr<ILoadedCartridge>(loadedCartridge); // load new cartridge
+				
+				mOnCartridgeInsertedCallback(*mLoadedCartridge); // insert cartridge
+
+			} catch (const std::exception& e) {
+				std::cerr << "Exception occurred while executing 'load_cartridge': " << e.what() << std::endl;
+				// Handle error as needed
+			} catch (...) {
+				std::cerr << "Unknown exception occurred while executing 'load_cartridge'." << std::endl;
+				// Handle error as needed
+			}
+		});
+		
+	} catch (const std::exception& e) {
+		std::cerr << "Standard exception: " << e.what() << std::endl;
+		// Handle error as needed
+		return;
+	} catch (...) {
+		std::cerr << "Unknown exception occurred during module compilation and instantiation." << std::endl;
+		// Handle error as needed
 		return;
 	}
-	
-	// Call the load_cartridge function in the main thread
-	nanogui::async([this, load_cartridge](){
-		try {
-			mLoadedCartridge = std::unique_ptr<ILoadedCartridge>(load_cartridge(mCartridge)); // load new cartridge
-			mOnCartridgeInsertedCallback(*mLoadedCartridge); // insert cartridge
-		} catch (...) {
-			std::cerr << "Exception occurred while executing load_cartridge." << std::endl;
-#ifdef _WIN32
-			FreeLibrary(mSharedObjectHandle);
-#else
-			dlclose(mSharedObjectHandle);
-#endif
-			mSharedObjectHandle = nullptr;
-			
-#ifdef __linux__
-			// Optionally, handle memfd reset if needed
-#elif defined(__APPLE__)
-			// Cleanup temporary file if fdlopen was used
-			if (!m_temp_so_path.empty()) {
-				std::remove(m_temp_so_path.c_str());
-				m_temp_so_path.clear();
-			}
-#endif
-		}
-	});
-	
-	// The shared object remains loaded until a new one is loaded or the server stops.
 }
 
 void CartridgeBridge::initialize_memory() {
@@ -407,13 +390,6 @@ void CartridgeBridge::erase_memory(bool force) {
 	}
 	
 	if (!m_temp_so_path.empty() && force) { // Only unlink if forced
-		// Detach and unload the shared object
-		if (dlclose(mSharedObjectHandle)) {
-			std::cerr << "Failed to dlclose shared object: " << dlerror() << std::endl;
-		} else {
-			std::cout << "Shared object unloaded successfully: " << m_temp_so_path << std::endl;
-		}
-		
 		// Remove the temporary dylib file
 		if (std::remove(m_temp_so_path.c_str()) != 0) {
 			std::cerr << "Failed to remove temporary dylib file: " << m_temp_so_path << std::endl;
