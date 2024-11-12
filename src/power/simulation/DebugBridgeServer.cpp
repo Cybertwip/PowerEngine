@@ -206,7 +206,7 @@ void CartridgeBridge::execute_elf(const std::vector<uint8_t>& data) {
 				
 				std::async([this, binary_data]() {
 					mVirtualMachine.start(std::move(binary_data), reinterpret_cast<uint64_t>(&mCartridge)); // start the machine
-				});
+				}).detach();
 
 				nanogui::async([this](){
 					// one frame to warmup the virtual machine thread
