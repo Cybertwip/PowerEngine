@@ -5,19 +5,17 @@
 
 #include <libriscv/rsp_server.hpp>
 
-std::atomic<bool> s_running;
+std::unique_ptr<riscv::RSPClient<riscv::RISCV64>> SDebugClient;
 
 template <int W>
 void gdb_listen(uint16_t port, riscv::Machine<W>& machine)
 {
 	printf("GDB server is listening on localhost:%u\n", port);
 	riscv::RSP<W> server { machine, port };
-	auto client = server.accept();
-	if (client != nullptr) {
+	SDebugClient = server.accept();
+	if (SDebugClient != nullptr) {
 		printf("GDB connected\n");
-		while(s_running.load()) {
-			client->process_one();
-		}
+		while (SDebugClient->process_one());
 	}
 	
 	// Finish the *remainder* of the program
@@ -58,8 +56,6 @@ void VirtualMachine::start(std::vector<uint8_t> executable_data, uint64_t loader
 	
 	mMachine->memory.memcpy_out(&mCartridgeHook, cartridgePtr, sizeof(CartridgeHook));
 	
-	s_running.store(true);
-	
 	// start debugging session
 	mDebugThread = std::thread([this]() {
 		gdb_listen(2159, *mMachine);
@@ -74,11 +70,9 @@ void VirtualMachine::reset() {
 }
 
 void VirtualMachine::stop() {
-	s_running.store(false);
-
 	if (mMachine) {
 		mMachine->stop();
-	}	
+	}
 }
 
 void VirtualMachine::update() {
