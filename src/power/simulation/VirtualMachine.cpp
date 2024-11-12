@@ -39,22 +39,25 @@ void VirtualMachine::start(std::vector<uint8_t> executable_data, uint64_t loader
 	mRunning.store(true);
 	
 	// start debugging session
-	
 	std::thread([this](){
 		gdb_listen(2159);
-	});
+	}).detach();
 }
 
 void VirtualMachine::gdb_listen(uint16_t port)
 {
 	printf("GDB server is listening on localhost:%u\n", port);
+	mMachineMutex.lock();
 	riscv::RSP<riscv::RISCV64> server { *mMachine, port };
+	mMachineMutex.unlock();
 	mDebugClient = server.accept();
+
 	if (mDebugClient != nullptr) {
 		printf("GDB connected\n");
 		while (mRunning.load()) {
-			std::lock_guard<std::mutex> lock(mMachineMutex);
+			mMachineMutex.lock();
 			mDebugClient->process_one();
+			mMachineMutex.unlock();
 		}
 	}
 }
