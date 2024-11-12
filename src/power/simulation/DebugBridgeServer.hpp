@@ -26,6 +26,7 @@ class VirtualMachine;
 class CartridgeBridge {
 public:
 	CartridgeBridge(uint16_t port,
+					VirtualMachine& virtualMachine,
 					ICartridge& cartridge,
 					CartridgeActorLoader& actorLoader,
 					std::function<void(std::optional<std::reference_wrapper<VirtualMachine>>)> onCartridgeInsertedCallback);
@@ -65,7 +66,7 @@ private:
 	std::function<void(std::optional<std::reference_wrapper<VirtualMachine>>)>  mOnVirtualMachineLoadedCallback;
 	
 	// Pointer to the currently loaded cartridge
-	std::unique_ptr<VirtualMachine> mVirtualMachine;
+	VirtualMachine& mVirtualMachine;
 	
 	// Reference to the cartridge interface
 	ICartridge& mCartridge;

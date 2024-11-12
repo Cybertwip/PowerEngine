@@ -34,8 +34,8 @@
 // Define INITIAL_MEMORY_SIZE for elf memory on macOS
 #define INITIAL_MEMORY_SIZE (10 * 1024 * 1024) // 10 MB, adjust as needed
 
-CartridgeBridge::CartridgeBridge(uint16_t port, ICartridge& cartridge, CartridgeActorLoader& actorLoader, std::function<void(std::optional<std::reference_wrapper<VirtualMachine>>)> onCartridgeInsertedCallback)
-: m_port(port), mCartridge(cartridge), mActorLoader(actorLoader), mOnVirtualMachineLoadedCallback(onCartridgeInsertedCallback)
+CartridgeBridge::CartridgeBridge(uint16_t port, VirtualMachine& virtualMachine, ICartridge& cartridge, CartridgeActorLoader& actorLoader, std::function<void(std::optional<std::reference_wrapper<VirtualMachine>>)> onCartridgeInsertedCallback)
+: m_port(port), mVirtualMachine(virtualMachine), mCartridge(cartridge), mActorLoader(actorLoader), mOnVirtualMachineLoadedCallback(onCartridgeInsertedCallback)
 {
 	m_server.init_asio();
 	
@@ -207,11 +207,11 @@ void CartridgeBridge::execute_elf(const std::vector<uint8_t>& data) {
 			try {
 				mOnVirtualMachineLoadedCallback(std::nullopt); // Eject cartridge to prevent updating
 				
-				mVirtualMachine->start(std::move(binary_data), reinterpret_cast<uint64_t>(&mCartridge)); // start the machine
+				mVirtualMachine.start(std::move(binary_data), reinterpret_cast<uint64_t>(&mCartridge)); // start the machine
 			} catch (std::exception& ex) {
 				std::cerr << "Exception occurred while executing load_cartridge >> " << ex.what() << std::endl;
 				mOnVirtualMachineLoadedCallback(std::nullopt); // Eject cartridge to prevent updating
-				mVirtualMachine->reset();
+				mVirtualMachine.reset();
 			}
 		});
 	} else {

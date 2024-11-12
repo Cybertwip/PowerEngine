@@ -5,7 +5,7 @@
 // Definition of function_map
 std::unordered_map<uint64_t, FunctionHandler> function_map;
 
-VirtualMachine::VirtualMachine() {
+VirtualMachine::VirtualMachine() : mMachine(nullptr) {
 }
 
 VirtualMachine::~VirtualMachine() {
@@ -14,7 +14,7 @@ VirtualMachine::~VirtualMachine() {
 }
 
 void VirtualMachine::start(std::vector<uint8_t> executable_data, uint64_t loader_ptr) {
-	mMachine = std::move(std::make_unique<riscv::Machine<riscv::RISCV64>>(executable_data));
+	mMachine = std::make_unique<riscv::Machine<riscv::RISCV64>>(executable_data);
 		
 	// Set up Linux environment
 	mMachine->setup_linux({});
