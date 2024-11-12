@@ -6,7 +6,7 @@
 #include <libriscv/rsp_server.hpp>
 
 template <int W>
-void gdb_listen(uint16_t port, Machine<W>& machine)
+void gdb_listen(uint16_t port, riscv::Machine<W>& machine)
 {
 	printf("GDB server is listening on localhost:%u\n", port);
 	riscv::RSP<W> server { machine, port };
