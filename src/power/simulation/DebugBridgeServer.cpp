@@ -31,7 +31,7 @@
 #include <functional>
 #include <optional>
 
-// Define INITIAL_MEMORY_SIZE for shared memory on macOS
+// Define INITIAL_MEMORY_SIZE for elf memory on macOS
 #define INITIAL_MEMORY_SIZE (10 * 1024 * 1024) // 10 MB, adjust as needed
 
 CartridgeBridge::CartridgeBridge(uint16_t port, ICartridge& cartridge, CartridgeActorLoader& actorLoader, std::function<void(std::optional<std::reference_wrapper<VirtualMachine>>)> onCartridgeInsertedCallback)
@@ -147,7 +147,7 @@ void CartridgeBridge::on_message(websocketpp::connection_hdl hdl, server::messag
 		// Check for magic number 'SOLO' at the start (optional)
 		if (data.size() >= 4 && data[0] == 'S' && data[1] == 'O' && data[2] == 'L' && data[3] == 'O') {
 			execute_elf(data);
-			std::string ack = "Shared object executed successfully.";
+			std::string ack = "Elf object executed successfully.";
 			m_server.send(hdl, ack, websocketpp::frame::opcode::text);
 		} else {
 			// Assume it's a DebugCommand
@@ -176,7 +176,7 @@ DebugCommand CartridgeBridge::process_command(const DebugCommand& cmd) {
 }
 
 void CartridgeBridge::execute_elf(const std::vector<uint8_t>& data) {
-	// Existing shared object unloading logic
+	// Existing elf unloading logic
 	// If a cartridge was loaded, reset it
 	if (mVirtualMachine) {
 		mOnVirtualMachineLoadedCallback(std::nullopt); // Eject cartridge to prevent updating
@@ -192,28 +192,28 @@ void CartridgeBridge::execute_elf(const std::vector<uint8_t>& data) {
 	
 	size_t elf_size = data.size() - offset;
 	if (elf_size == 0) {
-		std::cerr << "No shared object data to execute." << std::endl;
+		std::cerr << "No elf data to execute." << std::endl;
 		return;
 	}
 	
 	if (!data.empty()) {
-		mVirtualMachine = std::make_unique<VirtualMachine>(data, reinterpret_cast<uint64_t>(&mCartridge));
+		
+		// Call the load_cartridge function in the main thread
+		nanogui::async([this, data](){
+			try {
+				mOnVirtualMachineLoadedCallback(std::nullopt); // Eject cartridge to prevent updating
+				
+				mVirtualMachine->start(data, reinterpret_cast<uint64_t>(&mCartridge)); // start the machine
+			} catch (...) {
+				std::cerr << "Exception occurred while executing load_cartridge." << std::endl;
+				mOnVirtualMachineLoadedCallback(std::nullopt); // Eject cartridge to prevent updating
+				mVirtualMachine->reset();
+			}
+		});
 	} else {
 		std::cerr << "Invalid ELF." << std::endl;
 		return;
 	}
 	
-	// Call the load_cartridge function in the main thread
-	nanogui::async([this](){
-		try {
-			mOnVirtualMachineLoadedCallback(std::nullopt); // Eject cartridge to prevent updating
-
-			mVirtualMachine->start(); // start the machine
-		} catch (...) {
-			std::cerr << "Exception occurred while executing load_cartridge." << std::endl;
-			mOnVirtualMachineLoadedCallback(std::nullopt); // Eject cartridge to prevent updating
-			mVirtualMachine.reset();
-		}
-	});
 }
 

@@ -240,8 +240,10 @@ class Application : public nanogui::DraggableScreen
 	
 	
 	AnimationTimeProvider mGlobalAnimationTimeProvider;
-	std::optional<std::reference_wrapper<VirtualMachine>> mLoadedVirtualMachine;
+	std::unique_ptr<VirtualMachine> mVirtualMachine;
 	
+	std::optional<std::reference_wrapper<VirtualMachine>> mLoadedVirtualMachine;
+
 	// Reversed unique_ptr declarations
 	std::unique_ptr<ICartridge> mCartridge;
 	std::unique_ptr<CartridgeActorLoader> mCartridgeActorLoader;

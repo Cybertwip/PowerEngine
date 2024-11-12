@@ -4,6 +4,7 @@
 #include <vector>
 #include <string>
 #include <functional>
+#include <memory>
 #include <unordered_map>
 #include <any>
 #include <stdexcept>
@@ -84,10 +85,10 @@ void setup_syscall_handler(riscv::Machine<W>& machine) {
 
 class VirtualMachine {
 public:
-	VirtualMachine(const std::vector<uint8_t>& executable_data, uint64_t loader_ptr);
+	VirtualMachine();
 	~VirtualMachine();
 	
-	void start();
+	void start(const std::vector<uint8_t>& executable_data, uint64_t loader_ptr);
 	void reset();
 	void stop();
 	void update();
@@ -97,7 +98,6 @@ public:
 						   std::function<void(uint64_t, const std::vector<std::any>&, std::vector<unsigned char>&)> func);
 	
 private:
-	riscv::Machine<riscv::RISCV64> mMachine;
-	uint64_t mLoaderPtr;
+	std::unique_ptr<riscv::Machine<riscv::RISCV64>> mMachine;
 	CartridgeHook mCartridgeHook;
 };

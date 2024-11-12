@@ -1,6 +1,6 @@
 #pragma once
 
-#include "simulation/PrimitiveShape.hpp"
+#include "simulation/Primitive.hpp"
 
 #include <memory>
 #include <string>

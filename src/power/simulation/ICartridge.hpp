@@ -12,6 +12,6 @@ public:
 	
 	virtual ~ICartridge() = default;
 	
-	virtual ICartridgeActorLoader& GetActorLoader() = 0;
-	virtual ICameraManager& GetCameraManager() = 0;
+	virtual ICartridgeActorLoader* GetActorLoader() = 0;
+//	virtual ICameraManager& GetCameraManager() = 0;
 };

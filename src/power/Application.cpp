@@ -160,9 +160,11 @@ void Application::initialize() {
 	
 	DraggableScreen::initialize();
 	
-	mCartridgeActorLoader = std::make_unique<CartridgeActorLoader>( *mMeshActorLoader, *mActorManager, *mUiCommon->hierarchy_panel(), mGlobalAnimationTimeProvider, *mMeshShader, *mSkinnedShader);
+	mVirtualMachine = std::make_unique<VirtualMachine>();
 	
-	mCartridge = std::make_unique<Cartridge>(*mCartridgeActorLoader, *mCameraManager);
+	mCartridgeActorLoader = std::make_unique<CartridgeActorLoader>(*mVirtualMachine, *mMeshActorLoader, *mActorManager, *mUiCommon->hierarchy_panel(), mGlobalAnimationTimeProvider, *mMeshShader, *mSkinnedShader);
+	
+	mCartridge = std::make_unique<Cartridge>(*mVirtualMachine, *mCartridgeActorLoader, *mCameraManager);
 
 	mCartridgeBridge = std::make_unique<CartridgeBridge>(9003, *mCartridge, *mCartridgeActorLoader, [this](std::optional<std::reference_wrapper<VirtualMachine>> virtualMachine) {
 		mLoadedVirtualMachine = virtualMachine;
