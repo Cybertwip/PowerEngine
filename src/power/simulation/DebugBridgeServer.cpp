@@ -203,9 +203,7 @@ void CartridgeBridge::execute_elf(const std::vector<uint8_t>& data) {
 		nanogui::async([this, binary_data = std::move(elf_data)](){
 			try {
 				mOnVirtualMachineLoadedCallback(std::nullopt); // Eject cartridge to prevent updating
-				std::async(std::launch::async, [this, binary_data]() {
-					mVirtualMachine.start(std::move(binary_data), reinterpret_cast<uint64_t>(&mCartridge));
-				});
+				mVirtualMachine.start(std::move(binary_data), reinterpret_cast<uint64_t>(&mCartridge));
 
 				nanogui::async([this](){
 					// one frame to warmup the virtual machine thread

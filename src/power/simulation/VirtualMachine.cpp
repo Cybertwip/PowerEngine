@@ -36,8 +36,13 @@ void VirtualMachine::start(std::vector<uint8_t> executable_data, uint64_t loader
 	
 	mMachine->memory.memcpy_out(&mCartridgeHook, cartridgePtr, sizeof(CartridgeHook));
 	
+	mRunning.store(true);
+	
 	// start debugging session
-	gdb_listen(2159);
+	
+	std::thread([this](){
+		gdb_listen(2159);
+	})
 }
 
 void VirtualMachine::gdb_listen(uint16_t port)
@@ -47,12 +52,11 @@ void VirtualMachine::gdb_listen(uint16_t port)
 	mDebugClient = server.accept();
 	if (mDebugClient != nullptr) {
 		printf("GDB connected\n");
-		while (mDebugClient->process_one());
+		while (mRunning.load()) {
+			std::lock_guard<std::mutex> lock(mMachineMutex);
+			mDebugClient->process_one();
+		}
 	}
-	
-	// Finish the *remainder* of the program
-	if (!mMachine->stopped())
-		mMachine->simulate(/* machine.max_instructions() */);
 }
 
 
@@ -64,13 +68,15 @@ void VirtualMachine::reset() {
 }
 
 void VirtualMachine::stop() {
-
+	mRunning.store(false);
+	
 	if (mMachine) {
 		mMachine->stop();
 	}
 }
 
 void VirtualMachine::update() {
+	std::lock_guard<std::mutex> lock(mMachineMutex);
 
 	if (mMachine) {
 		mMachine->vmcall(mCartridgeHook.updater_function_ptr, mCartridgeHook.cartridge_ptr);
