@@ -62,53 +62,42 @@ std::unique_ptr<RSPClient<W>> RSP<W>::accept(int timeout_secs)
 	FD_SET(server_fd, &fds);
 	
 	const int ret = select(server_fd + 1, &fds, NULL, NULL, &tv);
-	if (ret < 0) {
-		perror("select failed");
-		return nullptr;
-	}
-	if (ret == 0) {
-		// Timeout, no incoming connection
+	if (ret <= 0) {
 		return nullptr;
 	}
 	
 	struct sockaddr_in address;
-	socklen_t addrlen = sizeof(address);
-	int sockfd = ::accept(server_fd, (struct sockaddr*) &address, &addrlen);
+	int addrlen = sizeof(address);
+	int sockfd = ::accept(server_fd, (struct sockaddr*) &address,
+						  (socklen_t*) &addrlen);
 	if (sockfd < 0) {
-		if (errno != EWOULDBLOCK && errno != EAGAIN) {
-			perror("accept failed");
-		}
 		return nullptr;
 	}
-	
-	// Set the client socket to non-blocking
-#ifndef SOCK_NONBLOCK
-	int flags = fcntl(sockfd, F_GETFL, 0);
-	if (flags == -1) {
-		perror("fcntl F_GETFL on client");
-		close(sockfd);
-		return nullptr;
-	}
-	if (fcntl(sockfd, F_SETFL, flags | O_NONBLOCK) == -1) {
-		perror("fcntl F_SETFL O_NONBLOCK on client");
-		close(sockfd);
-		return nullptr;
-	}
-#endif
-	
 	// Disable Nagle
 	int opt = 1;
-	if (setsockopt(sockfd, IPPROTO_TCP, TCP_NODELAY, &opt, sizeof(opt)) < 0) {
-		perror("setsockopt TCP_NODELAY failed");
+	if (setsockopt(sockfd, IPPROTO_TCP, TCP_NODELAY, &opt, sizeof(opt))) {
+		close(sockfd);
+		return nullptr;
+	}
+	// Enable receive timeout
+	tv = {
+		.tv_sec = 60,
+		.tv_usec = 0
+	};
+	if (setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv)) < 0) {
 		close(sockfd);
 		return nullptr;
 	}
 	
-	// Optionally, you can set timeouts or handle them manually in your polling
+	// Enable send timeout
+	if (setsockopt(sockfd, SOL_SOCKET, SO_SNDTIMEO, &tv, sizeof(tv)) < 0) {
+		close(sockfd);
+		return nullptr;
+	}
 	
 	return std::make_unique<RSPClient<W>>(m_machine, sockfd);
-
 }
+
 template <int W> inline
 RSP<W>::~RSP() {
 	close(server_fd);

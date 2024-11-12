@@ -29,6 +29,9 @@ void VirtualMachine::start(std::vector<uint8_t> executable_data, uint64_t loader
 	
 	// Set up the custom syscall handler
 	setup_syscall_handler(*mMachine);
+	
+	static inline std::function<const instruction_t& (format_t)> on_unimplemented_instruction;
+
 
 	uint64_t cartridgePtr = mMachine->preempt(MAX_CALL_INSTR, "load_cartridge", loader_ptr);
 	
