@@ -53,7 +53,7 @@ template <int W>
 struct RSP
 {
 	// Wait for a connection for @timeout_secs
-	std::unique_ptr<RSPClient<W>> accept(int timeout_secs = 30);
+	std::unique_ptr<RSPClient<W>> accept(int timeout_secs = 0); // timeout_secs = 0 for non-blocking
     socket_fd_type  fd() const noexcept { return server_fd; }
 
 	RSP(riscv::Machine<W>&, uint16_t);

@@ -17,8 +17,6 @@ VirtualMachine::~VirtualMachine() {
 }
 
 void VirtualMachine::start(std::vector<uint8_t> executable_data, uint64_t loader_ptr) {
-
-	
 	stop();
 	
 	mMachine = std::make_unique<riscv::Machine<riscv::RISCV64>>(executable_data);
@@ -36,54 +34,53 @@ void VirtualMachine::start(std::vector<uint8_t> executable_data, uint64_t loader
 	
 	mMachine->memory.memcpy_out(&mCartridgeHook, cartridgePtr, sizeof(CartridgeHook));
 	
-	mRunning.store(true);
-	
 	// start debugging session
-	std::thread([this](){
-		gdb_listen(2159);
-	}).detach();
+	
+	printf("GDB server is listening on localhost:%u\n", 2159);
+	mDebugServer = std::make_unique<riscv::RSP<riscv::RISCV64>>(*mMachine, 2159);
+	
+	gdb_poll();
 }
 
-void VirtualMachine::gdb_listen(uint16_t port)
+void VirtualMachine::gdb_poll()
 {
-	printf("GDB server is listening on localhost:%u\n", port);
-	mMachineMutex.lock();
-	riscv::RSP<riscv::RISCV64> server { *mMachine, port };
-	mMachineMutex.unlock();
-	mDebugClient = server.accept();
-
-	if (mDebugClient != nullptr) {
+	// Accept new client if any
+	auto client = mDebugServer->accept(0); // 0 timeout for non-blocking
+	if (client) {
 		printf("GDB connected\n");
-		while (mRunning.load()) {
-			mMachineMutex.lock();
-			mDebugClient->process_one();
-			mMachineMutex.unlock();
+		mDebugClient = std::move(client);
+	}
+	
+	// Process existing client
+	if (mDebugClient && !mDebugClient->is_closed()) {
+		while (mDebugClient->process_one()) {
+			// Continue processing available data
 		}
 	}
 }
 
 
-void VirtualMachine::reset() {
 
+void VirtualMachine::reset() {
 	if (mMachine) {
 		mMachine->reset();
 	}
 }
 
 void VirtualMachine::stop() {
-	mRunning.store(false);
-	
 	if (mMachine) {
 		mMachine->stop();
 	}
 }
 
 void VirtualMachine::update() {
-	std::lock_guard<std::mutex> lock(mMachineMutex);
-
 	if (mMachine) {
 		mMachine->vmcall(mCartridgeHook.updater_function_ptr, mCartridgeHook.cartridge_ptr);
 	}
+	
+	// Poll GDB in each update cycle
+	gdb_poll();
+
 }
 
 void VirtualMachine::register_callback(uint64_t this_ptr, const std::string& function_name,

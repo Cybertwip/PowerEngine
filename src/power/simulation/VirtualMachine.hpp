@@ -91,7 +91,7 @@ public:
 	~VirtualMachine();
 	
 	void start(std::vector<uint8_t> executable_data, uint64_t loader_ptr);
-	void gdb_listen(uint16_t port);
+	void gdb_poll();
 	void reset();
 	void stop();
 	void update();
@@ -103,8 +103,6 @@ public:
 private:
 	std::unique_ptr<riscv::Machine<riscv::RISCV64>> mMachine;
 	CartridgeHook mCartridgeHook;
+	std::unique_ptr<riscv::RSP<riscv::RISCV64>> mDebugServer;
 	std::unique_ptr<riscv::RSPClient<riscv::RISCV64>> mDebugClient;
-	
-	std::mutex mMachineMutex;
-	std::atomic<bool> mRunning;
 };
