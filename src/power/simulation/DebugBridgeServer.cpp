@@ -36,7 +36,7 @@
 #define INITIAL_MEMORY_SIZE (10 * 1024 * 1024) // 10 MB, adjust as needed
 
 CartridgeBridge::CartridgeBridge(uint16_t port, ICartridge& cartridge, CartridgeActorLoader& actorLoader, std::function<void(std::optional<std::reference_wrapper<ILoadedCartridge>>)> onCartridgeInsertedCallback)
-: m_port(port), mCartridge(cartridge), mActorLoader(actorLoader), mOnCartridgeInsertedCallback(onCartridgeInsertedCallback),
+: m_port(port), mCartridge(cartridge), mActorLoader(actorLoader), mOnVirtualMachineLoadedCallback(onCartridgeInsertedCallback)
 {
 	m_server.init_asio();
 	
@@ -79,9 +79,6 @@ void CartridgeBridge::run() {
 		
 		std::cout << "DebugBridgeServer is running on port " << m_port << std::endl;
 		
-		// Initialize memory mappings at server start
-		initialize_memory();
-		
 		m_running.store(true);
 		m_thread = std::thread([this]() {
 			try {
@@ -121,9 +118,9 @@ void CartridgeBridge::stop() {
 			m_thread.join();
 		}
 		
-		// Cleanup memory mappings when stopping the server
-		erase_memory(true); // Force erase
-		
+		mOnVirtualMachineLoadedCallback(std::nullopt); // Eject cartridge to prevent updating
+		mVirtualMachine.reset();
+
 		std::cout << "DebugBridgeServer has stopped." << std::endl;
 	} catch (const websocketpp::exception& e) {
 		std::cerr << "WebSocket++ exception on stop: " << e.what() << std::endl;
@@ -150,11 +147,7 @@ void CartridgeBridge::on_message(websocketpp::connection_hdl hdl, server::messag
 		
 		// Check for magic number 'SOLO' at the start (optional)
 		if (data.size() >= 4 && data[0] == 'S' && data[1] == 'O' && data[2] == 'L' && data[3] == 'O') {
-			// Shared Object execution
-			// Before loading a new cartridge, erase/eject the existing memory mapping
-			erase_memory(true); // Force erase
-			
-			execute_shared_object(data);
+			execute_elf(data);
 			std::string ack = "Shared object executed successfully.";
 			m_server.send(hdl, ack, websocketpp::frame::opcode::text);
 		} else {
@@ -212,7 +205,7 @@ void CartridgeBridge::execute_elf(const std::vector<uint8_t>& data) {
 	}
 	
 	// Call the load_cartridge function in the main thread
-	nanogui::async([this, load_cartridge](){
+	nanogui::async([this](){
 		try {
 			mOnVirtualMachineLoadedCallback(std::nullopt); // Eject cartridge to prevent updating
 
@@ -223,7 +216,5 @@ void CartridgeBridge::execute_elf(const std::vector<uint8_t>& data) {
 			mVirtualMachine.reset();
 		}
 	});
-	
-	// The shared object remains loaded until a new one is loaded or the server stops.
 }
 
