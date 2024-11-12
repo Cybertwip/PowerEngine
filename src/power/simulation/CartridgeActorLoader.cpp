@@ -23,13 +23,14 @@ mVirtualMachine(virtualMachine)
 		if (args.size() != 1) {
 			throw std::runtime_error("Argument count mismatch for multiply");
 		}
-		PrimitiveShape primitiveShape = std::any_cast<PrimitiveShape>(args[0]);
+		PrimitiveShape primitiveShape = static_cast<PrimitiveShape>(std::any_cast<uint64_t>(args[0]));
 		auto& instance = *reinterpret_cast<CartridgeActorLoader*>(this_ptr);
-		Primitive* result = instance.create_actor(primitiveShape);
+		
+		uint64_t result = reinterpret_cast<uint64_t>(instance.create_actor(primitiveShape));
 		
 		// Copy result into output_buffer
 		unsigned char* data_ptr = reinterpret_cast<unsigned char*>(&result);
-		std::memcpy(output_buffer.data(), data_ptr, sizeof(int));
+		std::memcpy(output_buffer.data(), data_ptr, sizeof(uint64_t));
 	});
 }
 

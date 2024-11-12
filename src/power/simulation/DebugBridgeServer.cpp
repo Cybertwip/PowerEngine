@@ -179,7 +179,6 @@ void CartridgeBridge::execute_elf(const std::vector<uint8_t>& data) {
 	// Existing elf unloading logic
 	// If a cartridge was loaded, reset it
 	mOnVirtualMachineLoadedCallback(std::nullopt); // Eject cartridge to prevent updating
-	mVirtualMachine.reset();
 	mActorLoader.cleanup();
 
 	// Prepare data by removing the 'SOLO' magic number if present
