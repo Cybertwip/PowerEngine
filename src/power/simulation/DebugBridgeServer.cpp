@@ -36,19 +36,6 @@
 
 CartridgeBridge::CartridgeBridge(uint16_t port, ICartridge& cartridge, CartridgeActorLoader& actorLoader, std::function<void(std::optional<std::reference_wrapper<ILoadedCartridge>>)> onCartridgeInsertedCallback)
 : m_port(port), mCartridge(cartridge), mActorLoader(actorLoader), mOnCartridgeInsertedCallback(onCartridgeInsertedCallback),
-#ifdef __linux__
-m_mem_fd(-1),
-#elif defined(__APPLE__)
-m_mem_fd(-1),
-m_mapped_memory(nullptr),
-m_temp_so_path(""),
-#endif
-mLoadedCartridge(nullptr),
-#ifdef _WIN32
-mSharedObjectHandle(nullptr) // Initialize for Windows
-#else
-mSharedObjectHandle(nullptr) // Initialize for Unix-like systems
-#endif
 {
 	m_server.init_asio();
 	
@@ -195,275 +182,47 @@ DebugCommand CartridgeBridge::process_command(const DebugCommand& cmd) {
 	return DebugCommand(DebugCommand::CommandType::RESPONSE, "Unknown command type.");
 }
 
-void CartridgeBridge::execute_shared_object(const std::vector<uint8_t>& data) {
+void CartridgeBridge::execute_elf(const std::vector<uint8_t>& data) {
 	// Existing shared object unloading logic
-	if (mSharedObjectHandle) {
-#ifdef _WIN32
-		FreeLibrary(mSharedObjectHandle);
-#else
-		dlclose(mSharedObjectHandle);
-#endif
-		mSharedObjectHandle = nullptr;
-		std::cout << "Previous shared object unloaded successfully." << std::endl;
+	// If a cartridge was loaded, reset it
+	if (mVirtualMachine) {
+		mOnVirtualMachineLoadedCallback(std::nullopt); // Eject cartridge to prevent updating
+		mVirtualMachine.reset();
+		mActorLoader.cleanup();
 	}
-	
-	// Platform-specific shared object loading
-#ifdef _WIN32
-	// [Windows-specific loading code remains unchanged]
-#elif defined(__linux__) || defined(__APPLE__)
+
 	// Prepare data by removing the 'SOLO' magic number if present
 	size_t offset = 0;
 	if (data.size() >= 4 && data[0] == 'S' && data[1] == 'O' && data[2] == 'L' && data[3] == 'O') {
 		offset = 4;
 	}
 	
-	size_t so_size = data.size() - offset;
-	if (so_size == 0) {
+	size_t elf_size = data.size() - offset;
+	if (elf_size == 0) {
 		std::cerr << "No shared object data to execute." << std::endl;
 		return;
 	}
 	
-#endif
-	
-#ifdef __linux__
-	// Ensure that m_mem_fd is already created and open
-	if (m_mem_fd == -1) {
-		std::cerr << "Memory file is not initialized." << std::endl;
-		return;
-	}
-	
-	// Overwrite the existing memory file with new shared object data
-	if (ftruncate(m_mem_fd, so_size) == -1) {
-		std::cerr << "Failed to truncate memfd: " << strerror(errno) << std::endl;
-		return;
-	}
-	
-	ssize_t written = write(m_mem_fd, data.data() + offset, so_size);
-	if (written != static_cast<ssize_t>(so_size)) {
-		std::cerr << "Failed to write all data to memfd: " << strerror(errno) << std::endl;
-		return;
-	}
-	
-	// Reload the shared object
-	std::string fd_path = "/proc/self/fd/" + std::to_string(m_mem_fd);
-	mSharedObjectHandle = dlopen(fd_path.c_str(), RTLD_NOW);
-	if (!mSharedObjectHandle) {
-		std::cerr << "dlopen failed: " << dlerror() << std::endl;
-		return;
-	}
-	
-#elif defined(__APPLE__)
-	// Implement fdlopen on macOS by writing to a temporary file and loading it
 	if (!data.empty()) {
-		// Use the fdlopen function to load the dylib from memory
-		void* handle = fdlopen(data.data() + offset, so_size);
-		if (!handle) {
-			const char* error = dlerror();
-			
-			std::string error_string = error != nullptr ? error : "";
-			std::cerr << "fdlopen failed: " << error_string << std::endl;
-			return;
-		}
-		mSharedObjectHandle = handle;
-	}
-#endif // Platform-specific loading
-	
-	// Clear any existing errors
-	dlerror();
-	
-	// Get the load_cartridge function
-	typedef ILoadedCartridge* (*LoadCartridgeFunc)(ICartridge& cartridge);
-	LoadCartridgeFunc load_cartridge = (LoadCartridgeFunc)dlsym(mSharedObjectHandle, "load_cartridge");
-	const char* dlsym_error = dlerror();
-	if (dlsym_error) {
-		std::cerr << "Failed to find load_cartridge function: " << dlsym_error << std::endl;
-#ifdef _WIN32
-		FreeLibrary(mSharedObjectHandle);
-#else
-		dlclose(mSharedObjectHandle);
-#endif
-		mSharedObjectHandle = nullptr;
-		
-#ifdef __linux__
-		// Optionally, handle memfd reset if needed
-#elif defined(__APPLE__)
-		// Cleanup temporary file if fdlopen was used
-		if (!m_temp_so_path.empty()) {
-			std::remove(m_temp_so_path.c_str());
-			m_temp_so_path.clear();
-		}
-#endif
+		mVirtualMachine = std::make_unique<VirtualMachine>(data, reinterpret_cast<uint64_t>(&mCartridge));
+	} else {
+		std::cerr << "Invalid ELF." << std::endl;
 		return;
 	}
 	
 	// Call the load_cartridge function in the main thread
 	nanogui::async([this, load_cartridge](){
 		try {
-			mLoadedCartridge = std::unique_ptr<ILoadedCartridge>(load_cartridge(mCartridge)); // load new cartridge
-			mOnCartridgeInsertedCallback(*mLoadedCartridge); // insert cartridge
+			mOnVirtualMachineLoadedCallback(std::nullopt); // Eject cartridge to prevent updating
+
+			mVirtualMachine->start(); // start the machine
 		} catch (...) {
 			std::cerr << "Exception occurred while executing load_cartridge." << std::endl;
-#ifdef _WIN32
-			FreeLibrary(mSharedObjectHandle);
-#else
-			dlclose(mSharedObjectHandle);
-#endif
-			mSharedObjectHandle = nullptr;
-			
-#ifdef __linux__
-			// Optionally, handle memfd reset if needed
-#elif defined(__APPLE__)
-			// Cleanup temporary file if fdlopen was used
-			if (!m_temp_so_path.empty()) {
-				std::remove(m_temp_so_path.c_str());
-				m_temp_so_path.clear();
-			}
-#endif
+			mOnVirtualMachineLoadedCallback(std::nullopt); // Eject cartridge to prevent updating
+			mVirtualMachine.reset();
 		}
 	});
 	
 	// The shared object remains loaded until a new one is loaded or the server stops.
 }
 
-void CartridgeBridge::initialize_memory() {
-#ifdef __linux__
-	if (m_mem_fd == -1) { // Check if mem_fd is already created
-		m_mem_fd = memfd_create("initial_memory", MFD_CLOEXEC);
-		if (m_mem_fd == -1) {
-			std::cerr << "memfd_create failed: " << strerror(errno) << std::endl;
-			// Handle error as needed
-		}
-		
-		// Optionally, set up the memory file as needed
-	}
-#elif defined(__APPLE__)
-	// Define a unique shared memory name
-	const char* shm_name = "/cartridge_bridge_shm";
-	
-	// Create or open the shared memory object
-	m_mem_fd = shm_open(shm_name, O_CREAT | O_RDWR, 0600);
-	if (m_mem_fd == -1) {
-		std::cerr << "shm_open failed: " << strerror(errno) << std::endl;
-		// Handle error as needed
-		return;
-	}
-	
-	// Set the size of the shared memory object
-	if (ftruncate(m_mem_fd, INITIAL_MEMORY_SIZE) == -1) {
-		std::cerr << "ftruncate failed: " << strerror(errno) << std::endl;
-		close(m_mem_fd);
-		shm_unlink(shm_name);
-		// Handle error as needed
-		return;
-	}
-	
-	// Map the shared memory object into the process's address space
-	m_mapped_memory = mmap(nullptr, INITIAL_MEMORY_SIZE, PROT_READ | PROT_WRITE, MAP_SHARED, m_mem_fd, 0);
-	if (m_mapped_memory == MAP_FAILED) {
-		std::cerr << "mmap failed: " << strerror(errno) << std::endl;
-		close(m_mem_fd);
-		shm_unlink(shm_name);
-		// Handle error as needed
-		return;
-	}
-	
-	// Optionally, initialize the memory region
-	std::memset(m_mapped_memory, 0, INITIAL_MEMORY_SIZE);
-	
-	std::cout << "Shared memory initialized successfully on macOS." << std::endl;
-#endif
-}
-
-void CartridgeBridge::erase_memory(bool force) {
-	// If a cartridge was loaded, reset it
-	if (mLoadedCartridge) {
-		mOnCartridgeInsertedCallback(std::nullopt); // Eject cartridge to prevent updating
-		mActorLoader.cleanup();
-		mLoadedCartridge.reset(); // Release cartridge memory
-		std::cout << "Loaded cartridge has been ejected." << std::endl;
-	}
-	
-#ifdef __linux__
-	if (m_mem_fd != -1 && force) { // Only erase if forced
-		close(m_mem_fd);
-		m_mem_fd = -1;
-		std::cout << "Memory file (memfd) erased and closed on Linux." << std::endl;
-	}
-#elif defined(__APPLE__)
-	if (m_mapped_memory && force) { // Only erase if forced
-		if (munmap(m_mapped_memory, INITIAL_MEMORY_SIZE) == -1) {
-			std::cerr << "munmap failed: " << strerror(errno) << std::endl;
-		} else {
-			std::cout << "Shared memory unmapped successfully on macOS." << std::endl;
-		}
-		m_mapped_memory = nullptr;
-	}
-	
-	if (m_mem_fd != -1 && force) {
-		close(m_mem_fd);
-		shm_unlink("/cartridge_bridge_shm"); // Ensure the name matches shm_name in initialize_memory
-		m_mem_fd = -1;
-		std::cout << "Shared memory object unlinked and closed on macOS." << std::endl;
-	}
-	
-	if (!m_temp_so_path.empty() && force) { // Only unlink if forced
-		// Detach and unload the shared object
-		if (dlclose(mSharedObjectHandle)) {
-			std::cerr << "Failed to dlclose shared object: " << dlerror() << std::endl;
-		} else {
-			std::cout << "Shared object unloaded successfully: " << m_temp_so_path << std::endl;
-		}
-		
-		// Remove the temporary dylib file
-		if (std::remove(m_temp_so_path.c_str()) != 0) {
-			std::cerr << "Failed to remove temporary dylib file: " << m_temp_so_path << std::endl;
-		} else {
-			std::cout << "Temporary dylib file removed successfully: " << m_temp_so_path << std::endl;
-		}
-		
-		m_temp_so_path.clear();
-	}
-#endif
-}
-
-#ifdef __APPLE__
-void* CartridgeBridge::fdlopen(const void* data, size_t size) {
-	if (!data || size == 0) {
-		std::cerr << "Invalid data or size for fdlopen." << std::endl;
-		return nullptr;
-	}
-	
-	// Create a unique temporary file with .dylib extension
-	char temp_filename_template[] = "/tmp/cartridge_bridge_so_XXXXXX.dylib";
-	int temp_fd = mkstemps(temp_filename_template, 6); // 6 for ".dylib"
-	if (temp_fd == -1) {
-		std::cerr << "Failed to create temporary dylib file: " << strerror(errno) << std::endl;
-		return nullptr;
-	}
-	
-	// Write the shared library data to the temporary file
-	ssize_t written = write(temp_fd, data, size);
-	if (written != static_cast<ssize_t>(size)) {
-		std::cerr << "Failed to write all data to temporary dylib: " << strerror(errno) << std::endl;
-		close(temp_fd);
-		std::remove(temp_filename_template);
-		return nullptr;
-	}
-	
-	// Close the file descriptor
-	close(temp_fd);
-	
-	// Load the shared library using dlopen
-	void* handle = dlopen(temp_filename_template, RTLD_NOW);
-	if (!handle) {
-		std::cerr << "dlopen failed: " << dlerror() << std::endl;
-		std::remove(temp_filename_template);
-		return nullptr;
-	}
-	
-	// Store the temporary file path for later cleanup
-	m_temp_so_path = std::string(temp_filename_template);
-	
-	return handle;
-}
-#endif
