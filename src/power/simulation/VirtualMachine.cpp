@@ -13,7 +13,7 @@ VirtualMachine::VirtualMachine() : mMachine(nullptr) {
 VirtualMachine::~VirtualMachine() {
 	stop();
 	
-	std::lock_guard<std::mutex> lock(mMachineMutex);
+	std::lock_guard<std::mutex> lock(mFunctionMapMutex);
 	function_map.clear();
 }
 
@@ -84,7 +84,7 @@ void VirtualMachine::update() {
 
 void VirtualMachine::register_callback(uint64_t this_ptr, const std::string& function_name,
 									   std::function<void(uint64_t, const std::vector<std::any>&, std::vector<unsigned char>&)> func) {
-	std::lock_guard<std::mutex> lock(mMachineMutex);
+	std::lock_guard<std::mutex> lock(mFunctionMapMutex);
 
 	uint64_t hash = FUNCTION_HASH(function_name.c_str(), function_name.size());
 	function_map[hash] = [this_ptr, func, function_name](uint64_t ptr, const std::vector<std::any>& args, std::vector<unsigned char>& output_buffer) {
