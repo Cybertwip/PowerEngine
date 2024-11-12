@@ -13,7 +13,6 @@ VirtualMachine::VirtualMachine() : mMachine(nullptr) {
 VirtualMachine::~VirtualMachine() {
 	stop();
 	
-	std::lock_guard<std::mutex> lock(mFunctionMapMutex);
 	function_map.clear();
 }
 
@@ -38,7 +37,6 @@ void VirtualMachine::start(std::vector<uint8_t> executable_data, uint64_t loader
 		uint64_t cartridgePtr = mMachine->preempt(MAX_CALL_INSTR, "load_cartridge", loader_ptr);
 		
 		mMachine->memory.memcpy_out(&mCartridgeHook, cartridgePtr, sizeof(CartridgeHook));
-		
 	}
 
 	mRunning.store(true);
@@ -89,8 +87,6 @@ void VirtualMachine::update() {
 
 void VirtualMachine::register_callback(uint64_t this_ptr, const std::string& function_name,
 									   std::function<void(uint64_t, const std::vector<std::any>&, std::vector<unsigned char>&)> func) {
-	std::lock_guard<std::mutex> lock(mFunctionMapMutex);
-
 	uint64_t hash = FUNCTION_HASH(function_name.c_str(), function_name.size());
 	function_map[hash] = [this_ptr, func, function_name](uint64_t ptr, const std::vector<std::any>& args, std::vector<unsigned char>& output_buffer) {
 		if (ptr != this_ptr) {
