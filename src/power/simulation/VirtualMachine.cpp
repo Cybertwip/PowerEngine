@@ -18,10 +18,11 @@ VirtualMachine::~VirtualMachine() {
 }
 
 void VirtualMachine::start(std::vector<uint8_t> executable_data, uint64_t loader_ptr) {
-	std::lock_guard<std::mutex> lock(mMachineMutex);
-
 	
 	stop();
+
+	std::lock_guard<std::mutex> lock(mMachineMutex);
+	
 	
 	mMachine = std::make_unique<riscv::Machine<riscv::RISCV64>>(executable_data);
 		
