@@ -166,7 +166,6 @@ bool RSPClient<W>::process_one()
     char tmp[1024];
     int len = ::read(this->sockfd, tmp, sizeof(tmp));
     if (len <= 0) {
-        this->close_now();
         return false;
     }
     if (UNLIKELY(m_verbose)) {

@@ -103,5 +103,4 @@ private:
 	CartridgeHook mCartridgeHook;
 	
 	std::thread mDebugThread;
-	std::thread mSimulationThread;
 };

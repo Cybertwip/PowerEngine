@@ -5,6 +5,8 @@
 
 #include <libriscv/rsp_server.hpp>
 
+std::atomic<bool> s_running;
+
 template <int W>
 void gdb_listen(uint16_t port, riscv::Machine<W>& machine)
 {
@@ -13,8 +15,15 @@ void gdb_listen(uint16_t port, riscv::Machine<W>& machine)
 	auto client = server.accept();
 	if (client != nullptr) {
 		printf("GDB connected\n");
-		while (client->process_one());
+		while(s_running.load()) {
+			client->process_one();
+		}
 	}
+	
+	// Finish the *remainder* of the program
+	if (!machine.stopped())
+		machine.simulate(/* machine.max_instructions() */);
+
 }
 
 static constexpr uint64_t MAX_CALL_INSTR = 32'000'000ull;
@@ -49,9 +58,7 @@ void VirtualMachine::start(std::vector<uint8_t> executable_data, uint64_t loader
 	
 	mMachine->memory.memcpy_out(&mCartridgeHook, cartridgePtr, sizeof(CartridgeHook));
 	
-	mSimulationThread = std::thread([this]() {
-		mMachine->simulate();
-	});
+	s_running.store(true);
 	
 	// start debugging session
 	mDebugThread = std::thread([this]() {
@@ -67,9 +74,11 @@ void VirtualMachine::reset() {
 }
 
 void VirtualMachine::stop() {
+	s_running.store(false);
+
 	if (mMachine) {
 		mMachine->stop();
-	}
+	}	
 }
 
 void VirtualMachine::update() {
