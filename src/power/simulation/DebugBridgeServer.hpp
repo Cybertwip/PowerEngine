@@ -76,7 +76,8 @@ private:
 	
 	// Thread to run the WebSocket server
 	std::thread m_thread;
-	
+	std::thread m_virtual_machine_thread;
+
 	// Flag to indicate if the server is running
 	std::atomic<bool> m_running;
 	

@@ -12,6 +12,7 @@
 
 // Include riscv machine implementation
 #include <libriscv/machine.hpp>
+#include <libriscv/rsp_server.hpp>
 
 #define SYS_CLASS_FUNCTION_HOOK 386
 
@@ -90,6 +91,7 @@ public:
 	~VirtualMachine();
 	
 	void start(std::vector<uint8_t> executable_data, uint64_t loader_ptr);
+	void gdb_listen(uint16_t port);
 	void reset();
 	void stop();
 	void update();
@@ -101,6 +103,6 @@ public:
 private:
 	std::unique_ptr<riscv::Machine<riscv::RISCV64>> mMachine;
 	CartridgeHook mCartridgeHook;
-	
-	std::thread mDebugThread;
+	std::unique_ptr<riscv::RSPClient<riscv::RISCV64>> mDebugClient;
+	std::mutex mMachineMutex;
 };

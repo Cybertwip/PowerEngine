@@ -204,9 +204,14 @@ void CartridgeBridge::execute_elf(const std::vector<uint8_t>& data) {
 			try {
 				mOnVirtualMachineLoadedCallback(std::nullopt); // Eject cartridge to prevent updating
 				
-				mVirtualMachine.start(std::move(binary_data), reinterpret_cast<uint64_t>(&mCartridge)); // start the machine
-								
-				mOnVirtualMachineLoadedCallback(mVirtualMachine);
+				m_virtual_machine_thread = std::thread([this]() {
+					mVirtualMachine.start(std::move(binary_data), reinterpret_cast<uint64_t>(&mCartridge)); // start the machine
+				});
+
+				nanogui::async([this](){
+					// one frame to warmup the virtual machine thread
+					mOnVirtualMachineLoadedCallback(mVirtualMachine);
+				});
 				
 			}
 			catch (const riscv::MachineTimeoutException& ex)
