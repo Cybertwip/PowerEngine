@@ -211,6 +211,8 @@ ${CMAKE_CURRENT_LIST_DIR}/actors/IActorManager.hpp
     ${CMAKE_CURRENT_LIST_DIR}/simulation/PrimitiveBuilder.hpp
     ${CMAKE_CURRENT_LIST_DIR}/simulation/PrimitiveBuilder.cpp
     ${CMAKE_CURRENT_LIST_DIR}/simulation/PrimitiveShape.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/simulation/VirtualMachine.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/simulation/VirtualMachine.hpp
     
 
     ${CMAKE_CURRENT_LIST_DIR}/ui/AnimationPanel.hpp
@@ -268,6 +270,7 @@ OpenSSL::SSL
 OpenSSL::Crypto
 ozz_animation_tools
 ozz_animation_fbx
+riscv
 wasmtime
 zlib
 #grpc++ 

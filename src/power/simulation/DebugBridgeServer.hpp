@@ -11,8 +11,6 @@
 #include "DebugBridgeCommon.hpp"
 #include "simulation/Cartridge.hpp"
 
-#include <wasmtime.hh>
-
 #ifdef __linux__
 #include <unistd.h>  // For close()
 #elif defined(__APPLE__)
@@ -73,7 +71,7 @@ private:
 	std::queue<DebugCommand> m_command_queue;   ///< Queue to store incoming DebugCommands.
 	
 	bool validate_connection(websocketpp::connection_hdl hdl);
-
+	
 	/**
 	 * @brief Callback for handling incoming WebSocket messages.
 	 *
@@ -148,9 +146,11 @@ private:
 	std::string m_temp_so_path;  ///< Path to the temporary shared object file on macOS.
 #endif
 	
-	wasmtime::Engine mWasmEngine;
-	wasmtime::Store mStore;
-	std::shared_ptr<wasmtime::Instance> mWasmInstance;
+#ifdef _WIN32
+	HMODULE mSharedObjectHandle; // Handle for Windows DLL
+#else
+	void* mSharedObjectHandle;   // Handle for Unix-like shared objects
+#endif
 	
 	// Prevent copying
 	CartridgeBridge(const CartridgeBridge&) = delete;

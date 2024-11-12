@@ -2,6 +2,7 @@
 
 #include <nanogui/layout.h>
 #include <nanogui/screen.h>
+#include <nanogui/icons.h>
 
 #include <nanovg.h>
 
