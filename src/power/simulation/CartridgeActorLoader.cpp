@@ -69,7 +69,7 @@ Primitive* CartridgeActorLoader::create_actor(PrimitiveShape primitiveShape) {
 		
 		// Copy result into output_buffer
 		unsigned char* data_ptr = reinterpret_cast<unsigned char*>(&result);
-		std::memcpy(output_buffer.data(), data_ptr, sizeof(int));
+		std::memcpy(output_buffer.data(), data_ptr, sizeof(glm::vec3));
 	});
 	
 	// Register HostDummyMath::set
