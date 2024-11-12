@@ -18,7 +18,6 @@ typedef websocketpp::server<websocketpp::config::asio> server;
 class IActorManager;
 class ICameraManager;
 class ICartridge;
-class ILoadedCartridge;
 
 class CartridgeActorLoader;
 

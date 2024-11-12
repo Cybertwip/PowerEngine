@@ -4,7 +4,6 @@
 
 #include "simulation/Cartridge.hpp"
 #include "simulation/CartridgeActorLoader.hpp"
-#include "simulation/ILoadedCartridge.hpp"
 #include "simulation/VirtualMachine.hpp"
 
 #include <nanogui/common.h>
