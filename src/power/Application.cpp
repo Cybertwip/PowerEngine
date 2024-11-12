@@ -233,8 +233,8 @@ void Application::draw(NVGcontext *ctx) {
 void Application::process_events() {
 	mGlobalAnimationTimeProvider.Update();
 	
-	if (mVirtualMachine.has_value()) {
-		mVirtualMachine->get().update();
+	if (mLoadedVirtualMachine.has_value()) {
+		mLoadedVirtualMachine->get().update();
 	}
 	
 	// Dispatch queued click events
