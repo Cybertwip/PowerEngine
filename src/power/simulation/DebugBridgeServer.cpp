@@ -8,7 +8,6 @@
 
 #include <nanogui/common.h>
 
-#include <async>
 #include <iostream>
 #include <stdexcept>
 #include <fstream>
