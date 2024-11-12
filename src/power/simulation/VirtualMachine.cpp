@@ -13,7 +13,7 @@ VirtualMachine::~VirtualMachine() {
 	function_map.clear();
 }
 
-void VirtualMachine::start(const std::vector<uint8_t>& executable_data, uint64_t loader_ptr) {
+void VirtualMachine::start(std::vector<uint8_t> executable_data, uint64_t loader_ptr) {
 	mMachine = std::make_unique<riscv::Machine<riscv::RISCV64>>(executable_data);
 		
 	// Set up Linux environment

@@ -88,7 +88,7 @@ public:
 	VirtualMachine();
 	~VirtualMachine();
 	
-	void start(const std::vector<uint8_t>& executable_data, uint64_t loader_ptr);
+	void start(std::vector<uint8_t> executable_data, uint64_t loader_ptr);
 	void reset();
 	void stop();
 	void update();

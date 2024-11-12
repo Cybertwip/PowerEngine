@@ -198,14 +198,16 @@ void CartridgeBridge::execute_elf(const std::vector<uint8_t>& data) {
 	
 	if (!data.empty()) {
 		
-		std::vector<uint8_t> elf_data(data.begin() + offset, data.end());
+		std::vector<uint8_t> elf_data;
+		
+		elf_data.assign(data.begin() + offset, data.end());
 		
 		// Call the load_cartridge function in the main thread
-		nanogui::async([this, elf_data](){
+		nanogui::async([this, binary_data = std::move(elf_data)](){
 			try {
 				mOnVirtualMachineLoadedCallback(std::nullopt); // Eject cartridge to prevent updating
 				
-				mVirtualMachine->start(elf_data, reinterpret_cast<uint64_t>(&mCartridge)); // start the machine
+				mVirtualMachine->start(std::move(binary_data), reinterpret_cast<uint64_t>(&mCartridge)); // start the machine
 			} catch (std::exception& ex) {
 				std::cerr << "Exception occurred while executing load_cartridge >> " << ex.what() << std::endl;
 				mOnVirtualMachineLoadedCallback(std::nullopt); // Eject cartridge to prevent updating
