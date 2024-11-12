@@ -208,7 +208,18 @@ void CartridgeBridge::execute_elf(const std::vector<uint8_t>& data) {
 				
 				mOnVirtualMachineLoadedCallback(mVirtualMachine);
 				
-			} catch (std::exception& ex) {
+			}
+			catch (const riscv::MachineTimeoutException& e)
+			{
+				std::cerr << "Timeout exception, might be safe?" << std::endl;
+			}
+			catch (const riscv::MachineException& ex)
+			{
+				std::cerr << "Exception occurred while executing load_cartridge >> " << ex.what() << std::endl;
+				mOnVirtualMachineLoadedCallback(std::nullopt); // Eject cartridge to prevent updating
+				mVirtualMachine.reset();
+			}
+			catch (std::exception& ex) {
 				std::cerr << "Exception occurred while executing load_cartridge >> " << ex.what() << std::endl;
 				mOnVirtualMachineLoadedCallback(std::nullopt); // Eject cartridge to prevent updating
 				mVirtualMachine.reset();
