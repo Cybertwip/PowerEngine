@@ -41,7 +41,7 @@
 #include "simulation/Cartridge.hpp"
 #include "simulation/CartridgeActorLoader.hpp"
 #include "simulation/DebugBridgeServer.hpp"
-#include "simulation/ILoadedCartridge.hpp"
+#include "simulation/VirtualMachine.hpp"
 #include "ui/AnimationPanel.hpp"
 #include "ui/HierarchyPanel.hpp"
 #include "ui/ScenePanel.hpp"
