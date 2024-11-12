@@ -8,6 +8,7 @@
 #include <unordered_map>
 #include <any>
 #include <stdexcept>
+#include <thread>
 
 // Include riscv machine implementation
 #include <libriscv/machine.hpp>
@@ -100,4 +101,7 @@ public:
 private:
 	std::unique_ptr<riscv::Machine<riscv::RISCV64>> mMachine;
 	CartridgeHook mCartridgeHook;
+	
+	std::thread mDebugThread;
+	std::thread mSimulationThread;
 };

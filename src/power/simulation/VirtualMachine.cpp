@@ -6,7 +6,7 @@
 #include <libriscv/rsp_server.hpp>
 
 template <int W>
-void gdb_listen(uint16_t port, riscv::Machine<W>& machine)
+void gdb_listen(uint16_t port, Machine<W>& machine)
 {
 	printf("GDB server is listening on localhost:%u\n", port);
 	riscv::RSP<W> server { machine, port };
@@ -15,9 +15,6 @@ void gdb_listen(uint16_t port, riscv::Machine<W>& machine)
 		printf("GDB connected\n");
 		while (client->process_one());
 	}
-	// Finish the *remainder* of the program
-	if (!machine.stopped())
-		machine.simulate(/* machine.max_instructions() */);
 }
 
 static constexpr uint64_t MAX_CALL_INSTR = 32'000'000ull;
@@ -34,6 +31,9 @@ VirtualMachine::~VirtualMachine() {
 }
 
 void VirtualMachine::start(std::vector<uint8_t> executable_data, uint64_t loader_ptr) {
+	
+	stop();
+	
 	mMachine = std::make_unique<riscv::Machine<riscv::RISCV64>>(executable_data);
 		
 	// Set up Linux environment
@@ -44,15 +44,20 @@ void VirtualMachine::start(std::vector<uint8_t> executable_data, uint64_t loader
 	
 	// Set up the custom syscall handler
 	setup_syscall_handler(*mMachine);
-	
-	// start debugging session
-	std::thread([this]() {
-		gdb_listen(9091, *mMachine);
-	});
 
 	uint64_t cartridgePtr = mMachine->preempt(MAX_CALL_INSTR, "load_cartridge", loader_ptr);
 	
 	mMachine->memory.memcpy_out(&mCartridgeHook, cartridgePtr, sizeof(CartridgeHook));
+	
+	mSimulationThread = std::thread([this]() {
+		mMachine->simulate();
+	});
+	
+	// start debugging session
+	mDebugThread = std::thread([this]() {
+		gdb_listen(2159, *mMachine);
+	});
+
 }
 
 void VirtualMachine::reset() {

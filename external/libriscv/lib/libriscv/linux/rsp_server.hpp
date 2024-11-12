@@ -20,12 +20,22 @@ RSP<W>::RSP(riscv::Machine<W>& m, uint16_t port)
 	                         	| SOCK_NONBLOCK
 #endif
 	                        ,0);
+	// Enable SO_REUSEADDR
 	int opt = 1;
-	if (setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT,
-		&opt, sizeof(opt))) {
+	if (setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) < 0) {
+		perror("setsockopt SO_REUSEADDR failed");
 		close(server_fd);
-		throw MachineException(SYSTEM_CALL_FAILED, "Failed to enable REUSEADDR/PORT");
+		throw MachineException(SYSTEM_CALL_FAILED, "Failed to enable SO_REUSEADDR");
 	}
+	
+	// Enable SO_REUSEPORT if available
+#ifdef SO_REUSEPORT
+	if (setsockopt(server_fd, SOL_SOCKET, SO_REUSEPORT, &opt, sizeof(opt)) < 0) {
+		perror("setsockopt SO_REUSEPORT failed");
+		close(server_fd);
+		throw MachineException(SYSTEM_CALL_FAILED, "Failed to enable SO_REUSEPORT");
+	}
+#endif
 	struct sockaddr_in address;
 	address.sin_family = AF_INET;
 	address.sin_addr.s_addr = INADDR_ANY;
@@ -69,15 +79,22 @@ std::unique_ptr<RSPClient<W>> RSP<W>::accept(int timeout_secs)
 		close(sockfd);
 		return nullptr;
 	}
-	// Enable receive and send timeouts
+	// Enable receive timeout
 	tv = {
 		.tv_sec = 60,
 		.tv_usec = 0
 	};
-	if (setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO | SO_SNDTIMEO, &tv, sizeof(tv))) {
+	if (setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv)) < 0) {
 		close(sockfd);
 		return nullptr;
 	}
+	
+	// Enable send timeout
+	if (setsockopt(sockfd, SOL_SOCKET, SO_SNDTIMEO, &tv, sizeof(tv)) < 0) {
+		close(sockfd);
+		return nullptr;
+	}
+
 	return std::make_unique<RSPClient<W>>(m_machine, sockfd);
 }
 template <int W> inline
