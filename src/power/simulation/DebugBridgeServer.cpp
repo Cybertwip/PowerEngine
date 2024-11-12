@@ -204,7 +204,7 @@ void CartridgeBridge::execute_elf(const std::vector<uint8_t>& data) {
 			try {
 				mOnVirtualMachineLoadedCallback(std::nullopt); // Eject cartridge to prevent updating
 				
-				m_virtual_machine_thread = std::thread([this]() {
+				m_virtual_machine_thread = std::thread([this, binary_data]() {
 					mVirtualMachine.start(std::move(binary_data), reinterpret_cast<uint64_t>(&mCartridge)); // start the machine
 				});
 
