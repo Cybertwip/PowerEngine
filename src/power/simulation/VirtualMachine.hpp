@@ -106,4 +106,5 @@ private:
 	std::unique_ptr<riscv::RSPClient<riscv::RISCV64>> mDebugClient;
 	std::mutex mMachineMutex;
 	std::mutex mFunctionMapMutex;
+	std::atomic<bool> mRunning;
 };

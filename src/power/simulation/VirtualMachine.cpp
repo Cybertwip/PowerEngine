@@ -21,23 +21,27 @@ void VirtualMachine::start(std::vector<uint8_t> executable_data, uint64_t loader
 	
 	stop();
 
-	std::lock_guard<std::mutex> lock(mMachineMutex);
-	
-	
-	mMachine = std::make_unique<riscv::Machine<riscv::RISCV64>>(executable_data);
-		
-	// Set up Linux environment
-	mMachine->setup_linux({});
-	
-	// Add basic Linux system calls
-	mMachine->setup_linux_syscalls();
-	
-	// Set up the custom syscall handler
-	setup_syscall_handler(*mMachine);
+	{
+		std::lock_guard<std::mutex> lock(mMachineMutex);
 
-	uint64_t cartridgePtr = mMachine->preempt(MAX_CALL_INSTR, "load_cartridge", loader_ptr);
-	
-	mMachine->memory.memcpy_out(&mCartridgeHook, cartridgePtr, sizeof(CartridgeHook));
+		mMachine = std::make_unique<riscv::Machine<riscv::RISCV64>>(executable_data);
+		
+		// Set up Linux environment
+		mMachine->setup_linux({});
+		
+		// Add basic Linux system calls
+		mMachine->setup_linux_syscalls();
+		
+		// Set up the custom syscall handler
+		setup_syscall_handler(*mMachine);
+		
+		uint64_t cartridgePtr = mMachine->preempt(MAX_CALL_INSTR, "load_cartridge", loader_ptr);
+		
+		mMachine->memory.memcpy_out(&mCartridgeHook, cartridgePtr, sizeof(CartridgeHook));
+		
+	}
+
+	mRunning.store(true);
 	
 	// start debugging session
 	gdb_listen(2159);
@@ -50,12 +54,11 @@ void VirtualMachine::gdb_listen(uint16_t port)
 	mDebugClient = server.accept();
 	if (mDebugClient != nullptr) {
 		printf("GDB connected\n");
-		while (mDebugClient->process_one());
+		while (mRunning.load()) {
+			std::lock_guard<std::mutex> lock(mMachineMutex);
+			mDebugClient->process_one();
+		}
 	}
-	
-	// Finish the *remainder* of the program
-	if (!mMachine->stopped())
-		mMachine->simulate(/* machine.max_instructions() */);
 }
 
 
@@ -69,6 +72,7 @@ void VirtualMachine::reset() {
 
 void VirtualMachine::stop() {
 	std::lock_guard<std::mutex> lock(mMachineMutex);
+	mRunning.store(false);
 
 	if (mMachine) {
 		mMachine->stop();
