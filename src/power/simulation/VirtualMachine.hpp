@@ -105,6 +105,6 @@ private:
 	CartridgeHook mCartridgeHook;
 	std::unique_ptr<riscv::RSPClient<riscv::RISCV64>> mDebugClient;
 	
-	std::mutex> mMachineMutex;
+	std::mutex mMachineMutex;
 	std::atomic<bool> mRunning;
 };
