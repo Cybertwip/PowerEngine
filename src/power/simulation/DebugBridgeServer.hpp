@@ -22,6 +22,8 @@ class ILoadedCartridge;
 
 class CartridgeActorLoader;
 
+class VirtualMachine;
+
 class CartridgeBridge {
 public:
 	CartridgeBridge(uint16_t port,
