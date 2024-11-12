@@ -42,7 +42,7 @@ void VirtualMachine::start(std::vector<uint8_t> executable_data, uint64_t loader
 	
 	std::thread([this](){
 		gdb_listen(2159);
-	})
+	});
 }
 
 void VirtualMachine::gdb_listen(uint16_t port)
