@@ -195,7 +195,7 @@ private:
 }  // namespace nanogui
 
 class ICartridge;
-class ILoadedCartridge;
+class VirtualMachine;
 
 class Actor;
 class ActorManager;
@@ -240,7 +240,7 @@ class Application : public nanogui::DraggableScreen
 	
 	
 	AnimationTimeProvider mGlobalAnimationTimeProvider;
-	std::optional<std::reference_wrapper<ILoadedCartridge>> mLoadedCartridge;
+	std::optional<std::reference_wrapper<VirtualMachine>> mLoadedVirtualMachine;
 	
 	// Reversed unique_ptr declarations
 	std::unique_ptr<ICartridge> mCartridge;
