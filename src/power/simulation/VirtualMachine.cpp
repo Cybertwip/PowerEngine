@@ -13,33 +13,30 @@ VirtualMachine::VirtualMachine() : mMachine(nullptr) {
 VirtualMachine::~VirtualMachine() {
 	stop();
 	
+	std::lock_guard<std::mutex> lock(mMachineMutex);
 	function_map.clear();
 }
 
 void VirtualMachine::start(std::vector<uint8_t> executable_data, uint64_t loader_ptr) {
+	std::lock_guard<std::mutex> lock(mMachineMutex);
+
 	
 	stop();
+	
+	mMachine = std::make_unique<riscv::Machine<riscv::RISCV64>>(executable_data);
+		
+	// Set up Linux environment
+	mMachine->setup_linux({});
+	
+	// Add basic Linux system calls
+	mMachine->setup_linux_syscalls();
+	
+	// Set up the custom syscall handler
+	setup_syscall_handler(*mMachine);
 
-	{
-		std::lock_guard<std::mutex> lock(mMachineMutex);
-
-		mMachine = std::make_unique<riscv::Machine<riscv::RISCV64>>(executable_data);
-		
-		// Set up Linux environment
-		mMachine->setup_linux({});
-		
-		// Add basic Linux system calls
-		mMachine->setup_linux_syscalls();
-		
-		// Set up the custom syscall handler
-		setup_syscall_handler(*mMachine);
-		
-		uint64_t cartridgePtr = mMachine->preempt(MAX_CALL_INSTR, "load_cartridge", loader_ptr);
-		
-		mMachine->memory.memcpy_out(&mCartridgeHook, cartridgePtr, sizeof(CartridgeHook));
-	}
-
-	mRunning.store(true);
+	uint64_t cartridgePtr = mMachine->preempt(MAX_CALL_INSTR, "load_cartridge", loader_ptr);
+	
+	mMachine->memory.memcpy_out(&mCartridgeHook, cartridgePtr, sizeof(CartridgeHook));
 	
 	// start debugging session
 	gdb_listen(2159);
@@ -52,11 +49,12 @@ void VirtualMachine::gdb_listen(uint16_t port)
 	mDebugClient = server.accept();
 	if (mDebugClient != nullptr) {
 		printf("GDB connected\n");
-		while (mRunning.load()) {
-			std::lock_guard<std::mutex> lock(mMachineMutex);
-			mDebugClient->process_one();
-		}
+		while (mDebugClient->process_one());
 	}
+	
+	// Finish the *remainder* of the program
+	if (!mMachine->stopped())
+		mMachine->simulate(/* machine.max_instructions() */);
 }
 
 
@@ -70,7 +68,6 @@ void VirtualMachine::reset() {
 
 void VirtualMachine::stop() {
 	std::lock_guard<std::mutex> lock(mMachineMutex);
-	mRunning.store(false);
 
 	if (mMachine) {
 		mMachine->stop();
@@ -87,6 +84,8 @@ void VirtualMachine::update() {
 
 void VirtualMachine::register_callback(uint64_t this_ptr, const std::string& function_name,
 									   std::function<void(uint64_t, const std::vector<std::any>&, std::vector<unsigned char>&)> func) {
+	std::lock_guard<std::mutex> lock(mMachineMutex);
+
 	uint64_t hash = FUNCTION_HASH(function_name.c_str(), function_name.size());
 	function_map[hash] = [this_ptr, func, function_name](uint64_t ptr, const std::vector<std::any>& args, std::vector<unsigned char>& output_buffer) {
 		if (ptr != this_ptr) {
