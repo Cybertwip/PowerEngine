@@ -404,7 +404,7 @@ mNormalButtonColor(theme().m_text_color) // Initialize normal button color
 	
 	mTakeWindow = std::make_shared<nanogui::Window>(*this, "Takes");
 	
-	mTakeWindow->set_fixed_size(nanogui::Vector2i(196, 164));
+	mTakeWindow->set_fixed_size(nanogui::Vector2i(98, 164));
 			
 	// Position the button in the lower-right corner
 	mTakeWindow->set_position(nanogui::Vector2i(fixed_width() - mTakeWindow->fixed_width() - 10, fixed_height() - mTakeWindow->fixed_height() - 10));
@@ -452,11 +452,13 @@ mNormalButtonColor(theme().m_text_color) // Initialize normal button color
 		}
 	});
 	
+	mTakeWindow->perform_layout(screen().nvg_context());
+	
 	mScrollPanel = std::make_shared<nanogui::VScrollPanel>(*mTakeWindow);
 	
-	mScrollPanel->set_fixed_size({0, 12 * 6});
+	mScrollPanel->set_fixed_size({0, 12 * 12});
 	
-	mScrollPanel->set_position(nanogui::Vector2i(0, mTakeWindow->button_panel().fixed_height()));
+	mScrollPanel->set_position(nanogui::Vector2i(0, mTakeWindow->button_panel().height() + 10));
 	
 	mTakeTreeView = std::make_shared<nanogui::TreeView>(*mScrollPanel);
 	
