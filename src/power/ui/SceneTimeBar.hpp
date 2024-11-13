@@ -101,8 +101,9 @@ private:
 
 	std::shared_ptr<nanogui::Widget> mButtonWrapper;
 	
+	std::shared_ptr<nanogui::Window> mTakeWindow;
 	std::shared_ptr<nanogui::TreeView> mTakeTreeView;
-	
+
 	std::shared_ptr<nanogui::Button> mRewindBtn;
 	std::shared_ptr<nanogui::Button> mSeekEndBtn;
 	
