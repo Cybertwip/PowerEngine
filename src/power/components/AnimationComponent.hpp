@@ -2,6 +2,8 @@
 
 class AnimationComponent {
 public:
+	AnimationComponent() = default;
+	virtual ~AnimationComponent() = default;
 	virtual void TriggerRegistration() = 0;
 	virtual void AddKeyframe() = 0;
 	virtual void UpdateKeyframe() = 0;

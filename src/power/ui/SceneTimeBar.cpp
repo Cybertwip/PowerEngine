@@ -513,7 +513,7 @@ void SceneTimeBar::toggle_play_pause(bool play) {
 void SceneTimeBar::verify_uncommited_key() {
 	if (!mRecording && !mPlaying) {
 		if (mActiveActor != std::nullopt) {
-			auto& component = mActiveActor->get().get_component<TimelineComponent>();
+			auto& component = mActiveActor->get().get_component<TakeComponent>();
 			
 			if (component.KeyframeExists()) {
 				mUncommittedKey = !component.IsSyncWithProvider();
@@ -683,7 +683,7 @@ std::tuple<SceneTimeBar::KeyframeStamp, SceneTimeBar::KeyframeStamp> SceneTimeBa
 
 // Helper method to refresh animatable actors
 void SceneTimeBar::refresh_actors() {
-	mAnimatableActors = mActorManager.get_actors_with_component<TimelineComponent>();
+	mAnimatableActors = mActorManager.get_actors_with_component<TakeComponent>();
 }
 
 // Helper method to register actor callbacks

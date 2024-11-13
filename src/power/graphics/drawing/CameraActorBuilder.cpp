@@ -27,14 +27,8 @@ Actor& CameraActorBuilder::build(Actor& actor,
 	actor.add_component<MetadataComponent>(Hash32::generate_crc32_from_compressed_data(dummyData), "Camera");
 	actor.add_component<ColorComponent>(actor.identifier());
 	actor.add_component<CameraComponent>(actor.get_component<TransformComponent>(), fov, near, far, aspect);
-	
-	auto& transformAnimationComponent = actor.add_component<TransformAnimationComponent>(transform, animationTimeProvider);
-	
-	std::vector<std::reference_wrapper<AnimationComponent>> timelineComponents = {
-		transformAnimationComponent
-	};
-	
-	actor.add_component<TimelineComponent>(std::move(timelineComponents), animationTimeProvider);
+		
+	actor.add_component<TakeComponent>(std::make_unique<SimpleTakeComponent>(actor, animationTimeProvider));
 	
 	return actor;
 }

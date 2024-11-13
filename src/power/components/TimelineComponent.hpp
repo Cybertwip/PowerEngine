@@ -3,10 +3,13 @@
 #include "AnimationComponent.hpp"
 #include "TransformAnimationComponent.hpp"
 #include "SkinnedAnimationComponent.hpp"
+#include "actors/Actor.hpp"
 #include "animation/AnimationTimeProvider.hpp"
 
 #include <functional>
+#include <memory>
 #include <vector>
+
 
 class TimelineComponent : public AnimationComponent {
 public:
@@ -129,23 +132,25 @@ private:
 	AnimationTimeProvider& mAnimationTimeProvider;
 };
 
-class TakeComponent : public AnimationComponent {
+class SimpleTakeComponent : public AnimationComponent {
 public:
-	TakeComponent(Actor& actor, AnimationTimeProvider& timeProvider) : mActor(actor), mTimeProvider(timeProvider) {
+	SimpleTakeComponent(std::reference_wrapper<Actor> actor, AnimationTimeProvider& timeProvider) : mActor(actor.get()), mTimeProvider(timeProvider) {
 		add_timeline();
 		mTimelineIndex = 0;
 	}
+	
+	~SimpleTakeComponent() = default;
 	
 	virtual void add_timeline() {
 		// Add TransformComponent and AnimationComponent
 		auto& transform = mActor.get_component<TransformComponent>();
 		
-		auto& transformAnimationComponent = *mAnimationComponents.emplace_back(std::make_unique<TransformAnimationComponent>(transform, mTimeProvider));
+		auto& transformAnimationComponent = mAnimationComponents.emplace_back(std::make_shared<TransformAnimationComponent>(transform, mTimeProvider));
 		
 		std::vector<std::reference_wrapper<AnimationComponent>> components = {
-			transformAnimationComponent,
+			*transformAnimationComponent,
 		};
-		mTimelineComponents.push_back(std::make_unique<TimelineComponent>(std::move(components), mTimeProvider));
+		mTimelineComponents.push_back(std::make_shared<TimelineComponent>(std::move(components), mTimeProvider));
 	}
 	
 	void set_active_timeline(unsigned int index) {
@@ -208,7 +213,7 @@ public:
 	void SyncWithProvider() override {
 		auto& timeline = get_active_timeline();
 		
-		return timeline.SyncWithProvider();
+		timeline.SyncWithProvider();
 	}
 	
 	bool KeyframeExists() override {
@@ -223,7 +228,6 @@ public:
 		return timeline.GetPreviousKeyframeTime();
 	}
 	
-	
 	float GetNextKeyframeTime() override {
 		auto& timeline = get_active_timeline();
 		
@@ -234,25 +238,26 @@ protected:
 	Actor& mActor;
 	AnimationTimeProvider& mTimeProvider;
 	
-	std::vector<std::unique_ptr<AnimationComponent>> mAnimationComponents;
+	std::vector<std::shared_ptr<AnimationComponent>> mAnimationComponents;
 
-	std::vector<std::unique_ptr<TimelineComponent>> mTimelineComponents;
+	std::vector<std::shared_ptr<TimelineComponent>> mTimelineComponents;
 
 private:
 	unsigned int mTimelineIndex;
 };
 
-class SkinnedTakeComponent : public TakeComponent {
+class SkinnedTakeComponent : public SimpleTakeComponent {
 public:
-	
-	SkinnedTakeComponent(Actor& actor, AnimationTimeProvider& timeProvider) : TakeComponent(actor, timeProvider) {
+	SkinnedTakeComponent(std::reference_wrapper<Actor> actor, AnimationTimeProvider& timeProvider) : SimpleTakeComponent(actor, timeProvider) {
 	}
+	
+	~SkinnedTakeComponent() = default;
 	
 	void add_timeline() override {
 		// Add TransformComponent and AnimationComponent
 		auto& transform = mActor.get_component<TransformComponent>();
 		
-		auto& transformAnimationComponent = *mAnimationComponents.emplace_back(std::make_unique<TransformAnimationComponent>(transform, mTimeProvider));
+		auto& transformAnimationComponent = mAnimationComponents.emplace_back(std::make_unique<TransformAnimationComponent>(transform, mTimeProvider));
 		
 		
 		// Add PlaybackComponent
@@ -260,13 +265,84 @@ public:
 		
 		auto& skeletonComponent = mActor.get_component<SkeletonComponent>();
 		
-		auto& skinnedAnimationComponent = *mAnimationComponents.emplace_back(std::make_unique<SkinnedAnimationComponent>(playbackComponent, skeletonComponent, mTimeProvider));
+		auto& skinnedAnimationComponent = mAnimationComponents.emplace_back(std::make_unique<SkinnedAnimationComponent>(playbackComponent, skeletonComponent, mTimeProvider));
 		
 
 		std::vector<std::reference_wrapper<AnimationComponent>> components = {
-			transformAnimationComponent,
-			skinnedAnimationComponent
+			*transformAnimationComponent,
+			*skinnedAnimationComponent
 		};
-		mTimelineComponents.push_back(std::make_unique<TimelineComponent>(std::move(components), mTimeProvider));
+		mTimelineComponents.push_back(std::make_shared<TimelineComponent>(std::move(components), mTimeProvider));
 	}
+};
+
+class TakeComponent : AnimationComponent {
+public:
+	TakeComponent(std::unique_ptr<SimpleTakeComponent> takeComponent) : mTakeComponent(std::move(takeComponent)) {
+	}
+	
+	
+	void add_timeline() {
+		mTakeComponent->add_timeline();
+	}
+	
+	void set_active_timeline(unsigned int index) {
+		mTakeComponent->set_active_timeline(index);
+	}
+	
+	TimelineComponent& get_active_timeline() {
+		return mTakeComponent->get_active_timeline();
+	}
+	
+	
+	void TriggerRegistration() override {
+		mTakeComponent->TriggerRegistration();
+	}
+	
+	void AddKeyframe() override {
+		mTakeComponent->AddKeyframe();
+	}
+	
+	void UpdateKeyframe() override {
+		mTakeComponent->UpdateKeyframe();
+	}
+	
+	void RemoveKeyframe() override {
+		mTakeComponent->RemoveKeyframe();
+	}
+	
+	void Freeze() override {
+		mTakeComponent->Freeze();
+	}
+	
+	void Evaluate() override {
+		mTakeComponent->Evaluate();
+	}
+	
+	void Unfreeze() override {
+		mTakeComponent->Unfreeze();
+	}
+	
+	bool IsSyncWithProvider() override {
+		return mTakeComponent->IsSyncWithProvider();
+	}
+	
+	void SyncWithProvider() override {
+		mTakeComponent->SyncWithProvider();
+	}
+	
+	bool KeyframeExists() override {
+		return mTakeComponent->KeyframeExists();
+	}
+	
+	float GetPreviousKeyframeTime() override {
+		return mTakeComponent->GetPreviousKeyframeTime();
+	}
+	
+	float GetNextKeyframeTime() override {
+		return mTakeComponent->GetNextKeyframeTime();
+	}
+	
+private:
+	std::unique_ptr<SimpleTakeComponent> mTakeComponent;
 };
