@@ -701,7 +701,7 @@ void SceneTimeBar::populate_tree(Actor &actor, std::shared_ptr<nanogui::TreeView
 							[this, &actor]() {
 								
 							})
-	: mTreeView->add_node(std::string{actor.get_component<MetadataComponent>().name()},
+	: mTakeTreeView->add_node(std::string{actor.get_component<MetadataComponent>().name()},
 						  [this, &actor]() {
 		OnActorSelected(actor);
 	});
@@ -711,7 +711,7 @@ void SceneTimeBar::populate_tree(Actor &actor, std::shared_ptr<nanogui::TreeView
 	}
 	
 	actor.add_component<UiComponent>([this, &actor, node]() {
-		mTreeView->set_selected(node.get());
+		mTakeTreeView->set_selected(node.get());
 	});
 	
 	perform_layout(screen().nvg_context());
