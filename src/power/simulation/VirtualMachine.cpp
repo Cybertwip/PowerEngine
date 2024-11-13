@@ -20,7 +20,7 @@ void VirtualMachine::start(std::vector<uint8_t> executable_data) {
 	stop();
 	
 	mMachine = std::make_unique<riscv::Machine<riscv::RISCV64>>(executable_data);
-		
+	
 	// Set up Linux environment
 	mMachine->setup_linux({});
 	
@@ -29,12 +29,13 @@ void VirtualMachine::start(std::vector<uint8_t> executable_data) {
 	
 	// Set up the custom syscall handler
 	setup_syscall_handler(*mMachine);
-
+	
 	// start debugging session
 	printf("GDB server is listening on localhost:%u\n", 3333);
 	mDebugServer = std::make_unique<riscv::RSP<riscv::RISCV64>>(*mMachine, 3333);
-		
-	gdb_poll();
+	
+
+	mMachine->simulate(0);
 }
 
 void VirtualMachine::gdb_poll()
@@ -70,11 +71,10 @@ void VirtualMachine::stop() {
 
 void VirtualMachine::update() {
 	if (mMachine) {
-		bool result = mMachine->simulate<false>(1000, mMachine->instruction_counter());
-		if (result) {
-			// Poll GDB in each update cycle
-			gdb_poll();
+		for (int i = 0; i < 480; ++i) { // machine is simulated with 8 cores times 60 frames per core
+			mMachine->cpu.step_one(true);
 		}
+		gdb_poll();
 	}
 }
 
