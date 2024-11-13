@@ -79,6 +79,8 @@ private:
 	
 	void register_actor_callbacks();
 	
+	void populate_tree(Actor& actor, std::shared_ptr<nanogui::TreeViewItem> parentNode = nullptr);
+	
 	// Override mouse events to consume them
 	bool mouse_button_event(const nanogui::Vector2i &p, int button, bool down, int modifiers) override;
 	bool mouse_motion_event(const nanogui::Vector2i &p, const nanogui::Vector2i &rel, int button, int modifiers) override;

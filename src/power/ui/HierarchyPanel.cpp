@@ -76,7 +76,6 @@ void HierarchyPanel::remove_actors(const std::vector<std::reference_wrapper<Acto
 	});
 }
 
-
 void HierarchyPanel::populate_tree(Actor &actor, std::shared_ptr<nanogui::TreeViewItem> parent_node) {
 	// Correctly reference the actor's name
 	std::shared_ptr<nanogui::TreeViewItem> node =

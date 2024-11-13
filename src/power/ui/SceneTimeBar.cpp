@@ -131,6 +131,9 @@ mNormalButtonColor(theme().m_text_color) // Initialize normal button color
 	mTakeTreeView = std::make_shared<nanogui::TreeView>(*mButtonWrapper);
 	mTakeTreeView->set_layout(
 						  std::make_unique<nanogui::BoxLayout>(nanogui::Orientation::Vertical, nanogui::Alignment::Fill));
+	
+	
+	
 	// Rewind Button
 	mRewindBtn = std::make_shared<nanogui::Button>(*mButtonWrapper, "", FA_FAST_BACKWARD);
 	mRewindBtn->set_fixed_width(buttonWidth);
@@ -302,7 +305,7 @@ mNormalButtonColor(theme().m_text_color) // Initialize normal button color
 	});
 	
 	// Keyframe Buttons Wrapper
-	mKeyBtnWrapper = std::make_shared<nanogui::Widget>(std::make_optional<std::reference_wrapper<nanogui::Widget>>(*mButtonWrapper));
+	mKeyBtnWrapper = std::make_shared<nanogui::Widget>(std::make_optional<std::reference_wrapper<nanogui::Widget>>(*mButtonWrapperWrapper));
 	mKeyBtnWrapper->set_layout(std::make_unique<nanogui::BoxLayout>(nanogui::Orientation::Horizontal, nanogui::Alignment::Middle, 1, 1));
 	
 	mPrevKeyBtn = std::make_shared<nanogui::Button>(*mKeyBtnWrapper, "", FA_STEP_BACKWARD);
@@ -687,4 +690,29 @@ void SceneTimeBar::register_actor_callbacks() {
 		
 		component.TriggerRegistration();
 	}
+}
+
+void SceneTimeBar::populate_tree(Actor &actor, std::shared_ptr<nanogui::TreeViewItem> parent_node) {
+	// Correctly reference the actor's name
+	std::shared_ptr<nanogui::TreeViewItem> node =
+	parent_node
+	? parent_node->add_node(
+							std::string{actor.get_component<MetadataComponent>().name()},
+							[this, &actor]() {
+								
+							})
+	: mTreeView->add_node(std::string{actor.get_component<MetadataComponent>().name()},
+						  [this, &actor]() {
+		OnActorSelected(actor);
+	});
+	
+	if (actor.find_component<UiComponent>()) {
+		actor.remove_component<UiComponent>();
+	}
+	
+	actor.add_component<UiComponent>([this, &actor, node]() {
+		mTreeView->set_selected(node.get());
+	});
+	
+	perform_layout(screen().nvg_context());
 }
