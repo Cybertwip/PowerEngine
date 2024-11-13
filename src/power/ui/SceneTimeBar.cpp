@@ -462,10 +462,15 @@ void SceneTimeBar::OnActorSelected(std::optional<std::reference_wrapper<Actor>> 
 	if (actor.has_value()){
 		if (actor->get().find_component<TakeComponent>()) {
 			mActiveActor = actor;
+			populate_tree(mActiveActor->get());
 		} else {
+			mTakeTreeView->clear();
+
 			mActiveActor = std::nullopt;
 		}
 	} else {
+		mTakeTreeView->clear();
+
 		mActiveActor = std::nullopt;
 	}
 	
