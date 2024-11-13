@@ -128,8 +128,12 @@ mNormalButtonColor(theme().m_text_color) // Initialize normal button color
 	mButtonWrapper->set_layout(std::make_unique<nanogui::BoxLayout>(nanogui::Orientation::Horizontal, nanogui::Alignment::Middle, 25, 5));
 	
 	
-	mTakeWindow = std::make_shared<nanogui::Window>(*mButtonWrapper, "Takes");
+	mTakeWindow = std::make_shared<nanogui::Window>(parent, "Takes");
+	
+	mTakeWindow->set_fixed_size(nanogui::Vector2i(128, 256));
+	
 	mTakeTreeView = std::make_shared<nanogui::TreeView>(*mTakeWindow);
+	
 	mTakeTreeView->set_layout(
 						  std::make_unique<nanogui::BoxLayout>(nanogui::Orientation::Vertical, nanogui::Alignment::Fill));
 	
