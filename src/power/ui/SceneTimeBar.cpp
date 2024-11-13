@@ -454,10 +454,10 @@ mNormalButtonColor(theme().m_text_color) // Initialize normal button color
 	
 	mScrollPanel = std::make_shared<nanogui::VScrollPanel>(*mTakeWindow);
 	
-	mScrollPanel->set_fixed_size({0, 12 * 25});
+	mScrollPanel->set_fixed_size({0, 12 * 6});
 	
-	mTreeView = std::make_shared<nanogui::TreeView>(*mScrollPanel);
-
+	mScrollPanel->set_position(nanogui::Vector2i(0, mTakeWindow->button_panel()->fixed_height()));
+	
 	mTakeTreeView = std::make_shared<nanogui::TreeView>(*mScrollPanel);
 	
 	mTakeTreeView->set_layout(
