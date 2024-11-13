@@ -409,9 +409,9 @@ mNormalButtonColor(theme().m_text_color) // Initialize normal button color
 	// Position the button in the lower-right corner
 	mTakeWindow->set_position(nanogui::Vector2i(fixed_width() - mTakeWindow->fixed_width() - 10, fixed_height() - mTakeWindow->fixed_height() - 10));
 	
-	mAddTakeButton = std::make_shared<nanogui::Button>(mTakeWindow->button_panel(), "", FA_PLUS_SQUARE);
+	mAddTakeButton = std::make_shared<nanogui::Button>(mTakeWindow->button_panel(), "", FA_PLUS);
 	
-	mRemoveTakeButton = std::make_shared<nanogui::Button>(mTakeWindow->button_panel(), "", FA_MINUS_SQUARE);
+	mRemoveTakeButton = std::make_shared<nanogui::Button>(mTakeWindow->button_panel(), "", FA_MINUS);
 
 
 	mTakeTreeView = std::make_shared<nanogui::TreeView>(*mTakeWindow);
