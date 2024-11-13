@@ -418,12 +418,20 @@ mNormalButtonColor(theme().m_text_color) // Initialize normal button color
 			auto& takeComponent = mActiveActor->get().get_component<TakeComponent>();
 			
 			takeComponent.add_timeline();
+			
+			populate_tree(mActiveActor->get());
 		}
 	});
 
 	mRemoveTakeButton->set_callback([this](){
 		if (mActiveActor.has_value()) {
 			
+			if (mTakeSelectedTreeViewNode == 0) {
+				return;
+			}
+
+			mTakeTreeViewNodes[mTakeSelectedTreeViewNode]->set_selected(false);
+
 			mTakeTreeViewNodes.erase(mTakeSelectedTreeViewNode);
 
 			auto& takeComponent = mActiveActor->get().get_component<TakeComponent>();
@@ -434,6 +442,8 @@ mNormalButtonColor(theme().m_text_color) // Initialize normal button color
 				mTakeSelectedTreeViewNode--;
 			}
 			
+			mTakeTreeView->clear();
+
 			populate_tree(mActiveActor->get());
 
 			if (!mTakeTreeViewNodes.empty()) {
@@ -441,8 +451,14 @@ mNormalButtonColor(theme().m_text_color) // Initialize normal button color
 			}
 		}
 	});
+	
+	mScrollPanel = std::make_shared<nanogui::VScrollPanel>(*mTakeWindow);
+	
+	mScrollPanel->set_fixed_size({0, 12 * 25});
+	
+	mTreeView = std::make_shared<nanogui::TreeView>(*mScrollPanel);
 
-	mTakeTreeView = std::make_shared<nanogui::TreeView>(*mTakeWindow);
+	mTakeTreeView = std::make_shared<nanogui::TreeView>(*mScrollPanel);
 	
 	mTakeTreeView->set_layout(
 							  std::make_unique<nanogui::BoxLayout>(nanogui::Orientation::Vertical, nanogui::Alignment::Fill));
@@ -467,11 +483,17 @@ void SceneTimeBar::OnActorSelected(std::optional<std::reference_wrapper<Actor>> 
 			mTakeTreeView->clear();
 
 			mActiveActor = std::nullopt;
+			
+			mTakeWindow->perform_layout(screen().nvg_context());
+
 		}
 	} else {
 		mTakeTreeView->clear();
 
 		mActiveActor = std::nullopt;
+		
+		mTakeWindow->perform_layout(screen().nvg_context());
+
 	}
 	
 	stop_playback();
@@ -743,6 +765,5 @@ void SceneTimeBar::populate_tree(Actor &actor) {
 		mTakeTreeViewNodes[i] = takeTreeViewNode;
 	}
 	
-	
-	perform_layout(screen().nvg_context());
+	mTakeWindow->perform_layout(screen().nvg_context());
 }
