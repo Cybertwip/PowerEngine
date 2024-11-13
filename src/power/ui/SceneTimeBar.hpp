@@ -131,4 +131,8 @@ private:
 	
 	int mCurrentTime;
 	int mTotalFrames;
+	
+	unsigned int mTakeSelectedTreeViewNode;
+	std::unordered_map<unsigned int, std::shared_ptr<nanogui::TreeViewItem>> mTakeTreeViewNodes;
+
 };

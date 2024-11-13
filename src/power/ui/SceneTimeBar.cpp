@@ -423,9 +423,22 @@ mNormalButtonColor(theme().m_text_color) // Initialize normal button color
 
 	mRemoveTakeButton->set_callback([this](){
 		if (mActiveActor.has_value()) {
-//			auto& takeComponent = actor->get().get_component<TakeComponent>();
-//			
-//			takeComponent.add_timeline();
+			
+			mTakeTreeViewNodes.erase(mTakeSelectedTreeViewNode);
+
+			auto& takeComponent = mActiveActor->get().get_component<TakeComponent>();
+
+			takeComponent.remove_timeline(mTakeSelectedTreeViewNode);
+			
+			if (mTakeSelectedTreeViewNode > 0) {
+				mTakeSelectedTreeViewNode--;
+			}
+			
+			populate_tree(mActiveActor->get());
+
+			if (!mTakeTreeViewNodes.empty()) {
+				mTakeTreeViewNodes[mTakeSelectedTreeViewNode]->set_selected(true);
+			}
 		}
 	});
 
@@ -716,10 +729,13 @@ void SceneTimeBar::populate_tree(Actor &actor) {
 	auto& takeComponent = actor.get_component<TakeComponent>();
 	
 	for (unsigned int i = 0; i < takeComponent.get_num_timelines(); ++i) {
-		mTakeTreeView->add_node("Take #"  + std::to_string(i),
-								[i, &takeComponent]() {
+		auto takeTreeViewNode = mTakeTreeView->add_node("Take #"  + std::to_string(i),
+								[this, i, &takeComponent]() {
 			takeComponent.set_active_timeline(i);
+			mTakeSelectedTreeViewNode = i;
 		});
+		
+		mTakeTreeViewNodes[i] = takeTreeViewNode;
 	}
 	
 	

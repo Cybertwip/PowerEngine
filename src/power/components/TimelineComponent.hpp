@@ -157,6 +157,13 @@ public:
 		mTimelineIndex = index;
 	}
 	
+	void remove_timeline(size_t index) {
+		if (index < mTimelineComponents.size()) {  // Check if index is within bounds
+			mTimelineComponents.erase(mTimelineComponents.begin() + index);
+		}
+	}
+
+	
 	size_t get_num_timelines() {
 		return mTimelineComponents.size();
 	}
@@ -288,6 +295,10 @@ public:
 	
 	void add_timeline() {
 		mTakeComponent->add_timeline();
+	}
+	
+	void remove_timeline(size_t index){
+		mTakeComponent->remove_timeline(index);
 	}
 	
 	size_t get_num_timelines() {
