@@ -201,10 +201,10 @@ class Actor;
 class ActorManager;
 class Canvas;
 class CartridgeActorLoader;
-class CartridgeBridge;
 class CameraManager;
 class OpenAiApiClient;
 class DeepMotionApiClient;
+class ExecutionManager;
 class GizmoManager;
 class MeshActor;
 class MeshActorLoader;
@@ -213,6 +213,7 @@ class PowerAi;
 class RenderCommon;
 class ShaderManager;
 class ShaderWrapper;
+class SimulationServer;
 class SkinnedMeshBatch;
 class TripoAiApiClient;
 class UiCommon;
@@ -240,6 +241,7 @@ class Application : public nanogui::DraggableScreen
 	
 	
 	AnimationTimeProvider mGlobalAnimationTimeProvider;
+	std::unique_ptr<ExecutionManager> mExecutionManager;
 	std::unique_ptr<VirtualMachine> mVirtualMachine;
 	
 	std::optional<std::reference_wrapper<VirtualMachine>> mLoadedVirtualMachine;
@@ -269,8 +271,7 @@ class Application : public nanogui::DraggableScreen
 	std::unique_ptr<ActorManager> mActorManager;
 	std::unique_ptr<CameraManager> mCameraManager;
 	std::unique_ptr<entt::registry> mEntityRegistry;
-	std::unique_ptr<CartridgeBridge> mCartridgeBridge;
-
+	std::unique_ptr<SimulationServer> mSimulationServer;
 
 	std::queue<std::tuple<bool, int, int, int, int>> mClickQueue;
 	std::vector<std::function<void(bool, int, int, int, int)>> mClickCallbacks;

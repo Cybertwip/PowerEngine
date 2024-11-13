@@ -2,12 +2,14 @@
 
 #include "simulation/ICartridgeActorLoader.hpp"
 
+class IActorManager;
+class IActorVisualManager;
 class Actor;
 class AnimationTimeProvider;
-class IActorVisualManager;
 class MeshActorLoader;
 class Primitive;
 class ShaderWrapper;
+class VirtualMachine;
 
 class CartridgeActorLoader : public ICartridgeActorLoader {
 public:

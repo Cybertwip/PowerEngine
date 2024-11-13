@@ -1,4 +1,4 @@
-// DebugBridgeServer.hpp
+// SimulationServer.hpp
 #pragma once
 
 #include <websocketpp/config/asio_no_tls.hpp>
@@ -23,9 +23,9 @@ class CartridgeActorLoader;
 
 class VirtualMachine;
 
-class CartridgeBridge {
+class SimulationServer {
 public:
-	CartridgeBridge(uint16_t port,
+	SimulationServer(uint16_t port,
 					VirtualMachine& virtualMachine,
 					CartridgeActorLoader& actorLoader,
 					std::function<void(std::optional<std::reference_wrapper<VirtualMachine>>)> onCartridgeInsertedCallback);
@@ -33,7 +33,7 @@ public:
 	/**
 	 * @brief Destructor. Ensures the server is stopped and resources are cleaned up.
 	 */
-	~CartridgeBridge();
+	~SimulationServer();
 	
 	/**
 	 * @brief Starts the server and initializes memory mappings.
@@ -44,6 +44,8 @@ public:
 	 * @brief Stops the server and cleans up memory mappings.
 	 */
 	void stop();
+	
+	void eject();
 	
 private:
 	// WebSocket++ server instance
@@ -78,6 +80,6 @@ private:
 	std::atomic<bool> m_running;
 	
 	// Prevent copying
-	CartridgeBridge(const CartridgeBridge&) = delete;
-	CartridgeBridge& operator=(const CartridgeBridge&) = delete;
+	SimulationServer(const SimulationServer&) = delete;
+	SimulationServer& operator=(const SimulationServer&) = delete;
 };

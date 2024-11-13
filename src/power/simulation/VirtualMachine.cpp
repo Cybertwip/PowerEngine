@@ -2,8 +2,6 @@
 #include <cstring> // for memcpy
 #include <stdexcept>
 
-static constexpr uint64_t MAX_CALL_INSTR = 32'000'000ull;
-
 // Definition of function_map
 std::unordered_map<uint64_t, FunctionHandler> function_map;
 
@@ -72,7 +70,7 @@ void VirtualMachine::stop() {
 void VirtualMachine::update() {
 	if (mMachine) {
 		for (int i = 0; i < 960; ++i) { // machine is simulated with 8 cores times 30 frames per core
-			mMachine->cpu.step_one(true);
+			mMachine->cpu.step_one(false); // We do not care for the length of its execution, otherwise the instruction counter will overflow eventually
 		}
 		gdb_poll();
 	}

@@ -27,6 +27,8 @@
 #include "components/SkinnedMeshComponent.hpp"  // debug
 #include "components/SkeletonComponent.hpp"  // debug
 
+#include "execution/ExecutionManager.hpp"
+
 #include "gizmo/GizmoManager.hpp"
 #include "graphics/drawing/BatchUnit.hpp"
 #include "graphics/drawing/Mesh.hpp"
@@ -40,7 +42,7 @@
 #include "import/Fbx.hpp"
 #include "simulation/Cartridge.hpp"
 #include "simulation/CartridgeActorLoader.hpp"
-#include "simulation/DebugBridgeServer.hpp"
+#include "simulation/SimulationServer.hpp"
 #include "simulation/VirtualMachine.hpp"
 #include "ui/AnimationPanel.hpp"
 #include "ui/HierarchyPanel.hpp"
@@ -61,6 +63,8 @@
 
 #include <cmath>
 #include <functional>
+
+
 Application::Application()
 : nanogui::DraggableScreen("Power Engine"),
 mGlobalAnimationTimeProvider(60 * 30)
@@ -166,11 +170,17 @@ void Application::initialize() {
 	
 	mCartridge = std::make_unique<Cartridge>(*mVirtualMachine, *mCartridgeActorLoader, *mCameraManager);
 
-	mCartridgeBridge = std::make_unique<CartridgeBridge>(9003, *mVirtualMachine, *mCartridgeActorLoader, [this](std::optional<std::reference_wrapper<VirtualMachine>> virtualMachine) {
+	mSimulationServer = std::make_unique<SimulationServer>(9003, *mVirtualMachine, *mCartridgeActorLoader, [this](std::optional<std::reference_wrapper<VirtualMachine>> virtualMachine) {
 		mLoadedVirtualMachine = virtualMachine;
+		
+		if (mLoadedVirtualMachine) {
+			mExecutionManager->set_execution_mode(ExecutionManager::EExecutionMode::Laboratory);
+		}
 	});
 	
-	mCartridgeBridge->run();
+	mExecutionManager = std::make_unique<ExecutionManager>(*mRenderCommon->canvas(), *mSimulationServer);
+	
+	mSimulationServer->run();
 
 	perform_layout();
 }

@@ -116,6 +116,8 @@ void Canvas::draw(NVGcontext *ctx) {
 		nvgStroke(ctx);
 	}
 	
+	Widget::draw(ctx);
+	
 }
 
 

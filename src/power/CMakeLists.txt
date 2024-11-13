@@ -119,6 +119,8 @@ ${CMAKE_CURRENT_LIST_DIR}/actors/IActorManager.hpp
     ${CMAKE_CURRENT_LIST_DIR}/components/SkinnedMeshComponent.cpp
     ${CMAKE_CURRENT_LIST_DIR}/components/SkinnedMeshComponent.hpp
 
+    ${CMAKE_CURRENT_LIST_DIR}/execution/ExecutionManager.hpp
+
     ${CMAKE_CURRENT_LIST_DIR}/filesystem/CompressedSerialization.hpp
 
     ${CMAKE_CURRENT_LIST_DIR}/filesystem/DirectoryNode.hpp
@@ -198,10 +200,9 @@ ${CMAKE_CURRENT_LIST_DIR}/actors/IActorManager.hpp
     ${CMAKE_CURRENT_LIST_DIR}/import/SkinnedFbx.hpp
     ${CMAKE_CURRENT_LIST_DIR}/import/SkinnedFbx.cpp
 
-    ${CMAKE_CURRENT_LIST_DIR}/simulation/DebugBridgeServer.hpp
     ${CMAKE_CURRENT_LIST_DIR}/simulation/DebugBridgeCommon.hpp
     ${CMAKE_CURRENT_LIST_DIR}/simulation/DebugBridgeCommon.hpp
-    ${CMAKE_CURRENT_LIST_DIR}/simulation/DebugBridgeServer.cpp
+    
     ${CMAKE_CURRENT_LIST_DIR}/simulation/Cartridge.hpp
     ${CMAKE_CURRENT_LIST_DIR}/simulation/ICartridge.hpp
     ${CMAKE_CURRENT_LIST_DIR}/simulation/ICartridgeActorLoader.hpp
@@ -210,6 +211,8 @@ ${CMAKE_CURRENT_LIST_DIR}/actors/IActorManager.hpp
     ${CMAKE_CURRENT_LIST_DIR}/simulation/PrimitiveBuilder.hpp
     ${CMAKE_CURRENT_LIST_DIR}/simulation/PrimitiveBuilder.cpp
     ${CMAKE_CURRENT_LIST_DIR}/simulation/Primitive.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/simulation/SimulationServer.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/simulation/SimulationServer.cpp
     ${CMAKE_CURRENT_LIST_DIR}/simulation/VirtualMachine.cpp
     ${CMAKE_CURRENT_LIST_DIR}/simulation/VirtualMachine.hpp
     

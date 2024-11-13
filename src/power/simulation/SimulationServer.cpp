@@ -1,6 +1,6 @@
-// DebugBridgeServer.cpp
+// SimulationServer.cpp
 
-#include "DebugBridgeServer.hpp"
+#include "SimulationServer.hpp"
 
 #include "simulation/Cartridge.hpp"
 #include "simulation/CartridgeActorLoader.hpp"
@@ -34,14 +34,14 @@
 // Define INITIAL_MEMORY_SIZE for elf memory on macOS
 #define INITIAL_MEMORY_SIZE (10 * 1024 * 1024) // 10 MB, adjust as needed
 
-CartridgeBridge::CartridgeBridge(uint16_t port, VirtualMachine& virtualMachine, CartridgeActorLoader& actorLoader, std::function<void(std::optional<std::reference_wrapper<VirtualMachine>>)> onCartridgeInsertedCallback)
+SimulationServer::SimulationServer(uint16_t port, VirtualMachine& virtualMachine, CartridgeActorLoader& actorLoader, std::function<void(std::optional<std::reference_wrapper<VirtualMachine>>)> onCartridgeInsertedCallback)
 : m_port(port), mVirtualMachine(virtualMachine), mActorLoader(actorLoader), mOnVirtualMachineLoadedCallback(onCartridgeInsertedCallback)
 {
 	m_server.init_asio();
 	
 	m_server.set_validate_handler(
 								  websocketpp::lib::bind(
-														 &CartridgeBridge::validate_connection,
+														 &SimulationServer::validate_connection,
 														 this,
 														 websocketpp::lib::placeholders::_1
 														 )
@@ -49,7 +49,7 @@ CartridgeBridge::CartridgeBridge(uint16_t port, VirtualMachine& virtualMachine, 
 	
 	m_server.set_message_handler(
 								 websocketpp::lib::bind(
-														&CartridgeBridge::on_message,
+														&SimulationServer::on_message,
 														this,
 														websocketpp::lib::placeholders::_1,
 														websocketpp::lib::placeholders::_2
@@ -61,11 +61,11 @@ CartridgeBridge::CartridgeBridge(uint16_t port, VirtualMachine& virtualMachine, 
 	m_server.set_access_channels(websocketpp::log::alevel::none);
 }
 
-CartridgeBridge::~CartridgeBridge() {
+SimulationServer::~SimulationServer() {
 	stop();
 }
 
-void CartridgeBridge::run() {
+void SimulationServer::run() {
 	std::lock_guard<std::mutex> lock(m_mutex);
 	if (m_running.load()) {
 		std::cerr << "Server is already running." << std::endl;
@@ -76,7 +76,7 @@ void CartridgeBridge::run() {
 		m_server.listen(m_port);
 		m_server.start_accept();
 		
-		std::cout << "DebugBridgeServer is running on port " << m_port << std::endl;
+		std::cout << "SimulationServer is running on port " << m_port << std::endl;
 		
 		m_running.store(true);
 		m_thread = std::thread([this]() {
@@ -91,7 +91,7 @@ void CartridgeBridge::run() {
 			}
 			
 			m_running.store(false);
-			std::cout << "DebugBridgeServer thread has exited." << std::endl;
+			std::cout << "SimulationServer thread has exited." << std::endl;
 		});
 	} catch (const websocketpp::exception& e) {
 		std::cerr << "WebSocket++ exception: " << e.what() << std::endl;
@@ -102,7 +102,7 @@ void CartridgeBridge::run() {
 	}
 }
 
-void CartridgeBridge::stop() {
+void SimulationServer::stop() {
 	std::lock_guard<std::mutex> lock(m_mutex);
 	if (!m_running.load()) {
 		std::cerr << "Server is not running." << std::endl;
@@ -120,7 +120,7 @@ void CartridgeBridge::stop() {
 		mOnVirtualMachineLoadedCallback(std::nullopt); // Eject cartridge to prevent updating
 		mVirtualMachine.reset();
 
-		std::cout << "DebugBridgeServer has stopped." << std::endl;
+		std::cout << "SimulationServer has stopped." << std::endl;
 	} catch (const websocketpp::exception& e) {
 		std::cerr << "WebSocket++ exception on stop: " << e.what() << std::endl;
 	} catch (const std::exception& e) {
@@ -130,11 +130,11 @@ void CartridgeBridge::stop() {
 	}
 }
 
-bool CartridgeBridge::validate_connection(websocketpp::connection_hdl hdl) {
+bool SimulationServer::validate_connection(websocketpp::connection_hdl hdl) {
 	return true;
 }
 
-void CartridgeBridge::on_message(websocketpp::connection_hdl hdl, server::message_ptr msg) {
+void SimulationServer::on_message(websocketpp::connection_hdl hdl, server::message_ptr msg) {
 	std::lock_guard<std::mutex> lock(m_mutex);
 	try {
 		if (msg->get_opcode() != websocketpp::frame::opcode::binary) {
@@ -166,7 +166,7 @@ void CartridgeBridge::on_message(websocketpp::connection_hdl hdl, server::messag
 	}
 }
 
-DebugCommand CartridgeBridge::process_command(const DebugCommand& cmd) {
+DebugCommand SimulationServer::process_command(const DebugCommand& cmd) {
 	if (cmd.type == DebugCommand::CommandType::EXECUTE) {
 		std::string result = "Executed command: " + cmd.payload;
 		return DebugCommand(DebugCommand::CommandType::RESPONSE, result);
@@ -175,7 +175,7 @@ DebugCommand CartridgeBridge::process_command(const DebugCommand& cmd) {
 	return DebugCommand(DebugCommand::CommandType::RESPONSE, "Unknown command type.");
 }
 
-void CartridgeBridge::execute_elf(const std::vector<uint8_t>& data) {
+void SimulationServer::execute_elf(const std::vector<uint8_t>& data) {
 	// Existing elf unloading logic
 	// If a cartridge was loaded, reset it
 	mOnVirtualMachineLoadedCallback(std::nullopt); // Eject cartridge to prevent updating
@@ -234,3 +234,11 @@ void CartridgeBridge::execute_elf(const std::vector<uint8_t>& data) {
 	
 }
 
+void SimulationServer::eject() {
+	// Existing elf unloading logic
+	// If a cartridge was loaded, reset it
+	mOnVirtualMachineLoadedCallback(std::nullopt); // Eject cartridge to prevent updating
+	mVirtualMachine.reset();
+	mActorLoader.cleanup();
+
+}
