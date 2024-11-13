@@ -38,7 +38,7 @@ public:
 		if (executionMode == EExecutionMode::Game) {
 			mExecutionButton->set_icon(FA_GAMEPAD);
 		} else if (executionMode == EExecutionMode::Laboratory) {
-			mExecutionButton->set_icon(FA_FLASK);
+			mExecutionButton->set_icon(FA_EJECT);
 		}
 		
 		mExecutionMode = executionMode;
