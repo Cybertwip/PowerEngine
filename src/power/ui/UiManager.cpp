@@ -96,7 +96,6 @@ UiManager::UiManager(nanogui::Screen& screen, std::shared_ptr<IActorSelectedRegi
 					 ShaderManager& shaderManager,
 					 std::shared_ptr<ScenePanel> scenePanel,
 					 std::shared_ptr<Canvas> canvas,
-					 std::shared_ptr<nanogui::Widget> toolbox,
 					 std::shared_ptr<nanogui::Widget> statusBar,
 					 std::shared_ptr<AnimationPanel> animationPanel,
 					 std::shared_ptr<SceneTimeBar> sceneTimeBar,
@@ -172,11 +171,7 @@ UiManager::UiManager(nanogui::Screen& screen, std::shared_ptr<IActorSelectedRegi
 	};
 	
 	// Register click callback with ScenePanel
-	scenePanel->register_click_callback(GLFW_MOUSE_BUTTON_1, [this, toolbox, readFromFramebuffer](bool down, int width, int height, int x, int y) {
-		if (toolbox->contains(nanogui::Vector2f(x, y))) {
-			return;
-		}
-		
+	scenePanel->register_click_callback(GLFW_MOUSE_BUTTON_1, [this, readFromFramebuffer](bool down, int width, int height, int x, int y) {		
 		if (down) {
 			int id = readFromFramebuffer(width, height, x, y);
 			
@@ -211,9 +206,9 @@ UiManager::UiManager(nanogui::Screen& screen, std::shared_ptr<IActorSelectedRegi
 	});
 	
 	// Register motion callback with ScenePanel
-	scenePanel->register_motion_callback(GLFW_MOUSE_BUTTON_RIGHT, [this, toolbox, readFromFramebuffer](int width, int height, int x, int y, int dx, int dy, int button, bool down) {
+	scenePanel->register_motion_callback(GLFW_MOUSE_BUTTON_RIGHT, [this, readFromFramebuffer](int width, int height, int x, int y, int dx, int dy, int button, bool down) {
 		
-		if (toolbox->contains(nanogui::Vector2f(x, y)) || !mCanvas->contains(nanogui::Vector2f(x, y))) {
+		if (!mCanvas->contains(nanogui::Vector2f(x, y))) {
 			return;
 		}
 		

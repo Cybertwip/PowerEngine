@@ -26,9 +26,8 @@ UiCommon::UiCommon(nanogui::Widget& parent, nanogui::Screen& screen, ActorManage
 	int rightWidth = totalWidth - sceneWidth;
 	
 	int totalHeight = parent.size().y();
-	int sceneHeight = static_cast<int>(totalHeight * 0.90);
+	int sceneHeight = static_cast<int>(totalHeight * 0.925);
 	int statusHeight = static_cast<int>(totalHeight * 0.05);
-	int toolboxHeight = static_cast<int>(totalHeight * 0.05);
 	
 	mSceneWrapper->set_fixed_width(totalWidth);
 	mSceneWrapper->set_fixed_height(totalHeight);
@@ -40,12 +39,6 @@ UiCommon::UiCommon(nanogui::Widget& parent, nanogui::Screen& screen, ActorManage
 	
 	mLeftWrapper->set_fixed_width(sceneWidth);
 	mLeftWrapper->set_fixed_height(totalHeight);
-	
-	mToolbox = std::make_shared<nanogui::Widget>(std::make_optional<std::reference_wrapper<nanogui::Widget>>(*mLeftWrapper));
-	
-	mToolbox->set_layout(std::make_unique<nanogui::BoxLayout>(nanogui::Orientation::Horizontal,
-															  nanogui::Alignment::Minimum, 4, 2));
-	mToolbox->set_fixed_height(toolboxHeight);
 	
 	mScenePanel = std::make_shared<ScenePanel>(*mLeftWrapper);
 	

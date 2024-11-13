@@ -51,10 +51,6 @@ public:
 		return mSceneTimeBar;
 	}
 
-	std::shared_ptr<nanogui::Widget> toolbox() {
-		return mToolbox;
-	}
-
 private:
 	std::shared_ptr<nanogui::Window> mMainWrapper;
 	std::shared_ptr<nanogui::Window> mSceneWrapper;
@@ -65,7 +61,6 @@ private:
 	std::shared_ptr<AnimationPanel> mAnimationPanel;
 	std::shared_ptr<HierarchyPanel> mHierarchyPanel;
 	std::shared_ptr<nanogui::Widget> mStatusBar;
-	std::shared_ptr<nanogui::Widget> mToolbox;
 	std::shared_ptr<SceneTimeBar> mSceneTimeBar;
 	
 	ActorManager& mActorManager;

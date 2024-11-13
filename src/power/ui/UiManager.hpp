@@ -69,7 +69,6 @@ public:
 			  ShaderManager& shaderManager,
 			  std::shared_ptr<ScenePanel> scenePanel,
 			  std::shared_ptr<Canvas> canvas,
-			  std::shared_ptr<nanogui::Widget> toolbox,
 			  std::shared_ptr<nanogui::Widget> statusBar,
 			  std::shared_ptr<AnimationPanel> animationPanel,
 			  std::shared_ptr<SceneTimeBar> sceneTimeBar,
