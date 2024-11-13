@@ -413,7 +413,6 @@ mNormalButtonColor(theme().m_text_color) // Initialize normal button color
 	
 	mRemoveTakeButton = std::make_shared<nanogui::Button>(mTakeWindow->button_panel(), "", FA_MINUS);
 
-
 	mTakeTreeView = std::make_shared<nanogui::TreeView>(*mTakeWindow);
 	
 	mTakeTreeView->set_layout(
