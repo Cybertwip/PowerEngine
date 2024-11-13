@@ -3,7 +3,7 @@
 #include "Canvas.hpp"
 #include "simulation/SimulationServer.hpp"
 
-#include <nanogui/button.h>
+#include <nanogui/toolbutton.h>
 #include <nanogui/icons.h>
 
 #include <memory>
@@ -12,7 +12,7 @@ class BlueprintManager {
 public:
 	BlueprintManager(Canvas& canvas) : mCanvas(canvas) {
 		
-		mBlueprintButton = std::make_shared<nanogui::Button>(canvas, "", FA_FLASK);
+		mBlueprintButton = std::make_shared<nanogui::ToolButton>(canvas, FA_FLASK);
 		
 		mBlueprintButton->set_fixed_size(nanogui::Vector2i(48, 48));
 		
@@ -28,5 +28,5 @@ public:
 private:
 	Canvas& mCanvas;
 	
-	std::shared_ptr<nanogui::Button> mBlueprintButton;
+	std::shared_ptr<nanogui::ToolButton> mBlueprintButton;
 };
