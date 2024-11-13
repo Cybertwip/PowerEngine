@@ -119,6 +119,7 @@ ${CMAKE_CURRENT_LIST_DIR}/actors/IActorManager.hpp
     ${CMAKE_CURRENT_LIST_DIR}/components/SkinnedMeshComponent.cpp
     ${CMAKE_CURRENT_LIST_DIR}/components/SkinnedMeshComponent.hpp
 
+    ${CMAKE_CURRENT_LIST_DIR}/execution/BlueprintManager.hpp
     ${CMAKE_CURRENT_LIST_DIR}/execution/ExecutionManager.hpp
 
     ${CMAKE_CURRENT_LIST_DIR}/filesystem/CompressedSerialization.hpp

@@ -27,6 +27,7 @@
 #include "components/SkinnedMeshComponent.hpp"  // debug
 #include "components/SkeletonComponent.hpp"  // debug
 
+#include "execution/BlueprintManager.hpp"
 #include "execution/ExecutionManager.hpp"
 
 #include "gizmo/GizmoManager.hpp"
@@ -63,7 +64,6 @@
 
 #include <cmath>
 #include <functional>
-
 
 Application::Application()
 : nanogui::DraggableScreen("Power Engine"),
@@ -176,6 +176,8 @@ void Application::initialize() {
 			mExecutionManager->set_execution_mode(ExecutionManager::EExecutionMode::Laboratory);
 		}
 	});
+	
+	mBlueprintManager = std::make_unique<BlueprintManager>(*mRenderCommon->canvas());
 	
 	mExecutionManager = std::make_unique<ExecutionManager>(*mRenderCommon->canvas(), *mSimulationServer);
 	

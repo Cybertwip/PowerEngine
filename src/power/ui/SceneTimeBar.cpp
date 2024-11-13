@@ -402,7 +402,7 @@ mNormalButtonColor(theme().m_text_color) // Initialize normal button color
 		}
 	});
 	
-	mTakeWindow = std::make_shared<nanogui::Window>(*this, nanogui::utf8(FA_CAMERA));
+	mTakeWindow = std::make_shared<nanogui::Window>(*this, "Shots");
 	
 	mTakeWindow->set_fixed_size(nanogui::Vector2i(144, 164));
 			

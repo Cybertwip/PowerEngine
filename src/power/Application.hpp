@@ -199,6 +199,7 @@ class VirtualMachine;
 
 class Actor;
 class ActorManager;
+class BlueprintManager;
 class Canvas;
 class CartridgeActorLoader;
 class CameraManager;
@@ -241,6 +242,7 @@ class Application : public nanogui::DraggableScreen
 	
 	
 	AnimationTimeProvider mGlobalAnimationTimeProvider;
+	std::unique_ptr<BlueprintManager> mBlueprintManager;
 	std::unique_ptr<ExecutionManager> mExecutionManager;
 	std::unique_ptr<VirtualMachine> mVirtualMachine;
 	
