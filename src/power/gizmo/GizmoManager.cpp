@@ -51,8 +51,6 @@ mScaleGizmo(mMeshActorLoader.create_actor("internal/models/Gizmo/Scale.fbx", mDu
 	mRotationButton->set_size(nanogui::Vector2i(48, 48));
 	mScaleButton->set_size(nanogui::Vector2i(48, 48));
 
-	mExecutionButton->set_position(nanogui::Vector2i(mCanvas.fixed_width() - mExecutionButton->width() - 10, mCanvas.fixed_height() - mExecutionButton->height() - 10));
-
 	mTranslationButton->set_position(nanogui::Vector2i(10,  parent.fixed_height() - mTranslationButton->height() - 10));
 	mRotationButton->set_position(nanogui::Vector2i(mTranslationButton->position().x() + mTranslationButton->width() + 10, parent.fixed_height() - mRotationButton->height() - 10));
 	mScaleButton->set_position(nanogui::Vector2i(mRotationButton->position().x() + mRotationButton->width() + 10, parent.fixed_height() - mScaleButton->height() - 10));
