@@ -157,6 +157,10 @@ public:
 		mTimelineIndex = index;
 	}
 	
+	size_t get_num_timelines() {
+		return mTimelineComponents.size();
+	}
+	
 	TimelineComponent& get_active_timeline() {
 		return *mTimelineComponents[mTimelineIndex];
 	}
@@ -284,6 +288,10 @@ public:
 	
 	void add_timeline() {
 		mTakeComponent->add_timeline();
+	}
+	
+	size_t get_num_timelines() {
+		return mTakeComponent->get_num_timelines();
 	}
 	
 	void set_active_timeline(unsigned int index) {

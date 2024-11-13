@@ -413,6 +413,22 @@ mNormalButtonColor(theme().m_text_color) // Initialize normal button color
 	
 	mRemoveTakeButton = std::make_shared<nanogui::Button>(mTakeWindow->button_panel(), "", FA_MINUS);
 
+	mAddTakeButton->set_callback([this](){
+		if (mActiveActor.has_value()) {
+			auto& takeComponent = mActiveActor->get().get_component<TakeComponent>();
+			
+			takeComponent.add_timeline();
+		}
+	});
+
+	mRemoveTakeButton->set_callback([this](){
+		if (mActiveActor.has_value()) {
+//			auto& takeComponent = actor->get().get_component<TakeComponent>();
+//			
+//			takeComponent.add_timeline();
+		}
+	});
+
 	mTakeTreeView = std::make_shared<nanogui::TreeView>(*mTakeWindow);
 	
 	mTakeTreeView->set_layout(
@@ -446,7 +462,6 @@ void SceneTimeBar::OnActorSelected(std::optional<std::reference_wrapper<Actor>> 
 	
 	find_previous_and_next_keyframes();
 
-	
 }
 
 // Override mouse_button_event to consume the event
@@ -695,27 +710,18 @@ void SceneTimeBar::register_actor_callbacks() {
 	}
 }
 
-void SceneTimeBar::populate_tree(Actor &actor, std::shared_ptr<nanogui::TreeViewItem> parent_node) {
-	// Correctly reference the actor's name
-	std::shared_ptr<nanogui::TreeViewItem> node =
-	parent_node
-	? parent_node->add_node(
-							std::string{actor.get_component<MetadataComponent>().name()},
-							[this, &actor]() {
-								
-							})
-	: mTakeTreeView->add_node(std::string{actor.get_component<MetadataComponent>().name()},
-						  [this, &actor]() {
-		OnActorSelected(actor);
-	});
+void SceneTimeBar::populate_tree(Actor &actor) {
+	mTakeTreeView->clear();
+
+	auto& takeComponent = actor.get_component<TakeComponent>();
 	
-	if (actor.find_component<UiComponent>()) {
-		actor.remove_component<UiComponent>();
+	for (unsigned int i = 0; i < takeComponent.get_num_timelines(); ++i) {
+		mTakeTreeView->add_node("Take #"  + std::to_string(i),
+								[i, &takeComponent]() {
+			takeComponent.set_active_timeline(i);
+		});
 	}
 	
-	actor.add_component<UiComponent>([this, &actor, node]() {
-		mTakeTreeView->set_selected(node.get());
-	});
 	
 	perform_layout(screen().nvg_context());
 }

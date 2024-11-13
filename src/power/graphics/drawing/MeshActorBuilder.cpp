@@ -113,6 +113,8 @@ Actor& MeshActorBuilder::build_mesh(Actor& actor, AnimationTimeProvider& timePro
 	// Add DrawableComponent
 	actor.add_component<DrawableComponent>(std::move(drawableComponent));
 
+	actor.add_component<TransformComponent>();
+
 	actor.add_component<TakeComponent>(std::make_unique<SimpleTakeComponent>(actor, timeProvider));
 	
 	return actor;
@@ -236,6 +238,8 @@ Actor& MeshActorBuilder::build_skinned(Actor& actor, AnimationTimeProvider& time
 	// Add DrawableComponent
 	actor.add_component<DrawableComponent>(std::move(drawableComponent));
 	
+	actor.add_component<TransformComponent>();
+
 	actor.add_component<TakeComponent>(	std::make_unique<SkinnedTakeComponent>(actor, timeProvider));
 	
 	return actor;
