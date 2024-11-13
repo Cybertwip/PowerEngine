@@ -6,7 +6,11 @@
 #include <functional>
 #include <vector>
 #include <glm/glm.hpp>
+
 #include <nanogui/nanogui.h>
+#include <nanogui/treeview.h>
+#include <nanogui/vscrollpanel.h>
+
 
 // Forward declarations to minimize dependencies
 class ActorManager;
@@ -94,6 +98,9 @@ private:
 	std::shared_ptr<nanogui::Widget> mSliderWrapper;
 
 	std::shared_ptr<nanogui::Widget> mButtonWrapper;
+	
+	std::shared_ptr<nanogui::TreeView> mTakeTreeView;
+	
 	std::shared_ptr<nanogui::Button> mRewindBtn;
 	std::shared_ptr<nanogui::Button> mSeekEndBtn;
 	

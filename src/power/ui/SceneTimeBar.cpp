@@ -10,6 +10,7 @@
 #include <nanogui/slider.h>
 #include <nanogui/toolbutton.h>
 #include <nanogui/textbox.h>
+#include <nanogui/treeviewitem.h>
 #include <nanovg.h>
 #include <iostream>
 
@@ -124,8 +125,12 @@ mNormalButtonColor(theme().m_text_color) // Initialize normal button color
 	
 	// Buttons Horizontal Layout
 	mButtonWrapper = std::make_shared<nanogui::Widget>(std::make_optional<std::reference_wrapper<nanogui::Widget>>(*mButtonWrapperWrapper));
-	mButtonWrapper->set_layout(std::make_unique<nanogui::BoxLayout>(nanogui::Orientation::Horizontal, nanogui::Alignment::Middle, 10, 5));
+	mButtonWrapper->set_layout(std::make_unique<nanogui::BoxLayout>(nanogui::Orientation::Horizontal, nanogui::Alignment::Middle, 25, 5));
 	
+	
+	mTakeTreeView = std::make_shared<nanogui::TreeView>(*mButtonWrapper);
+	mTakeTreeView->set_layout(
+						  std::make_unique<nanogui::BoxLayout>(nanogui::Orientation::Vertical, nanogui::Alignment::Fill));
 	// Rewind Button
 	mRewindBtn = std::make_shared<nanogui::Button>(*mButtonWrapper, "", FA_FAST_BACKWARD);
 	mRewindBtn->set_fixed_width(buttonWidth);
@@ -297,7 +302,7 @@ mNormalButtonColor(theme().m_text_color) // Initialize normal button color
 	});
 	
 	// Keyframe Buttons Wrapper
-	mKeyBtnWrapper = std::make_shared<nanogui::Widget>(std::make_optional<std::reference_wrapper<nanogui::Widget>>(*this));
+	mKeyBtnWrapper = std::make_shared<nanogui::Widget>(std::make_optional<std::reference_wrapper<nanogui::Widget>>(*mButtonWrapper));
 	mKeyBtnWrapper->set_layout(std::make_unique<nanogui::BoxLayout>(nanogui::Orientation::Horizontal, nanogui::Alignment::Middle, 1, 1));
 	
 	mPrevKeyBtn = std::make_shared<nanogui::Button>(*mKeyBtnWrapper, "", FA_STEP_BACKWARD);
