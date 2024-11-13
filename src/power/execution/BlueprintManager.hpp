@@ -17,7 +17,7 @@ public:
 		mBlueprintButton->set_size(nanogui::Vector2i(48, 48));
 		
 		// Position the button in the lower-right corner
-		mBlueprintButton->set_position(nanogui::Vector2i(mCanvas.fixed_width() * 0.5f - mExecutionButton->width() - 10, mCanvas.fixed_height() - mExecutionButton->height() - 10));
+		mBlueprintButton->set_position(nanogui::Vector2i(mCanvas.fixed_width() * 0.5f - mBlueprintButton->width() - 10, mCanvas.fixed_height() - mBlueprintButton->height() - 10));
 		
 		mBlueprintButton->set_callback([this]() {
 		});
