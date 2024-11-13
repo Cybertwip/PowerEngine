@@ -402,9 +402,9 @@ mNormalButtonColor(theme().m_text_color) // Initialize normal button color
 		}
 	});
 	
-	mTakeWindow = std::make_shared<nanogui::Window>(*this, "Takes");
+	mTakeWindow = std::make_shared<nanogui::Window>(*this, nanogui::utf8(FA_CAMERA));
 	
-	mTakeWindow->set_fixed_size(nanogui::Vector2i(112, 164));
+	mTakeWindow->set_fixed_size(nanogui::Vector2i(144, 164));
 			
 	// Position the button in the lower-right corner
 	mTakeWindow->set_position(nanogui::Vector2i(fixed_width() - mTakeWindow->fixed_width() - 10, fixed_height() - mTakeWindow->fixed_height() - 10));
