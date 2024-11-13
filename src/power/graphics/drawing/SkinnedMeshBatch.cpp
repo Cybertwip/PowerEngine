@@ -11,6 +11,45 @@
 
 #include <glm/gtc/type_ptr.hpp>
 
+
+namespace SkinnedMeshBatchUtils {
+struct BoneCPU {
+	float transform[4][4] =
+	{
+		{ 0.0f, 0.0f, 0.0f, 0.0f },
+		{ 0.0f, 0.0f, 0.0f, 0.0f },
+		{ 0.0f, 0.0f, 0.0f, 0.0f },
+		{ 0.0f, 0.0f, 0.0f, 0.0f }
+	};
+};
+
+// Retrieve the bones for rendering
+std::vector<BoneCPU> build_cpu_bones(SkeletonComponent& skeletonComponent) {
+	// Ensure we have a valid number of bones
+	size_t numBones = skeletonComponent.get_skeleton().num_bones();
+	
+	std::vector<BoneCPU> bonesCPU(numBones);
+	
+	for (size_t i = 0; i < numBones; ++i) {
+		Skeleton::Bone& bone = static_cast<Skeleton::Bone&>(skeletonComponent.get_skeleton().get_bone(i));
+		
+		// Get the bone transform as a glm::mat4
+		glm::mat4 boneTransform = bone.global;
+		
+		// Reference to the BoneCPU structure
+		BoneCPU& boneCPU = bonesCPU[i];
+		
+		// Copy each element from glm::mat4 to the BoneCPU's transform array
+		for (int row = 0; row < 4; ++row) {
+			for (int col = 0; col < 4; ++col) {
+				boneCPU.transform[row][col] = boneTransform[row][col];
+			}
+		}
+	}
+	return bonesCPU;
+}
+}
+
 void SkinnedMeshBatch::upload_material_data(ShaderWrapper& shader, const std::vector<std::shared_ptr<MaterialProperties>>& materialData) {
 	// Ensure we have a valid number of materials
 	size_t numMaterials = materialData.size();
@@ -287,12 +326,12 @@ void SkinnedMeshBatch::draw_content(const nanogui::Matrix4f& view,
 			shader.set_uniform("aModel", mesh.get_model_matrix());
 			
 			// Apply skinning and animations (if any)
-			auto bones = mesh.get_skinned_component().get_bones();
+			auto bones = SkinnedMeshBatchUtils::build_cpu_bones(mesh.get_skeleton_component());
 			
 			shader.set_buffer(
 							  "bones",
 							  nanogui::VariableType::Float32,
-							  { bones.size(), sizeof(SkinnedAnimationComponent::BoneCPU) / sizeof(float) },
+							  { bones.size(), sizeof(SkinnedMeshBatchUtils::BoneCPU) / sizeof(float) },
 							  bones.data()
 							  );
 			

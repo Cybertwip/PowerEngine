@@ -112,16 +112,8 @@ Actor& MeshActorBuilder::build_mesh(Actor& actor, AnimationTimeProvider& timePro
 	
 	// Add DrawableComponent
 	actor.add_component<DrawableComponent>(std::move(drawableComponent));
-	
-	// Add TransformComponent and AnimationComponent
-	auto& transform = actor.add_component<TransformComponent>();
-	auto& transformAnimationComponent = actor.add_component<TransformAnimationComponent>(transform, timeProvider);
-	
-	std::vector<std::reference_wrapper<AnimationComponent>> components = {
-		transformAnimationComponent
-	};
 
-	actor.add_component<TimelineComponent>(std::move(components), timeProvider);
+	actor.add_component<TakeComponent>(actor, timeProvider);
 	
 	return actor;
 }
@@ -206,12 +198,8 @@ Actor& MeshActorBuilder::build_skinned(Actor& actor, AnimationTimeProvider& time
 		auto& playbackComponent = actor.add_component<PlaybackComponent>();
 
 		playbackComponent.setPlaybackData(playbackData);
-
 		
 		auto& skeletonComponent = actor.add_component<SkeletonComponent>((*model->GetSkeleton()));
-
-		// Add SkinnedAnimationComponent
-		auto& skinnedComponent = actor.add_component<SkinnedAnimationComponent>(playbackComponent, skeletonComponent, timeProvider);
 				
 		// Create SkinnedMesh instances from deserialized data
 		for (auto& skinnedMeshData : model->GetSkinnedMeshData()) {
@@ -221,7 +209,6 @@ Actor& MeshActorBuilder::build_skinned(Actor& actor, AnimationTimeProvider& time
 																			 mBatchUnit.mSkinnedMeshBatch,
 																			 metadataComponent,
 																			 colorComponent,
-																			 skinnedComponent,
 																			 skeletonComponent
 																			 ));
 		}
@@ -249,19 +236,7 @@ Actor& MeshActorBuilder::build_skinned(Actor& actor, AnimationTimeProvider& time
 	// Add DrawableComponent
 	actor.add_component<DrawableComponent>(std::move(drawableComponent));
 	
-	// Add TransformComponent and AnimationComponent
-	auto& transform = actor.add_component<TransformComponent>();
-	
-	auto& transformAnimationComponent = actor.add_component<TransformAnimationComponent>(transform, timeProvider);
-	
-	auto& skinnedAnimationComponent = actor.get_component<SkinnedAnimationComponent>();
-
-	std::vector<std::reference_wrapper<AnimationComponent>> components = {
-		transformAnimationComponent,
-		skinnedAnimationComponent
-	};
-	
-	actor.add_component<TimelineComponent>(std::move(components), timeProvider);
+	actor.add_component<SkinnedTakeComponent>(actor, timeProvider);
 	
 	return actor;
 }

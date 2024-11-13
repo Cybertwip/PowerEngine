@@ -20,7 +20,6 @@ class ShaderManager;
 class SkinnedMesh : public Drawable {
 public:
 	SkinnedMesh(SkinnedMeshData& skinnedMeshData, ShaderWrapper& shader, ISkinnedMeshBatch& meshBatch, MetadataComponent& metadataComponent, ColorComponent& colorComponent,
-		SkinnedAnimationComponent& skinnedComponent,
 		SkeletonComponent& skeletonComponent);
 	~SkinnedMesh() override;
 	
@@ -50,10 +49,6 @@ public:
 		return mColorComponent;
 	}
 
-	SkinnedAnimationComponent& get_skinned_component() const {
-		return mSkinnedComponent;
-	}
-
 	SkeletonComponent& get_skeleton_component() const {
 		return mSkeletonComponent;
 	}
@@ -80,7 +75,6 @@ private:
 	ISkinnedMeshBatch& mMeshBatch;
 	MetadataComponent& mMetadataComponent;
 	ColorComponent& mColorComponent;
-	SkinnedAnimationComponent& mSkinnedComponent;
 	SkeletonComponent& mSkeletonComponent;
 	nanogui::Matrix4f mModelMatrix;
 };

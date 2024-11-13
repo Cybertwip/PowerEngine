@@ -29,14 +29,12 @@ SkinnedMesh::SkinnedMesh(
 						 ISkinnedMeshBatch& meshBatch,
 						 MetadataComponent& metadataComponent,
 						 ColorComponent& colorComponent,
-						 SkinnedAnimationComponent& skinnedComponent,
 						 SkeletonComponent& skeletonComponent)
 : mSkinnedMeshData(skinnedMeshData),
 mShader(shader),
 mMeshBatch(meshBatch),
 mMetadataComponent(metadataComponent),
 mColorComponent(colorComponent),
-mSkinnedComponent(skinnedComponent),
 mSkeletonComponent(skeletonComponent),
 mModelMatrix(nanogui::Matrix4f::identity()) {
 	

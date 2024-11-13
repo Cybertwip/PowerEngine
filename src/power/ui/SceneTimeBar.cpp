@@ -235,7 +235,7 @@ mNormalButtonColor(theme().m_text_color) // Initialize normal button color
 			
 			
 			if (mActiveActor != std::nullopt) {
-				auto& component = mActiveActor->get().get_component<TimelineComponent>();
+				auto& component = mActiveActor->get().get_component<TakeComponent>();
 				
 				if (mRecording) {
 					component.Freeze();
@@ -346,7 +346,7 @@ mNormalButtonColor(theme().m_text_color) // Initialize normal button color
 		
 		if (mActiveActor.has_value()) {
 			if (!mPlaying) {
-				auto& component = mActiveActor->get().get_component<TimelineComponent>();
+				auto& component = mActiveActor->get().get_component<TakeComponent>();
 				
 				if (wasUncommitted){
 					mUncommittedKey = false;
@@ -431,7 +431,7 @@ SceneTimeBar::~SceneTimeBar() {
 void SceneTimeBar::OnActorSelected(std::optional<std::reference_wrapper<Actor>> actor) {
 	
 	if (actor.has_value()){
-		if (actor->get().find_component<TimelineComponent>()) {
+		if (actor->get().find_component<TakeComponent>()) {
 			mActiveActor = actor;
 		} else {
 			mActiveActor = std::nullopt;
@@ -539,7 +539,7 @@ void SceneTimeBar::stop_playback() {
 	}
 	
 	if (mActiveActor.has_value()) {
-		auto& component = mActiveActor->get().get_component<TimelineComponent>();
+		auto& component = mActiveActor->get().get_component<TakeComponent>();
 		
 		component.Unfreeze();
 	}
@@ -564,7 +564,7 @@ void SceneTimeBar::update_time_display(int frameCount) {
 // Helper method to evaluate timelines
 void SceneTimeBar::evaluate_timelines() {
 	for (auto& animatableActor : mAnimatableActors) {
-		auto& component = animatableActor.get().get_component<TimelineComponent>();
+		auto& component = animatableActor.get().get_component<TakeComponent>();
 		
 		if (!mRecording && !mPlaying){
 			component.Freeze();
@@ -587,7 +587,7 @@ void SceneTimeBar::commit() {
 	mUncommittedKey = false;
 	
 	if (mActiveActor.has_value()) {
-		auto& component = mActiveActor->get().get_component<TimelineComponent>();
+		auto& component = mActiveActor->get().get_component<TakeComponent>();
 		
 		component.Unfreeze();
 		
@@ -603,7 +603,7 @@ void SceneTimeBar::evaluate_keyframe_status() {
 	
 	// Loop through animatable actors to determine keyframe status
 	if (mActiveActor.has_value()) {
-		auto& component = mActiveActor->get().get_component<TimelineComponent>();
+		auto& component = mActiveActor->get().get_component<TakeComponent>();
 		
 		if (component.KeyframeExists()) {
 			atKeyframe = true;
@@ -643,7 +643,7 @@ std::tuple<SceneTimeBar::KeyframeStamp, SceneTimeBar::KeyframeStamp> SceneTimeBa
 	float currentTimeFloat = static_cast<float>(mCurrentTime);
 	
 	// Get the AnimationComponent
-	auto& component = mActiveActor->get().get_component<TimelineComponent>();
+	auto& component = mActiveActor->get().get_component<TakeComponent>();
 	
 	float previousKeyframeTime = component.GetPreviousKeyframeTime();
 	
@@ -689,7 +689,7 @@ void SceneTimeBar::refresh_actors() {
 // Helper method to register actor callbacks
 void SceneTimeBar::register_actor_callbacks() {
 	if (mActiveActor != std::nullopt) {
-		auto& component = mActiveActor->get().get_component<TimelineComponent>();
+		auto& component = mActiveActor->get().get_component<TakeComponent>();
 		
 		component.TriggerRegistration();
 	}
