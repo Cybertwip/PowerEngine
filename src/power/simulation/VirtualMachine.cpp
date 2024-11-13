@@ -71,7 +71,7 @@ void VirtualMachine::stop() {
 
 void VirtualMachine::update() {
 	if (mMachine) {
-		for (int i = 0; i < 480; ++i) { // machine is simulated with 8 cores times 60 frames per core
+		for (int i = 0; i < 960; ++i) { // machine is simulated with 8 cores times 30 frames per core
 			mMachine->cpu.step_one(true);
 		}
 		gdb_poll();
