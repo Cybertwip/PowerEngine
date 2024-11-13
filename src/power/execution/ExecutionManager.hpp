@@ -3,6 +3,8 @@
 #include "Canvas.hpp"
 #include "simulation/SimulationServer.hpp"
 
+#include <nanogui/icons.h>
+
 #include <memory>
 
 class ExecutionManager {
