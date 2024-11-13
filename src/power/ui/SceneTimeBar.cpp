@@ -127,18 +127,6 @@ mNormalButtonColor(theme().m_text_color) // Initialize normal button color
 	mButtonWrapper = std::make_shared<nanogui::Widget>(std::make_optional<std::reference_wrapper<nanogui::Widget>>(*mButtonWrapperWrapper));
 	mButtonWrapper->set_layout(std::make_unique<nanogui::BoxLayout>(nanogui::Orientation::Horizontal, nanogui::Alignment::Middle, 25, 5));
 	
-	
-	mTakeWindow = std::make_shared<nanogui::Window>(parent, "Takes");
-	
-	mTakeWindow->set_fixed_size(nanogui::Vector2i(128, 256));
-	
-	mTakeTreeView = std::make_shared<nanogui::TreeView>(*mTakeWindow);
-	
-	mTakeTreeView->set_layout(
-						  std::make_unique<nanogui::BoxLayout>(nanogui::Orientation::Vertical, nanogui::Alignment::Fill));
-	
-	
-	
 	// Rewind Button
 	mRewindBtn = std::make_shared<nanogui::Button>(*mButtonWrapper, "", FA_FAST_BACKWARD);
 	mRewindBtn->set_fixed_width(buttonWidth);
@@ -417,6 +405,17 @@ mNormalButtonColor(theme().m_text_color) // Initialize normal button color
 		}
 	});
 	
+	mTakeWindow = std::make_shared<nanogui::Window>(*mButtonWrapper, "Takes");
+	
+	mTakeWindow->set_fixed_size(nanogui::Vector2i(128, 256));
+	
+	mTakeTreeView = std::make_shared<nanogui::TreeView>(*mTakeWindow);
+	
+	mTakeTreeView->set_layout(
+							  std::make_unique<nanogui::BoxLayout>(nanogui::Orientation::Vertical, nanogui::Alignment::Fill));
+	
+
+	
 	
 	mRegistry->RegisterOnActorSelectedCallback(*this);
 	
@@ -451,14 +450,12 @@ void SceneTimeBar::OnActorSelected(std::optional<std::reference_wrapper<Actor>> 
 
 // Override mouse_button_event to consume the event
 bool SceneTimeBar::mouse_button_event(const nanogui::Vector2i &p, int button, bool down, int modifiers) {
-	nanogui::Widget::mouse_button_event(p, button, down, modifiers);
-	return true; // Consume the event
+	return nanogui::Widget::mouse_button_event(p, button, down, modifiers);
 }
 
 // Override mouse_motion_event to consume the event
 bool SceneTimeBar::mouse_motion_event(const nanogui::Vector2i &p, const nanogui::Vector2i &rel, int button, int modifiers) {
-	nanogui::Widget::mouse_motion_event(p, rel, button, modifiers);
-	return true; // Consume the event
+	return nanogui::Widget::mouse_motion_event(p, rel, button, modifiers);
 }
 
 // Manual force draw to draw on top
