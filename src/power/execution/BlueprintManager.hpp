@@ -16,8 +16,6 @@ public:
 		
 		mBlueprintButton->set_fixed_size(nanogui::Vector2i(48, 48));
 		
-		mBlueprintButton->set_background_color(nanogui::Color(255, 255, 255, 255));
-
 		mBlueprintButton->set_text_color(nanogui::Color(0, 0, 255, 255));
 
 		// Position the button in the lower-right corner
