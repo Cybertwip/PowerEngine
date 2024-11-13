@@ -3,6 +3,7 @@
 #include "Canvas.hpp"
 #include "simulation/SimulationServer.hpp"
 
+#include <nanogui/button.h>
 #include <nanogui/icons.h>
 
 #include <memory>
