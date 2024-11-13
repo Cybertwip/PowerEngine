@@ -70,7 +70,7 @@ void StatusBarPanel::toggle_resources_panel(bool active) {
 
 	if (active) {
 		mAnimationFuture = std::async(std::launch::async, [this]() {
-			auto target = nanogui::Vector2i(0, parent()->get().parent()->get().fixed_height() * 0.55f - fixed_height());
+			auto target = nanogui::Vector2i(0, parent()->get().parent()->get().fixed_height() * 0.524f - fixed_height());
 			animate_panel_position(target);
 		});
 	} else {
