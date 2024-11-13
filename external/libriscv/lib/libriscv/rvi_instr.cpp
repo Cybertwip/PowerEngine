@@ -64,30 +64,23 @@ static inline uint64_t MUL128(
 		return snprintf(buffer, len, "NOP");
 	});
 
-//
-//INSTRUCTION(UNIMPLEMENTED,
-//			[] (auto& cpu, rv32i_instruction instr) RVINSTR_COLDATTR {
-//	if (instr.length() == 4)
-//		cpu.trigger_exception(UNIMPLEMENTED_INSTRUCTION, instr.whole);
-//	else
-//		cpu.trigger_exception(UNIMPLEMENTED_INSTRUCTION, instr.half[0]);
-//},
-//			[] (char* buffer, size_t len, auto&, rv32i_instruction instr) RVPRINTR_ATTR {
-//	if (instr.length() == 4) {
-//		return snprintf(buffer, len, "UNIMPLEMENTED: 4-byte 0x%X (0x%X)",
-//						instr.opcode(), instr.whole);
-//	} else {
-//		return snprintf(buffer, len, "UNIMPLEMENTED: 2-byte %#hx F%#hx (%#hx)",
-//						rv32c_instruction { instr }.opcode(),
-//						rv32c_instruction { instr }.funct3(),
-//						instr.half[0]);
-//	}
-//});
 	INSTRUCTION(UNIMPLEMENTED,
-				[] (auto& /* cpu */, rv32i_instruction /* instr */) RVINSTR_COLDATTR {
+	[] (auto& cpu, rv32i_instruction instr) RVINSTR_COLDATTR {
+		if (instr.length() == 4)
+			cpu.trigger_exception(UNIMPLEMENTED_INSTRUCTION, instr.whole);
+		else
+			cpu.trigger_exception(UNIMPLEMENTED_INSTRUCTION, instr.half[0]);
 	},
-				[] (char* buffer, size_t len, auto&, rv32i_instruction) RVPRINTR_ATTR {
-		return snprintf(buffer, len, "NOP");
+	[] (char* buffer, size_t len, auto&, rv32i_instruction instr) RVPRINTR_ATTR {
+		if (instr.length() == 4) {
+			return snprintf(buffer, len, "UNIMPLEMENTED: 4-byte 0x%X (0x%X)",
+							instr.opcode(), instr.whole);
+		} else {
+			return snprintf(buffer, len, "UNIMPLEMENTED: 2-byte %#hx F%#hx (%#hx)",
+							rv32c_instruction { instr }.opcode(),
+							rv32c_instruction { instr }.funct3(),
+							instr.half[0]);
+		}
 	});
 
 	INSTRUCTION(ILLEGAL,

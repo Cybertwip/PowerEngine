@@ -90,7 +90,7 @@ public:
 	VirtualMachine();
 	~VirtualMachine();
 	
-	void start(std::vector<uint8_t> executable_data, uint64_t loader_ptr);
+	void start(std::vector<uint8_t> executable_data);
 	void gdb_poll();
 	void reset();
 	void stop();

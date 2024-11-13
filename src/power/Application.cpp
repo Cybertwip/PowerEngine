@@ -166,7 +166,7 @@ void Application::initialize() {
 	
 	mCartridge = std::make_unique<Cartridge>(*mVirtualMachine, *mCartridgeActorLoader, *mCameraManager);
 
-	mCartridgeBridge = std::make_unique<CartridgeBridge>(9003, *mVirtualMachine, *mCartridge, *mCartridgeActorLoader, [this](std::optional<std::reference_wrapper<VirtualMachine>> virtualMachine) {
+	mCartridgeBridge = std::make_unique<CartridgeBridge>(9003, *mVirtualMachine, *mCartridgeActorLoader, [this](std::optional<std::reference_wrapper<VirtualMachine>> virtualMachine) {
 		mLoadedVirtualMachine = virtualMachine;
 	});
 	

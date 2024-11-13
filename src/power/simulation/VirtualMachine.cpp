@@ -16,7 +16,7 @@ VirtualMachine::~VirtualMachine() {
 	function_map.clear();
 }
 
-void VirtualMachine::start(std::vector<uint8_t> executable_data, uint64_t loader_ptr) {
+void VirtualMachine::start(std::vector<uint8_t> executable_data) {
 	stop();
 	
 	mMachine = std::make_unique<riscv::Machine<riscv::RISCV64>>(executable_data);
@@ -30,14 +30,9 @@ void VirtualMachine::start(std::vector<uint8_t> executable_data, uint64_t loader
 	// Set up the custom syscall handler
 	setup_syscall_handler(*mMachine);
 
-	uint64_t cartridgePtr = mMachine->preempt(MAX_CALL_INSTR, "load_cartridge", loader_ptr);
-	
-	mMachine->memory.memcpy_out(&mCartridgeHook, cartridgePtr, sizeof(CartridgeHook));
-	
 	// start debugging session
-	
-	printf("GDB server is listening on localhost:%u\n", 2159);
-	mDebugServer = std::make_unique<riscv::RSP<riscv::RISCV64>>(*mMachine, 2159);
+	printf("GDB server is listening on localhost:%u\n", 3333);
+	mDebugServer = std::make_unique<riscv::RSP<riscv::RISCV64>>(*mMachine, 3333);
 	
 	gdb_poll();
 }
