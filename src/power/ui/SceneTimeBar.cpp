@@ -77,9 +77,6 @@ mNormalButtonColor(theme().m_text_color) // Initialize normal button color
 	int keyBtnWidth = static_cast<int>(buttonWidth * 0.5f);
 	int keyBtnHeight = static_cast<int>(buttonHeight * 1.0f);
 	
-	// Vertical layout for slider above buttons
-	set_layout(std::make_unique<nanogui::BoxLayout>(nanogui::Orientation::Vertical, nanogui::Alignment::Maximum, 1, 1));
-	
 	// Slider Wrapper
 	mSliderWrapper = std::make_shared<nanogui::Widget>(std::make_optional<std::reference_wrapper<nanogui::Widget>>(*this));
 	mSliderWrapper->set_layout(std::make_unique<nanogui::BoxLayout>(nanogui::Orientation::Horizontal, nanogui::Alignment::Fill, 1, 1));
@@ -405,17 +402,22 @@ mNormalButtonColor(theme().m_text_color) // Initialize normal button color
 		}
 	});
 	
-	mTakeWindow = std::make_shared<nanogui::Window>(*mButtonWrapper, "Takes");
+	mTakeWindow = std::make_shared<nanogui::Window>(*this, "Takes");
 	
-	mTakeWindow->set_fixed_size(nanogui::Vector2i(128, 256));
+	mTakeWindow->set_fixed_size(nanogui::Vector2i(196, 164));
+			
+	// Position the button in the lower-right corner
+	mTakeWindow->set_position(nanogui::Vector2i(fixed_width() - mTakeWindow->fixed_width() - 10, fixed_height() - mTakeWindow->fixed_height() - 10));
 	
+	mAddTakeButton = std::make_shared<nanogui::Button>(mTakeWindow->button_panel(), "", FA_PLUS_SQUARE);
+	
+	mRemoveTakeButton = std::make_shared<nanogui::Button>(mTakeWindow->button_panel(), "", FA_MINUS_SQUARE);
+
+
 	mTakeTreeView = std::make_shared<nanogui::TreeView>(*mTakeWindow);
 	
 	mTakeTreeView->set_layout(
 							  std::make_unique<nanogui::BoxLayout>(nanogui::Orientation::Vertical, nanogui::Alignment::Fill));
-	
-
-	
 	
 	mRegistry->RegisterOnActorSelectedCallback(*this);
 	
