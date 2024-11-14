@@ -3,8 +3,9 @@
 #include "Canvas.hpp"
 #include "simulation/SimulationServer.hpp"
 
-#include <nanogui/toolbutton.h>
 #include <nanogui/icons.h>
+#include <nanogui/renderpass.h>
+#include <nanogui/toolbutton.h>
 
 #include <memory>
 #include <vector>
@@ -190,14 +191,27 @@ class BlueprintPanel : public Panel {
 public:
 	BlueprintPanel(nanogui::Widget& parent)
 	: Panel(parent, "Blueprint"){
-		
+		set_layout(std::make_unique<nanogui::BoxLayout>(nanogui::Orientation::Horizontal, nanogui::Alignment::Fill, 4, 2));
+
+		mCanvas = std::make_unique<Canvas>(*this, parent.screen(), nanogui::Color(35, 65, 90, 255));
+
+		mCanvas->register_draw_callback([this]() {
+			draw();
+		});
 	}
+	
+	void draw() {
+		mCanvas->render_pass().clear_color(0, mCanvas->background_color());
+	}
+
+	
+private:
+	std::unique_ptr<Canvas> mCanvas;
 };
 
 class BlueprintManager {
 public:
 	BlueprintManager(Canvas& canvas) : mCanvas(canvas){
-		
 		mBlueprintPanel = std::make_shared<BlueprintPanel>(canvas);
 		
 		mBlueprintPanel->set_position(nanogui::Vector2i(0, canvas.fixed_height()));
