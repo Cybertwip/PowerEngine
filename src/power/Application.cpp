@@ -177,7 +177,7 @@ void Application::initialize() {
 		}
 	});
 	
-	mBlueprintManager = std::make_unique<BlueprintManager>(*mRenderCommon->canvas(), mRenderCommon->shader_manager());
+	mBlueprintManager = std::make_unique<BlueprintManager>(*mRenderCommon->canvas());
 	
 	mExecutionManager = std::make_unique<ExecutionManager>(*mRenderCommon->canvas(), *mSimulationServer);
 	

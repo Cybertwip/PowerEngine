@@ -2,9 +2,9 @@
 
 #include "Canvas.hpp"
 
-#include "graphics/drawing/CameraActorBuilder.hpp"
 #include "graphics/drawing/Grid.hpp"
 #include "simulation/SimulationServer.hpp"
+#include "ShaderManager.hpp"
 
 #include <nanogui/icons.h>
 #include <nanogui/renderpass.h>
@@ -190,24 +190,36 @@ private:
 
 #include "ui/Panel.hpp"
 
+#include <glm/glm.hpp>
+#include <glm/gtx/quaternion.hpp>
+
+#include <nanogui/nanogui.h>
+
 class BlueprintPanel : public Panel {
 public:
-	BlueprintPanel(nanogui::Widget& parent, ShaderManager& shaderManager)
-	: Panel(parent, "Blueprint"){
-		set_layout(std::make_unique<nanogui::BoxLayout>(nanogui::Orientation::Horizontal, nanogui::Alignment::Fill, 4, 2));
-
-		mGrid = std::make_unique<Grid2d>(shaderManager);
-
+	BlueprintPanel(Canvas& parent)
+	: Panel(parent, "Blueprint") {
+		// Set the layout to horizontal with some padding
+		set_layout(std::make_unique<nanogui::BoxLayout>(nanogui::Orientation::Horizontal, nanogui::Alignment::Fill, 0, 0));
+				
+		// Ensure the canvas is created with the correct dimensions or set it explicitly if needed
 		mCanvas = std::make_unique<Canvas>(*this, parent.screen(), nanogui::Color(35, 65, 90, 255));
+		
+		mCanvas->set_fixed_size(nanogui::Vector2i(fixed_width(), parent.fixed_height() * 0.71));
 
+		mShaderManager = std::make_unique<ShaderManager>(*mCanvas);
+		
+		mGrid = std::make_unique<Grid2d>(*mShaderManager);
+		
+		// Register draw callback
 		mCanvas->register_draw_callback([this]() {
-			draw();
+			this->draw();
 		});
 		
+		// Initialize matrices
+		mModel = nanogui::Matrix4f::scale(nanogui::Vector3f(1.0f, 1.0f, 1.0f));
 		
-		mModel = nanogui::Matrix4f::identity();
-		mView = nanogui::Matrix4f::identity();
-		// Define orthographic projection parameters
+		// Adjusted orthographic projection parameters
 		float left = -1.0f;
 		float right = 1.0f;
 		float bottom = -1.0f;
@@ -216,17 +228,24 @@ public:
 		float far = 1.0f;
 		
 		mProjection = nanogui::Matrix4f::ortho(left, right, bottom, top, near, far);
+
+		mView = nanogui::Matrix4f::look_at(
+										   nanogui::Vector3f(0, 0, 1),  // Camera position
+										   nanogui::Vector3f(0, 0, 0),  // Look-at point
+										   nanogui::Vector3f(0, 1, 0)   // Up direction
+										   );
 	}
 	
+private:
 	void draw() {
 		mCanvas->render_pass().clear_color(0, mCanvas->background_color());
 		mGrid->draw_content(mModel, mView, mProjection);
 	}
 	
 private:
-	std::unique_ptr<Grid2d> mGrid;
 	std::unique_ptr<Canvas> mCanvas;
-	
+	std::unique_ptr<ShaderManager> mShaderManager;
+	std::unique_ptr<Grid2d> mGrid;
 	nanogui::Matrix4f mModel;
 	nanogui::Matrix4f mView;
 	nanogui::Matrix4f mProjection;
@@ -234,8 +253,8 @@ private:
 
 class BlueprintManager {
 public:
-	BlueprintManager(Canvas& canvas, ShaderManager& shaderManager) : mCanvas(canvas){
-		mBlueprintPanel = std::make_shared<BlueprintPanel>(canvas, shaderManager);
+	BlueprintManager(Canvas& canvas) : mCanvas(canvas){
+		mBlueprintPanel = std::make_shared<BlueprintPanel>(canvas);
 		
 		mBlueprintPanel->set_position(nanogui::Vector2i(0, canvas.fixed_height()));
 		

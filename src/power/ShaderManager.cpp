@@ -51,7 +51,6 @@ void ShaderManager::load_default_shaders() {
 	load_shader("skinned_mesh", "internal/shaders/metal/diffuse_skinned_vs.metal", "internal/shaders/metal/diffuse_fs.metal", nanogui::Shader::BlendMode::AlphaBlend);
 	load_shader("gizmo", "internal/shaders/metal/gizmo_vs.metal", "internal/shaders/metal/gizmo_fs.metal", nanogui::Shader::BlendMode::AlphaBlend);
 	load_shader("grid", "internal/shaders/metal/grid_vs.metal", "internal/shaders/metal/grid_fs.metal", nanogui::Shader::BlendMode::AlphaBlend);
-	load_shader("grid2d", "internal/shaders/metal/grid2d_vs.metal", "internal/shaders/metal/grid2d_fs.metal", nanogui::Shader::BlendMode::AlphaBlend);
 #endif
 }
 
