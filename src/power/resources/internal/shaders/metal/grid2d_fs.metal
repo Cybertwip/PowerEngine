@@ -9,18 +9,16 @@ fragment float4 fragment_main(VertexOut in [[stage_in]],
                               constant float2 &scrollOffset [[buffer(0)]],
                               constant float &gridSize [[buffer(1)]],
                               constant float &lineWidth [[buffer(2)]]) {
-    // Use the position on screen as the grid coordinate
-    float2 coord = (in.position.xy / gridSize) + scrollOffset;
+    // Adjusted grid coordinate calculation
+    float2 coord = (in.position.xy + scrollOffset) / gridSize;
 
-    // Calculate proximity to the nearest grid line
+    // Calculate proximity to the nearest grid line with line thickness
     float lineX = abs(fract(coord.x) - 0.5) * gridSize;
     float lineY = abs(fract(coord.y) - 0.5) * gridSize;
-
-    // Create grid lines based on line thickness
     float lineIntensity = step(lineWidth, lineX) * step(lineWidth, lineY);
 
-    // Blend between grid color and background
+    // Colors with solid background
     float4 gridColor = float4(0.0, 0.0, 0.0, 1.0); // Black lines
-    float4 backgroundColor = float4(1.0, 1.0, 1.0, 0.0); // Transparent background
+    float4 backgroundColor = float4(1.0, 1.0, 1.0, 0.0); // White solid background
     return mix(gridColor, backgroundColor, lineIntensity);
 }

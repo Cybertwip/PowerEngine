@@ -8,7 +8,7 @@
 
 class ScenePanel : public Panel {
 public:
-	ScenePanel(nanogui::Widget& parent);
+	ScenePanel(nanogui::Widget& parent, const std::string& title = "Scene");
 	
 	bool mouse_button_event(const nanogui::Vector2i &p, int button, bool down, int modifiers) override;
 	void register_click_callback(int button, std::function<void(bool, int, int, int, int)> callback);

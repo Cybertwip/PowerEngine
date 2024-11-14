@@ -188,17 +188,19 @@ private:
 
 }
 
-#include "ui/Panel.hpp"
+#include "ui/ScenePanel.hpp"
 
 #include <glm/glm.hpp>
 #include <glm/gtx/quaternion.hpp>
 
 #include <nanogui/nanogui.h>
 
-class BlueprintPanel : public Panel {
+class BlueprintPanel : public ScenePanel {
 public:
 	BlueprintPanel(Canvas& parent)
-	: Panel(parent, "Blueprint") {
+	: ScenePanel(parent, "Blueprint")
+	, mScrollX(0)
+	, mScrollY(0) {
 		// Set the layout to horizontal with some padding
 		set_layout(std::make_unique<nanogui::BoxLayout>(nanogui::Orientation::Horizontal, nanogui::Alignment::Fill, 0, 0));
 				
@@ -234,6 +236,16 @@ public:
 										   nanogui::Vector3f(0, 0, 0),  // Look-at point
 										   nanogui::Vector3f(0, 1, 0)   // Up direction
 										   );
+		
+		register_motion_callback(GLFW_MOUSE_BUTTON_MIDDLE, [this](int width, int height, int x, int y, int dx, int dy, int button, bool down){
+			
+			mScrollX += dx;
+			mScrollY += dy;
+			
+			mGrid->set_scroll_offset(nanogui::Vector2i(-mScrollX, -mScrollY));
+
+		});
+
 	}
 	
 private:
@@ -249,6 +261,9 @@ private:
 	nanogui::Matrix4f mModel;
 	nanogui::Matrix4f mView;
 	nanogui::Matrix4f mProjection;
+	
+	int mScrollX;
+	int mScrollY;
 };
 
 class BlueprintManager {
@@ -308,6 +323,10 @@ public:
 				break; // Stop animation if future is no longer valid (another animation started)
 			}
 		}
+	}
+	
+	void process_events() {
+		mBlueprintPanel->process_events();
 	}
 	
 private:
