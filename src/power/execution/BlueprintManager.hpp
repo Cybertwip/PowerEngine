@@ -1,6 +1,8 @@
 #pragma once
 
 #include "Canvas.hpp"
+
+#include "graphics/drawing/Grid.hpp"
 #include "simulation/SimulationServer.hpp"
 
 #include <nanogui/icons.h>
@@ -189,9 +191,11 @@ private:
 
 class BlueprintPanel : public Panel {
 public:
-	BlueprintPanel(nanogui::Widget& parent)
+	BlueprintPanel(nanogui::Widget& parent, ShaderManager& shaderManager)
 	: Panel(parent, "Blueprint"){
 		set_layout(std::make_unique<nanogui::BoxLayout>(nanogui::Orientation::Horizontal, nanogui::Alignment::Fill, 4, 2));
+
+		mGrid = std::make_unique<Grid2d>(shaderManager))
 
 		mCanvas = std::make_unique<Canvas>(*this, parent.screen(), nanogui::Color(35, 65, 90, 255));
 
@@ -205,13 +209,14 @@ public:
 	}
 	
 private:
+	std::unique_ptr<Grid2d> mGrid;
 	std::unique_ptr<Canvas> mCanvas;
 };
 
 class BlueprintManager {
 public:
-	BlueprintManager(Canvas& canvas) : mCanvas(canvas){
-		mBlueprintPanel = std::make_shared<BlueprintPanel>(canvas);
+	BlueprintManager(Canvas& canvas, ShaderManager& shaderManager) : mCanvas(canvas){
+		mBlueprintPanel = std::make_shared<BlueprintPanel>(canvas, shaderManager);
 		
 		mBlueprintPanel->set_position(nanogui::Vector2i(0, canvas.fixed_height()));
 		

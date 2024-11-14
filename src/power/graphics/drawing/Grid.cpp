@@ -11,6 +11,7 @@
 #elif defined(NANOGUI_USE_METAL)
 #include "MetalHelper.hpp"
 #endif
+
 Grid::Grid(ShaderManager& shaderManager)
 : mShaderWrapper(shaderManager.get_shader("grid"))
 {
@@ -53,3 +54,43 @@ void Grid::draw_content(const nanogui::Matrix4f& model, const nanogui::Matrix4f&
 	mShaderWrapper.draw_array(nanogui::Shader::PrimitiveType::Triangle, 0, 6, false);
 	mShaderWrapper.end();
 }
+
+Grid2d::Grid2d(ShaderManager& shaderManager)
+: mShaderWrapper(shaderManager.get_shader("grid2d"))
+{
+	mGridVertices = {
+		// positions for a full-screen quad
+		-1.0f, -1.0f,
+		1.0f, -1.0f,
+		1.0f,  1.0f,
+		1.0f,  1.0f,
+		-1.0f,  1.0f,
+		-1.0f, -1.0f
+	};
+}
+
+// Method to update scroll offset
+void Grid2d::set_scroll_offset(const nanogui::Vector2f& offset) {
+	mScrollOffset = offset;
+}
+
+
+void Grid2d::draw_content(const nanogui::Matrix4f& model, const nanogui::Matrix4f& view, const nanogui::Matrix4f& projection) {
+	
+	// Set up vertex buffer
+	mShaderWrapper.set_buffer("aPosition", nanogui::VariableType::Float32, {mGridVertices.size() / 2, 2}, mGridVertices.data());
+	
+	// Set uniforms
+	mShaderWrapper.set_uniform("scrollOffset", mScrollOffset);
+	mShaderWrapper.set_uniform("gridSize", mGridSize);
+	mShaderWrapper.set_uniform("lineWidth", mLineWidth);
+	mShaderWrapper.set_uniform("aView", view);
+	mShaderWrapper.set_uniform("aProjection", projection);
+	
+	// Begin shader, draw, and end
+	mShaderWrapper.begin();
+	mShaderWrapper.draw_array(nanogui::Shader::PrimitiveType::Triangle, 0, mGridVertices.size() / 2);
+	mShaderWrapper.end();
+
+}
+
