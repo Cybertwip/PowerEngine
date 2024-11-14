@@ -1,19 +1,16 @@
 #include <metal_stdlib>
 using namespace metal;
 
-struct VertexIn {
-    float2 position [[attribute(0)]];
-    float2 texCoord [[attribute(1)]];
-};
-
 struct VertexOut {
     float4 position [[position]];
-    float2 texCoord;
 };
 
-vertex VertexOut vertex_main(VertexIn in [[stage_in]]) {
+vertex VertexOut vertex_main(const device packed_float2 *const aPosition [[buffer(0)]],
+                             constant float4x4 &aView [[buffer(1)]],
+                             constant float4x4 &aProjection [[buffer(2)]],
+                             uint id [[vertex_id]]) {
     VertexOut out;
-    out.position = float4(in.position, 0.0, 1.0);
-    out.texCoord = in.texCoord;
+    float2 pos = aPosition[id];
+    out.position = aProjection * aView * float4(pos, 0.0, 1.0);
     return out;
 }

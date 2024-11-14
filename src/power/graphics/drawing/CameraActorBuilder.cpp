@@ -16,7 +16,7 @@
 
 Actor& CameraActorBuilder::build(Actor& actor,
 								 AnimationTimeProvider& animationTimeProvider,
-								 ShaderWrapper& meshShaderWrapper, float fov, float near, float far, float aspect) {
+								 float fov, float near, float far, float aspect) {
 	std::unique_ptr<Drawable> drawable = std::make_unique<NullDrawable>();
 	actor.add_component<DrawableComponent>(std::move(drawable));
 	auto& transform = actor.add_component<TransformComponent>();

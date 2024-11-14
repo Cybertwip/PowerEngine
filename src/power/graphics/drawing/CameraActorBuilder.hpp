@@ -7,5 +7,5 @@ class Actor;
 
 class CameraActorBuilder {
 public:
-	static Actor& build(Actor& actor, AnimationTimeProvider&, ShaderWrapper& meshShaderWrapper, float fov, float near, float far, float aspect );
+	static Actor& build(Actor& actor, AnimationTimeProvider&, float fov, float near, float far, float aspect );
 };

@@ -2,6 +2,7 @@
 
 #include "Canvas.hpp"
 
+#include "graphics/drawing/CameraActorBuilder.hpp"
 #include "graphics/drawing/Grid.hpp"
 #include "simulation/SimulationServer.hpp"
 
@@ -202,15 +203,33 @@ public:
 		mCanvas->register_draw_callback([this]() {
 			draw();
 		});
+		
+		
+		mModel = nanogui::Matrix4f::identity();
+		mView = nanogui::Matrix4f::identity();
+		// Define orthographic projection parameters
+		float left = -1.0f;
+		float right = 1.0f;
+		float bottom = -1.0f;
+		float top = 1.0f;
+		float near = -1.0f;
+		float far = 1.0f;
+		
+		mProjection = nanogui::Matrix4f::ortho(left, right, bottom, top, near, far);
 	}
 	
 	void draw() {
 		mCanvas->render_pass().clear_color(0, mCanvas->background_color());
+		mGrid->draw_content(mModel, mView, mProjection);
 	}
 	
 private:
 	std::unique_ptr<Grid2d> mGrid;
 	std::unique_ptr<Canvas> mCanvas;
+	
+	nanogui::Matrix4f mModel;
+	nanogui::Matrix4f mView;
+	nanogui::Matrix4f mProjection;
 };
 
 class BlueprintManager {

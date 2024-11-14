@@ -56,7 +56,7 @@ void Grid::draw_content(const nanogui::Matrix4f& model, const nanogui::Matrix4f&
 }
 
 Grid2d::Grid2d(ShaderManager& shaderManager)
-: mShaderWrapper(shaderManager.get_shader("grid2d"))
+: mShaderWrapper(shaderManager.get_shader("grid2d")), mScrollOffset(0.0f, 0.0f), mGridSize(10.0f), mLineWidth(0.05f)
 {
 	mGridVertices = {
 		// positions for a full-screen quad
@@ -81,16 +81,17 @@ void Grid2d::draw_content(const nanogui::Matrix4f& model, const nanogui::Matrix4
 	mShaderWrapper.set_buffer("aPosition", nanogui::VariableType::Float32, {mGridVertices.size() / 2, 2}, mGridVertices.data());
 	
 	// Set uniforms
+	mShaderWrapper.set_uniform("aView", view);
+	mShaderWrapper.set_uniform("aProjection", projection);
 	mShaderWrapper.set_uniform("scrollOffset", mScrollOffset);
 	mShaderWrapper.set_uniform("gridSize", mGridSize);
 	mShaderWrapper.set_uniform("lineWidth", mLineWidth);
-	mShaderWrapper.set_uniform("aView", view);
-	mShaderWrapper.set_uniform("aProjection", projection);
 	
-	// Begin shader, draw, and end
+	// Draw
 	mShaderWrapper.begin();
 	mShaderWrapper.draw_array(nanogui::Shader::PrimitiveType::Triangle, 0, mGridVertices.size() / 2);
 	mShaderWrapper.end();
+
 
 }
 

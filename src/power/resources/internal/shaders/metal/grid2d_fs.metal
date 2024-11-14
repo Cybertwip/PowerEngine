@@ -3,25 +3,24 @@ using namespace metal;
 
 struct VertexOut {
     float4 position [[position]];
-    float2 texCoord;
 };
 
 fragment float4 fragment_main(VertexOut in [[stage_in]],
                               constant float2 &scrollOffset [[buffer(0)]],
                               constant float &gridSize [[buffer(1)]],
                               constant float &lineWidth [[buffer(2)]]) {
+    // Use the position on screen as the grid coordinate
+    float2 coord = (in.position.xy / gridSize) + scrollOffset;
 
-    // Adjust the coordinates by the scroll offset to create a moving grid
-    float2 gridCoord = (in.texCoord + scrollOffset) / gridSize;
+    // Calculate proximity to the nearest grid line
+    float lineX = abs(fract(coord.x) - 0.5) * gridSize;
+    float lineY = abs(fract(coord.y) - 0.5) * gridSize;
 
-    // Create the grid lines by checking how close the current fragment is to the nearest grid line
-    float lineX = abs(fract(gridCoord.x) - 0.5) * gridSize;
-    float lineY = abs(fract(gridCoord.y) - 0.5) * gridSize;
-
-    // Define line color and background color
+    // Create grid lines based on line thickness
     float lineIntensity = step(lineWidth, lineX) * step(lineWidth, lineY);
-    float4 lineColor = float4(0.0, 0.0, 0.0, 1.0); // Black lines
-    float4 backgroundColor = float4(1.0, 1.0, 1.0, 1.0); // White background
 
-    return mix(lineColor, backgroundColor, lineIntensity);
+    // Blend between grid color and background
+    float4 gridColor = float4(0.0, 0.0, 0.0, 1.0); // Black lines
+    float4 backgroundColor = float4(1.0, 1.0, 1.0, 1.0); // White background
+    return mix(gridColor, backgroundColor, lineIntensity);
 }
