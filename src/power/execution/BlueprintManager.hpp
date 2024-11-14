@@ -203,7 +203,6 @@ public:
 	void draw() {
 		mCanvas->render_pass().clear_color(0, mCanvas->background_color());
 	}
-
 	
 private:
 	std::unique_ptr<Canvas> mCanvas;

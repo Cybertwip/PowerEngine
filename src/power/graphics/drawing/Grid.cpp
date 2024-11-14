@@ -27,13 +27,6 @@ Grid::Grid(ShaderManager& shaderManager)
 }
 
 void Grid::draw_content(const nanogui::Matrix4f& model, const nanogui::Matrix4f& view, const nanogui::Matrix4f& projection) {
-	// API-specific setup for depth testing and blending
-#if defined(NANOGUI_USE_OPENGL) || defined(NANOGUI_USE_GLES)
-	// OpenGL: Enable depth test and blending
-	glEnable(GL_DEPTH_TEST);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	glEnable(GL_BLEND);
-#endif
 	
 	// Common code: Set up vertex buffer
 	mShaderWrapper.set_buffer("aPosition", nanogui::VariableType::Float32, {mGridVertices.size() / 2, 2}, mGridVertices.data());
@@ -59,9 +52,4 @@ void Grid::draw_content(const nanogui::Matrix4f& model, const nanogui::Matrix4f&
 	mShaderWrapper.begin();
 	mShaderWrapper.draw_array(nanogui::Shader::PrimitiveType::Triangle, 0, 6, false);
 	mShaderWrapper.end();
-	
-	// API-specific cleanup for depth testing (if needed)
-#if defined(NANOGUI_USE_OPENGL) || defined(NANOGUI_USE_GLES)
-	glDisable(GL_DEPTH_TEST);
-#endif
 }
