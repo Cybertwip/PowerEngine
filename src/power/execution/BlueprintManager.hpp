@@ -195,7 +195,7 @@ public:
 	: Panel(parent, "Blueprint"){
 		set_layout(std::make_unique<nanogui::BoxLayout>(nanogui::Orientation::Horizontal, nanogui::Alignment::Fill, 4, 2));
 
-		mGrid = std::make_unique<Grid2d>(shaderManager))
+		mGrid = std::make_unique<Grid2d>(shaderManager);
 
 		mCanvas = std::make_unique<Canvas>(*this, parent.screen(), nanogui::Color(35, 65, 90, 255));
 
