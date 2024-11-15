@@ -236,7 +236,7 @@ public:
 			}
 		});
 		
-		mOutputPinWrapperAlignment->set_position(fixed_width() - mOutputPin->widt());
+		mOutputPinWrapperAlignment->set_position(fixed_width() - mOutputPin->width());
 	}
 	
 private:
