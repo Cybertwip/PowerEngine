@@ -110,10 +110,10 @@ protected:
 	}
 	
 	virtual void mouse_button_callback_event(int button, int action, int modifiers) override {
-		m_modifiers = modifiers;
-		m_last_interaction = glfwGetTime();
 		
-		try {
+		if (m_draggable_window->children().size() != 0) {
+			m_modifiers = modifiers;
+			m_last_interaction = glfwGetTime();
 			if (m_focused_widget) {
 				auto window =
 				dynamic_cast<Window*>(m_focused_widget);
@@ -122,7 +122,7 @@ protected:
 						return;
 				}
 			}
-
+			
 			if (action == GLFW_PRESS) {
 				m_mouse_state |= 1 << button;
 				if (m_drag_widget) {
@@ -132,13 +132,10 @@ protected:
 				m_mouse_state &= ~(1 << button);
 				m_drag_active = false;
 				if (m_drag_widget != nullptr) {
-					
-					if (m_draggable_window->children().size() != 0){
-						if (m_drag_widget->visible()) {
-							m_drag_widget->set_visible(false);
-							
-							m_draggable_window->do_drag_finish();
-						}
+					if (m_drag_widget->visible()) {
+						m_drag_widget->set_visible(false);
+						
+						m_draggable_window->do_drag_finish();
 					}
 					
 					m_drag_widget = nullptr;
@@ -147,9 +144,10 @@ protected:
 			}
 			
 			m_redraw |= mouse_button_event(m_mouse_pos, button, action == GLFW_PRESS, m_modifiers);
-		} catch (const std::exception &e) {
-//			std::cerr << "Caught exception in event handler: " << e.what() << std::endl;
+		} else {
+			Screen::mouse_button_callback_event(button, action, modifiers);
 		}
+		
 	}
 	
 	void initialize() {
