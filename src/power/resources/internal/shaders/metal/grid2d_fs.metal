@@ -3,14 +3,14 @@ using namespace metal;
 
 struct VertexOut {
     float4 position [[position]];
+    float4 scroll;
 };
 
 fragment float4 fragment_main(VertexOut in [[stage_in]],
-                              constant float2 &scrollOffset [[buffer(0)]],
                               constant float &gridSize [[buffer(1)]],
                               constant float &lineWidth [[buffer(2)]]) {
     // Adjusted grid coordinate calculation
-    float2 coord = (in.position.xy + scrollOffset) / gridSize;
+    float2 coord = (in.position.xy + in.scroll.xy) / gridSize;
 
     // Calculate proximity to the nearest grid line with line thickness
     float lineX = abs(fract(coord.x) - 0.5) * gridSize;

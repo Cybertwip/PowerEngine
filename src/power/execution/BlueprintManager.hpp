@@ -237,15 +237,18 @@ public:
 		
 		register_motion_callback(GLFW_MOUSE_BUTTON_MIDDLE, [this](int width, int height, int x, int y, int dx, int dy, int button, bool down){
 			
-			// because dx and dy are global screen space
-			mScrollX += dx * (width / mCanvas->fixed_width());
-			mScrollY += dy * (height / mCanvas->fixed_height());
+			// because dx and dy are global screen space and its range is -0.5 to 0.5
+			float scaledDx = dx * (width / mCanvas->fixed_width()) * 2.0f;
+			float scaledDy = dy * (height / mCanvas->fixed_height()) * 2.0f;
+			
+			mScrollX += scaledDx;
+			mScrollY += scaledDy;
 			
 			mGrid->set_scroll_offset(nanogui::Vector2i(-mScrollX, -mScrollY));
 
 			// Assuming mTestWidget's position is in screen space, update it
 			nanogui::Vector2i currentPos = mTestWidget->position();
-			mTestWidget->set_position(currentPos - nanogui::Vector2i(dx, dy));
+			mTestWidget->set_position(currentPos + nanogui::Vector2i(dx, dy));
 		});
 		
 		
