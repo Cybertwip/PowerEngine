@@ -156,7 +156,14 @@ public:
 	}
 	
 	void build() {
-		
+		for (auto& input : inputs) {
+			input->node = &node;
+			input->kind = PinKind::Input;
+		}
+		for (auto& output : outputs) {
+			output->node = &node;
+			output->kind = PinKind::Output;
+		}
 	}
 	
 	void reset_flow() {
@@ -208,7 +215,7 @@ public:
 		
 		textbox.set_fixed_size(nanogui::Vector2i(fixed_size().x() - 28, 48));
 		
-		auto& output = add_output(*this, output_pin_id, this->id, "Value", PinType::String);
+		auto& output = add_output(output_pin_id, this->id, "Value", PinType::String);
 				
 		on_linked = [&output](){
 			output->can_flow = true;
@@ -228,17 +235,6 @@ public:
 	
 	int get_next_id() {
 		return next_id++;
-	}
-	
-	void build_node(Node& node) {
-		for (auto& input : node.inputs) {
-			input.node = &node;
-			input.kind = PinKind::Input;
-		}
-		for (auto& output : node.outputs) {
-			output.node = &node;
-			output.kind = PinKind::Output;
-		}
 	}
 	
 	Node& spawn_string_node() {
