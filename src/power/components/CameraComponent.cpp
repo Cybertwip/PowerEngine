@@ -15,7 +15,19 @@ CameraComponent::CameraComponent(TransformComponent& transformComponent, float f
 , mFar(far)
 , mAspect(aspect) {
 	mProjection = nanogui::Matrix4f::perspective(mFov, mNear, mFar, mAspect);
+	update_view();
 }
+
+CameraComponent::CameraComponent(TransformComponent& transformComponent, float left, float right, float top, float bottom, float near, float far)
+: mTransformComponent(transformComponent)
+, mFov(0.0f)
+, mNear(near)
+, mFar(far)
+, mAspect(0.0f) {
+	mProjection = nanogui::Matrix4f::ortho(left, right, bottom, top, near, far);
+	update_view();
+}
+
 
 void CameraComponent::update_view() {
 	glm::vec3 position = mTransformComponent.get_translation();

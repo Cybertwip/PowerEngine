@@ -150,8 +150,6 @@ protected:
 		} catch (const std::exception &e) {
 //			std::cerr << "Caught exception in event handler: " << e.what() << std::endl;
 		}
-		
-		Screen::mouse_button_callback_event(button, action, modifiers);
 	}
 	
 	void initialize() {

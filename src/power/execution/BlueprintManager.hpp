@@ -2,6 +2,7 @@
 
 #include "Canvas.hpp"
 
+#include "components/CameraComponent.hpp"
 #include "components/TransformComponent.hpp"
 #include "graphics/drawing/Grid.hpp"
 #include "simulation/SimulationServer.hpp"
@@ -209,6 +210,8 @@ public:
 		mCanvas = std::make_unique<Canvas>(*this, parent.screen(), nanogui::Color(35, 65, 90, 255));
 		
 		mCanvas->set_fixed_size(nanogui::Vector2i(fixed_width(), parent.fixed_height() * 0.71));
+		
+		mCamera = std::make_unique<CameraComponent>(mCameraTransform, 45, 0.01f, 5e3f, mCanvas->fixed_width() / mCanvas->fixed_height());
 
 		mShaderManager = std::make_unique<ShaderManager>(*mCanvas);
 		
@@ -218,38 +221,20 @@ public:
 		mCanvas->register_draw_callback([this]() {
 			this->draw();
 		});
-		
-		// Adjusted orthographic projection parameters
-		float left = -1.0f;
-		float right = 1.0f;
-		float bottom = -1.0f;
-		float top = 1.0f;
-		float near = -1.0f;
-		float far = 1.0f;
-		
-		mProjection = nanogui::Matrix4f::ortho(left, right, bottom, top, near, far);
 
-		mView = nanogui::Matrix4f::look_at(
-										   nanogui::Vector3f(0, 0, 1),  // Camera position
-										   nanogui::Vector3f(0, 0, 0),  // Look-at point
-										   nanogui::Vector3f(0, 1, 0)   // Up direction
-										   );
+		mCameraTransform.set_translation(glm::vec3(0.0f, 100.0f, 0.0f));
+		
+		mCamera->look_at(glm::vec3(0.0f, 0.0f, 0.0f));
 		
 		register_motion_callback(GLFW_MOUSE_BUTTON_MIDDLE, [this](int width, int height, int x, int y, int dx, int dy, int button, bool down){
-			
 			mScrollX += dx;
 			mScrollY += dy;
 			
-			mGrid->set_scroll_offset(nanogui::Vector2i(-mScrollX, -mScrollY));
-			
-			// Convert mouse delta to world space
-			
-			glm::mat4 view = nanogui_to_glm(mView);
-			glm::vec4 worldDelta = glm::inverse(view) * glm::vec4(dx, dy, 0, 1);
+			mCameraTransform.set_translation(glm::vec3(mScrollX, 100.0f, mScrollY));
 
 			// Assuming mTestWidget's position is in world space, update it
 			nanogui::Vector2i currentPos = mTestWidget->position();
-			mTestWidget->set_position(currentPos + nanogui::Vector2i(worldDelta.x, worldDelta.y));
+			mTestWidget->set_position(currentPos + nanogui::Vector2i(dx, dy));
 		});
 		
 		
@@ -262,15 +247,22 @@ public:
 private:
 	void draw() {
 		mCanvas->render_pass().clear_color(0, mCanvas->background_color());
-		mGrid->draw_content(nanogui::Matrix4f::identity(), mView, mProjection);
+		
+		mCamera->update_view();
+
+		auto viewMatrix = mCamera->get_view();
+		auto projMatrix = mCamera->get_projection();
+
+		mGrid->draw_content(nanogui::Matrix4f::identity(), viewMatrix, projMatrix);
 	}
 	
 private:
 	std::unique_ptr<Canvas> mCanvas;
 	std::unique_ptr<ShaderManager> mShaderManager;
 	std::unique_ptr<Grid2d> mGrid;
-	nanogui::Matrix4f mView;
-	nanogui::Matrix4f mProjection;
+	
+	TransformComponent mCameraTransform;
+	std::unique_ptr<CameraComponent> mCamera;
 	
 	int mScrollX;
 	int mScrollY;
