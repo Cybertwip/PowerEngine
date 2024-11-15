@@ -131,7 +131,7 @@ public:
 		
 		data_widgets.push_back(std::move(data_widget));
 		
-		return data_widget;
+		return data_widget_ref;
 	}
 	
 	Pin& add_output(int pin_id, int node_id, const std::string& label, PinType pin_type) {
@@ -235,6 +235,10 @@ public:
 	
 	int get_next_id() {
 		return next_id++;
+	}
+	
+	void build_node(Node& node){
+		node.build();
 	}
 	
 	Node& spawn_string_node() {
