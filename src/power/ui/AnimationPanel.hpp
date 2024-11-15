@@ -6,6 +6,7 @@ namespace nanogui {
 class Canvas;
 class ToolButton;
 class Widget;
+class Screen;
 }
 
 class Actor;

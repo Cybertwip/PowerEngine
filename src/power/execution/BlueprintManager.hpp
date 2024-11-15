@@ -2,14 +2,23 @@
 
 #include "Canvas.hpp"
 
+#include "ShaderManager.hpp"
+
 #include "components/TransformComponent.hpp"
 #include "graphics/drawing/Grid.hpp"
 #include "simulation/SimulationServer.hpp"
-#include "ShaderManager.hpp"
+#include "ui/ScenePanel.hpp"
 
+#include <nanogui/canvas.h>
 #include <nanogui/icons.h>
-#include <nanogui/renderpass.h>
+#include <nanogui/textbox.h>
 #include <nanogui/toolbutton.h>
+#include <nanogui/renderpass.h>
+#include <nanogui/vector.h>
+#include <nanogui/window.h>
+
+#include <glm/glm.hpp>
+#include <glm/gtx/quaternion.hpp>
 
 #include <memory>
 #include <vector>
@@ -82,19 +91,20 @@ struct Pin {
 	}
 };
 
-struct Node {
+class Node : public nanogui::Window {
+public:
 	int id;
-	std::string name;
 	std::vector<Pin> inputs;
 	std::vector<Pin> outputs;
 	nanogui::Color color;
-	nanogui::Vector2i size;
 	bool root_node = false;
 	std::function<void()> on_linked;
 	std::function<void()> evaluate;
 	
-	Node(int id, const char* name, nanogui::Color color = nanogui::Color(255, 255, 255, 255))
-	: id(id), name(name), color(color), size(nanogui::Vector2i(0, 0)) {}
+	Node(nanogui::Widget& parent, const std::string& name, nanogui::Vector2i size, int id, nanogui::Color color = nanogui::Color(255, 255, 255, 255))
+	: nanogui::Window(parent, name), id(id), color(color) {
+		set_fixed_size(size);
+	}
 	
 	void reset_flow() {
 		for (auto& input : inputs) {
@@ -120,102 +130,27 @@ struct Link {
 	: id(id), start_pin_id(start_pin_id), end_pin_id(end_pin_id), color(nanogui::Color(255, 255, 255, 255)) {}
 };
 
-class NodeProcessor {
+
+class StringNode : public Node {
 public:
-	NodeProcessor() {}
-	
-	int get_next_id() {
-		return next_id++;
-	}
-	
-	void build_node(Node* node) {
-		for (auto& input : node->inputs) {
-			input.node = node;
-			input.kind = PinKind::Input;
-		}
-		for (auto& output : node->outputs) {
-			output.node = node;
-			output.kind = PinKind::Output;
-		}
-	}
-	
-	Node* spawn_input_action_node(const std::string& key_string, int key_code) {
-		auto label = "Input Action " + key_string;
-		auto node = std::make_unique<Node>(get_next_id(), label.c_str(), nanogui::Color(255, 128, 128, 255));
-		node->root_node = true;
-		node->outputs.emplace_back(get_next_id(), node->id, "Pressed", PinType::Flow);
-		node->outputs.emplace_back(get_next_id(), node->id, "Released", PinType::Flow);
-		
-		node->evaluate = [node = node.get(), key_code]() {
-			if (key_code != -1) {
-				if (glfwGetKey(glfwGetCurrentContext(), key_code) == GLFW_PRESS) {
-					node->outputs[0].can_flow = true;
-				} else if (glfwGetKey(glfwGetCurrentContext(), key_code) == GLFW_RELEASE) {
-					if (node->outputs[0].can_flow) {
-						node->outputs[0].can_flow = false;
-						node->outputs[1].can_flow = true;
-					} else {
-						node->outputs[1].can_flow = false;
-					}
-				}
-			} else {
-				node->outputs[0].can_flow = false;
-				node->outputs[1].can_flow = false;
-			}
-		};
-		
-		build_node(node.get());
-		nodes.push_back(std::move(node));
-		return nodes.back().get();
-	}
-	
-	void evaluate(Node* node) {
-		if (node->evaluate) {
-			node->evaluate();
-		}
-	}
-	
-	// Add more functions to define other nodes, and manage linking, deletion, etc.
-	// ...
-	
-private:
-	int next_id = 1;
-	std::vector<std::unique_ptr<Node>> nodes;
-	std::vector<std::unique_ptr<Link>> links;
-	
-	// Additional methods and logic needed for the complete functionality go here
-	
-};
-
-}
-
-#include "ui/ScenePanel.hpp"
-
-#include <glm/glm.hpp>
-#include <glm/gtx/quaternion.hpp>
-
-#include <nanogui/nanogui.h>
-
-class StringNode : public nanogui::Window {
-public:
-	StringNode(nanogui::Widget& parent, const std::string& title, nanogui::Vector2i size)
-	: nanogui::Window(parent, title) {
+	StringNode(nanogui::Widget& parent, const std::string& title, nanogui::Vector2i size, int id)
+	: Node(parent, title, size, id) {
 		set_fixed_size(size);
 		// Main window layout: Horizontal orientation, fill space
-		set_layout(std::make_unique<nanogui::GridLayout>(nanogui::Orientation::Horizontal, 3, nanogui::Alignment::Fill, 0, 0));
+		set_layout(std::make_unique<nanogui::GridLayout>(nanogui::Orientation::Horizontal, 2, nanogui::Alignment::Minimum, 5, 5));
 		
 		// Left column placeholder (no pins)
-		mLeftColumn = std::make_unique<nanogui::Widget>(*this);
-		mLeftColumn->set_layout(std::make_unique<nanogui::BoxLayout>(nanogui::Orientation::Vertical, nanogui::Alignment::Minimum, 0, 0));
-
+		//		mLeftColumn = std::make_unique<nanogui::Widget>(*this);
+		//		mLeftColumn->set_layout(std::make_unique<nanogui::BoxLayout>(nanogui::Orientation::Vertical, nanogui::Alignment::Minimum, 0, 0));
+		
 		// Middle column for the node data
 		mDataColumn = std::make_unique<nanogui::Widget>(*this);
-		mDataColumn->set_layout(std::make_unique<nanogui::BoxLayout>(nanogui::Orientation::Vertical, nanogui::Alignment::Middle, 0, 0));
+		mDataColumn->set_layout(std::make_unique<nanogui::BoxLayout>(nanogui::Orientation::Vertical, nanogui::Alignment::Minimum, 0, 0));
 		
 		// Right column for output pins: Aligned to the right edge
 		mRightColumn = std::make_unique<nanogui::Widget>(*this);
 		mRightColumn->set_layout(std::make_unique<nanogui::BoxLayout>(nanogui::Orientation::Vertical, nanogui::Alignment::Maximum, 0, 0));
-
+		
 		// Text box inside the node data wrapper: Will be centered due to the vertical alignment
 		mTextBox = std::make_unique<nanogui::TextBox>(*mDataColumn, "");
 		mTextBox->set_editable(true);
@@ -232,7 +167,7 @@ public:
 			}
 		});
 		
-		mOutputPin->set_fixed_size(nanogui::Vector2i(32, 32));
+		mOutputPin->set_fixed_size(nanogui::Vector2i(48, 48));
 		
 		// Optional change callback for the output pin
 		mOutputPin->set_change_callback([this](bool active) {
@@ -243,15 +178,111 @@ public:
 			}
 		});
 		
+		mTextBox->set_alignment(nanogui::TextBox::Alignment::Left);
+		
+		mTextBox->set_fixed_size(nanogui::Vector2i(fixed_size().x() - mOutputPin->fixed_size().x() - 15, 48));
+		
+		mRightColumn->set_position(nanogui::Vector2i(fixed_size().x() - mOutputPin->fixed_size().x(), mRightColumn->position().y()));
 	}
 	
 private:
-	std::unique_ptr<nanogui::Widget> mLeftColumn;
+	//	std::unique_ptr<nanogui::Widget> mLeftColumn;
 	std::unique_ptr<nanogui::Widget> mDataColumn;
 	std::unique_ptr<nanogui::Widget> mRightColumn;
 	std::unique_ptr<nanogui::TextBox> mTextBox;
 	std::unique_ptr<nanogui::ToolButton> mOutputPin;
 };
+
+class NodeProcessor {
+public:
+	NodeProcessor(Canvas& canvas)
+	: mCanvas(canvas) {
+		
+	}
+	
+	int get_next_id() {
+		return next_id++;
+	}
+	
+	void build_node(Node& node) {
+		for (auto& input : node.inputs) {
+			input.node = &node;
+			input.kind = PinKind::Input;
+		}
+		for (auto& output : node.outputs) {
+			output.node = &node;
+			output.kind = PinKind::Output;
+		}
+	}
+	
+	Node& spawn_string_node() {
+		auto node = std::make_unique<StringNode>(mCanvas, "String",  nanogui::Vector2i(196, 96), get_next_id());
+		
+		node->outputs.emplace_back(get_next_id(), node->id, "Value", PinType::String);
+		
+		auto& node_ref = *node;
+		
+		node->on_linked = [&node_ref](){
+			node_ref.outputs[0].can_flow = true;
+		};
+		
+		build_node(*node);
+		nodes.push_back(std::move(node));
+		return *nodes.back();
+	}
+	
+	//
+	//	Node& spawn_input_action_node(const std::string& key_string, int key_code) {
+	//		auto label = "Input Action " + key_string;
+	//		auto node = std::make_unique<Node>(get_next_id(), label.c_str(), nanogui::Color(255, 128, 128, 255));
+	//		node->root_node = true;
+	//		node->outputs.emplace_back(get_next_id(), node->id, "Pressed", PinType::Flow);
+	//		node->outputs.emplace_back(get_next_id(), node->id, "Released", PinType::Flow);
+	//
+	//		node->evaluate = [node = node.get(), key_code]() {
+	//			if (key_code != -1) {
+	//				if (glfwGetKey(glfwGetCurrentContext(), key_code) == GLFW_PRESS) {
+	//					node->outputs[0].can_flow = true;
+	//				} else if (glfwGetKey(glfwGetCurrentContext(), key_code) == GLFW_RELEASE) {
+	//					if (node->outputs[0].can_flow) {
+	//						node->outputs[0].can_flow = false;
+	//						node->outputs[1].can_flow = true;
+	//					} else {
+	//						node->outputs[1].can_flow = false;
+	//					}
+	//				}
+	//			} else {
+	//				node->outputs[0].can_flow = false;
+	//				node->outputs[1].can_flow = false;
+	//			}
+	//		};
+	//
+	//		build_node(node.get());
+	//		nodes.push_back(std::move(node));
+	//		return *nodes.back().get();
+	//	}
+	
+	void evaluate(Node& node) {
+		if (node.evaluate) {
+			node.evaluate();
+		}
+	}
+	
+	// Add more functions to define other nodes, and manage linking, deletion, etc.
+	// ...
+	
+private:
+	Canvas& mCanvas;
+	
+	int next_id = 1;
+	std::vector<std::unique_ptr<Node>> nodes;
+	std::vector<std::unique_ptr<Link>> links;
+	
+	// Additional methods and logic needed for the complete functionality go here
+	
+};
+}
+
 
 class BlueprintPanel : public ScenePanel {
 public:
@@ -261,12 +292,12 @@ public:
 	, mScrollY(0) {
 		// Set the layout to horizontal with some padding
 		set_layout(std::make_unique<nanogui::GroupLayout>(0, 0, 0));
-			
+		
 		// Ensure the canvas is created with the correct dimensions or set it explicitly if needed
 		mCanvas = std::make_unique<Canvas>(*this, parent.screen(), nanogui::Color(35, 65, 90, 255));
 		
 		mCanvas->set_fixed_size(nanogui::Vector2i(fixed_width(), parent.fixed_height() * 0.71));
-
+		
 		mShaderManager = std::make_unique<ShaderManager>(*mCanvas);
 		
 		mGrid = std::make_unique<Grid2d>(*mShaderManager);
@@ -285,7 +316,7 @@ public:
 		float far = 1.0f;
 		
 		mProjection = nanogui::Matrix4f::ortho(left, right, bottom, top, near, far);
-
+		
 		mView = nanogui::Matrix4f::look_at(
 										   nanogui::Vector3f(0, 0, 1),  // Camera position
 										   nanogui::Vector3f(0, 0, 0),  // Look-at point
@@ -302,16 +333,18 @@ public:
 			mScrollY += scaledDy;
 			
 			mGrid->set_scroll_offset(nanogui::Vector2i(-mScrollX, -mScrollY));
-
+			
 			// Assuming mTestWidget's position is in screen space, update it
-			nanogui::Vector2i currentPos = mTestWidget->position();
-			mTestWidget->set_position(currentPos + nanogui::Vector2i(dx, dy));
+			
+			for (auto* node : mNodes) {
+				nanogui::Vector2i currentPos = node->position();
+				node->set_position(currentPos + nanogui::Vector2i(dx, dy));
+			}
 		});
 		
+		mNodeProcessor = std::make_unique<blueprint::NodeProcessor>(*mCanvas);
 		
-		mTestWidget = std::make_unique<StringNode>(*mCanvas, "Test", nanogui::Vector2i(144, 164));
-		
-		mTestWidget->set_position(nanogui::Vector2i(0, 0));
+		mNodes.push_back(&mNodeProcessor->spawn_string_node());
 	}
 	
 private:
@@ -334,7 +367,8 @@ private:
 	float mScrollX;
 	float mScrollY;
 	
-	std::unique_ptr<StringNode> mTestWidget;
+	std::unique_ptr<blueprint::NodeProcessor> mNodeProcessor;
+	std::vector<blueprint::Node*> mNodes;
 };
 
 class BlueprintManager {
@@ -345,14 +379,14 @@ public:
 		mBlueprintPanel->set_position(nanogui::Vector2i(0, canvas.fixed_height()));
 		
 		mBlueprintButton = std::make_shared<nanogui::ToolButton>(canvas, FA_FLASK);
-
+		
 		mBlueprintButton->set_fixed_size(nanogui::Vector2i(48, 48));
 		
 		mBlueprintButton->set_text_color(nanogui::Color(135, 206, 235, 255));
-
+		
 		// Position the button in the lower-right corner
 		mBlueprintButton->set_position(nanogui::Vector2i(mCanvas.fixed_width() * 0.5f - mBlueprintButton->fixed_width() * 0.5f, mCanvas.fixed_height() - mBlueprintButton->fixed_height() - 20));
-
+		
 		mBlueprintButton->set_change_callback([this](bool active) {
 			toggle_blueprint_panel(active);
 		});
@@ -375,7 +409,7 @@ public:
 				animate_panel_position(target);
 			});
 		}
-
+		
 		mBlueprintPanel->set_visible(true);
 	}
 	
@@ -405,5 +439,4 @@ private:
 	std::shared_ptr<BlueprintPanel> mBlueprintPanel;
 	std::shared_ptr<nanogui::ToolButton> mBlueprintButton;
 	std::future<void> mAnimationFuture;
-
 };
