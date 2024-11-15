@@ -202,7 +202,7 @@ public:
 	: nanogui::Window(parent, title) {
 		set_fixed_size(size);
 		// Main window layout: Horizontal orientation, fill space
-		set_layout(std::make_unique<nanogui::GridLayout>(nanogui::Orientation::Horizontal, 3, nanogui::Alignment::Middle, 0, 0));
+		set_layout(std::make_unique<nanogui::GridLayout>(nanogui::Orientation::Horizontal, 3, nanogui::Alignment::Fill, 0, 0));
 		
 		// Left column placeholder (no pins)
 		mLeftColumn = std::make_unique<nanogui::Widget>(*this);
@@ -210,11 +210,11 @@ public:
 
 		// Middle column for the node data
 		mDataColumn = std::make_unique<nanogui::Widget>(*this);
-		mDataColumn->set_layout(std::make_unique<nanogui::BoxLayout>(nanogui::Orientation::Vertical, nanogui::Alignment::Minimum, 0, 0));
+		mDataColumn->set_layout(std::make_unique<nanogui::BoxLayout>(nanogui::Orientation::Vertical, nanogui::Alignment::Middle, 0, 0));
 		
 		// Right column for output pins: Aligned to the right edge
 		mRightColumn = std::make_unique<nanogui::Widget>(*this);
-		mRightColumn->set_layout(std::make_unique<nanogui::BoxLayout>(nanogui::Orientation::Vertical, nanogui::Alignment::Minimum, 0, 0));
+		mRightColumn->set_layout(std::make_unique<nanogui::BoxLayout>(nanogui::Orientation::Vertical, nanogui::Alignment::Maximum, 0, 0));
 
 		// Text box inside the node data wrapper: Will be centered due to the vertical alignment
 		mTextBox = std::make_unique<nanogui::TextBox>(*mDataColumn, "");
@@ -243,7 +243,6 @@ public:
 			}
 		});
 		
-		mRightColumn->set_position(nanogui::Vector2i(fixed_width() - mOutputPin->fixed_width(), mRightColumn->position().y()));
 	}
 	
 private:
