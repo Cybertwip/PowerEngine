@@ -203,29 +203,26 @@ public:
 		set_fixed_size(size);
 		
 		// Main window layout: Horizontal orientation, fill space
-		set_layout(std::make_unique<nanogui::BoxLayout>(nanogui::Orientation::Horizontal, nanogui::Alignment::Middle, 0, 0));
-		set_layout(std::make_unique<nanogui::BoxLayout>(nanogui::Orientation::Horizontal, nanogui::Alignment::Middle, 0, 0));
+		set_layout(std::make_unique<nanogui::GroupLayout>(0, 0));
 		
 		// Left column placeholder (no pins)
 		mLeftColumn = std::make_unique<nanogui::Widget>(*this);
 		mLeftColumn->set_layout(std::make_unique<nanogui::BoxLayout>(nanogui::Orientation::Vertical, nanogui::Alignment::Middle, 10, 15));
 		
 		// Middle column for the node data
-		mNodeDataWrapper = std::make_unique<nanogui::Widget>(*this);
-		mNodeDataWrapper->set_layout(std::make_unique<nanogui::BoxLayout>(nanogui::Orientation::Vertical, nanogui::Alignment::Middle, 10, 15));
+		mDataColumn = std::make_unique<nanogui::Widget>(*this);
+		mDataColumn->set_layout(std::make_unique<nanogui::BoxLayout>(nanogui::Orientation::Vertical, nanogui::Alignment::Middle, 10, 15));
 		
 		// Right column for output pins: Aligned to the right edge
-		mOutputPinWrapperAlignment = std::make_unique<nanogui::Widget>(*this);
-		mOutputPinWrapperAlignment->set_layout(std::make_unique<nanogui::BoxLayout>(nanogui::Orientation::Vertical, nanogui::Alignment::Maximum, 0, 0));
-		mOutputPinWrapper = std::make_unique<nanogui::Widget>(*mOutputPinWrapperAlignment);
-		mOutputPinWrapper->set_layout(std::make_unique<nanogui::BoxLayout>(nanogui::Orientation::Vertical, nanogui::Alignment::Maximum, 0, 0));
+		mRightColumn = std::make_unique<nanogui::Widget>(*mOutputPinWrapperAlignment);
+		mRightColumn->set_layout(std::make_unique<nanogui::BoxLayout>(nanogui::Orientation::Vertical, nanogui::Alignment::Maximum, 0, 0));
 		
 		// Text box inside the node data wrapper: Will be centered due to the vertical alignment
-		mTextBox = std::make_unique<nanogui::TextBox>(*mNodeDataWrapper, "");
+		mTextBox = std::make_unique<nanogui::TextBox>(*mDataColumn, "");
 		mTextBox->set_editable(true);
 		
 		// Output pin inside the output pin wrapper: Positioned on the right
-		mOutputPin = std::make_unique<nanogui::ToolButton>(*mOutputPinWrapper, FA_CIRCLE_NOTCH);
+		mOutputPin = std::make_unique<nanogui::ToolButton>(*mRightColumn, FA_CIRCLE_NOTCH);
 		
 		// Optional change callback for the output pin
 		mOutputPin->set_change_callback([this](bool active) {
@@ -236,14 +233,13 @@ public:
 			}
 		});
 		
-		mOutputPinWrapperAlignment->set_position(fixed_width() - mOutputPin->width());
+		mRightColumn->set_position(fixed_width() - mOutputPin->width());
 	}
 	
 private:
 	std::unique_ptr<nanogui::Widget> mLeftColumn;
-	std::unique_ptr<nanogui::Widget> mNodeDataWrapper;
-	std::unique_ptr<nanogui::Widget> mOutputPinWrapperAlignment;
-	std::unique_ptr<nanogui::Widget> mOutputPinWrapper;
+	std::unique_ptr<nanogui::Widget> mDataColumn;
+	std::unique_ptr<nanogui::Widget> mRightColumn;
 	std::unique_ptr<nanogui::TextBox> mTextBox;
 	std::unique_ptr<nanogui::ToolButton> mOutputPin;
 };
