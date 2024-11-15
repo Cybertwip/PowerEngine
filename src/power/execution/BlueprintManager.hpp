@@ -2,6 +2,7 @@
 
 #include "Canvas.hpp"
 
+#include "components/TransformComponent.hpp"
 #include "graphics/drawing/Grid.hpp"
 #include "simulation/SimulationServer.hpp"
 #include "ShaderManager.hpp"
@@ -202,8 +203,8 @@ public:
 	, mScrollX(0)
 	, mScrollY(0) {
 		// Set the layout to horizontal with some padding
-		set_layout(std::make_unique<nanogui::BoxLayout>(nanogui::Orientation::Horizontal, nanogui::Alignment::Fill, 0, 0));
-				
+		set_layout(std::make_unique<nanogui::GroupLayout>(0, 0, 0));
+			
 		// Ensure the canvas is created with the correct dimensions or set it explicitly if needed
 		mCanvas = std::make_unique<Canvas>(*this, parent.screen(), nanogui::Color(35, 65, 90, 255));
 		
@@ -217,9 +218,6 @@ public:
 		mCanvas->register_draw_callback([this]() {
 			this->draw();
 		});
-		
-		// Initialize matrices
-		mModel = nanogui::Matrix4f::scale(nanogui::Vector3f(1.0f, 1.0f, 1.0f));
 		
 		// Adjusted orthographic projection parameters
 		float left = -1.0f;
@@ -243,27 +241,41 @@ public:
 			mScrollY += dy;
 			
 			mGrid->set_scroll_offset(nanogui::Vector2i(-mScrollX, -mScrollY));
+			
+			// Convert mouse delta to world space
+			
+			glm::mat4 view = nanogui_to_glm(mView);
+			glm::vec4 worldDelta = glm::inverse(view) * glm::vec4(dx, dy, 0, 1);
 
+			// Assuming mTestWidget's position is in world space, update it
+			nanogui::Vector2i currentPos = mTestWidget->position();
+			mTestWidget->set_position(currentPos + nanogui::Vector2i(worldDelta.x, worldDelta.y));
 		});
-
+		
+		
+		mTestWidget = std::make_unique<nanogui::Window>(*mCanvas, "Test");
+		
+		mTestWidget->set_position(nanogui::Vector2i(0, 0));
+		mTestWidget->set_fixed_size(nanogui::Vector2i(144, 164));
 	}
 	
 private:
 	void draw() {
 		mCanvas->render_pass().clear_color(0, mCanvas->background_color());
-		mGrid->draw_content(mModel, mView, mProjection);
+		mGrid->draw_content(nanogui::Matrix4f::identity(), mView, mProjection);
 	}
 	
 private:
 	std::unique_ptr<Canvas> mCanvas;
 	std::unique_ptr<ShaderManager> mShaderManager;
 	std::unique_ptr<Grid2d> mGrid;
-	nanogui::Matrix4f mModel;
 	nanogui::Matrix4f mView;
 	nanogui::Matrix4f mProjection;
 	
 	int mScrollX;
 	int mScrollY;
+	
+	std::unique_ptr<nanogui::Window> mTestWidget;
 };
 
 class BlueprintManager {

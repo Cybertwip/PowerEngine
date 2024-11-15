@@ -105,6 +105,8 @@ protected:
 		} catch (const std::exception &e) {
 //			std::cerr << "Caught exception in event handler: " << e.what() << std::endl;
 		}
+		
+		Screen::cursor_pos_callback_event(x, y);
 	}
 	
 	virtual void mouse_button_callback_event(int button, int action, int modifiers) override {
@@ -131,10 +133,12 @@ protected:
 				m_drag_active = false;
 				if (m_drag_widget != nullptr) {
 					
-					if (m_drag_widget->visible()) {
-						m_drag_widget->set_visible(false);
-
-						m_draggable_window->do_drag_finish();
+					if (m_draggable_window->children().size() != 0){
+						if (m_drag_widget->visible()) {
+							m_drag_widget->set_visible(false);
+							
+							m_draggable_window->do_drag_finish();
+						}
 					}
 					
 					m_drag_widget = nullptr;
@@ -146,6 +150,8 @@ protected:
 		} catch (const std::exception &e) {
 //			std::cerr << "Caught exception in event handler: " << e.what() << std::endl;
 		}
+		
+		Screen::mouse_button_callback_event(button, action, modifiers);
 	}
 	
 	void initialize() {

@@ -56,7 +56,7 @@ void Grid::draw_content(const nanogui::Matrix4f& model, const nanogui::Matrix4f&
 }
 
 Grid2d::Grid2d(ShaderManager& shaderManager)
-: mShaderWrapper(shaderManager.load_shader("grid2d", "internal/shaders/metal/grid2d_vs.metal", "internal/shaders/metal/grid2d_fs.metal", nanogui::Shader::BlendMode::AlphaBlend)), mScrollOffset(0.0f, 0.0f), mGridSize(100.0f), mLineWidth(1.0f)
+: mShaderWrapper(shaderManager.load_shader("grid2d", "internal/shaders/metal/grid2d_vs.metal", "internal/shaders/metal/grid2d_fs.metal", nanogui::Shader::BlendMode::AlphaBlend)), mScrollOffset(0.0f, 0.0f), mGridSize(125.0f), mLineWidth(1.0f)
 {
 	mGridVertices = {
 		// positions for a full-screen quad
