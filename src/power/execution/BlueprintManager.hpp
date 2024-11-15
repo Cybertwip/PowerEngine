@@ -77,8 +77,8 @@ public:
 	bool can_flow = false;
 	std::optional<std::variant<Entity, std::string, int, float, bool>> data;
 	
-	Pin(nanogui::Widget& parent, int id, int node_id, PinType type, PinSubType subtype = PinSubType::None)
-	: nanogui::ToolButton(parent, FA_CIRCLE_NOTCH), id(id), node_id(node_id), node(nullptr), type(type), subtype(subtype), kind(PinKind::Input) {
+	Pin(nanogui::Widget& parent, int id, int node_id, const std::string& label, PinType type, PinSubType subtype = PinSubType::None)
+	: nanogui::ToolButton(parent, FA_CIRCLE_NOTCH, label), id(id), node_id(node_id), node(nullptr), type(type), subtype(subtype), kind(PinKind::Input) {
 		if (type == PinType::Bool) {
 			data = true;
 		} else if (type == PinType::String) {
@@ -157,11 +157,11 @@ public:
 	
 	void build() {
 		for (auto& input : inputs) {
-			input->node = &node;
+			input->node = this;
 			input->kind = PinKind::Input;
 		}
 		for (auto& output : outputs) {
-			output->node = &node;
+			output->node = this;
 			output->kind = PinKind::Output;
 		}
 	}
@@ -218,7 +218,7 @@ public:
 		auto& output = add_output(output_pin_id, this->id, "Value", PinType::String);
 				
 		on_linked = [&output](){
-			output->can_flow = true;
+			output.can_flow = true;
 		};
 	}
 	
