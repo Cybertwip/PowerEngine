@@ -11,7 +11,6 @@ class CameraComponent
 {
 public:
 	CameraComponent(TransformComponent& transformComponent, float fov, float near, float far, float aspect);
-	CameraComponent(TransformComponent& transformComponent, float left, float right, float top, float bottom, float near, float far);
     void update_view();
     
     const nanogui::Matrix4f& get_view() const {
