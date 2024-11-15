@@ -206,7 +206,7 @@ public:
 		
 		// Left column placeholder (no pins)
 		mLeftColumn = std::make_unique<nanogui::Widget>(*this);
-		mLeftColumn->set_layout(std::make_unique<nanogui::BoxLayout>(nanogui::Orientation::Vertical, nanogui::Alignment::Minimum, 0, 0)));
+		mLeftColumn->set_layout(std::make_unique<nanogui::BoxLayout>(nanogui::Orientation::Vertical, nanogui::Alignment::Minimum, 0, 0));
 
 		// Middle column for the node data
 		mDataColumn = std::make_unique<nanogui::Widget>(*this);
@@ -214,7 +214,7 @@ public:
 		
 		// Right column for output pins: Aligned to the right edge
 		mRightColumn = std::make_unique<nanogui::Widget>(*this);
-		mRightColumn->set_layout(std::make_unique<nanogui::BoxLayout>(nanogui::Orientation::Vertical, nanogui::Alignment::Minimum, 0, 0)));
+		mRightColumn->set_layout(std::make_unique<nanogui::BoxLayout>(nanogui::Orientation::Vertical, nanogui::Alignment::Minimum, 0, 0));
 
 		// Text box inside the node data wrapper: Will be centered due to the vertical alignment
 		mTextBox = std::make_unique<nanogui::TextBox>(*mDataColumn, "");
