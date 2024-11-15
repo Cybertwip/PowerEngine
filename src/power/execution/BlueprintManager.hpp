@@ -125,10 +125,11 @@ public:
 	template<typename T, typename... Args>
 	T& add_data_widget(Args&&... args){
 		auto data_widget = std::make_unique<T>(*mDataColumn, std::forward<Args>(args)...);
+		
+		data_widget->set_fixed_size(nanogui::Vector2i(fixed_size().x() - 68, 48));
 
 		auto& data_widget_ref = *data_widget;
-		
-		
+
 		data_widgets.push_back(std::move(data_widget));
 		
 		return data_widget_ref;
@@ -213,9 +214,8 @@ public:
 		
 		textbox.set_alignment(nanogui::TextBox::Alignment::Left);
 		
-		textbox.set_fixed_size(nanogui::Vector2i(fixed_size().x() - 28, 48));
 		
-		auto& output = add_output(output_pin_id, this->id, "Value", PinType::String);
+		auto& output = add_output(output_pin_id, this->id, "", PinType::String);
 				
 		on_linked = [&output](){
 			output.can_flow = true;
