@@ -243,7 +243,7 @@ public:
 			}
 		});
 		
-		mRightColumn->set_position(nanogui::Vector2i(fixed_width() - mOutputPin->fixed_width(), mRightColumn->get_position().y()));
+		mRightColumn->set_position(nanogui::Vector2i(fixed_width() - mOutputPin->fixed_width(), mRightColumn->position().y()));
 	}
 	
 private:
