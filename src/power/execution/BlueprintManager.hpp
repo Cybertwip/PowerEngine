@@ -142,9 +142,9 @@ public:
 		// Optional change callback for the output pin
 		output->set_change_callback([&output_ref](bool active) {
 			if (active) {
-				output_ref->set_icon(FA_CIRCLE);
+				output_ref.set_icon(FA_CIRCLE);
 			} else {
-				output_ref->set_icon(FA_CIRCLE_NOTCH);
+				output_ref.set_icon(FA_CIRCLE_NOTCH);
 			}
 		});
 		
@@ -161,13 +161,13 @@ public:
 	
 	void reset_flow() {
 		for (auto& input : inputs) {
-			if (input.type == PinType::Flow) {
-				input.can_flow = false;
+			if (input->type == PinType::Flow) {
+				input->can_flow = false;
 			}
 		}
 		for (auto& output : outputs) {
-			if (output.type == PinType::Flow) {
-				output.can_flow = false;
+			if (output->type == PinType::Flow) {
+				output->can_flow = false;
 			}
 		}
 	}
@@ -208,7 +208,7 @@ public:
 		
 		textbox.set_fixed_size(nanogui::Vector2i(fixed_size().x() - 28, 48));
 		
-		auto& output = add_output(*this, output_pin_id, node->id, "Value", PinType::String);
+		auto& output = add_output(*this, output_pin_id, this->id, "Value", PinType::String);
 				
 		on_linked = [&output](){
 			output->can_flow = true;
