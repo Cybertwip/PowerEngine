@@ -66,19 +66,19 @@ struct Entity {
 	std::optional<std::variant<std::string, int, float, bool>> payload;
 };
 
-struct Pin {
+class Pin : public nanogui::ToolButton {
+public:
 	int id;
 	int node_id;
 	Node* node;
-	std::string name;
 	PinType type;
 	PinSubType subtype;
 	PinKind kind;
 	bool can_flow = false;
 	std::optional<std::variant<Entity, std::string, int, float, bool>> data;
 	
-	Pin(int id, int node_id, const char* name, PinType type, PinSubType subtype = PinSubType::None)
-	: id(id), node_id(node_id), node(nullptr), name(name), type(type), subtype(subtype), kind(PinKind::Input) {
+	Pin(nanogui::Widget& parent, int id, int node_id, PinType type, PinSubType subtype = PinSubType::None)
+	: nanogui::ToolButton(parent, FA_CIRCLE_NOTCH), id(id), node_id(node_id), node(nullptr), type(type), subtype(subtype), kind(PinKind::Input) {
 		if (type == PinType::Bool) {
 			data = true;
 		} else if (type == PinType::String) {
@@ -94,8 +94,6 @@ struct Pin {
 class Node : public nanogui::Window {
 public:
 	int id;
-	std::vector<Pin> inputs;
-	std::vector<Pin> outputs;
 	nanogui::Color color;
 	bool root_node = false;
 	std::function<void()> on_linked;
@@ -104,6 +102,61 @@ public:
 	Node(nanogui::Widget& parent, const std::string& name, nanogui::Vector2i size, int id, nanogui::Color color = nanogui::Color(255, 255, 255, 255))
 	: nanogui::Window(parent, name), id(id), color(color) {
 		set_fixed_size(size);
+		
+		// Main window layout: Horizontal orientation, fill space
+		set_layout(std::make_unique<nanogui::GridLayout>(nanogui::Orientation::Horizontal, 3, nanogui::Alignment::Minimum, 5, 5));
+		
+		// Left column inputs placeholder
+		mLeftColumn = std::make_unique<nanogui::Widget>(*this);
+		mLeftColumn->set_layout(std::make_unique<nanogui::BoxLayout>(nanogui::Orientation::Vertical, nanogui::Alignment::Minimum, 0, 0));
+		
+		// Middle column for the node data
+		mDataColumn = std::make_unique<nanogui::Widget>(*this);
+		mDataColumn->set_layout(std::make_unique<nanogui::BoxLayout>(nanogui::Orientation::Vertical, nanogui::Alignment::Minimum, 0, 0));
+		
+		// Right column for output pins: Aligned to the right edge
+		mRightColumn = std::make_unique<nanogui::Widget>(*this);
+		mRightColumn->set_layout(std::make_unique<nanogui::BoxLayout>(nanogui::Orientation::Vertical, nanogui::Alignment::Maximum, 0, 0));
+		
+		mRightColumn->set_position(nanogui::Vector2i(fixed_size().x() - 48, mRightColumn->position().y()));
+
+	}
+
+	template<typename T, typename... Args>
+	T& add_data_widget(Args&&... args){
+		auto data_widget = std::make_unique<T>(*mDataColumn, std::forward<Args>(args)...);
+
+		auto& data_widget_ref = *data_widget;
+		
+		
+		data_widgets.push_back(std::move(data_widget));
+		
+		return data_widget;
+	}
+	
+	Pin& add_output(int pin_id, int node_id, const std::string& label, PinType pin_type) {
+		
+		auto output = std::make_unique<Pin>(*mRightColumn, pin_id, node_id, label, pin_type);
+		
+		auto& output_ref = *output;
+		// Optional change callback for the output pin
+		output->set_change_callback([&output_ref](bool active) {
+			if (active) {
+				output_ref->set_icon(FA_CIRCLE);
+			} else {
+				output_ref->set_icon(FA_CIRCLE_NOTCH);
+			}
+		});
+		
+		output->set_fixed_size(nanogui::Vector2i(48, 48));
+		
+		outputs.push_back(std::move(output));
+		
+		return *outputs.back();
+	}
+	
+	void build() {
+		
 	}
 	
 	void reset_flow() {
@@ -118,6 +171,16 @@ public:
 			}
 		}
 	}
+	
+protected:
+	std::vector<std::unique_ptr<Pin>> inputs;
+	std::vector<std::unique_ptr<nanogui::Widget>> data_widgets;
+	std::vector<std::unique_ptr<Pin>> outputs;
+
+private:
+	std::unique_ptr<nanogui::Widget> mLeftColumn;
+	std::unique_ptr<nanogui::Widget> mDataColumn;
+	std::unique_ptr<nanogui::Widget> mRightColumn;
 };
 
 struct Link {
@@ -133,64 +196,27 @@ struct Link {
 
 class StringNode : public Node {
 public:
-	StringNode(nanogui::Widget& parent, const std::string& title, nanogui::Vector2i size, int id)
+	StringNode(nanogui::Widget& parent, const std::string& title, nanogui::Vector2i size, int id, int output_pin_id)
 	: Node(parent, title, size, id) {
-		set_fixed_size(size);
-		// Main window layout: Horizontal orientation, fill space
-		set_layout(std::make_unique<nanogui::GridLayout>(nanogui::Orientation::Horizontal, 2, nanogui::Alignment::Minimum, 5, 5));
-		
-		// Left column placeholder (no pins)
-		//		mLeftColumn = std::make_unique<nanogui::Widget>(*this);
-		//		mLeftColumn->set_layout(std::make_unique<nanogui::BoxLayout>(nanogui::Orientation::Vertical, nanogui::Alignment::Minimum, 0, 0));
-		
-		// Middle column for the node data
-		mDataColumn = std::make_unique<nanogui::Widget>(*this);
-		mDataColumn->set_layout(std::make_unique<nanogui::BoxLayout>(nanogui::Orientation::Vertical, nanogui::Alignment::Minimum, 0, 0));
-		
-		// Right column for output pins: Aligned to the right edge
-		mRightColumn = std::make_unique<nanogui::Widget>(*this);
-		mRightColumn->set_layout(std::make_unique<nanogui::BoxLayout>(nanogui::Orientation::Vertical, nanogui::Alignment::Maximum, 0, 0));
 		
 		// Text box inside the node data wrapper: Will be centered due to the vertical alignment
-		mTextBox = std::make_unique<nanogui::TextBox>(*mDataColumn, "");
-		mTextBox->set_editable(true);
+		auto& textbox = add_data_widget<nanogui::TextBox>("");
 		
-		// Output pin inside the output pin wrapper: Positioned on the right
-		mOutputPin = std::make_unique<nanogui::ToolButton>(*mRightColumn, FA_CIRCLE_NOTCH);
+		textbox.set_editable(true);
 		
-		// Optional change callback for the output pin
-		mOutputPin->set_change_callback([this](bool active) {
-			if (active) {
-				mOutputPin->set_icon(FA_CIRCLE);
-			} else {
-				mOutputPin->set_icon(FA_CIRCLE_NOTCH);
-			}
-		});
+		textbox.set_alignment(nanogui::TextBox::Alignment::Left);
 		
-		mOutputPin->set_fixed_size(nanogui::Vector2i(48, 48));
+		textbox.set_fixed_size(nanogui::Vector2i(fixed_size().x() - 28, 48));
 		
-		// Optional change callback for the output pin
-		mOutputPin->set_change_callback([this](bool active) {
-			if (active) {
-				mOutputPin->set_icon(FA_CIRCLE);
-			} else {
-				mOutputPin->set_icon(FA_CIRCLE_NOTCH);
-			}
-		});
-		
-		mTextBox->set_alignment(nanogui::TextBox::Alignment::Left);
-		
-		mTextBox->set_fixed_size(nanogui::Vector2i(fixed_size().x() - mOutputPin->fixed_size().x() - 15, 48));
-		
-		mRightColumn->set_position(nanogui::Vector2i(fixed_size().x() - mOutputPin->fixed_size().x(), mRightColumn->position().y()));
+		auto& output = add_output(*this, output_pin_id, node->id, "Value", PinType::String);
+				
+		on_linked = [&output](){
+			output->can_flow = true;
+		};
 	}
 	
 private:
-	//	std::unique_ptr<nanogui::Widget> mLeftColumn;
-	std::unique_ptr<nanogui::Widget> mDataColumn;
-	std::unique_ptr<nanogui::Widget> mRightColumn;
 	std::unique_ptr<nanogui::TextBox> mTextBox;
-	std::unique_ptr<nanogui::ToolButton> mOutputPin;
 };
 
 class NodeProcessor {
@@ -216,16 +242,7 @@ public:
 	}
 	
 	Node& spawn_string_node() {
-		auto node = std::make_unique<StringNode>(mCanvas, "String",  nanogui::Vector2i(196, 96), get_next_id());
-		
-		node->outputs.emplace_back(get_next_id(), node->id, "Value", PinType::String);
-		
-		auto& node_ref = *node;
-		
-		node->on_linked = [&node_ref](){
-			node_ref.outputs[0].can_flow = true;
-		};
-		
+		auto node = std::make_unique<StringNode>(mCanvas, "String",  nanogui::Vector2i(196, 96), get_next_id(), get_next_id());
 		build_node(*node);
 		nodes.push_back(std::move(node));
 		return *nodes.back();
