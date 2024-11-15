@@ -196,6 +196,45 @@ private:
 
 #include <nanogui/nanogui.h>
 
+class StringNode : public nanogui::Window {
+public:
+	StringNode(nanogui::Widget& parent, const std::string& title)
+	: nanogui::Window(parent, title) {
+		// Main window layout: Horizontal orientation, fill space
+		set_layout(std::make_unique<nanogui::BoxLayout>(nanogui::Orientation::Horizontal, nanogui::Alignment::Fill, 10, 15));
+		
+		// Node data wrapper: Vertically centered
+		mNodeDataWrapper = std::make_unique<nanogui::Widget>(*this);
+		mNodeDataWrapper->set_layout(std::make_unique<nanogui::BoxLayout>(nanogui::Orientation::Vertical, nanogui::Alignment::Middle, 10, 15));
+		
+		// Output pin wrapper: Aligned to the right
+		mOutputPinWrapper = std::make_unique<nanogui::Widget>(*this);
+		mOutputPinWrapper->set_layout(std::make_unique<nanogui::BoxLayout>(nanogui::Orientation::Vertical, nanogui::Alignment::Maximum, 10, 15));
+		
+		// Text box inside the node data wrapper: Will be centered due to the vertical alignment
+		mTextBox = std::make_unique<nanogui::TextBox>(*mNodeDataWrapper, "");
+		mTextBox->set_editable(true);
+		
+		// Output pin inside the output pin wrapper: Positioned on the right
+		mOutputPin = std::make_unique<nanogui::ToolButton>(*mOutputPinWrapper, FA_CIRCLE_NOTCH);
+		
+		// Optional change callback for the output pin
+		mOutputPin->set_change_callback([this](bool active) {
+			if (active) {
+				mOutputPin->set_icon(FA_CIRCLE);
+			} else {
+				mOutputPin->set_icon(FA_CIRCLE_NOTCH);
+			}
+		});
+	}
+	
+private:
+	std::unique_ptr<nanogui::Widget> mNodeDataWrapper;
+	std::unique_ptr<nanogui::Widget> mOutputPinWrapper;
+	std::unique_ptr<nanogui::TextBox> mTextBox;
+	std::unique_ptr<nanogui::ToolButton> mOutputPin;
+};
+
 class BlueprintPanel : public ScenePanel {
 public:
 	BlueprintPanel(Canvas& parent)
@@ -252,7 +291,7 @@ public:
 		});
 		
 		
-		mTestWidget = std::make_unique<nanogui::Window>(*mCanvas, "Test");
+		mTestWidget = std::make_unique<StringNode>(*mCanvas, "Test");
 		
 		mTestWidget->set_position(nanogui::Vector2i(0, 0));
 		mTestWidget->set_fixed_size(nanogui::Vector2i(144, 164));
@@ -262,6 +301,10 @@ private:
 	void draw() {
 		mCanvas->render_pass().clear_color(0, mCanvas->background_color());
 		mGrid->draw_content(nanogui::Matrix4f::identity(), mView, mProjection);
+	}
+	
+	void draw(NVGcontext *ctx) override {
+		ScenePanel::draw(ctx);
 	}
 	
 private:
@@ -274,7 +317,7 @@ private:
 	float mScrollX;
 	float mScrollY;
 	
-	std::unique_ptr<nanogui::Window> mTestWidget;
+	std::unique_ptr<StringNode> mTestWidget;
 };
 
 class BlueprintManager {

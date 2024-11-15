@@ -21,8 +21,10 @@ public:
 	
 	void register_motion_callback(int button, std::function<void(int, int, int, int, int, int, int, bool)> callback);
 	
-private:
+protected:
 	void draw(NVGcontext *ctx) override;
+
+private:
 	
 	// Queues to store events along with the button information
 	std::deque<std::tuple<bool, int, int, int, int, int>> mClickQueue; // down, width, height, x, y, button

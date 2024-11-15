@@ -37,6 +37,7 @@ class NANOGUI_EXPORT Widget : public Object {
 public:
 	
 	/// Construct a new widget with the given parent widget
+	Widget(Widget& parent);
 	Widget(std::optional<std::reference_wrapper<Widget>> parent);
 
     /// Free all resources used by the widget and any children

@@ -23,6 +23,10 @@
 
 NAMESPACE_BEGIN(nanogui)
 
+Widget::Widget(Widget& parent) : Widget(std::make_optional<std::reference_wrapper<Widget>>(parent)){
+	
+}
+
 Widget::Widget(std::optional<std::reference_wrapper<Widget>> parent)
 : m_parent(parent), m_layout(nullptr),
 m_pos(0), m_size(0), m_fixed_size(0), m_visible(true), m_enabled(true),
