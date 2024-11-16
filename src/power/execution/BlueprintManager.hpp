@@ -104,8 +104,6 @@ public:
 	Node(nanogui::Widget& parent, const std::string& name, nanogui::Vector2i size, int id, nanogui::Color color = nanogui::Color(255, 255, 255, 255))
 	: nanogui::Window(parent, name), id(id), color(color) {
 		set_fixed_size(size);
-		
-		set_layout(std::make_unique<nanogui::GroupLayout>(5, 0));
 
 		int hh = theme().m_window_header_height;
 
