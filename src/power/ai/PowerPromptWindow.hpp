@@ -19,6 +19,12 @@
 #include <vector>
 
 // Forward Declarations
+class IMeshBatch;
+class ISkinnedMeshBatch;
+
+class Actor;
+class BatchUnit;
+
 class PowerAi;
 class ResourcesPanel;
 class SharedSelfContainedMeshCanvas;
