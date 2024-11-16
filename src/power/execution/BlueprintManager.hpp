@@ -236,7 +236,7 @@ private:
 	void perform_layout(NVGcontext *ctx) override {
 		Window::perform_layout(ctx);
 		
-		mFlowContainer->set_position(nanogui::Vector2i(5, 5));
+		mFlowContainer->set_position(nanogui::Vector2i(0, 0));
 	}
 
 	void draw(NVGcontext *ctx) override {
@@ -315,11 +315,11 @@ private:
 		
 		nvgRestore(ctx);
 
-		nvgTranslate(ctx, m_pos.x(), m_pos.y() - hh + mFlowContainer->position().y());
+		nvgTranslate(ctx, m_pos.x(), m_pos.y());
 		
 		mFlowContainer->draw(ctx);
 		
-		nvgTranslate(ctx, -m_pos.x(), -m_pos.y() + hh - mFlowContainer->position().y());
+		nvgTranslate(ctx, -m_pos.x(), -m_pos.y());
 		
 		nvgTranslate(ctx, m_pos.x(), m_pos.y());
 		
