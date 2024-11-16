@@ -102,25 +102,29 @@ public:
 	Node(nanogui::Widget& parent, const std::string& name, nanogui::Vector2i size, int id, nanogui::Color color = nanogui::Color(255, 255, 255, 255))
 	: nanogui::Widget(parent), id(id), color(color) {
 		set_fixed_size(size);
-		set_layout(std::make_unique<nanogui::GroupLayout>(0, 0));
-
-		mWindow = std::make_unique<nanogui::Window>(*this, name);
 		
+		mWindow = std::make_unique<nanogui::Window>(*this, name);
 		mWindow->set_fixed_size(size);
+		mWindow->set_layout(std::make_unique<nanogui::GroupLayout>(5, 5));
+		
+		int hh = theme().m_window_header_height;
+		
+		mColumnContainer = std::make_unique<nanogui::Widget>(*this);
+		mColumnContainer->set_position(nanogui::Vector2i(0, hh));
 		
 		// Left column inputs placeholder
-		mLeftColumn = std::make_unique<nanogui::Widget>(*mWindow);
+		mLeftColumn = std::make_unique<nanogui::Widget>(*mColumnContainer);
 		mLeftColumn->set_layout(std::make_unique<nanogui::BoxLayout>(nanogui::Orientation::Vertical, nanogui::Alignment::Minimum, 0, 0));
 		
 		// Middle column for the node data
-		mDataColumn = std::make_unique<nanogui::Widget>(*mWindow);
+		mDataColumn = std::make_unique<nanogui::Widget>(*mColumnContainer);
 		mDataColumn->set_layout(std::make_unique<nanogui::BoxLayout>(nanogui::Orientation::Vertical, nanogui::Alignment::Minimum, 0, 0));
 		
 		// Right column for output pins: Aligned to the right edge
-		mRightColumn = std::make_unique<nanogui::Widget>(*mWindow);
-		mRightColumn->set_layout(std::make_unique<nanogui::BoxLayout>(nanogui::Orientation::Vertical, nanogui::Alignment::Maximum, 0, 0));
+		mRightColumn = std::make_unique<nanogui::Widget>(*mColumnContainer);
+		mRightColumn->set_layout(std::make_unique<nanogui::BoxLayout>(nanogui::Orientation::Vertical, nanogui::Alignment::Minimum, 0, 0));
 		
-		mRightColumn->set_position(nanogui::Vector2i(fixed_size().x() - 48, mRightColumn->position().y()));
+		mRightColumn->set_position(nanogui::Vector2i(fixed_size().x() - 48, 0));
 	}
 
 	template<typename T, typename... Args>
@@ -226,7 +230,23 @@ protected:
 	std::vector<std::unique_ptr<Pin>> outputs;
 
 private:
+	bool mouse_button_event(const nanogui::Vector2i &p, int button,
+						  bool down, int modifiers) override {
+		return mColumnContainer(p, button, down, modifiers);
+	}
+
+	bool mouse_drag_event(const nanogui::Vector2i &p, const nanogui::Vector2i &rel, int button,
+								  int modifiers) override {
+		if(mWindow->mouse_drag_event(p, rel, button, modifiers)){
+			set_position(mWindow->position());
+			return true;
+		}
+		
+		return false;
+	}
+
 	std::unique_ptr<nanogui::Window> mWindow;
+	std::unique_ptr<nanogui::Widget> mColumnContainer;
 	std::unique_ptr<nanogui::Widget> mLeftColumn;
 	std::unique_ptr<nanogui::Widget> mDataColumn;
 	std::unique_ptr<nanogui::Widget> mRightColumn;
