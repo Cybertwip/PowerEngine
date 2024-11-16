@@ -113,7 +113,8 @@ public:
 		
 		mColumnContainer = std::make_unique<nanogui::Widget>(*this);
 		mColumnContainer->set_fixed_size(nanogui::Vector2i(size.x(), size.y() - hh));
-
+		mColumnContainer->set_layout(std::make_unique<nanogui::GridLayout>(nanogui::Orientation::Horizontal, 3, nanogui::Alignment::fill));
+		
 		// Left column inputs placeholder
 		mLeftColumn = std::make_unique<nanogui::Widget>(*mColumnContainer);
 		mLeftColumn->set_layout(std::make_unique<nanogui::BoxLayout>(nanogui::Orientation::Vertical, nanogui::Alignment::Minimum, 0, 0));
