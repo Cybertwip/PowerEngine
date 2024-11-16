@@ -214,7 +214,6 @@ public:
 		
 		textbox.set_alignment(nanogui::TextBox::Alignment::Left);
 		
-		
 		auto& output = add_output(output_pin_id, this->id, "", PinType::String);
 				
 		on_linked = [&output](){
@@ -226,9 +225,92 @@ private:
 	std::unique_ptr<nanogui::TextBox> mTextBox;
 };
 
+class BlueprintCanvas : public Canvas {
+public:
+	BlueprintCanvas(ScenePanel& parent, nanogui::Screen& screen, nanogui::Color backgroundColor)
+	: Canvas(parent, screen, backgroundColor)
+	, mScrollX(0)
+	, mScrollY(0) {
+		
+		mShaderManager = std::make_unique<ShaderManager>(*this);
+		
+		mGrid = std::make_unique<Grid2d>(*mShaderManager);
+		
+		// Adjusted orthographic projection parameters
+		float left = -1.0f;
+		float right = 1.0f;
+		float bottom = -1.0f;
+		float top = 1.0f;
+		float near = -1.0f;
+		float far = 1.0f;
+		
+		mProjection = nanogui::Matrix4f::ortho(left, right, bottom, top, near, far);
+		
+		mView = nanogui::Matrix4f::look_at(
+										   nanogui::Vector3f(0, 0, 1),  // Camera position
+										   nanogui::Vector3f(0, 0, 0),  // Look-at point
+										   nanogui::Vector3f(0, 1, 0)   // Up direction
+										   );
+		
+		parent.register_motion_callback(GLFW_MOUSE_BUTTON_MIDDLE, [this](int width, int height, int x, int y, int dx, int dy, int button, bool down){
+			
+			// because dx and dy are global screen space and its range is -0.5 to 0.5
+			float scaledDx = dx * (width / fixed_width()) * 2.0f;
+			float scaledDy = dy * (height / fixed_height()) * 2.0f;
+			
+			mScrollX += scaledDx;
+			mScrollY += scaledDy;
+			
+			mGrid->set_scroll_offset(nanogui::Vector2i(-mScrollX, -mScrollY));
+			
+			// Assuming mTestWidget's position is in screen space, update it
+			
+			for (auto* node : mNodes) {
+				nanogui::Vector2i currentPos = node->position();
+				node->set_position(currentPos + nanogui::Vector2i(dx, dy));
+			}
+		});
+		
+		// Register draw callback
+		register_draw_callback([this]() {
+			this->draw();
+		});
+		
+		
+	}
+	
+	void add_node(Node* node) {
+		mNodes.push_back(node);
+	}
+	
+	void begin_link(Node& source) {
+		
+	}
+	
+	void end_link(Node& target) {
+		
+	}
+	
+	void draw() {
+		render_pass().clear_color(0, background_color());
+		mGrid->draw_content(nanogui::Matrix4f::identity(), mView, mProjection);
+	}
+	
+	std::unique_ptr<ShaderManager> mShaderManager;
+	std::unique_ptr<Grid2d> mGrid;
+	nanogui::Matrix4f mView;
+	nanogui::Matrix4f mProjection;
+	
+	float mScrollX;
+	float mScrollY;
+	
+	std::vector<blueprint::Node*> mNodes;
+
+};
+
 class NodeProcessor {
 public:
-	NodeProcessor(Canvas& canvas)
+	NodeProcessor(BlueprintCanvas& canvas)
 	: mCanvas(canvas) {
 		
 	}
@@ -241,11 +323,12 @@ public:
 		node.build();
 	}
 	
-	Node& spawn_string_node() {
+	void spawn_string_node() {
 		auto node = std::make_unique<StringNode>(mCanvas, "String",  nanogui::Vector2i(196, 96), get_next_id(), get_next_id());
 		build_node(*node);
 		nodes.push_back(std::move(node));
-		return *nodes.back();
+
+		mCanvas.add_node(nodes.back().get());
 	}
 	
 	//
@@ -289,7 +372,7 @@ public:
 	// ...
 	
 private:
-	Canvas& mCanvas;
+	BlueprintCanvas& mCanvas;
 	
 	int next_id = 1;
 	std::vector<std::unique_ptr<Node>> nodes;
@@ -304,88 +387,29 @@ private:
 class BlueprintPanel : public ScenePanel {
 public:
 	BlueprintPanel(Canvas& parent)
-	: ScenePanel(parent, "Blueprint")
-	, mScrollX(0)
-	, mScrollY(0) {
+	: ScenePanel(parent, "Blueprint") {
 		// Set the layout to horizontal with some padding
 		set_layout(std::make_unique<nanogui::GroupLayout>(0, 0, 0));
 		
 		// Ensure the canvas is created with the correct dimensions or set it explicitly if needed
-		mCanvas = std::make_unique<Canvas>(*this, parent.screen(), nanogui::Color(35, 65, 90, 255));
+		mCanvas = std::make_unique<BlueprintCanvas>(*this, parent.screen(), nanogui::Color(35, 65, 90, 255));
 		
 		mCanvas->set_fixed_size(nanogui::Vector2i(fixed_width(), parent.fixed_height() * 0.71));
-		
-		mShaderManager = std::make_unique<ShaderManager>(*mCanvas);
-		
-		mGrid = std::make_unique<Grid2d>(*mShaderManager);
-		
-		// Register draw callback
-		mCanvas->register_draw_callback([this]() {
-			this->draw();
-		});
-		
-		// Adjusted orthographic projection parameters
-		float left = -1.0f;
-		float right = 1.0f;
-		float bottom = -1.0f;
-		float top = 1.0f;
-		float near = -1.0f;
-		float far = 1.0f;
-		
-		mProjection = nanogui::Matrix4f::ortho(left, right, bottom, top, near, far);
-		
-		mView = nanogui::Matrix4f::look_at(
-										   nanogui::Vector3f(0, 0, 1),  // Camera position
-										   nanogui::Vector3f(0, 0, 0),  // Look-at point
-										   nanogui::Vector3f(0, 1, 0)   // Up direction
-										   );
-		
-		register_motion_callback(GLFW_MOUSE_BUTTON_MIDDLE, [this](int width, int height, int x, int y, int dx, int dy, int button, bool down){
-			
-			// because dx and dy are global screen space and its range is -0.5 to 0.5
-			float scaledDx = dx * (width / mCanvas->fixed_width()) * 2.0f;
-			float scaledDy = dy * (height / mCanvas->fixed_height()) * 2.0f;
-			
-			mScrollX += scaledDx;
-			mScrollY += scaledDy;
-			
-			mGrid->set_scroll_offset(nanogui::Vector2i(-mScrollX, -mScrollY));
-			
-			// Assuming mTestWidget's position is in screen space, update it
-			
-			for (auto* node : mNodes) {
-				nanogui::Vector2i currentPos = node->position();
-				node->set_position(currentPos + nanogui::Vector2i(dx, dy));
-			}
-		});
-		
+				
 		mNodeProcessor = std::make_unique<blueprint::NodeProcessor>(*mCanvas);
 		
-		mNodes.push_back(&mNodeProcessor->spawn_string_node());
+		mNodeProcessor->spawn_string_node();
 	}
 	
 private:
-	void draw() {
-		mCanvas->render_pass().clear_color(0, mCanvas->background_color());
-		mGrid->draw_content(nanogui::Matrix4f::identity(), mView, mProjection);
-	}
-	
 	void draw(NVGcontext *ctx) override {
 		ScenePanel::draw(ctx);
 	}
 	
 private:
-	std::unique_ptr<Canvas> mCanvas;
-	std::unique_ptr<ShaderManager> mShaderManager;
-	std::unique_ptr<Grid2d> mGrid;
-	nanogui::Matrix4f mView;
-	nanogui::Matrix4f mProjection;
-	
-	float mScrollX;
-	float mScrollY;
+	std::unique_ptr<BlueprintCanvas> mCanvas;
 	
 	std::unique_ptr<blueprint::NodeProcessor> mNodeProcessor;
-	std::vector<blueprint::Node*> mNodes;
 };
 
 class BlueprintManager {
