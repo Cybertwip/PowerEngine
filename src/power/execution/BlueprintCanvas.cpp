@@ -121,7 +121,7 @@ void BlueprintCanvas::draw(NVGcontext *ctx) {
 		
 		// Circle at the start point
 		nvgBeginPath(ctx);
-		nvgCircle(ctx, pin_position.x(), pin_position.y(), radius);
+		nvgCircle(ctx, pin_position.x() + pin_size.x() * 0.5f, pin_position.y() + pin_size.y() * 0.5f), radius);
 		nvgFillColor(ctx, nvgRGBA(255, 255, 0, 255)); // Same color as the stroke
 		nvgFill(ctx);
 		
