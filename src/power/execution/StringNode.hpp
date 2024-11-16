@@ -11,11 +11,11 @@
 
 
 namespace blueprint {
-
+class BlueprintCanvas;
 
 class StringNode : public Node {
 public:
-	StringNode(nanogui::Widget& parent, const std::string& title, nanogui::Vector2i size, int id, int output_pin_id);
+	StringNode(BlueprintCanvas& parent, const std::string& title, nanogui::Vector2i size, int id, int output_pin_id);
 	
 private:
 	std::unique_ptr<nanogui::TextBox> mTextBox;

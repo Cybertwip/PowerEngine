@@ -1,7 +1,7 @@
 #include "PrintNode.hpp"
 
 namespace blueprint {
-PrintNode::PrintNode(nanogui::Widget& parent, const std::string& title, nanogui::Vector2i size, int id, int flow_pin_id, int input_pin_id, int output_pin_id)
+PrintNode::PrintNode(BlueprintCanvas& parent, const std::string& title, nanogui::Vector2i size, int id, int flow_pin_id, int input_pin_id, int output_pin_id)
 : Node(parent, title, size, id) {
 	auto& input_flow = add_input(flow_pin_id, this->id, "", PinType::Flow);
 	auto& input = add_input(input_pin_id, this->id, "", PinType::String);

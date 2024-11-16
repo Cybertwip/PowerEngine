@@ -1,9 +1,11 @@
 #include "Node.hpp"
 
+#include "BlueprintCanvas.hpp"
+
 namespace blueprint {
 
-Node::Node(nanogui::Widget& parent, const std::string& name, nanogui::Vector2i size, int id, nanogui::Color color)
-: nanogui::Window(parent, name), id(id), color(color) {
+Node::Node(BlueprintCanvas& parent, const std::string& name, nanogui::Vector2i size, int id, nanogui::Color color)
+: nanogui::Window(parent, name), mCanvas(parent), id(id), color(color) {
 	set_fixed_size(size);
 	set_layout(std::make_unique<nanogui::GroupLayout>(5, 0));
 	
@@ -86,6 +88,10 @@ Pin& Node::add_output(int pin_id, int node_id, const std::string& label, PinType
 			}
 		});
 	}
+	
+	output->set_callback([this, &output_ref](){
+		mCanvas.on_output_pin_clicked(output_ref);
+	});
 	
 	output->set_fixed_size(nanogui::Vector2i(22, 22));
 	

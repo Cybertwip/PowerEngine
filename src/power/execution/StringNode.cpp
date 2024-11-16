@@ -1,7 +1,7 @@
 #include "StringNode.hpp"
 
 namespace blueprint {
-StringNode::StringNode(nanogui::Widget& parent, const std::string& title, nanogui::Vector2i size, int id, int output_pin_id)
+StringNode::StringNode(BlueprintCanvas& parent, const std::string& title, nanogui::Vector2i size, int id, int output_pin_id)
 : Node(parent, title, size, id) {
 	
 	// Text box inside the node data wrapper: Will be centered due to the vertical alignment

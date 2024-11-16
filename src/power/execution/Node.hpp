@@ -79,6 +79,7 @@ struct Link {
 	: id(id), start_pin_id(start_pin_id), end_pin_id(end_pin_id), color(nanogui::Color(255, 255, 255, 255)) {}
 };
 
+class BlueprintCanvas;
 
 class Node : public nanogui::Window {
 public:
@@ -88,7 +89,7 @@ public:
 	std::function<void()> link;
 	std::function<void()> evaluate;
 	
-	Node(nanogui::Widget& parent, const std::string& name, nanogui::Vector2i size, int id, nanogui::Color color = nanogui::Color(255, 255, 255, 255));
+	Node(BlueprintCanvas& parent, const std::string& name, nanogui::Vector2i size, int id, nanogui::Color color = nanogui::Color(255, 255, 255, 255));
 	
 	template<typename T, typename... Args>
 	T& add_data_widget(Args&&... args){
@@ -120,7 +121,7 @@ protected:
 private:
 	void perform_layout(NVGcontext *ctx) override;
 	void draw(NVGcontext *ctx) override;
-	
+	BlueprintCanvas& mCanvas;
 	std::unique_ptr<nanogui::Widget> mFlowContainer;
 	std::unique_ptr<nanogui::Widget> mColumnContainer;
 	std::unique_ptr<nanogui::Widget> mLeftColumn;

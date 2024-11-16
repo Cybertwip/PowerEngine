@@ -10,10 +10,11 @@
 #include <string>
 
 namespace blueprint {
+class BlueprintCanvas;
 
 class PrintNode : public Node {
 public:
-	PrintNode(nanogui::Widget& parent, const std::string& title, nanogui::Vector2i size, int id, int flow_pin_id, int input_pin_id, int output_pin_id);
+	PrintNode(BlueprintCanvas& parent, const std::string& title, nanogui::Vector2i size, int id, int flow_pin_id, int input_pin_id, int output_pin_id);
 	
 private:
 	std::unique_ptr<nanogui::TextBox> mTextBox;

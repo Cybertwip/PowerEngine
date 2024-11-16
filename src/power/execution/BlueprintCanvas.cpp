@@ -16,7 +16,8 @@ namespace blueprint {
 BlueprintCanvas::BlueprintCanvas(ScenePanel& parent, nanogui::Screen& screen, nanogui::Color backgroundColor)
 : Canvas(parent, screen, backgroundColor)
 , mScrollX(0)
-, mScrollY(0) {
+, mScrollY(0)
+, mMousePosition(0, 0) {
 	
 	mShaderManager = std::make_unique<ShaderManager>(*this);
 	
@@ -57,19 +58,79 @@ BlueprintCanvas::BlueprintCanvas(ScenePanel& parent, nanogui::Screen& screen, na
 		}
 	});
 	
+	mHeaderHeight = theme().m_window_header_height;
+
 	// Register draw callback
 	register_draw_callback([this]() {
 		this->draw();
 	});
+	
 }
 
 void BlueprintCanvas::add_node(Node* node) {
 	mNodes.push_back(node);
 }
 
+void BlueprintCanvas::on_output_pin_clicked(Pin& pin) {
+	mActiveOutputPin = pin;
+}
+
+bool BlueprintCanvas::mouse_motion_event(const nanogui::Vector2i &p, const nanogui::Vector2i &rel, int button, int modifiers) {
+	mMousePosition = nanogui::Vector2i(p.x() + absolute_position().x(), p.y() + absolute_position().y() - mHeaderHeight);
+}
+
 void BlueprintCanvas::draw() {
 	render_pass().clear_color(0, background_color());
 	mGrid->draw_content(nanogui::Matrix4f::identity(), mView, mProjection);
+	
+}
+void BlueprintCanvas::draw(NVGcontext *ctx) {
+	Canvas::draw(ctx);
+	
+	if (mActiveOutputPin.has_value()) {
+		// Get canvas and pin positions
+		nanogui::Vector2i canvas_position = absolute_position();
+		nanogui::Vector2i pin_position = mActiveOutputPin->get().absolute_position();
+		nanogui::Vector2i pin_size = mActiveOutputPin->get().fixed_size();
+
+		// Translate the context to account for the canvas position
+		nvgTranslate(ctx, m_pos.x(), m_pos.y());
+		nvgTranslate(ctx, -canvas_position.x(), -canvas_position.y());
+		
+		// Define Bézier curve
+		nvgBeginPath(ctx);
+		nvgMoveTo(ctx, pin_position.x() + pin_size.x() * 0.5f, pin_position.y() + pin_size.y() * 0.5f);
+
+		// Set control points and end point (example values for demonstration)
+		// Define control points and endpoint for the Bézier curve.
+		float c1x = pin_position.x() + 50; // Example control point 1 x
+		float c1y = pin_position.y() - 30; // Example control point 1 y
+		float c2x = mMousePosition.x() - 50; // Example control point 2 x
+		float c2y = mMousePosition.y() + 30; // Example control point 2 y
+		float ex = mMousePosition.x(); // Endpoint x
+		float ey = mMousePosition.y(); // Endpoint y
+		
+		// Draw the Bézier curve.
+		nvgBezierTo(ctx, c1x, c1y, c2x, c2y, ex, ey);
+		nvgStrokeColor(ctx, nvgRGBA(255, 255, 0, 255)); // Yellow stroke
+		nvgStrokeWidth(ctx, 3.0f);
+		nvgStroke(ctx);
+		
+		// Draw circles at the start and end points
+		float radius = 5.0f; // Radius of the circle
+		
+		// Circle at the start point
+		nvgBeginPath(ctx);
+		nvgCircle(ctx, pin_position.x(), pin_position.y(), radius);
+		nvgFillColor(ctx, nvgRGBA(255, 255, 0, 255)); // Same color as the stroke
+		nvgFill(ctx);
+		
+		// Circle at the end point
+		nvgBeginPath(ctx);
+		nvgCircle(ctx, ex, ey, radius);
+		nvgFillColor(ctx, nvgRGBA(255, 255, 0, 255)); // Same color as the stroke
+		nvgFill(ctx);
+	}
 }
 
 }
