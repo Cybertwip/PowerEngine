@@ -120,6 +120,22 @@ ${CMAKE_CURRENT_LIST_DIR}/actors/IActorManager.hpp
     ${CMAKE_CURRENT_LIST_DIR}/components/SkinnedMeshComponent.hpp
 
     ${CMAKE_CURRENT_LIST_DIR}/execution/BlueprintManager.hpp
+
+    ${CMAKE_CURRENT_LIST_DIR}/execution/BlueprintCanvas.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/execution/BlueprintCanvas.cpp
+
+    ${CMAKE_CURRENT_LIST_DIR}/execution/Node.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/execution/Node.cpp
+
+    ${CMAKE_CURRENT_LIST_DIR}/execution/NodeProcessor.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/execution/NodeProcessor.cpp
+
+    ${CMAKE_CURRENT_LIST_DIR}/execution/StringNode.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/execution/StringNode.cpp
+
+    ${CMAKE_CURRENT_LIST_DIR}/execution/PrintNode.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/execution/PrintNode.cpp
+
     ${CMAKE_CURRENT_LIST_DIR}/execution/ExecutionManager.hpp
 
     ${CMAKE_CURRENT_LIST_DIR}/filesystem/CompressedSerialization.hpp
