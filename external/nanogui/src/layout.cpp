@@ -117,7 +117,7 @@ void BoxLayout::perform_layout(NVGcontext *ctx, Widget& widget) {
                 break;
         }
 
-        w.get().set_position(pos);
+		w.get().set_position(pos);
         w.get().set_size(target_size);
         w.get().perform_layout(ctx);
         position += target_size[axis1];

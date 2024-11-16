@@ -91,7 +91,7 @@ public:
 	}
 };
 
-class Node : public nanogui::Window {
+class Node : public nanogui::Widget {
 public:
 	int id;
 	nanogui::Color color;
@@ -100,42 +100,34 @@ public:
 	std::function<void()> evaluate;
 	
 	Node(nanogui::Widget& parent, const std::string& name, nanogui::Vector2i size, int id, nanogui::Color color = nanogui::Color(255, 255, 255, 255))
-	: nanogui::Window(parent, name), id(id), color(color) {
+	: nanogui::Widget(parent), id(id), color(color) {
 		set_fixed_size(size);
-		// Main window layout: Horizontal orientation, fill space
 		set_layout(std::make_unique<nanogui::GroupLayout>(0, 0));
 
-		mFlowWrapper = std::make_unique<nanogui::Widget>(*this);
-		mFlowWrapper->set_layout(std::make_unique<nanogui::GroupLayout>(0, 0));
+		mWindow = std::make_unique<nanogui::Window>(*this, name);
 		
-		mFlowWrapper->set_position(nanogui::Vector2i(0, -48));
-
-		mColumnWrapper = std::make_unique<nanogui::Widget>(*this);
-		mColumnWrapper->set_layout(std::make_unique<nanogui::GridLayout>(nanogui::Orientation::Horizontal, 3, nanogui::Alignment::Minimum, 5, 5));
-
+		mWindow->set_fixed_size(size);
+		
 		// Left column inputs placeholder
-		mLeftColumn = std::make_unique<nanogui::Widget>(*mColumnWrapper);
+		mLeftColumn = std::make_unique<nanogui::Widget>(*mWindow);
 		mLeftColumn->set_layout(std::make_unique<nanogui::BoxLayout>(nanogui::Orientation::Vertical, nanogui::Alignment::Minimum, 0, 0));
 		
 		// Middle column for the node data
-		mDataColumn = std::make_unique<nanogui::Widget>(*mColumnWrapper);
+		mDataColumn = std::make_unique<nanogui::Widget>(*mWindow);
 		mDataColumn->set_layout(std::make_unique<nanogui::BoxLayout>(nanogui::Orientation::Vertical, nanogui::Alignment::Minimum, 0, 0));
 		
 		// Right column for output pins: Aligned to the right edge
-		mRightColumn = std::make_unique<nanogui::Widget>(*mColumnWrapper);
+		mRightColumn = std::make_unique<nanogui::Widget>(*mWindow);
 		mRightColumn->set_layout(std::make_unique<nanogui::BoxLayout>(nanogui::Orientation::Vertical, nanogui::Alignment::Maximum, 0, 0));
 		
 		mRightColumn->set_position(nanogui::Vector2i(fixed_size().x() - 48, mRightColumn->position().y()));
-		
-		button_panel().set_layout(std::make_unique<nanogui::GroupLayout>(0, 0));
-
 	}
 
 	template<typename T, typename... Args>
 	T& add_data_widget(Args&&... args){
 		auto data_widget = std::make_unique<T>(*mDataColumn, std::forward<Args>(args)...);
 		
-		data_widget->set_fixed_size(nanogui::Vector2i(fixed_size().x() - 68, 48));
+		data_widget->set_fixed_size(nanogui::Vector2i(fixed_size().x() - 48, 22));
 
 		auto& data_widget_ref = *data_widget;
 
@@ -147,7 +139,7 @@ public:
 	
 	Pin& add_input(int pin_id, int node_id, const std::string& label, PinType pin_type) {
 		
-		auto& parent = pin_type == PinType::Flow ? *mFlowWrapper : *mLeftColumn;
+		auto& parent = pin_type == PinType::Flow ? *this : *mLeftColumn;
 		
 		auto input = std::make_unique<Pin>(parent, pin_id, node_id, label, pin_type);
 		
@@ -163,7 +155,11 @@ public:
 			}
 		});
 		
-		input->set_fixed_size(nanogui::Vector2i(48, 48));
+		input->set_fixed_size(nanogui::Vector2i(22, 22));
+		
+		if (pin_type == PinType::Flow) {
+			input->set_position(nanogui::Vector2i(5, 3));
+		}
 
 		inputs.push_back(std::move(input));
 		
@@ -171,7 +167,7 @@ public:
 	}
 	
 	Pin& add_output(int pin_id, int node_id, const std::string& label, PinType pin_type) {
-		auto& parent = pin_type == PinType::Flow ? *mFlowWrapper : *mRightColumn;
+		auto& parent = pin_type == PinType::Flow ? *this : *mRightColumn;
 
 		auto output = std::make_unique<Pin>(parent, pin_id, node_id, label, pin_type);
 		
@@ -189,10 +185,10 @@ public:
 			}
 		});
 		
-		output->set_fixed_size(nanogui::Vector2i(48, 48));
+		output->set_fixed_size(nanogui::Vector2i(22, 22));
 		
 		if (pin_type == PinType::Flow) {
-			output->set_position(nanogui::Vector2i(fixed_size().x() - 48, 0));
+			output->set_position(nanogui::Vector2i(fixed_size().x() - 22 - 5, 3));
 		}
 
 		outputs.push_back(std::move(output));
@@ -230,8 +226,7 @@ protected:
 	std::vector<std::unique_ptr<Pin>> outputs;
 
 private:
-	std::unique_ptr<nanogui::Widget> mFlowWrapper;
-	std::unique_ptr<nanogui::Widget> mColumnWrapper;
+	std::unique_ptr<nanogui::Window> mWindow;
 	std::unique_ptr<nanogui::Widget> mLeftColumn;
 	std::unique_ptr<nanogui::Widget> mDataColumn;
 	std::unique_ptr<nanogui::Widget> mRightColumn;
