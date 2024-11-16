@@ -105,7 +105,7 @@ public:
 	: nanogui::Window(parent, name), id(id), color(color) {
 		set_fixed_size(size);
 		
-		set_layout(std::make_unique<nanogui::GroupLayout>(5, 5));
+		set_layout(std::make_unique<nanogui::GroupLayout>(5, 0));
 
 		int hh = theme().m_window_header_height;
 
@@ -186,7 +186,6 @@ public:
 		}
 
 		auto& output_ref = *output;
-		
 		
 		if (pin_type != PinType::Flow) {
 			// Optional change callback for the output pin
