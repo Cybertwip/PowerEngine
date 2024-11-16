@@ -153,14 +153,17 @@ public:
 		input->set_icon(pin_type == PinType::Flow ? FA_PLAY : FA_CIRCLE);
 		
 		auto& input_ref = *input;
-		// Optional change callback for the output pin
-		input->set_change_callback([&input_ref](bool active) {
-			if (active) {
-				input_ref.set_icon(FA_CIRCLE);
-			} else {
-				input_ref.set_icon(FA_CIRCLE_NOTCH);
-			}
-		});
+		
+		if (pin_type != PinType::Flow) {
+			// Optional change callback for the input pin
+			input->set_change_callback([&input_ref](bool active) {
+				if (active) {
+					input_ref.set_icon(FA_CIRCLE);
+				} else {
+					input_ref.set_icon(FA_CIRCLE_NOTCH);
+				}
+			});
+		}
 		
 		input->set_fixed_size(nanogui::Vector2i(22, 22));
 		
@@ -183,15 +186,19 @@ public:
 		}
 
 		auto& output_ref = *output;
-		// Optional change callback for the output pin
-		output->set_change_callback([&output_ref](bool active) {
-			if (active) {
-				output_ref.set_icon(FA_CIRCLE);
-			} else {
-				output_ref.set_icon(FA_CIRCLE_NOTCH);
-			}
-		});
 		
+		
+		if (pin_type != PinType::Flow) {
+			// Optional change callback for the output pin
+			output->set_change_callback([&output_ref](bool active) {
+				if (active) {
+					output_ref.set_icon(FA_CIRCLE);
+				} else {
+					output_ref.set_icon(FA_CIRCLE_NOTCH);
+				}
+			});
+		}
+
 		output->set_fixed_size(nanogui::Vector2i(22, 22));
 		
 		if (pin_type == PinType::Flow) {
@@ -499,7 +506,7 @@ public:
 	}
 	
 	void spawn_string_node(const nanogui::Vector2i& position) {
-		auto node = std::make_unique<StringNode>(mCanvas, "String",  nanogui::Vector2i(196, 96), get_next_id(), get_next_id());
+		auto node = std::make_unique<StringNode>(mCanvas, "String",  nanogui::Vector2i(196, 72), get_next_id(), get_next_id());
 		node->set_position(position);
 		build_node(*node);
 		nodes.push_back(std::move(node));
@@ -508,7 +515,7 @@ public:
 	}
 
 	void spawn_print_string_node(const nanogui::Vector2i& position) {
-		auto node = std::make_unique<PrintStringNode>(mCanvas, "Print String",  nanogui::Vector2i(196, 96), get_next_id(), get_next_id(), get_next_id(), get_next_id());
+		auto node = std::make_unique<PrintStringNode>(mCanvas, "Print String",  nanogui::Vector2i(196, 72), get_next_id(), get_next_id(), get_next_id(), get_next_id());
 		node->set_position(position);
 		build_node(*node);
 		nodes.push_back(std::move(node));
