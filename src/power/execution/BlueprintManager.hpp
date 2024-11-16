@@ -108,7 +108,7 @@ public:
 		mFlowWrapper = std::make_unique<nanogui::Widget>(*this);
 		mFlowWrapper->set_layout(std::make_unique<nanogui::GroupLayout>(0, 0));
 		
-		mFlowWrapper->set_position(0, -48);
+		mFlowWrapper->set_position(nanogui::Vector2i(0, -48));
 
 		mColumnWrapper = std::make_unique<nanogui::Widget>(*this);
 		mColumnWrapper->set_layout(std::make_unique<nanogui::GridLayout>(nanogui::Orientation::Horizontal, 3, nanogui::Alignment::Minimum, 5, 5));
