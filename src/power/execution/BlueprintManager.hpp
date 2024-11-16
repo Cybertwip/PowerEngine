@@ -135,6 +135,28 @@ public:
 		return data_widget_ref;
 	}
 	
+	
+	Pin& add_input(int pin_id, int node_id, const std::string& label, PinType pin_type) {
+		
+		auto output = std::make_unique<Pin>(*mLeftColumn, pin_id, node_id, label, pin_type);
+		
+		auto& output_ref = *output;
+		// Optional change callback for the output pin
+		output->set_change_callback([&output_ref](bool active) {
+			if (active) {
+				output_ref.set_icon(FA_CIRCLE);
+			} else {
+				output_ref.set_icon(FA_CIRCLE_NOTCH);
+			}
+		});
+		
+		output->set_fixed_size(nanogui::Vector2i(48, 48));
+		
+		outputs.push_back(std::move(output));
+		
+		return *outputs.back();
+	}
+	
 	Pin& add_output(int pin_id, int node_id, const std::string& label, PinType pin_type) {
 		
 		auto output = std::make_unique<Pin>(*mRightColumn, pin_id, node_id, label, pin_type);
@@ -201,6 +223,36 @@ struct Link {
 	: id(id), start_pin_id(start_pin_id), end_pin_id(end_pin_id), color(nanogui::Color(255, 255, 255, 255)) {}
 };
 
+
+class PrintStringNode : public Node {
+public:
+	PrintStringNode(nanogui::Widget& parent, const std::string& title, nanogui::Vector2i size, int id, int flow_pin_id, int input_pin_id, int output_pin_id)
+	: Node(parent, title, size, id) {
+		auto& input_flow = add_input(flow_pin_id, this->id, "", PinType::Flow);
+		auto& input = add_input(input_pin_id, this->id, "", PinType::String);
+		auto& output_flow = add_output(output_pin_id, this->id, "", PinType::Flow);
+		
+		on_linked = [&output_flow](){
+			output_flow.can_flow = true;
+		};
+		
+		evaluate = [&input_flow, &input](){
+			if(input_flow.can_flow){
+				auto& data = input.data;
+				if(data.has_value()){
+					std::cout << std::get<std::string>(*data) << std::endl;
+				}
+			}
+			
+			input.can_flow = input_flow.can_flow;
+		};
+		
+
+	}
+	
+private:
+	std::unique_ptr<nanogui::TextBox> mTextBox;
+};
 
 class StringNode : public Node {
 public:
@@ -327,10 +379,17 @@ public:
 		auto node = std::make_unique<StringNode>(mCanvas, "String",  nanogui::Vector2i(196, 96), get_next_id(), get_next_id());
 		build_node(*node);
 		nodes.push_back(std::move(node));
-
+		
 		mCanvas.add_node(nodes.back().get());
 	}
-	
+
+	void spawn_print_string_node() {
+		auto node = std::make_unique<PrintStringNode>(mCanvas, "Print String",  nanogui::Vector2i(196, 96), get_next_id(), get_next_id(), get_next_id(), get_next_id());
+		build_node(*node);
+		nodes.push_back(std::move(node));
+		mCanvas.add_node(nodes.back().get());
+	}
+
 	//
 	//	Node& spawn_input_action_node(const std::string& key_string, int key_code) {
 	//		auto label = "Input Action " + key_string;
@@ -408,7 +467,6 @@ private:
 	
 private:
 	std::unique_ptr<blueprint::BlueprintCanvas> mCanvas;
-	
 	std::unique_ptr<blueprint::NodeProcessor> mNodeProcessor;
 };
 
