@@ -233,6 +233,12 @@ protected:
 	std::vector<std::unique_ptr<Pin>> outputs;
 
 private:
+	void perform_layout(NVGcontext *ctx) override {
+		Window::perform_layout(ctx);
+		
+		mFlowContainer->set_position(nanogui::Vector2i(5, 5));
+	}
+
 	void draw(NVGcontext *ctx) override {
 		int ds = theme().m_window_drop_shadow_size, cr = theme().m_window_corner_radius;
 		int hh = theme().m_window_header_height;
@@ -309,11 +315,11 @@ private:
 		
 		nvgRestore(ctx);
 
-		nvgTranslate(ctx, m_pos.x() - 5, m_pos.y() - 33);
+		nvgTranslate(ctx, m_pos.x(), m_pos.y() - hh + mFlowContainer->position().y());
 		
 		mFlowContainer->draw(ctx);
 		
-		nvgTranslate(ctx, -m_pos.x() + 5, -m_pos.y() + 33);
+		nvgTranslate(ctx, -m_pos.x(), -m_pos.y() + hh - mFlowContainer->position().y());
 		
 		nvgTranslate(ctx, m_pos.x(), m_pos.y());
 		
