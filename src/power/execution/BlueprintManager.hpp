@@ -104,13 +104,14 @@ public:
 	Node(nanogui::Widget& parent, const std::string& name, nanogui::Vector2i size, int id, nanogui::Color color = nanogui::Color(255, 255, 255, 255))
 	: nanogui::Window(parent, name), id(id), color(color) {
 		set_fixed_size(size);
+		set_layout(std::make_unique<nanogui::GroupLayout>(5, 0));
 
 		int hh = theme().m_window_header_height;
 
 		mFlowContainer = std::make_unique<nanogui::Widget>(*this);
 		mFlowContainer->set_fixed_size(nanogui::Vector2i(size.x(), hh));
 		
-		mColumnContainer = std::make_unique<nanogui::Widget>(*this);
+		mColumnContainer = std::make_unique<nanogui::Widget>(*mFlowContainer);
 		mColumnContainer->set_fixed_size(nanogui::Vector2i(size.x(), size.y() - hh));
 
 		// Left column inputs placeholder
@@ -240,7 +241,10 @@ private:
 	void perform_layout(NVGcontext *ctx) override {
 		Window::perform_layout(ctx);
 		
+		int hh = theme().m_window_header_height;
+
 		mFlowContainer->set_position(nanogui::Vector2i(0, 0));
+		mColumnContainer->set_position(nanogui::Vector2i(0, hh));
 	}
 
 	void draw(NVGcontext *ctx) override {
