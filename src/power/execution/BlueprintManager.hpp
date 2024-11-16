@@ -108,6 +108,7 @@ public:
 		mFlowContainer = std::make_unique<nanogui::Widget>(std::nullopt);
 		
 		mFlowContainer->set_screen(screen());
+		mFlowContainer->set_theme(theme());
 
 		// Left column inputs placeholder
 		mLeftColumn = std::make_unique<nanogui::Widget>(*this);
@@ -230,7 +231,7 @@ private:
 	void draw(NVGcontext *ctx) override {
 		nanogui::Window::draw(ctx);
 		
-		mFlowContainer->set_position(position());
+		mFlowContainer->set_position(position()); // optimize later
 		mFlowContainer->draw(ctx);
 	}
 	
