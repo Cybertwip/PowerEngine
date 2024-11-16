@@ -195,43 +195,43 @@ bool Application::keyboard_event(int key, int scancode, int action, int modifier
 		});
 		return true;
 	}
-	if (key == GLFW_KEY_ENTER && action == GLFW_PRESS) {
-//		mMeshActorLoader->cleanup();
-		auto& skinnedActor = mMeshActorLoader->create_actor("test.fbx", mGlobalAnimationTimeProvider, *mMeshShader, *mSkinnedShader);
-		
-		auto& skeletonComponent = skinnedActor.get_component<SkeletonComponent>();
-		
-		auto& skeleton = static_cast<Skeleton&>(skeletonComponent.get_skeleton());
-		
-		HeuristicSkeletonPoser poser(skeleton);
-		
-		poser.apply();
-
-		DrawableComponent& drawableComponent = skinnedActor.get_component<DrawableComponent>();
-		
-		auto& drawableRef = drawableComponent.drawable();
-		
-		auto& skinnedMeshComponent = static_cast<SkinnedMeshComponent&>(drawableRef);
-
-		
-		MeshActorExporter exporter;
-		
-		std::stringstream meshStream;
-		
-		exporter.exportSkinnedFbxToStream(skinnedMeshComponent.get_model(), meshStream);
-		
-		std::ofstream outFile("SkinnedMesh.fbx");
-		if (outFile.is_open()) {
-			outFile << meshStream.str();
-			outFile.close();
-			std::cout << "File exported successfully." << std::endl;
-		} else {
-			std::cerr << "Unable to open file for writing." << std::endl;
-		}
-
-
-		return true;
-	}
+//	if (key == GLFW_KEY_ENTER && action == GLFW_PRESS) {
+////		mMeshActorLoader->cleanup();
+//		auto& skinnedActor = mMeshActorLoader->create_actor("test.fbx", mGlobalAnimationTimeProvider, *mMeshShader, *mSkinnedShader);
+//		
+//		auto& skeletonComponent = skinnedActor.get_component<SkeletonComponent>();
+//		
+//		auto& skeleton = static_cast<Skeleton&>(skeletonComponent.get_skeleton());
+//		
+//		HeuristicSkeletonPoser poser(skeleton);
+//		
+//		poser.apply();
+//
+//		DrawableComponent& drawableComponent = skinnedActor.get_component<DrawableComponent>();
+//		
+//		auto& drawableRef = drawableComponent.drawable();
+//		
+//		auto& skinnedMeshComponent = static_cast<SkinnedMeshComponent&>(drawableRef);
+//
+//		
+//		MeshActorExporter exporter;
+//		
+//		std::stringstream meshStream;
+//		
+//		exporter.exportSkinnedFbxToStream(skinnedMeshComponent.get_model(), meshStream);
+//		
+//		std::ofstream outFile("SkinnedMesh.fbx");
+//		if (outFile.is_open()) {
+//			outFile << meshStream.str();
+//			outFile.close();
+//			std::cout << "File exported successfully." << std::endl;
+//		} else {
+//			std::cerr << "Unable to open file for writing." << std::endl;
+//		}
+//
+//
+//		return true;
+//	}
 	if (key == GLFW_KEY_DELETE && action == GLFW_PRESS) {
 		mUiManager->remove_active_actor();
 		return true;

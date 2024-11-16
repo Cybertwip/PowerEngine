@@ -33,6 +33,7 @@ public:
 		if (screen().drag_active()) {
 			set_visible(true);
 			set_position(m_pos + rel);
+			return true;
 		} else {
 			set_visible(false);
 		}
@@ -76,7 +77,7 @@ protected:
 #endif
 
 		m_last_interaction = glfwGetTime();
-		try {
+		if (m_draggable_window->children().size() != 0) {
 			p -= Vector2i(1, 2);
 			bool ret = false;
 			if (!m_drag_active) {
@@ -92,7 +93,10 @@ protected:
 			} else {
 				ret = m_drag_widget->mouse_drag_event(p - m_drag_widget->parent()->get().absolute_position(), p - m_mouse_pos, m_mouse_state, m_modifiers);
 				// Ensure the dragged widget stays on top during the drag
-				move_widget_to_top(*m_drag_widget);
+				
+				if (ret) {
+					move_widget_to_top(*m_drag_widget);
+				}
 			}
 			
 			if (!ret) {
@@ -102,11 +106,10 @@ protected:
 			m_mouse_pos = p;
 			m_redraw |= ret;
 
-		} catch (const std::exception &e) {
-//			std::cerr << "Caught exception in event handler: " << e.what() << std::endl;
+		} else {			
+			Screen::cursor_pos_callback_event(x, y);
 		}
 		
-		Screen::cursor_pos_callback_event(x, y);
 	}
 	
 	virtual void mouse_button_callback_event(int button, int action, int modifiers) override {
