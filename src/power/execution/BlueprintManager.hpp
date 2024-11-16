@@ -102,23 +102,32 @@ public:
 	Node(nanogui::Widget& parent, const std::string& name, nanogui::Vector2i size, int id, nanogui::Color color = nanogui::Color(255, 255, 255, 255))
 	: nanogui::Window(parent, name), id(id), color(color) {
 		set_fixed_size(size);
-		
 		// Main window layout: Horizontal orientation, fill space
-		set_layout(std::make_unique<nanogui::GridLayout>(nanogui::Orientation::Horizontal, 3, nanogui::Alignment::Minimum, 5, 5));
+		set_layout(std::make_unique<nanogui::GroupLayout>(0, 0));
+
+		mFlowWrapper = std::make_unique<nanogui::Widget>(*this);
+		mFlowWrapper->set_layout(std::make_unique<nanogui::GroupLayout>(0, 0));
 		
+		mFlowWrapper->set_position(0, -48);
+
+		mColumnWrapper = std::make_unique<nanogui::Widget>(*this);
+		mColumnWrapper->set_layout(std::make_unique<nanogui::GridLayout>(nanogui::Orientation::Horizontal, 3, nanogui::Alignment::Minimum, 5, 5));
+
 		// Left column inputs placeholder
-		mLeftColumn = std::make_unique<nanogui::Widget>(*this);
+		mLeftColumn = std::make_unique<nanogui::Widget>(*mColumnWrapper);
 		mLeftColumn->set_layout(std::make_unique<nanogui::BoxLayout>(nanogui::Orientation::Vertical, nanogui::Alignment::Minimum, 0, 0));
 		
 		// Middle column for the node data
-		mDataColumn = std::make_unique<nanogui::Widget>(*this);
+		mDataColumn = std::make_unique<nanogui::Widget>(*mColumnWrapper);
 		mDataColumn->set_layout(std::make_unique<nanogui::BoxLayout>(nanogui::Orientation::Vertical, nanogui::Alignment::Minimum, 0, 0));
 		
 		// Right column for output pins: Aligned to the right edge
-		mRightColumn = std::make_unique<nanogui::Widget>(*this);
+		mRightColumn = std::make_unique<nanogui::Widget>(*mColumnWrapper);
 		mRightColumn->set_layout(std::make_unique<nanogui::BoxLayout>(nanogui::Orientation::Vertical, nanogui::Alignment::Maximum, 0, 0));
 		
 		mRightColumn->set_position(nanogui::Vector2i(fixed_size().x() - 48, mRightColumn->position().y()));
+		
+		button_panel().set_layout(std::make_unique<nanogui::GroupLayout>(0, 0));
 
 	}
 
@@ -138,29 +147,38 @@ public:
 	
 	Pin& add_input(int pin_id, int node_id, const std::string& label, PinType pin_type) {
 		
-		auto output = std::make_unique<Pin>(*mLeftColumn, pin_id, node_id, label, pin_type);
+		auto& parent = pin_type == PinType::Flow ? *mFlowWrapper : *mLeftColumn;
 		
-		auto& output_ref = *output;
+		auto input = std::make_unique<Pin>(parent, pin_id, node_id, label, pin_type);
+		
+		input->set_icon(pin_type == PinType::Flow ? FA_PLAY : FA_CIRCLE);
+		
+		auto& input_ref = *input;
 		// Optional change callback for the output pin
-		output->set_change_callback([&output_ref](bool active) {
+		input->set_change_callback([&input_ref](bool active) {
 			if (active) {
-				output_ref.set_icon(FA_CIRCLE);
+				input_ref.set_icon(FA_CIRCLE);
 			} else {
-				output_ref.set_icon(FA_CIRCLE_NOTCH);
+				input_ref.set_icon(FA_CIRCLE_NOTCH);
 			}
 		});
 		
-		output->set_fixed_size(nanogui::Vector2i(48, 48));
+		input->set_fixed_size(nanogui::Vector2i(48, 48));
+
+		inputs.push_back(std::move(input));
 		
-		outputs.push_back(std::move(output));
-		
-		return *outputs.back();
+		return *inputs.back();
 	}
 	
 	Pin& add_output(int pin_id, int node_id, const std::string& label, PinType pin_type) {
+		auto& parent = pin_type == PinType::Flow ? *mFlowWrapper : *mRightColumn;
+
+		auto output = std::make_unique<Pin>(parent, pin_id, node_id, label, pin_type);
 		
-		auto output = std::make_unique<Pin>(*mRightColumn, pin_id, node_id, label, pin_type);
-		
+		if (pin_type == PinType::Flow) {
+			output->set_icon(pin_type == PinType::Flow ? FA_PLAY : FA_CIRCLE);
+		}
+
 		auto& output_ref = *output;
 		// Optional change callback for the output pin
 		output->set_change_callback([&output_ref](bool active) {
@@ -173,6 +191,10 @@ public:
 		
 		output->set_fixed_size(nanogui::Vector2i(48, 48));
 		
+		if (pin_type == PinType::Flow) {
+			output->set_position(nanogui::Vector2i(fixed_size().x() - 48, 0));
+		}
+
 		outputs.push_back(std::move(output));
 		
 		return *outputs.back();
@@ -208,6 +230,8 @@ protected:
 	std::vector<std::unique_ptr<Pin>> outputs;
 
 private:
+	std::unique_ptr<nanogui::Widget> mFlowWrapper;
+	std::unique_ptr<nanogui::Widget> mColumnWrapper;
 	std::unique_ptr<nanogui::Widget> mLeftColumn;
 	std::unique_ptr<nanogui::Widget> mDataColumn;
 	std::unique_ptr<nanogui::Widget> mRightColumn;
@@ -375,16 +399,18 @@ public:
 		node.build();
 	}
 	
-	void spawn_string_node() {
+	void spawn_string_node(const nanogui::Vector2i& position) {
 		auto node = std::make_unique<StringNode>(mCanvas, "String",  nanogui::Vector2i(196, 96), get_next_id(), get_next_id());
+		node->set_position(position);
 		build_node(*node);
 		nodes.push_back(std::move(node));
 		
 		mCanvas.add_node(nodes.back().get());
 	}
 
-	void spawn_print_string_node() {
+	void spawn_print_string_node(const nanogui::Vector2i& position) {
 		auto node = std::make_unique<PrintStringNode>(mCanvas, "Print String",  nanogui::Vector2i(196, 96), get_next_id(), get_next_id(), get_next_id(), get_next_id());
+		node->set_position(position);
 		build_node(*node);
 		nodes.push_back(std::move(node));
 		mCanvas.add_node(nodes.back().get());
@@ -457,7 +483,9 @@ public:
 				
 		mNodeProcessor = std::make_unique<blueprint::NodeProcessor>(*mCanvas);
 		
-		mNodeProcessor->spawn_string_node();
+		mNodeProcessor->spawn_string_node(nanogui::Vector2i(mCanvas->fixed_size().x() / 4, mCanvas->fixed_size().y() / 4));
+
+		mNodeProcessor->spawn_print_string_node(nanogui::Vector2i(mCanvas->fixed_size().x() / 2, mCanvas->fixed_size().y() / 2));
 	}
 	
 private:
