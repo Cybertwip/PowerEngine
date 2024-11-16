@@ -110,10 +110,10 @@ public:
 		int hh = theme().m_window_header_height;
 
 		mFlowContainer = std::make_unique<nanogui::Widget>(*this);
-		mFlowContainer->set_fixed_size(size.x(), hh);
+		mFlowContainer->set_fixed_size(nanogui::Vector2i(size.x(), hh));
 		
 		mColumnContainer = std::make_unique<nanogui::Widget>(*this);
-		mColumnContainer->set_fixed_size(size.x(), size.y() - hh);
+		mColumnContainer->set_fixed_size(nanogui::Vector2i(size.x(), size.y() - hh));
 
 		// Left column inputs placeholder
 		mLeftColumn = std::make_unique<nanogui::Widget>(*mColumnContainer);
