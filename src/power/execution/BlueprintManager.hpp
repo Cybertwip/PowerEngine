@@ -111,7 +111,7 @@ public:
 		mFlowContainer = std::make_unique<nanogui::Widget>(*this);
 		mFlowContainer->set_fixed_size(nanogui::Vector2i(size.x(), hh));
 		
-		mColumnContainer = std::make_unique<nanogui::Widget>(*mFlowContainer);
+		mColumnContainer = std::make_unique<nanogui::Widget>(*this);
 		mColumnContainer->set_fixed_size(nanogui::Vector2i(size.x(), size.y() - hh));
 
 		// Left column inputs placeholder
@@ -244,7 +244,7 @@ private:
 		int hh = theme().m_window_header_height;
 
 		mFlowContainer->set_position(nanogui::Vector2i(0, 0));
-		mColumnContainer->set_position(nanogui::Vector2i(0, hh));
+		mColumnContainer->set_position(nanogui::Vector2i(5, hh + 3));
 	}
 
 	void draw(NVGcontext *ctx) override {
@@ -326,15 +326,7 @@ private:
 		nvgTranslate(ctx, m_pos.x(), m_pos.y());
 		
 		mFlowContainer->draw(ctx);
-		
-		nvgTranslate(ctx, -m_pos.x(), -m_pos.y());
-		
-		nvgTranslate(ctx, m_pos.x(), m_pos.y());
-		
 		mColumnContainer->draw(ctx);
-		
-		nvgTranslate(ctx, -m_pos.x(), -m_pos.y());
-
 	}
 
 	std::unique_ptr<nanogui::Widget> mFlowContainer;
