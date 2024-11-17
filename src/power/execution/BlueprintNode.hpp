@@ -72,6 +72,24 @@ public:
 
 class BlueprintCanvas;
 
+class PassThroughWidget : public nanogui::Widget {
+public:
+	PassThroughWidget(nanogui::Widget& parent)
+	: nanogui::Widget(parent){
+		
+	}
+	
+private:
+	bool mouse_button_event(const nanogui::Vector2i &p, int button, bool down,
+									int modifiers) override {
+		return false;
+	}
+	
+	bool mouse_drag_event(const nanogui::Vector2i &p, const nanogui::Vector2i &rel, int button, int modifiers) override {
+		return false;
+	}
+};
+
 class BlueprintNode : public nanogui::Window {
 public:
 	int id;
@@ -113,7 +131,7 @@ private:
 	void perform_layout(NVGcontext *ctx) override;
 	void draw(NVGcontext *ctx) override;
 	BlueprintCanvas& mCanvas;
-	std::unique_ptr<nanogui::Widget> mFlowContainer;
+	std::unique_ptr<PassThroughWidget> mFlowContainer;
 	std::unique_ptr<nanogui::Widget> mColumnContainer;
 	std::unique_ptr<nanogui::Widget> mLeftColumn;
 	std::unique_ptr<nanogui::Widget> mDataColumn;

@@ -9,7 +9,7 @@ blueprint::BlueprintNode::BlueprintNode(blueprint::BlueprintCanvas& parent, cons
 	
 	int hh = theme().m_window_header_height;
 	
-	mFlowContainer = std::make_unique<nanogui::Widget>(*this);
+	mFlowContainer = std::make_unique<PassThroughWidget>(*this);
 	mFlowContainer->set_fixed_size(nanogui::Vector2i(size.x(), hh));
 	
 	mColumnContainer = std::make_unique<nanogui::Widget>(*this);
