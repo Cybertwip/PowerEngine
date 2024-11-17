@@ -297,7 +297,6 @@ protected:
     bool m_drag_active;
 	std::function<void()> m_drag_callback;
 	Widget* m_drag_widget;
-	Widget* m_focused_widget;
     double m_last_interaction;
     bool m_process_events = true;
     Color m_background;
@@ -308,6 +307,8 @@ protected:
     bool m_stencil_buffer;
     bool m_float_buffer;
     bool m_redraw;
+	Widget* m_focused_widget;
+
     std::function<void(Vector2i)> m_resize_callback;
 #if defined(NANOGUI_USE_METAL)
     void *m_metal_texture = nullptr;

@@ -3,6 +3,8 @@
 #include <memory>
 #include <vector>
 
+class Actor;
+
 namespace blueprint {
 class BlueprintCanvas;
 class Node;
@@ -13,7 +15,7 @@ class NodeProcessor {
 public:
 	NodeProcessor();
 	
-	int get_next_id();
+	long long get_next_id();
 	
 	void build_node(BlueprintNode& node);
 
@@ -25,8 +27,13 @@ public:
 	BlueprintNode* spawn_key_release_node(BlueprintCanvas& parent, const nanogui::Vector2i& position);
 
 	void evaluate();
+	
+	void serialize(Actor& actor);
+	void deserialize(Actor& actor);
+	void clear();
+	
 private:
-	int next_id = 1;
+	long long next_id = 1;
 	std::vector<std::unique_ptr<BlueprintNode>> nodes;
 	std::vector<std::unique_ptr<Link>> links;
 };

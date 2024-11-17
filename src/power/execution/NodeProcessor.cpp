@@ -2,6 +2,8 @@
 
 #include "Canvas.hpp"
 
+#include "actors/Actor.hpp"
+
 #include "BlueprintCanvas.hpp"
 #include "BlueprintNode.hpp"
 #include "KeyPressNode.hpp"
@@ -11,11 +13,22 @@
 
 #include <unordered_set>
 
+class BlueprintComponent {
+public:
+	BlueprintComponent(std::unique_ptr<blueprint::NodeProcessor> nodeProcessor)
+	: mNodeProcessor(std::move(nodeProcessor)) {
+		
+	}
+	
+private:
+	std::unique_ptr<blueprint::NodeProcessor> mNodeProcessor;
+};
+
 blueprint::NodeProcessor::NodeProcessor() {
 	
 }
 
-int blueprint::NodeProcessor::get_next_id() {
+long long blueprint::NodeProcessor::get_next_id() {
 	return next_id++;
 }
 
@@ -43,12 +56,11 @@ blueprint::BlueprintNode* blueprint::NodeProcessor::spawn_print_string_node(blue
 	node->set_position(position);
 	build_node(*node);
 	nodes.push_back(std::move(node));
-	
 	return nodes.back().get();
 }
 
 blueprint::BlueprintNode* blueprint::NodeProcessor::spawn_key_press_node(blueprint::BlueprintCanvas& parent, const nanogui::Vector2i& position) {
-	auto node = std::make_unique<blueprint::KeyPressNode>(parent, "Key Press",  nanogui::Vector2i(128, 64), get_next_id(), get_next_id());
+	auto node = std::make_unique<blueprint::KeyPressNode>(parent, "Key Press",  nanogui::Vector2i(136, 64), get_next_id(), get_next_id());
 	node->set_position(position);
 	build_node(*node);
 	nodes.push_back(std::move(node));
@@ -56,7 +68,7 @@ blueprint::BlueprintNode* blueprint::NodeProcessor::spawn_key_press_node(bluepri
 }
 
 blueprint::BlueprintNode* blueprint::NodeProcessor::spawn_key_release_node(blueprint::BlueprintCanvas& parent, const nanogui::Vector2i& position) {
-	auto node = std::make_unique<blueprint::KeyReleaseNode>(parent, "Key Press",  nanogui::Vector2i(128, 64), get_next_id(), get_next_id());
+	auto node = std::make_unique<blueprint::KeyReleaseNode>(parent, "Key Release",  nanogui::Vector2i(136, 64), get_next_id(), get_next_id());
 	node->set_position(position);
 	build_node(*node);
 	nodes.push_back(std::move(node));
@@ -112,25 +124,40 @@ void blueprint::NodeProcessor::evaluate() {
 		
 		in_pin.data = out_pin.data;
 	}
-	
-	
-//	for (auto& link : m_Links)
-//	{
-//		auto outPin = FindPin(link->StartPinID);
-//		auto inPin = FindPin(link->EndPinID);
-//		
-//		inPin->Data = outPin->Data;
-//		
-//		if(inPin->Type == PinType::Flow && outPin->Type == PinType::Flow){
-//			if(outPin->CanFlow && inPin->CanFlow){
-//				ed::Flow(link->ID);
-//			}
-//		} else {
-//			if(inPin->CanFlow && outPin->CanFlow){
-//				ed::Flow(link->ID);
-//			}
-//		}
-//	}
+}
 
+void blueprint::NodeProcessor::serialize(Actor& actor) {
 	
+	auto node_processor = std::make_unique<blueprint::NodeProcessor>();
+		
+	for (auto& node : nodes) {
+		switch (node->type) {
+			case NodeType::KeyPress:
+				
+				break;
+			case NodeType::KeyRelease:
+				break;
+			case NodeType::String:
+				break;
+			case NodeType::Print:
+				break;
+		}
+	}
+	
+	for (auto& link : links) {
+		
+	}
+	
+	
+	actor.add_component<BlueprintComponent>(std::move(node_processor));
+}
+
+void blueprint::NodeProcessor::deserialize(Actor& actor) {
+	
+}
+
+
+void blueprint::NodeProcessor::clear() {
+	nodes.clear();
+	links.clear();
 }

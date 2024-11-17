@@ -233,7 +233,6 @@ mNormalButtonColor(theme().m_text_color) // Initialize normal button color
 			mRecording = active;
 			mRecordBtn->set_text_color(active ? nanogui::Color(1.0f, 0.0f, 0.0f, 1.0f) : normalRecordColor); // Red when recording
 			
-			
 			if (mActiveActor != std::nullopt) {
 				auto& component = mActiveActor->get().get_component<TakeComponent>();
 				

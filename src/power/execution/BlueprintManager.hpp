@@ -1,5 +1,7 @@
 #pragma once
 
+#include "actors/IActorSelectedCallback.hpp"
+#include "actors/Actor.hpp"
 #include "components/TransformComponent.hpp"
 #include "graphics/drawing/Grid.hpp"
 #include "simulation/SimulationServer.hpp"
@@ -31,6 +33,21 @@ public:
 		
 		mCanvas->process_events();
 	}
+	
+	void serialize(Actor& actor) {
+		clear();
+		mNodeProcessor->serialize(actor);
+	}
+	
+	void deserialize(Actor& actor) {
+		clear();
+		mNodeProcessor->deserialize(actor);
+	}
+	
+	void clear() {
+		mCanvas->shed_children();
+		mNodeProcessor->clear();
+	}
 
 private:
 	void draw(NVGcontext *ctx) override {
@@ -42,9 +59,11 @@ private:
 	std::unique_ptr<blueprint::NodeProcessor> mNodeProcessor;
 };
 
-class BlueprintManager {
+class BlueprintManager : public IActorSelectedCallback {
 public:
-	BlueprintManager(Canvas& canvas) : mCanvas(canvas){
+	BlueprintManager(Canvas& canvas, std::shared_ptr<IActorSelectedRegistry> registry)
+	: mCanvas(canvas)
+	, mRegistry(registry) {
 		mBlueprintPanel = std::make_shared<BlueprintPanel>(canvas);
 		
 		mBlueprintPanel->set_position(nanogui::Vector2i(0, canvas.fixed_height()));
@@ -61,9 +80,30 @@ public:
 		mBlueprintButton->set_change_callback([this](bool active) {
 			toggle_blueprint_panel(active);
 		});
+		
+		mRegistry->RegisterOnActorSelectedCallback(*this);
+
 	}
 	
+	~BlueprintManager() {
+		mRegistry->UnregisterOnActorSelectedCallback(*this);
+	}
 	
+	void OnActorSelected(std::optional<std::reference_wrapper<Actor>> actor) override {
+		
+		if (mActiveActor.has_value()) {
+			mBlueprintPanel->serialize(mActiveActor->get());
+		}
+		
+		mActiveActor = actor;
+		
+		if (mActiveActor.has_value()) {
+			mBlueprintPanel->deserialize(mActiveActor->get());
+		} else {
+			mBlueprintPanel->clear();
+		}
+	}
+
 	void toggle_blueprint_panel(bool active) {
 		if (mAnimationFuture.valid() && mAnimationFuture.wait_for(std::chrono::seconds(0)) != std::future_status::ready) {
 			return; // Animation is still running, do not start a new one
@@ -107,7 +147,12 @@ public:
 	
 private:
 	Canvas& mCanvas;
+	std::shared_ptr<IActorSelectedRegistry> mRegistry;
+
 	std::shared_ptr<BlueprintPanel> mBlueprintPanel;
 	std::shared_ptr<nanogui::ToolButton> mBlueprintButton;
 	std::future<void> mAnimationFuture;
+	
+	std::optional<std::reference_wrapper<Actor>> mActiveActor;
+	
 };

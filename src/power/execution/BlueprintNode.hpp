@@ -8,6 +8,13 @@
 
 namespace blueprint {
 
+enum class NodeType {
+	KeyPress,
+	KeyRelease,
+	String,
+	Print
+};
+
 enum class PinType {
 	Flow,
 	Bool,
@@ -129,13 +136,14 @@ private:
 
 class BlueprintNode : public nanogui::Window {
 public:
+	NodeType type;
 	int id;
 	nanogui::Color color;
 	bool root_node = false;
 	std::function<void()> link;
 	std::function<void()> evaluate;
 	
-	BlueprintNode(BlueprintCanvas& parent, const std::string& name, nanogui::Vector2i size, int id, nanogui::Color color = nanogui::Color(255, 255, 255, 255));
+	BlueprintNode(std::optional<std::reference_wrapper<BlueprintCanvas>> parent, NodeType type, const std::string& name, nanogui::Vector2i size, int id, nanogui::Color color = nanogui::Color(255, 255, 255, 255));
 	
 	template<typename T, typename... Args>
 	T& add_data_widget(Args&&... args){
@@ -167,7 +175,7 @@ protected:
 private:
 	void perform_layout(NVGcontext *ctx) override;
 	void draw(NVGcontext *ctx) override;
-	BlueprintCanvas& mCanvas;
+	std::optional<std::reference_wrapper<BlueprintCanvas>> mCanvas;
 	std::unique_ptr<nanogui::Widget> mFlowContainer;
 	std::unique_ptr<nanogui::Widget> mColumnContainer;
 	std::unique_ptr<nanogui::Widget> mLeftColumn;

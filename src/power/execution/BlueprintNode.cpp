@@ -2,8 +2,8 @@
 
 #include "BlueprintCanvas.hpp"
 
-blueprint::BlueprintNode::BlueprintNode(blueprint::BlueprintCanvas& parent, const std::string& name, nanogui::Vector2i size, int id, nanogui::Color color)
-: nanogui::Window(parent, name), mCanvas(parent), id(id), color(color) {
+blueprint::BlueprintNode::BlueprintNode(std::optional<std::reference_wrapper<blueprint::BlueprintCanvas>> parent, NodeType type, const std::string& name, nanogui::Vector2i size, int id, nanogui::Color color)
+: nanogui::Window(parent, name), mCanvas(parent), type(type), id(id), color(color) {
 	set_fixed_size(size);
 	set_layout(std::make_unique<nanogui::GroupLayout>(5, 0));
 	
@@ -43,11 +43,13 @@ Pin& blueprint::BlueprintNode::add_input(int pin_id, int node_id, const std::str
 		input->set_icon(FA_PLAY);
 	}
 	
-	auto& input_ref = *input;
-	
-	input->set_callback([this, &input_ref](){
-		mCanvas.on_input_pin_clicked(input_ref);
-	});
+	if (mCanvas.has_value()) {
+		auto& input_ref = *input;
+		
+		input->set_callback([this, &input_ref](){
+			mCanvas->get().on_input_pin_clicked(input_ref);
+		});
+	}
 	
 	input->set_fixed_size(nanogui::Vector2i(22, 22));
 	
@@ -71,11 +73,16 @@ Pin& blueprint::BlueprintNode::add_output(int pin_id, int node_id, const std::st
 		output->set_icon(FA_PLAY);
 	}
 	
-	auto& output_ref = *output;
 	
-	output->set_callback([this, &output_ref](){
-		mCanvas.on_output_pin_clicked(output_ref);
-	});
+	
+	if (mCanvas.has_value()) {
+		auto& output_ref = *output;
+		
+		output->set_callback([this, &output_ref](){
+			mCanvas->get().on_output_pin_clicked(output_ref);
+		});
+
+	}
 	
 	output->set_fixed_size(nanogui::Vector2i(22, 22));
 	

@@ -17,8 +17,8 @@
 
 NAMESPACE_BEGIN(nanogui)
 
-Window::Window(Widget& parent,  const std::string &title)
-    : Widget(std::make_optional<std::reference_wrapper<Widget>>(parent)), m_title(title), m_button_panel(nullptr), m_modal(false),
+Window::Window(std::optional<std::reference_wrapper<Widget>> parent,  const std::string &title)
+    : Widget(parent), m_title(title), m_button_panel(nullptr), m_modal(false),
       m_drag(false) { }
 
 Vector2i Window::preferred_size(NVGcontext *ctx) {

@@ -12,7 +12,7 @@ class BlueprintCanvas;
 
 class StringNode : public BlueprintNode {
 public:
-	StringNode(BlueprintCanvas& parent, const std::string& title, nanogui::Vector2i size, int id, int output_pin_id);
+	StringNode(std::optional<std::reference_wrapper<BlueprintCanvas>> parent, const std::string& title, nanogui::Vector2i size, int id, int output_pin_id);
 	
 private:
 	std::unique_ptr<nanogui::TextBox> mTextBox;
