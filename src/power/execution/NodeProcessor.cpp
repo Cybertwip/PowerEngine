@@ -115,24 +115,14 @@ void blueprint::NodeProcessor::serialize(BlueprintCanvas& canvas, Actor& actor) 
 		
 		for (auto& link : links) {
 			
-			for (auto& node : node_processor->nodes) {
-				const auto& node_inputs = node->get_inputs();
-				const auto& node_outputs = node->get_outputs();
-				
-				auto start_pin_it = std::find_if(node_inputs.begin(), node_inputs.end(), [&link](auto& pin) {
-					return pin->id == link->get_start().id;
-				});
-				
-				auto end_pin_it = std::find_if(node_outputs.begin(), node_outputs.end(), [&link](auto& pin) {
-					return pin->id == link->get_end().id;
-				});
-				
-				start_pin_it->get()->data = link->get_start().data;
-				end_pin_it->get()->data = link->get_end().data;
-				
-				create_link(canvas, *start_pin_it->get(), *end_pin_it->get());
-			}
+			auto* start_pin = node_processor->find_pin(link->get_start().id);
+			auto* end_pin = node_processor->find_pin(link->get_end().id);
+			
+			assert(start_pin && end_pint);
+			
+			node_processor->create_link(canvas, *start_pin, *end_pin);
 		}
+		
 		actor.add_component<BlueprintComponent>(std::move(node_processor));
 	}
 	
@@ -165,29 +155,45 @@ void blueprint::NodeProcessor::deserialize(BlueprintCanvas& canvas, Actor& actor
 		
 		for (auto& link : node_processor.links) {
 			
-			for (auto& node : nodes) {
-				const auto& node_inputs = node->get_inputs();
-				const auto& node_outputs = node->get_outputs();
-				
-				auto start_pin_it = std::find_if(node_outputs.begin(), node_outputs.end(), [&link](auto& pin) {
-					return pin->id == link->get_start().id;
-				});
+			
+			auto* start_pin = node_processor->find_pin(link->get_start().id);
+			auto* end_pin = node_processor->find_pin(link->get_end().id);
+			
+			assert(start_pin && end_pint);
+			
+			create_link(canvas, *start_pin, *end_pin);
 
-				auto end_pin_it = std::find_if(node_outputs.begin(), node_outputs.end(), [&link](auto& pin) {
-					return pin->id == link->get_end().id;
-				});
-
-				start_pin_it->get()->data = link->get_start().data;
-				end_pin_it->get()->data = link->get_end().data;
-
-				create_link(canvas, *start_pin_it->get(), *end_pin_it->get());
-			}
 		}
 		
 		canvas.perform_layout(canvas.screen().nvg_context());
 	}
 }
 
+blueprint::Pin* blueprint::NodeProcessor::find_pin(long long id) {
+	
+	for (auto& node : nodes) {
+		const auto& node_inputs = node->get_inputs();
+		const auto& node_outputs = node->get_outputs();
+		
+		auto start_pin_it = std::find_if(node_outputs.begin(), node_outputs.end(), [id](auto& pin) {
+			return pin->id == id;
+		});
+		
+		if (start_pin_it != node_outputs.end()) {
+			return start_pin_it->get();
+		}
+		
+		auto end_pin_it = std::find_if(node_inputs.begin(), node_inputs.end(), [id](auto& pin) {
+			return pin->id == id;
+		});
+		
+		if (end_pin_it != node_inputs.end()) {
+			return end_pin_it->get();
+		}
+	}
+	
+	return nullptr;
+}
 
 void blueprint::NodeProcessor::clear() {
 	nodes.clear();
