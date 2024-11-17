@@ -101,9 +101,7 @@ void blueprint::NodeProcessor::evaluate() {
 			in_pin.can_flow = can_flow;
 		}
 		
-		if (in_pin.can_flow && out_pin.can_flow) {
-			in_pin.data = out_pin.data;
-		}
+		in_pin.data = out_pin.data;
 	}
 	
 	
