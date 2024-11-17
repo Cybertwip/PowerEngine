@@ -43,25 +43,25 @@ BlueprintCanvas::BlueprintCanvas(ScenePanel& parent, nanogui::Screen& screen, No
 	key_press_option->set_callback([this](){
 		mContextMenu->set_visible(false);
 		add_node(mNodeProcessor.spawn_node<blueprint::KeyPressNode>(*this, mContextMenu->position()));
-		perform_layout(screen().nvg_context());
+		perform_layout(this->screen().nvg_context());
 	});
 
 	key_release_option->set_callback([this](){
 		mContextMenu->set_visible(false);
 		add_node(mNodeProcessor.spawn_node<blueprint::KeyReleaseNode>(*this, mContextMenu->position()));
-		perform_layout(screen().nvg_context());
+		perform_layout(this->screen().nvg_context());
 	});
 
 	string_option->set_callback([this](){
 		mContextMenu->set_visible(false);
 		add_node(mNodeProcessor.spawn_node<blueprint::StringNode>(*this, mContextMenu->position()));
-		perform_layout(screen().nvg_context());
+		perform_layout(this->screen().nvg_context());
 	});
 
 	print_option->set_callback([this](){
 		mContextMenu->set_visible(false);
 		add_node(mNodeProcessor.spawn_node<blueprint::PrintNode>(*this, mContextMenu->position()));
-		perform_layout(screen().nvg_context());
+		perform_layout(this->screen().nvg_context());
 	});
 
 	mNodeOptions.push_back(std::move(key_press_option));
@@ -92,7 +92,7 @@ BlueprintCanvas::BlueprintCanvas(ScenePanel& parent, nanogui::Screen& screen, No
 		if (down) {
 			mContextMenu->set_position(nanogui::Vector2i(x + 32, y - 64));
 			mContextMenu->set_visible(true);
-			perform_layout(screen().nvg_context());
+			perform_layout(this->screen().nvg_context());
 		}
 	});
 
