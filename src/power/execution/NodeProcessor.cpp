@@ -167,30 +167,34 @@ void blueprint::NodeProcessor::serialize(Actor& actor) {
 
 void blueprint::NodeProcessor::deserialize(BlueprintCanvas& canvas, Actor& actor) {
 	next_id = 1;
-	auto& blueprint_component = actor.get_component<BlueprintComponent>();
 	
-	auto& node_processor = blueprint_component.node_processor();
-	
-	for (auto& node : node_processor.nodes) {
-		switch (node->type) {
-			case NodeType::KeyPress:
-				spawn_node<blueprint::KeyPressNode>(canvas, node->position());
-				break;
-			case NodeType::KeyRelease:
-				spawn_node<blueprint::KeyReleaseNode>(canvas, node->position());
-				break;
-			case NodeType::String:
-				spawn_node<blueprint::StringNode>(canvas, node->position());
-				break;
-			case NodeType::Print:
-				spawn_node<blueprint::PrintNode>(canvas, node->position());
-				break;
+	if (actor.find_component<BlueprintComponent>()) {
+		auto& blueprint_component = actor.get_component<BlueprintComponent>();
+		
+		auto& node_processor = blueprint_component.node_processor();
+		
+		for (auto& node : node_processor.nodes) {
+			switch (node->type) {
+				case NodeType::KeyPress:
+					spawn_node<blueprint::KeyPressNode>(canvas, node->position());
+					break;
+				case NodeType::KeyRelease:
+					spawn_node<blueprint::KeyReleaseNode>(canvas, node->position());
+					break;
+				case NodeType::String:
+					spawn_node<blueprint::StringNode>(canvas, node->position());
+					break;
+				case NodeType::Print:
+					spawn_node<blueprint::PrintNode>(canvas, node->position());
+					break;
+			}
+		}
+		
+		for (auto& link : links) {
+			
 		}
 	}
-	
-	for (auto& link : links) {
-		
-	}
+
 
 }
 
