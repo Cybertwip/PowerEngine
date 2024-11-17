@@ -144,7 +144,7 @@ private:
 	void perform_layout(NVGcontext *ctx) override;
 	void draw(NVGcontext *ctx) override;
 	BlueprintCanvas& mCanvas;
-	std::unique_ptr<PassThroughWidget> mFlowContainer;
+	std::unique_ptr<nanogui::Widget> mFlowContainer;
 	std::unique_ptr<nanogui::Widget> mColumnContainer;
 	std::unique_ptr<nanogui::Widget> mLeftColumn;
 	std::unique_ptr<nanogui::Widget> mDataColumn;
