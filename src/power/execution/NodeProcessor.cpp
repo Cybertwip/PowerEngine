@@ -134,8 +134,6 @@ void blueprint::NodeProcessor::serialize(BlueprintCanvas& canvas, Actor& actor) 
 			}
 		}
 		actor.add_component<BlueprintComponent>(std::move(node_processor));
-		
-		canvas.shed_children();
 	}
 	
 }
