@@ -14,4 +14,8 @@ blueprint::StringNode::StringNode(blueprint::BlueprintCanvas& parent, const std:
 	link = [&output](){
 		output.can_flow = true;
 	};
+	
+	evaluate = [&textbox]() {
+		data = textbox.value();
+	};
 }
