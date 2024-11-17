@@ -782,15 +782,23 @@ void Screen::update_focus(Widget& widget) {
 	}
 	
 	if (m_focused_widget) {
-		if (m_focused_widget->parent().has_value()) {
-			m_focused_widget->parent()->get().focus_event(false);
+		
+		std::optional<std::reference_wrapper<Widget>> parent = m_focused_widget->parent();
+		while(parent != std::nullopt) {
+			parent->get().focus_event(false);
+			
+			parent = parent->get().parent();
 		}
 		m_focused_widget->focus_event(false);
 	}
 	
-	if (widget.parent().has_value()) {
-		widget.parent()->get().focus_event(false);
+	std::optional<std::reference_wrapper<Widget>> parent = widget.parent();
+	while(parent != std::nullopt) {
+		parent->get().focus_event(true);
+		
+		parent = parent->get().parent();
 	}
+	
 	widget.focus_event(true);
 
 	m_focused_widget = &widget;

@@ -96,6 +96,10 @@ private:
 		return nanogui::Widget::mouse_drag_event(p, rel, button, modifiers);
 	}
 	
+	bool keyboard_event(int key, int scancode, int action, int modifiers) override {
+		return mWindow.keyboard_event(key, scancode, action, modifiers);
+	}
+	
 	nanogui::Window& mWindow;
 };
 
