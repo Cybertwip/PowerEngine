@@ -112,12 +112,12 @@ private:
 							int modifiers) override {
 		mWindow.mouse_button_event(p, button, down, modifiers);
 		
-		return nanogui::Widget::mouse_button_event(p, button, down, modifiers);
+		return nanogui::Button::mouse_button_event(p, button, down, modifiers);
 	}
 	
 	bool mouse_drag_event(const nanogui::Vector2i &p, const nanogui::Vector2i &rel, int button, int modifiers) override {
 		mWindow.mouse_drag_event(p, rel, button, modifiers);
-		return nanogui::Widget::mouse_drag_event(p, rel, button, modifiers);
+		return nanogui::Button::mouse_drag_event(p, rel, button, modifiers);
 	}
 	
 	bool keyboard_event(int key, int scancode, int action, int modifiers) override {
