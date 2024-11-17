@@ -782,9 +782,15 @@ void Screen::update_focus(Widget& widget) {
 	}
 	
 	if (m_focused_widget) {
+		if (m_focused_widget->parent().has_value()) {
+			m_focused_widget->parent()->get().focus_event(false);
+		}
 		m_focused_widget->focus_event(false);
 	}
 	
+	if (widget.parent().has_value()) {
+		widget.parent()->get().focus_event(false);
+	}
 	widget.focus_event(true);
 
 	m_focused_widget = &widget;

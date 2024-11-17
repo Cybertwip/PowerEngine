@@ -86,10 +86,6 @@ private:
 		mWindow.mouse_button_event(p, button, down, modifiers);
 		
 		bool handled = nanogui::Widget::mouse_button_event(p, button, down, modifiers);
-		
-		if (down) {
-			mWindow.request_focus();
-		}
 
 		return handled;
 	}
