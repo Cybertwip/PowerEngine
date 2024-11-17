@@ -15,6 +15,7 @@
 #include "ui/ScenePanel.hpp"
 
 #include <nanogui/renderpass.h>
+#include <nanogui/screen.h>
 
 #include <nanovg.h>
 
