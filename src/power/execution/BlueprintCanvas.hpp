@@ -26,6 +26,8 @@ public:
 	
 	void draw();
 	
+	void process_events();
+	
 private:
 	bool mouse_motion_event(const nanogui::Vector2i &p, const nanogui::Vector2i &rel, int button, int modifiers) override;
 	

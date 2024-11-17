@@ -62,13 +62,13 @@ BlueprintCanvas::BlueprintCanvas(ScenePanel& parent, nanogui::Screen& screen, No
 	});
 	
 	mHeaderHeight = theme().m_window_header_height;
-
+	
 	add_node(mNodeProcessor.spawn_key_press_node(*this, nanogui::Vector2i(fixed_size().x() / 8, fixed_size().y() / 8)));
-
+	
 	add_node(mNodeProcessor.spawn_string_node(*this, nanogui::Vector2i(fixed_size().x() / 4, fixed_size().y() / 4)));
 	
 	add_node(mNodeProcessor.spawn_print_string_node(*this, nanogui::Vector2i(fixed_size().x() / 2, fixed_size().y() / 2)));
-
+	
 	// Register draw callback
 	register_draw_callback([this]() {
 		this->draw();
@@ -110,13 +110,13 @@ void BlueprintCanvas::on_input_pin_clicked(Pin& pin) {
 		pin.links.push_back(mLinks.back());
 		
 		
-//		if(mActiveOutputPin->get().node->link){
-//			mActiveOutputPin->get().node->link();
-//		}
-//		
-//		if(pin.node->link){
-//			pin.node->link();
-//		}
+		//		if(mActiveOutputPin->get().node->link){
+		//			mActiveOutputPin->get().node->link();
+		//		}
+		//
+		//		if(pin.node->link){
+		//			pin.node->link();
+		//		}
 		
 		mActiveOutputPin = std::nullopt;
 		mActiveInputPin = std::nullopt;
@@ -152,7 +152,7 @@ void BlueprintCanvas::draw(NVGcontext *ctx) {
 		nanogui::Vector2i canvas_position = absolute_position();
 		nanogui::Vector2i pin_position = mActiveOutputPin->get().absolute_position();
 		nanogui::Vector2i pin_size = mActiveOutputPin->get().fixed_size();
-
+		
 		// Translate the context to account for the canvas position
 		nvgTranslate(ctx, m_pos.x(), m_pos.y());
 		nvgTranslate(ctx, -canvas_position.x(), -canvas_position.y());
@@ -160,7 +160,7 @@ void BlueprintCanvas::draw(NVGcontext *ctx) {
 		// Define Bézier curve
 		nvgBeginPath(ctx);
 		nvgMoveTo(ctx, pin_position.x() + pin_size.x() * 0.5f, pin_position.y() + pin_size.y() * 0.5f);
-
+		
 		// Set control points and end point (example values for demonstration)
 		// Define control points and endpoint for the Bézier curve.
 		float c1x = pin_position.x() + 50; // Example control point 1 x
@@ -193,7 +193,7 @@ void BlueprintCanvas::draw(NVGcontext *ctx) {
 		
 		nvgTranslate(ctx, canvas_position.x(), canvas_position.y());
 		nvgTranslate(ctx, -m_pos.x(), -m_pos.y());
-
+		
 	}
 	
 	if (!mLinks.empty()) {
@@ -202,8 +202,8 @@ void BlueprintCanvas::draw(NVGcontext *ctx) {
 		// Translate the context to account for the canvas position
 		nvgTranslate(ctx, m_pos.x(), m_pos.y());
 		nvgTranslate(ctx, -canvas_position.x(), -canvas_position.y());
-
-
+		
+		
 		for (auto* link : mLinks) {
 			auto& start_pin = link->get_start();
 			auto& end_pin = link->get_end();
@@ -215,15 +215,15 @@ void BlueprintCanvas::draw(NVGcontext *ctx) {
 			if (start_pin.type == PinType::Flow) {
 				color = nvgRGBA(255, 255, 255, 255);
 			}
-
+			
 			
 			nanogui::Vector2i start_pin_position = start_pin.absolute_position();
 			nanogui::Vector2i start_pin_size = start_pin.fixed_size();
-
+			
 			nanogui::Vector2i end_pin_position = end_pin.absolute_position();
 			nanogui::Vector2i end_pin_size = end_pin.fixed_size();
-
-
+			
+			
 			// Define Bézier curve
 			nvgBeginPath(ctx);
 			nvgMoveTo(ctx, start_pin_position.x() + start_pin_size.x() * 0.5f, start_pin_position.y() + start_pin_size.y() * 0.5f);
@@ -259,4 +259,8 @@ void BlueprintCanvas::draw(NVGcontext *ctx) {
 			nvgFill(ctx);
 		}
 	}
+}
+
+void BlueprintCanvas::process_events() {
+	mNodeProcessor.evaluate();
 }

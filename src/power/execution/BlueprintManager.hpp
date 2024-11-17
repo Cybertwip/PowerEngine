@@ -24,13 +24,17 @@ public:
 		mCanvas = std::make_unique<blueprint::BlueprintCanvas>(*this, parent.screen(), *mNodeProcessor, nanogui::Color(35, 65, 90, 255));
 		
 		mCanvas->set_fixed_size(nanogui::Vector2i(fixed_width(), parent.fixed_height() * 0.71));
-				
-
 	}
 	
 private:
 	void draw(NVGcontext *ctx) override {
 		ScenePanel::draw(ctx);
+	}
+	
+	void process_events() override {
+		ScenePanel::process_events();
+		
+		mCanvas->process_events();
 	}
 	
 private:

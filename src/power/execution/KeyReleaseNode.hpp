@@ -2,7 +2,7 @@
 
 #include "BlueprintNode.hpp"
 
-#include <nanogui/textbox.h>
+#include <nanogui/button.h>
 
 #include <memory>
 #include <string>
@@ -21,7 +21,9 @@ private:
 	bool mListening;
 	bool mConfigured;
 	bool mTriggered;
-	std::unique_ptr<nanogui::Button> mButton;
+	
+	nanogui::Button& mActionButton;
+
 };
 
 }

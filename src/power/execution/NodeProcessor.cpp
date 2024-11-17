@@ -8,6 +8,8 @@
 #include "PrintNode.hpp"
 #include "StringNode.hpp"
 
+#include <unordered_set>
+
 blueprint::NodeProcessor::NodeProcessor() {
 	
 }
@@ -56,8 +58,72 @@ blueprint::BlueprintNode* blueprint::NodeProcessor::spawn_key_press_node(bluepri
 //	Node& spawn_input_action_node(const std::string& key_string, int key_code) {
 //	}
 
-void blueprint::NodeProcessor::evaluate(blueprint::BlueprintNode& node) {
-	if (node.evaluate) {
-		node.evaluate();
+void blueprint::NodeProcessor::evaluate() {
+
+	std::unordered_set<blueprint::BlueprintNode*> evaluated_nodes;
+	
+	for (auto& link : links)
+	{
+		auto& out_pin = link->get_start();
+		auto& in_pin = link->get_end();
+
+		if(evaluated_nodes.find(out_pin.node) == evaluated_nodes.end()){
+			if(out_pin.node->evaluate){
+				out_pin.node->evaluate();
+				
+				evaluated_nodes.insert(out_pin.node);
+			}
+		}
+
+		if(evaluated_nodes.find(in_pin.node) == evaluated_nodes.end()){
+			if(in_pin.node->evaluate){
+				in_pin.node->evaluate();
+				
+				evaluated_nodes.insert(in_pin.node);
+			}
+		}
+		
+		
+		if (in_pin.type == PinType::Flow) {
+			bool can_flow = false;  // Initialize to false
+			
+			for (auto& other_link : links) {
+				auto& other_pin = other_link->get_end();
+				
+				if (&other_pin == &in_pin) {
+					auto& other_start_pin = other_link->get_start();
+					if (other_start_pin.type == PinType::Flow) {
+						can_flow = can_flow || other_start_pin.can_flow; // If any start pin can flow, set canFlow to true
+					}
+				}
+			}
+			
+			in_pin.can_flow = can_flow;
+		}
+		
+		if (in_pin.can_flow && out_pin.can_flow) {
+			in_pin.data = out_pin.data;
+		}
 	}
+	
+	
+//	for (auto& link : m_Links)
+//	{
+//		auto outPin = FindPin(link->StartPinID);
+//		auto inPin = FindPin(link->EndPinID);
+//		
+//		inPin->Data = outPin->Data;
+//		
+//		if(inPin->Type == PinType::Flow && outPin->Type == PinType::Flow){
+//			if(outPin->CanFlow && inPin->CanFlow){
+//				ed::Flow(link->ID);
+//			}
+//		} else {
+//			if(inPin->CanFlow && outPin->CanFlow){
+//				ed::Flow(link->ID);
+//			}
+//		}
+//	}
+
+	
 }

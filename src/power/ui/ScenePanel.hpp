@@ -12,7 +12,7 @@ public:
 	
 	bool mouse_button_event(const nanogui::Vector2i &p, int button, bool down, int modifiers) override;
 	void register_click_callback(int button, std::function<void(bool, int, int, int, int)> callback);
-	void process_events();
+	virtual void process_events();
 	
 	bool mouse_motion_event(const nanogui::Vector2i &p, const nanogui::Vector2i &rel, int button, int modifiers) override;
 	

@@ -21,7 +21,8 @@ private:
 	bool mListening;
 	bool mConfigured;
 	bool mTriggered;
-	std::unique_ptr<nanogui::Button> mButton;
+	
+	nanogui::Button& mActionButton;
 };
 
 }
