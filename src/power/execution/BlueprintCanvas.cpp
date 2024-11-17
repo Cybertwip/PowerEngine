@@ -120,7 +120,7 @@ bool BlueprintCanvas::query_link(Pin& source_pin, Pin& destination_pin) {
 void BlueprintCanvas::on_input_pin_clicked(Pin& pin) {
 	if (mActiveOutputPin.has_value() && query_link(mActiveOutputPin->get(), pin)) {
 		mActiveInputPin = pin;
-		mNodeProcessor.create_link(*this, mNodeProcessor->get_next_id(), *mActiveOutputPin, pin);
+		mNodeProcessor.create_link(*this, mNodeProcessor.get_next_id(), *mActiveOutputPin, pin);
 		mActiveOutputPin->get().links.push_back(mLinks.back());
 		pin.links.push_back(mLinks.back());
 		

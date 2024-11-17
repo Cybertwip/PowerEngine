@@ -208,6 +208,10 @@ public:
 	Pin& get_end() const {
 		return mEnd;
 	}
+	
+	int get_id() const {
+		return id;
+	}
 
 private:
 	int id;
