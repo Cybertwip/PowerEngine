@@ -22,6 +22,7 @@ public:
 	BlueprintNode* spawn_string_node(BlueprintCanvas& parent, const nanogui::Vector2i& position);
 	BlueprintNode* spawn_print_string_node(BlueprintCanvas& parent, const nanogui::Vector2i& position);
 	BlueprintNode* spawn_key_press_node(BlueprintCanvas& parent, const nanogui::Vector2i& position);
+	BlueprintNode* spawn_key_release_node(BlueprintCanvas& parent, const nanogui::Vector2i& position);
 
 	void evaluate();
 private:

@@ -63,7 +63,7 @@ BlueprintCanvas::BlueprintCanvas(ScenePanel& parent, nanogui::Screen& screen, No
 	
 	mHeaderHeight = theme().m_window_header_height;
 	
-	add_node(mNodeProcessor.spawn_key_press_node(*this, nanogui::Vector2i(fixed_size().x() / 8, fixed_size().y() / 8)));
+	add_node(mNodeProcessor.spawn_key_release_node(*this, nanogui::Vector2i(fixed_size().x() / 8, fixed_size().y() / 8)));
 	
 	add_node(mNodeProcessor.spawn_string_node(*this, nanogui::Vector2i(fixed_size().x() / 4, fixed_size().y() / 4)));
 	

@@ -12,16 +12,15 @@ KeyPressNode::KeyPressNode(BlueprintCanvas& parent, const std::string& title, na
 	evaluate = [this, &output_flow]() {
 		if (mConfigured) {
 			int action = glfwGetKey(screen().glfw_window(), mKeyCode);
-			
-
-			if (action == GLFW_PRESS || action == GLFW_REPEAT) {
+		
+			if ((action == GLFW_PRESS || action == GLFW_REPEAT) && !mTriggered) {
 				mTriggered = true;
+			} else {
+				mTriggered = false;
 			}
 		}
 
 		output_flow.can_flow = mTriggered;
-		
-		mTriggered = false;
 	};
 		
 	mActionButton.set_callback([this](){

@@ -5,6 +5,7 @@
 #include "BlueprintCanvas.hpp"
 #include "BlueprintNode.hpp"
 #include "KeyPressNode.hpp"
+#include "KeyReleaseNode.hpp"
 #include "PrintNode.hpp"
 #include "StringNode.hpp"
 
@@ -48,6 +49,14 @@ blueprint::BlueprintNode* blueprint::NodeProcessor::spawn_print_string_node(blue
 
 blueprint::BlueprintNode* blueprint::NodeProcessor::spawn_key_press_node(blueprint::BlueprintCanvas& parent, const nanogui::Vector2i& position) {
 	auto node = std::make_unique<blueprint::KeyPressNode>(parent, "Key Press",  nanogui::Vector2i(128, 64), get_next_id(), get_next_id());
+	node->set_position(position);
+	build_node(*node);
+	nodes.push_back(std::move(node));
+	return nodes.back().get();
+}
+
+blueprint::BlueprintNode* blueprint::NodeProcessor::spawn_key_release_node(blueprint::BlueprintCanvas& parent, const nanogui::Vector2i& position) {
+	auto node = std::make_unique<blueprint::KeyReleaseNode>(parent, "Key Press",  nanogui::Vector2i(128, 64), get_next_id(), get_next_id());
 	node->set_position(position);
 	build_node(*node);
 	nodes.push_back(std::move(node));
