@@ -82,6 +82,11 @@ public:
 private:
 	bool mouse_button_event(const nanogui::Vector2i &p, int button, bool down,
 									int modifiers) override {
+		
+		if (down) {
+			mWindow.request_focus();
+		}
+		
 		mWindow.mouse_button_event(p, button, down, modifiers);
 		return nanogui::Widget::mouse_button_event(p, button, down, modifiers);
 	}

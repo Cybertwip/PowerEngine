@@ -16,7 +16,6 @@ mActionButton(add_data_widget<nanogui::Button>("Setup")) {
 	mActionButton.set_callback([this](){
 		mActionButton.set_caption("Press Key");
 		mListening = true;
-		request_focus();
 	});
 }
 

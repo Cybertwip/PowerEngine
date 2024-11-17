@@ -14,7 +14,6 @@ KeyPressNode::KeyPressNode(BlueprintCanvas& parent, const std::string& title, na
 	mActionButton.set_callback([this](){
 		mActionButton.set_caption("Press Key");
 		mListening = true;
-		request_focus();
 	});
 }
 
