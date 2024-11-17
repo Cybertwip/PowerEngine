@@ -73,8 +73,6 @@ Pin& blueprint::BlueprintNode::add_output(int pin_id, int node_id, const std::st
 		output->set_icon(FA_PLAY);
 	}
 	
-	
-	
 	if (mCanvas.has_value()) {
 		auto& output_ref = *output;
 		

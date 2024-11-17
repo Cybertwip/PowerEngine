@@ -174,7 +174,7 @@ public:
 	}
 
 	const std::vector<std::unique_ptr<Pin>>& get_outputs() {
-		return inputs;
+		return outputs;
 	}
 
 protected:
