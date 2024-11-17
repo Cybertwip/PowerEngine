@@ -74,20 +74,22 @@ class BlueprintCanvas;
 
 class PassThroughWidget : public nanogui::Widget {
 public:
-	PassThroughWidget(nanogui::Widget& parent)
-	: nanogui::Widget(parent){
+	PassThroughWidget(nanogui::Window& parent)
+	: nanogui::Widget(parent), mWindow(parent) {
 		
 	}
 	
 private:
 	bool mouse_button_event(const nanogui::Vector2i &p, int button, bool down,
 									int modifiers) override {
-		return false;
+		return mWindow.mouse_button_event(p, button, down, modifiers);
 	}
 	
 	bool mouse_drag_event(const nanogui::Vector2i &p, const nanogui::Vector2i &rel, int button, int modifiers) override {
-		return false;
+		return mWindow.mouse_button_event(p, rel, button, down, modifiers);
 	}
+	
+	nanogui::Window& mWindow;
 };
 
 class BlueprintNode : public nanogui::Window {
