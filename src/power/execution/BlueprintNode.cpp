@@ -7,7 +7,7 @@ blueprint::BlueprintNode::BlueprintNode(std::optional<std::reference_wrapper<blu
 	set_fixed_size(size);
 	set_layout(std::make_unique<nanogui::GroupLayout>(5, 0));
 	
-	int hh = theme().m_window_header_height;
+	int hh = parent.has_value() ? theme().m_window_header_height : 30;
 	
 	mFlowContainer = std::make_unique<PassThroughWidget>(*this);
 	mFlowContainer->set_fixed_size(nanogui::Vector2i(size.x(), hh));

@@ -268,7 +268,7 @@ void Widget::draw(NVGcontext *ctx) {
 
 void Widget::set_parent(Widget& parent) {
 	m_parent = parent;
-	m_screen = parent.screen(); // Update screen pointer
+	m_screen = parent.m_screen; // Update screen pointer
 }
 
 void Widget::set_screen(Screen& screen) {
