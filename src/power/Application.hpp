@@ -247,7 +247,6 @@ class Application : public nanogui::DraggableScreen
 	
 	
 	AnimationTimeProvider mGlobalAnimationTimeProvider;
-	std::unique_ptr<BlueprintManager> mBlueprintManager;
 	std::unique_ptr<ExecutionManager> mExecutionManager;
 	std::unique_ptr<VirtualMachine> mVirtualMachine;
 	
@@ -271,6 +270,7 @@ class Application : public nanogui::DraggableScreen
 	std::unique_ptr<SkinnedMeshBatch> mGizmoSkinnedMeshBatch;
 	std::shared_ptr<RenderCommon> mRenderCommon;
 	std::shared_ptr<UiCommon> mUiCommon;
+	std::unique_ptr<BlueprintManager> mBlueprintManager;
 	std::unique_ptr<PowerAi> mPowerAi;
 	std::unique_ptr<OpenAiApiClient> mOpenAiApiClient;
 	std::unique_ptr<TripoAiApiClient> mTripoAiApiClient;
