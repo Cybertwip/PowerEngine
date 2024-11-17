@@ -114,19 +114,17 @@ void blueprint::NodeProcessor::serialize(BlueprintCanvas& canvas, Actor& actor) 
 		
 		
 		for (auto& link : links) {
-			
 			auto* start_pin = node_processor->find_pin(link->get_start().id);
 			auto* end_pin = node_processor->find_pin(link->get_end().id);
 			
 			assert(start_pin && end_pin);
-			
 			
 			if (link->get_start().data.has_value()) {
 				start_pin->data = link->get_start().data;
 			}
 
 			if (link->get_end().data.has_value()) {
-				end_pin_it->data = link->get_end().data;
+				end_pin->data = link->get_end().data;
 			}
 
 			node_processor->create_link(canvas, *start_pin, *end_pin);
