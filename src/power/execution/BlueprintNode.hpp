@@ -102,8 +102,8 @@ private:
 
 class PassThroughButton : public nanogui::Button {
 public:
-	PassThroughButton(nanogui::Window& parent, const std::string &caption = "", int icon = 0)
-	: nanogui::Button(parent, caption, icon), mWindow(parent) {
+	PassThroughButton(nanogui::Widget& parent, nanogui::Window& window, const std::string &caption = "", int icon = 0)
+	: nanogui::Button(parent, caption, icon), mWindow(window) {
 		
 	}
 	
