@@ -6,6 +6,8 @@
 #include <nanogui/textbox.h>
 #include <nanogui/window.h>
 
+#include <functional>
+
 namespace blueprint {
 
 enum class NodeType {

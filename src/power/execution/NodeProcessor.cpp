@@ -20,6 +20,10 @@ public:
 		
 	}
 	
+	const blueprint::NodeProcessor& node_processor() {
+		return *mNodeProcessor;
+	}
+	
 private:
 	std::unique_ptr<blueprint::NodeProcessor> mNodeProcessor;
 };
@@ -44,7 +48,9 @@ blueprint::Link* blueprint::NodeProcessor::create_link(blueprint::BlueprintCanva
 }
 
 blueprint::BlueprintNode* blueprint::NodeProcessor::spawn_string_node(blueprint::BlueprintCanvas& parent, const nanogui::Vector2i& position) {
-	auto node = std::make_unique<blueprint::StringNode>(parent, "String",  nanogui::Vector2i(196, 64), get_next_id(), get_next_id());
+	auto node = std::make_unique<blueprint::StringNode>(parent, "String",  nanogui::Vector2i(196, 64), [this](){
+		return get_next_id();
+	});
 	node->set_position(position);
 	build_node(*node);
 	nodes.push_back(std::move(node));
@@ -52,7 +58,9 @@ blueprint::BlueprintNode* blueprint::NodeProcessor::spawn_string_node(blueprint:
 }
 
 blueprint::BlueprintNode* blueprint::NodeProcessor::spawn_print_string_node(blueprint::BlueprintCanvas& parent, const nanogui::Vector2i& position) {
-	auto node = std::make_unique<blueprint::PrintNode>(parent, "Print",  nanogui::Vector2i(128, 64), get_next_id(), get_next_id(), get_next_id(), get_next_id());
+	auto node = std::make_unique<blueprint::PrintNode>(parent, "Print",  nanogui::Vector2i(128, 64), [this](){
+		return get_next_id();
+	});
 	node->set_position(position);
 	build_node(*node);
 	nodes.push_back(std::move(node));
@@ -60,7 +68,9 @@ blueprint::BlueprintNode* blueprint::NodeProcessor::spawn_print_string_node(blue
 }
 
 blueprint::BlueprintNode* blueprint::NodeProcessor::spawn_key_press_node(blueprint::BlueprintCanvas& parent, const nanogui::Vector2i& position) {
-	auto node = std::make_unique<blueprint::KeyPressNode>(parent, "Key Press",  nanogui::Vector2i(136, 64), get_next_id(), get_next_id());
+	auto node = std::make_unique<blueprint::KeyPressNode>(parent, "Key Press",  nanogui::Vector2i(136, 64), [this](){
+		return get_next_id();
+	});
 	node->set_position(position);
 	build_node(*node);
 	nodes.push_back(std::move(node));
@@ -68,7 +78,9 @@ blueprint::BlueprintNode* blueprint::NodeProcessor::spawn_key_press_node(bluepri
 }
 
 blueprint::BlueprintNode* blueprint::NodeProcessor::spawn_key_release_node(blueprint::BlueprintCanvas& parent, const nanogui::Vector2i& position) {
-	auto node = std::make_unique<blueprint::KeyReleaseNode>(parent, "Key Release",  nanogui::Vector2i(136, 64), get_next_id(), get_next_id());
+	auto node = std::make_unique<blueprint::KeyReleaseNode>(parent, "Key Release",  nanogui::Vector2i(136, 64), [this](){
+		return get_next_id();
+	});
 	node->set_position(position);
 	build_node(*node);
 	nodes.push_back(std::move(node));
@@ -127,19 +139,21 @@ void blueprint::NodeProcessor::evaluate() {
 }
 
 void blueprint::NodeProcessor::serialize(Actor& actor) {
-	
 	auto node_processor = std::make_unique<blueprint::NodeProcessor>();
 		
 	for (auto& node : nodes) {
 		switch (node->type) {
 			case NodeType::KeyPress:
-				
+				node_processor->spawn_node<blueprint::KeyPressNode>(std::nullopt, node->position());
 				break;
 			case NodeType::KeyRelease:
+				node_processor->spawn_node<blueprint::KeyReleaseNode>(std::nullopt, node->position());
 				break;
 			case NodeType::String:
+				node_processor->spawn_node<blueprint::StringNode>(std::nullopt, node->position());
 				break;
 			case NodeType::Print:
+				node_processor->spawn_node<blueprint::PrintNode>(std::nullopt, node->position());
 				break;
 		}
 	}
@@ -148,12 +162,36 @@ void blueprint::NodeProcessor::serialize(Actor& actor) {
 		
 	}
 	
-	
 	actor.add_component<BlueprintComponent>(std::move(node_processor));
 }
 
-void blueprint::NodeProcessor::deserialize(Actor& actor) {
+void blueprint::NodeProcessor::deserialize(BlueprintCanvas& canvas, Actor& actor) {
+	next_id = 1;
+	auto& blueprint_component = actor.get_component<BlueprintComponent>();
 	
+	auto& node_processor = blueprint_component.node_processor();
+	
+	for (auto& node : node_processor.nodes) {
+		switch (node->type) {
+			case NodeType::KeyPress:
+				spawn_node<blueprint::KeyPressNode>(canvas, node->position());
+				break;
+			case NodeType::KeyRelease:
+				spawn_node<blueprint::KeyReleaseNode>(canvas, node->position());
+				break;
+			case NodeType::String:
+				spawn_node<blueprint::StringNode>(canvas, node->position());
+				break;
+			case NodeType::Print:
+				spawn_node<blueprint::PrintNode>(canvas, node->position());
+				break;
+		}
+	}
+	
+	for (auto& link : links) {
+		
+	}
+
 }
 
 

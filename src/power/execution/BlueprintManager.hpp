@@ -41,7 +41,7 @@ public:
 	
 	void deserialize(Actor& actor) {
 		clear();
-		mNodeProcessor->deserialize(actor);
+		mNodeProcessor->deserialize(*mCanvas, actor);
 	}
 	
 	void clear() {
@@ -53,6 +53,7 @@ private:
 	void draw(NVGcontext *ctx) override {
 		ScenePanel::draw(ctx);
 	}
+
 	
 private:
 	std::unique_ptr<blueprint::BlueprintCanvas> mCanvas;
