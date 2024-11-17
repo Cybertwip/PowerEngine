@@ -32,7 +32,8 @@ BlueprintCanvas::BlueprintCanvas(ScenePanel& parent, nanogui::Screen& screen, No
 	mShaderManager = std::make_unique<ShaderManager>(*this);
 	
 	mGrid = std::make_unique<Grid2d>(*mShaderManager);
-	
+	mContextMenu = std::make_unique<nanogui::Popup>(*this);
+
 	// Adjusted orthographic projection parameters
 	float left = -1.0f;
 	float right = 1.0f;
@@ -52,7 +53,12 @@ BlueprintCanvas::BlueprintCanvas(ScenePanel& parent, nanogui::Screen& screen, No
 	parent.register_click_callback(GLFW_MOUSE_BUTTON_RIGHT, [this](bool down, int width, int height, int x, int y) {
 		
 		if (down) {
-			mContextMenu = std::make_unique<nanogui::Popup>(*this);
+			if (m_children.empty()) {  // means serial/deserial
+				add_child(*mContextMenu);
+			} else {
+				remove_child(*mContextMenu);
+				add_child(*mContextMenu);
+			}
 			setup_options();
 			mContextMenu->set_position(nanogui::Vector2i(x + 32, y - 256));
 			mContextMenu->set_visible(true);
@@ -276,6 +282,8 @@ void BlueprintCanvas::draw(NVGcontext *ctx) {
 }
 
 void BlueprintCanvas::setup_options() {
+	
+	mContextMenu->shed_children();
 	
 	auto key_press_option = std::make_unique<nanogui::Button>(*mContextMenu, "Key Press");
 	auto key_release_option = std::make_unique<nanogui::Button>(*mContextMenu, "Key Release");

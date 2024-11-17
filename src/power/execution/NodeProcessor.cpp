@@ -119,7 +119,7 @@ void blueprint::NodeProcessor::serialize(BlueprintCanvas& canvas, Actor& actor) 
 				const auto& node_inputs = node->get_inputs();
 				const auto& node_outputs = node->get_outputs();
 				
-				auto start_pin_it = std::find_if(node_outputs.begin(), node_outputs.end(), [&link](auto& pin) {
+				auto start_pin_it = std::find_if(node_inputs.begin(), node_inputs.end(), [&link](auto& pin) {
 					return pin->id == link->get_start().id;
 				});
 				

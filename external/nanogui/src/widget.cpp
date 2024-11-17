@@ -72,7 +72,7 @@ void Widget::perform_layout(NVGcontext *ctx) {
 	if (m_layout) {
 		m_layout->perform_layout(ctx, *this);
 	} else {
-		for (auto c : m_children) {
+		for (auto& c : m_children) {
 			const Vector2i &pref = c.get().preferred_size(ctx);
 			const Vector2i &fix = c.get().fixed_size();
 			c.get().set_size(Vector2i(
@@ -177,13 +177,15 @@ void Widget::add_child(Widget& widget) {
 }
 
 void Widget::remove_child(Widget& widget) {
-	size_t child_count = m_children.size();
-	m_children.erase(std::remove_if(m_children.begin(), m_children.end(), [&widget](std::reference_wrapper<Widget> item){
+	auto it = std::find_if(m_children.begin(), m_children.end(),
+						   [&widget](const std::reference_wrapper<Widget>& item) {
 		return &item.get() == &widget;
-	}),
-					 m_children.end());
-	if (m_children.size() == child_count)
+	});
+	if (it == m_children.end()) {
 		throw std::runtime_error("Widget::remove_child(): widget not found!");
+	}
+	
+	m_children.erase(it);
 }
 
 void Widget::remove_child_at(int index) {
