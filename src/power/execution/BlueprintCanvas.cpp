@@ -2,6 +2,12 @@
 
 #include "BlueprintNode.hpp"
 #include "NodeProcessor.hpp"
+#include "BlueprintNode.hpp"
+#include "KeyPressNode.hpp"
+#include "KeyReleaseNode.hpp"
+#include "PrintNode.hpp"
+#include "StringNode.hpp"
+
 
 #include "ShaderManager.hpp"
 
@@ -25,6 +31,40 @@ BlueprintCanvas::BlueprintCanvas(ScenePanel& parent, nanogui::Screen& screen, No
 	mShaderManager = std::make_unique<ShaderManager>(*this);
 	
 	mGrid = std::make_unique<Grid2d>(*mShaderManager);
+	
+	mContextMenu = std::make_unique<nanogui::Popup>(*this);
+	
+	auto key_press_option = std::make_unique<nanogui::Button>(*mContextMenu, "Key Press");
+	auto key_release_option = std::make_unique<nanogui::Button>(*mContextMenu, "Key Release");
+	auto string_option = std::make_unique<nanogui::Button>(*mContextMenu, "String");
+	auto print_option = std::make_unique<nanogui::Button>(*mContextMenu, "Print");
+	
+	key_press_option->set_callback([this](){
+		mContextMenu->set_visible(false);
+		mNodeProcessor.spawn_node<blueprint::KeyPressNode>(*this, mContextMenu->position());
+	});
+
+	key_release_option->set_callback([this](){
+		mContextMenu->set_visible(false);
+		mNodeProcessor.spawn_node<blueprint::KeyReleaseNode>(*this, mContextMenu->position());
+	});
+
+	string_option->set_callback([this](){
+		mContextMenu->set_visible(false);
+		mNodeProcessor.spawn_node<blueprint::StringNode>(*this, mContextMenu->position());
+	});
+
+	print_option->set_callback([this](){
+		mContextMenu->set_visible(false);
+		mNodeProcessor.spawn_node<blueprint::PrintNode>(*this, mContextMenu->position());
+	});
+
+	mNodeOptions.push_back(std::move(key_press_option));
+	mNodeOptions.push_back(std::move(key_release_option));
+	mNodeOptions.push_back(std::move(string_option));
+	mNodeOptions.push_back(std::move(print_option));
+
+	mContextMenu->set_visible(false);
 	
 	// Adjusted orthographic projection parameters
 	float left = -1.0f;
@@ -62,12 +102,6 @@ BlueprintCanvas::BlueprintCanvas(ScenePanel& parent, nanogui::Screen& screen, No
 	});
 	
 	mHeaderHeight = theme().m_window_header_height;
-	
-	add_node(mNodeProcessor.spawn_key_release_node(*this, nanogui::Vector2i(fixed_size().x() / 8, fixed_size().y() / 8)));
-	
-	add_node(mNodeProcessor.spawn_string_node(*this, nanogui::Vector2i(fixed_size().x() / 4, fixed_size().y() / 4)));
-	
-	add_node(mNodeProcessor.spawn_print_string_node(*this, nanogui::Vector2i(fixed_size().x() / 2, fixed_size().y() / 2)));
 	
 	// Register draw callback
 	register_draw_callback([this]() {
@@ -109,14 +143,13 @@ void BlueprintCanvas::on_input_pin_clicked(Pin& pin) {
 		mActiveOutputPin->get().links.push_back(mLinks.back());
 		pin.links.push_back(mLinks.back());
 		
-		
-		//		if(mActiveOutputPin->get().node->link){
-		//			mActiveOutputPin->get().node->link();
-		//		}
-		//
-		//		if(pin.node->link){
-		//			pin.node->link();
-		//		}
+		if(mActiveOutputPin->get().node->link){
+			mActiveOutputPin->get().node->link();
+		}
+
+		if(pin.node->link){
+			pin.node->link();
+		}
 		
 		mActiveOutputPin = std::nullopt;
 		mActiveInputPin = std::nullopt;
@@ -126,8 +159,23 @@ void BlueprintCanvas::on_input_pin_clicked(Pin& pin) {
 	}
 }
 
+bool BlueprintCanvas::mouse_button_event(const nanogui::Vector2i &p, int button, bool down, int modifiers) {
+	
+	if (button == GLFW_MOUSE_BUTTON_RIGHT && down) {
+		//mContextMenu->shed_children(); //@TODO selective options
+		mContextMenu->set_position(nanogui::Vector2i(p.x() + 32, p.y() - 64));
+		mContextMenu->set_visible(true);
+		
+	}
+	
+	return Canvas::mouse_button_event(p, button, down, modifiers);
+}
+
+
 bool BlueprintCanvas::mouse_motion_event(const nanogui::Vector2i &p, const nanogui::Vector2i &rel, int button, int modifiers) {
 	mMousePosition = nanogui::Vector2i(p.x() + absolute_position().x(), p.y() + absolute_position().y() - mHeaderHeight);
+	
+	return Canvas::mouse_motion_event(p, rel, button, modifiers);
 }
 
 void BlueprintCanvas::draw() {

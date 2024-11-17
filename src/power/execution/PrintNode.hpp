@@ -12,7 +12,7 @@ class BlueprintCanvas;
 
 class PrintNode : public BlueprintNode {
 public:
-	PrintNode(std::optional<std::reference_wrapper<BlueprintCanvas>> parent, const std::string& title, nanogui::Vector2i size, std::function<int()> id_registrator_lambda);
+	PrintNode(std::optional<std::reference_wrapper<BlueprintCanvas>> parent, nanogui::Vector2i size, std::function<int()> id_registrator_lambda);
 	
 private:
 	std::unique_ptr<nanogui::TextBox> mTextBox;

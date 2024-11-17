@@ -169,6 +169,14 @@ public:
 	
 	void reset_flow();
 	
+	const std::vector<std::unique_ptr<Pin>>& get_inputs() {
+		return inputs;
+	}
+
+	const std::vector<std::unique_ptr<Pin>>& get_outputs() {
+		return inputs;
+	}
+
 protected:
 	std::vector<std::unique_ptr<Pin>> inputs;
 	std::vector<std::unique_ptr<nanogui::Widget>> data_widgets;
@@ -188,7 +196,7 @@ private:
 
 class Link : public nanogui::Widget {
 public:
-	Link(nanogui::Widget& parent, int id, Pin& start, Pin& end)
+	Link(std::optional<std::reference_wrapper<blueprint::BlueprintCanvas>> parent, int id, Pin& start, Pin& end)
 	: nanogui::Widget(parent), id(id), mStart(start), mEnd(end), color(nanogui::Color(255, 255, 255, 255)) {
 		
 	}

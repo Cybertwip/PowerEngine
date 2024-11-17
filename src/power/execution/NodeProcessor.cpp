@@ -40,57 +40,6 @@ void blueprint::NodeProcessor::build_node(blueprint::BlueprintNode& node){
 	node.build();
 }
 
-blueprint::Link* blueprint::NodeProcessor::create_link(blueprint::BlueprintCanvas& parent, blueprint::Pin& output, blueprint::Pin& input){
-	auto link = std::make_unique<blueprint::Link>(parent, get_next_id(), output, input);
-	links.push_back(std::move(link));
-	
-	return links.back().get();
-}
-
-blueprint::BlueprintNode* blueprint::NodeProcessor::spawn_string_node(blueprint::BlueprintCanvas& parent, const nanogui::Vector2i& position) {
-	auto node = std::make_unique<blueprint::StringNode>(parent, "String",  nanogui::Vector2i(196, 64), [this](){
-		return get_next_id();
-	});
-	node->set_position(position);
-	build_node(*node);
-	nodes.push_back(std::move(node));
-	return nodes.back().get();
-}
-
-blueprint::BlueprintNode* blueprint::NodeProcessor::spawn_print_string_node(blueprint::BlueprintCanvas& parent, const nanogui::Vector2i& position) {
-	auto node = std::make_unique<blueprint::PrintNode>(parent, "Print",  nanogui::Vector2i(128, 64), [this](){
-		return get_next_id();
-	});
-	node->set_position(position);
-	build_node(*node);
-	nodes.push_back(std::move(node));
-	return nodes.back().get();
-}
-
-blueprint::BlueprintNode* blueprint::NodeProcessor::spawn_key_press_node(blueprint::BlueprintCanvas& parent, const nanogui::Vector2i& position) {
-	auto node = std::make_unique<blueprint::KeyPressNode>(parent, "Key Press",  nanogui::Vector2i(136, 64), [this](){
-		return get_next_id();
-	});
-	node->set_position(position);
-	build_node(*node);
-	nodes.push_back(std::move(node));
-	return nodes.back().get();
-}
-
-blueprint::BlueprintNode* blueprint::NodeProcessor::spawn_key_release_node(blueprint::BlueprintCanvas& parent, const nanogui::Vector2i& position) {
-	auto node = std::make_unique<blueprint::KeyReleaseNode>(parent, "Key Release",  nanogui::Vector2i(136, 64), [this](){
-		return get_next_id();
-	});
-	node->set_position(position);
-	build_node(*node);
-	nodes.push_back(std::move(node));
-	return nodes.back().get();
-}
-
-//
-//	Node& spawn_input_action_node(const std::string& key_string, int key_code) {
-//	}
-
 void blueprint::NodeProcessor::evaluate() {
 
 	std::unordered_set<blueprint::BlueprintNode*> evaluated_nodes;
@@ -143,30 +92,50 @@ void blueprint::NodeProcessor::serialize(Actor& actor) {
 		actor.remove_component<BlueprintComponent>();
 	}
 	
-	auto node_processor = std::make_unique<blueprint::NodeProcessor>();
+	if (!nodes.empty()) {
+		auto node_processor = std::make_unique<blueprint::NodeProcessor>();
 		
-	for (auto& node : nodes) {
-		switch (node->type) {
-			case NodeType::KeyPress:
-				node_processor->spawn_node<blueprint::KeyPressNode>(std::nullopt, node->position());
-				break;
-			case NodeType::KeyRelease:
-				node_processor->spawn_node<blueprint::KeyReleaseNode>(std::nullopt, node->position());
-				break;
-			case NodeType::String:
-				node_processor->spawn_node<blueprint::StringNode>(std::nullopt, node->position());
-				break;
-			case NodeType::Print:
-				node_processor->spawn_node<blueprint::PrintNode>(std::nullopt, node->position());
-				break;
+		for (auto& node : nodes) {
+			switch (node->type) {
+				case NodeType::KeyPress:
+					node_processor->spawn_node<blueprint::KeyPressNode>(std::nullopt, node->position());
+					break;
+				case NodeType::KeyRelease:
+					node_processor->spawn_node<blueprint::KeyReleaseNode>(std::nullopt, node->position());
+					break;
+				case NodeType::String:
+					node_processor->spawn_node<blueprint::StringNode>(std::nullopt, node->position());
+					break;
+				case NodeType::Print:
+					node_processor->spawn_node<blueprint::PrintNode>(std::nullopt, node->position());
+					break;
+			}
 		}
-	}
-	
-	for (auto& link : links) {
 		
+		
+		for (auto& link : links) {
+			
+			for (auto& node : node_processor->nodes) {
+				const auto& node_inputs = node->get_inputs();
+				const auto& node_outputs = node->get_outputs();
+				
+				auto start_pin_it = std::find_if(node_outputs.begin(), node_outputs.end(), [&link](auto& pin) {
+					return pin->id == link->get_start().id;
+				});
+				
+				auto end_pin_it = std::find_if(node_outputs.begin(), node_outputs.end(), [&link](auto& pin) {
+					return pin->id == link->get_end().id;
+				});
+				
+				start_pin_it->get()->data = link->get_start().data;
+				end_pin_it->get()->data = link->get_end().data;
+				
+				create_link(std::nullopt, *start_pin_it->get(), *end_pin_it->get());
+			}
+		}
+		actor.add_component<BlueprintComponent>(std::move(node_processor));
 	}
 	
-	actor.add_component<BlueprintComponent>(std::move(node_processor));
 }
 
 void blueprint::NodeProcessor::deserialize(BlueprintCanvas& canvas, Actor& actor) {
@@ -194,8 +163,25 @@ void blueprint::NodeProcessor::deserialize(BlueprintCanvas& canvas, Actor& actor
 			}
 		}
 		
-		for (auto& link : links) {
+		for (auto& link : node_processor.links) {
 			
+			for (auto& node : nodes) {
+				const auto& node_inputs = node->get_inputs();
+				const auto& node_outputs = node->get_outputs();
+				
+				auto start_pin_it = std::find_if(node_outputs.begin(), node_outputs.end(), [&link](auto& pin) {
+					return pin->id == link->get_start().id;
+				});
+
+				auto end_pin_it = std::find_if(node_outputs.begin(), node_outputs.end(), [&link](auto& pin) {
+					return pin->id == link->get_end().id;
+				});
+
+				start_pin_it->get()->data = link->get_start().data;
+				end_pin_it->get()->data = link->get_end().data;
+
+				create_link(canvas, *start_pin_it->get(), *end_pin_it->get());
+			}
 		}
 	}
 }
