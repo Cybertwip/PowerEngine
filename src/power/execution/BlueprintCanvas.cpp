@@ -42,21 +42,25 @@ BlueprintCanvas::BlueprintCanvas(ScenePanel& parent, nanogui::Screen& screen, No
 	key_press_option->set_callback([this](){
 		mContextMenu->set_visible(false);
 		add_node(mNodeProcessor.spawn_node<blueprint::KeyPressNode>(*this, mContextMenu->position()));
+		perform_layout(screen().nvg_context());
 	});
 
 	key_release_option->set_callback([this](){
 		mContextMenu->set_visible(false);
 		add_node(mNodeProcessor.spawn_node<blueprint::KeyReleaseNode>(*this, mContextMenu->position()));
+		perform_layout(screen().nvg_context());
 	});
 
 	string_option->set_callback([this](){
 		mContextMenu->set_visible(false);
 		add_node(mNodeProcessor.spawn_node<blueprint::StringNode>(*this, mContextMenu->position()));
+		perform_layout(screen().nvg_context());
 	});
 
 	print_option->set_callback([this](){
 		mContextMenu->set_visible(false);
 		add_node(mNodeProcessor.spawn_node<blueprint::PrintNode>(*this, mContextMenu->position()));
+		perform_layout(screen().nvg_context());
 	});
 
 	mNodeOptions.push_back(std::move(key_press_option));
@@ -81,6 +85,16 @@ BlueprintCanvas::BlueprintCanvas(ScenePanel& parent, nanogui::Screen& screen, No
 									   nanogui::Vector3f(0, 0, 0),  // Look-at point
 									   nanogui::Vector3f(0, 1, 0)   // Up direction
 									   );
+	
+	parent.register_click_callback(GLFW_MOUSE_BUTTON_RIGHT, [this](bool down, int width, int height, int x, int y) {
+		
+		if (down) {
+			mContextMenu->set_position(nanogui::Vector2i(x + 32, y - 64));
+			mContextMenu->set_visible(true);
+			perform_layout(screen().nvg_context());
+		}
+	});
+
 	
 	parent.register_motion_callback(GLFW_MOUSE_BUTTON_MIDDLE, [this](int width, int height, int x, int y, int dx, int dy, int button, bool down){
 		
@@ -158,19 +172,6 @@ void BlueprintCanvas::on_input_pin_clicked(Pin& pin) {
 		mActiveInputPin = std::nullopt;
 	}
 }
-
-bool BlueprintCanvas::mouse_button_event(const nanogui::Vector2i &p, int button, bool down, int modifiers) {
-	
-	if (button == GLFW_MOUSE_BUTTON_RIGHT && down) {
-		//mContextMenu->shed_children(); //@TODO selective options
-		mContextMenu->set_position(nanogui::Vector2i(p.x() + 32, p.y() - 64));
-		mContextMenu->set_visible(true);
-		
-	}
-	
-	return Canvas::mouse_button_event(p, button, down, modifiers);
-}
-
 
 bool BlueprintCanvas::mouse_motion_event(const nanogui::Vector2i &p, const nanogui::Vector2i &rel, int button, int modifiers) {
 	mMousePosition = nanogui::Vector2i(p.x() + absolute_position().x(), p.y() + absolute_position().y() - mHeaderHeight);
