@@ -14,17 +14,21 @@ mActionButton(add_data_widget<nanogui::Button>("Setup")) {
 	mActionButton.set_fixed_size(nanogui::Vector2i(32, 10));
 	
 	mActionButton.set_callback([this](){
+		mActionButton.set_caption("Press Key");
 		mListening = true;
+		request_focus();
 	});
 }
 
 bool KeyReleaseNode::keyboard_event(int key, int scancode, int action, int modifiers) {
 	if (mListening) {
-		if (action == GLFW_RELEASE) {
+		auto* caption = glfwGetKeyName(key, scancode);
+
+		if (action == GLFW_RELEASE && caption != nullptr) {
 			mKeyCode = key;
 			mListening = false;
 			mConfigured = true;
-			mActionButton.set_caption(glfwGetKeyName(key, scancode));
+			mActionButton.set_caption(caption);
 		}
 	} else {
 		if (mConfigured) {

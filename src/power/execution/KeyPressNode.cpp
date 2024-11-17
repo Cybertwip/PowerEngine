@@ -12,17 +12,22 @@ KeyPressNode::KeyPressNode(BlueprintCanvas& parent, const std::string& title, na
 	};
 		
 	mActionButton.set_callback([this](){
+		mActionButton.set_caption("Press Key");
 		mListening = true;
+		request_focus();
 	});
 }
 
 bool KeyPressNode::keyboard_event(int key, int scancode, int action, int modifiers) {
 	if (mListening) {
-		if (action == GLFW_PRESS) {
+		auto* caption = glfwGetKeyName(key, scancode);
+
+		if (action == GLFW_PRESS && caption != nullptr) {
 			mKeyCode = key;
 			mListening = false;
 			mConfigured = true;
-			mActionButton.set_caption(glfwGetKeyName(key, scancode));
+			
+			mActionButton.set_caption(caption);
 		}
 	} else {
 		if (mConfigured) {
