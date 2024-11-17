@@ -86,7 +86,7 @@ private:
 	}
 	
 	bool mouse_drag_event(const nanogui::Vector2i &p, const nanogui::Vector2i &rel, int button, int modifiers) override {
-		return mWindow.mouse_button_event(p, rel, button, down, modifiers);
+		return mWindow.mouse_button_event(p, rel, button, modifiers);
 	}
 	
 	nanogui::Window& mWindow;
