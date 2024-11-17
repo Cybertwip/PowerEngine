@@ -31,7 +31,7 @@ public:
 	
 	void process_events();
 	
-	void clear_links();
+	void clear();
 	
 	void add_link(Link* link);
 	
