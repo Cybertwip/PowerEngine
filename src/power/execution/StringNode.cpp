@@ -15,7 +15,7 @@ blueprint::StringNode::StringNode(blueprint::BlueprintCanvas& parent, const std:
 		output.can_flow = true;
 	};
 	
-	evaluate = [&textbox]() {
-		data = textbox.value();
+	evaluate = [&output, &textbox]() {
+		output.data = textbox.value();
 	};
 }
