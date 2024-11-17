@@ -17,15 +17,15 @@ blueprint::BlueprintNode::BlueprintNode(blueprint::BlueprintCanvas& parent, cons
 	mColumnContainer->set_layout(std::make_unique<nanogui::GridLayout>(nanogui::Orientation::Horizontal, 3, nanogui::Alignment::Fill));
 	
 	// Left column inputs placeholder
-	mLeftColumn = std::make_unique<PassThroughWidget>(*mColumnContainer);
+	mLeftColumn = std::make_unique<nanogui::Widget>(*mColumnContainer);
 	mLeftColumn->set_layout(std::make_unique<nanogui::BoxLayout>(nanogui::Orientation::Vertical, nanogui::Alignment::Minimum, 0, 0));
 	
 	// Middle column for the node data
-	mDataColumn = std::make_unique<PassThroughWidget>(*mColumnContainer);
+	mDataColumn = std::make_unique<nanogui::Widget>(*mColumnContainer);
 	mDataColumn->set_layout(std::make_unique<nanogui::BoxLayout>(nanogui::Orientation::Vertical, nanogui::Alignment::Minimum, 0, 0));
 	
 	// Right column for output pins: Aligned to the right edge
-	mRightColumn = std::make_unique<PassThroughWidget>(*mColumnContainer);
+	mRightColumn = std::make_unique<nanogui::Widget>(*mColumnContainer);
 	mRightColumn->set_layout(std::make_unique<nanogui::BoxLayout>(nanogui::Orientation::Vertical, nanogui::Alignment::Minimum, 0, 0));
 	
 	mRightColumn->set_position(nanogui::Vector2i(fixed_size().x() - 48, 0));
