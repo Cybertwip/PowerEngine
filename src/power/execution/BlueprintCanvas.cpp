@@ -324,6 +324,10 @@ void BlueprintCanvas::setup_options() {
 	mContextMenu->set_visible(false);
 }
 
+void BlueprintCanvas::clear_links() {
+	mLinks.clear();
+}
+
 void BlueprintCanvas::process_events() {
 	mNodeProcessor.evaluate();
 }

@@ -46,6 +46,7 @@ public:
 	
 	void clear() {
 		mCanvas->shed_children();
+		mCanvas->clear_links();
 		mNodeProcessor->clear();
 	}
 
