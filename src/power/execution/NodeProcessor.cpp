@@ -87,7 +87,7 @@ void blueprint::NodeProcessor::evaluate() {
 	}
 }
 
-void blueprint::NodeProcessor::serialize(Actor& actor) {
+void blueprint::NodeProcessor::serialize(BlueprintCanvas& canvas, Actor& actor) {
 	if (actor.find_component<BlueprintComponent>()) {
 		actor.remove_component<BlueprintComponent>();
 	}
@@ -98,16 +98,16 @@ void blueprint::NodeProcessor::serialize(Actor& actor) {
 		for (auto& node : nodes) {
 			switch (node->type) {
 				case NodeType::KeyPress:
-					node_processor->spawn_node<blueprint::KeyPressNode>(std::nullopt, node->position());
+					node_processor->spawn_node<blueprint::KeyPressNode>(canvas, node->position());
 					break;
 				case NodeType::KeyRelease:
-					node_processor->spawn_node<blueprint::KeyReleaseNode>(std::nullopt, node->position());
+					node_processor->spawn_node<blueprint::KeyReleaseNode>(canvas, node->position());
 					break;
 				case NodeType::String:
-					node_processor->spawn_node<blueprint::StringNode>(std::nullopt, node->position());
+					node_processor->spawn_node<blueprint::StringNode>(canvas, node->position());
 					break;
 				case NodeType::Print:
-					node_processor->spawn_node<blueprint::PrintNode>(std::nullopt, node->position());
+					node_processor->spawn_node<blueprint::PrintNode>(canvas, node->position());
 					break;
 			}
 		}
@@ -130,10 +130,12 @@ void blueprint::NodeProcessor::serialize(Actor& actor) {
 				start_pin_it->get()->data = link->get_start().data;
 				end_pin_it->get()->data = link->get_end().data;
 				
-				create_link(std::nullopt, *start_pin_it->get(), *end_pin_it->get());
+				create_link(canvas, *start_pin_it->get(), *end_pin_it->get());
 			}
 		}
 		actor.add_component<BlueprintComponent>(std::move(node_processor));
+		
+		canvas.shed_children();
 	}
 	
 }

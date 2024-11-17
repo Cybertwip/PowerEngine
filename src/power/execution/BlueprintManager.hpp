@@ -35,7 +35,7 @@ public:
 	}
 	
 	void serialize(Actor& actor) {
-		mNodeProcessor->serialize(actor);
+		mNodeProcessor->serialize(*mCanvas, actor);
 		clear();
 	}
 	

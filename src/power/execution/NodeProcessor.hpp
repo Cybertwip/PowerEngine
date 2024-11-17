@@ -21,12 +21,12 @@ public:
 
 	void evaluate();
 	
-	void serialize(Actor& actor);
+	void serialize(BlueprintCanvas& canvas, Actor& actor);
 	void deserialize(BlueprintCanvas& canvas, Actor& actor);
 	void clear();
 	
 	template<typename T>
-	blueprint::BlueprintNode* spawn_node(std::optional<std::reference_wrapper<blueprint::BlueprintCanvas>> parent, const nanogui::Vector2i& position) {
+	blueprint::BlueprintNode* spawn_node(blueprint::BlueprintCanvas& parent, const nanogui::Vector2i& position) {
 		auto node = std::make_unique<T>(parent, nanogui::Vector2i(196, 64), [this](){
 			return get_next_id();
 		});
@@ -37,7 +37,7 @@ public:
 		return nodes.back().get();
 	}
 	
-	blueprint::Link*  create_link(std::optional<std::reference_wrapper<blueprint::BlueprintCanvas>> parent, blueprint::Pin& output, blueprint::Pin& input){
+	blueprint::Link*  create_link(blueprint::BlueprintCanvas& parent, blueprint::Pin& output, blueprint::Pin& input){
 		auto link = std::make_unique<blueprint::Link>(parent, get_next_id(), output, input);
 		links.push_back(std::move(link));
 		return links.back().get();

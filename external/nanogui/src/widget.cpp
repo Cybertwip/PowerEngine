@@ -168,7 +168,7 @@ void Widget::add_child(int index, Widget& widget) {
 	assert(index <= child_count());
 	m_children.insert(m_children.begin() + index, widget);
 	widget.set_parent(*this);
-	widget.m_screen = m_screen;
+	widget.set_screen(screen());
 	widget.set_theme(m_theme);
 }
 
@@ -268,7 +268,7 @@ void Widget::draw(NVGcontext *ctx) {
 
 void Widget::set_parent(Widget& parent) {
 	m_parent = parent;
-	m_screen = parent.m_screen; // Update screen pointer
+	m_screen = parent.screen(); // Update screen pointer
 }
 
 void Widget::set_screen(Screen& screen) {
