@@ -41,22 +41,22 @@ BlueprintCanvas::BlueprintCanvas(ScenePanel& parent, nanogui::Screen& screen, No
 	
 	key_press_option->set_callback([this](){
 		mContextMenu->set_visible(false);
-		mNodeProcessor.spawn_node<blueprint::KeyPressNode>(*this, mContextMenu->position());
+		add_node(mNodeProcessor.spawn_node<blueprint::KeyPressNode>(*this, mContextMenu->position()));
 	});
 
 	key_release_option->set_callback([this](){
 		mContextMenu->set_visible(false);
-		mNodeProcessor.spawn_node<blueprint::KeyReleaseNode>(*this, mContextMenu->position());
+		add_node(mNodeProcessor.spawn_node<blueprint::KeyReleaseNode>(*this, mContextMenu->position()));
 	});
 
 	string_option->set_callback([this](){
 		mContextMenu->set_visible(false);
-		mNodeProcessor.spawn_node<blueprint::StringNode>(*this, mContextMenu->position());
+		add_node(mNodeProcessor.spawn_node<blueprint::StringNode>(*this, mContextMenu->position()));
 	});
 
 	print_option->set_callback([this](){
 		mContextMenu->set_visible(false);
-		mNodeProcessor.spawn_node<blueprint::PrintNode>(*this, mContextMenu->position());
+		add_node(mNodeProcessor.spawn_node<blueprint::PrintNode>(*this, mContextMenu->position()));
 	});
 
 	mNodeOptions.push_back(std::move(key_press_option));
