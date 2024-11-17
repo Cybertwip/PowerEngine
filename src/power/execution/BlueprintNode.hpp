@@ -84,6 +84,7 @@ private:
 									int modifiers) override {
 			
 		mWindow.mouse_button_event(p, button, down, modifiers);
+		
 		bool handled = nanogui::Widget::mouse_button_event(p, button, down, modifiers);
 		
 		if (down) {
