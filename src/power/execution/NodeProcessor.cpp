@@ -160,8 +160,8 @@ void blueprint::NodeProcessor::deserialize(BlueprintCanvas& canvas, Actor& actor
 		}
 		
 		for (auto& link : node_processor.links) {
-			auto* start_pin = node_processor.find_pin(link->get_start().id);
-			auto* end_pin = node_processor.find_pin(link->get_end().id);
+			auto* start_pin = find_pin(link->get_start().id);
+			auto* end_pin = find_pin(link->get_end().id);
 			
 			assert(start_pin && end_pin);
 			
