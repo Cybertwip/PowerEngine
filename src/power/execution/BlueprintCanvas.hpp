@@ -38,6 +38,8 @@ private:
 	
 	bool query_link(Pin& source_pin, Pin& destination_pin);
 	
+	void setup_options();
+	
 private:
 	std::unique_ptr<ShaderManager> mShaderManager;
 	std::unique_ptr<Grid2d> mGrid;

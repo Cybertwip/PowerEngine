@@ -183,6 +183,8 @@ void blueprint::NodeProcessor::deserialize(BlueprintCanvas& canvas, Actor& actor
 				create_link(canvas, *start_pin_it->get(), *end_pin_it->get());
 			}
 		}
+		
+		canvas.perform_layout(canvas.screen().nvg_context());
 	}
 }
 

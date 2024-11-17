@@ -33,44 +33,6 @@ BlueprintCanvas::BlueprintCanvas(ScenePanel& parent, nanogui::Screen& screen, No
 	
 	mGrid = std::make_unique<Grid2d>(*mShaderManager);
 	
-	mContextMenu = std::make_unique<nanogui::Popup>(*this);
-	
-	auto key_press_option = std::make_unique<nanogui::Button>(*mContextMenu, "Key Press");
-	auto key_release_option = std::make_unique<nanogui::Button>(*mContextMenu, "Key Release");
-	auto string_option = std::make_unique<nanogui::Button>(*mContextMenu, "String");
-	auto print_option = std::make_unique<nanogui::Button>(*mContextMenu, "Print");
-	
-	key_press_option->set_callback([this](){
-		mContextMenu->set_visible(false);
-		add_node(mNodeProcessor.spawn_node<blueprint::KeyPressNode>(*this, mContextMenu->position()));
-		perform_layout(this->screen().nvg_context());
-	});
-
-	key_release_option->set_callback([this](){
-		mContextMenu->set_visible(false);
-		add_node(mNodeProcessor.spawn_node<blueprint::KeyReleaseNode>(*this, mContextMenu->position()));
-		perform_layout(this->screen().nvg_context());
-	});
-
-	string_option->set_callback([this](){
-		mContextMenu->set_visible(false);
-		add_node(mNodeProcessor.spawn_node<blueprint::StringNode>(*this, mContextMenu->position()));
-		perform_layout(this->screen().nvg_context());
-	});
-
-	print_option->set_callback([this](){
-		mContextMenu->set_visible(false);
-		add_node(mNodeProcessor.spawn_node<blueprint::PrintNode>(*this, mContextMenu->position()));
-		perform_layout(this->screen().nvg_context());
-	});
-
-	mNodeOptions.push_back(std::move(key_press_option));
-	mNodeOptions.push_back(std::move(key_release_option));
-	mNodeOptions.push_back(std::move(string_option));
-	mNodeOptions.push_back(std::move(print_option));
-
-	mContextMenu->set_visible(false);
-	
 	// Adjusted orthographic projection parameters
 	float left = -1.0f;
 	float right = 1.0f;
@@ -90,7 +52,9 @@ BlueprintCanvas::BlueprintCanvas(ScenePanel& parent, nanogui::Screen& screen, No
 	parent.register_click_callback(GLFW_MOUSE_BUTTON_RIGHT, [this](bool down, int width, int height, int x, int y) {
 		
 		if (down) {
-			mContextMenu->set_position(nanogui::Vector2i(x + 32, y - 64));
+			mContextMenu = std::make_unique<nanogui::Popup>(*this);
+			setup_options();
+			mContextMenu->set_position(nanogui::Vector2i(x + 32, y - 256));
 			mContextMenu->set_visible(true);
 			perform_layout(this->screen().nvg_context());
 		}
@@ -309,6 +273,47 @@ void BlueprintCanvas::draw(NVGcontext *ctx) {
 			nvgFill(ctx);
 		}
 	}
+}
+
+void BlueprintCanvas::setup_options() {
+	
+	auto key_press_option = std::make_unique<nanogui::Button>(*mContextMenu, "Key Press");
+	auto key_release_option = std::make_unique<nanogui::Button>(*mContextMenu, "Key Release");
+	auto string_option = std::make_unique<nanogui::Button>(*mContextMenu, "String");
+	auto print_option = std::make_unique<nanogui::Button>(*mContextMenu, "Print");
+	
+	key_press_option->set_callback([this](){
+		mContextMenu->set_visible(false);
+		add_node(mNodeProcessor.spawn_node<blueprint::KeyPressNode>(*this, mContextMenu->position()));
+		perform_layout(this->screen().nvg_context());
+	});
+	
+	key_release_option->set_callback([this](){
+		mContextMenu->set_visible(false);
+		add_node(mNodeProcessor.spawn_node<blueprint::KeyReleaseNode>(*this, mContextMenu->position()));
+		perform_layout(this->screen().nvg_context());
+	});
+	
+	string_option->set_callback([this](){
+		mContextMenu->set_visible(false);
+		add_node(mNodeProcessor.spawn_node<blueprint::StringNode>(*this, mContextMenu->position()));
+		perform_layout(this->screen().nvg_context());
+	});
+	
+	print_option->set_callback([this](){
+		mContextMenu->set_visible(false);
+		add_node(mNodeProcessor.spawn_node<blueprint::PrintNode>(*this, mContextMenu->position()));
+		perform_layout(this->screen().nvg_context());
+	});
+	
+	mNodeOptions.clear();
+	
+	mNodeOptions.push_back(std::move(key_press_option));
+	mNodeOptions.push_back(std::move(key_release_option));
+	mNodeOptions.push_back(std::move(string_option));
+	mNodeOptions.push_back(std::move(print_option));
+	
+	mContextMenu->set_visible(false);
 }
 
 void BlueprintCanvas::process_events() {

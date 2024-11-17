@@ -35,8 +35,8 @@ public:
 	}
 	
 	void serialize(Actor& actor) {
-		clear();
 		mNodeProcessor->serialize(actor);
+		clear();
 	}
 	
 	void deserialize(Actor& actor) {
