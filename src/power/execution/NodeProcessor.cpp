@@ -1,74 +1,63 @@
 #include "NodeProcessor.hpp"
 
-#include "BlueprintCanvas.hpp"
-#include "Node.hpp"
-#include "StringNode.hpp"
-#include "PrintNode.hpp"
+#include "Canvas.hpp"
 
-namespace blueprint {
-NodeProcessor::NodeProcessor(BlueprintCanvas& canvas)
-: mCanvas(canvas) {
+#include "BlueprintCanvas.hpp"
+#include "BlueprintNode.hpp"
+#include "KeyPressNode.hpp"
+#include "PrintNode.hpp"
+#include "StringNode.hpp"
+
+blueprint::NodeProcessor::NodeProcessor() {
 	
 }
 
-int NodeProcessor::get_next_id() {
+int blueprint::NodeProcessor::get_next_id() {
 	return next_id++;
 }
 
-void NodeProcessor::build_node(Node& node){
+void blueprint::NodeProcessor::build_node(blueprint::BlueprintNode& node){
 	node.build();
 }
 
-void NodeProcessor::spawn_string_node(const nanogui::Vector2i& position) {
-	auto node = std::make_unique<StringNode>(mCanvas, "String",  nanogui::Vector2i(196, 64), get_next_id(), get_next_id());
-	node->set_position(position);
-	build_node(*node);
-	nodes.push_back(std::move(node));
-	mCanvas.add_node(nodes.back().get());
+blueprint::Link* blueprint::NodeProcessor::create_link(blueprint::BlueprintCanvas& parent, blueprint::Pin& output, blueprint::Pin& input){
+	auto link = std::make_unique<blueprint::Link>(parent, get_next_id(), output, input);
+	links.push_back(std::move(link));
+	
+	return links.back().get();
 }
 
-void NodeProcessor::spawn_print_string_node(const nanogui::Vector2i& position) {
-	auto node = std::make_unique<PrintNode>(mCanvas, "Print",  nanogui::Vector2i(128, 64), get_next_id(), get_next_id(), get_next_id(), get_next_id());
+blueprint::BlueprintNode* blueprint::NodeProcessor::spawn_string_node(blueprint::BlueprintCanvas& parent, const nanogui::Vector2i& position) {
+	auto node = std::make_unique<blueprint::StringNode>(parent, "String",  nanogui::Vector2i(196, 64), get_next_id(), get_next_id());
 	node->set_position(position);
 	build_node(*node);
 	nodes.push_back(std::move(node));
-	mCanvas.add_node(nodes.back().get());
+	return nodes.back().get();
+}
+
+blueprint::BlueprintNode* blueprint::NodeProcessor::spawn_print_string_node(blueprint::BlueprintCanvas& parent, const nanogui::Vector2i& position) {
+	auto node = std::make_unique<blueprint::PrintNode>(parent, "Print",  nanogui::Vector2i(128, 64), get_next_id(), get_next_id(), get_next_id(), get_next_id());
+	node->set_position(position);
+	build_node(*node);
+	nodes.push_back(std::move(node));
+	
+	return nodes.back().get();
+}
+
+blueprint::BlueprintNode* blueprint::NodeProcessor::spawn_key_press_node(blueprint::BlueprintCanvas& parent, const nanogui::Vector2i& position) {
+	auto node = std::make_unique<blueprint::KeyPressNode>(parent, "Key Press",  nanogui::Vector2i(128, 64), get_next_id(), get_next_id());
+	node->set_position(position);
+	build_node(*node);
+	nodes.push_back(std::move(node));
+	return nodes.back().get();
 }
 
 //
 //	Node& spawn_input_action_node(const std::string& key_string, int key_code) {
-//		auto label = "Input Action " + key_string;
-//		auto node = std::make_unique<Node>(get_next_id(), label.c_str(), nanogui::Color(255, 128, 128, 255));
-//		node->root_node = true;
-//		node->outputs.emplace_back(get_next_id(), node->id, "Pressed", PinType::Flow);
-//		node->outputs.emplace_back(get_next_id(), node->id, "Released", PinType::Flow);
-//
-//		node->evaluate = [node = node.get(), key_code]() {
-//			if (key_code != -1) {
-//				if (glfwGetKey(glfwGetCurrentContext(), key_code) == GLFW_PRESS) {
-//					node->outputs[0].can_flow = true;
-//				} else if (glfwGetKey(glfwGetCurrentContext(), key_code) == GLFW_RELEASE) {
-//					if (node->outputs[0].can_flow) {
-//						node->outputs[0].can_flow = false;
-//						node->outputs[1].can_flow = true;
-//					} else {
-//						node->outputs[1].can_flow = false;
-//					}
-//				}
-//			} else {
-//				node->outputs[0].can_flow = false;
-//				node->outputs[1].can_flow = false;
-//			}
-//		};
-//
-//		build_node(node.get());
-//		nodes.push_back(std::move(node));
-//		return *nodes.back().get();
 //	}
 
-void NodeProcessor::evaluate(Node& node) {
+void blueprint::NodeProcessor::evaluate(blueprint::BlueprintNode& node) {
 	if (node.evaluate) {
 		node.evaluate();
 	}
-}
 }

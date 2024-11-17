@@ -18,7 +18,7 @@ NAMESPACE_BEGIN(nanogui)
 
 Button::Button(Widget& parent,  const std::string &caption, int icon)
     : Widget(std::make_optional<std::reference_wrapper<Widget>>(parent)), m_caption(caption), m_icon(icon),
-      m_icon_position(IconPosition::LeftCentered), m_pushed(false),
+      m_icon_position(IconPosition::LeftCentered), m_programmable(false), m_pushed(false),
       m_flags(NormalButton), m_background_color(Color(0, 0)),
       m_text_color(Color(0, 0)) { }
 
@@ -91,16 +91,20 @@ bool Button::mouse_button_event(const Vector2i &p, int button, bool down, int mo
                 dynamic_cast<nanogui::PopupButton*>(this)->popup().request_focus();
             }
             if (m_flags & ToggleButton)
-                m_pushed = !m_pushed;
-            else
-                m_pushed = true;
+			{
+				if (!m_programmable) {
+					m_pushed = !m_pushed;
+				}
+			} else {
+				m_pushed = true;
+			}
         }
 		
-		if (m_pushed || (m_flags & MenuButton)) {
+		if (m_pushed || (m_flags & MenuButton) || (m_flags & ToggleButton)) {
             if (m_flags & NormalButton)
                 m_pushed = false;
 			
-			if (contains(p) && m_callback)
+			if (contains(p) && m_callback && down)
 				m_callback();
 		} 
 		

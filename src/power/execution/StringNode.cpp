@@ -1,8 +1,7 @@
 #include "StringNode.hpp"
 
-namespace blueprint {
-StringNode::StringNode(BlueprintCanvas& parent, const std::string& title, nanogui::Vector2i size, int id, int output_pin_id)
-: Node(parent, title, size, id) {
+blueprint::StringNode::StringNode(blueprint::BlueprintCanvas& parent, const std::string& title, nanogui::Vector2i size, int id, int output_pin_id)
+: BlueprintNode(parent, title, size, id, nanogui::Color(255, 0, 255, 255)) {
 	
 	// Text box inside the node data wrapper: Will be centered due to the vertical alignment
 	auto& textbox = add_data_widget<nanogui::TextBox>("");
@@ -15,5 +14,4 @@ StringNode::StringNode(BlueprintCanvas& parent, const std::string& title, nanogu
 	link = [&output](){
 		output.can_flow = true;
 	};
-}
 }

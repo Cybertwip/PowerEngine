@@ -95,6 +95,10 @@ public:
     bool pushed() const { return m_pushed; }
     /// Sets whether or not this Button is currently pushed.
     void set_pushed(bool pushed) { m_pushed = pushed; }
+	
+	void set_programmable(bool programmable) {
+		m_programmable = programmable;
+	}
 
     /// Return the push callback (for any type of button)
     const std::function<void()> &callback() const { return m_callback; }
@@ -137,6 +141,8 @@ protected:
 
     /// The position to draw the icon at.
     IconPosition m_icon_position;
+	
+	bool m_programmable;
 
     /// Whether or not this Button is currently pushed.
     bool m_pushed;
