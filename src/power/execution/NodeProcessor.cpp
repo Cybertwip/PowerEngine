@@ -126,7 +126,7 @@ void blueprint::NodeProcessor::serialize(BlueprintCanvas& canvas, Actor& actor) 
 				end_pin->data = link->get_end().data;
 			}
 
-			node_processor->create_link(canvas, *start_pin, *end_pin);
+			node_processor->create_link(canvas, link->id, *start_pin, *end_pin);
 		}
 		
 		actor.add_component<BlueprintComponent>(std::move(node_processor));
@@ -173,7 +173,7 @@ void blueprint::NodeProcessor::deserialize(BlueprintCanvas& canvas, Actor& actor
 				end_pin->data = link->get_end().data;
 			}
 			
-			create_link(canvas, *start_pin, *end_pin);
+			create_link(canvas, link->id, *start_pin, *end_pin);
 		}
 		
 		canvas.perform_layout(canvas.screen().nvg_context());

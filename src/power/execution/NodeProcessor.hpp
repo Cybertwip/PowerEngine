@@ -37,8 +37,8 @@ public:
 		return nodes.back().get();
 	}
 	
-	blueprint::Link*  create_link(blueprint::BlueprintCanvas& parent, blueprint::Pin& output, blueprint::Pin& input){
-		auto link = std::make_unique<blueprint::Link>(parent, get_next_id(), output, input);
+	blueprint::Link* create_link(blueprint::BlueprintCanvas& parent, long long id, blueprint::Pin& output, blueprint::Pin& input){
+		auto link = std::make_unique<blueprint::Link>(parent, id, output, input);
 		links.push_back(std::move(link));
 		parent.add_link(links.back().get());
 		return links.back().get();
