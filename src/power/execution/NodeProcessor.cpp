@@ -139,6 +139,10 @@ void blueprint::NodeProcessor::evaluate() {
 }
 
 void blueprint::NodeProcessor::serialize(Actor& actor) {
+	if (actor.find_component<BlueprintComponent>()) {
+		actor.remove_component<BlueprintComponent>();
+	}
+	
 	auto node_processor = std::make_unique<blueprint::NodeProcessor>();
 		
 	for (auto& node : nodes) {
@@ -194,8 +198,6 @@ void blueprint::NodeProcessor::deserialize(BlueprintCanvas& canvas, Actor& actor
 			
 		}
 	}
-
-
 }
 
 
