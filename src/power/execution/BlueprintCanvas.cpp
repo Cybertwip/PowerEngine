@@ -124,7 +124,7 @@ bool BlueprintCanvas::query_link(Pin& source_pin, Pin& destination_pin) {
 void BlueprintCanvas::on_input_pin_clicked(Pin& pin) {
 	if (mActiveOutputPin.has_value() && query_link(mActiveOutputPin->get(), pin)) {
 		mActiveInputPin = pin;
-		mLinks.push_back(mNodeProcessor.create_link(*this, *mActiveOutputPin, pin));
+		mNodeProcessor.create_link(*this, *mActiveOutputPin, pin);
 		mActiveOutputPin->get().links.push_back(mLinks.back());
 		pin.links.push_back(mLinks.back());
 		
@@ -326,6 +326,10 @@ void BlueprintCanvas::setup_options() {
 
 void BlueprintCanvas::clear_links() {
 	mLinks.clear();
+}
+
+void BlueprintCanvas::add_link(Link* link) {
+	mLinks.push_back(link);
 }
 
 void BlueprintCanvas::process_events() {

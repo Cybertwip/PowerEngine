@@ -112,7 +112,6 @@ void blueprint::NodeProcessor::serialize(BlueprintCanvas& canvas, Actor& actor) 
 			}
 		}
 		
-		
 		for (auto& link : links) {
 			auto* start_pin = node_processor->find_pin(link->get_start().id);
 			auto* end_pin = node_processor->find_pin(link->get_end().id);
@@ -210,4 +209,5 @@ blueprint::Pin* blueprint::NodeProcessor::find_pin(long long id) {
 void blueprint::NodeProcessor::clear() {
 	nodes.clear();
 	links.clear();
+	next_id = 1;
 }
