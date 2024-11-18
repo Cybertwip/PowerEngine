@@ -55,6 +55,8 @@ private:
 	float mScrollX;
 	float mScrollY;
 	
+	bool mScrolling;
+	
 	NodeProcessor& mNodeProcessor;
 	
 	std::vector<blueprint::BlueprintNode*> mNodes;

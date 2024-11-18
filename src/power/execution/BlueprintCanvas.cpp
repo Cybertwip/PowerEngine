@@ -27,6 +27,7 @@ BlueprintCanvas::BlueprintCanvas(ScenePanel& parent, nanogui::Screen& screen, No
 : Canvas(parent, screen, backgroundColor)
 , mScrollX(0)
 , mScrollY(0)
+, mScrolling(false)
 , mNodeProcessor(nodeProcessor)
 , mMousePosition(0, 0) {
 	mShaderManager = std::make_unique<ShaderManager>(*this);
@@ -52,18 +53,29 @@ BlueprintCanvas::BlueprintCanvas(ScenePanel& parent, nanogui::Screen& screen, No
 	
 	parent.register_click_callback(GLFW_MOUSE_BUTTON_RIGHT, [this](bool down, int width, int height, int x, int y) {
 		
-		if (down) {
-			remove_child(*mContextMenu);
-			add_child(*mContextMenu);
-			setup_options();
-			mContextMenu->set_position(nanogui::Vector2i(x + 32, y - 256));
-			mContextMenu->set_visible(true);
-			perform_layout(this->screen().nvg_context());
+		if (!down) {
+			if (!mScrolling) {
+				remove_child(*mContextMenu);
+				add_child(*mContextMenu);
+				setup_options();
+				mContextMenu->set_position(nanogui::Vector2i(x + 32, y - 256));
+				mContextMenu->set_visible(true);
+				perform_layout(this->screen().nvg_context());
+			}
 		}
+		
+		
+		mScrolling = false;
 	});
 
 	
 	parent.register_motion_callback(GLFW_MOUSE_BUTTON_MIDDLE, [this](int width, int height, int x, int y, int dx, int dy, int button, bool down){
+		
+		mScrolling = down;
+		
+		if (mScrolling) {
+			mContextMenu->set_visible(false);
+		}
 		
 		// because dx and dy are global screen space and its range is -0.5 to 0.5
 		float scaledDx = dx * (width / fixed_width()) * 2.0f;
