@@ -158,7 +158,11 @@ bool BlueprintCanvas::mouse_motion_event(const nanogui::Vector2i &p, const nanog
 }
 
 void BlueprintCanvas::draw() {
-//	render_pass().clear_color(0, background_color()); // globally cleared
+	//	render_pass().clear_color(0, background_color()); // globally cleared
+	
+	render_pass().clear_depth(1.0f);
+	
+	render_pass().set_depth_test(nanogui::RenderPass::DepthTest::Always, true); // draw on top
 	mGrid->draw_content(nanogui::Matrix4f::identity(), mView, mProjection);
 }
 

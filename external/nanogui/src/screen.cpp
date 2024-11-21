@@ -125,8 +125,6 @@ m_stencil_buffer(stencil_buffer), m_float_buffer(float_buffer), m_redraw(false),
 	
 	glfwWindowHint(GLFW_REFRESH_RATE, 60);
 
-	glfwWindowHint(GLFW_TRANSPARENT_FRAMEBUFFER, GLFW_TRUE);
-
 #if defined(__APPLE__)
 	glfwWindowHint(GLFW_COCOA_GRAPHICS_SWITCHING, GLFW_FALSE); // Disable graphics switching
 

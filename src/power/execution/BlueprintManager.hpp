@@ -20,12 +20,12 @@ public:
 		// Set the layout to horizontal with some padding
 		set_layout(std::make_unique<nanogui::GroupLayout>(0, 0, 0));
 		
-		set_background_color(nanogui::Color(0, 0, 0, 0));
+		set_background_color(nanogui::Color(35, 65, 90, 32));
 		
 		mNodeProcessor = std::make_unique<blueprint::NodeProcessor>();
 		
 		// Ensure the canvas is created with the correct dimensions or set it explicitly if needed
-		mCanvas = std::make_unique<blueprint::BlueprintCanvas>(*this, parent.screen(), *mNodeProcessor, nanogui::Color(35, 65, 90, 64));
+		mCanvas = std::make_unique<blueprint::BlueprintCanvas>(*this, parent.screen(), *mNodeProcessor, nanogui::Color(0, 0, 0, 0));
 		
 		mCanvas->set_fixed_size(nanogui::Vector2i(fixed_width(), parent.fixed_height() * 0.71));
 	}

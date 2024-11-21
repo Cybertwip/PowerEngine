@@ -19,6 +19,6 @@ fragment float4 fragment_main(VertexOut in [[stage_in]],
 
     // Colors with solid background
     float4 gridColor = float4(0.0, 0.0, 0.0, 1.0); // Black lines
-    float4 backgroundColor = float4(0.0, 0.0, 0.0, 0.0); // Transparent background
+    float4 backgroundColor = float4(1.0, 1.0, 1.0, 0.0); // White background
     return mix(gridColor, backgroundColor, lineIntensity);
 }
