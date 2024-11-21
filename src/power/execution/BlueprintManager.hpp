@@ -20,7 +20,7 @@ public:
 		// Set the layout to horizontal with some padding
 		set_layout(std::make_unique<nanogui::GroupLayout>(0, 0, 0));
 		
-		set_background_color(nanogui::Color(35, 65, 90, 32));
+		set_background_color(nanogui::Color(35, 65, 90, 192));
 		
 		mNodeProcessor = std::make_unique<blueprint::NodeProcessor>();
 		
