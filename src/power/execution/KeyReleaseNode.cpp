@@ -8,7 +8,7 @@ namespace blueprint {
 KeyReleaseNode::KeyReleaseNode(std::optional<std::reference_wrapper<BlueprintCanvas>> parent, nanogui::Vector2i size, std::function<int()> id_registrator_lambda)
 : BlueprintNode(parent, NodeType::KeyRelease, "Key Release", size, id_registrator_lambda(), nanogui::Color(255, 0, 255, 255)), mKeyCode(-1), mListening(false), mConfigured(false), mTriggered(false),
 	mActionButton(add_data_widget<PassThroughButton>(*this, "Set")) {
-	auto& output_flow = add_output(id_registrator_lambda(), this->id, "", PinType::Flow);
+	auto& output_flow = add_output(id_registrator_lambda(), this->id, "", PinType::Flow, PinSubType::None);
 	root_node = true;
 		evaluate = [this, &output_flow]() {
 			if (mConfigured) {

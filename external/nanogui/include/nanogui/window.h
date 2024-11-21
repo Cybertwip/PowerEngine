@@ -41,6 +41,9 @@ public:
 
     /// Center the window in the current \ref Screen
     void center();
+	
+	void set_background_color(std::optional<Color> color) { m_background_color = color; }
+
 
     /// Draw the window
     virtual void draw(NVGcontext *ctx) override;
@@ -64,6 +67,9 @@ protected:
     std::unique_ptr<Widget> m_button_panel;
     bool m_modal;
     bool m_drag;
+	
+	std::optional<Color> m_background_color; // New member variable
+
 };
 
 NAMESPACE_END(nanogui)

@@ -31,68 +31,6 @@ blueprint::BlueprintNode::BlueprintNode(std::optional<std::reference_wrapper<blu
 	mRightColumn->set_position(nanogui::Vector2i(fixed_size().x() - 48, 0));
 }
 
-Pin& blueprint::BlueprintNode::add_input(int pin_id, int node_id, const std::string& label, PinType pin_type) {
-	
-	auto& parent = pin_type == PinType::Flow ? *mFlowContainer : *mLeftColumn;
-	
-	auto input = std::make_unique<Pin>(parent, pin_id, node_id, label, pin_type);
-	
-	input->set_programmable(true);
-	
-	if (pin_type == PinType::Flow) {
-		input->set_icon(FA_PLAY);
-	}
-	
-	if (mCanvas.has_value()) {
-		auto& input_ref = *input;
-		
-		input->set_callback([this, &input_ref](){
-			mCanvas->get().on_input_pin_clicked(input_ref);
-		});
-	}
-	
-	input->set_fixed_size(nanogui::Vector2i(22, 22));
-	
-	if (pin_type == PinType::Flow) {
-		input->set_position(nanogui::Vector2i(5, 3));
-	}
-	
-	inputs.push_back(std::move(input));
-	
-	return *inputs.back();
-}
-
-Pin& blueprint::BlueprintNode::add_output(int pin_id, int node_id, const std::string& label, PinType pin_type) {
-	auto& parent = pin_type == PinType::Flow ? *mFlowContainer : *mRightColumn;
-	
-	auto output = std::make_unique<Pin>(parent, pin_id, node_id, label, pin_type);
-	
-	output->set_programmable(true);
-	
-	if (pin_type == PinType::Flow) {
-		output->set_icon(FA_PLAY);
-	}
-	
-	if (mCanvas.has_value()) {
-		auto& output_ref = *output;
-		
-		output->set_callback([this, &output_ref](){
-			mCanvas->get().on_output_pin_clicked(output_ref);
-		});
-
-	}
-	
-	output->set_fixed_size(nanogui::Vector2i(22, 22));
-	
-	if (pin_type == PinType::Flow) {
-		output->set_position(nanogui::Vector2i(fixed_size().x() - 22 - 5, 3));
-	}
-	
-	outputs.push_back(std::move(output));
-	
-	return *outputs.back();
-}
-
 void blueprint::BlueprintNode::build() {
 	for (auto& input : inputs) {
 		input->node = this;

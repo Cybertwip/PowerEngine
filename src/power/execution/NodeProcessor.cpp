@@ -83,7 +83,7 @@ void blueprint::NodeProcessor::evaluate() {
 			in_pin.can_flow = can_flow;
 		}
 		
-		in_pin.data = out_pin.data;
+		in_pin.set_data(out_pin.get_data());
 	}
 }
 
@@ -118,12 +118,12 @@ void blueprint::NodeProcessor::serialize(BlueprintCanvas& canvas, Actor& actor) 
 			
 			assert(start_pin && end_pin);
 			
-			if (link->get_start().data.has_value()) {
-				start_pin->data = link->get_start().data;
+			if (link->get_start().get_data().has_value()) {
+				start_pin->set_data(link->get_start().get_data());
 			}
 
-			if (link->get_end().data.has_value()) {
-				end_pin->data = link->get_end().data;
+			if (link->get_end().get_data().has_value()) {
+				end_pin->set_data(link->get_end().get_data());
 			}
 
 			node_processor->create_link(canvas, link->get_id(), *start_pin, *end_pin);
@@ -165,12 +165,12 @@ void blueprint::NodeProcessor::deserialize(BlueprintCanvas& canvas, Actor& actor
 			
 			assert(start_pin && end_pin);
 			
-			if (link->get_start().data.has_value()) {
-				start_pin->data = link->get_start().data;
+			if (link->get_start().get_data().has_value()) {
+				start_pin->set_data(link->get_start().get_data());
 			}
 			
-			if (link->get_end().data.has_value()) {
-				end_pin->data = link->get_end().data;
+			if (link->get_end().get_data().has_value()) {
+				end_pin->set_data(link->get_end().get_data());
 			}
 			
 			create_link(canvas, link->get_id(), *start_pin, *end_pin);

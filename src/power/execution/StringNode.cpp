@@ -1,5 +1,32 @@
 #include "StringNode.hpp"
 
+namespace {
+class StringPin : public blueprint::Pin {
+public:
+	StringPin(nanogui::Widget& parent, int id, int node_id, const std::string& label, blueprint::PinType type, blueprint::PinSubType subtype, nanogui::TextBox& textbox)
+	: blueprint::Pin(parent, id, node_id, label, type, subtype)
+	, mTextBox(textbox) {
+		
+	}
+	
+	std::optional<std::variant<blueprint::Entity, std::string, int, float, bool>> get_data() override {
+		return mTextBox.value();
+	}
+	
+	void set_data(std::optional<std::variant<blueprint::Entity, std::string, int, float, bool>> data) override {
+		if (data.has_value()) {
+			mTextBox.set_value(std::get<std::string>(*data));
+		} else {
+			mTextBox.set_value("");
+		}
+	}
+	
+private:
+	nanogui::TextBox& mTextBox;
+};
+
+}
+
 blueprint::StringNode::StringNode(std::optional<std::reference_wrapper<BlueprintCanvas>> parent, nanogui::Vector2i size, std::function<int()> id_registrator_lambda)
 : BlueprintNode(parent, NodeType::String, "String", size, id_registrator_lambda(), nanogui::Color(255, 0, 255, 255)) {
 	
@@ -9,13 +36,9 @@ blueprint::StringNode::StringNode(std::optional<std::reference_wrapper<Blueprint
 	textbox.set_editable(true);
 	textbox.set_alignment(nanogui::TextBox::Alignment::Left);
 	
-	auto& output = add_output(id_registrator_lambda(), this->id, "", PinType::String);
+	auto& output = add_output<StringPin>(id_registrator_lambda(), this->id, "", PinType::String, PinSubType::None, textbox);
 	
 	link = [&output](){
 		output.can_flow = true;
-	};
-	
-	evaluate = [&output, &textbox]() {
-		output.data = textbox.value();
 	};
 }

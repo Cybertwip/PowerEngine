@@ -64,7 +64,6 @@ BlueprintCanvas::BlueprintCanvas(ScenePanel& parent, nanogui::Screen& screen, No
 			}
 		}
 		
-		
 		mScrolling = false;
 	});
 

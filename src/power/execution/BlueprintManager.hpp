@@ -20,10 +20,12 @@ public:
 		// Set the layout to horizontal with some padding
 		set_layout(std::make_unique<nanogui::GroupLayout>(0, 0, 0));
 		
+		set_background_color(nanogui::Color(0, 0, 0, 0));
+		
 		mNodeProcessor = std::make_unique<blueprint::NodeProcessor>();
 		
 		// Ensure the canvas is created with the correct dimensions or set it explicitly if needed
-		mCanvas = std::make_unique<blueprint::BlueprintCanvas>(*this, parent.screen(), *mNodeProcessor, nanogui::Color(35, 65, 90, 255));
+		mCanvas = std::make_unique<blueprint::BlueprintCanvas>(*this, parent.screen(), *mNodeProcessor, nanogui::Color(35, 65, 90, 32));
 		
 		mCanvas->set_fixed_size(nanogui::Vector2i(fixed_width(), parent.fixed_height() * 0.71));
 	}
@@ -82,6 +84,8 @@ public:
 			toggle_blueprint_panel(active);
 		});
 		
+		mBlueprintButton->set_enabled(false);
+		
 		mRegistry->RegisterOnActorSelectedCallback(*this);
 
 	}
@@ -100,7 +104,11 @@ public:
 		
 		if (mActiveActor.has_value()) {
 			mBlueprintPanel->deserialize(mActiveActor->get());
+			mBlueprintButton->set_enabled(true);
 		} else {
+			mBlueprintButton->set_enabled(false);
+			mBlueprintButton->set_pushed(false);
+			toggle_blueprint_panel(false);
 			mBlueprintPanel->clear();
 		}
 	}

@@ -60,22 +60,32 @@ public:
 	PinSubType subtype;
 	PinKind kind;
 	bool can_flow = false;
-	std::optional<std::variant<Entity, std::string, int, float, bool>> data;
 	
 	std::vector<Link*> links;
 	
 	Pin(nanogui::Widget& parent, int id, int node_id, const std::string& label, PinType type, PinSubType subtype = PinSubType::None)
 	: nanogui::ToolButton(parent, FA_CIRCLE_NOTCH, label), id(id), node_id(node_id), node(nullptr), type(type), subtype(subtype), kind(PinKind::Input) {
 		if (type == PinType::Bool) {
-			data = true;
+			set_data(true);
 		} else if (type == PinType::String) {
-			data = "";
+			set_data("");
 		} else if (type == PinType::Float) {
-			data = 0.0f;
+			set_data(0.0f);
 		} else if (type == PinType::Flow) {
-			data = true;
+			set_data(true);
 		}
 	}
+	
+	virtual std::optional<std::variant<Entity, std::string, int, float, bool>> get_data() {
+		return mData;
+	}
+	
+	virtual void set_data(std::optional<std::variant<Entity, std::string, int, float, bool>> data) {
+		mData = data;
+	}
+	
+private:
+	std::optional<std::variant<Entity, std::string, int, float, bool>> mData;
 };
 
 
@@ -161,10 +171,69 @@ public:
 	}
 	
 	
-	Pin& add_input(int pin_id, int node_id, const std::string& label, PinType pin_type);
-	
-	Pin& add_output(int pin_id, int node_id, const std::string& label, PinType pin_type);
-	
+	template<typename T = Pin, typename... Args>
+	Pin& add_input(int pin_id, int node_id, const std::string& label, PinType pin_type, PinSubType pin_subtype, Args &&...args) {
+		
+		auto& parent = pin_type == PinType::Flow ? *mFlowContainer : *mLeftColumn;
+		
+		auto input = std::make_unique<T>(parent, pin_id, node_id, label, pin_type, pin_subtype, std::forward<Args>(args)...);
+
+		input->set_programmable(true);
+		
+		if (pin_type == PinType::Flow) {
+			input->set_icon(FA_PLAY);
+		}
+		
+		if (mCanvas.has_value()) {
+			auto& input_ref = *input;
+			
+			input->set_callback([this, &input_ref](){
+				mCanvas->get().on_input_pin_clicked(input_ref);
+			});
+		}
+		
+		input->set_fixed_size(nanogui::Vector2i(22, 22));
+		
+		if (pin_type == PinType::Flow) {
+			input->set_position(nanogui::Vector2i(5, 3));
+		}
+		
+		inputs.push_back(std::move(input));
+		
+		return *inputs.back();
+	}
+
+	template<typename T = Pin, typename... Args>
+	Pin& add_output(int pin_id, int node_id, const std::string& label, PinType pin_type, PinSubType pin_subtype, Args &&...args) {
+		auto& parent = pin_type == PinType::Flow ? *mFlowContainer : *mRightColumn;
+		
+		auto output = std::make_unique<T>(parent, pin_id, node_id, label, pin_type, pin_subtype, std::forward<Args>(args)...);
+		
+		output->set_programmable(true);
+		
+		if (pin_type == PinType::Flow) {
+			output->set_icon(FA_PLAY);
+		}
+		
+		if (mCanvas.has_value()) {
+			auto& output_ref = *output;
+			
+			output->set_callback([this, &output_ref](){
+				mCanvas->get().on_output_pin_clicked(output_ref);
+			});
+			
+		}
+		
+		output->set_fixed_size(nanogui::Vector2i(22, 22));
+		
+		if (pin_type == PinType::Flow) {
+			output->set_position(nanogui::Vector2i(fixed_size().x() - 22 - 5, 3));
+		}
+		
+		outputs.push_back(std::move(output));
+		
+		return *outputs.back();
+	}
 	void build();
 	
 	void reset_flow();
