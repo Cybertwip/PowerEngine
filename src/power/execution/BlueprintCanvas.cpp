@@ -158,7 +158,7 @@ bool BlueprintCanvas::mouse_motion_event(const nanogui::Vector2i &p, const nanog
 }
 
 void BlueprintCanvas::draw() {
-	render_pass().clear_color(0, background_color());
+//	render_pass().clear_color(0, background_color()); // globally cleared
 	mGrid->draw_content(nanogui::Matrix4f::identity(), mView, mProjection);
 }
 

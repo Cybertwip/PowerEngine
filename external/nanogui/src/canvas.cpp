@@ -78,8 +78,6 @@ void Canvas::draw(NVGcontext *ctx) {
 	
 	float pixel_ratio = scr.pixel_ratio();
 	
-	Widget::draw(ctx);
-	
 	scr.nvg_flush();
 	
 	Vector2i fbsize = m_size;

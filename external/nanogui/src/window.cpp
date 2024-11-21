@@ -19,7 +19,7 @@ NAMESPACE_BEGIN(nanogui)
 
 Window::Window(std::optional<std::reference_wrapper<Widget>> parent,  const std::string &title)
     : Widget(parent), m_title(title), m_button_panel(nullptr), m_modal(false),
-      m_drag(false), m_background_color(std::nullopt) { }
+m_drag(false), m_background_color(std::nullopt) { }
 
 Vector2i Window::preferred_size(NVGcontext *ctx) {
 	// Start with the preferred size from the base Widget
@@ -91,67 +91,89 @@ void Window::set_modal(bool modal) {
 	}
 }
 
+
 void Window::draw(NVGcontext *ctx) {
-	int ds = theme().m_window_drop_shadow_size, cr = theme().m_window_corner_radius;
-	int hh = theme().m_window_header_height;
-	
-	/* Draw drop shadow */
-	NVGpaint shadow_paint = nvgBoxGradient(
-										   ctx, m_pos.x(), m_pos.y(), m_size.x(), m_size.y(), cr * 2, ds * 2,
-										   theme().m_drop_shadow, theme().m_transparent);
-	
-	nvgSave(ctx);
-	nvgResetScissor(ctx);
-	nvgBeginPath(ctx);
-	nvgRect(ctx, m_pos.x() - ds, m_pos.y() - ds, m_size.x() + 2 * ds, m_size.y() + 2 * ds);
-	nvgRoundedRect(ctx, m_pos.x(), m_pos.y(), m_size.x(), m_size.y(), cr);
-	nvgPathWinding(ctx, NVG_HOLE);
-	nvgFillPaint(ctx, shadow_paint);
-	nvgFill(ctx);
-	nvgRestore(ctx);
-	
-	/* Draw window background */
-	nvgSave(ctx);
-	nvgBeginPath(ctx);
-	nvgRoundedRect(ctx, m_pos.x(), m_pos.y(), m_size.x(), m_size.y(), cr);
-	
-	// Use the background color if it has value
+    int ds = theme().m_window_drop_shadow_size, cr = theme().m_window_corner_radius;
+    int hh = theme().m_window_header_height;
+
+    /* Draw window */
+    nvgSave(ctx);
+    nvgBeginPath(ctx);
+    nvgRoundedRect(ctx, m_pos.x(), m_pos.y(), m_size.x(), m_size.y(), cr);
+
 	if (m_background_color != std::nullopt) {
 		nvgFillColor(ctx, m_background_color.value());
 	} else {
 		nvgFillColor(ctx, m_mouse_focus ? theme().m_window_fill_focused
 					 : theme().m_window_fill_unfocused);
 	}
-	
-	nvgFill(ctx);
-	nvgRestore(ctx);
-	
-	/* Draw window title header */
-	if (!m_title.empty()) {
-		NVGpaint header_paint = nvgLinearGradient(ctx,
-												  m_pos.x(), m_pos.y(), m_pos.x(),
-												  m_pos.y() + hh,
-												  theme().m_window_header_gradient_top,
-												  theme().m_window_header_gradient_bot);
-		
-		nvgBeginPath(ctx);
-		nvgRoundedRect(ctx, m_pos.x(), m_pos.y(), m_size.x(), hh, cr);
-		nvgFillPaint(ctx, header_paint);
-		nvgFill(ctx);
-		
-		nvgFontSize(ctx, 18.0f);
-		nvgFontFace(ctx, "sans-bold");
-		nvgTextAlign(ctx, NVG_ALIGN_CENTER | NVG_ALIGN_MIDDLE);
-		nvgFillColor(ctx, m_focused ? theme().m_window_title_focused
-					 : theme().m_window_title_unfocused);
-		nvgText(ctx, m_pos.x() + m_size.x() / 2,
-				m_pos.y() + hh / 2, m_title.c_str(), nullptr);
-	}
-	
-	/* Draw child widgets */
-	Widget::draw(ctx);
-}
 
+    nvgFill(ctx);
+
+
+    /* Draw a drop shadow */
+    NVGpaint shadow_paint = nvgBoxGradient(
+        ctx, m_pos.x(), m_pos.y(), m_size.x(), m_size.y(), cr*2, ds*2,
+        theme().m_drop_shadow, theme().m_transparent);
+
+    nvgSave(ctx);
+    nvgResetScissor(ctx);
+    nvgBeginPath(ctx);
+    nvgRect(ctx, m_pos.x()-ds,m_pos.y()-ds, m_size.x()+2*ds, m_size.y()+2*ds);
+    nvgRoundedRect(ctx, m_pos.x(), m_pos.y(), m_size.x(), m_size.y(), cr);
+    nvgPathWinding(ctx, NVG_HOLE);
+    nvgFillPaint(ctx, shadow_paint);
+    nvgFill(ctx);
+    nvgRestore(ctx);
+
+    if (!m_title.empty()) {
+        /* Draw header */
+        NVGpaint header_paint = nvgLinearGradient(
+            ctx, m_pos.x(), m_pos.y(), m_pos.x(),
+            m_pos.y() + hh,
+            theme().m_window_header_gradient_top,
+            theme().m_window_header_gradient_bot);
+
+        nvgBeginPath(ctx);
+        nvgRoundedRect(ctx, m_pos.x(), m_pos.y(), m_size.x(), hh, cr);
+
+        nvgFillPaint(ctx, header_paint);
+        nvgFill(ctx);
+
+        nvgBeginPath(ctx);
+        nvgRoundedRect(ctx, m_pos.x(), m_pos.y(), m_size.x(), hh, cr);
+        nvgStrokeColor(ctx, theme().m_window_header_sep_top);
+
+        nvgSave(ctx);
+        nvgIntersectScissor(ctx, m_pos.x(), m_pos.y(), m_size.x(), 0.5f);
+        nvgStroke(ctx);
+        nvgRestore(ctx);
+
+        nvgBeginPath(ctx);
+        nvgMoveTo(ctx, m_pos.x() + 0.5f, m_pos.y() + hh - 1.5f);
+        nvgLineTo(ctx, m_pos.x() + m_size.x() - 0.5f, m_pos.y() + hh - 1.5);
+        nvgStrokeColor(ctx, theme().m_window_header_sep_bot);
+        nvgStroke(ctx);
+
+        nvgFontSize(ctx, 18.0f);
+        nvgFontFace(ctx, "sans-bold");
+        nvgTextAlign(ctx, NVG_ALIGN_CENTER | NVG_ALIGN_MIDDLE);
+
+        nvgFontBlur(ctx, 2);
+        nvgFillColor(ctx, theme().m_drop_shadow);
+        nvgText(ctx, m_pos.x() + m_size.x() / 2,
+                m_pos.y() + hh / 2, m_title.c_str(), nullptr);
+
+        nvgFontBlur(ctx, 0);
+        nvgFillColor(ctx, m_focused ? theme().m_window_title_focused
+                                    : theme().m_window_title_unfocused);
+        nvgText(ctx, m_pos.x() + m_size.x() / 2, m_pos.y() + hh / 2 - 1,
+                m_title.c_str(), nullptr);
+    }
+
+    nvgRestore(ctx);
+    Widget::draw(ctx);
+}
 
 void Window::center() {
 	screen().center_window(*this);
