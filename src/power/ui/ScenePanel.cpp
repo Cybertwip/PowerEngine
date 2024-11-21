@@ -32,7 +32,7 @@ bool ScenePanel::mouse_button_event(const nanogui::Vector2i &p, int button, bool
 	mDragging = down;
 	mClickQueue.push_back(std::make_tuple(down, width(), height(), p.x(), p.y(), button));
 	
-	return false;
+	return true;
 }
 
 bool ScenePanel::mouse_motion_event(const nanogui::Vector2i &p, const nanogui::Vector2i &rel, int button, int modifiers) {

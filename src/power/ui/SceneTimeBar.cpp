@@ -507,7 +507,9 @@ void SceneTimeBar::OnActorSelected(std::optional<std::reference_wrapper<Actor>> 
 
 // Override mouse_button_event to consume the event
 bool SceneTimeBar::mouse_button_event(const nanogui::Vector2i &p, int button, bool down, int modifiers) {
-	return nanogui::Widget::mouse_button_event(p, button, down, modifiers);
+	nanogui::Widget::mouse_button_event(p, button, down, modifiers);
+	
+	return true;
 }
 
 // Override mouse_motion_event to consume the event
