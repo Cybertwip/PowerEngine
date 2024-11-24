@@ -21,22 +21,7 @@ private:
 		return mKeyCode;
 	}
 	
-	void set_data(std::optional<std::variant<Entity, std::string, int, float, bool>> data) override {
-		if (data.has_value()) {
-			mKeyCode = std::get<int>(data.value());
-			auto* caption = glfwGetKeyName(mKeyCode, -1);
-			
-			if (caption != nullptr) {
-				mActionButton.set_caption(caption);
-			}
-
-			mConfigured = true;
-			
-		} else {
-			mKeyCode = -1;
-			mConfigured = false;
-		}
-	}
+	void set_data(std::optional<std::variant<Entity, std::string, int, float, bool>> data) override;
 	
 	bool keyboard_event(int key, int scancode, int action, int modifiers) override;
 	
