@@ -177,9 +177,9 @@ void Application::initialize() {
 		}
 	});
 	
-	mBlueprintManager = std::make_unique<BlueprintManager>(*mRenderCommon->canvas(), mUiCommon->hierarchy_panel());
+	mBlueprintManager = std::make_unique<BlueprintManager>(*mRenderCommon->canvas(), mUiCommon->hierarchy_panel(), *mActorManager);
 	
-	mExecutionManager = std::make_unique<ExecutionManager>(*mRenderCommon->canvas(), *mSimulationServer);
+	mExecutionManager = std::make_unique<ExecutionManager>(*mRenderCommon->canvas(), *mSimulationServer, *mBlueprintManager);
 	
 	mSimulationServer->run();
 

@@ -11,22 +11,9 @@
 #include "PrintNode.hpp"
 #include "StringNode.hpp"
 
-#include <unordered_set>
+#include "components/BlueprintComponent.hpp"
 
-class BlueprintComponent {
-public:
-	BlueprintComponent(std::unique_ptr<blueprint::NodeProcessor> nodeProcessor)
-	: mNodeProcessor(std::move(nodeProcessor)) {
-		
-	}
-	
-	blueprint::NodeProcessor& node_processor() {
-		return *mNodeProcessor;
-	}
-	
-private:
-	std::unique_ptr<blueprint::NodeProcessor> mNodeProcessor;
-};
+#include <unordered_set>
 
 blueprint::NodeProcessor::NodeProcessor() {
 	

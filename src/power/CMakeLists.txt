@@ -94,6 +94,7 @@ ${CMAKE_CURRENT_LIST_DIR}/actors/IActorManager.hpp
     ${CMAKE_CURRENT_LIST_DIR}/animation/Transform.hpp
 
     ${CMAKE_CURRENT_LIST_DIR}/components/AnimationComponent.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/components/BlueprintComponent.hpp
     ${CMAKE_CURRENT_LIST_DIR}/components/PrimitiveComponent.hpp
     ${CMAKE_CURRENT_LIST_DIR}/components/PrimitiveComponent.cpp
     ${CMAKE_CURRENT_LIST_DIR}/components/SkinnedAnimationComponent.hpp

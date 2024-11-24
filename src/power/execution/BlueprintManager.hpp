@@ -2,6 +2,8 @@
 
 #include "actors/IActorSelectedCallback.hpp"
 #include "actors/Actor.hpp"
+#include "actors/ActorManager.hpp"
+#include "components/BlueprintComponent.hpp"
 #include "components/TransformComponent.hpp"
 #include "graphics/drawing/Grid.hpp"
 #include "simulation/SimulationServer.hpp"
@@ -63,9 +65,10 @@ private:
 
 class BlueprintManager : public IActorSelectedCallback {
 public:
-	BlueprintManager(Canvas& canvas, std::shared_ptr<IActorSelectedRegistry> registry)
+	BlueprintManager(Canvas& canvas, std::shared_ptr<IActorSelectedRegistry> registry, ActorManager& actorManager)
 	: mCanvas(canvas)
-	, mRegistry(registry) {
+	, mRegistry(registry)
+	, mActorManager(actorManager) {
 		mBlueprintPanel = std::make_shared<BlueprintPanel>(canvas);
 		
 		mBlueprintPanel->set_position(nanogui::Vector2i(0, canvas.fixed_height()));
@@ -149,6 +152,18 @@ public:
 		}
 	}
 	
+	void start() {
+		mBlueprintActors = mActorManager.get_actors_with_component<blueprint::BlueprintComponent>();
+	}
+	
+	void stop() {
+		mBlueprintActors.clear();
+	}
+	
+	void update() {
+		
+	}
+	
 	void process_events() {
 		mBlueprintPanel->process_events();
 	}
@@ -156,11 +171,14 @@ public:
 private:
 	Canvas& mCanvas;
 	std::shared_ptr<IActorSelectedRegistry> mRegistry;
+	ActorManager& mActorManager;
 
 	std::shared_ptr<BlueprintPanel> mBlueprintPanel;
 	std::shared_ptr<nanogui::ToolButton> mBlueprintButton;
 	std::future<void> mAnimationFuture;
 	
 	std::optional<std::reference_wrapper<Actor>> mActiveActor;
+	
+	std::vector<std::reference_wrapper<Actor>> mBlueprintActors;
 	
 };
