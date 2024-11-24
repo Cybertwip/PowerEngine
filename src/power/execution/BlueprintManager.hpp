@@ -153,7 +153,7 @@ public:
 	}
 	
 	void start() {
-		mBlueprintActors = mActorManager.get_actors_with_component<blueprint::BlueprintComponent>();
+		mBlueprintActors = mActorManager.get_actors_with_component<BlueprintComponent>();
 	}
 	
 	void stop() {
