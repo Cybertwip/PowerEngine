@@ -12,5 +12,5 @@ blueprint::NodeProcessor& BlueprintComponent::node_processor() {
 }
 
 void BlueprintComponent::update() {
-	mNodeProcessor.evaluate();
+	mNodeProcessor->evaluate();
 }

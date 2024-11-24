@@ -1,6 +1,7 @@
 #pragma once
 
 #include "actors/IActorSelectedCallback.hpp"
+#include "actors/IActorSelectedRegistry.hpp"
 #include "actors/Actor.hpp"
 #include "actors/ActorManager.hpp"
 #include "components/BlueprintComponent.hpp"
