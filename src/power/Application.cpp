@@ -271,7 +271,7 @@ void Application::process_events() {
 	
 	mUiManager->process_events();
 	
-	mBlueprintManager->process_events();
+	mExecutionManager->process_events();
 }
 
 bool Application::mouse_button_event(const nanogui::Vector2i &p, int button, bool down, int modifiers) {

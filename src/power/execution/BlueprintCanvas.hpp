@@ -29,8 +29,6 @@ public:
 	
 	void draw();
 	
-	void process_events();
-	
 	void clear();
 	
 	void add_link(Link* link);

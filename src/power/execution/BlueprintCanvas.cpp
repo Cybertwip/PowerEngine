@@ -343,7 +343,3 @@ void BlueprintCanvas::clear() {
 void BlueprintCanvas::add_link(Link* link) {
 	mLinks.push_back(link);
 }
-
-void BlueprintCanvas::process_events() {
-	mNodeProcessor.evaluate();
-}

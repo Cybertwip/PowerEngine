@@ -36,8 +36,6 @@ public:
 	
 	void process_events() override {
 		ScenePanel::process_events();
-		
-		mCanvas->process_events();
 	}
 	
 	void serialize(Actor& actor) {
@@ -166,10 +164,6 @@ public:
 		for (auto& actor : mBlueprintActors) {
 			actor.get().get_component<BlueprintComponent>().update(); //might be slow with thousands of objets due to get_component
 		}
-	}
-	
-	void process_events() {
-		mBlueprintPanel->process_events();
 	}
 	
 private:
