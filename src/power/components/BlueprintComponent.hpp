@@ -8,14 +8,11 @@ namespace blueprint {
 
 class BlueprintComponent {
 public:
-	BlueprintComponent(std::unique_ptr<blueprint::NodeProcessor> nodeProcessor)
-	: mNodeProcessor(std::move(nodeProcessor)) {
-		
-	}
+	BlueprintComponent(std::unique_ptr<blueprint::NodeProcessor> nodeProcessor);
 	
-	blueprint::NodeProcessor& node_processor() {
-		return *mNodeProcessor;
-	}
+	blueprint::NodeProcessor& node_processor();
+	
+	void update();
 	
 private:
 	std::unique_ptr<blueprint::NodeProcessor> mNodeProcessor;
