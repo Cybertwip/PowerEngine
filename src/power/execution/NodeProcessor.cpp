@@ -99,6 +99,11 @@ void blueprint::NodeProcessor::serialize(BlueprintCanvas& canvas, Actor& actor) 
 			}
 		}
 		
+		for (auto& node : nodes) {
+			auto* that_node = node_processor->find_node(node->id);
+			that_node->set_data(node->get_data());
+		}
+		
 		for (auto& link : links) {
 			auto* start_pin = node_processor->find_pin(link->get_start().id);
 			auto* end_pin = node_processor->find_pin(link->get_end().id);
@@ -144,6 +149,11 @@ void blueprint::NodeProcessor::deserialize(BlueprintCanvas& canvas, Actor& actor
 					spawn_node<blueprint::PrintNode>(canvas, node->position());
 					break;
 			}
+		}
+		
+		for (auto& node : node_processor.nodes) {
+			auto* this_node = find_node(node->id);
+			this_node->set_data(node->get_data());
 		}
 		
 		for (auto& link : node_processor.links) {
@@ -192,6 +202,21 @@ blueprint::Pin* blueprint::NodeProcessor::find_pin(long long id) {
 	
 	return nullptr;
 }
+
+
+blueprint::BlueprintNode* blueprint::NodeProcessor::find_node(long long id) {
+
+	auto node_it = std::find_if(nodes.begin(), nodes.end(), [id](auto& node) {
+		return node->id == id;
+	});
+
+	if (node_it != nodes.end()) {
+		return node_it->get();
+	}
+
+	return nullptr;
+}
+
 
 void blueprint::NodeProcessor::clear() {
 	nodes.clear();

@@ -45,7 +45,8 @@ public:
 	}
 	
 	blueprint::Pin* find_pin(long long id);
-	
+	blueprint::BlueprintNode* find_node(long long id);
+
 private:
 	long long next_id = 1;
 	std::vector<std::unique_ptr<BlueprintNode>> nodes;

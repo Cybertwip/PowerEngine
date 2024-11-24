@@ -240,6 +240,15 @@ public:
 	
 	void reset_flow();
 	
+	virtual std::optional<std::variant<Entity, std::string, int, float, bool>> get_data() {
+		return std::nullopt; // override in self-contained nodes
+	}
+	
+	virtual void set_data(std::optional<std::variant<Entity, std::string, int, float, bool>> data) {
+		// override in self-contained nodes
+	}
+
+	
 	const std::vector<std::unique_ptr<Pin>>& get_inputs() {
 		return inputs;
 	}
