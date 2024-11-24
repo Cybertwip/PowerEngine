@@ -15,7 +15,8 @@ class BlueprintCanvas;
 class KeyPressNode : public BlueprintNode {
 public:
 	KeyPressNode(std::optional<std::reference_wrapper<BlueprintCanvas>> parent, nanogui::Vector2i size, std::function<int()> id_registrator_lambda);
-	
+
+private:
 	virtual std::optional<std::variant<Entity, std::string, int, float, bool>> get_data() {
 		return mKeyCode;
 	}
@@ -29,8 +30,6 @@ public:
 			mConfigured = false;
 		}
 	}
-
-private:
 	bool keyboard_event(int key, int scancode, int action, int modifiers) override;
 
 	int mKeyCode;
