@@ -160,9 +160,11 @@ public:
 		mBlueprintActors.clear();
 	}
 	
-	void update() {
+	void process_events() {
 		mBlueprintPanel->process_events();
-
+	}
+	
+	void update() {
 		for (auto& actor : mBlueprintActors) {
 			actor.get().get_component<BlueprintComponent>().update(); //might be slow with thousands of objets due to get_component
 		}

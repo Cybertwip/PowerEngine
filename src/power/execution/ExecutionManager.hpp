@@ -60,6 +60,9 @@ public:
 	}
 	
 	void process_events() {
+		
+		mBlueprintManager.process_events();
+		
 		if (mExecutionMode == EExecutionMode::Game || mExecutionMode == EExecutionMode::Laboratory) {
 			mSimulationTime++; // will overflow in a few million of years. Maybe adding a two/x+-variable timer? Just in case.
 			
