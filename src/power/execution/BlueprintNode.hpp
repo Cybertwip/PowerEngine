@@ -1,5 +1,7 @@
 #pragma once
 
+#include "execution/BlueprintCanvas.hpp"
+
 #include <nanogui/icons.h>
 #include <nanogui/toolbutton.h>
 #include <nanogui/vector.h>

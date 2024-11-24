@@ -1,5 +1,7 @@
 #include "PrintNode.hpp"
 
+#include <iostream>
+
 blueprint::PrintNode::PrintNode(std::optional<std::reference_wrapper<BlueprintCanvas>> parent, nanogui::Vector2i size, std::function<int()> id_registrator_lambda)
 : BlueprintNode(parent, NodeType::Print, "Print", size, id_registrator_lambda(), nanogui::Color(255, 0, 255, 255)) {
 	auto& input_flow = add_input(id_registrator_lambda(), this->id, "", PinType::Flow, PinSubType::None);
