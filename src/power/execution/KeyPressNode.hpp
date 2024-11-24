@@ -17,11 +17,11 @@ public:
 	KeyPressNode(std::optional<std::reference_wrapper<BlueprintCanvas>> parent, nanogui::Vector2i size, std::function<int()> id_registrator_lambda);
 
 private:
-	virtual std::optional<std::variant<Entity, std::string, int, float, bool>> get_data() {
+	std::optional<std::variant<Entity, std::string, int, float, bool>> get_data() override {
 		return mKeyCode;
 	}
 	
-	virtual void set_data(std::optional<std::variant<Entity, std::string, int, float, bool>> data) {
+	void set_data(std::optional<std::variant<Entity, std::string, int, float, bool>> data) override {
 		if (data.has_value()) {
 			mKeyCode = std::get<int>(data.value());
 			mConfigured = true;
