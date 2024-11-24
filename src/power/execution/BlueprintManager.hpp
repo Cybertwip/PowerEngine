@@ -13,6 +13,7 @@
 #include "BlueprintCanvas.hpp"
 #include "NodeProcessor.hpp"
 #include "BlueprintNode.hpp"
+#include "ShaderManager.hpp"
 #include "StringNode.hpp"
 #include "PrintNode.hpp"
 
