@@ -65,7 +65,9 @@ public:
     Vector2f pixel_to_pos(const Vector2f &p);
 
     // Widget implementation
-    virtual void draw(NVGcontext *ctx) override;
+
+	bool mouse_button_event(const Vector2i &p, int button, bool down, int modifiers);
+	virtual void draw(NVGcontext *ctx) override;
     virtual void draw_contents() override;
 
 protected:

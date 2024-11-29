@@ -104,6 +104,11 @@ Vector2f ImageView::pixel_to_pos(const Vector2f &p) {
     return pos;
 }
 
+bool ImageView::mouse_button_event(const Vector2i &p, int button, bool down, int modifiers) {
+	
+	return false;
+}
+
 void ImageView::draw(NVGcontext *ctx) {
     if (!m_enabled || !m_image)
         return;
