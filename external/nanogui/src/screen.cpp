@@ -655,8 +655,8 @@ void Screen::mouse_button_callback_event(int button, int action, int modifiers) 
 	
 	try {
 		if (m_focused_widget) {
-			auto* window =
-			std::dynamic_ptr_cast<Window>(m_focused_widget);
+			auto window =
+			std::dynamic_pointer_cast<Window>(m_focused_widget);
 			if (window && window->modal()) {
 				if (!window->contains(m_mouse_pos))
 					return;
@@ -732,7 +732,7 @@ void Screen::scroll_callback_event(double x, double y) {
 	try {
 		if (m_focused_widget) {
 			auto window =
-			std::dynamic_ptr_cast<Window>(m_focused_widget);
+			std::dynamic_pointer_cast<Window>(m_focused_widget);
 			if (window && window->modal()) {
 				if (!window->contains(m_mouse_pos))
 					return;
