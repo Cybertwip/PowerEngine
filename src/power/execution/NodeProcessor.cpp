@@ -102,7 +102,7 @@ void NodeProcessor::serialize(BlueprintCanvas& canvas, Actor& actor) {
 		for (auto& node : nodes) {
 			auto* that_node = dynamic_cast<BlueprintDataNode*>(node_processor->find_node(node->id));
 
-			auto* this_node = dynamic_cast<BlueprintDataNode*>(node);
+			auto* this_node = dynamic_cast<BlueprintDataNode*>(node.get());
 			
 			if (that_node && this_node) {
 				that_node->set_data(this_node->get_data());
@@ -159,7 +159,7 @@ void NodeProcessor::deserialize(BlueprintCanvas& canvas, Actor& actor) {
 		for (auto& node : node_processor.nodes) {
 			auto* this_node = dynamic_cast<BlueprintDataNode*>(find_node(node->id));
 			
-			auto* that_node = dynamic_cast<BlueprintDataNode*>(node);
+			auto* that_node = dynamic_cast<BlueprintDataNode*>(node.get());
 			
 			if (this_node && that_node) {
 				this_node->set_data(that_node->get_data());
