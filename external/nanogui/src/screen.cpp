@@ -672,7 +672,7 @@ void Screen::mouse_button_callback_event(int button, int action, int modifiers) 
 		if (m_drag_active && action == GLFW_RELEASE && m_drag_widget &&
 			drop_widget != m_drag_widget) {
 			m_redraw |= m_drag_widget->mouse_button_event(
-														  m_mouse_pos - m_drag_widget->parent()->get().absolute_position(), button,
+														  m_mouse_pos - m_drag_widget->absolute_position(), button,
 														  false, m_modifiers);
 		}
 		
