@@ -104,29 +104,6 @@ Vector2f ImageView::pixel_to_pos(const Vector2f &p) {
     return pos;
 }
 
-bool ImageView::keyboard_event(int key, int /* scancode */, int action, int /* modifiers */) {
-    if (!m_enabled || !m_image)
-        return false;
-
-    if (action == GLFW_PRESS) {
-        if (key == GLFW_KEY_R) {
-            reset();
-            return true;
-        }
-    }
-    return false;
-}
-
-bool ImageView::mouse_drag_event(const Vector2i & /* p */, const Vector2i &rel,
-                                 int /* button */, int /* modifiers */) {
-    if (!m_enabled || !m_image)
-        return false;
-
-    m_offset += rel * screen().pixel_ratio();
-
-    return true;
-}
-
 void ImageView::draw(NVGcontext *ctx) {
     if (!m_enabled || !m_image)
         return;
