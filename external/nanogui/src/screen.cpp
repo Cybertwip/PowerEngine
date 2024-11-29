@@ -672,7 +672,7 @@ void Screen::mouse_button_callback_event(int button, int action, int modifiers) 
 		if (m_drag_active && action == GLFW_RELEASE && m_drag_widget &&
 			drop_widget != m_drag_widget) {
 			m_redraw |= m_drag_widget->mouse_button_event(
-														  m_mouse_pos - m_drag_widget->parent()->get().absolute_position(), button,
+														  m_mouse_pos - m_drag_widget->absolute_position(), button,
 														  false, m_modifiers);
 		}
 		
@@ -784,20 +784,21 @@ void Screen::update_focus(Widget& widget) {
 	if (m_focused_widget) {
 		
 		std::optional<std::reference_wrapper<Widget>> parent = m_focused_widget->parent();
-		while(parent != std::nullopt) {
+		do {
 			parent->get().focus_event(false);
 			
 			parent = parent->get().parent();
-		}
+		} while(parent != std::nullopt);
+		
 		m_focused_widget->focus_event(false);
 	}
 	
 	std::optional<std::reference_wrapper<Widget>> parent = widget.parent();
-	while(parent != std::nullopt) {
+	do {
 		parent->get().focus_event(true);
 		
 		parent = parent->get().parent();
-	}
+	} while (parent != std::nullopt);
 	
 	widget.focus_event(true);
 
