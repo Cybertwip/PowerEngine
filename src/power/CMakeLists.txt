@@ -290,7 +290,6 @@ nanogui
 imgui-feature-layout 
 imgui-node-editor 
 json 
-SmallFBX 
 httplib::httplib 
 OpenSSL::SSL
 OpenSSL::Crypto

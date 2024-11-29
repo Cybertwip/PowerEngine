@@ -270,6 +270,8 @@ class BlueprintDataNode : public BlueprintNode {
 public:
 	BlueprintDataNode(std::optional<std::reference_wrapper<BlueprintCanvas>> parent, NodeType type, const std::string& name, nanogui::Vector2i size, int id, nanogui::Color color = nanogui::Color(255, 255, 255, 255));
 
+	~BlueprintDataNode() override = default;
+	
 	virtual std::optional<std::variant<Entity, std::string, int, float, bool>> get_data();
 	
 	virtual void set_data(std::optional<std::variant<Entity, std::string, int, float, bool>> data);
