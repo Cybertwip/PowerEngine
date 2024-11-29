@@ -41,7 +41,7 @@ public:
 	Widget(std::optional<std::reference_wrapper<Widget>> parent);
 
     /// Free all resources used by the widget and any children
-    ~Widget();
+    virtual ~Widget();
 
     /// Return the parent widget
     std::optional<std::reference_wrapper<Widget>> parent() { return m_parent; }

@@ -4,8 +4,8 @@
 
 #include "actors/Actor.hpp"
 
-#include "BlueprintCanvas.hpp"
 #include "BlueprintNode.hpp"
+#include "BlueprintCanvas.hpp"
 #include "KeyPressNode.hpp"
 #include "KeyReleaseNode.hpp"
 #include "PrintNode.hpp"

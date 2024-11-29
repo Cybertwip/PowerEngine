@@ -6,7 +6,7 @@
 class Actor;
 
 class BlueprintCanvas;
-class Node;
+class BlueprintNode;
 class Pin;
 class Link;
 
