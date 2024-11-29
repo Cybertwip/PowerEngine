@@ -2,18 +2,16 @@
 
 #include <memory>
 
-namespace blueprint {
-	class NodeProcessor;
-}
+class NodeProcessor;
 
 class BlueprintComponent {
 public:
-	BlueprintComponent(std::unique_ptr<blueprint::NodeProcessor> nodeProcessor);
+	BlueprintComponent(std::unique_ptr<NodeProcessor> nodeProcessor);
 	
-	blueprint::NodeProcessor& node_processor();
+	NodeProcessor& node_processor();
 	
 	void update();
 	
 private:
-	std::unique_ptr<blueprint::NodeProcessor> mNodeProcessor;
+	std::unique_ptr<NodeProcessor> mNodeProcessor;
 };

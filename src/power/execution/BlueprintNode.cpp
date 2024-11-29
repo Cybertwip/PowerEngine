@@ -2,7 +2,7 @@
 
 #include "BlueprintCanvas.hpp"
 
-blueprint::BlueprintNode::BlueprintNode(std::optional<std::reference_wrapper<blueprint::BlueprintCanvas>> parent, NodeType type, const std::string& name, nanogui::Vector2i size, int id, nanogui::Color color)
+BlueprintNode::BlueprintNode(std::optional<std::reference_wrapper<BlueprintCanvas>> parent, NodeType type, const std::string& name, nanogui::Vector2i size, int id, nanogui::Color color)
 : nanogui::Window(parent, name), mCanvas(parent), type(type), id(id), color(color) {
 	set_fixed_size(size);
 	set_layout(std::make_unique<nanogui::GroupLayout>(5, 0));
@@ -31,7 +31,7 @@ blueprint::BlueprintNode::BlueprintNode(std::optional<std::reference_wrapper<blu
 	mRightColumn->set_position(nanogui::Vector2i(fixed_size().x() - 48, 0));
 }
 
-void blueprint::BlueprintNode::build() {
+void BlueprintNode::build() {
 	for (auto& input : inputs) {
 		input->node = this;
 		input->kind = PinKind::Input;
@@ -42,7 +42,7 @@ void blueprint::BlueprintNode::build() {
 	}
 }
 
-void blueprint::BlueprintNode::reset_flow() {
+void BlueprintNode::reset_flow() {
 	for (auto& input : inputs) {
 		if (input->type == PinType::Flow) {
 			input->can_flow = false;
@@ -54,7 +54,7 @@ void blueprint::BlueprintNode::reset_flow() {
 		}
 	}
 }
-void blueprint::BlueprintNode::perform_layout(NVGcontext *ctx) {
+void BlueprintNode::perform_layout(NVGcontext *ctx) {
 	Window::perform_layout(ctx);
 	
 	int hh = theme().m_window_header_height;
@@ -63,7 +63,7 @@ void blueprint::BlueprintNode::perform_layout(NVGcontext *ctx) {
 	mColumnContainer->set_position(nanogui::Vector2i(5, hh + 3));
 }
 
-void blueprint::BlueprintNode::draw(NVGcontext *ctx) {
+void BlueprintNode::draw(NVGcontext *ctx) {
 	int ds = theme().m_window_drop_shadow_size, cr = theme().m_window_corner_radius;
 	int hh = theme().m_window_header_height;
 	
@@ -145,4 +145,10 @@ void blueprint::BlueprintNode::draw(NVGcontext *ctx) {
 	mColumnContainer->draw(ctx);
 }
 
+BlueprintDataNode::BlueprintDataNode(std::optional<std::reference_wrapper<BlueprintCanvas>> parent, NodeType type, const std::string& name, nanogui::Vector2i size, int id, nanogui::Color color)
+: BlueprintNode(parent, type, name, size, id, color) {
+	
 }
+
+
+

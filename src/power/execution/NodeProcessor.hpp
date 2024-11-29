@@ -5,7 +5,6 @@
 
 class Actor;
 
-namespace blueprint {
 class BlueprintCanvas;
 class Node;
 class Pin;
@@ -26,7 +25,7 @@ public:
 	void clear();
 	
 	template<typename T>
-	blueprint::BlueprintNode* spawn_node(blueprint::BlueprintCanvas& parent, const nanogui::Vector2i& position) {
+	BlueprintNode* spawn_node(BlueprintCanvas& parent, const nanogui::Vector2i& position) {
 		auto node = std::make_unique<T>(parent, nanogui::Vector2i(196, 64), [this](){
 			return get_next_id();
 		});
@@ -37,20 +36,18 @@ public:
 		return nodes.back().get();
 	}
 	
-	blueprint::Link* create_link(blueprint::BlueprintCanvas& parent, long long id, blueprint::Pin& output, blueprint::Pin& input){
-		auto link = std::make_unique<blueprint::Link>(parent, id, output, input);
+	Link* create_link(BlueprintCanvas& parent, long long id, Pin& output, Pin& input){
+		auto link = std::make_unique<Link>(parent, id, output, input);
 		links.push_back(std::move(link));
 		parent.add_link(links.back().get());
 		return links.back().get();
 	}
 	
-	blueprint::Pin* find_pin(long long id);
-	blueprint::BlueprintNode* find_node(long long id);
+	Pin* find_pin(long long id);
+	BlueprintNode* find_node(long long id);
 
 private:
 	long long next_id = 1;
 	std::vector<std::unique_ptr<BlueprintNode>> nodes;
 	std::vector<std::unique_ptr<Link>> links;
 };
-
-}

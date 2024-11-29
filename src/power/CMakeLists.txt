@@ -279,6 +279,7 @@ target_include_directories(PowerEngine PUBLIC ../../external/wasmtime/include)
 target_include_directories(PowerEngine PUBLIC ../../external/websocketpp)
 target_include_directories(PowerEngine PUBLIC ../../external/smallfbx)
 target_include_directories(PowerEngine PUBLIC ../../external/stb)
+target_include_directories(PowerEngine PUBLIC ../../external/entt/single_include)
 target_include_directories(PowerEngine PUBLIC ${CMAKE_CURRENT_LIST_DIR})
 
 target_link_directories(PowerEngine PUBLIC ../../external/wasmtime/lib)
@@ -286,7 +287,6 @@ target_link_directories(PowerEngine PUBLIC ../../external/wasmtime/lib)
 target_link_libraries(PowerEngine 
 PRIVATE 
 nanogui 
-EnTT 
 imgui-feature-layout 
 imgui-node-editor 
 json 

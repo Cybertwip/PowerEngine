@@ -26,10 +26,10 @@ public:
 		
 		set_background_color(nanogui::Color(35, 65, 90, 224));
 		
-		mNodeProcessor = std::make_unique<blueprint::NodeProcessor>();
+		mNodeProcessor = std::make_unique<NodeProcessor>();
 		
 		// Ensure the canvas is created with the correct dimensions or set it explicitly if needed
-		mCanvas = std::make_unique<blueprint::BlueprintCanvas>(*this, parent.screen(), *mNodeProcessor, nanogui::Color(0, 0, 0, 0));
+		mCanvas = std::make_unique<BlueprintCanvas>(*this, parent.screen(), *mNodeProcessor, nanogui::Color(0, 0, 0, 0));
 		
 		mCanvas->set_fixed_size(nanogui::Vector2i(fixed_width(), parent.fixed_height() * 0.71));
 	}
@@ -59,8 +59,8 @@ private:
 	}
 	
 private:
-	std::unique_ptr<blueprint::BlueprintCanvas> mCanvas;
-	std::unique_ptr<blueprint::NodeProcessor> mNodeProcessor;
+	std::unique_ptr<BlueprintCanvas> mCanvas;
+	std::unique_ptr<NodeProcessor> mNodeProcessor;
 };
 
 class BlueprintManager : public IActorSelectedCallback {

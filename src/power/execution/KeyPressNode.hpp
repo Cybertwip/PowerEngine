@@ -9,10 +9,9 @@
 #include <string>
 #include <variant>
 
-namespace blueprint {
 class BlueprintCanvas;
 
-class KeyPressNode : public BlueprintNode {
+class KeyPressNode : public BlueprintDataNode {
 public:
 	KeyPressNode(std::optional<std::reference_wrapper<BlueprintCanvas>> parent, nanogui::Vector2i size, std::function<int()> id_registrator_lambda);
 
@@ -33,4 +32,3 @@ private:
 	nanogui::Button& mActionButton;
 };
 
-}

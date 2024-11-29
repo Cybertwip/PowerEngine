@@ -20,7 +20,9 @@ enum class deletion_policy : std::uint8_t {
     /*! @brief In-place deletion policy. */
     in_place = 1u,
     /*! @brief Swap-only deletion policy. */
-    swap_only = 2u
+    swap_only = 2u,
+    /*! @brief Unspecified deletion policy. */
+    unspecified = swap_and_pop
 };
 
 template<typename Entity = entity, typename = std::allocator<Entity>>
@@ -31,6 +33,9 @@ class basic_storage;
 
 template<typename, typename>
 class basic_sigh_mixin;
+
+template<typename, typename>
+class basic_reactive_mixin;
 
 template<typename Entity = entity, typename = std::allocator<Entity>>
 class basic_registry;
@@ -43,9 +48,6 @@ class basic_runtime_view;
 
 template<typename, typename, typename>
 class basic_group;
-
-template<typename, typename = std::allocator<void>>
-class basic_observer;
 
 template<typename>
 class basic_organizer;
@@ -79,11 +81,15 @@ using storage = basic_storage<Type>;
 template<typename Type>
 using sigh_mixin = basic_sigh_mixin<Type, basic_registry<typename Type::entity_type, typename Type::base_type::allocator_type>>;
 
-/*! @brief Alias declaration for the most common use case. */
-using registry = basic_registry<>;
+/**
+ * @brief Alias declaration for the most common use case.
+ * @tparam Type Underlying storage type.
+ */
+template<typename Type>
+using reactive_mixin = basic_reactive_mixin<Type, basic_registry<typename Type::entity_type, typename Type::base_type::allocator_type>>;
 
 /*! @brief Alias declaration for the most common use case. */
-using observer = basic_observer<registry>;
+using registry = basic_registry<>;
 
 /*! @brief Alias declaration for the most common use case. */
 using organizer = basic_organizer<registry>;
@@ -217,6 +223,20 @@ template<typename Type, typename Entity = entity, typename Allocator = std::allo
 struct storage_type {
     /*! @brief Type-to-storage conversion result. */
     using type = ENTT_STORAGE(sigh_mixin, basic_storage<Type, Entity, Allocator>);
+};
+
+/*! @brief Empty value type for reactive storage types. */
+struct reactive final {};
+
+/**
+ * @ brief Partial specialization for reactive storage types.
+ * @tparam Entity A valid entity type.
+ * @tparam Allocator Type of allocator used to manage memory and elements.
+ */
+template<typename Entity, typename Allocator>
+struct storage_type<reactive, Entity, Allocator> {
+    /*! @brief Type-to-storage conversion result. */
+    using type = ENTT_STORAGE(reactive_mixin, basic_storage<reactive, Entity, Allocator>);
 };
 
 /**

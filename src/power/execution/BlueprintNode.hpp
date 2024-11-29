@@ -9,8 +9,10 @@
 #include <nanogui/window.h>
 
 #include <functional>
+#include <optional>
+#include <string>
+#include <variant>
 
-namespace blueprint {
 
 enum class NodeType {
 	KeyPress,
@@ -240,15 +242,6 @@ public:
 	
 	void reset_flow();
 	
-	virtual std::optional<std::variant<Entity, std::string, int, float, bool>> get_data() {
-		return std::nullopt; // override in self-contained nodes
-	}
-	
-	virtual void set_data(std::optional<std::variant<Entity, std::string, int, float, bool>> data) {
-		// override in self-contained nodes
-	}
-
-	
 	const std::vector<std::unique_ptr<Pin>>& get_inputs() {
 		return inputs;
 	}
@@ -273,10 +266,20 @@ private:
 	std::unique_ptr<nanogui::Widget> mRightColumn;
 };
 
+class BlueprintDataNode : public BlueprintNode {
+public:
+	BlueprintDataNode(std::optional<std::reference_wrapper<BlueprintCanvas>> parent, NodeType type, const std::string& name, nanogui::Vector2i size, int id, nanogui::Color color = nanogui::Color(255, 255, 255, 255));
+
+	virtual std::optional<std::variant<Entity, std::string, int, float, bool>> get_data();
+	
+	virtual void set_data(std::optional<std::variant<Entity, std::string, int, float, bool>> data);
+
+};
+
 
 class Link : public nanogui::Widget {
 public:
-	Link(std::optional<std::reference_wrapper<blueprint::BlueprintCanvas>> parent, int id, Pin& start, Pin& end)
+	Link(std::optional<std::reference_wrapper<BlueprintCanvas>> parent, int id, Pin& start, Pin& end)
 	: nanogui::Widget(parent), id(id), mStart(start), mEnd(end), color(nanogui::Color(255, 255, 255, 255)) {
 		
 	}
@@ -299,5 +302,3 @@ private:
 	Pin& mEnd;
 	nanogui::Color color;
 };
-
-}

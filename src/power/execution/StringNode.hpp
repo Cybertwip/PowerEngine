@@ -7,7 +7,6 @@
 #include <memory>
 #include <string>
 
-namespace blueprint {
 class BlueprintCanvas;
 
 class StringNode : public BlueprintNode {
@@ -18,4 +17,3 @@ private:
 	std::unique_ptr<nanogui::TextBox> mTextBox;
 };
 
-}

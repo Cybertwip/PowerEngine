@@ -197,7 +197,7 @@ public:
  * @param len Length of the string to hash.
  */
 template<typename Char>
-basic_hashed_string(const Char *str, const std::size_t len) -> basic_hashed_string<Char>;
+basic_hashed_string(const Char *str, std::size_t len) -> basic_hashed_string<Char>;
 
 /**
  * @brief Deduction guide.
@@ -291,7 +291,7 @@ inline namespace literals {
  * @param str The literal without its suffix.
  * @return A properly initialized hashed string.
  */
-[[nodiscard]] constexpr hashed_string operator"" _hs(const char *str, std::size_t) noexcept {
+[[nodiscard]] constexpr hashed_string operator""_hs(const char *str, std::size_t) noexcept {
     return hashed_string{str};
 }
 
@@ -300,7 +300,7 @@ inline namespace literals {
  * @param str The literal without its suffix.
  * @return A properly initialized hashed wstring.
  */
-[[nodiscard]] constexpr hashed_wstring operator"" _hws(const wchar_t *str, std::size_t) noexcept {
+[[nodiscard]] constexpr hashed_wstring operator""_hws(const wchar_t *str, std::size_t) noexcept {
     return hashed_wstring{str};
 }
 

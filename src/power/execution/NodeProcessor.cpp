@@ -15,21 +15,21 @@
 
 #include <unordered_set>
 
-blueprint::NodeProcessor::NodeProcessor() {
+NodeProcessor::NodeProcessor() {
 	
 }
 
-long long blueprint::NodeProcessor::get_next_id() {
+long long NodeProcessor::get_next_id() {
 	return next_id++;
 }
 
-void blueprint::NodeProcessor::build_node(blueprint::BlueprintNode& node){
+void NodeProcessor::build_node(BlueprintNode& node){
 	node.build();
 }
 
-void blueprint::NodeProcessor::evaluate() {
+void NodeProcessor::evaluate() {
 
-	std::unordered_set<blueprint::BlueprintNode*> evaluated_nodes;
+	std::unordered_set<BlueprintNode*> evaluated_nodes;
 	
 	for (auto& link : links)
 	{
@@ -74,34 +74,39 @@ void blueprint::NodeProcessor::evaluate() {
 	}
 }
 
-void blueprint::NodeProcessor::serialize(BlueprintCanvas& canvas, Actor& actor) {
+void NodeProcessor::serialize(BlueprintCanvas& canvas, Actor& actor) {
 	if (actor.find_component<BlueprintComponent>()) {
 		actor.remove_component<BlueprintComponent>();
 	}
 	
 	if (!nodes.empty()) {
-		auto node_processor = std::make_unique<blueprint::NodeProcessor>();
+		auto node_processor = std::make_unique<NodeProcessor>();
 		
 		for (auto& node : nodes) {
 			switch (node->type) {
 				case NodeType::KeyPress:
-					node_processor->spawn_node<blueprint::KeyPressNode>(canvas, node->position());
+					node_processor->spawn_node<KeyPressNode>(canvas, node->position());
 					break;
 				case NodeType::KeyRelease:
-					node_processor->spawn_node<blueprint::KeyReleaseNode>(canvas, node->position());
+					node_processor->spawn_node<KeyReleaseNode>(canvas, node->position());
 					break;
 				case NodeType::String:
-					node_processor->spawn_node<blueprint::StringNode>(canvas, node->position());
+					node_processor->spawn_node<StringNode>(canvas, node->position());
 					break;
 				case NodeType::Print:
-					node_processor->spawn_node<blueprint::PrintNode>(canvas, node->position());
+					node_processor->spawn_node<PrintNode>(canvas, node->position());
 					break;
 			}
 		}
 		
 		for (auto& node : nodes) {
-			auto* that_node = node_processor->find_node(node->id);
-			that_node->set_data(node->get_data());
+			auto* that_node = dynamic_cast<BlueprintDataNode*>(node_processor->find_node(node->id));
+
+			auto* this_node = dynamic_cast<BlueprintDataNode*>(node);
+			
+			if (that_node && this_node) {
+				that_node->set_data(this_node->get_data());
+			}
 		}
 		
 		for (auto& link : links) {
@@ -126,7 +131,7 @@ void blueprint::NodeProcessor::serialize(BlueprintCanvas& canvas, Actor& actor) 
 	
 }
 
-void blueprint::NodeProcessor::deserialize(BlueprintCanvas& canvas, Actor& actor) {
+void NodeProcessor::deserialize(BlueprintCanvas& canvas, Actor& actor) {
 	next_id = 1;
 	
 	if (actor.find_component<BlueprintComponent>()) {
@@ -137,23 +142,29 @@ void blueprint::NodeProcessor::deserialize(BlueprintCanvas& canvas, Actor& actor
 		for (auto& node : node_processor.nodes) {
 			switch (node->type) {
 				case NodeType::KeyPress:
-					spawn_node<blueprint::KeyPressNode>(canvas, node->position());
+					spawn_node<KeyPressNode>(canvas, node->position());
 					break;
 				case NodeType::KeyRelease:
-					spawn_node<blueprint::KeyReleaseNode>(canvas, node->position());
+					spawn_node<KeyReleaseNode>(canvas, node->position());
 					break;
 				case NodeType::String:
-					spawn_node<blueprint::StringNode>(canvas, node->position());
+					spawn_node<StringNode>(canvas, node->position());
 					break;
 				case NodeType::Print:
-					spawn_node<blueprint::PrintNode>(canvas, node->position());
+					spawn_node<PrintNode>(canvas, node->position());
 					break;
 			}
 		}
 		
 		for (auto& node : node_processor.nodes) {
-			auto* this_node = find_node(node->id);
-			this_node->set_data(node->get_data());
+			auto* this_node = dynamic_cast<BlueprintDataNode*>(find_node(node->id));
+			
+			auto* that_node = dynamic_cast<BlueprintDataNode*>(node);
+			
+			if (this_node && that_node) {
+				this_node->set_data(that_node->get_data());
+			}
+
 		}
 		
 		for (auto& link : node_processor.links) {
@@ -177,7 +188,7 @@ void blueprint::NodeProcessor::deserialize(BlueprintCanvas& canvas, Actor& actor
 	}
 }
 
-blueprint::Pin* blueprint::NodeProcessor::find_pin(long long id) {
+Pin* NodeProcessor::find_pin(long long id) {
 	
 	for (auto& node : nodes) {
 		const auto& node_inputs = node->get_inputs();
@@ -204,7 +215,7 @@ blueprint::Pin* blueprint::NodeProcessor::find_pin(long long id) {
 }
 
 
-blueprint::BlueprintNode* blueprint::NodeProcessor::find_node(long long id) {
+BlueprintNode* NodeProcessor::find_node(long long id) {
 
 	auto node_it = std::find_if(nodes.begin(), nodes.end(), [id](auto& node) {
 		return node->id == id;
@@ -218,7 +229,7 @@ blueprint::BlueprintNode* blueprint::NodeProcessor::find_node(long long id) {
 }
 
 
-void blueprint::NodeProcessor::clear() {
+void NodeProcessor::clear() {
 	nodes.clear();
 	links.clear();
 	next_id = 1;

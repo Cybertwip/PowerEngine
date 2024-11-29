@@ -165,7 +165,7 @@ class basic_sparse_set {
     static constexpr auto max_size = static_cast<std::size_t>(traits_type::to_entity(null));
 
     [[nodiscard]] auto policy_to_head() const noexcept {
-        return static_cast<size_type>(max_size * (mode != deletion_policy::swap_only));
+        return static_cast<size_type>(max_size * static_cast<decltype(max_size)>(mode != deletion_policy::swap_only));
     }
 
     [[nodiscard]] auto sparse_ptr(const Entity entt) const {
@@ -275,7 +275,6 @@ protected:
         packed[pos] = traits_type::combine(static_cast<typename traits_type::entity_type>(std::exchange(head, pos)), tombstone);
     }
 
-protected:
     /**
      * @brief Erases entities from a sparse set.
      * @param first An iterator to the first element of the range of entities.
@@ -369,6 +368,10 @@ protected:
         return --(end() - static_cast<typename iterator::difference_type>(pos));
     }
 
+    /*! @brief Forwards variables to derived classes, if any. */
+    // NOLINTNEXTLINE(performance-unnecessary-value-param)
+    virtual void bind_any(any) noexcept {}
+
 public:
     /*! @brief Allocator type. */
     using allocator_type = Allocator;
@@ -453,7 +456,7 @@ public:
     }
 
     /*! @brief Default destructor. */
-    virtual ~basic_sparse_set() noexcept {
+    virtual ~basic_sparse_set() {
         release_sparse_pages();
     }
 
@@ -470,13 +473,7 @@ public:
      */
     basic_sparse_set &operator=(basic_sparse_set &&other) noexcept {
         ENTT_ASSERT(alloc_traits::is_always_equal::value || get_allocator() == other.get_allocator(), "Copying a sparse set is not allowed");
-
-        release_sparse_pages();
-        sparse = std::move(other.sparse);
-        packed = std::move(other.packed);
-        info = other.info;
-        mode = other.mode;
-        head = std::exchange(other.head, policy_to_head());
+        swap(other);
         return *this;
     }
 
@@ -484,7 +481,7 @@ public:
      * @brief Exchanges the contents with those of a given sparse set.
      * @param other Sparse set to exchange the content with.
      */
-    void swap(basic_sparse_set &other) {
+    void swap(basic_sparse_set &other) noexcept {
         using std::swap;
         swap(sparse, other.sparse);
         swap(packed, other.packed);
@@ -684,7 +681,7 @@ public:
      * @return True if the sparse set contains the entity, false otherwise.
      */
     [[nodiscard]] bool contains(const entity_type entt) const noexcept {
-        const auto elem = sparse_ptr(entt);
+        const auto *elem = sparse_ptr(entt);
         constexpr auto cap = traits_type::entity_mask;
         constexpr auto mask = traits_type::to_integral(null) & ~cap;
         // testing versions permits to avoid accessing the packed array
@@ -698,7 +695,7 @@ public:
      * version otherwise.
      */
     [[nodiscard]] version_type current(const entity_type entt) const noexcept {
-        const auto elem = sparse_ptr(entt);
+        const auto *elem = sparse_ptr(entt);
         constexpr auto fallback = traits_type::to_version(tombstone);
         return elem ? traits_type::to_version(*elem) : fallback;
     }
@@ -1051,9 +1048,15 @@ public:
         return *info;
     }
 
-    /*! @brief Forwards variables to derived classes, if any. */
-    // NOLINTNEXTLINE(performance-unnecessary-value-param)
-    virtual void bind(any) noexcept {}
+    /**
+     * @brief Forwards variables to derived classes, if any.
+     * @tparam Type Type of the element to forward.
+     * @param value The element to forward.
+     */
+    template<typename Type>
+    void bind(Type &&value) noexcept {
+        bind_any(forward_as_any(std::forward<Type>(value)));
+    }
 
 private:
     sparse_container_type sparse;

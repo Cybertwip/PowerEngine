@@ -21,8 +21,6 @@
 
 #include <GLFW/glfw3.h>
 
-namespace blueprint {
-
 BlueprintCanvas::BlueprintCanvas(ScenePanel& parent, nanogui::Screen& screen, NodeProcessor& nodeProcessor, nanogui::Color backgroundColor)
 : Canvas(parent, screen, backgroundColor)
 , mScrollX(0)
@@ -57,6 +55,10 @@ BlueprintCanvas::BlueprintCanvas(ScenePanel& parent, nanogui::Screen& screen, No
 			mContextMenu->set_visible(false);
 		}
 		
+		if (down) {
+			mActiveInputPin = std::nullopt;
+			mActiveOutputPin = std::nullopt;
+		}
 	});
 	
 	parent.register_click_callback(GLFW_MOUSE_BUTTON_RIGHT, [this](bool down, int width, int height, int x, int y) {
@@ -310,25 +312,25 @@ void BlueprintCanvas::setup_options() {
 	
 	key_press_option->set_callback([this](){
 		mContextMenu->set_visible(false);
-		add_node(mNodeProcessor.spawn_node<blueprint::KeyPressNode>(*this, mContextMenu->position()));
+		add_node(mNodeProcessor.spawn_node<KeyPressNode>(*this, mContextMenu->position()));
 		perform_layout(this->screen().nvg_context());
 	});
 	
 	key_release_option->set_callback([this](){
 		mContextMenu->set_visible(false);
-		add_node(mNodeProcessor.spawn_node<blueprint::KeyReleaseNode>(*this, mContextMenu->position()));
+		add_node(mNodeProcessor.spawn_node<KeyReleaseNode>(*this, mContextMenu->position()));
 		perform_layout(this->screen().nvg_context());
 	});
 	
 	string_option->set_callback([this](){
 		mContextMenu->set_visible(false);
-		add_node(mNodeProcessor.spawn_node<blueprint::StringNode>(*this, mContextMenu->position()));
+		add_node(mNodeProcessor.spawn_node<StringNode>(*this, mContextMenu->position()));
 		perform_layout(this->screen().nvg_context());
 	});
 	
 	print_option->set_callback([this](){
 		mContextMenu->set_visible(false);
-		add_node(mNodeProcessor.spawn_node<blueprint::PrintNode>(*this, mContextMenu->position()));
+		add_node(mNodeProcessor.spawn_node<PrintNode>(*this, mContextMenu->position()));
 		perform_layout(this->screen().nvg_context());
 	});
 	

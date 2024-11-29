@@ -12,7 +12,6 @@ class ScenePanel;
 class ShaderManager;
 class Grid2d;
 
-namespace blueprint {
 class Link;
 class BlueprintNode;
 class NodeProcessor;
@@ -57,13 +56,11 @@ private:
 	
 	NodeProcessor& mNodeProcessor;
 	
-	std::vector<blueprint::BlueprintNode*> mNodes;
-	std::vector<blueprint::Link*> mLinks;
+	std::vector<BlueprintNode*> mNodes;
+	std::vector<Link*> mLinks;
 
 	nanogui::Vector2i mMousePosition;
 	int mHeaderHeight;
 	std::optional<std::reference_wrapper<Pin>> mActiveOutputPin;
 	std::optional<std::reference_wrapper<Pin>> mActiveInputPin;
 };
-
-}

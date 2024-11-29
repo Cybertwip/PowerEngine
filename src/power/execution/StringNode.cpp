@@ -1,19 +1,19 @@
 #include "StringNode.hpp"
 
 namespace {
-class StringPin : public blueprint::Pin {
+class StringPin : public Pin {
 public:
-	StringPin(nanogui::Widget& parent, int id, int node_id, const std::string& label, blueprint::PinType type, blueprint::PinSubType subtype, nanogui::TextBox& textbox)
-	: blueprint::Pin(parent, id, node_id, label, type, subtype)
+	StringPin(nanogui::Widget& parent, int id, int node_id, const std::string& label, PinType type, PinSubType subtype, nanogui::TextBox& textbox)
+	: Pin(parent, id, node_id, label, type, subtype)
 	, mTextBox(textbox) {
 		
 	}
 	
-	std::optional<std::variant<blueprint::Entity, std::string, int, float, bool>> get_data() override {
+	std::optional<std::variant<Entity, std::string, int, float, bool>> get_data() override {
 		return mTextBox.value();
 	}
 	
-	void set_data(std::optional<std::variant<blueprint::Entity, std::string, int, float, bool>> data) override {
+	void set_data(std::optional<std::variant<Entity, std::string, int, float, bool>> data) override {
 		if (data.has_value()) {
 			mTextBox.set_value(std::get<std::string>(*data));
 		} else {
@@ -27,7 +27,7 @@ private:
 
 }
 
-blueprint::StringNode::StringNode(std::optional<std::reference_wrapper<BlueprintCanvas>> parent, nanogui::Vector2i size, std::function<int()> id_registrator_lambda)
+StringNode::StringNode(std::optional<std::reference_wrapper<BlueprintCanvas>> parent, nanogui::Vector2i size, std::function<int()> id_registrator_lambda)
 : BlueprintNode(parent, NodeType::String, "String", size, id_registrator_lambda(), nanogui::Color(255, 0, 255, 255)) {
 	
 	// Text box inside the node data wrapper: Will be centered due to the vertical alignment

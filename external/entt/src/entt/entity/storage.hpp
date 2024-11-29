@@ -266,8 +266,8 @@ class basic_storage: public basic_sparse_set<Entity, typename std::allocator_tra
         const auto it = base_type::try_emplace(entt, force_back);
 
         ENTT_TRY {
-            auto elem = assure_at_least(static_cast<size_type>(it.index()));
-            entt::uninitialized_construct_using_allocator(to_address(elem), get_allocator(), std::forward<Args>(args)...);
+            auto *elem = to_address(assure_at_least(static_cast<size_type>(it.index())));
+            entt::uninitialized_construct_using_allocator(elem, get_allocator(), std::forward<Args>(args)...);
         }
         ENTT_CATCH {
             base_type::pop(it, it + 1u);
@@ -304,11 +304,11 @@ private:
     }
 
     void swap_or_move([[maybe_unused]] const std::size_t from, [[maybe_unused]] const std::size_t to) override {
-        static constexpr bool is_pinned_type_v = !(std::is_move_constructible_v<Type> && std::is_move_assignable_v<Type>);
+        static constexpr bool is_pinned_type = !(std::is_move_constructible_v<Type> && std::is_move_assignable_v<Type>);
         // use a runtime value to avoid compile-time suppression that drives the code coverage tool crazy
-        ENTT_ASSERT((from + 1u) && !is_pinned_type_v, "Pinned type");
+        ENTT_ASSERT((from + 1u) && !is_pinned_type, "Pinned type");
 
-        if constexpr(!is_pinned_type_v) {
+        if constexpr(!is_pinned_type) {
             auto &elem = element_at(from);
 
             if constexpr(traits_type::in_place_delete) {
@@ -374,7 +374,7 @@ protected:
      * @return Iterator pointing to the emplaced element.
      */
     underlying_iterator try_emplace([[maybe_unused]] const Entity entt, [[maybe_unused]] const bool force_back, const void *value) override {
-        if(value) {
+        if(value != nullptr) {
             if constexpr(std::is_copy_constructible_v<element_type>) {
                 return emplace_element(entt, force_back, *static_cast<const element_type *>(value));
             } else {
@@ -456,11 +456,13 @@ public:
     basic_storage(basic_storage &&other, const allocator_type &allocator)
         : base_type{std::move(other), allocator},
           payload{std::move(other.payload), allocator} {
+        // NOLINTNEXTLINE(bugprone-use-after-move)
         ENTT_ASSERT(alloc_traits::is_always_equal::value || get_allocator() == other.get_allocator(), "Copying a storage is not allowed");
     }
 
     /*! @brief Default destructor. */
-    ~basic_storage() noexcept override {
+    // NOLINTNEXTLINE(bugprone-exception-escape)
+    ~basic_storage() override {
         shrink_to_size(0u);
     }
 
@@ -477,9 +479,7 @@ public:
      */
     basic_storage &operator=(basic_storage &&other) noexcept {
         ENTT_ASSERT(alloc_traits::is_always_equal::value || get_allocator() == other.get_allocator(), "Copying a storage is not allowed");
-        shrink_to_size(0u);
-        payload = std::move(other.payload);
-        base_type::operator=(std::move(other));
+        swap(other);
         return *this;
     }
 
@@ -487,7 +487,7 @@ public:
      * @brief Exchanges the contents with those of a given storage.
      * @param other Storage to exchange the content with.
      */
-    void swap(basic_storage &other) {
+    void swap(basic_storage &other) noexcept {
         using std::swap;
         swap(payload, other.payload);
         base_type::swap(other);
@@ -840,7 +840,7 @@ public:
         : base_type{std::move(other), allocator} {}
 
     /*! @brief Default destructor. */
-    ~basic_storage() noexcept override = default;
+    ~basic_storage() override = default;
 
     /**
      * @brief Default copy assignment operator, deleted on purpose.
@@ -1062,7 +1062,7 @@ public:
           placeholder{other.placeholder} {}
 
     /*! @brief Default destructor. */
-    ~basic_storage() noexcept override = default;
+    ~basic_storage() override = default;
 
     /**
      * @brief Default copy assignment operator, deleted on purpose.

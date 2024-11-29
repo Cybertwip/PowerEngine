@@ -10,9 +10,6 @@ DOC:
 * bump entities, reserved bits on identifiers
 
 TODO:
-* further optimize exclusion lists in multi type views (no existence check)
-* further improve meta resolve function by id (bimap)
-* get rid of observers, storage based views made them pointless - document alternatives
 * deprecate non-owning groups in favor of owning views and view packs, introduce lazy owning views
 * bring nested groups back in place (see bd34e7f)
 * work stealing job system (see #100) + mt scheduler based on const awareness for types
@@ -28,20 +25,23 @@ TODO:
   - allow skipping/reserving entity identifiers
   - documentation for reserved entities
 * storage entity: no emplace/insert, rename and add a fast range-push from above
-* view: propagate tombostone check request to iterator
 * table: pop back to support swap and pop, single column access, empty type optimization
 * checkout tools workflow
-* review constrained noexcept-ness (ie sigh)
-* registry::view const invokes refresh multiple times implicitly
 * improve front (no multiple checks) and back (ie no contains) for multi-type view
 * cleanup common view from tricks to handle single swap-only and in-place, if constexpr branches
-* exploit ref/cref in any to avoid invoking the vtable if possible
-* review meta properties and details, maybe a dense map is too much
-* self assignment support for any and meta_any
-* meta support for use defined traits (room for them on meta traits)
 * entity based component_traits
-* investigate using any rather than shared<void> for meta properties
-* refine user defined meta traits implementation
-* copy-and-swap for any and meta_any
-* fix cmake warning about FetchContent_Populate
-
+* review cmake warning about FetchContent_Populate (need .28 and EXCLUDE_FROM_ALL for FetchContent)
+* after removing meta prop vectors, copy meta objects in their handles directly
+* suppress -Wself-move on CI with g++13
+* view specializations for multi, single and filtered elements
+* organizer support to groups
+* meta range: move id to meta objects and return plain types (?), then remove id from meta base and meta ctor too
+* refine the storage fallback mechanism for views (ie alloc?)
+* don't pass reactive storage by default to callback
+* runtime types support for meta for types that aren't backed by C++ types
+* dtor, traits and custom should be part of meta descriptor maybe (?)
+* allow attaching const values of non-Type type to meta types
+* built-in no-pagination storage - no_pagination page size as limits::max
+* meta_any ownership construction and from_void
+* meta_factory() isn't fully tested yet
+* entt::meta isn't required anymore, we can do everything with entt::meta_factory and avoid symbol duplication

@@ -2,12 +2,12 @@
 
 #include "execution/BlueprintManager.hpp"
 
-BlueprintComponent::BlueprintComponent(std::unique_ptr<blueprint::NodeProcessor> nodeProcessor)
+BlueprintComponent::BlueprintComponent(std::unique_ptr<NodeProcessor> nodeProcessor)
 : mNodeProcessor(std::move(nodeProcessor)) {
 	
 }
 
-blueprint::NodeProcessor& BlueprintComponent::node_processor() {
+NodeProcessor& BlueprintComponent::node_processor() {
 	return *mNodeProcessor;
 }
 

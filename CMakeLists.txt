@@ -22,6 +22,8 @@ endif()
 
 
 set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
 
 set(CMAKE_WARN_DEPRECATED FALSE)
 
@@ -95,7 +97,6 @@ add_subdirectory(external/jsoncpp)
 add_subdirectory(external/libriscv/)
 add_subdirectory(external/glm/)
 #add_subdirectory(external/grpc/)
-add_subdirectory(external/smallfbx/)
 add_subdirectory(external/imgui-feature-layout/)
 add_subdirectory(external/imgui-node-editor/)
 add_subdirectory(external/cpp-httplib/)

@@ -250,25 +250,25 @@ class basic_registry {
         } else {
             using storage_type = storage_for_type<Type>;
 
-            if(auto it = pools.find(id); it == pools.cend()) {
-                using alloc_type = typename storage_type::allocator_type;
-                typename pool_container_type::mapped_type cpool{};
-
-                if constexpr(std::is_void_v<Type> && !std::is_constructible_v<alloc_type, allocator_type>) {
-                    // std::allocator<void> has no cross constructors (waiting for C++20)
-                    cpool = std::allocate_shared<storage_type>(get_allocator(), alloc_type{});
-                } else {
-                    cpool = std::allocate_shared<storage_type>(get_allocator(), get_allocator());
-                }
-
-                pools.emplace(id, cpool);
-                cpool->bind(forward_as_any(*this));
-
-                return static_cast<storage_type &>(*cpool);
-            } else {
+            if(auto it = pools.find(id); it != pools.cend()) {
                 ENTT_ASSERT(it->second->type() == type_id<Type>(), "Unexpected type");
                 return static_cast<storage_type &>(*it->second);
             }
+
+            using alloc_type = typename storage_type::allocator_type;
+            typename pool_container_type::mapped_type cpool{};
+
+            if constexpr(std::is_void_v<Type> && !std::is_constructible_v<alloc_type, allocator_type>) {
+                // std::allocator<void> has no cross constructors (waiting for C++20)
+                cpool = std::allocate_shared<storage_type>(get_allocator(), alloc_type{});
+            } else {
+                cpool = std::allocate_shared<storage_type>(get_allocator(), get_allocator());
+            }
+
+            pools.emplace(id, cpool);
+            cpool->bind(*this);
+
+            return static_cast<storage_type &>(*cpool);
         }
     }
 
@@ -290,10 +290,10 @@ class basic_registry {
     }
 
     void rebind() {
-        entities.bind(forward_as_any(*this));
+        entities.bind(*this);
 
         for(auto &&curr: pools) {
-            curr.second->bind(forward_as_any(*this));
+            curr.second->bind(*this);
         }
     }
 
@@ -363,7 +363,7 @@ public:
     }
 
     /*! @brief Default destructor. */
-    ~basic_registry() noexcept = default;
+    ~basic_registry() = default;
 
     /**
      * @brief Default copy assignment operator, deleted on purpose.
@@ -377,13 +377,7 @@ public:
      * @return This registry.
      */
     basic_registry &operator=(basic_registry &&other) noexcept {
-        vars = std::move(other.vars);
-        pools = std::move(other.pools);
-        groups = std::move(other.groups);
-        entities = std::move(other.entities);
-
-        rebind();
-
+        swap(other);
         return *this;
     }
 
@@ -391,7 +385,7 @@ public:
      * @brief Exchanges the contents with those of a given registry.
      * @param other Registry to exchange the content with.
      */
-    void swap(basic_registry &other) {
+    void swap(basic_registry &other) noexcept {
         using std::swap;
 
         swap(vars, other.vars);
@@ -470,6 +464,16 @@ public:
     }
 
     /**
+     * @brief Discards the storage associated with a given name, if any.
+     * @param id Name used to map the storage within the registry.
+     * @return True in case of success, false otherwise.
+     */
+    bool reset(const id_type id) {
+        ENTT_ASSERT(id != type_hash<entity_type>::value(), "Cannot reset entity storage");
+        return !(pools.erase(id) == 0u);
+    }
+
+    /**
      * @brief Checks if an identifier refers to a valid entity.
      * @param entt An identifier, either valid or not.
      * @return True if the identifier is valid, false otherwise.
@@ -534,7 +538,7 @@ public:
      * @return The version of the recycled entity.
      */
     version_type destroy(const entity_type entt) {
-        for(size_type pos = pools.size(); pos; --pos) {
+        for(size_type pos = pools.size(); pos != 0u; --pos) {
             pools.begin()[pos - 1u].second->remove(entt);
         }
 
@@ -651,12 +655,9 @@ public:
      */
     template<typename Type, typename... Args>
     decltype(auto) emplace_or_replace(const entity_type entt, Args &&...args) {
-        if(auto &cpool = assure<Type>(); cpool.contains(entt)) {
-            return cpool.patch(entt, [&args...](auto &...curr) { ((curr = Type{std::forward<Args>(args)...}), ...); });
-        } else {
-            ENTT_ASSERT(valid(entt), "Invalid entity");
-            return cpool.emplace(entt, std::forward<Args>(args)...);
-        }
+        auto &cpool = assure<Type>();
+        ENTT_ASSERT(valid(entt), "Invalid entity");
+        return cpool.contains(entt) ? cpool.patch(entt, [&args...](auto &...curr) { ((curr = Type{std::forward<Args>(args)...}), ...); }) : cpool.emplace(entt, std::forward<Args>(args)...);
     }
 
     /**
@@ -916,12 +917,9 @@ public:
      */
     template<typename Type, typename... Args>
     [[nodiscard]] decltype(auto) get_or_emplace(const entity_type entt, Args &&...args) {
-        if(auto &cpool = assure<Type>(); cpool.contains(entt)) {
-            return cpool.get(entt);
-        } else {
-            ENTT_ASSERT(valid(entt), "Invalid entity");
-            return cpool.emplace(entt, std::forward<Args>(args)...);
-        }
+        auto &cpool = assure<Type>();
+        ENTT_ASSERT(valid(entt), "Invalid entity");
+        return cpool.contains(entt) ? cpool.get(entt) : cpool.emplace(entt, std::forward<Args>(args)...);
     }
 
     /**
@@ -1063,9 +1061,8 @@ public:
     template<typename Type, typename... Other, typename... Exclude>
     [[nodiscard]] basic_view<get_t<storage_for_type<const Type>, storage_for_type<const Other>...>, exclude_t<storage_for_type<const Exclude>...>>
     view(exclude_t<Exclude...> = exclude_t{}) const {
-        const auto cpools = std::make_tuple(assure<std::remove_const_t<Type>>(), assure<std::remove_const_t<Other>>()..., assure<std::remove_const_t<Exclude>>()...);
         basic_view<get_t<storage_for_type<const Type>, storage_for_type<const Other>...>, exclude_t<storage_for_type<const Exclude>...>> elem{};
-        std::apply([&elem](const auto *...curr) { ((curr ? elem.storage(*curr) : void()), ...); }, cpools);
+        [&elem](const auto *...curr) { ((curr ? elem.storage(*curr) : void()), ...); }(assure<std::remove_const_t<Exclude>>()..., assure<std::remove_const_t<Other>>()..., assure<std::remove_const_t<Type>>());
         return elem;
     }
 
@@ -1099,8 +1096,7 @@ public:
             handler = std::allocate_shared<handler_type>(get_allocator(), get_allocator(), std::forward_as_tuple(assure<std::remove_const_t<Get>>()...), std::forward_as_tuple(assure<std::remove_const_t<Exclude>>()...));
         } else {
             handler = std::allocate_shared<handler_type>(get_allocator(), std::forward_as_tuple(assure<std::remove_const_t<Owned>>()..., assure<std::remove_const_t<Get>>()...), std::forward_as_tuple(assure<std::remove_const_t<Exclude>>()...));
-            [[maybe_unused]] const std::array elem{type_hash<std::remove_const_t<Owned>>::value()..., type_hash<std::remove_const_t<Get>>::value()..., type_hash<std::remove_const_t<Exclude>>::value()...};
-            ENTT_ASSERT(std::all_of(groups.cbegin(), groups.cend(), [&elem](const auto &data) { return data.second->owned(elem.data(), sizeof...(Owned)) == 0u; }), "Conflicting groups");
+            ENTT_ASSERT(std::all_of(groups.cbegin(), groups.cend(), [](const auto &data) { return !(data.second->owned(type_id<Owned>().hash()) || ...); }), "Conflicting groups");
         }
 
         groups.emplace(group_type::group_id(), handler);
@@ -1123,15 +1119,13 @@ public:
 
     /**
      * @brief Checks whether the given elements belong to any group.
-     * @tparam Type Type of element in which one is interested.
-     * @tparam Other Other types of elements in which one is interested.
+     * @tparam Type Types of elements in which one is interested.
      * @return True if the pools of the given elements are _free_, false
      * otherwise.
      */
-    template<typename Type, typename... Other>
+    template<typename... Type>
     [[nodiscard]] bool owned() const {
-        const std::array elem{type_hash<std::remove_const_t<Type>>::value(), type_hash<std::remove_const_t<Other>>::value()...};
-        return std::any_of(groups.cbegin(), groups.cend(), [&elem](auto &&data) { return data.second->owned(elem.data(), 1u + sizeof...(Other)); });
+        return std::any_of(groups.cbegin(), groups.cend(), [](auto &&data) { return (data.second->owned(type_id<Type>().hash()) || ...); });
     }
 
     /**

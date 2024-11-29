@@ -16,13 +16,8 @@ else()
         GIT_SHALLOW 1
     )
 
-    FetchContent_GetProperties(googletest)
-
-    if(NOT googletest_POPULATED)
-        FetchContent_Populate(googletest)
-        set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
-        add_subdirectory(${googletest_SOURCE_DIR} ${googletest_BINARY_DIR})
-    endif()
+    set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+    FetchContent_MakeAvailable(googletest)
 
     add_library(GTest::Main ALIAS gtest_main)
 
@@ -51,21 +46,11 @@ function(SETUP_TARGET TARGET_NAME)
         target_compile_options(
             ${TARGET_NAME}
             PRIVATE
-                # vs2017 emits too many false positives for my tastes
-                $<IF:$<EQUAL:${MSVC_TOOLSET_VERSION},141>, /W1, /W4>
-                # clang-cl goes a little wrong with some warnings instead
                 $<$<STREQUAL:"${CMAKE_CXX_COMPILER_ID}","Clang">:
+                    -Wdocumentation
                     -Wno-deprecated-declarations
-                    -Wno-ignored-qualifiers
-                    -Wno-unknown-warning-option
                     -Wno-exceptions
-                    -Wno-unused-local-typedef
-                    -Wno-unused-private-field
                 >
-                # documentation diagnostic turned on for clang-cl only
-                $<$<STREQUAL:"${CMAKE_CXX_COMPILER_ID}","Clang">:-Wdocumentation>
-                # warnings from compilers that think I don't know what I'm doing
-                $<$<STREQUAL:"${CMAKE_CXX_COMPILER_ID}","Clang">:-Wcomma>
                 /EHsc /wd4324 /wd4996
                 # disabling INCREMENTAL is required by SizeBench
                 $<$<CONFIG:Debug>:/Od /INCREMENTAL:NO>
@@ -82,7 +67,11 @@ function(SETUP_TARGET TARGET_NAME)
         target_compile_options(
             ${TARGET_NAME}
             PRIVATE
-                -pedantic -fvisibility=hidden -Wall -Wshadow -Wno-deprecated-declarations
+                -fvisibility=hidden
+                -pedantic
+                -Wall
+                -Wno-deprecated-declarations
+                -Wshadow
                 $<$<CONFIG:Debug>:-O0 -g>
                 $<$<CONFIG:Release>:-O2>
         )
@@ -240,8 +229,8 @@ SETUP_BASIC_TEST(entity entt/entity/entity.cpp)
 SETUP_BASIC_TEST(group entt/entity/group.cpp)
 SETUP_BASIC_TEST(handle entt/entity/handle.cpp)
 SETUP_BASIC_TEST(helper entt/entity/helper.cpp)
-SETUP_BASIC_TEST(observer entt/entity/observer.cpp)
 SETUP_BASIC_TEST(organizer entt/entity/organizer.cpp)
+SETUP_BASIC_TEST(reactive_mixin entt/entity/reactive_mixin.cpp)
 SETUP_BASIC_TEST(registry entt/entity/registry.cpp)
 SETUP_BASIC_TEST(runtime_view entt/entity/runtime_view.cpp)
 SETUP_BASIC_TEST(sigh_mixin entt/entity/sigh_mixin.cpp)
@@ -272,12 +261,13 @@ SETUP_BASIC_TEST(meta_container entt/meta/meta_container.cpp)
 SETUP_BASIC_TEST(meta_context entt/meta/meta_context.cpp)
 SETUP_BASIC_TEST(meta_conv entt/meta/meta_conv.cpp)
 SETUP_BASIC_TEST(meta_ctor entt/meta/meta_ctor.cpp)
+SETUP_BASIC_TEST(meta_custom entt/meta/meta_custom.cpp)
 SETUP_BASIC_TEST(meta_data entt/meta/meta_data.cpp)
 SETUP_BASIC_TEST(meta_dtor entt/meta/meta_dtor.cpp)
+SETUP_BASIC_TEST(meta_factory entt/meta/meta_factory.cpp)
 SETUP_BASIC_TEST(meta_func entt/meta/meta_func.cpp)
 SETUP_BASIC_TEST(meta_handle entt/meta/meta_handle.cpp)
 SETUP_BASIC_TEST(meta_pointer entt/meta/meta_pointer.cpp)
-SETUP_BASIC_TEST(meta_prop entt/meta/meta_prop.cpp)
 SETUP_BASIC_TEST(meta_range entt/meta/meta_range.cpp)
 SETUP_BASIC_TEST(meta_template entt/meta/meta_template.cpp)
 SETUP_BASIC_TEST(meta_type entt/meta/meta_type.cpp)

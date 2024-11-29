@@ -134,10 +134,12 @@ class basic_organizer final {
         if constexpr(sizeof...(Type) == 0u) {
             return {};
         } else {
+            // NOLINTNEXTLINE(cppcoreguidelines-avoid-c-arrays, modernize-avoid-c-arrays)
             const type_info *info[]{&type_id<Type>()...};
             const auto length = count < sizeof...(Type) ? count : sizeof...(Type);
 
             for(std::size_t pos{}; pos < length; ++pos) {
+                // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-pointer-arithmetic)
                 buffer[pos] = info[pos];
             }
 
@@ -268,14 +270,6 @@ public:
          */
         [[nodiscard]] const std::vector<std::size_t> &out_edges() const noexcept {
             return out;
-        }
-
-        /**
-         * @brief Returns the list of nodes reachable from a given vertex.
-         * @return The list of nodes reachable from the vertex.
-         */
-        [[deprecated("use ::out_edges")]] [[nodiscard]] const std::vector<std::size_t> &children() const noexcept {
-            return out_edges();
         }
 
         /**

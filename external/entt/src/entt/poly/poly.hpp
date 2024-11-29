@@ -47,20 +47,21 @@ template<typename Concept, std::size_t Len, std::size_t Align>
 class poly_vtable {
     using inspector = typename Concept::template type<poly_inspector>;
 
-    template<typename Ret, typename... Args>
-    static auto vtable_entry(Ret (*)(inspector &, Args...)) -> Ret (*)(basic_any<Len, Align> &, Args...);
+    template<typename Ret, typename Clazz, typename... Args>
+    static auto vtable_entry(Ret (*)(Clazz &, Args...))
+        -> std::enable_if_t<std::is_base_of_v<std::remove_const_t<Clazz>, inspector>, Ret (*)(constness_as_t<basic_any<Len, Align>, Clazz> &, Args...)>;
 
     template<typename Ret, typename... Args>
-    static auto vtable_entry(Ret (*)(const inspector &, Args...)) -> Ret (*)(const basic_any<Len, Align> &, Args...);
+    static auto vtable_entry(Ret (*)(Args...))
+        -> Ret (*)(const basic_any<Len, Align> &, Args...);
 
-    template<typename Ret, typename... Args>
-    static auto vtable_entry(Ret (*)(Args...)) -> Ret (*)(const basic_any<Len, Align> &, Args...);
+    template<typename Ret, typename Clazz, typename... Args>
+    static auto vtable_entry(Ret (Clazz::*)(Args...))
+        -> std::enable_if_t<std::is_base_of_v<Clazz, inspector>, Ret (*)(basic_any<Len, Align> &, Args...)>;
 
-    template<typename Ret, typename... Args>
-    static auto vtable_entry(Ret (inspector::*)(Args...)) -> Ret (*)(basic_any<Len, Align> &, Args...);
-
-    template<typename Ret, typename... Args>
-    static auto vtable_entry(Ret (inspector::*)(Args...) const) -> Ret (*)(const basic_any<Len, Align> &, Args...);
+    template<typename Ret, typename Clazz, typename... Args>
+    static auto vtable_entry(Ret (Clazz::*)(Args...) const)
+        -> std::enable_if_t<std::is_base_of_v<Clazz, inspector>, Ret (*)(const basic_any<Len, Align> &, Args...)>;
 
     template<auto... Candidate>
     static auto make_vtable(value_list<Candidate...>) noexcept
@@ -96,11 +97,11 @@ class poly_vtable {
     }
 
     using vtable_type = decltype(make_vtable(Concept{}));
-    static constexpr bool is_mono_v = std::tuple_size_v<vtable_type> == 1u;
+    static constexpr bool is_mono = std::tuple_size_v<vtable_type> == 1u;
 
 public:
     /*! @brief Virtual table type. */
-    using type = std::conditional_t<is_mono_v, std::tuple_element_t<0u, vtable_type>, const vtable_type *>;
+    using type = std::conditional_t<is_mono, std::tuple_element_t<0u, vtable_type>, const vtable_type *>;
 
     /**
      * @brief Returns a static virtual table for a specific concept and type.
@@ -112,7 +113,7 @@ public:
         static_assert(std::is_same_v<Type, std::decay_t<Type>>, "Type differs from its decayed form");
         static const vtable_type vtable = fill_vtable<Type>(std::make_index_sequence<Concept::template impl<Type>::size>{});
 
-        if constexpr(is_mono_v) {
+        if constexpr(is_mono) {
             return std::get<0>(vtable);
         } else {
             return &vtable;
