@@ -51,6 +51,14 @@ BlueprintCanvas::BlueprintCanvas(ScenePanel& parent, nanogui::Screen& screen, No
 									   nanogui::Vector3f(0, 1, 0)   // Up direction
 									   );
 	
+	parent.register_click_callback(GLFW_MOUSE_BUTTON_LEFT, [this](bool down, int width, int height, int x, int y) {
+		
+		if (!mContextMenu->contains(x, y)) {
+			mContextMenu->set_visible(false);
+		}
+		
+	});
+	
 	parent.register_click_callback(GLFW_MOUSE_BUTTON_RIGHT, [this](bool down, int width, int height, int x, int y) {
 		
 		if (!down) {
