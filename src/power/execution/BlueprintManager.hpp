@@ -137,11 +137,7 @@ public:
 	}
 	
 	bool keyboard_event(int key, int scancode, int action, int modifiers) {
-		if (mBlueprintPanel->visible()) {
-			return mBlueprintPanel->keyboard_event(key, scancode, action, modifiers);
-		} else {
-			return false;
-		}
+		return mBlueprintPanel->keyboard_event(key, scancode, action, modifiers);
 	}
 
 	void toggle_blueprint_panel(bool active) {
