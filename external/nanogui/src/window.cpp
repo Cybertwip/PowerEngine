@@ -19,7 +19,7 @@ NAMESPACE_BEGIN(nanogui)
 
 Window::Window(std::optional<std::reference_wrapper<Widget>> parent,  const std::string &title)
     : Widget(parent), m_title(title), m_button_panel(nullptr), m_modal(false),
-m_drag(false), m_background_color(std::nullopt) { }
+m_drag(false), m_draggable(false), m_background_color(std::nullopt) { }
 
 Vector2i Window::preferred_size(NVGcontext *ctx) {
 	// Start with the preferred size from the base Widget
@@ -183,7 +183,7 @@ bool Window::mouse_enter_event(const Vector2i &p, bool enter) {
 
 bool Window::mouse_drag_event(const Vector2i &, const Vector2i &rel,
                             int button, int /* modifiers */) {
-    if (m_drag && (button & (1 << GLFW_MOUSE_BUTTON_1)) != 0) {
+    if (m_drag && m_draggable && (button & (1 << GLFW_MOUSE_BUTTON_1)) != 0) {
         m_pos += rel;
         m_pos = max(m_pos, Vector2i(0));
         m_pos = min(m_pos, parent()->get().size() - m_size);
@@ -207,14 +207,13 @@ bool Window::mouse_button_event(const Vector2i &p, int button, bool down, int mo
 		return true;
 	if (button == GLFW_MOUSE_BUTTON_1) {
 		m_drag = down && (p.y() - m_pos.y()) < theme().m_window_header_height;
-		return true;
+		return m_drag && m_draggable;
 	}
 	return false;
 }
 
 bool Window::scroll_event(const Vector2i &p, const Vector2f &rel) {
-    Widget::scroll_event(p, rel);
-    return true;
+    return Widget::scroll_event(p, rel);
 }
 
 void Window::refresh_relative_placement() {

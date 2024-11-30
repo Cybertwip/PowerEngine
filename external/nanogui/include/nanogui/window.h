@@ -44,7 +44,10 @@ public:
 	
 	void set_background_color(std::optional<Color> color) { m_background_color = color; }
 
-
+	void set_draggable(bool draggable) {
+		m_draggable = draggable;
+	}
+	
     /// Draw the window
     virtual void draw(NVGcontext *ctx) override;
     /// Handle mouse enter/leave events
@@ -67,6 +70,7 @@ protected:
     std::unique_ptr<Widget> m_button_panel;
     bool m_modal;
     bool m_drag;
+	bool m_draggable;
 	
 	std::optional<Color> m_background_color; // New member variable
 

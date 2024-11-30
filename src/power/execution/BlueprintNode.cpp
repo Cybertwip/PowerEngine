@@ -4,6 +4,7 @@
 
 BlueprintNode::BlueprintNode(std::optional<std::reference_wrapper<BlueprintCanvas>> parent, NodeType type, const std::string& name, nanogui::Vector2i size, int id, nanogui::Color color)
 : nanogui::Window(parent, name), mCanvas(parent), type(type), id(id), color(color) {
+	set_draggable(true);
 	set_fixed_size(size);
 	set_layout(std::make_unique<nanogui::GroupLayout>(5, 0));
 	

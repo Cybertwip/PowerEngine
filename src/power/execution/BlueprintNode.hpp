@@ -133,7 +133,6 @@ private:
 									int modifiers) override {
 		mWindow.mouse_button_event(p, button, down, modifiers);
 		nanogui::Widget::mouse_button_event(p, button, down, modifiers);
-		
 		// delegate and consume event
 		return true;
 	}

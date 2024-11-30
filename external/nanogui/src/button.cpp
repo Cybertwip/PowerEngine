@@ -51,9 +51,7 @@ bool Button::mouse_enter_event(const Vector2i &p, bool enter) {
     return true;
 }
 
-bool Button::mouse_button_event(const Vector2i &p, int button, bool down, int modifiers) {
-    Widget::mouse_button_event(p, button, down, modifiers);
-
+bool Button::mouse_button_event(const Vector2i &p, int button, bool down, int) {
 	if (button == GLFW_MOUSE_BUTTON_1 && down) {
 		request_focus();
 	}
