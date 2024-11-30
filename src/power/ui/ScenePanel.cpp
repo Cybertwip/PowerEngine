@@ -26,6 +26,15 @@ bool ScenePanel::mouse_button_event(const nanogui::Vector2i &p, int button, bool
 	return true;
 }
 
+
+bool ScenePanel::mouse_drag_event(const nanogui::Vector2i &p, const nanogui::Vector2i &rel, int button, int modifiers) {
+	if (Panel::mouse_drag_event(p, rel, button, modifiers)) {
+		return true;
+	} else {
+		return false;
+	}
+}
+
 bool ScenePanel::mouse_motion_event(const nanogui::Vector2i &p, const nanogui::Vector2i &rel, int button, int modifiers) {
 	
 	if (Panel::mouse_motion_event(p, rel, button, modifiers)) {

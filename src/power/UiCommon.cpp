@@ -32,7 +32,7 @@ UiCommon::UiCommon(nanogui::Widget& parent, nanogui::Screen& screen, ActorManage
 	mSceneWrapper->set_fixed_width(totalWidth);
 	mSceneWrapper->set_fixed_height(totalHeight);
 	
-	mLeftWrapper = std::make_shared<nanogui::Window>(*mSceneWrapper, "Workspace");
+	mLeftWrapper = std::make_shared<Panel>(*mSceneWrapper, "Workspace");
 	
 	mLeftWrapper->set_layout(
 							 std::make_unique<nanogui::GridLayout>(nanogui::Orientation::Horizontal, 1, nanogui::Alignment::Minimum));

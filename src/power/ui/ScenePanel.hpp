@@ -22,6 +22,8 @@ public:
 	void register_motion_callback(int button, std::function<void(int, int, int, int, int, int, int, bool)> callback);
 	
 protected:
+	bool mouse_drag_event(const nanogui::Vector2i &p, const nanogui::Vector2i &rel, int button, int modifiers) override;
+	
 	void draw(NVGcontext *ctx) override;
 
 private:
