@@ -277,6 +277,7 @@ bool TextBox::mouse_button_event(const Vector2i &p, int button, bool down,
 	if (button == GLFW_MOUSE_BUTTON_1 && down && !m_focused) {
 		if (!m_spinnable || spin_area(p) == SpinArea::None) /* not on scrolling arrows */
 			request_focus();
+		
 	}
 	
 	if (m_editable) {
@@ -351,7 +352,8 @@ bool TextBox::mouse_drag_event(const Vector2i &p, const Vector2i &/* rel */,
 	return false;
 }
 
-bool TextBox::focus_event(bool focused) {	
+bool TextBox::focus_event(bool focused) {
+	m_focused = focused;
 	std::string backup = m_value;
 	
 	if (m_editable) {
@@ -386,7 +388,7 @@ bool TextBox::focus_event(bool focused) {
 bool TextBox::keyboard_event(int key, int  scancode, int action, int modifiers) {
 	if (m_editable && focused()) {
 		if (action == GLFW_PRESS || action == GLFW_REPEAT) {
-						
+			
 			if (key == GLFW_KEY_LEFT) {
 				if (modifiers == GLFW_MOD_SHIFT) {
 					if (m_selection_pos == -1)
@@ -430,11 +432,11 @@ bool TextBox::keyboard_event(int key, int  scancode, int action, int modifiers) 
 					if (m_cursor_pos > 0) {
 						m_value_temp.erase(m_value_temp.begin() + m_cursor_pos - 1);{
 							m_cursor_pos--;
-
+							
 							if (m_valid_format && m_callback){
 								m_callback(m_value_temp);
 							}
-
+							
 							
 						}
 					}
@@ -487,7 +489,7 @@ bool TextBox::keyboard_character_event(unsigned int codepoint) {
 		if (m_valid_format && m_callback){
 			m_callback(m_value_temp);
 		}
-
+		
 		return true;
 	}
 	
@@ -640,3 +642,4 @@ void TextBox::disable_password_mode() {
 
 
 NAMESPACE_END(nanogui)
+

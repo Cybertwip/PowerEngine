@@ -88,7 +88,7 @@ public:
     virtual bool mouse_button_event(const Vector2i &p, int button, bool down, int modifiers) override;
     virtual bool mouse_motion_event(const Vector2i &p, const Vector2i &rel, int button, int modifiers) override;
     virtual bool mouse_drag_event(const Vector2i &p, const Vector2i &rel, int button, int modifiers) override;
-    bool focus_event(bool focused);
+    bool focus_event(bool focused) override;
     virtual bool keyboard_event(int key, int scancode, int action, int modifiers) override;
     virtual bool keyboard_character_event(unsigned int codepoint) override;
 

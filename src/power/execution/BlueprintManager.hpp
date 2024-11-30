@@ -59,14 +59,18 @@ public:
 	
 	// Override mouse_button_event to consume the event
 	bool mouse_button_event(const nanogui::Vector2i &p, int button, bool down, int modifiers) override {
-		ScenePanel::mouse_button_event(p, button, down, modifiers);
-		return true;
+		if(ScenePanel::mouse_button_event(p, button, down, modifiers)){
+			return true;
+		}
+		return false;
 	}
 	
 	// Override mouse_motion_event to consume the event
 	bool mouse_motion_event(const nanogui::Vector2i &p, const nanogui::Vector2i &rel, int button, int modifiers) override {
-		ScenePanel::mouse_motion_event(p, rel, button, modifiers);
-		return true;
+		if(ScenePanel::mouse_motion_event(p, rel, button, modifiers)) {
+			return true;
+		}
+		return false;
 	}
 	
 	void serialize(Actor& actor) {

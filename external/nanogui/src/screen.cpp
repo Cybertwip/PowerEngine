@@ -779,7 +779,13 @@ void Screen::update_focus(Widget& widget) {
 		return;
 	}
 	
+	if (m_focused_widget) {
+		m_focused_widget->focus_event(false);
+	}
+	
 	m_focused_widget = widget.shared_from_this();
+	
+	m_focused_widget->focus_event(true);
 
 	if (auto* window = dynamic_cast<Window*>(&widget); window) {
 		if (window->modal()) {

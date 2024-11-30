@@ -186,6 +186,10 @@ public:
     /// Request the focus to be moved to this widget
     void request_focus();
 	
+	virtual bool focus_event(bool) {
+		return false;
+	}
+	
     const std::string &tooltip() const { return m_tooltip; }
     void set_tooltip(const std::string &tooltip) { m_tooltip = tooltip; }
 
