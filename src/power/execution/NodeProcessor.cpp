@@ -169,7 +169,7 @@ void NodeProcessor::serialize(BlueprintCanvas& canvas, Actor& actor) {
 void NodeProcessor::deserialize(BlueprintCanvas& canvas, Actor& actor) {
 	clear();
 	canvas.clear(); // must clean after deallocation
-	canvas.clear_chldren();
+	canvas.clear_children();
 	canvas.attach_popup();
 
 	if (actor.find_component<BlueprintComponent>()) {
