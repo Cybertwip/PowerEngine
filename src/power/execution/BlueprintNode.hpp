@@ -8,6 +8,8 @@
 #include <nanogui/textbox.h>
 #include <nanogui/window.h>
 
+#include <GLFW/glfw3.h>
+
 #include <functional>
 #include <optional>
 #include <string>
@@ -88,17 +90,23 @@ public:
 		mData = data;
 	}
 	
-	void set_pin_callback(std::function<void()> callback) {
+	void set_hover_callback(std::function<void()> callback) {
 		mHoverCallback = callback;
 	}
-	
+
+	void set_click_callback(std::function<void()> callback) {
+		mClickCallback = callback;
+	}
+
 	bool mouse_button_event(const nanogui::Vector2i &p, int button, bool down, int modifiers) override {
 		nanogui::Widget::mouse_button_event(p, button, down, modifiers);
-		if (button == GLFW_MOUSE_BUTTON_1) {
-			if (!down) {
-				if (mHoverCallback) {
-					mHoverCallback();
-				}
+		if (button == GLFW_MOUSE_BUTTON_1 && !down) {
+			if (mHoverCallback) {
+				mHoverCallback();
+			}
+		} else if (button == GLFW_MOUSE_BUTTON_1) {
+			if (mClickCallback) {
+				mClickCallback();
 			}
 		}
 	}
@@ -107,6 +115,7 @@ private:
 	std::optional<std::variant<Entity, std::string, int, float, bool>> mData;
 	
 	std::function<void()> mHoverCallback;
+	std::function<void()> mClickCallback;
 };
 
 
@@ -238,7 +247,7 @@ public:
 		if (mCanvas.has_value()) {
 			auto& output_ref = *output;
 			
-			output->set_callback([this, &output_ref](){
+			output->set_click_callback([this, &output_ref](){
 				mCanvas->get().on_output_pin_clicked(output_ref);
 			});
 			
