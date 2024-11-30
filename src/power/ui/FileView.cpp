@@ -445,18 +445,6 @@ void FileView::draw(NVGcontext* ctx) {
 	nvgRestore(ctx);
 }
 
-bool Widget::mouse_button_event(const Vector2i &p, int button, bool down, int modifiers) {
-	for (auto it = m_children.rbegin(); it != m_children.rend(); ++it) {
-		Widget& child = *it;
-		if (child.visible() && child.contains(p - m_pos) &&
-			child.mouse_button_event(p - m_pos, button, down, modifiers))
-			return true;
-	}
-	if (button == GLFW_MOUSE_BUTTON_1 && down && !m_focused)
-		request_focus();
-	return false;
-}
-
 bool FileView::mouse_button_event(const nanogui::Vector2i &p, int button, bool down, int modifiers) {
 	for (auto it = m_children.rbegin(); it != m_children.rend(); ++it) {
 		nanogui::Widget& child = *it;
