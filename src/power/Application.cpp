@@ -232,6 +232,12 @@ bool Application::keyboard_event(int key, int scancode, int action, int modifier
 //
 //		return true;
 //	}
+	// delegate to blueprint manager first
+	
+	if (mBlueprintManager->keyboard_event(key, scancode, action, modifiers)) {
+		return true;
+	}
+	
 	if (key == GLFW_KEY_DELETE && action == GLFW_PRESS) {
 		mBlueprintManager->commit_blueprint();
 		mUiManager->remove_active_actor();

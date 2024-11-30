@@ -116,12 +116,22 @@ public:
 			mBlueprintPanel->serialize(mActiveActor->get());
 		}
 	}
+	
+	bool keyboard_event(int key, int scancode, int action, int modifiers) {
+		if (mBlueprintPanel->visible()) {
+			return mBlueprintPanel->keyboard_event(key, scancode, action, modifiers);
+		} else {
+			return false;
+		}
+	}
 
 	void toggle_blueprint_panel(bool active) {
 		if (mAnimationFuture.valid() && mAnimationFuture.wait_for(std::chrono::seconds(0)) != std::future_status::ready) {
 			return; // Animation is still running, do not start a new one
 		}
 		
+		mBlueprintPanel->set_visible(true);
+
 		if (active) {
 			mAnimationFuture = std::async(std::launch::async, [this]() {
 				auto target = nanogui::Vector2i(0, mCanvas.fixed_height() * 0.25f);
@@ -131,10 +141,10 @@ public:
 			mAnimationFuture = std::async(std::launch::async, [this]() {
 				auto target = nanogui::Vector2i(0, mCanvas.fixed_height());
 				animate_panel_position(target);
+				
+				mBlueprintPanel->set_visible(false);
 			});
 		}
-		
-		mBlueprintPanel->set_visible(true);
 	}
 	
 	void animate_panel_position(const nanogui::Vector2i &targetPosition) {
