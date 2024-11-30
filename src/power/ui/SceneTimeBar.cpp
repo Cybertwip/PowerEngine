@@ -514,7 +514,9 @@ bool SceneTimeBar::mouse_button_event(const nanogui::Vector2i &p, int button, bo
 
 // Override mouse_motion_event to consume the event
 bool SceneTimeBar::mouse_motion_event(const nanogui::Vector2i &p, const nanogui::Vector2i &rel, int button, int modifiers) {
-	return nanogui::Widget::mouse_motion_event(p, rel, button, modifiers);
+	nanogui::Widget::mouse_motion_event(p, rel, button, modifiers);
+	
+	return true;
 }
 
 // Manual force draw to draw on top
