@@ -228,7 +228,35 @@ BlueprintNode* NodeProcessor::find_node(long long id) {
 	return nullptr;
 }
 
-
+void NodeProcessor::break_links(BlueprintNode* node) {
+	if (!node) {
+		return;
+	}
+	
+	// Create a vector to store links that need to be removed
+	std::vector<Link*> links_to_remove;
+	
+	// Find all links connected to the node's input or output pins
+	for (auto& link : links) {
+		const auto& start_pin = link->get_start();
+		const auto& end_pin = link->get_end();
+		
+		// Check if either end of the link connects to the node
+		if (start_pin.node == node || end_pin.node == node) {
+			links_to_remove.push_back(link.get());
+		}
+	}
+	
+	// Remove the identified links
+	links.erase(
+				std::remove_if(links.begin(), links.end(),
+							   [&links_to_remove](const std::unique_ptr<Link>& link) {
+								   return std::find(links_to_remove.begin(), links_to_remove.end(), link.get()) != links_to_remove.end();
+							   }
+							   ),
+				links.end()
+				);
+}
 void NodeProcessor::clear() {
 	nodes.clear();
 	links.clear();

@@ -32,6 +32,14 @@ public:
 	
 	void add_link(Link* link);
 	
+	BlueprintNode* selected_node() {
+		return mSelectedNode;
+	}
+	
+	void clear_selection() {
+		mSelectedNode = nullptr;
+	}
+	
 private:	
 	bool mouse_motion_event(const nanogui::Vector2i &p, const nanogui::Vector2i &rel, int button, int modifiers) override;
 	
@@ -57,6 +65,7 @@ private:
 	NodeProcessor& mNodeProcessor;
 	
 	std::vector<BlueprintNode*> mNodes;
+	BlueprintNode* mSelectedNode;
 	std::vector<Link*> mLinks;
 
 	nanogui::Vector2i mMousePosition;

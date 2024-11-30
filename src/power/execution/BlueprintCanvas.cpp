@@ -27,6 +27,7 @@ BlueprintCanvas::BlueprintCanvas(ScenePanel& parent, nanogui::Screen& screen, No
 , mScrollY(0)
 , mScrolling(false)
 , mNodeProcessor(nodeProcessor)
+, mSelectedNode(nullptr)
 , mMousePosition(0, 0) {
 	mShaderManager = std::make_unique<ShaderManager>(*this);
 	
@@ -50,7 +51,6 @@ BlueprintCanvas::BlueprintCanvas(ScenePanel& parent, nanogui::Screen& screen, No
 									   );
 	
 	parent.register_click_callback(GLFW_MOUSE_BUTTON_LEFT, [this](bool down, int width, int height, int x, int y) {
-		
 		if (!mContextMenu->contains(x, y)) {
 			mContextMenu->set_visible(false);
 		}
@@ -58,6 +58,13 @@ BlueprintCanvas::BlueprintCanvas(ScenePanel& parent, nanogui::Screen& screen, No
 		if (down) {
 			mActiveInputPin = std::nullopt;
 			mActiveOutputPin = std::nullopt;
+		}
+		
+		for (auto* node : mNodes) {
+			if (node->contains(x, y)){
+				mSelectedNode = node;
+				break;
+			}
 		}
 	});
 	
@@ -347,6 +354,7 @@ void BlueprintCanvas::setup_options() {
 void BlueprintCanvas::clear() {
 	shed_children();
 	mLinks.clear();
+	mSelectedNode = nullptr;
 	mContextMenu = std::make_unique<nanogui::Popup>(*this);
 }
 

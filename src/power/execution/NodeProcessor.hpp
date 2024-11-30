@@ -45,6 +45,8 @@ public:
 	
 	Pin* find_pin(long long id);
 	BlueprintNode* find_node(long long id);
+	
+	void break_links(BlueprintNode* node);
 
 private:
 	long long next_id = 1;

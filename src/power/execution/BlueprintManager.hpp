@@ -38,6 +38,19 @@ public:
 		ScenePanel::process_events();
 	}
 	
+	bool keyboard_event(int key, int scancode, int action, int modifiers) override {
+		
+		auto* selected_node = mCanvas->selected_node();
+		
+		if (selected_node) {
+			mNodeProcessor->break_links(selected_node);
+			mCanvas->clear_selection();
+			return true;
+		} else {
+			return false;
+		}
+	}
+	
 	void serialize(Actor& actor) {
 		mNodeProcessor->serialize(*mCanvas, actor);
 		clear();
