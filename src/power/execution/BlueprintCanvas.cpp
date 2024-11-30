@@ -399,6 +399,7 @@ void BlueprintCanvas::clear() {
 	shed_children();
 	mActiveInputPin = std::nullopt;
 	mActiveOutputPin = std::nullopt;
+	mNodes.clear();
 	mLinks.clear();
 	mSelectedNode = nullptr;
 	mContextMenu = std::make_unique<nanogui::Popup>(*this);

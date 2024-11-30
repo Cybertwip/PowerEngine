@@ -28,14 +28,14 @@ void NodeProcessor::build_node(BlueprintNode& node){
 }
 
 void NodeProcessor::evaluate() {
-
+	
 	std::unordered_set<BlueprintNode*> evaluated_nodes;
 	
 	for (auto& link : links)
 	{
 		auto& out_pin = link->get_start();
 		auto& in_pin = link->get_end();
-
+		
 		if(evaluated_nodes.find(out_pin.node) == evaluated_nodes.end()){
 			if(out_pin.node->evaluate){
 				out_pin.node->evaluate();
@@ -43,7 +43,7 @@ void NodeProcessor::evaluate() {
 				evaluated_nodes.insert(out_pin.node);
 			}
 		}
-
+		
 		if(evaluated_nodes.find(in_pin.node) == evaluated_nodes.end()){
 			if(in_pin.node->evaluate){
 				in_pin.node->evaluate();
@@ -97,11 +97,38 @@ void NodeProcessor::serialize(BlueprintCanvas& canvas, Actor& actor) {
 					node_processor->spawn_node<PrintNode>(canvas, node->position());
 					break;
 			}
+			
+			auto* source_node = node.get();
+			auto* target_node = node_processor->find_node(node->id);
+			
+			if (source_node && target_node) {
+				const auto& source_inputs = source_node->get_inputs();
+				const auto& target_inputs = target_node->get_inputs();
+				
+				for (const auto& source_pin : source_inputs) {
+					for (const auto& target_pin : target_inputs) {
+						if (target_pin) {
+							target_pin->set_data(source_pin->get_data());
+						}
+					}
+				}
+			}
+			
+			const auto& source_outputs = source_node->get_outputs();
+			const auto& target_outputs = target_node->get_outputs();
+			
+			for (const auto& source_pin : source_outputs) {
+				for (const auto& target_pin : target_outputs) {
+					if (target_pin) {
+						target_pin->set_data(source_pin->get_data());
+					}
+				}
+			}
 		}
 		
 		for (auto& node : nodes) {
 			auto* that_node = dynamic_cast<BlueprintDataNode*>(node_processor->find_node(node->id));
-
+			
 			auto* this_node = dynamic_cast<BlueprintDataNode*>(node.get());
 			
 			if (that_node && this_node) {
@@ -118,11 +145,11 @@ void NodeProcessor::serialize(BlueprintCanvas& canvas, Actor& actor) {
 			if (link->get_start().get_data().has_value()) {
 				start_pin->set_data(link->get_start().get_data());
 			}
-
+			
 			if (link->get_end().get_data().has_value()) {
 				end_pin->set_data(link->get_end().get_data());
 			}
-
+			
 			node_processor->create_link(canvas, link->get_id(), *start_pin, *end_pin);
 		}
 		
@@ -154,6 +181,34 @@ void NodeProcessor::deserialize(BlueprintCanvas& canvas, Actor& actor) {
 					spawn_node<PrintNode>(canvas, node->position());
 					break;
 			}
+			
+			auto* source_node = node.get();
+			auto* target_node = find_node(node->id);
+			
+			if (source_node && target_node) {
+				const auto& source_inputs = source_node->get_inputs();
+				const auto& target_inputs = target_node->get_inputs();
+				
+				for (const auto& source_pin : source_inputs) {
+					for (const auto& target_pin : target_inputs) {
+						if (target_pin) {
+							target_pin->set_data(source_pin->get_data());
+						}
+					}
+				}
+			}
+			
+			const auto& source_outputs = source_node->get_outputs();
+			const auto& target_outputs = target_node->get_outputs();
+			
+			for (const auto& source_pin : source_outputs) {
+				for (const auto& target_pin : target_outputs) {
+					if (target_pin) {
+						target_pin->set_data(source_pin->get_data());
+					}
+				}
+			}
+			
 		}
 		
 		for (auto& node : node_processor.nodes) {
@@ -164,7 +219,7 @@ void NodeProcessor::deserialize(BlueprintCanvas& canvas, Actor& actor) {
 			if (this_node && that_node) {
 				this_node->set_data(that_node->get_data());
 			}
-
+			
 		}
 		
 		for (auto& link : node_processor.links) {
@@ -216,15 +271,15 @@ Pin* NodeProcessor::find_pin(long long id) {
 
 
 BlueprintNode* NodeProcessor::find_node(long long id) {
-
+	
 	auto node_it = std::find_if(nodes.begin(), nodes.end(), [id](auto& node) {
 		return node->id == id;
 	});
-
+	
 	if (node_it != nodes.end()) {
 		return node_it->get();
 	}
-
+	
 	return nullptr;
 }
 

@@ -436,8 +436,6 @@ bool TextBox::keyboard_event(int key, int  scancode, int action, int modifiers) 
 							if (m_valid_format && m_callback){
 								m_callback(m_value_temp);
 							}
-							
-							
 						}
 					}
 				}
@@ -488,6 +486,10 @@ bool TextBox::keyboard_character_event(unsigned int codepoint) {
 		
 		if (m_valid_format && m_callback){
 			m_callback(m_value_temp);
+		}
+		
+		if (m_valid_format) {
+			m_value = m_value_temp;
 		}
 		
 		return true;

@@ -92,9 +92,9 @@ public:
 		}
 	}
 	
-	void on_canvas_modified() {
-		mBlueprintButton->set_text_color(nanogui::Color(255, 0, 0, 255));
-		
+	void on_canvas_modified() {		
+		mBlueprintButton->set_text_color(nanogui::Color(1.0f, 1.0f, 0.0f, 1.0f)); // Yellow
+
 		mCommitted = false;
 	}
 	
