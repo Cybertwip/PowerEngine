@@ -401,6 +401,7 @@ void BlueprintCanvas::clear() {
 	mNodes.clear();
 	mLinks.clear();
 	mSelectedNode = nullptr;
+	remove_child(*mContextMenu);
 	mContextMenu = std::make_unique<nanogui::Popup>(*this);
 }
 

@@ -191,12 +191,13 @@ void Widget::shed_children() {
 	while (!m_children.empty()) {
 		// Get the last child
 		Widget& child = m_children.back();
+				
+		// Recursively shed the child's children
+		child.shed_children();
 		
 		// Remove the child from m_children
 		m_children.pop_back();
-		
-		// Recursively shed the child's children
-		child.shed_children();
+
 	}
 }
 
