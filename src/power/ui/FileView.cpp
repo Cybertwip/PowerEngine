@@ -457,7 +457,7 @@ bool Widget::mouse_button_event(const Vector2i &p, int button, bool down, int mo
 	return false;
 }
 
-bool FileView::mouse_button_event(const nanogui::Vector2i &, int, bool, int) {
+bool FileView::mouse_button_event(const nanogui::Vector2i &p, int button, bool down, int modifiers) {
 	for (auto it = m_children.rbegin(); it != m_children.rend(); ++it) {
 		nanogui::Widget& child = *it;
 		if (child.visible() && child.contains(p - m_pos) &&
