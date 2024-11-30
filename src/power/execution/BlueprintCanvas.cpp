@@ -395,13 +395,13 @@ void BlueprintCanvas::setup_options() {
 }
 
 void BlueprintCanvas::clear() {
+	remove_child(*mContextMenu);
 	shed_children();
 	mActiveInputPin = std::nullopt;
 	mActiveOutputPin = std::nullopt;
 	mNodes.clear();
 	mLinks.clear();
 	mSelectedNode = nullptr;
-	remove_child(*mContextMenu);
 	mContextMenu = std::make_unique<nanogui::Popup>(*this);
 }
 
