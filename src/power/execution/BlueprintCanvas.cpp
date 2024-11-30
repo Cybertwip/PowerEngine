@@ -362,25 +362,25 @@ void BlueprintCanvas::setup_options() {
 	
 	key_press_option->set_callback([this](){
 		mContextMenu->set_visible(false);
-		add_node(mNodeProcessor.spawn_node<KeyPressNode>(*this, mContextMenu->position()));
+		add_node(mNodeProcessor.spawn_node<KeyPressNode>(*this, mNodeProcessor.get_next_id(), mContextMenu->position()));
 		perform_layout(this->screen().nvg_context());
 	});
 	
 	key_release_option->set_callback([this](){
 		mContextMenu->set_visible(false);
-		add_node(mNodeProcessor.spawn_node<KeyReleaseNode>(*this, mContextMenu->position()));
+		add_node(mNodeProcessor.spawn_node<KeyReleaseNode>(*this, mNodeProcessor.get_next_id(), mContextMenu->position()));
 		perform_layout(this->screen().nvg_context());
 	});
 	
 	string_option->set_callback([this](){
 		mContextMenu->set_visible(false);
-		add_node(mNodeProcessor.spawn_node<StringNode>(*this, mContextMenu->position()));
+		add_node(mNodeProcessor.spawn_node<StringNode>(*this, mNodeProcessor.get_next_id(), mContextMenu->position()));
 		perform_layout(this->screen().nvg_context());
 	});
 	
 	print_option->set_callback([this](){
 		mContextMenu->set_visible(false);
-		add_node(mNodeProcessor.spawn_node<PrintNode>(*this, mContextMenu->position()));
+		add_node(mNodeProcessor.spawn_node<PrintNode>(*this, mNodeProcessor.get_next_id(), mContextMenu->position()));
 		perform_layout(this->screen().nvg_context());
 	});
 	
