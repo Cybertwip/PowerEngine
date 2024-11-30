@@ -29,8 +29,8 @@ bool ScenePanel::mouse_button_event(const nanogui::Vector2i &p, int button, bool
 
 bool ScenePanel::mouse_motion_event(const nanogui::Vector2i &p, const nanogui::Vector2i &rel, int button, int modifiers) {
 	
-	if (Widget::mouse_motion_event(p, rel, button, modifiers)) {
-		return mMovable;
+	if (mMovable && Widget::mouse_motion_event(p, rel, button, modifiers)) {
+		return true;
 	} else {
 		// Queue the motion event
 		mMotionQueue.push_front(std::make_tuple(width(), height(), p.x(), p.y(), rel.x(), rel.y(), button, mDragging));
