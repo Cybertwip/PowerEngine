@@ -15,7 +15,7 @@ ScenePanel::ScenePanel(nanogui::Widget& parent, const std::string& title)
 
 bool ScenePanel::mouse_button_event(const nanogui::Vector2i &p, int button, bool down, int modifiers) {
 	
-	if (Widget::mouse_button_event(p, button, down, modifiers)) {
+	if (Panel::mouse_button_event(p, button, down, modifiers)) {
 		return true;
 	} 
 	// Queue the button up event
@@ -28,7 +28,7 @@ bool ScenePanel::mouse_button_event(const nanogui::Vector2i &p, int button, bool
 
 bool ScenePanel::mouse_motion_event(const nanogui::Vector2i &p, const nanogui::Vector2i &rel, int button, int modifiers) {
 	
-	if (Widget::mouse_motion_event(p, rel, button, modifiers)) {
+	if (Panel::mouse_motion_event(p, rel, button, modifiers)) {
 		return true;
 	} else {
 		// Queue the motion event
@@ -39,7 +39,7 @@ bool ScenePanel::mouse_motion_event(const nanogui::Vector2i &p, const nanogui::V
 }
 
 bool ScenePanel::scroll_event(const nanogui::Vector2i &p, const nanogui::Vector2f &rel) {
-	if (Widget::scroll_event(p, rel)) {
+	if (Panel::scroll_event(p, rel)) {
 		return true;
 	} else {
 		// Queue the scroll event
