@@ -19,7 +19,7 @@
 
 class BlueprintPanel : public ScenePanel, public IActorSelectedCallback {
 public:
-	BlueprintPanel(Canvas& parent, std::shared_ptr<IActorSelectedRegistry> registry, ActorManager& actorManager, std::function<void(bool)> blueprintActionTriggerCallback)
+	BlueprintPanel(Canvas& parent, std::shared_ptr<IActorSelectedRegistry> registry, ActorManager& actorManager, std::function<void(bool, std::function<void()>)> blueprintActionTriggerCallback)
 	: ScenePanel(parent, "Blueprint")
 	, mRegistry(registry)
 	, mActorManager(actorManager)
@@ -55,7 +55,9 @@ public:
 			} else {
 				mActive = !mActive;
 				
-				mBlueprintActionTriggerCallback(mActive);
+				mBlueprintActionTriggerCallback(mActive, [this](){
+					clear();
+				});
 			}
 		});
 		
@@ -78,8 +80,9 @@ public:
 		} else {
 			mBlueprintButton->set_enabled(false);
 			mBlueprintButton->set_pushed(false);
-			mBlueprintActionTriggerCallback(false);
-			clear();
+			mBlueprintActionTriggerCallback(false, [this](){
+				clear();
+			});
 		}
 	}
 	
@@ -179,7 +182,7 @@ private:
 	std::shared_ptr<IActorSelectedRegistry> mRegistry;
 	ActorManager& mActorManager;
 
-	std::function<void(bool)> mBlueprintActionTriggerCallback;
+	std::function<void(bool, std::function<void()>)> mBlueprintActionTriggerCallback;
 	
 	std::shared_ptr<nanogui::Button> mBlueprintButton;
 
@@ -195,8 +198,8 @@ class BlueprintManager {
 public:
 	BlueprintManager(Canvas& canvas, std::shared_ptr<IActorSelectedRegistry> registry, ActorManager& actorManager)
 	: mCanvas(canvas) {
-		mBlueprintPanel = std::make_shared<BlueprintPanel>(canvas, registry, actorManager, [this](bool active){
-			toggle_blueprint_panel(active);
+		mBlueprintPanel = std::make_shared<BlueprintPanel>(canvas, registry, actorManager, [this](bool active, std::function<void()> onPanelToggle){
+			toggle_blueprint_panel(active, onPanelToggle);
 		});
 		
 		mBlueprintPanel->set_position(nanogui::Vector2i(0, canvas.fixed_height()));
@@ -207,7 +210,7 @@ public:
 		return mBlueprintPanel->keyboard_event(key, scancode, action, modifiers);
 	}
 
-	void toggle_blueprint_panel(bool active) {
+	void toggle_blueprint_panel(bool active, std::function<void()> onPanelToggle) {
 		if (mAnimationFuture.valid() && mAnimationFuture.wait_for(std::chrono::seconds(0)) != std::future_status::ready) {
 			return; // Animation is still running, do not start a new one
 		}
@@ -220,11 +223,12 @@ public:
 				animate_panel_position(target);
 			});
 		} else {
-			mAnimationFuture = std::async(std::launch::async, [this]() {
+			mAnimationFuture = std::async(std::launch::async, [this, onPanelToggle]() {
 				auto target = nanogui::Vector2i(0, mCanvas.fixed_height());
 				animate_panel_position(target);
 				
 				mBlueprintPanel->set_visible(false);
+				onPanelToggle();
 			});
 		}
 	}
