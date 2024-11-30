@@ -33,7 +33,7 @@ BlueprintCanvas::BlueprintCanvas(ScenePanel& parent, nanogui::Screen& screen, No
 	mShaderManager = std::make_unique<ShaderManager>(*this);
 	
 	mGrid = std::make_unique<Grid2d>(*mShaderManager);
-	mContextMenu = std::make_unique<nanogui::Popup>(*this);
+	SContextMenu->set_parent(*this);
 
 	// Adjusted orthographic projection parameters
 	float left = -1.0f;
@@ -54,8 +54,8 @@ BlueprintCanvas::BlueprintCanvas(ScenePanel& parent, nanogui::Screen& screen, No
 	parent.register_click_callback(GLFW_MOUSE_BUTTON_LEFT, [this](bool down, int width, int height, int x, int y) {
 		auto point = nanogui::Vector2i(x, y) + position();
 
-		if (!mContextMenu->contains(point, true, true)) {
-			mContextMenu->set_visible(false);
+		if (!SContextMenu->contains(point, true, true)) {
+			SContextMenu->set_visible(false);
 		}
 		
 		if (down) {
@@ -79,11 +79,11 @@ BlueprintCanvas::BlueprintCanvas(ScenePanel& parent, nanogui::Screen& screen, No
 		
 		if (!down) {
 			if (!mScrolling) {
-				remove_child(*mContextMenu);
-				add_child(*mContextMenu);
+				remove_child(*SContextMenu);
+				add_child(*SContextMenu);
 				setup_options();
-				mContextMenu->set_position(nanogui::Vector2i(x + 32, y - 256));
-				mContextMenu->set_visible(true);
+				SContextMenu->set_position(nanogui::Vector2i(x + 32, y - 256));
+				SContextMenu->set_visible(true);
 				perform_layout(this->screen().nvg_context());
 			}
 		}
@@ -96,7 +96,7 @@ BlueprintCanvas::BlueprintCanvas(ScenePanel& parent, nanogui::Screen& screen, No
 		mScrolling = down;
 		
 		if (mScrolling) {
-			mContextMenu->set_visible(false);
+			SContextMenu->set_visible(false);
 		}
 		
 		// because dx and dy are global screen space and its range is -0.5 to 0.5
@@ -353,34 +353,34 @@ void BlueprintCanvas::draw(NVGcontext *ctx) {
 }
 
 void BlueprintCanvas::setup_options() {
-	mContextMenu->shed_children();
+	SContextMenu->shed_children();
 	
-	auto key_press_option = std::make_unique<nanogui::Button>(*mContextMenu, "Key Press");
-	auto key_release_option = std::make_unique<nanogui::Button>(*mContextMenu, "Key Release");
-	auto string_option = std::make_unique<nanogui::Button>(*mContextMenu, "String");
-	auto print_option = std::make_unique<nanogui::Button>(*mContextMenu, "Print");
+	auto key_press_option = std::make_unique<nanogui::Button>(*SContextMenu, "Key Press");
+	auto key_release_option = std::make_unique<nanogui::Button>(*SContextMenu, "Key Release");
+	auto string_option = std::make_unique<nanogui::Button>(*SContextMenu, "String");
+	auto print_option = std::make_unique<nanogui::Button>(*SContextMenu, "Print");
 	
 	key_press_option->set_callback([this](){
-		mContextMenu->set_visible(false);
-		add_node(mNodeProcessor.spawn_node<KeyPressNode>(*this, mNodeProcessor.get_next_id(), mContextMenu->position()));
+		SContextMenu->set_visible(false);
+		add_node(mNodeProcessor.spawn_node<KeyPressNode>(*this, mNodeProcessor.get_next_id(), SContextMenu->position()));
 		perform_layout(this->screen().nvg_context());
 	});
 	
 	key_release_option->set_callback([this](){
-		mContextMenu->set_visible(false);
-		add_node(mNodeProcessor.spawn_node<KeyReleaseNode>(*this, mNodeProcessor.get_next_id(), mContextMenu->position()));
+		SContextMenu->set_visible(false);
+		add_node(mNodeProcessor.spawn_node<KeyReleaseNode>(*this, mNodeProcessor.get_next_id(), SContextMenu->position()));
 		perform_layout(this->screen().nvg_context());
 	});
 	
 	string_option->set_callback([this](){
-		mContextMenu->set_visible(false);
-		add_node(mNodeProcessor.spawn_node<StringNode>(*this, mNodeProcessor.get_next_id(), mContextMenu->position()));
+		SContextMenu->set_visible(false);
+		add_node(mNodeProcessor.spawn_node<StringNode>(*this, mNodeProcessor.get_next_id(), SContextMenu->position()));
 		perform_layout(this->screen().nvg_context());
 	});
 	
 	print_option->set_callback([this](){
-		mContextMenu->set_visible(false);
-		add_node(mNodeProcessor.spawn_node<PrintNode>(*this, mNodeProcessor.get_next_id(), mContextMenu->position()));
+		SContextMenu->set_visible(false);
+		add_node(mNodeProcessor.spawn_node<PrintNode>(*this, mNodeProcessor.get_next_id(), SContextMenu->position()));
 		perform_layout(this->screen().nvg_context());
 	});
 	
@@ -391,21 +391,22 @@ void BlueprintCanvas::setup_options() {
 	mNodeOptions.push_back(std::move(string_option));
 	mNodeOptions.push_back(std::move(print_option));
 	
-	mContextMenu->set_visible(false);
+	SContextMenu->set_visible(false);
 }
 
 void BlueprintCanvas::clear() {
-	remove_child(*mContextMenu);
 	shed_children();
 	mActiveInputPin = std::nullopt;
 	mActiveOutputPin = std::nullopt;
 	mNodes.clear();
 	mLinks.clear();
 	mSelectedNode = nullptr;
-	mContextMenu = std::make_unique<nanogui::Popup>(*this);
 }
 
 void BlueprintCanvas::add_link(Link* link) {
 	mLinks.push_back(link);
 	mOnCanvasModifiedCallback();
 }
+
+std::unique_ptr<nanogui::Popup> BlueprintCanvas::SContextMenu = std::make_unique<nanogui::Popup>(std::nullopt);
+

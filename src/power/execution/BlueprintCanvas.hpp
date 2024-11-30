@@ -55,7 +55,7 @@ private:
 private:
 	std::unique_ptr<ShaderManager> mShaderManager;
 	std::unique_ptr<Grid2d> mGrid;
-	std::unique_ptr<nanogui::Popup> mContextMenu;
+	static std::unique_ptr<nanogui::Popup> SContextMenu;
 	std::vector<std::unique_ptr<nanogui::Button>> mNodeOptions;
 	nanogui::Matrix4f mView;
 	nanogui::Matrix4f mProjection;
