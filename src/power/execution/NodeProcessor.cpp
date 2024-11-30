@@ -188,7 +188,7 @@ void NodeProcessor::deserialize(BlueprintCanvas& canvas, Actor& actor) {
 					spawn_node<StringNode>(canvas, node->id, node->position());
 					break;
 				case NodeType::Print:
-					spawn_node<PrintNode>(canvas, node->id,, node->position());
+					spawn_node<PrintNode>(canvas, node->id, node->position());
 					break;
 			}
 			
