@@ -132,14 +132,14 @@ private:
 	bool mouse_button_event(const nanogui::Vector2i &p, int button, bool down,
 									int modifiers) override {
 		nanogui::Widget::mouse_button_event(p, button, down, modifiers);
-		// delegate and consume event
-		return true;
+		// delegate and propagate event
+		return false;
 	}
 	
 	bool mouse_drag_event(const nanogui::Vector2i &p, const nanogui::Vector2i &rel, int button, int modifiers) override {
 		nanogui::Widget::mouse_drag_event(p, rel, button, modifiers);
-		// delegate and consume event
-		return true;
+		// delegate and propagate event
+		return false;
 	}
 	
 	bool keyboard_event(int key, int scancode, int action, int modifiers) override {
