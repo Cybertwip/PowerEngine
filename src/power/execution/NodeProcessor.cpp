@@ -15,7 +15,7 @@
 
 #include <unordered_set>
 
-NodeProcessor::NodeProcessor() {
+NodeProcessor::NodeProcessor() : next_id(1) {
 	
 }
 
@@ -87,34 +87,36 @@ void NodeProcessor::serialize(BlueprintCanvas& canvas, Actor& actor) {
 		for (auto& node : nodes) {
 			switch (node->type) {
 				case NodeType::KeyPress:
-					node_processor->spawn_node<KeyPressNode>(canvas, node->position());
+					node_processor->spawn_node<KeyPressNode>(canvas, node->id, node->position());
 					break;
 				case NodeType::KeyRelease:
-					node_processor->spawn_node<KeyReleaseNode>(canvas, node->position());
+					node_processor->spawn_node<KeyReleaseNode>(canvas, node->id, node->position());
 					break;
 				case NodeType::String:
-					node_processor->spawn_node<StringNode>(canvas, node->position());
+					node_processor->spawn_node<StringNode>(canvas, node->id, node->position());
 					break;
 				case NodeType::Print:
-					node_processor->spawn_node<PrintNode>(canvas, node->position());
+					node_processor->spawn_node<PrintNode>(canvas, node->id, node->position());
 					break;
 			}
 			
 			auto* source_node = node.get();
 			auto* target_node = node_processor->find_node(node->id);
 			
-			if (source_node && target_node) {
-				const auto& source_inputs = source_node->get_inputs();
-				const auto& target_inputs = target_node->get_inputs();
-				
-				for (const auto& source_pin : source_inputs) {
-					for (const auto& target_pin : target_inputs) {
-						if (target_pin) {
-							target_pin->set_data(source_pin->get_data());
-						}
+			assert(source_node && target_node);
+			
+			
+			const auto& source_inputs = source_node->get_inputs();
+			const auto& target_inputs = target_node->get_inputs();
+			
+			for (const auto& source_pin : source_inputs) {
+				for (const auto& target_pin : target_inputs) {
+					if (target_pin) {
+						target_pin->set_data(source_pin->get_data());
 					}
 				}
 			}
+			
 			
 			const auto& source_outputs = source_node->get_outputs();
 			const auto& target_outputs = target_node->get_outputs();
@@ -126,6 +128,7 @@ void NodeProcessor::serialize(BlueprintCanvas& canvas, Actor& actor) {
 					}
 				}
 			}
+			
 		}
 		
 		for (auto& node : nodes) {
@@ -158,7 +161,7 @@ void NodeProcessor::serialize(BlueprintCanvas& canvas, Actor& actor) {
 		actor.add_component<BlueprintComponent>(std::move(node_processor));
 		
 		canvas.perform_layout(canvas.screen().nvg_context());
-
+		
 	}
 	
 }
@@ -176,31 +179,31 @@ void NodeProcessor::deserialize(BlueprintCanvas& canvas, Actor& actor) {
 		for (auto& node : node_processor.nodes) {
 			switch (node->type) {
 				case NodeType::KeyPress:
-					spawn_node<KeyPressNode>(canvas, node->position());
+					spawn_node<KeyPressNode>(canvas, node->id, node->position());
 					break;
 				case NodeType::KeyRelease:
-					spawn_node<KeyReleaseNode>(canvas, node->position());
+					spawn_node<KeyReleaseNode>(canvas, node->id, node->position());
 					break;
 				case NodeType::String:
-					spawn_node<StringNode>(canvas, node->position());
+					spawn_node<StringNode>(canvas, node->id, node->position());
 					break;
 				case NodeType::Print:
-					spawn_node<PrintNode>(canvas, node->position());
+					spawn_node<PrintNode>(canvas, node->id,, node->position());
 					break;
 			}
 			
 			auto* source_node = node.get();
 			auto* target_node = find_node(node->id);
 			
-			if (source_node && target_node) {
-				const auto& source_inputs = source_node->get_inputs();
-				const auto& target_inputs = target_node->get_inputs();
-				
-				for (const auto& source_pin : source_inputs) {
-					for (const auto& target_pin : target_inputs) {
-						if (target_pin) {
-							target_pin->set_data(source_pin->get_data());
-						}
+			assert(source_node && target_node);
+			
+			const auto& source_inputs = source_node->get_inputs();
+			const auto& target_inputs = target_node->get_inputs();
+			
+			for (const auto& source_pin : source_inputs) {
+				for (const auto& target_pin : target_inputs) {
+					if (target_pin) {
+						target_pin->set_data(source_pin->get_data());
 					}
 				}
 			}

@@ -11,6 +11,6 @@ class BlueprintCanvas;
 
 class StringNode : public BlueprintNode {
 public:
-	StringNode(std::optional<std::reference_wrapper<BlueprintCanvas>> parent, nanogui::Vector2i size, std::function<int()> id_registrator_lambda);
+	StringNode(std::optional<std::reference_wrapper<BlueprintCanvas>> parent, long long id, nanogui::Vector2i size, std::function<int()> id_registrator_lambda);
 };
 

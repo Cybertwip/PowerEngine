@@ -25,8 +25,8 @@ public:
 	void clear();
 	
 	template<typename T>
-	BlueprintNode* spawn_node(BlueprintCanvas& parent, const nanogui::Vector2i& position) {
-		auto node = std::make_unique<T>(parent, nanogui::Vector2i(196, 64), [this](){
+	BlueprintNode* spawn_node(BlueprintCanvas& parent, long long id, const nanogui::Vector2i& position) {
+		auto node = std::make_unique<T>(parent, id, nanogui::Vector2i(196, 64), [this](){
 			return get_next_id();
 		});
 		node->set_position(position);
@@ -49,7 +49,7 @@ public:
 	void break_links(BlueprintNode* node);
 
 private:
-	long long next_id = 1;
+	long long next_id;
 	std::vector<std::unique_ptr<BlueprintNode>> nodes;
 	std::vector<std::unique_ptr<Link>> links;
 };

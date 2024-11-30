@@ -13,7 +13,7 @@ class BlueprintCanvas;
 
 class KeyReleaseNode : public BlueprintDataNode {
 public:
-	KeyReleaseNode(std::optional<std::reference_wrapper<BlueprintCanvas>> parent, nanogui::Vector2i size, std::function<int()> id_registrator_lambda);
+	KeyReleaseNode(std::optional<std::reference_wrapper<BlueprintCanvas>> parent, long long id, nanogui::Vector2i size, std::function<int()> id_registrator_lambda);
 	
 private:
 	std::optional<std::variant<Entity, std::string, int, float, bool>> get_data() override {
