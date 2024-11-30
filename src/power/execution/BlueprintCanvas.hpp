@@ -42,7 +42,7 @@ public:
 	
 private:
 	// Override mouse_button_event to consume the event
-	bool mouse_button_event(const nanogui::Vector2i &p, int button, bool down, int modifiers);
+	bool mouse_button_event(const nanogui::Vector2i &p, int button, bool down, int modifiers) override;
 	bool mouse_motion_event(const nanogui::Vector2i &p, const nanogui::Vector2i &rel, int button, int modifiers) override;
 	
 	void draw(NVGcontext *ctx) override;
