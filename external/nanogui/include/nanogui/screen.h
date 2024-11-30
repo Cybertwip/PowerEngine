@@ -307,7 +307,7 @@ protected:
     bool m_stencil_buffer;
     bool m_float_buffer;
     bool m_redraw;
-	std::shared_ptr<Widget> m_focused_widget;
+	std::optional<std::reference_wrapper<Widget>> m_focused_widget;
 
     std::function<void(Vector2i)> m_resize_callback;
 #if defined(NANOGUI_USE_METAL)

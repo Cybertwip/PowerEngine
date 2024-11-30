@@ -117,7 +117,7 @@ Screen::Screen(const std::string &caption,
 : Widget(std::nullopt), m_glfw_window(nullptr), m_nvg_context(nullptr),
 m_cursor(Cursor::Arrow), m_background(0.3f, 0.3f, 0.32f, 1.f), m_caption(caption),
 m_shutdown_glfw(false), m_fullscreen(fullscreen), m_depth_buffer(depth_buffer),
-m_stencil_buffer(stencil_buffer), m_float_buffer(float_buffer), m_redraw(false), m_focused_widget(nullptr) {
+m_stencil_buffer(stencil_buffer), m_float_buffer(float_buffer), m_redraw(false), m_focused_widget(std::nullopt) {
 	memset(m_cursors, 0, sizeof(GLFWcursor *) * (int) Cursor::CursorCount);
 	
 	// Framebuffer configuration for performance
@@ -573,7 +573,7 @@ void Screen::draw_widgets() {
 
 bool Screen::keyboard_event(int key, int scancode, int action, int modifiers) {
 	if (m_focused_widget) {
-		m_focused_widget->keyboard_event(key, scancode, action, modifiers);
+		m_focused_widget->get().keyboard_event(key, scancode, action, modifiers);
 			return true;
 	}
 	
@@ -582,7 +582,7 @@ bool Screen::keyboard_event(int key, int scancode, int action, int modifiers) {
 
 bool Screen::keyboard_character_event(unsigned int codepoint) {
 	if (m_focused_widget) {
-		m_focused_widget->keyboard_character_event(codepoint);
+		m_focused_widget->get().keyboard_character_event(codepoint);
 		
 		return true;
 	}
@@ -656,7 +656,7 @@ void Screen::mouse_button_callback_event(int button, int action, int modifiers) 
 	try {
 		if (m_focused_widget) {
 			auto window =
-			std::dynamic_pointer_cast<Window>(m_focused_widget);
+			dynamic_cast<Window*>(&m_focused_widget->get());
 			if (window && window->modal()) {
 				if (!window->contains(m_mouse_pos))
 					return;
@@ -730,7 +730,7 @@ void Screen::scroll_callback_event(double x, double y) {
 	try {
 		if (m_focused_widget) {
 			auto window =
-			std::dynamic_pointer_cast<Window>(m_focused_widget);
+			dynamic_cast<Window*>(&m_focused_widget->get());
 			if (window && window->modal()) {
 				if (!window->contains(m_mouse_pos))
 					return;
@@ -780,12 +780,12 @@ void Screen::update_focus(Widget& widget) {
 	}
 	
 	if (m_focused_widget) {
-		m_focused_widget->focus_event(false);
+		m_focused_widget->get().focus_event(false);
 	}
 	
-	m_focused_widget = widget.shared_from_this();
+	m_focused_widget = std::ref(widget);
 	
-	m_focused_widget->focus_event(true);
+	m_focused_widget->get().focus_event(true);
 
 	if (auto* window = dynamic_cast<Window*>(&widget); window) {
 		if (window->modal()) {
@@ -796,8 +796,8 @@ void Screen::update_focus(Widget& widget) {
 
 
 void Screen::remove_from_focus(Widget& widget) {
-	if (&widget == m_focused_widget.get()){
-		m_focused_widget = nullptr;
+	if (&widget == &m_focused_widget->get()){
+		m_focused_widget = std::nullopt;
 	}
 }
 

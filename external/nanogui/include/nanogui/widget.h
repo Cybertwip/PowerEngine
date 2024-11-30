@@ -33,7 +33,7 @@ enum class Cursor; // do not put a docstring, this is already documented
  * also be used as an panel to arrange an arbitrary number of child
  * widgets using a layout generator (see \ref Layout).
  */
-class NANOGUI_EXPORT Widget : public Object, public std::enable_shared_from_this<Widget> {
+class NANOGUI_EXPORT Widget : public Object {
 public:
 	
 	/// Construct a new widget with the given parent widget

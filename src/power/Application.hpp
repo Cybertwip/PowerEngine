@@ -119,7 +119,7 @@ protected:
 			m_last_interaction = glfwGetTime();
 			if (m_focused_widget) {
 				auto window =
-				std::dynamic_pointer_cast<Window>(m_focused_widget);
+				dynamic_cast<Window*>(&m_focused_widget->get());;
 				if (window && window->modal()) {
 					if (!window->contains(m_mouse_pos))
 						return;
