@@ -445,7 +445,7 @@ void FileView::draw(NVGcontext* ctx) {
 	nvgRestore(ctx);
 }
 
-bool FileView::mouse_button_event(const Vector2i &, int , bool, int) {
+bool FileView::mouse_button_event(const Vector2i &, int, bool, int) {
 	return false;
 }
 
