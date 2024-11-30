@@ -97,11 +97,7 @@ public:
 	}
 	
 	void OnActorSelected(std::optional<std::reference_wrapper<Actor>> actor) override {
-		
-		if (mActiveActor.has_value()) {
-			mBlueprintPanel->serialize(mActiveActor->get());
-		}
-		
+
 		mActiveActor = actor;
 		
 		if (mActiveActor.has_value()) {
@@ -112,6 +108,12 @@ public:
 			mBlueprintButton->set_pushed(false);
 			toggle_blueprint_panel(false);
 			mBlueprintPanel->clear();
+		}
+	}
+	
+	void commit_blueprint() {
+		if (mActiveActor.has_value()) {
+			mBlueprintPanel->serialize(mActiveActor->get());
 		}
 	}
 
