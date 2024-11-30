@@ -50,8 +50,9 @@ public:
 		mBlueprintButton->set_position(nanogui::Vector2i(parent.fixed_width() * 0.5f - mBlueprintButton->fixed_width() * 0.5f, parent.fixed_height() - mBlueprintButton->fixed_height() - 20));
 		
 		mBlueprintButton->set_callback([this](){
-			mBlueprintActionTriggerCallback(mActive);
 			mActive = !mActive;
+
+			mBlueprintActionTriggerCallback(mActive);
 
 			if (!mCommitted) {
 				commit();
