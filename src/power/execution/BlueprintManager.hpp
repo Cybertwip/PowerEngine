@@ -24,6 +24,7 @@ public:
 	, mRegistry(registry)
 	, mActorManager(actorManager)
 	, mBlueprintActionTriggerCallback(blueprintActionTriggerCallback)
+	, mActive(false)
 	, mCommitted(true) {
 		// Set the layout to horizontal with some padding
 		set_layout(std::make_unique<nanogui::GroupLayout>(0, 0, 0));
@@ -46,13 +47,12 @@ public:
 		mBlueprintButton->set_text_color(nanogui::Color(135, 206, 235, 255));
 		
 		// Position the button in the lower-right corner
-		mBlueprintButton->set_position(nanogui::Vector2i(mCanvas->fixed_width() * 0.5f - mBlueprintButton->fixed_width() * 0.5f, mCanvas->fixed_height() - mBlueprintButton->fixed_height() - 20));
-		
-		mBlueprintButton->set_change_callback([this](bool active) {
-			mBlueprintActionTriggerCallback(active);
-		});
+		mBlueprintButton->set_position(nanogui::Vector2i(parent.fixed_width() * 0.5f - mBlueprintButton->fixed_width() * 0.5f, parent.fixed_height() - mBlueprintButton->fixed_height() - 20));
 		
 		mBlueprintButton->set_callback([this](){
+			mBlueprintActionTriggerCallback(mActive);
+			mActive = !mActive;
+
 			if (!mCommitted) {
 				commit();
 			}
@@ -183,6 +183,7 @@ private:
 	
 	std::vector<std::reference_wrapper<Actor>> mBlueprintActors;
 
+	bool mActive;
 	bool mCommitted;
 };
 
