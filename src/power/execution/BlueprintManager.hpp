@@ -17,10 +17,13 @@
 #include "StringNode.hpp"
 #include "PrintNode.hpp"
 
-class BlueprintPanel : public ScenePanel {
+class BlueprintPanel : public ScenePanel, public IActorSelectedCallback {
 public:
-	BlueprintPanel(Canvas& parent)
-	: ScenePanel(parent, "Blueprint") {
+	BlueprintPanel(Canvas& parent, std::shared_ptr<IActorSelectedRegistry> registry, ActorManager& actorManager, std::function<void(bool)> blueprintActionTriggerCallback)
+	: ScenePanel(parent, "Blueprint")
+	, mRegistry(registry)
+	, mActorManager(actorManager)
+	, mBlueprintActionTriggerCallback(blueprintActionTriggerCallback) {
 		// Set the layout to horizontal with some padding
 		set_layout(std::make_unique<nanogui::GroupLayout>(0, 0, 0));
 		
@@ -29,10 +32,60 @@ public:
 		mNodeProcessor = std::make_unique<NodeProcessor>();
 		
 		// Ensure the canvas is created with the correct dimensions or set it explicitly if needed
-		mCanvas = std::make_unique<BlueprintCanvas>(*this, parent.screen(), *mNodeProcessor, nanogui::Color(0, 0, 0, 0));
+		mCanvas = std::make_unique<BlueprintCanvas>(*this, parent.screen(), *mNodeProcessor, [this](){
+			on_canvas_modified();
+		}, nanogui::Color(0, 0, 0, 0));
 		
 		mCanvas->set_fixed_size(nanogui::Vector2i(fixed_width(), parent.fixed_height() * 0.71));
+		
+		
+		mBlueprintButton = std::make_shared<nanogui::ToolButton>(parent, FA_FLASK);
+		
+		mBlueprintButton->set_fixed_size(nanogui::Vector2i(48, 48));
+		
+		mBlueprintButton->set_text_color(nanogui::Color(135, 206, 235, 255));
+		
+		// Position the button in the lower-right corner
+		mBlueprintButton->set_position(nanogui::Vector2i(mCanvas->fixed_width() * 0.5f - mBlueprintButton->fixed_width() * 0.5f, mCanvas->fixed_height() - mBlueprintButton->fixed_height() - 20));
+		
+		mBlueprintButton->set_change_callback([this](bool active) {
+			mBlueprintActionTriggerCallback(active);
+		});
+		
+		mBlueprintButton->set_enabled(false);
+		
+		mRegistry->RegisterOnActorSelectedCallback(*this);
 	}
+	
+	~BlueprintPanel() override {
+		mRegistry->UnregisterOnActorSelectedCallback(*this);
+	}
+	
+	void OnActorSelected(std::optional<std::reference_wrapper<Actor>> actor) override {
+		
+		mActiveActor = actor;
+		
+		if (mActiveActor.has_value()) {
+			deserialize(mActiveActor->get());
+			mBlueprintButton->set_enabled(true);
+		} else {
+			mBlueprintButton->set_enabled(false);
+			mBlueprintButton->set_pushed(false);
+			mBlueprintActionTriggerCallback(false);
+			clear();
+		}
+	}
+	
+	void on_canvas_modified() {
+		mBlueprintButton->set_text_color(nanogui::Color(255, 0, 0, 255));
+	}
+	
+	void commit() {
+		if (mActiveActor.has_value()) {
+			serialize(mActiveActor->get());
+		}
+	}
+
 	
 	void process_events() override {
 		ScenePanel::process_events();
@@ -87,6 +140,21 @@ public:
 		mCanvas->clear();
 		mNodeProcessor->clear();
 	}
+	
+	void start() {
+		mBlueprintActors = mActorManager.get_actors_with_component<BlueprintComponent>();
+	}
+	
+	void stop() {
+		mBlueprintActors.clear();
+	}
+	
+	void update() {
+		for (auto& actor : mBlueprintActors) {
+			actor.get().get_component<BlueprintComponent>().update(); //might be slow with thousands of objets due to get_component
+		}
+	}
+	
 
 private:
 	void draw(NVGcontext *ctx) override {
@@ -96,60 +164,29 @@ private:
 private:
 	std::unique_ptr<BlueprintCanvas> mCanvas;
 	std::unique_ptr<NodeProcessor> mNodeProcessor;
+	std::shared_ptr<IActorSelectedRegistry> mRegistry;
+	ActorManager& mActorManager;
+
+	std::function<void(bool)> mBlueprintActionTriggerCallback;
+	
+	std::shared_ptr<nanogui::ToolButton> mBlueprintButton;
+
+	std::optional<std::reference_wrapper<Actor>> mActiveActor;
+	
+	std::vector<std::reference_wrapper<Actor>> mBlueprintActors;
+
 };
 
-class BlueprintManager : public IActorSelectedCallback {
+class BlueprintManager {
 public:
 	BlueprintManager(Canvas& canvas, std::shared_ptr<IActorSelectedRegistry> registry, ActorManager& actorManager)
-	: mCanvas(canvas)
-	, mRegistry(registry)
-	, mActorManager(actorManager) {
-		mBlueprintPanel = std::make_shared<BlueprintPanel>(canvas);
-		
-		mBlueprintPanel->set_position(nanogui::Vector2i(0, canvas.fixed_height()));
-		
-		mBlueprintButton = std::make_shared<nanogui::ToolButton>(canvas, FA_FLASK);
-		
-		mBlueprintButton->set_fixed_size(nanogui::Vector2i(48, 48));
-		
-		mBlueprintButton->set_text_color(nanogui::Color(135, 206, 235, 255));
-		
-		// Position the button in the lower-right corner
-		mBlueprintButton->set_position(nanogui::Vector2i(mCanvas.fixed_width() * 0.5f - mBlueprintButton->fixed_width() * 0.5f, mCanvas.fixed_height() - mBlueprintButton->fixed_height() - 20));
-		
-		mBlueprintButton->set_change_callback([this](bool active) {
+	: mCanvas(canvas) {
+		mBlueprintPanel = std::make_shared<BlueprintPanel>(canvas, registry, actorManager, [this](bool active){
 			toggle_blueprint_panel(active);
 		});
 		
-		mBlueprintButton->set_enabled(false);
+		mBlueprintPanel->set_position(nanogui::Vector2i(0, canvas.fixed_height()));
 		
-		mRegistry->RegisterOnActorSelectedCallback(*this);
-
-	}
-	
-	~BlueprintManager() {
-		mRegistry->UnregisterOnActorSelectedCallback(*this);
-	}
-	
-	void OnActorSelected(std::optional<std::reference_wrapper<Actor>> actor) override {
-
-		mActiveActor = actor;
-		
-		if (mActiveActor.has_value()) {
-			mBlueprintPanel->deserialize(mActiveActor->get());
-			mBlueprintButton->set_enabled(true);
-		} else {
-			mBlueprintButton->set_enabled(false);
-			mBlueprintButton->set_pushed(false);
-			toggle_blueprint_panel(false);
-			mBlueprintPanel->clear();
-		}
-	}
-	
-	void commit_blueprint() {
-		if (mActiveActor.has_value()) {
-			mBlueprintPanel->serialize(mActiveActor->get());
-		}
 	}
 	
 	bool keyboard_event(int key, int scancode, int action, int modifiers) {
@@ -196,34 +233,30 @@ public:
 	}
 	
 	void start() {
-		mBlueprintActors = mActorManager.get_actors_with_component<BlueprintComponent>();
+		mBlueprintPanel->start();
 	}
 	
 	void stop() {
-		mBlueprintActors.clear();
+		mBlueprintPanel->stop();
 	}
+	
+	void update() {
+		mBlueprintPanel->update();
+	}
+	
+	void commit() {
+		mBlueprintPanel->commit();
+	}
+	
 	
 	void process_events() {
 		mBlueprintPanel->process_events();
 	}
 	
-	void update() {
-		for (auto& actor : mBlueprintActors) {
-			actor.get().get_component<BlueprintComponent>().update(); //might be slow with thousands of objets due to get_component
-		}
-	}
-	
 private:
 	Canvas& mCanvas;
-	std::shared_ptr<IActorSelectedRegistry> mRegistry;
-	ActorManager& mActorManager;
 
 	std::shared_ptr<BlueprintPanel> mBlueprintPanel;
-	std::shared_ptr<nanogui::ToolButton> mBlueprintButton;
 	std::future<void> mAnimationFuture;
-	
-	std::optional<std::reference_wrapper<Actor>> mActiveActor;
-	
-	std::vector<std::reference_wrapper<Actor>> mBlueprintActors;
 	
 };

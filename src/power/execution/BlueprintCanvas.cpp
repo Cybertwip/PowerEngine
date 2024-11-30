@@ -21,12 +21,13 @@
 
 #include <GLFW/glfw3.h>
 
-BlueprintCanvas::BlueprintCanvas(ScenePanel& parent, nanogui::Screen& screen, NodeProcessor& nodeProcessor, nanogui::Color backgroundColor)
+BlueprintCanvas::BlueprintCanvas(ScenePanel& parent, nanogui::Screen& screen, NodeProcessor& nodeProcessor, std::function<void()> onCanvasModified, nanogui::Color backgroundColor)
 : Canvas(parent, screen, backgroundColor)
 , mScrollX(0)
 , mScrollY(0)
 , mScrolling(false)
 , mNodeProcessor(nodeProcessor)
+, mOnCanvasModifiedCallback(onCanvasModified)
 , mSelectedNode(nullptr)
 , mMousePosition(0, 0) {
 	mShaderManager = std::make_unique<ShaderManager>(*this);
@@ -126,6 +127,7 @@ BlueprintCanvas::BlueprintCanvas(ScenePanel& parent, nanogui::Screen& screen, No
 
 void BlueprintCanvas::add_node(BlueprintNode* node) {
 	mNodes.push_back(node);
+	mOnCanvasModifiedCallback();
 }
 
 void BlueprintCanvas::on_output_pin_clicked(Pin& pin) {
@@ -400,8 +402,10 @@ void BlueprintCanvas::clear() {
 	mLinks.clear();
 	mSelectedNode = nullptr;
 	mContextMenu = std::make_unique<nanogui::Popup>(*this);
+	mOnCanvasModifiedCallback();
 }
 
 void BlueprintCanvas::add_link(Link* link) {
 	mLinks.push_back(link);
+	mOnCanvasModifiedCallback();
 }

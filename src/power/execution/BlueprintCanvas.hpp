@@ -19,7 +19,7 @@ class Pin;
 
 class BlueprintCanvas : public Canvas {
 public:
-	BlueprintCanvas(ScenePanel& parent, nanogui::Screen& screen, NodeProcessor& nodeProcessor, nanogui::Color backgroundColor);
+	BlueprintCanvas(ScenePanel& parent, nanogui::Screen& screen, NodeProcessor& nodeProcessor, std::function<void()> onCanvasModifiedCallback, nanogui::Color backgroundColor);
 	
 	void add_node(BlueprintNode* node);
 	
@@ -65,6 +65,7 @@ private:
 	bool mScrolling;
 	
 	NodeProcessor& mNodeProcessor;
+	std::function<void()> mOnCanvasModifiedCallback;
 	
 	std::vector<BlueprintNode*> mNodes;
 	BlueprintNode* mSelectedNode;
