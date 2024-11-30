@@ -104,7 +104,7 @@ Vector2f ImageView::pixel_to_pos(const Vector2f &p) {
     return pos;
 }
 
-bool ImageView::mouse_button_event(const Vector2i &, int , bool, int down) {
+bool ImageView::mouse_button_event(const Vector2i &, int , bool, int) {
 	return false;
 }
 

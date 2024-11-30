@@ -66,7 +66,7 @@ public:
 
     // Widget implementation
 
-	bool mouse_button_event(const Vector2i &p, int button, bool down, int modifiers);
+	bool mouse_button_event(const Vector2i &p, int button, bool down, int modifiers) override;
 	virtual void draw(NVGcontext *ctx) override;
     virtual void draw_contents() override;
 
