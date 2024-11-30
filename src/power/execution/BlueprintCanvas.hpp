@@ -30,6 +30,8 @@ public:
 	
 	void clear();
 	
+	void attach_popup();
+	
 	void add_link(Link* link);
 	
 	BlueprintNode* selected_node() {

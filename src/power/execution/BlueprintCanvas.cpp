@@ -399,14 +399,14 @@ void BlueprintCanvas::setup_options() {
 
 void BlueprintCanvas::clear() {
 	mSelectedNode = nullptr;
-
-	shed_children();
-	add_child(*SContextMenu);
-
 	mActiveInputPin = std::nullopt;
 	mActiveOutputPin = std::nullopt;
 	mNodes.clear();
 	mLinks.clear();
+}
+
+void BlueprintCanvas::attach_popup() {
+	add_child(*SContextMenu);
 }
 
 void BlueprintCanvas::add_link(Link* link) {
