@@ -11,4 +11,6 @@ protected:
 								  int button, int modifiers) override;
 	
 	virtual bool mouse_button_event(const nanogui::Vector2i &p, int button, bool down, int modifiers) override;
+	
+	virtual bool scroll_event(const nanogui::Vector2i &p, const nanogui::Vector2f &rel) override;
 };

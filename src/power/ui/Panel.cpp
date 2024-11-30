@@ -16,7 +16,16 @@ bool Panel::mouse_drag_event(const nanogui::Vector2i &p, const nanogui::Vector2i
 bool Panel::mouse_button_event(const nanogui::Vector2i &p, int button, bool down, int modifiers) {
 	
 	nanogui::Window::mouse_button_event(p, button, down, modifiers);
+	
+	// delegate but don't interrupt handling
+	
+	return false;
+}
 
+bool Panel::scroll_event(const nanogui::Vector2i &p, const nanogui::Vector2f &rel) {
+	
+	nanogui::Window::scroll_event(p, rel);
+	
 	// delegate but don't interrupt handling
 
 	return false;
