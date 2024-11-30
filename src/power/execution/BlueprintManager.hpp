@@ -143,6 +143,7 @@ public:
 	// Override mouse_motion_event to consume the event
 	bool mouse_motion_event(const nanogui::Vector2i &p, const nanogui::Vector2i &rel, int button, int modifiers) override {
 		ScenePanel::mouse_motion_event(p, rel, button, modifiers);
+		
 		// delegate and consume event
 		return true;
 	}

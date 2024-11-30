@@ -72,8 +72,7 @@ bool Canvas::mouse_button_event(const nanogui::Vector2i &p, int button, bool dow
 		request_focus();
 	}
 	
-	nanogui::Canvas::mouse_button_event(p, button, down, modifiers);
-	
-	return false;
+	// Delegate event
+	return nanogui::Canvas::mouse_button_event(p, button, down, modifiers);
 }
 

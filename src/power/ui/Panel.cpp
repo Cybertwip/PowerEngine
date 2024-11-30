@@ -16,11 +16,11 @@ bool Panel::mouse_drag_event(const nanogui::Vector2i &p, const nanogui::Vector2i
 bool Panel::mouse_button_event(const nanogui::Vector2i &p, int button, bool down, int modifiers) {
 	
 	// event propagation depends on delegation
-	return nanogui::Window::mouse_button_event(p, button, down, modifiers);
+	return nanogui::Widget::mouse_button_event(p, button, down, modifiers);
 }
 
 bool Panel::scroll_event(const nanogui::Vector2i &p, const nanogui::Vector2f &rel) {
 	
 	// event propagation depends on delegation
-	return nanogui::Window::scroll_event(p, rel);
+	return nanogui::Widget::scroll_event(p, rel);
 }
