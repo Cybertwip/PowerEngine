@@ -154,6 +154,7 @@ public:
 	
 	void deserialize(Actor& actor) {
 		mNodeProcessor->deserialize(*mCanvas, actor);
+		commit();
 	}
 	
 	void clear() {
