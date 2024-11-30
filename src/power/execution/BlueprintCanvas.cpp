@@ -51,22 +51,27 @@ BlueprintCanvas::BlueprintCanvas(ScenePanel& parent, nanogui::Screen& screen, No
 									   );
 	
 	parent.register_click_callback(GLFW_MOUSE_BUTTON_LEFT, [this](bool down, int width, int height, int x, int y) {
-		if (!mContextMenu->contains(x, y)) {
+		auto point = nanogui::Vector2i(x, y) + position();
+
+		if (!mContextMenu->contains(point, true, true)) {
 			mContextMenu->set_visible(false);
 		}
 		
 		if (down) {
 			mActiveInputPin = std::nullopt;
 			mActiveOutputPin = std::nullopt;
-		}
-		
-		for (auto* node : mNodes) {			
-			auto point = nanogui::Vector2i(x, y);
-			if (node->contains(point)){
-				mSelectedNode = node;
-				break;
+			
+			mSelectedNode = nullptr;
+			
+			// Query node again
+			for (auto* node : mNodes) {
+				if (node->contains(point, true, true)){
+					mSelectedNode = node;
+					break;
+				}
 			}
 		}
+		
 	});
 	
 	parent.register_click_callback(GLFW_MOUSE_BUTTON_RIGHT, [this](bool down, int width, int height, int x, int y) {
@@ -170,7 +175,7 @@ void BlueprintCanvas::on_input_pin_clicked(Pin& pin) {
 
 bool BlueprintCanvas::mouse_button_event(const nanogui::Vector2i &p, int button, bool down, int modifiers) {
 	Canvas::mouse_button_event(p, button, down, modifiers);
-	return false;
+	return false; // let parent panel consume the event
 }
 
 bool BlueprintCanvas::mouse_motion_event(const nanogui::Vector2i &p, const nanogui::Vector2i &rel, int button, int modifiers) {
@@ -181,7 +186,6 @@ bool BlueprintCanvas::mouse_motion_event(const nanogui::Vector2i &p, const nanog
 
 void BlueprintCanvas::draw() {
 	//	render_pass().clear_color(0, background_color()); // globally cleared
-	
 	render_pass().clear_depth(1.0f);
 	
 	render_pass().set_depth_test(nanogui::RenderPass::DepthTest::Always, true); // draw on top
@@ -311,6 +315,38 @@ void BlueprintCanvas::draw(NVGcontext *ctx) {
 			nvgFillColor(ctx, color); // Same color as the stroke
 			nvgFill(ctx);
 		}
+	}
+
+	if (mSelectedNode) {
+		nanogui::Vector2i node_pos = mSelectedNode->absolute_position();
+		nanogui::Vector2i node_size = mSelectedNode->size();
+		
+		// Get canvas position for proper translation
+		nanogui::Vector2i canvas_position = absolute_position();
+		
+		// Translate to correct position
+		nvgTranslate(ctx, m_pos.x(), m_pos.y());
+		nvgTranslate(ctx, -canvas_position.x(), -canvas_position.y());
+		
+		// Begin drawing the contour
+		nvgBeginPath(ctx);
+		
+		// Draw rectangle around the node
+		nvgRect(ctx,
+				node_pos.x() - 4,  // Slightly larger than the node
+				node_pos.y() - 4,
+				node_size.x() + 8, // Add padding on both sides
+				node_size.y() + 8
+				);
+		
+		// Set contour style
+		nvgStrokeColor(ctx, nvgRGBA(255, 255, 255, 100)); // Semi-transparent white
+		nvgStrokeWidth(ctx, 2.0f);
+		nvgStroke(ctx);
+		
+		// Reset translation
+		nvgTranslate(ctx, canvas_position.x(), canvas_position.y());
+		nvgTranslate(ctx, -m_pos.x(), -m_pos.y());
 	}
 }
 
