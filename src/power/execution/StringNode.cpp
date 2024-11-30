@@ -27,7 +27,7 @@ private:
 
 }
 
-StringNode::StringNode(std::optional<std::reference_wrapper<BlueprintCanvas>> parent, long long id, nanogui::Vector2i size, std::function<int()> id_registrator_lambda)
+StringNode::StringNode(std::optional<std::reference_wrapper<BlueprintCanvas>> parent, long long id, nanogui::Vector2i size)
 : BlueprintNode(parent, NodeType::String, "String", size, id, nanogui::Color(255, 0, 255, 255)) {
 	
 	// Text box inside the node data wrapper: Will be centered due to the vertical alignment
@@ -36,7 +36,7 @@ StringNode::StringNode(std::optional<std::reference_wrapper<BlueprintCanvas>> pa
 	textbox.set_editable(true);
 	textbox.set_alignment(nanogui::TextBox::Alignment::Left);
 	
-	auto& output = add_output<StringPin>(id_registrator_lambda(), this->id, "", PinType::String, PinSubType::None, textbox);
+	auto& output = add_output<StringPin>(this->id, "", PinType::String, PinSubType::None, textbox);
 	
 	link = [&output](){
 		output.can_flow = true;

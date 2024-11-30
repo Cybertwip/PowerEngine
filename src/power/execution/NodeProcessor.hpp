@@ -26,9 +26,7 @@ public:
 	
 	template<typename T>
 	BlueprintNode* spawn_node(BlueprintCanvas& parent, long long id, const nanogui::Vector2i& position) {
-		auto node = std::make_unique<T>(parent, id, nanogui::Vector2i(196, 64), [this](){
-			return get_next_id();
-		});
+		auto node = std::make_unique<T>(parent, id, nanogui::Vector2i(196, 64));
 		node->set_position(position);
 		build_node(*node);
 		nodes.push_back(std::move(node));

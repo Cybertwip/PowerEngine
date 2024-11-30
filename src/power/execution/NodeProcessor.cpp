@@ -218,7 +218,6 @@ void NodeProcessor::deserialize(BlueprintCanvas& canvas, Actor& actor) {
 					}
 				}
 			}
-			
 		}
 		
 		for (auto& node : node_processor.nodes) {

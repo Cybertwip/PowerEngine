@@ -13,7 +13,7 @@ class BlueprintCanvas;
 
 class KeyPressNode : public BlueprintDataNode {
 public:
-	KeyPressNode(std::optional<std::reference_wrapper<BlueprintCanvas>> parent, long long id, nanogui::Vector2i size, std::function<int()> id_registrator_lambda);
+	KeyPressNode(std::optional<std::reference_wrapper<BlueprintCanvas>> parent, long long id, nanogui::Vector2i size);
 
 private:
 	std::optional<std::variant<Entity, std::string, int, float, bool>> get_data() override {

@@ -3,7 +3,7 @@
 #include "BlueprintCanvas.hpp"
 
 BlueprintNode::BlueprintNode(std::optional<std::reference_wrapper<BlueprintCanvas>> parent, NodeType type, const std::string& name, nanogui::Vector2i size, int id, nanogui::Color color)
-: nanogui::Window(parent, name), mCanvas(parent), type(type), id(id), color(color) {
+: nanogui::Window(parent, name), mCanvas(parent), type(type), id(id), color(color), next_id(1) {
 	set_draggable(true);
 	set_fixed_size(size);
 	set_layout(std::make_unique<nanogui::GroupLayout>(5, 0));
@@ -144,6 +144,11 @@ void BlueprintNode::draw(NVGcontext *ctx) {
 	mFlowContainer->draw(ctx);
 	mColumnContainer->draw(ctx);
 }
+
+long long BlueprintNode::get_next_id() {
+	return next_id++;
+}
+
 
 BlueprintDataNode::BlueprintDataNode(std::optional<std::reference_wrapper<BlueprintCanvas>> parent, NodeType type, const std::string& name, nanogui::Vector2i size, int id, nanogui::Color color)
 : BlueprintNode(parent, type, name, size, id, color) {

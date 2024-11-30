@@ -201,11 +201,11 @@ public:
 	
 	
 	template<typename T = Pin, typename... Args>
-	Pin& add_input(int pin_id, int node_id, const std::string& label, PinType pin_type, PinSubType pin_subtype, Args &&...args) {
+	Pin& add_input(int node_id, const std::string& label, PinType pin_type, PinSubType pin_subtype, Args &&...args) {
 		
 		auto& parent = pin_type == PinType::Flow ? *mFlowContainer : *mLeftColumn;
 		
-		auto input = std::make_unique<T>(parent, pin_id, node_id, label, pin_type, pin_subtype, std::forward<Args>(args)...);
+		auto input = std::make_unique<T>(parent, get_next_id(), node_id, label, pin_type, pin_subtype, std::forward<Args>(args)...);
 
 		input->set_programmable(true);
 		
@@ -233,10 +233,10 @@ public:
 	}
 
 	template<typename T = Pin, typename... Args>
-	Pin& add_output(int pin_id, int node_id, const std::string& label, PinType pin_type, PinSubType pin_subtype, Args &&...args) {
+	Pin& add_output(int node_id, const std::string& label, PinType pin_type, PinSubType pin_subtype, Args &&...args) {
 		auto& parent = pin_type == PinType::Flow ? *mFlowContainer : *mRightColumn;
 		
-		auto output = std::make_unique<T>(parent, pin_id, node_id, label, pin_type, pin_subtype, std::forward<Args>(args)...);
+		auto output = std::make_unique<T>(parent, get_next_id(), node_id, label, pin_type, pin_subtype, std::forward<Args>(args)...);
 		
 		output->set_programmable(true);
 		
@@ -281,6 +281,8 @@ protected:
 	std::vector<std::unique_ptr<Pin>> outputs;
 	
 private:
+	long long get_next_id();
+
 	void perform_layout(NVGcontext *ctx) override;
 	void draw(NVGcontext *ctx) override;
 	std::optional<std::reference_wrapper<BlueprintCanvas>> mCanvas;
@@ -289,6 +291,9 @@ private:
 	std::unique_ptr<nanogui::Widget> mLeftColumn;
 	std::unique_ptr<nanogui::Widget> mDataColumn;
 	std::unique_ptr<nanogui::Widget> mRightColumn;
+	
+	long long next_id;
+
 };
 
 class BlueprintDataNode : public BlueprintNode {
