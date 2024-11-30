@@ -9,8 +9,7 @@
 
 ScenePanel::ScenePanel(nanogui::Widget& parent, const std::string& title)
 : Panel(parent, title)
-, mDragging(false)
-, mMovable(false) {
+, mDragging(false) {
 	set_position(nanogui::Vector2i(0, 0));
 }
 
@@ -29,7 +28,7 @@ bool ScenePanel::mouse_button_event(const nanogui::Vector2i &p, int button, bool
 
 bool ScenePanel::mouse_motion_event(const nanogui::Vector2i &p, const nanogui::Vector2i &rel, int button, int modifiers) {
 	
-	if (mMovable && Widget::mouse_motion_event(p, rel, button, modifiers)) {
+	if (Widget::mouse_motion_event(p, rel, button, modifiers)) {
 		return true;
 	} else {
 		// Queue the motion event

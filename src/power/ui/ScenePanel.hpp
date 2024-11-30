@@ -24,9 +24,8 @@ public:
 protected:
 	void draw(NVGcontext *ctx) override;
 
-	bool mMovable;
-
 private:
+	
 	// Queues to store events along with the button information
 	std::deque<std::tuple<bool, int, int, int, int, int>> mClickQueue; // down, width, height, x, y, button
 	std::deque<std::tuple<int, int, int, int, int, int, int, bool>> mMotionQueue; // width, height, x, y, dx, dy, button, dragging
