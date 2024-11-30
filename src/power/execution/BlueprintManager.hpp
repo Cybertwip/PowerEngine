@@ -106,7 +106,6 @@ public:
 		mCommitted = true;
 		
 		mBlueprintButton->set_text_color(nanogui::Color(135, 206, 235, 255));
-
 	}
 
 	
@@ -154,6 +153,7 @@ public:
 	}
 	
 	void deserialize(Actor& actor) {
+		clear();
 		mNodeProcessor->deserialize(*mCanvas, actor);
 	}
 	

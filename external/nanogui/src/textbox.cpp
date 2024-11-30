@@ -275,9 +275,12 @@ bool TextBox::mouse_button_event(const Vector2i &p, int button, bool down,
 								 int modifiers) {
 	
 	if (button == GLFW_MOUSE_BUTTON_1 && down && !m_focused) {
-		if (!m_spinnable || spin_area(p) == SpinArea::None) /* not on scrolling arrows */
+		if (!m_spinnable || spin_area(p) == SpinArea::None) {
+			/* not on scrolling arrows */
 			request_focus();
-		
+		} else if (!m_focused) {
+			request_focus();
+		}
 	}
 	
 	if (m_editable) {
