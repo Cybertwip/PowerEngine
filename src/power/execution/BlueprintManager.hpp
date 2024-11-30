@@ -48,7 +48,7 @@ public:
 		// Position the button in the lower-right corner
 		mBlueprintButton->set_position(nanogui::Vector2i(mCanvas->fixed_width() * 0.5f - mBlueprintButton->fixed_width() * 0.5f, mCanvas->fixed_height() - mBlueprintButton->fixed_height() - 20));
 		
-		mBlueprintButton->set_change_callback([this]() {
+		mBlueprintButton->set_change_callback([this](bool active) {
 			mBlueprintActionTriggerCallback(active);
 		});
 		
