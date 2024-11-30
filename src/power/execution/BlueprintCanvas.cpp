@@ -174,7 +174,7 @@ void BlueprintCanvas::on_input_pin_clicked(Pin& pin) {
 }
 
 bool BlueprintCanvas::mouse_button_event(const nanogui::Vector2i &p, int button, bool down, int modifiers) {
-	Canvas::mouse_button_event(p, button, down, modifiers);
+	nanogui::Widget::mouse_button_event(p, button, down, modifiers);
 	return false; // let parent panel consume the event
 }
 
