@@ -402,7 +402,6 @@ void BlueprintCanvas::clear() {
 	mLinks.clear();
 	mSelectedNode = nullptr;
 	mContextMenu = std::make_unique<nanogui::Popup>(*this);
-	mOnCanvasModifiedCallback();
 }
 
 void BlueprintCanvas::add_link(Link* link) {
