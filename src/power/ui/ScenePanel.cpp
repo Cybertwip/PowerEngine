@@ -23,11 +23,7 @@ bool ScenePanel::mouse_button_event(const nanogui::Vector2i &p, int button, bool
 		}
 		return true;
 	}
-	
-	if (down && !m_focused) {
-		request_focus();
-	}
-	
+		
 	// Queue the click event
 	mDragging = down;
 	mClickQueue.push_back(std::make_tuple(down, width(), height(), p.x(), p.y(), button));
