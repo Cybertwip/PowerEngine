@@ -216,7 +216,7 @@ public:
 		if (mCanvas.has_value()) {
 			auto& input_ref = *input;
 			
-			input->set_pin_callback([this, &input_ref](){
+			input->set_hover_callback([this, &input_ref](){
 				mCanvas->get().on_input_pin_clicked(input_ref);
 			});
 		}
