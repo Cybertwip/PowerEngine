@@ -55,6 +55,12 @@ public:
 			} else {
 				mActive = !mActive;
 				
+				if (mActive) {
+					if (mActiveActor) {
+						deserialize(mActiveActor->get());
+					}
+				}
+				
 				mBlueprintActionTriggerCallback(mActive, [this](){
 					clear();
 				});
