@@ -249,7 +249,6 @@ void BlueprintCanvas::draw(NVGcontext *ctx) {
 		
 		nvgTranslate(ctx, canvas_position.x(), canvas_position.y());
 		nvgTranslate(ctx, -m_pos.x(), -m_pos.y());
-		
 	}
 	
 	if (!mLinks.empty()) {
@@ -314,6 +313,9 @@ void BlueprintCanvas::draw(NVGcontext *ctx) {
 			nvgFillColor(ctx, color); // Same color as the stroke
 			nvgFill(ctx);
 		}
+		
+		nvgTranslate(ctx, canvas_position.x(), canvas_position.y());
+		nvgTranslate(ctx, -m_pos.x(), -m_pos.y());
 	}
 
 	if (mSelectedNode) {
