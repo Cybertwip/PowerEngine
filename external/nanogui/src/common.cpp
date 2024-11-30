@@ -212,18 +212,7 @@ void register_event_callbacks() {
 		}
 	}
 								   );
-	
-	// Window Focus Callback
-	glfwSetWindowFocusCallback(window1,
-							   [](GLFWwindow *w, int focused) {
-		std::lock_guard<std::mutex> lock(screen1_mutex);
-		if (screen1) {
-			// focus_event: 0 when false, 1 when true
-			screen1->focus_event(focused != 0);
-		}
-	}
-							   );
-	
+		
 	// Window Content Scale Callback
 	glfwSetWindowContentScaleCallback(window1,
 									  [](GLFWwindow* w, float xscale, float yscale) {

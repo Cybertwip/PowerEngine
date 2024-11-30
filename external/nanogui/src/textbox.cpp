@@ -27,6 +27,7 @@ TextBox::TextBox(Widget& parent,  const std::string &value)
 m_password_mode(false),
 m_password_char('*'),
 m_editable(false),
+m_focused(false),
 m_spinnable(false),
 m_committed(true),
 m_value(value),
@@ -121,7 +122,7 @@ void TextBox::draw(NVGcontext* ctx) {
 	
 	float spin_arrows_width = 0.f;
 	
-	if (m_spinnable && !focused()) {
+	if (m_spinnable) {
 		spin_arrows_width = 14.f;
 		
 		nvgFontFace(ctx, "icons");
@@ -278,7 +279,7 @@ bool TextBox::mouse_button_event(const Vector2i &p, int button, bool down,
 			request_focus();
 	}
 	
-	if (m_editable && focused()) {
+	if (m_editable) {
 		if (down) {
 			m_mouse_down_pos = p;
 			m_mouse_down_modifier = modifiers;
@@ -350,9 +351,7 @@ bool TextBox::mouse_drag_event(const Vector2i &p, const Vector2i &/* rel */,
 	return false;
 }
 
-bool TextBox::focus_event(bool focused) {
-	Widget::focus_event(focused);
-	
+bool TextBox::focus_event(bool focused) {	
 	std::string backup = m_value;
 	
 	if (m_editable) {

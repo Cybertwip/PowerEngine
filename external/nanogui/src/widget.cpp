@@ -30,7 +30,7 @@ Widget::Widget(Widget& parent) : Widget(std::make_optional<std::reference_wrappe
 Widget::Widget(std::optional<std::reference_wrapper<Widget>> parent)
 : m_parent(parent), m_layout(nullptr),
 m_pos(0), m_size(0), m_fixed_size(0), m_visible(true), m_enabled(true),
-m_focused(false), m_mouse_focus(false), m_tooltip(""), m_font_size(-1.f),
+m_mouse_focus(false), m_tooltip(""), m_font_size(-1.f),
 m_icon_extra_scale(1.f), m_cursor(Cursor::Arrow), m_initialized(false) {
 	
 	if (m_parent.has_value()){
@@ -105,8 +105,6 @@ bool Widget::mouse_button_event(const Vector2i &p, int button, bool down, int mo
 			child.mouse_button_event(p - m_pos, button, down, modifiers))
 			return true;
 	}
-	if (button == GLFW_MOUSE_BUTTON_1 && down && !m_focused)
-		focus_event(true);
 	return false;
 }
 
@@ -148,11 +146,6 @@ bool Widget::mouse_drag_event(const Vector2i &, const Vector2i &, int, int) {
 
 bool Widget::mouse_enter_event(const Vector2i &, bool enter) {
 	m_mouse_focus = enter;
-	return false;
-}
-
-bool Widget::focus_event(bool focused) {
-	m_focused = focused;
 	return false;
 }
 

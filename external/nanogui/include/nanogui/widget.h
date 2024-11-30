@@ -182,11 +182,7 @@ public:
     bool enabled() const { return m_enabled; }
     /// Set whether or not this widget is currently enabled
     void set_enabled(bool enabled) { m_enabled = enabled; }
-
-    /// Return whether or not this widget is currently focused
-    bool focused() const { return m_focused; }
     /// Set whether or not this widget is currently focused
-    void set_focused(bool focused) { m_focused = focused; }
     /// Request the focus to be moved to this widget
     void request_focus();
 	
@@ -264,9 +260,6 @@ public:
     /// Handle a mouse scroll event (default implementation: propagate to children)
     virtual bool scroll_event(const Vector2i &p, const Vector2f &rel);
 
-    /// Handle a focus change event (default implementation: record the focus status, but do nothing)
-    virtual bool focus_event(bool focused);
-
     /// Handle a keyboard event (default implementation: do nothing)
     virtual bool keyboard_event(int key, int scancode, int action, int modifiers);
 
@@ -315,7 +308,7 @@ protected:
      * CheckBox cannot be changed, or a TextBox will not allow new input.
      */
     bool m_enabled;
-    bool m_focused, m_mouse_focus;
+    bool m_mouse_focus;
     std::string m_tooltip;
     int m_font_size;
 

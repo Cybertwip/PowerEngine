@@ -88,7 +88,7 @@ public:
     virtual bool mouse_button_event(const Vector2i &p, int button, bool down, int modifiers) override;
     virtual bool mouse_motion_event(const Vector2i &p, const Vector2i &rel, int button, int modifiers) override;
     virtual bool mouse_drag_event(const Vector2i &p, const Vector2i &rel, int button, int modifiers) override;
-    virtual bool focus_event(bool focused) override;
+    bool focus_event(bool focused);
     virtual bool keyboard_event(int key, int scancode, int action, int modifiers) override;
     virtual bool keyboard_character_event(unsigned int codepoint) override;
 
@@ -137,12 +137,15 @@ protected:
     enum class SpinArea { None, Top, Bottom };
     SpinArea spin_area(const Vector2i &pos);
 	
+	bool focused() { return m_focused; }
+	
 protected:
 	// Existing protected members...
 	bool m_password_mode;      // Indicates if password mode is active
 	char m_password_char;      // Character used for masking
 
     bool m_editable;
+	bool m_focused;
     bool m_spinnable;
     bool m_committed;
     std::string m_value;

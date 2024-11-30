@@ -688,8 +688,6 @@ void Screen::mouse_button_callback_event(int button, int action, int modifiers) 
 			if (m_drag_widget == this)
 				m_drag_widget = nullptr;
 			m_drag_active = m_drag_widget != nullptr;
-			if (!m_drag_active)
-				focus_event(false);
 		} else if (m_drag_active && action == GLFW_RELEASE && btn12) {
 			m_drag_active = false;
 			m_drag_widget = nullptr;
@@ -781,26 +779,6 @@ void Screen::update_focus(Widget& widget) {
 		return;
 	}
 	
-	if (m_focused_widget) {
-		
-		std::optional<std::reference_wrapper<Widget>> parent = m_focused_widget->parent();
-		while(parent != std::nullopt) {
-			parent->get().focus_event(false);
-			
-			parent = parent->get().parent();
-		}
-		m_focused_widget->focus_event(false);
-	}
-	
-	std::optional<std::reference_wrapper<Widget>> parent = widget.parent();
-	while(parent != std::nullopt) {
-		parent->get().focus_event(true);
-		
-		parent = parent->get().parent();
-	}
-	
-	widget.focus_event(true);
-
 	m_focused_widget = widget.shared_from_this();
 
 	if (auto* window = dynamic_cast<Window*>(&widget); window) {

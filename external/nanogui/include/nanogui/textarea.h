@@ -103,6 +103,8 @@ protected:
     Vector2i position_to_block(const Vector2i &pos);
     Vector2i block_to_position(const Vector2i &pos);
 
+	bool focused() { return m_focused; }
+
 protected:
     struct Block {
         Vector2i offset;
@@ -119,6 +121,7 @@ protected:
     Vector2i m_offset, m_max_size;
     int m_padding;
     bool m_selectable;
+	bool m_focused;
     Vector2i m_selection_start;
     Vector2i m_selection_end;
 };

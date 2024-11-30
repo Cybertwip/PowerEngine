@@ -85,8 +85,6 @@ void Window::set_modal(bool modal) {
 
 		center();
 		
-		set_focused(true);
-		
 		request_focus();
 	}
 }
@@ -165,8 +163,7 @@ void Window::draw(NVGcontext *ctx) {
                 m_pos.y() + hh / 2, m_title.c_str(), nullptr);
 
         nvgFontBlur(ctx, 0);
-        nvgFillColor(ctx, m_focused ? theme().m_window_title_focused
-                                    : theme().m_window_title_unfocused);
+        nvgFillColor(ctx, theme().m_window_title_focused);
         nvgText(ctx, m_pos.x() + m_size.x() / 2, m_pos.y() + hh / 2 - 1,
                 m_title.c_str(), nullptr);
     }
