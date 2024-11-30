@@ -57,14 +57,14 @@ public:
 	}
 	
 	// Override mouse_button_event to consume the event
-	bool mouse_button_event(const nanogui::Vector2i &p, int button, bool down, int modifiers) {
+	bool mouse_button_event(const nanogui::Vector2i &p, int button, bool down, int modifiers) override {
 		nanogui::Widget::mouse_button_event(p, button, down, modifiers);
 		
 		return true;
 	}
 	
 	// Override mouse_motion_event to consume the event
-	bool mouse_motion_event(const nanogui::Vector2i &p, const nanogui::Vector2i &rel, int button, int modifiers) {
+	bool mouse_motion_event(const nanogui::Vector2i &p, const nanogui::Vector2i &rel, int button, int modifiers) override {
 		nanogui::Widget::mouse_motion_event(p, rel, button, modifiers);
 		
 		return true;
