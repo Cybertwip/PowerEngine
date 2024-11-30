@@ -33,8 +33,10 @@ BlueprintCanvas::BlueprintCanvas(ScenePanel& parent, nanogui::Screen& screen, No
 	mShaderManager = std::make_unique<ShaderManager>(*this);
 	
 	mGrid = std::make_unique<Grid2d>(*mShaderManager);
-	SContextMenu->set_parent(*this);
-	add_child(*SContextMenu);
+	
+	assert(!SContextMenu); // Unique instance allowed;
+	
+	BlueprintCanvas::SContextMenu = std::make_unique<nanogui::Popup>(*this);
 
 	// Adjusted orthographic projection parameters
 	float left = -1.0f;
@@ -397,6 +399,8 @@ void BlueprintCanvas::setup_options() {
 
 void BlueprintCanvas::clear() {
 	shed_children();
+	add_child(*SContextMenu);
+
 	mActiveInputPin = std::nullopt;
 	mActiveOutputPin = std::nullopt;
 	mNodes.clear();
@@ -409,5 +413,4 @@ void BlueprintCanvas::add_link(Link* link) {
 	mOnCanvasModifiedCallback();
 }
 
-std::unique_ptr<nanogui::Popup> BlueprintCanvas::SContextMenu = std::make_unique<nanogui::Popup>(std::nullopt);
-
+std::unique_ptr<nanogui::Popup> BlueprintCanvas::SContextMenu;
