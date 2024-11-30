@@ -51,6 +51,4 @@ private:
     entt::registry& mRegistry;
     std::optional<std::reference_wrapper<Actor>> mActiveCamera;
 	std::vector<std::reference_wrapper<Actor>> mCameras;
-	
-	std::optional<std::reference_wrapper<Actor>> mActiveActor;
 };

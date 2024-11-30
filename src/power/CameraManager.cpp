@@ -80,7 +80,11 @@ void CameraManager::look_at(const glm::vec3& position) {
 
 
 void CameraManager::OnActorSelected(std::optional<std::reference_wrapper<Actor>> actor) {
-	mActiveActor = actor;
+	if (actor) {
+		if (actor->get().find_component<CameraComponent>()) {
+			mActiveCamera = actor;
+		}
+	}
 }
 
 std::optional<std::reference_wrapper<TransformComponent>> CameraManager::get_transform_component() {
@@ -110,7 +114,7 @@ void CameraManager::set_transform(const glm::mat4& transform) {
 
 // Rotate the camera based on mouse movement
 void CameraManager::rotate_camera(float dx, float dy) {
-	if (mActiveCamera.has_value() && mActiveActor == std::nullopt) {
+	if (mActiveCamera.has_value()) {
 		auto& cameraActor = mActiveCamera->get();
 		auto& transform = cameraActor.get_component<TransformComponent>();
 		
@@ -144,7 +148,7 @@ void CameraManager::rotate_camera(float dx, float dy) {
 
 // Zoom the camera based on mouse movement
 void CameraManager::zoom_camera(float dy) {
-	if (mActiveCamera.has_value() && mActiveActor == std::nullopt) {
+	if (mActiveCamera.has_value()) {
 		auto& cameraActor = mActiveCamera->get();
 		auto& transform = cameraActor.get_component<TransformComponent>();
 		
@@ -171,7 +175,7 @@ void CameraManager::zoom_camera(float dy) {
 
 // Pan the camera based on mouse movement
 void CameraManager::pan_camera(float dx, float dy) {
-	if (mActiveCamera.has_value() && mActiveActor == std::nullopt) {
+	if (mActiveCamera.has_value()) {
 		auto& cameraActor = mActiveCamera->get();
 		auto& transform = cameraActor.get_component<TransformComponent>();
 		
