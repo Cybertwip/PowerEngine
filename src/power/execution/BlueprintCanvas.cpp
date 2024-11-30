@@ -58,9 +58,6 @@ BlueprintCanvas::BlueprintCanvas(ScenePanel& parent, nanogui::Screen& screen, No
 		}
 		
 		if (down) {
-			mActiveInputPin = std::nullopt;
-			mActiveOutputPin = std::nullopt;
-			
 			mSelectedNode = nullptr;
 			
 			// Query node again
@@ -70,6 +67,9 @@ BlueprintCanvas::BlueprintCanvas(ScenePanel& parent, nanogui::Screen& screen, No
 					break;
 				}
 			}
+		} else {
+			mActiveOutputPin = std::nullopt;
+			mActiveInputPin = std::nullopt;
 		}
 		
 	});
@@ -151,7 +151,7 @@ bool BlueprintCanvas::query_link(Pin& source_pin, Pin& destination_pin) {
 }
 
 void BlueprintCanvas::on_input_pin_clicked(Pin& pin) {
-	if (mActiveOutputPin.has_value() && query_link(mActiveOutputPin->get(), pin)) {
+	if (mActiveOutputPin && !mActiveInputPin && query_link(mActiveOutputPin->get(), pin)) {
 		mActiveInputPin = pin;
 		mNodeProcessor.create_link(*this, mNodeProcessor.get_next_id(), *mActiveOutputPin, pin);
 		mActiveOutputPin->get().links.push_back(mLinks.back());
@@ -393,6 +393,8 @@ void BlueprintCanvas::setup_options() {
 
 void BlueprintCanvas::clear() {
 	shed_children();
+	mActiveInputPin = std::nullopt;
+	mActiveOutputPin = std::nullopt;
 	mLinks.clear();
 	mSelectedNode = nullptr;
 	mContextMenu = std::make_unique<nanogui::Popup>(*this);

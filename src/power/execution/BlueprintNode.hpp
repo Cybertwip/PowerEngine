@@ -88,8 +88,25 @@ public:
 		mData = data;
 	}
 	
+	void set_pin_callback(std::function<void()> callback) {
+		mHoverCallback = callback;
+	}
+	
+	bool mouse_button_event(const nanogui::Vector2i &p, int button, bool down, int modifiers) override {
+		nanogui::Widget::mouse_button_event(p, button, down, modifiers);
+		if (button == GLFW_MOUSE_BUTTON_1) {
+			if (!down) {
+				if (mHoverCallback) {
+					mHoverCallback();
+				}
+			}
+		}
+	}
+	
 private:
 	std::optional<std::variant<Entity, std::string, int, float, bool>> mData;
+	
+	std::function<void()> mHoverCallback;
 };
 
 
@@ -190,7 +207,7 @@ public:
 		if (mCanvas.has_value()) {
 			auto& input_ref = *input;
 			
-			input->set_callback([this, &input_ref](){
+			input->set_pin_callback([this, &input_ref](){
 				mCanvas->get().on_input_pin_clicked(input_ref);
 			});
 		}
