@@ -66,3 +66,11 @@ void Canvas::process_events() {
 	}
 	
 }
+
+bool Canvas::mouse_button_event(const nanogui::Vector2i &p, int button, bool down, int modifiers) {
+	if (button == GLFW_MOUSE_BUTTON_1 && down) {
+		request_focus();
+	}
+	
+	return true;
+}
