@@ -445,16 +445,6 @@ void FileView::draw(NVGcontext* ctx) {
 	nvgRestore(ctx);
 }
 
-bool FileView::mouse_button_event(const nanogui::Vector2i &p, int button, bool down, int modifiers) {
-	for (auto it = m_children.rbegin(); it != m_children.rend(); ++it) {
-		nanogui::Widget& child = *it;
-		if (child.visible() && child.contains(p - m_pos) &&
-			child.mouse_button_event(p - m_pos, button, down, modifiers))
-			return true;
-	}
-	return false;
-}
-
 void FileView::ProcessEvents() {
 	std::function<void()> task;
 	
