@@ -15,20 +15,20 @@ ScenePanel::ScenePanel(nanogui::Widget& parent, const std::string& title)
 
 bool ScenePanel::mouse_button_event(const nanogui::Vector2i &p, int button, bool down, int modifiers) {
 	
-	if (Panel::mouse_button_event(p, button, down, modifiers)) {
-		return true;
-	} 
+	Panel::mouse_button_event(p, button, down, modifiers);
+
 	// Queue the button up event
 	mDragging = down;
 	
 	mClickQueue.push_back(std::make_tuple(down, width(), height(), p.x(), p.y(), button));
 
+	// delegate and consume the event
 	return true;
 }
 
 
 bool ScenePanel::mouse_drag_event(const nanogui::Vector2i &p, const nanogui::Vector2i &rel, int button, int modifiers) {
-	if (Panel::mouse_drag_event(p, rel, button, modifiers)) {
+	if (Panel::mouse_drag_event(p, rel, button, modifiers)) { // locked for now
 		return true;
 	} else {
 		return false;

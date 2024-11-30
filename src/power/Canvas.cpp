@@ -74,8 +74,7 @@ bool Canvas::mouse_button_event(const nanogui::Vector2i &p, int button, bool dow
 	
 	nanogui::Canvas::mouse_button_event(p, button, down, modifiers);
 	
-	// delegate to contained objects but don't interrupt the events
-	
-	return false;
+	// delegate and consume the event
+	return true;
 }
 
