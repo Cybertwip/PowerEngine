@@ -62,7 +62,7 @@ BlueprintCanvas::BlueprintCanvas(ScenePanel& parent, nanogui::Screen& screen, No
 		
 		for (auto* node : mNodes) {			
 			auto point = nanogui::Vector2i(x, y);
-			if (node->contains(point, true, true)){
+			if (node->contains(point)){
 				mSelectedNode = node;
 				break;
 			}

@@ -14,16 +14,13 @@ ScenePanel::ScenePanel(nanogui::Widget& parent, const std::string& title)
 }
 
 bool ScenePanel::mouse_button_event(const nanogui::Vector2i &p, int button, bool down, int modifiers) {
-	
+
+	// Queue the button up event
 	mDragging = down;
+	
+	mClickQueue.push_back(std::make_tuple(down, width(), height(), p.x(), p.y(), button));
 
-	if(Widget::mouse_button_event(p, button, down, modifiers)) {
-		return true;
-	} else {
-		mClickQueue.push_back(std::make_tuple(down, width(), height(), p.x(), p.y(), button));
-
-		return false;
-	}
+	return Widget::mouse_button_event(p, button, down, modifiers);
 }
 
 bool ScenePanel::mouse_motion_event(const nanogui::Vector2i &p, const nanogui::Vector2i &rel, int button, int modifiers) {
