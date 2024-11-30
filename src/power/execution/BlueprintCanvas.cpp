@@ -34,6 +34,7 @@ BlueprintCanvas::BlueprintCanvas(ScenePanel& parent, nanogui::Screen& screen, No
 	
 	mGrid = std::make_unique<Grid2d>(*mShaderManager);
 	SContextMenu->set_parent(*this);
+	add_child(*SContextMenu);
 
 	// Adjusted orthographic projection parameters
 	float left = -1.0f;
