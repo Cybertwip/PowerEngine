@@ -40,15 +40,21 @@ public:
 	
 	bool keyboard_event(int key, int scancode, int action, int modifiers) override {
 		
-		auto* selected_node = mCanvas->selected_node();
-		
-		if (selected_node) {
-			mNodeProcessor->break_links(selected_node);
-			mCanvas->clear_selection();
-			return true;
+		if (key == GLFW_KEY_DELETE && action == GLFW_PRESS) {
+			auto* selected_node = mCanvas->selected_node();
+			
+			if (selected_node) {
+				mNodeProcessor->break_links(selected_node);
+				mCanvas->clear_selection();
+				return true;
+			} else {
+				return false;
+			}
+
 		} else {
 			return false;
 		}
+
 	}
 	
 	void serialize(Actor& actor) {
