@@ -796,8 +796,10 @@ void Screen::update_focus(Widget& widget) {
 
 
 void Screen::remove_from_focus(Widget& widget) {
-	if (&widget == &m_focused_widget->get()){
-		m_focused_widget = std::nullopt;
+	if (m_focused_widget) {
+		if (&widget == &m_focused_widget->get()){
+			m_focused_widget = std::nullopt;
+		}
 	}
 }
 
