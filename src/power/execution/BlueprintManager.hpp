@@ -153,7 +153,6 @@ public:
 	}
 	
 	void deserialize(Actor& actor) {
-		clear();
 		mNodeProcessor->deserialize(*mCanvas, actor);
 	}
 	

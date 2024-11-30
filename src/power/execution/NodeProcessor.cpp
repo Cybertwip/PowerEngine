@@ -79,6 +79,8 @@ void NodeProcessor::serialize(BlueprintCanvas& canvas, Actor& actor) {
 		actor.remove_component<BlueprintComponent>();
 	}
 	
+	canvas.clear();
+	
 	if (!nodes.empty()) {
 		auto node_processor = std::make_unique<NodeProcessor>();
 		
@@ -154,12 +156,17 @@ void NodeProcessor::serialize(BlueprintCanvas& canvas, Actor& actor) {
 		}
 		
 		actor.add_component<BlueprintComponent>(std::move(node_processor));
+		
+		canvas.perform_layout(canvas.screen().nvg_context());
+
 	}
 	
 }
 
 void NodeProcessor::deserialize(BlueprintCanvas& canvas, Actor& actor) {
 	next_id = 1;
+	
+	canvas.clear();
 	
 	if (actor.find_component<BlueprintComponent>()) {
 		auto& blueprint_component = actor.get_component<BlueprintComponent>();
@@ -268,7 +275,6 @@ Pin* NodeProcessor::find_pin(long long id) {
 	
 	return nullptr;
 }
-
 
 BlueprintNode* NodeProcessor::find_node(long long id) {
 	
