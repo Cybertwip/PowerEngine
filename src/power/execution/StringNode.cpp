@@ -6,7 +6,7 @@ public:
 	StringPin(nanogui::Widget& parent, int id, int node_id, const std::string& label, PinType type, PinSubType subtype, nanogui::TextBox& textbox)
 	: Pin(parent, id, node_id, label, type, subtype)
 	, mTextBox(textbox) {
-		mTextBox->set_placeholder("Enter Text");
+		mTextBox.set_placeholder("Enter Text");
 	}
 	
 	std::optional<std::variant<Entity, std::string, int, float, bool>> get_data() override {
