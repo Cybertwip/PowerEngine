@@ -186,6 +186,11 @@ void Widget::remove_child_at(int index) {
 		throw std::runtime_error("Widget::remove_child_at(): out of bounds!");
 	m_children.erase(m_children.begin() + index);
 }
+
+void Widget::clear_children() {
+	m_children.clear(); // maybe managed somewhere else
+}
+
 void Widget::shed_children() {
 	// Continue removing children until m_children is empty
 	while (!m_children.empty()) {

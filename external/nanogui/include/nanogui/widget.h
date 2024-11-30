@@ -155,6 +155,8 @@ public:
     /// Remove a child widget by value
     void remove_child(Widget& widget);
 	
+	void clear_children();
+	
 	void shed_children();
 
     /// Retrieves the child at the specific position
