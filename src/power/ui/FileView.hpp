@@ -37,7 +37,7 @@ public:
 	// Handle scroll events
 	virtual bool scroll_event(const nanogui::Vector2i& p, const nanogui::Vector2f& rel) override;
 	
-	bool mouse_button_event(const Vector2i &p, int button, bool down, int modifiers) override;
+	bool mouse_button_event(const nanogui::Vector2i &p, int button, bool down, int modifiers) override;
 	
 	// Process pending thumbnail loading tasks
 	void ProcessEvents();
