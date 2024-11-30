@@ -25,7 +25,7 @@ MessageDialog::MessageDialog(Widget& parent,  Type type, const std::string &titl
     set_modal(true);
 	
 	throw ""; // not fully ported to references yet
-/
+//
 //    Widget& panel1 = std::make_shared<Widget>(*this);
 //    panel1->set_layout(std::make_shared<BoxLayout>(Orientation::Horizontal,
 //                                     Alignment::Middle, 10, 15));
