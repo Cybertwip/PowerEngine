@@ -23,7 +23,8 @@ public:
 	: ScenePanel(parent, "Blueprint")
 	, mRegistry(registry)
 	, mActorManager(actorManager)
-	, mBlueprintActionTriggerCallback(blueprintActionTriggerCallback) {
+	, mBlueprintActionTriggerCallback(blueprintActionTriggerCallback)
+	, mCommitted(true) {
 		// Set the layout to horizontal with some padding
 		set_layout(std::make_unique<nanogui::GroupLayout>(0, 0, 0));
 		
@@ -38,8 +39,7 @@ public:
 		
 		mCanvas->set_fixed_size(nanogui::Vector2i(fixed_width(), parent.fixed_height() * 0.71));
 		
-		
-		mBlueprintButton = std::make_shared<nanogui::ToolButton>(parent, FA_FLASK);
+		mBlueprintButton = std::make_shared<nanogui::Button>(parent, "", FA_FLASK);
 		
 		mBlueprintButton->set_fixed_size(nanogui::Vector2i(48, 48));
 		
@@ -48,8 +48,14 @@ public:
 		// Position the button in the lower-right corner
 		mBlueprintButton->set_position(nanogui::Vector2i(mCanvas->fixed_width() * 0.5f - mBlueprintButton->fixed_width() * 0.5f, mCanvas->fixed_height() - mBlueprintButton->fixed_height() - 20));
 		
-		mBlueprintButton->set_change_callback([this](bool active) {
+		mBlueprintButton->set_change_callback([this]() {
 			mBlueprintActionTriggerCallback(active);
+		});
+		
+		mBlueprintButton->set_callback([this](){
+			if (!mCommitted) {
+				commit();
+			}
 		});
 		
 		mBlueprintButton->set_enabled(false);
@@ -78,6 +84,8 @@ public:
 	
 	void on_canvas_modified() {
 		mBlueprintButton->set_text_color(nanogui::Color(255, 0, 0, 255));
+		
+		mCommitted = false;
 	}
 	
 	void commit() {
@@ -169,12 +177,13 @@ private:
 
 	std::function<void(bool)> mBlueprintActionTriggerCallback;
 	
-	std::shared_ptr<nanogui::ToolButton> mBlueprintButton;
+	std::shared_ptr<nanogui::Button> mBlueprintButton;
 
 	std::optional<std::reference_wrapper<Actor>> mActiveActor;
 	
 	std::vector<std::reference_wrapper<Actor>> mBlueprintActors;
 
+	bool mCommitted;
 };
 
 class BlueprintManager {
