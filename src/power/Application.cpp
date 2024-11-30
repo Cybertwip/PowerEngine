@@ -235,6 +235,7 @@ bool Application::keyboard_event(int key, int scancode, int action, int modifier
 	if (key == GLFW_KEY_DELETE && action == GLFW_PRESS) {
 		mBlueprintManager->commit_blueprint();
 		mUiManager->remove_active_actor();
+		mCameraManager->update_from(*mActorManager);
 		return true;
 	}
     return false;
