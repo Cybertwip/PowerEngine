@@ -142,11 +142,9 @@ public:
 	
 	void serialize(Actor& actor) {
 		mNodeProcessor->serialize(*mCanvas, actor);
-		clear();
 	}
 	
 	void deserialize(Actor& actor) {
-		clear();
 		mNodeProcessor->deserialize(*mCanvas, actor);
 	}
 	
