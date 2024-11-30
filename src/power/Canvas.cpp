@@ -72,5 +72,5 @@ bool Canvas::mouse_button_event(const nanogui::Vector2i &p, int button, bool dow
 		request_focus();
 	}
 	
-	return true;
+	return false;
 }
