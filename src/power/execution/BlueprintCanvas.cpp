@@ -168,6 +168,11 @@ void BlueprintCanvas::on_input_pin_clicked(Pin& pin) {
 	}
 }
 
+bool BlueprintCanvas::mouse_button_event(const nanogui::Vector2i &p, int button, bool down, int modifiers) {
+	Canvas::mouse_button_event(p, button, down, modifiers);
+	return false;
+}
+
 bool BlueprintCanvas::mouse_motion_event(const nanogui::Vector2i &p, const nanogui::Vector2i &rel, int button, int modifiers) {
 	mMousePosition = nanogui::Vector2i(p.x() + absolute_position().x(), p.y() + absolute_position().y() - mHeaderHeight);
 	
