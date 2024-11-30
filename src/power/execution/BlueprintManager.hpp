@@ -40,17 +40,21 @@ public:
 	
 	bool keyboard_event(int key, int scancode, int action, int modifiers) override {
 		
-		if (key == GLFW_KEY_DELETE && action == GLFW_PRESS) {
-			auto* selected_node = mCanvas->selected_node();
-			
-			if (selected_node) {
-				mNodeProcessor->break_links(selected_node);
-				mCanvas->clear_selection();
-				return true;
+		bool handled = nanogui::Widget::keyboard_event(key, scancode, action, modifiers);
+		
+		if (!handled) {
+			if (key == GLFW_KEY_DELETE && action == GLFW_PRESS) {
+				auto* selected_node = mCanvas->selected_node();
+				
+				if (selected_node) {
+					mNodeProcessor->break_links(selected_node);
+					mCanvas->clear_selection();
+					return true;
+				}
 			}
 		}
 		
-		return ScenePanel::keyboard_event(key, scancode, action, modifiers);
+		return handled;
 	}
 	
 	// Override mouse_button_event to consume the event
