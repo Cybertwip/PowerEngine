@@ -93,6 +93,11 @@ public:
 		if (mActiveActor.has_value()) {
 			serialize(mActiveActor->get());
 		}
+		
+		mCommitted = true;
+		
+		mBlueprintButton->set_text_color(nanogui::Color(135, 206, 235, 255));
+
 	}
 
 	
