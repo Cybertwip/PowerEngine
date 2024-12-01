@@ -9,8 +9,18 @@
 
 class BlueprintCanvas;
 
-class StringNode : public BlueprintNode {
+class StringCoreNode : public CoreNode {
 public:
-	StringNode(std::optional<std::reference_wrapper<BlueprintCanvas>> parent, long long id, nanogui::Vector2i size);
+	StringCoreNode(long long id);
+	
+	void set_data(const std::string& data);
+	
+private:
+	CorePin& mOutput;
+};
+
+class StringVisualNode : public VisualBlueprintNode {
+public:
+	StringVisualNode(BlueprintCanvas& parent, nanogui::Vector2i position, nanogui::Vector2i size, StringCoreNode& coreNode);
 };
 

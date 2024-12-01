@@ -64,7 +64,7 @@ public:
     virtual void set_theme(std::optional<std::reference_wrapper<Theme>> theme);
 
     /// Return the position relative to the parent widget
-    const Vector2i &position() const { return m_pos; }
+    Vector2i position() const { return m_pos; }
     /// Set the position relative to the parent widget
     void set_position(const Vector2i &pos) { m_pos = pos; }
 

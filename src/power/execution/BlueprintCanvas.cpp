@@ -65,9 +65,9 @@ BlueprintCanvas::BlueprintCanvas(ScenePanel& parent, nanogui::Screen& screen, No
 			mSelectedNode = nullptr;
 			
 			// Query node again
-			for (auto* node : mNodes) {
+			for (auto& node : mVisualNodes) {
 				if (node->contains(point, true, true)){
-					mSelectedNode = node;
+					mSelectedNode = node.get();
 					break;
 				}
 			}
@@ -113,7 +113,7 @@ BlueprintCanvas::BlueprintCanvas(ScenePanel& parent, nanogui::Screen& screen, No
 		
 		// Assuming mTestWidget's position is in screen space, update it
 		
-		for (auto* node : mNodes) {
+		for (auto& node : mVisualNodes) {
 			nanogui::Vector2i currentPos = node->position();
 			node->set_position(currentPos + nanogui::Vector2i(dx, dy));
 		}
@@ -128,12 +128,7 @@ BlueprintCanvas::BlueprintCanvas(ScenePanel& parent, nanogui::Screen& screen, No
 	
 }
 
-void BlueprintCanvas::add_node(BlueprintNode* node) {
-	mNodes.push_back(node);
-	mOnCanvasModifiedCallback();
-}
-
-void BlueprintCanvas::on_output_pin_clicked(Pin& pin) {
+void BlueprintCanvas::on_output_pin_clicked(VisualPin& pin) {
 	if (mActiveOutputPin.has_value()){
 		mActiveOutputPin = std::nullopt;
 	} else {
@@ -141,13 +136,13 @@ void BlueprintCanvas::on_output_pin_clicked(Pin& pin) {
 	}
 }
 
-bool BlueprintCanvas::query_link(Pin& source_pin, Pin& destination_pin) {
+bool BlueprintCanvas::query_link(VisualPin& source_pin, VisualPin& destination_pin) {
 	if (destination_pin.links.empty()) {
-		if (source_pin.type == destination_pin.type && source_pin.node != destination_pin.node) {
+		if (source_pin.get_type() == destination_pin.get_type() && source_pin.node() != destination_pin.node()) {
 			return true;
-		} else if (source_pin.type != destination_pin.type){
+		} else if (source_pin.get_type() != destination_pin.get_type()){
 			return false;
-		} else if (source_pin.node == destination_pin.node) {
+		} else if (source_pin.node() == destination_pin.node()) {
 			return false;
 		}
 	} else if (!destination_pin.links.empty()) {
@@ -155,19 +150,19 @@ bool BlueprintCanvas::query_link(Pin& source_pin, Pin& destination_pin) {
 	}
 }
 
-void BlueprintCanvas::on_input_pin_clicked(Pin& pin) {
+void BlueprintCanvas::on_input_pin_clicked(VisualPin& pin) {
 	if (mActiveOutputPin && !mActiveInputPin && query_link(mActiveOutputPin->get(), pin)) {
 		mActiveInputPin = pin;
-		mNodeProcessor.create_link(*this, mNodeProcessor.get_next_id(), *mActiveOutputPin, pin);
-		mActiveOutputPin->get().links.push_back(mLinks.back());
-		pin.links.push_back(mLinks.back());
+		mNodeProcessor.create_link(*this, mNodeProcessor.get_next_id(), mActiveOutputPin->get(), pin);
+		mActiveOutputPin->get().links.push_back(mLinks.back().get());
+		mActiveInputPin->get().links.push_back(mLinks.back().get());
 		
-		if(mActiveOutputPin->get().node->link){
-			mActiveOutputPin->get().node->link();
+		if(mActiveOutputPin->get().node()->link){
+			mActiveOutputPin->get().node()->link();
 		}
 
-		if(pin.node->link){
-			pin.node->link();
+		if(mActiveInputPin->get().node()->link){
+			mActiveInputPin->get().node()->link();
 		}
 		
 		mActiveOutputPin = std::nullopt;
@@ -200,11 +195,11 @@ void BlueprintCanvas::draw(NVGcontext *ctx) {
 	
 	if (mActiveOutputPin.has_value() && !mActiveInputPin.has_value()) {
 		
-		auto* node = mActiveOutputPin->get().node;
+		auto* node = mActiveOutputPin->get().node();
 		
 		NVGcolor color = node->color;
 		
-		if (mActiveOutputPin->get().type == PinType::Flow) {
+		if (mActiveOutputPin->get().get_type() == PinType::Flow) {
 			color = nvgRGBA(255, 255, 255, 255);
 		}
 		
@@ -262,16 +257,15 @@ void BlueprintCanvas::draw(NVGcontext *ctx) {
 		nvgTranslate(ctx, m_pos.x(), m_pos.y());
 		nvgTranslate(ctx, -canvas_position.x(), -canvas_position.y());
 		
-		
-		for (auto* link : mLinks) {
+		for (auto& link : mLinks) {
 			auto& start_pin = link->get_start();
 			auto& end_pin = link->get_end();
 			
-			auto* node = start_pin.node;
+			auto* node = start_pin.node();
 			
 			NVGcolor color = node->color;
 			
-			if (start_pin.type == PinType::Flow) {
+			if (start_pin.get_type() == PinType::Flow) {
 				color = nvgRGBA(255, 255, 255, 255);
 			}
 			
@@ -356,34 +350,34 @@ void BlueprintCanvas::draw(NVGcontext *ctx) {
 }
 
 void BlueprintCanvas::setup_options() {
-	SContextMenu->shed_children();
+	SContextMenu->clear_children();
 	
 	auto key_press_option = std::make_unique<nanogui::Button>(*SContextMenu, "Key Press");
 	auto key_release_option = std::make_unique<nanogui::Button>(*SContextMenu, "Key Release");
 	auto string_option = std::make_unique<nanogui::Button>(*SContextMenu, "String");
 	auto print_option = std::make_unique<nanogui::Button>(*SContextMenu, "Print");
 	
-	key_press_option->set_callback([this](){
-		SContextMenu->set_visible(false);
-		add_node(mNodeProcessor.spawn_node<KeyPressNode>(*this, mNodeProcessor.get_next_id(), SContextMenu->position()));
-		perform_layout(this->screen().nvg_context());
-	});
-	
-	key_release_option->set_callback([this](){
-		SContextMenu->set_visible(false);
-		add_node(mNodeProcessor.spawn_node<KeyReleaseNode>(*this, mNodeProcessor.get_next_id(), SContextMenu->position()));
-		perform_layout(this->screen().nvg_context());
-	});
+//	key_press_option->set_callback([this](){
+//		SContextMenu->set_visible(false);
+//		add_node(mNodeProcessor.spawn_node<KeyPressNode>(*this, mNodeProcessor.get_next_id(), SContextMenu->position()));
+//		perform_layout(this->screen().nvg_context());
+//	});
+//	
+//	key_release_option->set_callback([this](){
+//		SContextMenu->set_visible(false);
+//		add_node(mNodeProcessor.spawn_node<KeyReleaseNode>(*this, mNodeProcessor.get_next_id(), SContextMenu->position()));
+//		perform_layout(this->screen().nvg_context());
+//	});
 	
 	string_option->set_callback([this](){
 		SContextMenu->set_visible(false);
-		add_node(mNodeProcessor.spawn_node<StringNode>(*this, mNodeProcessor.get_next_id(), SContextMenu->position()));
+		spawn_node<StringVisualNode>(SContextMenu->position(), mNodeProcessor.spawn_node<StringCoreNode>(mNodeProcessor.get_next_id()));
 		perform_layout(this->screen().nvg_context());
 	});
-	
+
 	print_option->set_callback([this](){
 		SContextMenu->set_visible(false);
-		add_node(mNodeProcessor.spawn_node<PrintNode>(*this, mNodeProcessor.get_next_id(), SContextMenu->position()));
+		spawn_node<PrintVisualNode>(SContextMenu->position(), mNodeProcessor.spawn_node<PrintCoreNode>(mNodeProcessor.get_next_id()));
 		perform_layout(this->screen().nvg_context());
 	});
 	
@@ -398,10 +392,12 @@ void BlueprintCanvas::setup_options() {
 }
 
 void BlueprintCanvas::clear() {
+	clear_children();
+	attach_popup();
 	mSelectedNode = nullptr;
 	mActiveInputPin = std::nullopt;
 	mActiveOutputPin = std::nullopt;
-	mNodes.clear();
+	mVisualNodes.clear();
 	mLinks.clear();
 }
 
@@ -409,9 +405,36 @@ void BlueprintCanvas::attach_popup() {
 	add_child(*SContextMenu);
 }
 
-void BlueprintCanvas::add_link(Link* link) {
-	mLinks.push_back(link);
+void BlueprintCanvas::add_link(VisualPin& start, VisualPin& end) {
+	mLinks.push_back(std::move(std::make_unique<VisualLink>(start, end)));
 	mOnCanvasModifiedCallback();
+}
+
+void BlueprintCanvas::link(CorePin& start, CorePin& end) {
+	
+	auto* start_node = find_node(start.node->id);
+	auto* end_node = find_node(end.node->id);
+	
+	assert(start_node && end_node);
+	
+	auto* start_pin = start_node->find_pin(start.id);
+	auto* end_pin = end_node->find_pin(end.id);
+	
+	mLinks.push_back(std::move(std::make_unique<VisualLink>(*start_pin, *end_pin)));
+	mOnCanvasModifiedCallback();
+}
+
+VisualBlueprintNode* BlueprintCanvas::find_node(long long id) {
+	
+	auto node_it = std::find_if(mVisualNodes.begin(), mVisualNodes.end(), [id](auto& node) {
+		return node->core_node().id == id;
+	});
+	
+	if (node_it != mVisualNodes.end()) {
+		return node_it->get();
+	}
+	
+	return nullptr;
 }
 
 std::unique_ptr<nanogui::Popup> BlueprintCanvas::SContextMenu;

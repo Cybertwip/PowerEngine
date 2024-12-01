@@ -1,14 +1,13 @@
 #pragma once
 
+#include "BlueprintNode.hpp"
+
 #include <memory>
 #include <vector>
 
 class Actor;
 
 class BlueprintCanvas;
-class BlueprintNode;
-class Pin;
-class Link;
 
 class NodeProcessor {
 public:
@@ -18,6 +17,8 @@ public:
 	
 	void build_node(BlueprintNode& node);
 
+	void build_node(CoreNode& node);
+
 	void evaluate();
 	
 	void serialize(BlueprintCanvas& canvas, Actor& actor);
@@ -25,29 +26,40 @@ public:
 	void clear();
 	
 	template<typename T>
-	BlueprintNode* spawn_node(BlueprintCanvas& parent, long long id, const nanogui::Vector2i& position) {
-		auto node = std::make_unique<T>(parent, id, nanogui::Vector2i(196, 64));
-		node->set_position(position);
+	T& spawn_node(long long id) {
+		auto node = std::make_unique<T>(id);
 		build_node(*node);
+		T& node_ref = *node;
 		nodes.push_back(std::move(node));
-		
-		return nodes.back().get();
+		return node_ref;
 	}
 	
-	Link* create_link(BlueprintCanvas& parent, long long id, Pin& output, Pin& input){
-		auto link = std::make_unique<Link>(parent, id, output, input);
+	void create_link(long long id, CorePin& output, CorePin& input){
+		auto link = std::make_unique<Link>(id, output, input);
+
+		output.links.push_back(link.get());
+		input.links.push_back(link.get());
+
 		links.push_back(std::move(link));
-		parent.add_link(links.back().get());
-		return links.back().get();
+	}
+
+	void create_link(BlueprintCanvas& canvas, long long id, VisualPin& output, VisualPin& input){
+		auto link = std::make_unique<Link>(id, output.core_pin(), input.core_pin());
+		links.push_back(std::move(link));
+		
+		output.core_pin().links.push_back(links.back().get());
+		input.core_pin().links.push_back(links.back().get());
+		
+		canvas.add_link(output, input);
 	}
 	
-	Pin* find_pin(long long id);
-	BlueprintNode* find_node(long long id);
+	CoreNode* find_node(long long id);
 	
-	void break_links(BlueprintNode* node);
+	void break_links(CoreNode* node);
 
 private:
 	long long next_id;
-	std::vector<std::unique_ptr<BlueprintNode>> nodes;
 	std::vector<std::unique_ptr<Link>> links;
+	std::vector<std::unique_ptr<CoreNode>> nodes;
+
 };

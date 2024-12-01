@@ -13,33 +13,44 @@ class ShaderManager;
 class Grid2d;
 
 class Link;
-class BlueprintNode;
+class CoreNode;
+class CorePin;
+class VisualPin;
 class NodeProcessor;
-class Pin;
+class VisualBlueprintNode;
+class VisualLink;
 
 class BlueprintCanvas : public Canvas {
 public:
 	BlueprintCanvas(ScenePanel& parent, nanogui::Screen& screen, NodeProcessor& nodeProcessor, std::function<void()> onCanvasModifiedCallback, nanogui::Color backgroundColor);
 	
-	void add_node(BlueprintNode* node);
-	
-	void on_output_pin_clicked(Pin& pin);
-	void on_input_pin_clicked(Pin& pin);
+	void on_output_pin_clicked(VisualPin& pin);
+	void on_input_pin_clicked(VisualPin& pin);
 	
 	void draw();
 	
 	void clear();
 	
 	void attach_popup();
-	
-	void add_link(Link* link);
-	
-	BlueprintNode* selected_node() {
+
+	void add_link(VisualPin& start, VisualPin& end);
+
+	void link(CorePin& start, CorePin& end);
+
+	VisualBlueprintNode* selected_node() {
 		return mSelectedNode;
 	}
 	
 	void clear_selection() {
 		mSelectedNode = nullptr;
+	}
+	
+	
+	template<typename T, typename U>
+	void spawn_node(nanogui::Vector2i position, U& coreNode) {
+		auto node = std::make_unique<T>(*this, position, nanogui::Vector2i(196, 64), coreNode);
+		mVisualNodes.push_back(std::move(node));
+		mOnCanvasModifiedCallback();
 	}
 	
 private:
@@ -50,10 +61,12 @@ private:
 	
 	void draw(NVGcontext *ctx) override;
 	
-	bool query_link(Pin& source_pin, Pin& destination_pin);
+	bool query_link(VisualPin& source_pin, VisualPin& destination_pin);
 	
 	void setup_options();
 	
+	VisualBlueprintNode* find_node(long long id);
+
 private:
 	std::unique_ptr<ShaderManager> mShaderManager;
 	std::unique_ptr<Grid2d> mGrid;
@@ -69,13 +82,16 @@ private:
 	
 	NodeProcessor& mNodeProcessor;
 	std::function<void()> mOnCanvasModifiedCallback;
+
+	VisualBlueprintNode* mSelectedNode;
 	
-	std::vector<BlueprintNode*> mNodes;
-	BlueprintNode* mSelectedNode;
-	std::vector<Link*> mLinks;
+	std::vector<std::unique_ptr<VisualBlueprintNode>> mVisualNodes;
+	
+	std::vector<std::unique_ptr<VisualLink>> mLinks;
 
 	nanogui::Vector2i mMousePosition;
+	
 	int mHeaderHeight;
-	std::optional<std::reference_wrapper<Pin>> mActiveOutputPin;
-	std::optional<std::reference_wrapper<Pin>> mActiveInputPin;
+	std::optional<std::reference_wrapper<VisualPin>> mActiveOutputPin;
+	std::optional<std::reference_wrapper<VisualPin>> mActiveInputPin;
 };
