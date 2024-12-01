@@ -23,6 +23,7 @@ StringVisualNode::StringVisualNode(BlueprintCanvas& parent, nanogui::Vector2i po
 	
 	auto& textbox = add_data_widget<nanogui::TextBox>("");
 	
+	textbox.set_placeholder("Enter Text");
 	textbox.set_editable(true);
 	textbox.set_alignment(nanogui::TextBox::Alignment::Left);
 	
