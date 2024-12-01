@@ -19,17 +19,16 @@ void StringCoreNode::set_data(std::optional<std::variant<Entity, std::string, in
 }
 
 StringVisualNode::StringVisualNode(BlueprintCanvas& parent, nanogui::Vector2i position, nanogui::Vector2i size, StringCoreNode& coreNode)
-: VisualBlueprintNode(parent, "String", position, size, coreNode) {
+: VisualBlueprintNode(parent, "String", position, size, coreNode)
+, mTextBox(add_data_widget<nanogui::TextBox>(""))
+, mCoreNode(coreNode) {
 	
-	auto& textbox = add_data_widget<nanogui::TextBox>("");
+	mTextBox.set_placeholder("Enter Text");
+	mTextBox.set_editable(true);
+	mTextBox.set_alignment(nanogui::TextBox::Alignment::Left);
 	
-	textbox.set_placeholder("Enter Text");
-	textbox.set_editable(true);
-	textbox.set_alignment(nanogui::TextBox::Alignment::Left);
-	
-	textbox.set_callback([&coreNode](const std::string& value) {
-		coreNode.set_data(value);
+	mTextBox.set_callback([this](const std::string& value) {
+		mCoreNode.set_data(value);
 		return true;
 	});
-	
 }
