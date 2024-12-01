@@ -180,7 +180,7 @@ void SelfContainedMeshCanvas::draw_content(const nanogui::Matrix4f& view,
 		
 		component.evaluate_provider(mPreviewTimeProvider.GetTime(), PlaybackModifier::Forward);
 		
-		mPreviewTimeProvider.Update();
+		mPreviewTimeProvider.Update(mPreviewTimeProvider.GetTime() + 1);
 	}
 	
 	drawableRef.draw_content(CanvasUtils::glm_to_nanogui(mModelMatrix), view, projection);
