@@ -15,9 +15,9 @@ public:
 
 	void set_data(std::optional<std::variant<Entity, std::string, int, float, bool>> data) override;
 
-private:
 	std::optional<std::variant<Entity, std::string, int, float, bool>> get_data() override;
 	
+private:
 	CorePin& mOutput;
 };
 
@@ -31,7 +31,7 @@ public:
 		auto data = mCoreNode.get_data();
 		
 		if (data.has_value()) {
-			mTextBox.set_value(std::get<std::string>(data));
+			mTextBox.set_value(std::get<std::string>(*data));
 		} else {
 			mTextBox.set_value("");
 		}

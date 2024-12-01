@@ -509,11 +509,12 @@ public:
 
 	
 protected:
+	void perform_layout(NVGcontext *ctx) override;
+
 	std::vector<std::unique_ptr<nanogui::Widget>> data_widgets;
 	
 private:
 	void create_visual_pins();
-	void perform_layout(NVGcontext *ctx) override;
 	void draw(NVGcontext *ctx) override;
 	BlueprintCanvas& mCanvas;
 	CoreNode& mCoreNode;
