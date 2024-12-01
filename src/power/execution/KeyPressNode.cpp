@@ -28,7 +28,7 @@ KeyPressVisualNode::KeyPressVisualNode(BlueprintCanvas& parent, nanogui::Vector2
 , mCoreNode(coreNode)
 , mTriggered(false)
 , mListening(false) {
-	mCoreNode.evaluate = [this]() {
+	mCoreNode.set_evaluate([this]() {
 		if (mCoreNode.configured()) {
 			int action = glfwGetKey(screen().glfw_window(), mCoreNode.keycode());
 			
@@ -40,7 +40,7 @@ KeyPressVisualNode::KeyPressVisualNode(BlueprintCanvas& parent, nanogui::Vector2
 		}
 		
 		mCoreNode.output().can_flow = mTriggered;
-	};
+	});
 	
 	mActionButton.set_callback([this](){
 		mActionButton.set_caption("Press Key");

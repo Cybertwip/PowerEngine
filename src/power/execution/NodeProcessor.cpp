@@ -41,17 +41,13 @@ void NodeProcessor::evaluate() {
 		auto& in_pin = link->get_end();
 		
 		if(evaluated_nodes.find(out_pin.node) == evaluated_nodes.end()){
-			if(out_pin.node->evaluate){
-				out_pin.node->evaluate();
-				
+			if(out_pin.node->evaluate()){
 				evaluated_nodes.insert(out_pin.node);
 			}
 		}
 		
 		if(evaluated_nodes.find(in_pin.node) == evaluated_nodes.end()){
-			if(in_pin.node->evaluate){
-				in_pin.node->evaluate();
-				
+			if(in_pin.node->evaluate()){				
 				evaluated_nodes.insert(in_pin.node);
 			}
 		}

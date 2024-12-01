@@ -157,14 +157,10 @@ void BlueprintCanvas::on_input_pin_clicked(VisualPin& pin) {
 		mActiveOutputPin->get().links.push_back(mLinks.back().get());
 		mActiveInputPin->get().links.push_back(mLinks.back().get());
 		
-		if(mActiveOutputPin->get().node()->link){
-			mActiveOutputPin->get().node()->link();
-		}
+		mActiveOutputPin->get().node()->link();
 
-		if(mActiveInputPin->get().node()->link){
-			mActiveInputPin->get().node()->link();
-		}
-		
+		mActiveInputPin->get().node()->link();
+
 		mActiveOutputPin = std::nullopt;
 		mActiveInputPin = std::nullopt;
 	} else {

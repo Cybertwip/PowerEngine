@@ -28,7 +28,7 @@ KeyReleaseVisualNode::KeyReleaseVisualNode(BlueprintCanvas& parent, nanogui::Vec
 , mCoreNode(coreNode)
 , mTriggered(false)
 , mListening(false) {
-	mCoreNode.evaluate = [this]() {
+	mCoreNode.set_evaluate([this]() {
 		if (mCoreNode.configured()) {
 			int action = glfwGetKey(screen().glfw_window(), mCoreNode.keycode());
 			
@@ -43,7 +43,7 @@ KeyReleaseVisualNode::KeyReleaseVisualNode(BlueprintCanvas& parent, nanogui::Vec
 				mTriggered = false;
 			}
 		}
-	};
+	});
 	
 	mActionButton.set_callback([this](){
 		mActionButton.set_caption("Press Key");

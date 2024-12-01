@@ -341,9 +341,29 @@ public:
 	bool root_node = false;
 	nanogui::Vector2i position;
 	
-	std::function<void()> link;
-	std::function<void()> evaluate;
+	void link() {
+		if (mLink) {
+			mLink();
+		}
+	}
 	
+	bool evaluate() {
+		if (mEvaluate) {
+			mEvaluate();
+			return true;
+		} else {
+			return false;
+		}
+	}
+	
+	void set_link(std::function<void()> link) {
+		mLink = link;
+	}
+	
+	void set_evaluate(std::function<void()> evaluate) {
+		mEvaluate = evaluate;
+	}
+
 	CoreNode(NodeType type, long long id, nanogui::Color color = nanogui::Color(255, 255, 255, 255)) : type(type), id(id), color(color), next_id(1) {
 		
 	}
@@ -408,6 +428,10 @@ public:
 private:
 	long long get_next_id();
 	long long next_id;
+	
+	std::function<void()> mLink;
+	std::function<void()> mEvaluate;
+
 	
 	std::vector<std::unique_ptr<CorePin>> inputs;
 	std::vector<std::unique_ptr<CorePin>> outputs;

@@ -4,9 +4,9 @@ StringCoreNode::StringCoreNode(long long id)
 : DataCoreNode(NodeType::String, id, nanogui::Color(255, 0, 255, 255))
 , mOutput(add_output(PinType::String, PinSubType::None)) {
 	
-	link = [this](){
+	set_link([this](){
 		mOutput.can_flow = true;
-	};
+	});
 	
 }
 
