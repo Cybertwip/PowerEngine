@@ -348,6 +348,8 @@ public:
 		
 	}
 	
+	virtual ~CoreNode() = default;
+	
 	CorePin& add_input(PinType pin_type, PinSubType pin_subtype) {
 				
 		auto input = std::make_unique<CorePin>(get_next_id(), this->id, pin_type, pin_subtype);

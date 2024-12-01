@@ -1,7 +1,7 @@
 #include "StringNode.hpp"
 
 StringCoreNode::StringCoreNode(long long id)
-: CoreNode(NodeType::String, id, nanogui::Color(255, 0, 255, 255))
+: DataCoreNode(NodeType::String, id, nanogui::Color(255, 0, 255, 255))
 , mOutput(add_output(PinType::String, PinSubType::None)) {
 	
 	link = [this](){
@@ -17,7 +17,6 @@ std::optional<std::variant<Entity, std::string, int, float, bool>> StringCoreNod
 void StringCoreNode::set_data(std::optional<std::variant<Entity, std::string, int, float, bool>> data) {
 	mOutput.set_data(data);
 }
-
 
 StringVisualNode::StringVisualNode(BlueprintCanvas& parent, nanogui::Vector2i position, nanogui::Vector2i size, StringCoreNode& coreNode)
 : VisualBlueprintNode(parent, "String", position, size, coreNode) {
