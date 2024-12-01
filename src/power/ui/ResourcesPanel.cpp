@@ -266,7 +266,7 @@ mShaderManager(shaderManager)
 		auto filename = node->FullPath;
 		
 		if (filename.find(".psk") != std::string::npos || filename.find(".pma") != std::string::npos){
-			mActorVisualManager->add_actor(mMeshActorLoader.create_actor(filename, mGlobalAnimationTimeProvider, *mMeshShader, *mSkinnedShader));
+			mActorVisualManager->add_actor(mMeshActorLoader.create_actor(filename, mGlobalAnimationTimeProvider, mPreviewAnimationTimeProvider, *mMeshShader, *mSkinnedShader));
 			
 			mSceneTimeBar->refresh_actors();
 		}

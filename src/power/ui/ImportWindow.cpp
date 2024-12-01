@@ -39,7 +39,7 @@ ImportWindow::ImportWindow(nanogui::Screen& parent, ResourcesPanel& resourcesPan
 		this->set_modal(false);
 	});
 	
-	mPreviewCanvas = std::make_shared<SharedSelfContainedMeshCanvas>(*this, parent);
+	mPreviewCanvas = std::make_shared<SharedSelfContainedMeshCanvas>(*this, parent, mDummyAnimationTimeProvider);
 	
 	mMeshBatch = std::make_unique<SelfContainedMeshBatch>(mRenderPass, mPreviewCanvas->get_mesh_shader());
 	
