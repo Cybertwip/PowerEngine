@@ -11,17 +11,13 @@ StringCoreNode::StringCoreNode(long long id)
 }
 
 std::optional<std::variant<Entity, std::string, int, float, bool>> StringCoreNode::get_data() {
-	return mOutput.value();
+	return mOutput.get_data();
 }
 
 void StringCoreNode::set_data(std::optional<std::variant<Entity, std::string, int, float, bool>> data) {
 	mOutput.set_data(data);
 }
 
-
-void StringCoreNode::set_data(const std::string& data) {
-	mOutput.set_data(data);
-}
 
 StringVisualNode::StringVisualNode(BlueprintCanvas& parent, nanogui::Vector2i position, nanogui::Vector2i size, StringCoreNode& coreNode)
 : VisualBlueprintNode(parent, "String", position, size, coreNode) {
