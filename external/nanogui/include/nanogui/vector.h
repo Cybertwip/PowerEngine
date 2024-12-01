@@ -406,7 +406,9 @@ public:
     }
 
     /// Allows for conversion between this Color and NanoVG's representation.
-    inline operator const NVGcolor &() const;
+	inline operator const NVGcolor &() const {
+		return reinterpret_cast<const NVGcolor &>(*(this->v));
+	}
 };
 
 /// Simple matrix class with column-major storage
