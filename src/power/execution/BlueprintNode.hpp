@@ -58,68 +58,6 @@ struct Entity {
 	std::optional<std::variant<std::string, int, float, bool>> payload;
 };
 
-class Pin : public nanogui::ToolButton {
-public:
-	int id;
-	int node_id;
-	BlueprintNode* node;
-	PinType type;
-	PinSubType subtype;
-	PinKind kind;
-	bool can_flow = false;
-	
-	std::vector<Link*> links;
-	
-	Pin(nanogui::Widget& parent, int id, int node_id, const std::string& label, PinType type, PinSubType subtype = PinSubType::None)
-	: nanogui::ToolButton(parent, FA_CIRCLE_NOTCH, label), id(id), node_id(node_id), node(nullptr), type(type), subtype(subtype), kind(PinKind::Input) {
-		if (type == PinType::Bool) {
-			set_data(true);
-		} else if (type == PinType::String) {
-			set_data("");
-		} else if (type == PinType::Float) {
-			set_data(0.0f);
-		} else if (type == PinType::Flow) {
-			set_data(true);
-		}
-	}
-	
-	virtual std::optional<std::variant<Entity, std::string, int, float, bool>> get_data() {
-		return mData;
-	}
-	
-	virtual void set_data(std::optional<std::variant<Entity, std::string, int, float, bool>> data) {
-		mData = data;
-	}
-	
-	void set_hover_callback(std::function<void()> callback) {
-		mHoverCallback = callback;
-	}
-
-	void set_click_callback(std::function<void()> callback) {
-		mClickCallback = callback;
-	}
-
-	bool mouse_button_event(const nanogui::Vector2i &p, int button, bool down, int modifiers) override {
-		nanogui::Widget::mouse_button_event(p, button, down, modifiers);
-		if (button == GLFW_MOUSE_BUTTON_1 && !down) {
-			if (mHoverCallback) {
-				mHoverCallback();
-			}
-		} else if (button == GLFW_MOUSE_BUTTON_1) {
-			if (mClickCallback) {
-				mClickCallback();
-			}
-		}
-	}
-	
-private:
-	std::optional<std::variant<Entity, std::string, int, float, bool>> mData;
-	
-	std::function<void()> mHoverCallback;
-	std::function<void()> mClickCallback;
-};
-
-
 class BlueprintCanvas;
 
 class PassThroughWidget : public nanogui::Widget {
@@ -176,126 +114,6 @@ private:
 	nanogui::Window& mWindow;
 };
 
-class BlueprintNode : public nanogui::Window {
-public:
-	NodeType type;
-	long long id;
-	nanogui::Color color;
-	bool root_node = false;
-	std::function<void()> link;
-	std::function<void()> evaluate;
-	
-	BlueprintNode(std::optional<std::reference_wrapper<BlueprintCanvas>> parent, NodeType type, const std::string& name, nanogui::Vector2i size, long long id, nanogui::Color color = nanogui::Color(255, 255, 255, 255));
-	
-	template<typename T, typename... Args>
-	T& add_data_widget(Args&&... args){
-		auto data_widget = std::make_unique<T>(*mDataColumn, std::forward<Args>(args)...);
-		
-		data_widget->set_fixed_size(nanogui::Vector2i(fixed_size().x() - 48, 22));
-		
-		auto& data_widget_ref = *data_widget;
-		
-		data_widgets.push_back(std::move(data_widget));
-		
-		return data_widget_ref;
-	}
-	
-	
-	template<typename T = Pin, typename... Args>
-	Pin& add_input(int node_id, const std::string& label, PinType pin_type, PinSubType pin_subtype, Args &&...args) {
-		
-		auto& parent = pin_type == PinType::Flow ? *mFlowContainer : *mLeftColumn;
-		
-		auto input = std::make_unique<T>(parent, get_next_id(), node_id, label, pin_type, pin_subtype, std::forward<Args>(args)...);
-
-		input->set_programmable(true);
-		
-		if (pin_type == PinType::Flow) {
-			input->set_icon(FA_PLAY);
-		}
-		
-		if (mCanvas.has_value()) {
-			auto& input_ref = *input;
-			
-			input->set_hover_callback([this, &input_ref](){
-//				mCanvas->get().on_input_pin_clicked(input_ref);
-			});
-		}
-		
-		input->set_fixed_size(nanogui::Vector2i(22, 22));
-		
-		if (pin_type == PinType::Flow) {
-			input->set_position(nanogui::Vector2i(5, 3));
-		}
-		
-		inputs.push_back(std::move(input));
-		
-		return *inputs.back();
-	}
-
-	template<typename T = Pin, typename... Args>
-	Pin& add_output(int node_id, const std::string& label, PinType pin_type, PinSubType pin_subtype, Args &&...args) {
-		auto& parent = pin_type == PinType::Flow ? *mFlowContainer : *mRightColumn;
-		
-		auto output = std::make_unique<T>(parent, get_next_id(), node_id, label, pin_type, pin_subtype, std::forward<Args>(args)...);
-		
-		output->set_programmable(true);
-		
-		if (pin_type == PinType::Flow) {
-			output->set_icon(FA_PLAY);
-		}
-		
-		if (mCanvas.has_value()) {
-			auto& output_ref = *output;
-			
-			output->set_click_callback([this, &output_ref](){
-				//mCanvas->get().on_output_pin_clicked(output_ref);
-			});
-			
-		}
-		
-		output->set_fixed_size(nanogui::Vector2i(22, 22));
-		
-		if (pin_type == PinType::Flow) {
-			output->set_position(nanogui::Vector2i(fixed_size().x() - 22 - 5, 3));
-		}
-		
-		outputs.push_back(std::move(output));
-		
-		return *outputs.back();
-	}
-	void build();
-	
-	void reset_flow();
-	
-	const std::vector<std::unique_ptr<Pin>>& get_inputs() {
-		return inputs;
-	}
-
-	const std::vector<std::unique_ptr<Pin>>& get_outputs() {
-		return outputs;
-	}
-
-protected:
-	std::vector<std::unique_ptr<Pin>> inputs;
-	std::vector<std::unique_ptr<nanogui::Widget>> data_widgets;
-	std::vector<std::unique_ptr<Pin>> outputs;
-	
-private:
-	long long get_next_id();
-
-	void perform_layout(NVGcontext *ctx) override;
-	void draw(NVGcontext *ctx) override;
-	std::optional<std::reference_wrapper<BlueprintCanvas>> mCanvas;
-	std::unique_ptr<nanogui::Widget> mFlowContainer;
-	std::unique_ptr<nanogui::Widget> mColumnContainer;
-	std::unique_ptr<nanogui::Widget> mLeftColumn;
-	std::unique_ptr<nanogui::Widget> mDataColumn;
-	std::unique_ptr<nanogui::Widget> mRightColumn;
-	
-	long long next_id;
-};
-
 class CorePin {
 public:
 	int id;
@@ -348,8 +166,8 @@ public:
 	}
 	
 	bool evaluate() {
-		if (mEvaluate) {
-			mEvaluate();
+		if (get_evaluate()) {
+			get_evaluate()();
 			return true;
 		} else {
 			return false;
@@ -426,12 +244,15 @@ public:
 
 		
 private:
+	std::function<void()> get_evaluate() {
+		return mEvaluate;
+	}
+	
 	long long get_next_id();
 	long long next_id;
 	
 	std::function<void()> mLink;
 	std::function<void()> mEvaluate;
-
 	
 	std::vector<std::unique_ptr<CorePin>> inputs;
 	std::vector<std::unique_ptr<CorePin>> outputs;
@@ -518,7 +339,6 @@ public:
 		return mCoreNode;
 	}
 	
-	
 	VisualPin* find_pin(long long id) {
 		// Search through visual pins
 		for (const auto& pin : mVisualPins) {
@@ -548,15 +368,6 @@ private:
 	std::unique_ptr<nanogui::Widget> mDataColumn;
 	std::unique_ptr<nanogui::Widget> mRightColumn;
 	std::vector<std::unique_ptr<VisualPin>> mVisualPins;
-};
-
-class BlueprintDataNode : public BlueprintNode {
-public:
-	BlueprintDataNode(std::optional<std::reference_wrapper<BlueprintCanvas>> parent, NodeType type, const std::string& name, nanogui::Vector2i size, int id, nanogui::Color color = nanogui::Color(255, 255, 255, 255));
-	
-	virtual std::optional<std::variant<Entity, std::string, int, float, bool>> get_data() = 0;
-	
-	virtual void set_data(std::optional<std::variant<Entity, std::string, int, float, bool>> data) = 0;
 };
 
 class Link {

@@ -15,8 +15,6 @@ public:
 	
 	long long get_next_id();
 	
-	void build_node(BlueprintNode& node);
-
 	void build_node(CoreNode& node);
 
 	void evaluate();
@@ -53,7 +51,7 @@ public:
 		canvas.add_link(output, input);
 	}
 	
-	CoreNode* find_node(long long id);
+	CoreNode& get_node(long long id);
 	
 	void break_links(CoreNode* node);
 

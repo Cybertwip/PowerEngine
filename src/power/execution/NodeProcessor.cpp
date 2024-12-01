@@ -23,10 +23,6 @@ long long NodeProcessor::get_next_id() {
 	return next_id++;
 }
 
-void NodeProcessor::build_node(BlueprintNode& node){
-	node.build();
-}
-
 void NodeProcessor::build_node(CoreNode& node){
 	node.build();
 }
@@ -112,13 +108,11 @@ void NodeProcessor::serialize(BlueprintCanvas& canvas, Actor& actor) {
 					break;
 			}
 			
-			auto* source_node = node.get();
-			auto* target_node = node_processor->find_node(node->id);
-			
-			assert(source_node && target_node);
-			
-			const auto& source_inputs = source_node->get_inputs();
-			const auto& target_inputs = target_node->get_inputs();
+			auto& source_node = *node;
+			auto& target_node = node_processor->get_node(node->id);
+						
+			const auto& source_inputs = source_node.get_inputs();
+			const auto& target_inputs = target_node.get_inputs();
 			
 			for (const auto& source_pin : source_inputs) {
 				for (const auto& target_pin : target_inputs) {
@@ -128,8 +122,8 @@ void NodeProcessor::serialize(BlueprintCanvas& canvas, Actor& actor) {
 				}
 			}
 			
-			const auto& source_outputs = source_node->get_outputs();
-			const auto& target_outputs = target_node->get_outputs();
+			const auto& source_outputs = source_node.get_outputs();
+			const auto& target_outputs = target_node.get_outputs();
 			
 			for (const auto& source_pin : source_outputs) {
 				for (const auto& target_pin : target_outputs) {
@@ -144,14 +138,12 @@ void NodeProcessor::serialize(BlueprintCanvas& canvas, Actor& actor) {
 			auto& start_pin = link->get_start();
 			auto& end_pin = link->get_end();
 			
-			auto* target_source_pin_node = node_processor->find_node(start_pin.node->id);
-			auto* target_destination_pin_node = node_processor->find_node(end_pin.node->id);
+			auto& target_source_pin_node = node_processor->get_node(start_pin.node->id);
+			auto& target_destination_pin_node = node_processor->get_node(end_pin.node->id);
 			
-			assert(target_source_pin_node && target_destination_pin_node);
-
-			auto* target_start_pin = target_source_pin_node->find_pin(start_pin.id);
+			auto* target_start_pin = target_source_pin_node.find_pin(start_pin.id);
 			
-			auto* target_end_pin = target_destination_pin_node->find_pin(end_pin.id);
+			auto* target_end_pin = target_destination_pin_node.find_pin(end_pin.id);
 			
 			assert(target_start_pin && target_end_pin);
 			
@@ -160,7 +152,7 @@ void NodeProcessor::serialize(BlueprintCanvas& canvas, Actor& actor) {
 		}
 
 		for (auto& node : nodes) {
-			auto* that_node = dynamic_cast<DataCoreNode*>(node_processor->find_node(node->id));
+			auto* that_node = dynamic_cast<DataCoreNode*>(&node_processor->get_node(node->id));
 			
 			auto* this_node = dynamic_cast<DataCoreNode*>(node.get());
 			
@@ -201,13 +193,11 @@ void NodeProcessor::deserialize(BlueprintCanvas& canvas, Actor& actor) {
 					break;
 			}
 			
-			auto* source_node = node.get();
-			auto* target_node = find_node(node->id);
-			
-			assert(source_node && target_node);
-			
-			const auto& source_inputs = source_node->get_inputs();
-			const auto& target_inputs = target_node->get_inputs();
+			auto& source_node = *node;
+			auto& target_node = get_node(node->id);
+						
+			const auto& source_inputs = source_node.get_inputs();
+			const auto& target_inputs = target_node.get_inputs();
 			
 			for (const auto& source_pin : source_inputs) {
 				for (const auto& target_pin : target_inputs) {
@@ -217,8 +207,8 @@ void NodeProcessor::deserialize(BlueprintCanvas& canvas, Actor& actor) {
 				}
 			}
 			
-			const auto& source_outputs = source_node->get_outputs();
-			const auto& target_outputs = target_node->get_outputs();
+			const auto& source_outputs = source_node.get_outputs();
+			const auto& target_outputs = target_node.get_outputs();
 			
 			for (const auto& source_pin : source_outputs) {
 				for (const auto& target_pin : target_outputs) {
@@ -230,7 +220,7 @@ void NodeProcessor::deserialize(BlueprintCanvas& canvas, Actor& actor) {
 		}
 		
 		for (auto& node : node_processor.nodes) {
-			auto* this_node = dynamic_cast<DataCoreNode*>(find_node(node->id));
+			auto* this_node = dynamic_cast<DataCoreNode*>(&get_node(node->id));
 			
 			auto* that_node = dynamic_cast<DataCoreNode*>(node.get());
 			
@@ -243,37 +233,30 @@ void NodeProcessor::deserialize(BlueprintCanvas& canvas, Actor& actor) {
 			auto& start_pin = link->get_start();
 			auto& end_pin = link->get_end();
 			
-			auto* target_source_pin_node = find_node(start_pin.node->id);
-			auto* target_destination_pin_node = find_node(end_pin.node->id);
-			
-			assert(target_source_pin_node && target_destination_pin_node);
+			auto& target_source_pin_node = get_node(start_pin.node->id);
+			auto& target_destination_pin_node = get_node(end_pin.node->id);
 
-			auto* target_start_pin = target_source_pin_node->find_pin(start_pin.id);
+			auto* target_start_pin = target_source_pin_node.find_pin(start_pin.id);
 			
-			auto* target_end_pin = target_destination_pin_node->find_pin(end_pin.id);
+			auto* target_end_pin = target_destination_pin_node.find_pin(end_pin.id);
 			
 			assert(target_start_pin && target_end_pin);
 			
 			create_link(link->get_id(), *target_start_pin, *target_end_pin);
 			
 			canvas.link(*target_start_pin, *target_end_pin);
-
 		}
 		
 		canvas.perform_layout(canvas.screen().nvg_context());
 	}
 }
 
-CoreNode* NodeProcessor::find_node(long long id) {
+CoreNode& NodeProcessor::get_node(long long id) {
 	auto node_it = std::find_if(nodes.begin(), nodes.end(), [id](auto& node) {
 		return node->id == id;
 	});
 	
-	if (node_it != nodes.end()) {
-		return node_it->get();
-	}
-	
-	return nullptr;
+	return *node_it->get();
 }
 
 void NodeProcessor::break_links(CoreNode* node) {
