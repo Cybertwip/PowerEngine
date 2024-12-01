@@ -10,6 +10,15 @@ StringCoreNode::StringCoreNode(long long id)
 	
 }
 
+std::optional<std::variant<Entity, std::string, int, float, bool>> StringCoreNode::get_data() {
+	return mOutput.value();
+}
+
+void StringCoreNode::set_data(std::optional<std::variant<Entity, std::string, int, float, bool>> data) {
+	mOutput.set_data(data);
+}
+
+
 void StringCoreNode::set_data(const std::string& data) {
 	mOutput.set_data(data);
 }

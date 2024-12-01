@@ -9,13 +9,15 @@
 
 class BlueprintCanvas;
 
-class StringCoreNode : public CoreNode {
+class StringCoreNode : public DataCoreNode {
 public:
 	StringCoreNode(long long id);
-	
-	void set_data(const std::string& data);
-	
+
 private:
+	std::optional<std::variant<Entity, std::string, int, float, bool>> get_data() override;
+	
+	void set_data(std::optional<std::variant<Entity, std::string, int, float, bool>> data) override;
+	
 	CorePin& mOutput;
 };
 

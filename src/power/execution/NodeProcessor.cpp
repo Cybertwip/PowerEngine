@@ -156,17 +156,16 @@ void NodeProcessor::serialize(BlueprintCanvas& canvas, Actor& actor) {
 			node_processor->create_link(link->get_id(), *target_start_pin, *target_end_pin);
 
 		}
-		
-//
-//		for (auto& node : nodes) {
-//			auto* that_node = dynamic_cast<BlueprintDataNode*>(node_processor->find_node(node->id));
-//			
-//			auto* this_node = dynamic_cast<BlueprintDataNode*>(node.get());
-//			
-//			if (that_node && this_node) {
-//				that_node->set_data(this_node->get_data());
-//			}
-//		}
+
+		for (auto& node : nodes) {
+			auto* that_node = dynamic_cast<DataCoreNode*>(node_processor->find_node(node->id));
+			
+			auto* this_node = dynamic_cast<DataCoreNode*>(node.get());
+			
+			if (that_node && this_node) {
+				that_node->set_data(this_node->get_data());
+			}
+		}
 		
 		actor.add_component<BlueprintComponent>(std::move(node_processor));
 	}
@@ -228,17 +227,15 @@ void NodeProcessor::deserialize(BlueprintCanvas& canvas, Actor& actor) {
 			}
 		}
 		
-//		for (auto& node : node_processor.nodes) {
-//			auto* this_node = dynamic_cast<BlueprintDataNode*>(find_node(node->id));
-//			
-//			auto* that_node = dynamic_cast<BlueprintDataNode*>(node.get());
-//			
-//			if (this_node && that_node) {
-//				this_node->set_data(that_node->get_data());
-//			}
-//			
-//		}
-		
+		for (auto& node : node_processor.nodes) {
+			auto* this_node = dynamic_cast<DataCoreNode*>(find_node(node->id));
+			
+			auto* that_node = dynamic_cast<DataCoreNode*>(node.get());
+			
+			if (this_node && that_node) {
+				this_node->set_data(that_node->get_data());
+			}
+		}
 		
 		for (auto& link : node_processor.links) {
 			auto& start_pin = link->get_start();
