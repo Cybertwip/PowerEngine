@@ -247,6 +247,9 @@ class Application : public nanogui::DraggableScreen
 	
 	
 	AnimationTimeProvider mGlobalAnimationTimeProvider;
+	AnimationTimeProvider mPreviewAnimationTimeProvider;
+	std::unique_ptr<ActorManager> mActorManager;
+
 	std::unique_ptr<ExecutionManager> mExecutionManager;
 	std::unique_ptr<VirtualMachine> mVirtualMachine;
 	
@@ -275,7 +278,6 @@ class Application : public nanogui::DraggableScreen
 	std::unique_ptr<OpenAiApiClient> mOpenAiApiClient;
 	std::unique_ptr<TripoAiApiClient> mTripoAiApiClient;
 	std::unique_ptr<DeepMotionApiClient> mDeepMotionApiClient;
-	std::unique_ptr<ActorManager> mActorManager;
 	std::unique_ptr<CameraManager> mCameraManager;
 	std::unique_ptr<entt::registry> mEntityRegistry;
 	std::unique_ptr<SimulationServer> mSimulationServer;

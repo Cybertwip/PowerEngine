@@ -78,7 +78,7 @@ mRenderPass(renderpass) { // update with proper duration, dynamically after load
 	});
 	
 	// Preview Canvas
-	mPreviewCanvas = std::make_shared<SharedSelfContainedMeshCanvas>(*this, parent);
+	mPreviewCanvas = std::make_shared<SharedSelfContainedMeshCanvas>(*this, parent, mDummyAnimationTimeProvider);
 	mPreviewCanvas->set_fixed_size(nanogui::Vector2i(256, 256));
 	mPreviewCanvas->set_aspect_ratio(1.0f);
 	
@@ -158,7 +158,7 @@ void PromptWindow::Preview(const std::string& path, const std::string& directory
 	
 	auto actor = std::make_shared<Actor>(mDummyRegistry);
 	
-	mMeshActorBuilder->build(*actor, mDummyAnimationTimeProvider, path, mPreviewCanvas->get_mesh_shader(), mPreviewCanvas->get_skinned_mesh_shader());
+	mMeshActorBuilder->build(*actor, mDummyAnimationTimeProvider, mDummyAnimationTimeProvider, path, mPreviewCanvas->get_mesh_shader(), mPreviewCanvas->get_skinned_mesh_shader());
 	
 	if (path.find(".psk") == std::string::npos) {
 		// Mesh rigging is still not implemented

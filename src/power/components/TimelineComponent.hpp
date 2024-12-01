@@ -135,7 +135,6 @@ private:
 class SimpleTakeComponent : public AnimationComponent {
 public:
 	SimpleTakeComponent(std::reference_wrapper<Actor> actor, AnimationTimeProvider& timeProvider) : mActor(actor.get()), mTimeProvider(timeProvider) {
-		add_timeline();
 		mTimelineIndex = 0;
 	}
 	
@@ -145,7 +144,10 @@ public:
 		// Add TransformComponent and AnimationComponent
 		auto& transform = mActor.get_component<TransformComponent>();
 		
-		auto& transformAnimationComponent = mAnimationComponents.emplace_back(std::make_shared<TransformAnimationComponent>(transform, mTimeProvider));
+		
+		auto transformAnimationComponent = std::make_shared<TransformAnimationComponent>(transform, mTimeProvider);
+		
+		mAnimationComponents.push_back(transformAnimationComponent);
 		
 		std::vector<std::reference_wrapper<AnimationComponent>> components = {
 			*transformAnimationComponent,
@@ -268,15 +270,18 @@ public:
 		// Add TransformComponent and AnimationComponent
 		auto& transform = mActor.get_component<TransformComponent>();
 		
-		auto& transformAnimationComponent = mAnimationComponents.emplace_back(std::make_unique<TransformAnimationComponent>(transform, mTimeProvider));
+		auto transformAnimationComponent = std::make_shared<TransformAnimationComponent>(transform, mTimeProvider);
 		
+		mAnimationComponents.push_back(transformAnimationComponent);
 		
 		// Add PlaybackComponent
 		auto& playbackComponent = mActor.get_component<PlaybackComponent>();
 		
 		auto& skeletonComponent = mActor.get_component<SkeletonComponent>();
 		
-		auto& skinnedAnimationComponent = mAnimationComponents.emplace_back(std::make_unique<SkinnedAnimationComponent>(playbackComponent, skeletonComponent, mTimeProvider));
+		auto skinnedAnimationComponent = std::make_shared<SkinnedPlaybackComponent>(playbackComponent, skeletonComponent, mTimeProvider);
+		
+		mAnimationComponents.push_back(skinnedAnimationComponent);
 		
 
 		std::vector<std::reference_wrapper<AnimationComponent>> components = {
@@ -290,6 +295,7 @@ public:
 class TakeComponent : AnimationComponent {
 public:
 	TakeComponent(std::unique_ptr<SimpleTakeComponent> takeComponent) : mTakeComponent(std::move(takeComponent)) {
+		add_timeline();
 	}
 	
 	void add_timeline() {

@@ -24,9 +24,9 @@ GizmoManager::GizmoManager(nanogui::Widget& parent, ShaderManager& shaderManager
 mMeshActorLoader(meshActorLoader),
 mMeshShader(std::make_unique<ShaderWrapper>(shaderManager.get_shader("gizmo"))),
 mSkinnedShader(std::make_unique<ShaderWrapper>(shaderManager.get_shader("skinned_mesh"))),
-mTranslationGizmo(mMeshActorLoader.create_actor("internal/models/Gizmo/Translation.fbx", mDummyAnimationTimeProvider, *mMeshShader, *mSkinnedShader)),
-mRotationGizmo(mMeshActorLoader.create_actor("internal/models/Gizmo/Rotation.fbx", mDummyAnimationTimeProvider, *mMeshShader, *mSkinnedShader)),
-mScaleGizmo(mMeshActorLoader.create_actor("internal/models/Gizmo/Scale.fbx", mDummyAnimationTimeProvider, *mMeshShader, *mSkinnedShader))
+mTranslationGizmo(mMeshActorLoader.create_actor("internal/models/Gizmo/Translation.fbx", mDummyAnimationTimeProvider, mDummyAnimationTimeProvider, *mMeshShader, *mSkinnedShader)),
+mRotationGizmo(mMeshActorLoader.create_actor("internal/models/Gizmo/Rotation.fbx", mDummyAnimationTimeProvider, mDummyAnimationTimeProvider, *mMeshShader, *mSkinnedShader)),
+mScaleGizmo(mMeshActorLoader.create_actor("internal/models/Gizmo/Scale.fbx", mDummyAnimationTimeProvider, mDummyAnimationTimeProvider, *mMeshShader, *mSkinnedShader))
 {
 	
 	// Translation Button

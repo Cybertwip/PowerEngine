@@ -6,7 +6,7 @@
 
 class SharedSelfContainedMeshCanvas : public SelfContainedMeshCanvas {
 public:
-	SharedSelfContainedMeshCanvas(nanogui::Widget& parent, nanogui::Screen& screen);
+	SharedSelfContainedMeshCanvas(nanogui::Widget& parent, nanogui::Screen& screen, AnimationTimeProvider& previewTimeProvider);
 	
 	void set_active_actor(std::shared_ptr<Actor> actor);
 

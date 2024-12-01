@@ -120,7 +120,7 @@ Actor& MeshActorBuilder::build_mesh(Actor& actor, AnimationTimeProvider& timePro
 	return actor;
 }
 
-Actor& MeshActorBuilder::build_skinned(Actor& actor, AnimationTimeProvider& timeProvider, const std::string& actorName,  CompressedSerialization::Deserializer& deserializer, ShaderWrapper& meshShader, ShaderWrapper& skinnedShader){
+Actor& MeshActorBuilder::build_skinned(Actor& actor, AnimationTimeProvider& timeProvider, AnimationTimeProvider& previewTimeProvider, const std::string& actorName,  CompressedSerialization::Deserializer& deserializer, ShaderWrapper& meshShader, ShaderWrapper& skinnedShader){
 	
 	std::string crcGenerator = deserializer.get_header_string();
 	
@@ -202,6 +202,8 @@ Actor& MeshActorBuilder::build_skinned(Actor& actor, AnimationTimeProvider& time
 		playbackComponent.setPlaybackData(playbackData);
 		
 		auto& skeletonComponent = actor.add_component<SkeletonComponent>((*model->GetSkeleton()));
+		
+		actor.add_component<SkinnedPlaybackComponent>(playbackComponent, skeletonComponent, previewTimeProvider);
 				
 		// Create SkinnedMesh instances from deserialized data
 		for (auto& skinnedMeshData : model->GetSkinnedMeshData()) {
@@ -245,7 +247,7 @@ Actor& MeshActorBuilder::build_skinned(Actor& actor, AnimationTimeProvider& time
 	return actor;
 }
 
-Actor& MeshActorBuilder::build(Actor& actor, AnimationTimeProvider& timeProvider, const std::string& path, ShaderWrapper& meshShader, ShaderWrapper& skinnedShader) {
+Actor& MeshActorBuilder::build(Actor& actor, AnimationTimeProvider& timeProvider, AnimationTimeProvider& previewTimeProvider, const std::string& path, ShaderWrapper& meshShader, ShaderWrapper& skinnedShader) {
 	
 	// Determine file type based on extension
 	std::filesystem::path filePath(path);
@@ -298,7 +300,7 @@ Actor& MeshActorBuilder::build(Actor& actor, AnimationTimeProvider& timeProvider
 	}
 	
 	if (extension == ".psk") {
-		return build_skinned(actor, timeProvider, actorName, deserializer, meshShader, skinnedShader);
+		return build_skinned(actor, timeProvider, previewTimeProvider, actorName, deserializer, meshShader, skinnedShader);
 	} else if (extension == ".pma") {
 		return build_mesh(actor, timeProvider, actorName, deserializer, meshShader, skinnedShader);
 	} else {
@@ -311,7 +313,7 @@ Actor& MeshActorBuilder::build(Actor& actor, AnimationTimeProvider& timeProvider
 
 
 
-Actor& MeshActorBuilder::build(Actor& actor, AnimationTimeProvider& timeProvider, std::stringstream& fbxStream, const std::string& path, ShaderWrapper& meshShader, ShaderWrapper& skinnedShader) {
+Actor& MeshActorBuilder::build(Actor& actor, AnimationTimeProvider& timeProvider, AnimationTimeProvider& previewTimeProvider, std::stringstream& fbxStream, const std::string& path, ShaderWrapper& meshShader, ShaderWrapper& skinnedShader) {
 	
 	std::string actorName = std::filesystem::path(path).stem().string();
 	
@@ -350,7 +352,7 @@ Actor& MeshActorBuilder::build(Actor& actor, AnimationTimeProvider& timeProvider
 	auto extension = filePath.extension().string();
 	
 	if (extension == ".psk") {
-		auto& skinned_actor = build_skinned(actor, timeProvider, actorName, deserializer, meshShader, skinnedShader);
+		auto& skinned_actor = build_skinned(actor, timeProvider, previewTimeProvider, actorName, deserializer, meshShader, skinnedShader);
 		
 		if (compressedMeshActor->mAnimations.has_value()) {
 			auto serializedPrompt = std::move(compressedMeshActor->mAnimations.value()[0].mSerializer);

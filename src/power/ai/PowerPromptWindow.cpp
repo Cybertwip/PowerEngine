@@ -84,7 +84,7 @@ PowerPromptWindow::PowerPromptWindow(nanogui::Screen& parent, ResourcesPanel& re
 	
 	mImageView->set_image(mImageContent);
 	
-	mPreviewCanvas = std::make_shared<SharedSelfContainedMeshCanvas>(*mImageContainer, parent);
+	mPreviewCanvas = std::make_shared<SharedSelfContainedMeshCanvas>(*mImageContainer, parent, mDummyAnimationTimeProvider);
 	
 	mPreviewCanvas->set_fixed_size(nanogui::Vector2i(300, 300));
 	
@@ -405,7 +405,7 @@ void PowerPromptWindow::SubmitPromptAsync() {
 				
 				mCompressedMeshData = mMeshActorImporter->process(model_stream, "generated_model", mOutputDirectory);
 
-				mMeshActorBuilder->build(*actor, mDummyAnimationTimeProvider, model_stream, mActorPath, mPreviewCanvas->get_mesh_shader(), mPreviewCanvas->get_skinned_mesh_shader());
+				mMeshActorBuilder->build(*actor, mDummyAnimationTimeProvider, mDummyAnimationTimeProvider, model_stream, mActorPath, mPreviewCanvas->get_mesh_shader(), mPreviewCanvas->get_skinned_mesh_shader());
 
 				mPreviewCanvas->set_active_actor(actor);
 				

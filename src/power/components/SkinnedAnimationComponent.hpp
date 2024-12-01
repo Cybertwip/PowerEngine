@@ -20,12 +20,12 @@
 #include <vector>
 #include <optional>
 
-class SkinnedAnimationComponent : public AnimationComponent {	
+class SkinnedPlaybackComponent : public AnimationComponent {
 private:
-	SkinnedAnimationComponent();
+	SkinnedPlaybackComponent();
 	
 public:
-	SkinnedAnimationComponent(PlaybackComponent& provider, SkeletonComponent& skeletonComponent, AnimationTimeProvider& animationTimeProvider)
+	SkinnedPlaybackComponent(PlaybackComponent& provider, SkeletonComponent& skeletonComponent, AnimationTimeProvider& animationTimeProvider)
 	: mProvider(provider), mSkeletonComponent(skeletonComponent), mAnimationTimeProvider(animationTimeProvider), mRegistrationId(-1), mFrozen(false)
 	, mAnimationOffset(0.0f) {
 		// Initialize the pose buffers
@@ -85,6 +85,8 @@ public:
 				mProvider.setPlaybackModifier(keyframe->getPlaybackModifier());
 				mProvider.setPlaybackTrigger(keyframe->getPlaybackTrigger());
 				mProvider.setPlaybackData(keyframe->getPlaybackData());
+			} else {
+				evaluate_provider(mAnimationTimeProvider.GetTime(), mProvider.getPlaybackModifier());
 			}
 		} else {
 			auto _ = evaluate_keyframe(mAnimationTimeProvider.GetTime());

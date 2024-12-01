@@ -9,8 +9,8 @@
 #include "MetalHelper.hpp"
 #endif
 
-SharedSelfContainedMeshCanvas::SharedSelfContainedMeshCanvas(nanogui::Widget& parent, nanogui::Screen& screen)
-: SelfContainedMeshCanvas(parent, screen) {
+SharedSelfContainedMeshCanvas::SharedSelfContainedMeshCanvas(nanogui::Widget& parent, nanogui::Screen& screen, AnimationTimeProvider& previewTimeProvider)
+: SelfContainedMeshCanvas(parent, screen, previewTimeProvider) {
 }
 
 void SharedSelfContainedMeshCanvas::set_active_actor(std::shared_ptr<Actor> actor) {

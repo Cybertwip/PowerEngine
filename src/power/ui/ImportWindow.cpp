@@ -103,7 +103,7 @@ void ImportWindow::Preview(const std::string& path, const std::string& directory
 	
 	if (meshData->mMesh.mPrecomputedPath.find(".psk") != std::string::npos) {
 		
-		mMeshActorBuilder->build_skinned(*actor, mDummyAnimationTimeProvider, "DummyActor", deserializer, mPreviewCanvas->get_mesh_shader(), mPreviewCanvas->get_skinned_mesh_shader());
+		mMeshActorBuilder->build_skinned(*actor, mDummyAnimationTimeProvider, mDummyAnimationTimeProvider, "DummyActor", deserializer, mPreviewCanvas->get_mesh_shader(), mPreviewCanvas->get_skinned_mesh_shader());
 	} else {
 		mMeshActorBuilder->build_mesh(*actor, mDummyAnimationTimeProvider, "DummyActor", deserializer, mPreviewCanvas->get_mesh_shader(), mPreviewCanvas->get_skinned_mesh_shader());
 	}

@@ -7,12 +7,13 @@
 
 #include "MeshActorLoader.hpp"
 
-CartridgeActorLoader::CartridgeActorLoader(VirtualMachine& virtualMachine, MeshActorLoader& meshActorLoader, IActorManager& actorManager, IActorVisualManager& actorVisualManager, AnimationTimeProvider& animationTimeProvider, ShaderWrapper& meshShader, ShaderWrapper& skinnedShader) :
+CartridgeActorLoader::CartridgeActorLoader(VirtualMachine& virtualMachine, MeshActorLoader& meshActorLoader, IActorManager& actorManager, IActorVisualManager& actorVisualManager, AnimationTimeProvider& animationTimeProvider, AnimationTimeProvider& previewTimeProvider, ShaderWrapper& meshShader, ShaderWrapper& skinnedShader) :
 mVirtualMachine(virtualMachine)
 , mMeshActorLoader(meshActorLoader)
 , mActorManager(actorManager)
 , mActorVisualManager(actorVisualManager)
 , mAnimationTimeProvider(animationTimeProvider)
+, mPreviewTimeProvider(previewTimeProvider)
 , mMeshShader(meshShader)
 , mSkinnedMeshShader(skinnedShader)
 {
@@ -40,7 +41,7 @@ void CartridgeActorLoader::cleanup() {
 }
 
 Actor& CartridgeActorLoader::create_actor(const std::string& filePath) {
-	Actor& actor = mMeshActorLoader.create_actor(filePath, mAnimationTimeProvider, mMeshShader, mSkinnedMeshShader);
+	Actor& actor = mMeshActorLoader.create_actor(filePath, mAnimationTimeProvider, mPreviewTimeProvider, mMeshShader, mSkinnedMeshShader);
 	
 	mActorVisualManager.add_actor(actor);
 	

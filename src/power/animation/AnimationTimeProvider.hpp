@@ -24,6 +24,10 @@ public:
 		return mTime;
 	}
 	
+	void SetTime(float time) {
+		mTime = time;
+	}
+	
 private:
 	float mTime;
 	float mDuration;

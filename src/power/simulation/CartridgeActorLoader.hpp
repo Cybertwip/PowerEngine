@@ -13,7 +13,7 @@ class VirtualMachine;
 
 class CartridgeActorLoader : public ICartridgeActorLoader {
 public:
-	CartridgeActorLoader(VirtualMachine& virtualMachine, MeshActorLoader& meshActorLoader, IActorManager& actorManager, IActorVisualManager& actorVisualManager, AnimationTimeProvider& animationTimeProvider, ShaderWrapper& meshShader, ShaderWrapper& skinnedMeshShader);
+	CartridgeActorLoader(VirtualMachine& virtualMachine, MeshActorLoader& meshActorLoader, IActorManager& actorManager, IActorVisualManager& actorVisualManager, AnimationTimeProvider& animationTimeProvider, AnimationTimeProvider& previewTimeProvider, ShaderWrapper& meshShader, ShaderWrapper& skinnedMeshShader);
 	
 	Primitive* create_actor(PrimitiveShape primitiveShape) override;
 	
@@ -27,6 +27,7 @@ private:
 	IActorManager& mActorManager;
 	IActorVisualManager& mActorVisualManager;
 	AnimationTimeProvider& mAnimationTimeProvider;
+	AnimationTimeProvider& mPreviewTimeProvider;
 	ShaderWrapper& mMeshShader;
 	ShaderWrapper& mSkinnedMeshShader;
 

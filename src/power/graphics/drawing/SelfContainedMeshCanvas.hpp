@@ -39,7 +39,7 @@ private:
 	};
 
 public:
-	SelfContainedMeshCanvas(nanogui::Widget& parent, nanogui::Screen& screen);
+	SelfContainedMeshCanvas(nanogui::Widget& parent, nanogui::Screen& screen, AnimationTimeProvider& previewTimeProvider);
 	void set_active_actor(std::optional<std::reference_wrapper<Actor>> actor);
 	
 	void set_update(bool update) {
@@ -67,6 +67,8 @@ private:
 	void update_camera_view();
 	
 	void draw_content(const nanogui::Matrix4f& view, const nanogui::Matrix4f& projection);
+	
+	AnimationTimeProvider& mPreviewTimeProvider;
 	
 	std::optional<std::reference_wrapper<Actor>> mPreviewActor;
 	entt::registry mRegistry;

@@ -66,8 +66,9 @@
 #include <functional>
 
 Application::Application()
-: nanogui::DraggableScreen("Power Engine"),
-mGlobalAnimationTimeProvider(60 * 30)
+: nanogui::DraggableScreen("Power Engine")
+, mGlobalAnimationTimeProvider(60 * 30)
+, mPreviewAnimationTimeProvider(60 * 30)
 {
 	Batch::init_dummy_texture();
 	
@@ -88,7 +89,7 @@ mGlobalAnimationTimeProvider(60 * 30)
 }
 
 void Application::initialize() {	
-	mUiCommon = std::make_shared<UiCommon>(*this, screen(), *mActorManager, mGlobalAnimationTimeProvider);
+	mUiCommon = std::make_shared<UiCommon>(*this, screen(), *mActorManager, mGlobalAnimationTimeProvider, mPreviewAnimationTimeProvider);
 	
 	mRenderCommon = std::make_shared<RenderCommon>(*mUiCommon->scene_panel(), *this, *mEntityRegistry, *mActorManager, *mCameraManager);
 	
@@ -165,7 +166,7 @@ void Application::initialize() {
 	
 	mVirtualMachine = std::make_unique<VirtualMachine>();
 	
-	mCartridgeActorLoader = std::make_unique<CartridgeActorLoader>(*mVirtualMachine, *mMeshActorLoader, *mActorManager, *mUiCommon->hierarchy_panel(), mGlobalAnimationTimeProvider, *mMeshShader, *mSkinnedShader);
+	mCartridgeActorLoader = std::make_unique<CartridgeActorLoader>(*mVirtualMachine, *mMeshActorLoader, *mActorManager, *mUiCommon->hierarchy_panel(), mGlobalAnimationTimeProvider, mPreviewAnimationTimeProvider, *mMeshShader, *mSkinnedShader);
 	
 	mCartridge = std::make_unique<Cartridge>(*mVirtualMachine, *mCartridgeActorLoader, *mCameraManager);
 
@@ -307,7 +308,7 @@ bool Application::drop_event(Widget& sender, const std::vector<std::string> & fi
 		
 		if (mRenderCommon->canvas()->contains(m_mouse_pos, true, true) && !mUiManager->status_bar_panel()->resources_panel()->contains(m_mouse_pos, true, true)) {
 			if (filenames[0].find(".psk") != std::string::npos || filenames[0].find(".pma") != std::string::npos){
-				mUiCommon->hierarchy_panel()->add_actor(mMeshActorLoader->create_actor(filenames[0], mGlobalAnimationTimeProvider, *mMeshShader, *mSkinnedShader));
+				mUiCommon->hierarchy_panel()->add_actor(mMeshActorLoader->create_actor(filenames[0], mGlobalAnimationTimeProvider, mPreviewAnimationTimeProvider, *mMeshShader, *mSkinnedShader));
 				
 				mUiCommon->scene_time_bar()->refresh_actors();
 			}

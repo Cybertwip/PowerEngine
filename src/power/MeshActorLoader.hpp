@@ -25,7 +25,7 @@ class MeshActorLoader
 
 	~MeshActorLoader();
 	
-	Actor& create_actor(const std::string& path, AnimationTimeProvider& timeProvider,  ShaderWrapper& meshShader, ShaderWrapper& skinnedShader);
+	Actor& create_actor(const std::string& path, AnimationTimeProvider& timeProvider,  AnimationTimeProvider& previewTimeProvider, ShaderWrapper& meshShader, ShaderWrapper& skinnedShader);
 
 	Actor& create_actor(const std::string& actorName, PrimitiveShape primitiveShape, ShaderWrapper& meshShader);
 	
