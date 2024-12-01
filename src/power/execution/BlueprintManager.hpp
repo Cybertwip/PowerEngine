@@ -59,6 +59,8 @@ public:
 					if (mActiveActor) {
 						deserialize(mActiveActor->get());
 					}
+				} else {
+					commit();
 				}
 				
 				mBlueprintActionTriggerCallback(mActive, [this](){
