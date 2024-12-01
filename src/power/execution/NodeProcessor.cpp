@@ -252,10 +252,7 @@ CoreNode& NodeProcessor::get_node(long long id) {
 	return *node_it->get();
 }
 
-void NodeProcessor::break_links(CoreNode* node) {
-	if (!node) {
-		return;
-	}
+void NodeProcessor::break_links(CoreNode& node) {
 	
 	// Create a vector to store links that need to be removed
 	std::vector<Link*> links_to_remove;
@@ -266,7 +263,7 @@ void NodeProcessor::break_links(CoreNode* node) {
 		const auto& end_pin = link->get_end();
 		
 		// Check if either end of the link connects to the node
-		if (&start_pin.node == node || &end_pin.node == node) {
+		if (&start_pin.node == &node || &end_pin.node == &node) {
 			links_to_remove.push_back(link.get());
 		}
 	}

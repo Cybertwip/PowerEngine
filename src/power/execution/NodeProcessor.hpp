@@ -53,7 +53,7 @@ public:
 	
 	CoreNode& get_node(long long id);
 	
-	void break_links(CoreNode* node);
+	void break_links(CoreNode& node);
 
 private:
 	long long next_id;

@@ -292,7 +292,6 @@ public:
 	TakeComponent(std::unique_ptr<SimpleTakeComponent> takeComponent) : mTakeComponent(std::move(takeComponent)) {
 	}
 	
-	
 	void add_timeline() {
 		mTakeComponent->add_timeline();
 	}

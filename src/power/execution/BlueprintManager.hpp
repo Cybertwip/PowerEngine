@@ -124,7 +124,7 @@ public:
 				auto* selected_node = mCanvas->selected_node();
 				
 				if (selected_node) {
-					mNodeProcessor->break_links(&selected_node->core_node());
+					mNodeProcessor->break_links(selected_node->core_node());
 					mCanvas->clear_selection();
 					return true;
 				}

@@ -115,7 +115,7 @@ void AnimationPanel::set_active_actor(std::optional<std::reference_wrapper<Actor
 	if (mActiveActor.has_value()) {
 		Actor& actorRef = mActiveActor->get();
 		
-		if (actorRef.find_component<SkinnedAnimationComponent>()) {
+		if (actorRef.find_component<PlaybackComponent>()) {
 			set_title("Animation");
 			set_visible(true);
 			
