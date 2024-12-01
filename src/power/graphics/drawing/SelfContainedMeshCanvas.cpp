@@ -24,7 +24,12 @@ nanogui::Matrix4f glm_to_nanogui(glm::mat4 glmMatrix) {
 }
 // In SelfContainedMeshCanvas.cpp, modify the constructor to load and assign the mesh shader
 SelfContainedMeshCanvas::SelfContainedMeshCanvas(nanogui::Widget& parent, nanogui::Screen& screen, AnimationTimeProvider& previewTimeProvider)
-: nanogui::Canvas(parent, screen, 1, true, true), mPreviewTimeProvider(previewTimeProvider), mCamera(mRegistry), mUpdate(true), mShaderManager(ShaderManager(*this)) {
+: nanogui::Canvas(parent, screen, 1, true, true)
+, mPreviewTimeProvider(previewTimeProvider)
+, mCurrentTime(0)
+, mCamera(mRegistry)
+, mUpdate(true)
+, mShaderManager(ShaderManager(*this)) {
 	
 	set_background_color(nanogui::Color{70, 130, 180, 255});
 	
@@ -56,7 +61,7 @@ SelfContainedMeshCanvas::SelfContainedMeshCanvas(nanogui::Widget& parent, nanogu
 void SelfContainedMeshCanvas::set_active_actor(std::optional<std::reference_wrapper<Actor>> actor) {
 	std::unique_lock<std::mutex> lock(mMutex);
 	clear();
-	mPreviewTimeProvider.SetTime(0);
+	mCurrentTime = 0;
 	
 	mPreviewActor = actor;
 	
@@ -180,7 +185,7 @@ void SelfContainedMeshCanvas::draw_content(const nanogui::Matrix4f& view,
 		
 		component.evaluate_provider(mPreviewTimeProvider.GetTime(), PlaybackModifier::Forward);
 		
-		mPreviewTimeProvider.Update(mPreviewTimeProvider.GetTime() + 1);
+		mPreviewTimeProvider.Update(mCurrentTime++);
 	}
 	
 	drawableRef.draw_content(CanvasUtils::glm_to_nanogui(mModelMatrix), view, projection);

@@ -65,7 +65,7 @@ UiCommon::UiCommon(nanogui::Widget& parent, nanogui::Screen& screen, ActorManage
 	
 	mTransformPanel = std::make_shared<TransformPanel>(*mRightWrapper);
 	
-	mAnimationPanel = std::make_shared<AnimationPanel>(*mRightWrapper, screen, mAnimationTimeProvider);
+	mAnimationPanel = std::make_shared<AnimationPanel>(*mRightWrapper, screen, mPreviewTimeProvider);
 	
 	mHierarchyPanel = std::make_shared<HierarchyPanel>(*mRightWrapper, mScenePanel, mTransformPanel, mAnimationPanel, mActorManager);
 	
