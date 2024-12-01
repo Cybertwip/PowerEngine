@@ -183,9 +183,7 @@ void SelfContainedMeshCanvas::draw_content(const nanogui::Matrix4f& view,
 		
 		component.Unfreeze();
 		
-		component.evaluate_provider(mPreviewTimeProvider.GetTime(), PlaybackModifier::Forward);
-		
-		mPreviewTimeProvider.Update(mCurrentTime++);
+		component.evaluate_provider(mCurrentTime++, PlaybackModifier::Forward);
 	}
 	
 	drawableRef.draw_content(CanvasUtils::glm_to_nanogui(mModelMatrix), view, projection);
