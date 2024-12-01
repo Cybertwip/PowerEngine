@@ -526,8 +526,9 @@ public:
 			
 			// Compress the main buffer
 			// Determine the number of available hardware threads
-			unsigned int numThreads = std::thread::hardware_concurrency();
-			if (numThreads == 0) numThreads = 4; // Fallback to 4 threads if unable to detect
+			unsigned int numThreads = 1;
+//			std::thread::hardware_concurrency();
+//			if (numThreads == 0) numThreads = 4; // Fallback to 4 threads if unable to detect
 			// Calculate chunk sizes
 			size_t totalSize = buffer.size();
 			size_t chunkSize = totalSize / numThreads;
