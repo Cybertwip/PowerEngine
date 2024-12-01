@@ -73,6 +73,7 @@ public:
 			  std::shared_ptr<AnimationPanel> animationPanel,
 			  std::shared_ptr<SceneTimeBar> sceneTimeBar,
 			  AnimationTimeProvider& animationTimeProvider,
+			  AnimationTimeProvider& previewTimeProvider,
 			  CameraManager& cameraManager,
 			  DeepMotionApiClient& deepMotionApiClient,
 			  PowerAi& powerAi,

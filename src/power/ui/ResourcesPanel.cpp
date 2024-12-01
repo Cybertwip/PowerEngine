@@ -125,6 +125,7 @@ mMeshShader(std::make_unique<ShaderWrapper>(shaderManager.get_shader("mesh"))),
 mSkinnedShader(std::make_unique<ShaderWrapper>(shaderManager.get_shader("skinned_mesh"))),
 mSceneTimeBar(sceneTimeBar),
 mGlobalAnimationTimeProvider(animationTimeProvider),
+mPreviewTimeProvider(previewTimeProvider)
 mUiManager(uiManager),
 mDeepMotionApiClient(deepMotionApiClient),
 mPowerAi(powerAi),
@@ -266,7 +267,7 @@ mShaderManager(shaderManager)
 		auto filename = node->FullPath;
 		
 		if (filename.find(".psk") != std::string::npos || filename.find(".pma") != std::string::npos){
-			mActorVisualManager->add_actor(mMeshActorLoader.create_actor(filename, mGlobalAnimationTimeProvider, mPreviewAnimationTimeProvider, *mMeshShader, *mSkinnedShader));
+			mActorVisualManager->add_actor(mMeshActorLoader.create_actor(filename, mGlobalAnimationTimeProvider, mPreviewTimeProvider, *mMeshShader, *mSkinnedShader));
 			
 			mSceneTimeBar->refresh_actors();
 		}

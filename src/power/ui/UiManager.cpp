@@ -100,6 +100,7 @@ UiManager::UiManager(nanogui::Screen& screen, std::shared_ptr<IActorSelectedRegi
 					 std::shared_ptr<AnimationPanel> animationPanel,
 					 std::shared_ptr<SceneTimeBar> sceneTimeBar,
 					 AnimationTimeProvider& animationTimeProvider,
+					 AnimationTimeProvider& previewTimeProvider,
 					 CameraManager& cameraManager,
 					 DeepMotionApiClient& deepMotionApiClient,
 					 PowerAi& powerAi,
@@ -260,7 +261,7 @@ UiManager::UiManager(nanogui::Screen& screen, std::shared_ptr<IActorSelectedRegi
 	});
 	
 	// Initialize StatusBarPanel
-	mStatusBarPanel = std::make_shared<StatusBarPanel>(*statusBar, screen, mActorVisualManager, mSceneTimeBar, animationTimeProvider,
+	mStatusBarPanel = std::make_shared<StatusBarPanel>(*statusBar, screen, mActorVisualManager, mSceneTimeBar, animationTimeProvider, previewTimeProvider,
 										 mMeshActorLoader, mShaderManager, deepMotionApiClient, powerAi,  *this, applicationClickRegistrator);
 	
 	mStatusBarPanel->set_fixed_width(statusBar->fixed_height());
