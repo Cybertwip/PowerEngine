@@ -258,7 +258,7 @@ void VisualBlueprintNode::create_visual_pins() {
 		
 		if (core_pin->type == PinType::Flow) {
 			visual_pin->set_icon(FA_PLAY);
-			visual_pin->set_position(nanogui::Vector2i(5, 3));
+			visual_pin->set_position(nanogui::Vector2i(fixed_size().x() - 22 - 5, 3));
 		}
 
 		auto& visual_pin_ref = *visual_pin;
