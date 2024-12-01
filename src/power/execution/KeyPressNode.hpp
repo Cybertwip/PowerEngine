@@ -41,10 +41,17 @@ public:
 		return mOutput;
 	}
 	
+	void set_window(GLFWwindow* window) {
+		mWindow = window;
+	}
+	
 private:
 	int mKeyCode;
 	bool mConfigured;
+	bool mTriggered;
 	CorePin& mOutput;
+	
+	GLFWwindow* mWindow;
 };
 
 class KeyPressVisualNode : public VisualBlueprintNode {
@@ -58,8 +65,7 @@ public:
 private:
 	nanogui::Button& mActionButton;
 	KeyPressCoreNode& mCoreNode;
-	
-	bool mTriggered;
+
 	bool mListening;
 };
 

@@ -8,8 +8,25 @@ KeyReleaseCoreNode::KeyReleaseCoreNode(long long id)
 : DataCoreNode(NodeType::KeyRelease, id, nanogui::Color(255, 0, 255, 255))
 , mOutput(add_output(PinType::Flow, PinSubType::None))
 , mKeyCode(-1)
-, mConfigured(false) {
-	
+, mConfigured(false)
+, mTriggered(false) {
+	set_evaluate([this]() {
+		assert(mWindow);
+		if (configured()) {
+			int action = glfwGetKey(mWindow, keycode());
+			
+			output().can_flow = action == GLFW_RELEASE && mTriggered; // Reset the triggered action.
+			
+			if (action == GLFW_PRESS && !mTriggered) {
+				// The key is pressed for the first time.
+				mTriggered = true;
+				output().can_flow = false; // Triggered action.
+			} else if (action == GLFW_RELEASE && mTriggered) {
+				// The key is released after being pressed.
+				mTriggered = false;
+			}
+		}
+	});
 }
 
 void KeyReleaseCoreNode::set_data(std::optional<std::variant<Entity, std::string, int, float, bool>> data) {
@@ -26,24 +43,9 @@ KeyReleaseVisualNode::KeyReleaseVisualNode(BlueprintCanvas& parent, nanogui::Vec
 : VisualBlueprintNode(parent, "Key Release", position, size, coreNode)
 , mActionButton(add_data_widget<PassThroughButton>(*this, "Set"))
 , mCoreNode(coreNode)
-, mTriggered(false)
 , mListening(false) {
-	mCoreNode.set_evaluate([this]() {
-		if (mCoreNode.configured()) {
-			int action = glfwGetKey(screen().glfw_window(), mCoreNode.keycode());
-			
-			mCoreNode.output().can_flow = action == GLFW_RELEASE && mTriggered; // Reset the triggered action.
-			
-			if (action == GLFW_PRESS && !mTriggered) {
-				// The key is pressed for the first time.
-				mTriggered = true;
-				mCoreNode.output().can_flow = false; // Triggered action.
-			} else if (action == GLFW_RELEASE && mTriggered) {
-				// The key is released after being pressed.
-				mTriggered = false;
-			}
-		}
-	});
+	
+	mCoreNode.set_window(screen().glfw_window());
 	
 	mActionButton.set_callback([this](){
 		mActionButton.set_caption("Press Key");

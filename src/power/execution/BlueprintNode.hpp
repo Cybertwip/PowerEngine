@@ -165,8 +165,8 @@ public:
 	}
 	
 	bool evaluate() {
-		if (get_evaluate()) {
-			get_evaluate()();
+		if (mEvaluate) {
+			mEvaluate();
 			return true;
 		} else {
 			return false;
@@ -222,31 +222,27 @@ public:
 		this->position = position;
 	}
 	
-	CorePin* find_pin(long long id) {
+	CorePin& get_pin(long long id) {
 		// Search through input pins
 		for (const auto& input : inputs) {
 			if (input->id == id) {
-				return input.get();
+				return *input.get();
 			}
 		}
 		
 		// Search through output pins
 		for (const auto& output : outputs) {
 			if (output->id == id) {
-				return output.get();
+				return *output.get();
 			}
 		}
 		
 		// Pin not found
-		return nullptr;
+		assert(false);
 	}
 
 		
 private:
-	std::function<void()> get_evaluate() {
-		return mEvaluate;
-	}
-	
 	long long get_next_id();
 	long long next_id;
 	

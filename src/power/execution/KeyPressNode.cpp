@@ -8,8 +8,25 @@ KeyPressCoreNode::KeyPressCoreNode(long long id)
 : DataCoreNode(NodeType::KeyPress, id, nanogui::Color(255, 0, 255, 255))
 , mOutput(add_output(PinType::Flow, PinSubType::None))
 , mKeyCode(-1)
-, mConfigured(false) {
+, mConfigured(false)
+, mTriggered(false)
+{
+	set_evaluate([this]() {
+		assert(mWindow);
 		
+		if (configured()) {
+			int action = glfwGetKey(mWindow, keycode());
+			
+			if ((action == GLFW_PRESS || action == GLFW_REPEAT) && !mTriggered) {
+				mTriggered = true;
+			} else {
+				mTriggered = false;
+			}
+		}
+		
+		output().can_flow = mTriggered;
+	});
+	
 }
 
 void KeyPressCoreNode::set_data(std::optional<std::variant<Entity, std::string, int, float, bool>> data) {
@@ -26,21 +43,9 @@ KeyPressVisualNode::KeyPressVisualNode(BlueprintCanvas& parent, nanogui::Vector2
 : VisualBlueprintNode(parent, "Key Press", position, size, coreNode)
 , mActionButton(add_data_widget<PassThroughButton>(*this, "Set"))
 , mCoreNode(coreNode)
-, mTriggered(false)
 , mListening(false) {
-	mCoreNode.set_evaluate([this]() {
-		if (mCoreNode.configured()) {
-			int action = glfwGetKey(screen().glfw_window(), mCoreNode.keycode());
-			
-			if ((action == GLFW_PRESS || action == GLFW_REPEAT) && !mTriggered) {
-				mTriggered = true;
-			} else {
-				mTriggered = false;
-			}
-		}
-		
-		mCoreNode.output().can_flow = mTriggered;
-	});
+	
+	mCoreNode.set_window(screen().glfw_window());
 	
 	mActionButton.set_callback([this](){
 		mActionButton.set_caption("Press Key");

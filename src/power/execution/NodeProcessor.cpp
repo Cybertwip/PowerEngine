@@ -28,7 +28,6 @@ void NodeProcessor::build_node(CoreNode& node){
 }
 
 void NodeProcessor::evaluate() {
-	
 	std::unordered_set<CoreNode*> evaluated_nodes;
 	
 	for (auto& link : links)
@@ -83,26 +82,24 @@ void NodeProcessor::serialize(BlueprintCanvas& canvas, Actor& actor) {
 			switch (node->type) {
 				case NodeType::KeyPress: {
 					auto& spawn = node_processor->spawn_node<KeyPressCoreNode>(node->id);
-					
+					spawn.set_window(canvas.screen().glfw_window());
 					spawn.set_position(node->position);
 				}
 					break;
 				case NodeType::KeyRelease: {
 					auto& spawn = node_processor->spawn_node<KeyReleaseCoreNode>(node->id);
-					
+					spawn.set_window(canvas.screen().glfw_window());
 					spawn.set_position(node->position);
 				}
 					break;
 				case NodeType::String: {
 					auto& spawn = node_processor->spawn_node<StringCoreNode>(node->id);
-					
 					spawn.set_position(node->position);
 				}
 					break;
 					
 				case NodeType::Print: {
 					auto& spawn = node_processor->spawn_node<PrintCoreNode>(node->id);
-					
 					spawn.set_position(node->position);
 				}
 					break;
@@ -141,13 +138,11 @@ void NodeProcessor::serialize(BlueprintCanvas& canvas, Actor& actor) {
 			auto& target_source_pin_node = node_processor->get_node(start_pin.node.id);
 			auto& target_destination_pin_node = node_processor->get_node(end_pin.node.id);
 			
-			auto* target_start_pin = target_source_pin_node.find_pin(start_pin.id);
+			auto& target_start_pin = target_source_pin_node.get_pin(start_pin.id);
 			
-			auto* target_end_pin = target_destination_pin_node.find_pin(end_pin.id);
-			
-			assert(target_start_pin && target_end_pin);
-			
-			node_processor->create_link(link->get_id(), *target_start_pin, *target_end_pin);
+			auto& target_end_pin = target_destination_pin_node.get_pin(end_pin.id);
+						
+			node_processor->create_link(link->get_id(), target_start_pin, target_end_pin);
 
 		}
 
@@ -236,15 +231,13 @@ void NodeProcessor::deserialize(BlueprintCanvas& canvas, Actor& actor) {
 			auto& target_source_pin_node = get_node(start_pin.node.id);
 			auto& target_destination_pin_node = get_node(end_pin.node.id);
 
-			auto* target_start_pin = target_source_pin_node.find_pin(start_pin.id);
+			auto& target_start_pin = target_source_pin_node.get_pin(start_pin.id);
 			
-			auto* target_end_pin = target_destination_pin_node.find_pin(end_pin.id);
+			auto& target_end_pin = target_destination_pin_node.get_pin(end_pin.id);
+						
+			create_link(link->get_id(), target_start_pin, target_end_pin);
 			
-			assert(target_start_pin && target_end_pin);
-			
-			create_link(link->get_id(), *target_start_pin, *target_end_pin);
-			
-			canvas.link(*target_start_pin, *target_end_pin);
+			canvas.link(target_start_pin, target_end_pin);
 		}
 		
 		canvas.perform_layout(canvas.screen().nvg_context());

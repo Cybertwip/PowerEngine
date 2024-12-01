@@ -41,12 +41,18 @@ public:
 		return mOutput;
 	}
 	
+	void set_window(GLFWwindow* window) {
+		mWindow = window;
+	}
+	
 private:
 	int mKeyCode;
 	bool mConfigured;
+	bool mTriggered;
+	
 	CorePin& mOutput;
+	GLFWwindow* mWindow;
 };
-
 
 class KeyReleaseVisualNode : public VisualBlueprintNode {
 public:
