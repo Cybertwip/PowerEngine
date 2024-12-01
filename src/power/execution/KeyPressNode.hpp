@@ -11,24 +11,55 @@
 
 class BlueprintCanvas;
 
-class KeyPressNode : public BlueprintDataNode {
+class KeyPressCoreNode : public DataCoreNode {
 public:
-	KeyPressNode(std::optional<std::reference_wrapper<BlueprintCanvas>> parent, long long id, nanogui::Vector2i size);
-
-private:
+	KeyPressCoreNode(long long id);
+	
 	std::optional<std::variant<Entity, std::string, int, float, bool>> get_data() override {
 		return mKeyCode;
 	}
 	
 	void set_data(std::optional<std::variant<Entity, std::string, int, float, bool>> data) override;
+
+	int keycode() {
+		return mKeyCode;
+	}
+	
+	bool configured() {
+		return mConfigured;
+	}
+	
+	void set_keycode(int keycode) {
+		mKeyCode = keycode;
+	}
+	
+	void set_configured(bool configured) {
+		mConfigured = configured;
+	}
+	
+	CorePin& output() {
+		return mOutput;
+	}
+	
+private:
+	int mKeyCode;
+	bool mConfigured;
+	CorePin& mOutput;
+};
+
+class KeyPressVisualNode : public VisualBlueprintNode {
+public:
+	KeyPressVisualNode(BlueprintCanvas& parent, nanogui::Vector2i position, nanogui::Vector2i size, KeyPressCoreNode& coreNode);
 	
 	bool keyboard_event(int key, int scancode, int action, int modifiers) override;
-
-	int mKeyCode;
-	bool mListening;
-	bool mConfigured;
-	bool mTriggered;
 	
+	void perform_layout(NVGcontext *ctx) override;
+	
+private:
 	nanogui::Button& mActionButton;
+	KeyPressCoreNode& mCoreNode;
+	
+	bool mTriggered;
+	bool mListening;
 };
 

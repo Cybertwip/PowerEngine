@@ -89,12 +89,18 @@ void NodeProcessor::serialize(BlueprintCanvas& canvas, Actor& actor) {
 		
 		for (auto& node : nodes) {
 			switch (node->type) {
-//				case NodeType::KeyPress:
-//					node_processor->spawn_node<KeyPressNode>(canvas, node->id, node->position());
-//					break;
-//				case NodeType::KeyRelease:
-//					node_processor->spawn_node<KeyReleaseNode>(canvas, node->id, node->position());
-//					break;
+				case NodeType::KeyPress: {
+					auto& spawn = node_processor->spawn_node<KeyPressCoreNode>(node->id);
+					
+					spawn.set_position(node->position);
+				}
+					break;
+				case NodeType::KeyRelease: {
+					auto& spawn = node_processor->spawn_node<KeyReleaseCoreNode>(node->id);
+					
+					spawn.set_position(node->position);
+				}
+					break;
 				case NodeType::String: {
 					auto& spawn = node_processor->spawn_node<StringCoreNode>(node->id);
 					
@@ -184,12 +190,12 @@ void NodeProcessor::deserialize(BlueprintCanvas& canvas, Actor& actor) {
 		
 		for (auto& node : node_processor.nodes) {
 			switch (node->type) {
-//				case NodeType::KeyPress:
-//					spawn_node<KeyPressNode>(canvas, node->id, node->position());
-//					break;
-//				case NodeType::KeyRelease:
-//					spawn_node<KeyReleaseNode>(canvas, node->id, node->position());
-//					break;
+				case NodeType::KeyPress:
+					canvas.spawn_node<KeyPressVisualNode>(node->position, spawn_node<KeyPressCoreNode>(node->id));
+					break;
+				case NodeType::KeyRelease:
+					canvas.spawn_node<KeyReleaseVisualNode>(node->position, spawn_node<KeyReleaseCoreNode>(node->id));
+					break;
 				case NodeType::String:
 					canvas.spawn_node<StringVisualNode>(node->position, spawn_node<StringCoreNode>(node->id));
 					break;

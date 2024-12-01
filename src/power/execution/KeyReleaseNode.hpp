@@ -11,24 +11,56 @@
 
 class BlueprintCanvas;
 
-class KeyReleaseNode : public BlueprintDataNode {
+class KeyReleaseCoreNode : public DataCoreNode {
 public:
-	KeyReleaseNode(std::optional<std::reference_wrapper<BlueprintCanvas>> parent, long long id, nanogui::Vector2i size);
+	KeyReleaseCoreNode(long long id);
 	
-private:
 	std::optional<std::variant<Entity, std::string, int, float, bool>> get_data() override {
 		return mKeyCode;
 	}
 	
 	void set_data(std::optional<std::variant<Entity, std::string, int, float, bool>> data) override;
 	
+	int keycode() {
+		return mKeyCode;
+	}
+	
+	bool configured() {
+		return mConfigured;
+	}
+	
+	void set_keycode(int keycode) {
+		mKeyCode = keycode;
+	}
+	
+	void set_configured(bool configured) {
+		mConfigured = configured;
+	}
+	
+	CorePin& output() {
+		return mOutput;
+	}
+	
+private:
+	int mKeyCode;
+	bool mConfigured;
+	CorePin& mOutput;
+};
+
+
+class KeyReleaseVisualNode : public VisualBlueprintNode {
+public:
+	KeyReleaseVisualNode(BlueprintCanvas& parent, nanogui::Vector2i position, nanogui::Vector2i size, KeyReleaseCoreNode& coreNode);
+	
 	bool keyboard_event(int key, int scancode, int action, int modifiers) override;
 	
-	int mKeyCode;
-	bool mListening;
-	bool mConfigured;
-	bool mTriggered;
+	void perform_layout(NVGcontext *ctx) override;
 	
+private:
 	nanogui::Button& mActionButton;
-
+	KeyReleaseCoreNode& mCoreNode;
+	
+	bool mTriggered;
+	bool mListening;
 };
+

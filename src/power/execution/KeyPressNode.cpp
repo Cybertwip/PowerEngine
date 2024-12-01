@@ -4,60 +4,75 @@
 
 #include <GLFW/glfw3.h>
 
-KeyPressNode::KeyPressNode(std::optional<std::reference_wrapper<BlueprintCanvas>> parent, long long id, nanogui::Vector2i size)
-: BlueprintDataNode(parent, NodeType::KeyPress, "Key Press", size, id, nanogui::Color(255, 0, 255, 255)), mKeyCode(-1), mListening(false), mConfigured(false), mTriggered(false), mActionButton(add_data_widget<PassThroughButton>(*this, "Set")) {
-	auto& output_flow = add_output(this->id, "", PinType::Flow, PinSubType::None);
-	root_node = true;
-	evaluate = [this, &output_flow]() {
-		if (mConfigured) {
-			int action = glfwGetKey(screen().glfw_window(), mKeyCode);
+KeyPressCoreNode::KeyPressCoreNode(long long id)
+: DataCoreNode(NodeType::KeyPress, id, nanogui::Color(255, 0, 255, 255))
+, mOutput(add_output(PinType::Flow, PinSubType::None))
+, mKeyCode(-1)
+, mConfigured(false) {
 		
-			if ((action == GLFW_PRESS || action == GLFW_REPEAT) && !mTriggered) {
-				mTriggered = true;
-			} else {
-				mTriggered = false;
-			}
-		}
-
-		output_flow.can_flow = mTriggered;
-	};
-		
-	mActionButton.set_callback([this](){
-		mActionButton.set_caption("Press Key");
-		mListening = true;
-	});
 }
 
-
-void KeyPressNode::set_data(std::optional<std::variant<Entity, std::string, int, float, bool>> data) {
+void KeyPressCoreNode::set_data(std::optional<std::variant<Entity, std::string, int, float, bool>> data) {
 	if (data.has_value()) {
 		mKeyCode = std::get<int>(data.value());
-		auto* caption = glfwGetKeyName(mKeyCode, -1);
-		
-		if (caption != nullptr) {
-			mActionButton.set_caption(caption);
-		}
-		
 		mConfigured = true;
-		
 	} else {
 		mKeyCode = -1;
 		mConfigured = false;
 	}
 }
 
+KeyPressVisualNode::KeyPressVisualNode(BlueprintCanvas& parent, nanogui::Vector2i position, nanogui::Vector2i size, KeyPressCoreNode& coreNode)
+: VisualBlueprintNode(parent, "Key Press", position, size, coreNode)
+, mActionButton(add_data_widget<PassThroughButton>(*this, "Set"))
+, mCoreNode(coreNode)
+, mTriggered(false)
+, mListening(false) {
+	mCoreNode.evaluate = [this]() {
+		if (mCoreNode.configured()) {
+			int action = glfwGetKey(screen().glfw_window(), mCoreNode.keycode());
+			
+			if ((action == GLFW_PRESS || action == GLFW_REPEAT) && !mTriggered) {
+				mTriggered = true;
+			} else {
+				mTriggered = false;
+			}
+		}
+		
+		mCoreNode.output().can_flow = mTriggered;
+	};
+	
+	mActionButton.set_callback([this](){
+		mActionButton.set_caption("Press Key");
+		mListening = true;
+	});
+}
 
-bool KeyPressNode::keyboard_event(int key, int scancode, int action, int modifiers) {
+bool KeyPressVisualNode::keyboard_event(int key, int scancode, int action, int modifiers) {
 	if (mListening) {
 		auto* caption = glfwGetKeyName(key, scancode);
-
+		
 		if (action == GLFW_PRESS && caption != nullptr) {
-			mKeyCode = key;
+			mCoreNode.set_keycode(key);
 			mListening = false;
-			mConfigured = true;
+			mCoreNode.set_configured(true);
 			
 			mActionButton.set_caption(caption);
 		}
 	}
 }
 
+
+void KeyPressVisualNode::perform_layout(NVGcontext *ctx) {
+	VisualBlueprintNode::perform_layout(ctx);
+	
+	auto data = mCoreNode.get_data();
+	
+	if (data.has_value()) {
+		auto* caption = glfwGetKeyName(mCoreNode.keycode(), -1);
+		
+		if (caption != nullptr) {
+			mActionButton.set_caption(caption);
+		}
+	}
+}

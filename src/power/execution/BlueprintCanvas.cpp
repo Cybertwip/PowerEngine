@@ -357,17 +357,17 @@ void BlueprintCanvas::setup_options() {
 	auto string_option = std::make_unique<nanogui::Button>(*SContextMenu, "String");
 	auto print_option = std::make_unique<nanogui::Button>(*SContextMenu, "Print");
 	
-//	key_press_option->set_callback([this](){
-//		SContextMenu->set_visible(false);
-//		add_node(mNodeProcessor.spawn_node<KeyPressNode>(*this, mNodeProcessor.get_next_id(), SContextMenu->position()));
-//		perform_layout(this->screen().nvg_context());
-//	});
-//	
-//	key_release_option->set_callback([this](){
-//		SContextMenu->set_visible(false);
-//		add_node(mNodeProcessor.spawn_node<KeyReleaseNode>(*this, mNodeProcessor.get_next_id(), SContextMenu->position()));
-//		perform_layout(this->screen().nvg_context());
-//	});
+	key_press_option->set_callback([this](){
+		SContextMenu->set_visible(false);
+		spawn_node<KeyPressVisualNode>(SContextMenu->position(), mNodeProcessor.spawn_node<KeyPressCoreNode>(mNodeProcessor.get_next_id()));
+		perform_layout(this->screen().nvg_context());
+	});
+	
+	key_release_option->set_callback([this](){
+		SContextMenu->set_visible(false);
+		spawn_node<KeyReleaseVisualNode>(SContextMenu->position(), mNodeProcessor.spawn_node<KeyReleaseCoreNode>(mNodeProcessor.get_next_id()));
+		perform_layout(this->screen().nvg_context());
+	});
 	
 	string_option->set_callback([this](){
 		SContextMenu->set_visible(false);
