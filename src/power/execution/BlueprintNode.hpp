@@ -117,8 +117,7 @@ private:
 class CorePin {
 public:
 	int id;
-	int node_id;
-	CoreNode* node;
+	CoreNode& node;
 	PinType type;
 	PinSubType subtype;
 	PinKind kind;
@@ -126,8 +125,8 @@ public:
 	
 	std::vector<Link*> links;
 	
-	CorePin(int id, int node_id, PinType type, PinSubType subtype = PinSubType::None)
-	: id(id), node_id(node_id), node(nullptr), type(type), subtype(subtype), kind(PinKind::Input) {
+	CorePin(CoreNode& parent, int id, PinType type, PinSubType subtype = PinSubType::None)
+	: id(id), node(parent), type(type), subtype(subtype), kind(PinKind::Input) {
 		if (type == PinType::Bool) {
 			set_data(true);
 		} else if (type == PinType::String) {
@@ -190,7 +189,7 @@ public:
 	
 	CorePin& add_input(PinType pin_type, PinSubType pin_subtype) {
 				
-		auto input = std::make_unique<CorePin>(get_next_id(), this->id, pin_type, pin_subtype);
+		auto input = std::make_unique<CorePin>(*this, get_next_id(), pin_type, pin_subtype);
 		
 		inputs.push_back(std::move(input));
 		
@@ -200,7 +199,7 @@ public:
 	
 	CorePin& add_output(PinType pin_type, PinSubType pin_subtype) {
 		
-		auto output = std::make_unique<CorePin>(get_next_id(), this->id, pin_type, pin_subtype);
+		auto output = std::make_unique<CorePin>(*this, get_next_id(), pin_type, pin_subtype);
 		
 		outputs.push_back(std::move(output));
 		
@@ -275,10 +274,8 @@ class VisualBlueprintNode;
 class VisualPin : public nanogui::ToolButton {
 public:
 	VisualPin(nanogui::Widget& parent, CorePin& core_pin);
-	
-	std::vector<VisualLink*> links;
-	
-	CoreNode* node() {
+		
+	CoreNode& node() {
 		return mCorePin.node;
 	}
 	

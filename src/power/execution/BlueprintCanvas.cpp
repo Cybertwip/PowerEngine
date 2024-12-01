@@ -137,15 +137,15 @@ void BlueprintCanvas::on_output_pin_clicked(VisualPin& pin) {
 }
 
 bool BlueprintCanvas::query_link(VisualPin& source_pin, VisualPin& destination_pin) {
-	if (destination_pin.links.empty()) {
-		if (source_pin.get_type() == destination_pin.get_type() && source_pin.node() != destination_pin.node()) {
+	if (destination_pin.core_pin().links.empty()) {
+		if (source_pin.get_type() == destination_pin.get_type() && &source_pin.node() != &destination_pin.node()) {
 			return true;
 		} else if (source_pin.get_type() != destination_pin.get_type()){
 			return false;
-		} else if (source_pin.node() == destination_pin.node()) {
+		} else if (&source_pin.node() == &destination_pin.node()) {
 			return false;
 		}
-	} else if (!destination_pin.links.empty()) {
+	} else if (!destination_pin.core_pin().links.empty()) {
 		return false;
 	}
 }
@@ -153,13 +153,11 @@ bool BlueprintCanvas::query_link(VisualPin& source_pin, VisualPin& destination_p
 void BlueprintCanvas::on_input_pin_clicked(VisualPin& pin) {
 	if (mActiveOutputPin && !mActiveInputPin && query_link(mActiveOutputPin->get(), pin)) {
 		mActiveInputPin = pin;
-		mNodeProcessor.create_link(*this, mNodeProcessor.get_next_id(), mActiveOutputPin->get(), pin);
-		mActiveOutputPin->get().links.push_back(mLinks.back().get());
-		mActiveInputPin->get().links.push_back(mLinks.back().get());
+		mNodeProcessor.create_link(*this, mNodeProcessor.get_next_id(), mActiveOutputPin->get(), mActiveInputPin->get());
 		
-		mActiveOutputPin->get().node()->link();
+		mActiveOutputPin->get().node().link();
 
-		mActiveInputPin->get().node()->link();
+		mActiveInputPin->get().node().link();
 
 		mActiveOutputPin = std::nullopt;
 		mActiveInputPin = std::nullopt;
@@ -191,9 +189,9 @@ void BlueprintCanvas::draw(NVGcontext *ctx) {
 	
 	if (mActiveOutputPin.has_value() && !mActiveInputPin.has_value()) {
 		
-		auto* node = mActiveOutputPin->get().node();
+		auto& node = mActiveOutputPin->get().node();
 		
-		NVGcolor color = node->color;
+		NVGcolor color = node.color;
 		
 		if (mActiveOutputPin->get().get_type() == PinType::Flow) {
 			color = nvgRGBA(255, 255, 255, 255);
@@ -257,9 +255,9 @@ void BlueprintCanvas::draw(NVGcontext *ctx) {
 			auto& start_pin = link->get_start();
 			auto& end_pin = link->get_end();
 			
-			auto* node = start_pin.node();
+			auto& node = start_pin.node();
 			
-			NVGcolor color = node->color;
+			NVGcolor color = node.color;
 			
 			if (start_pin.get_type() == PinType::Flow) {
 				color = nvgRGBA(255, 255, 255, 255);
@@ -408,8 +406,8 @@ void BlueprintCanvas::add_link(VisualPin& start, VisualPin& end) {
 
 void BlueprintCanvas::link(CorePin& start, CorePin& end) {
 	
-	auto* start_node = find_node(start.node->id);
-	auto* end_node = find_node(end.node->id);
+	auto* start_node = find_node(start.node.id);
+	auto* end_node = find_node(end.node.id);
 	
 	assert(start_node && end_node);
 	

@@ -36,15 +36,15 @@ void NodeProcessor::evaluate() {
 		auto& out_pin = link->get_start();
 		auto& in_pin = link->get_end();
 		
-		if(evaluated_nodes.find(out_pin.node) == evaluated_nodes.end()){
-			if(out_pin.node->evaluate()){
-				evaluated_nodes.insert(out_pin.node);
+		if(evaluated_nodes.find(&out_pin.node) == evaluated_nodes.end()){
+			if(out_pin.node.evaluate()){
+				evaluated_nodes.insert(&out_pin.node);
 			}
 		}
 		
-		if(evaluated_nodes.find(in_pin.node) == evaluated_nodes.end()){
-			if(in_pin.node->evaluate()){				
-				evaluated_nodes.insert(in_pin.node);
+		if(evaluated_nodes.find(&in_pin.node) == evaluated_nodes.end()){
+			if(in_pin.node.evaluate()){
+				evaluated_nodes.insert(&in_pin.node);
 			}
 		}
 		
@@ -138,8 +138,8 @@ void NodeProcessor::serialize(BlueprintCanvas& canvas, Actor& actor) {
 			auto& start_pin = link->get_start();
 			auto& end_pin = link->get_end();
 			
-			auto& target_source_pin_node = node_processor->get_node(start_pin.node->id);
-			auto& target_destination_pin_node = node_processor->get_node(end_pin.node->id);
+			auto& target_source_pin_node = node_processor->get_node(start_pin.node.id);
+			auto& target_destination_pin_node = node_processor->get_node(end_pin.node.id);
 			
 			auto* target_start_pin = target_source_pin_node.find_pin(start_pin.id);
 			
@@ -233,8 +233,8 @@ void NodeProcessor::deserialize(BlueprintCanvas& canvas, Actor& actor) {
 			auto& start_pin = link->get_start();
 			auto& end_pin = link->get_end();
 			
-			auto& target_source_pin_node = get_node(start_pin.node->id);
-			auto& target_destination_pin_node = get_node(end_pin.node->id);
+			auto& target_source_pin_node = get_node(start_pin.node.id);
+			auto& target_destination_pin_node = get_node(end_pin.node.id);
 
 			auto* target_start_pin = target_source_pin_node.find_pin(start_pin.id);
 			
@@ -273,7 +273,7 @@ void NodeProcessor::break_links(CoreNode* node) {
 		const auto& end_pin = link->get_end();
 		
 		// Check if either end of the link connects to the node
-		if (start_pin.node == node || end_pin.node == node) {
+		if (&start_pin.node == node || &end_pin.node == node) {
 			links_to_remove.push_back(link.get());
 		}
 	}

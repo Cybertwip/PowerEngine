@@ -4,11 +4,9 @@
 
 void CoreNode::build() {
 	for (auto& input : inputs) {
-		input->node = this;
 		input->kind = PinKind::Input;
 	}
 	for (auto& output : outputs) {
-		output->node = this;
 		output->kind = PinKind::Output;
 	}
 }
