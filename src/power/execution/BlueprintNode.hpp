@@ -509,7 +509,7 @@ public:
 
 	
 protected:
-	void perform_layout(NVGcontext *ctx) override;
+	virtual void perform_layout(NVGcontext *ctx) override;
 
 	std::vector<std::unique_ptr<nanogui::Widget>> data_widgets;
 	
