@@ -52,4 +52,9 @@ private:
 	std::optional<std::reference_wrapper<Actor>> mActiveCamera;
 	std::optional<std::reference_wrapper<Actor>> mActiveActor;
 	std::vector<std::reference_wrapper<Actor>> mCameras;
+	
+	nanogui::Matrix4f mLastView;
+	nanogui::Matrix4f mLastProjection;
 };
+
+

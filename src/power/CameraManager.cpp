@@ -48,6 +48,11 @@ void CameraManager::update_from(const ActorManager& actorManager) {
 void CameraManager::update_view() {
     if (mActiveCamera.has_value()) {
 		mActiveCamera->get().get_component<CameraComponent>().update_view();
+		
+		mLastView = mActiveCamera->get().get_component<CameraComponent>().get_view();
+		
+		mLastProjection = mActiveCamera->get().get_component<CameraComponent>().get_projection();
+		
     }
 }
 
@@ -55,15 +60,15 @@ const nanogui::Matrix4f CameraManager::get_view() const {
     if (mActiveCamera.has_value()) {
         return mActiveCamera->get().get_component<CameraComponent>().get_view();
     } else {
-        return nanogui::Matrix4f();
+		return mLastView;
     }
 }
 const nanogui::Matrix4f CameraManager::get_projection() const {
     if (mActiveCamera.has_value()) {
 		return mActiveCamera->get().get_component<CameraComponent>().get_projection();
     } else {
-        return nanogui::Matrix4f::perspective(45, 0.01f, 5e3f, 16.0f / 9.0f);
-    }
+		return mLastProjection;
+	}
 }
 
 void CameraManager::look_at(Actor& actor) {
@@ -87,6 +92,8 @@ void CameraManager::OnActorSelected(std::optional<std::reference_wrapper<Actor>>
 		} else {
 			mActiveActor = actor;
 		}
+	} else {
+		mActiveCamera = std::nullopt;
 	}
 }
 
