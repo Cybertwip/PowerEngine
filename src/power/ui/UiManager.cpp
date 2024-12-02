@@ -431,8 +431,8 @@ void UiManager::draw() {
 		mActorManager.visit(batch_unit.mSkinnedMeshBatch);
 		
 		mActorManager.visit(*this);
-		
-		mCanvas->render_pass().set_depth_test(nanogui::RenderPass::DepthTest::Less, false);
+				
+		mCanvas->render_pass().set_depth_test(nanogui::RenderPass::DepthTest::Less, true);
 
 		// Draw gizmos
 		mGizmoManager.draw();

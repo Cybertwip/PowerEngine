@@ -277,17 +277,16 @@ void GizmoManager::draw_content(const nanogui::Matrix4f& model, const nanogui::M
 			glm::mat4 actorTranslationMatrix = glm::translate(glm::mat4(1.0f), glm::vec3(translation.x, translation.y, translation.z));
 			
 			float distance = glm::distance(cameraPosition, glm::vec3(translation.x, translation.y, translation.z)); // Now using actor's position for distance
-			float visualScaleFactor = std::max(1.0f, distance * 0.005f) * 0.0001f;
+			float visualScaleFactor = std::max(1.0f, distance * 0.005f);
 			
 			glm::mat4 scaleMatrix = glm::scale(glm::mat4(1.0f), glm::vec3(visualScaleFactor, visualScaleFactor, visualScaleFactor));
 			
 			glm::mat4 rotationMatrix = glm::mat4(1.0f); // Identity matrix
 			
 			if (&mActiveGizmo->get() == &mTranslationGizmo || &mActiveGizmo->get() == &mScaleGizmo) {
-				rotationMatrix = glm::rotate(rotationMatrix, glm::radians(-90.0f), glm::vec3(1, 0, 0));
-				rotationMatrix = glm::rotate(rotationMatrix, glm::radians(180.0f), glm::vec3(0, 1, 0));
-				
-				rotationMatrix = glm::rotate(rotationMatrix, glm::radians(180.0f), glm::vec3(1, 0, 0));
+				rotationMatrix = glm::rotate(rotationMatrix, glm::radians(90.0f), glm::vec3(1, 0, 0));  // X-axis
+				rotationMatrix = glm::rotate(rotationMatrix, glm::radians(180.0f), glm::vec3(0, 1, 0)); // Y-axis
+				rotationMatrix = glm::rotate(rotationMatrix, glm::radians(90.0f), glm::vec3(0, 0, 1));  // Z-axis
 			}
 			
 			// Apply transformations in order: rotation, translation, then scale

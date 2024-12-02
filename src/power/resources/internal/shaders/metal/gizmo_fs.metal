@@ -23,6 +23,7 @@ struct VertexOut {
 struct FragmentOut {
     float4 color [[color(0)]];  // First attachment: Color
     int entityId [[color(1)]];  // Second attachment: Entity ID
+    float depth [[depth(any)]]; // Add depth output
 };
 
 fragment FragmentOut fragment_main(VertexOut vert [[stage_in]],
@@ -63,6 +64,14 @@ fragment FragmentOut fragment_main(VertexOut vert [[stage_in]],
 
     out.color = mat_diffuse;
     out.entityId = entityId;
+
+    float epsilon = 0.0001; 
+    if (entityId < 0) { 
+        out.depth = epsilon + (vert.Position.z * 0.0001); 
+    } else {
+        out.depth = vert.Position.z;
+    }
+
 
     return out;
 }
