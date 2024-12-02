@@ -89,6 +89,11 @@ void CameraManager::OnActorSelected(std::optional<std::reference_wrapper<Actor>>
 		if (actor->get().find_component<CameraComponent>()) {
 			mActiveCamera = actor;
 			mActiveActor = std::nullopt;
+			
+			mLastView = mActiveCamera->get().get_component<CameraComponent>().get_view();
+			
+			mLastProjection = mActiveCamera->get().get_component<CameraComponent>().get_projection();
+
 		} else {
 			mActiveActor = actor;
 		}
