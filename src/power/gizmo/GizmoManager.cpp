@@ -287,6 +287,9 @@ void GizmoManager::draw_content(const nanogui::Matrix4f& model, const nanogui::M
 				rotationMatrix = glm::rotate(rotationMatrix, glm::radians(90.0f), glm::vec3(1, 0, 0));  // X-axis
 				rotationMatrix = glm::rotate(rotationMatrix, glm::radians(180.0f), glm::vec3(0, 1, 0)); // Y-axis
 				rotationMatrix = glm::rotate(rotationMatrix, glm::radians(90.0f), glm::vec3(0, 0, 1));  // Z-axis
+			} else if (&mActiveGizmo->get() == &mRotationGizmo) {
+				rotationMatrix = glm::rotate(rotationMatrix, glm::radians(180.0f), glm::vec3(0, 1, 0));  // Y-axis
+				rotationMatrix = glm::rotate(rotationMatrix, glm::radians(90.0f), glm::vec3(0, 0, 1));  // Z-axis
 			}
 			
 			// Apply transformations in order: rotation, translation, then scale
@@ -297,7 +300,6 @@ void GizmoManager::draw_content(const nanogui::Matrix4f& model, const nanogui::M
 			auto& drawable = mActiveGizmo->get().get_component<DrawableComponent>();
 			
 			drawable.draw_content(gizmoMatrix, view, projection);
-			
 		}
 		
 		
