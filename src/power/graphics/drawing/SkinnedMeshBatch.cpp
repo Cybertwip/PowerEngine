@@ -159,7 +159,64 @@ void SkinnedMeshBatch::remove(std::reference_wrapper<SkinnedMesh> meshRef) {
 	}
 }
 
-// [upload_material_data remains largely the same]
+
+void SkinnedMeshBatch::upload_material_data(ShaderWrapper& shader, const std::vector<std::shared_ptr<MaterialProperties>>& materialData) {
+	// Ensure we have a valid number of materials
+	size_t numMaterials = materialData.size();
+	
+	// Create a CPU-side array of Material structs
+	std::vector<MaterialCPU> materialsCPU(numMaterials);
+	
+	int textureSetCount = 0;
+	
+	for (size_t i = 0; i < numMaterials; ++i) {
+		auto& material = *materialData[i];
+		MaterialCPU& materialCPU = materialsCPU[i];
+		
+		// Copy ambient, diffuse, and specular as arrays
+		memcpy(&materialCPU.mAmbient[0], glm::value_ptr(material.mAmbient), sizeof(materialCPU.mAmbient));
+		
+		memcpy(&materialCPU.mDiffuse[0], glm::value_ptr(material.mDiffuse), sizeof(materialCPU.mDiffuse));
+		
+		memcpy(&materialCPU.mSpecular[0], glm::value_ptr(material.mSpecular), sizeof(materialCPU.mSpecular));
+		
+		// Copy the rest of the individual fields
+		materialCPU.mShininess = material.mShininess;
+		materialCPU.mOpacity = material.mOpacity;
+		materialCPU.mHasDiffuseTexture = material.mHasDiffuseTexture ? 1.0f : 0.0f;
+		
+		// Set the diffuse texture (if it exists) or a dummy texture
+		std::string textureBaseName = "textures";
+		if (material.mHasDiffuseTexture) {
+			shader.set_texture(textureBaseName, material.mTextureDiffuse, i);
+			
+			textureSetCount++;
+		}
+		
+	}
+	
+	if (numMaterials == 0) { // upload dummy material
+		numMaterials = 1;
+		materialsCPU.push_back({});
+	}
+	
+	
+	shader.set_buffer(
+					  "materials",
+					  nanogui::VariableType::Float32,
+					  {numMaterials, sizeof(MaterialCPU) / sizeof(float)},
+					  materialsCPU.data()
+					  );
+	
+	size_t dummy_texture_count = shader.get_buffer_size("textures");
+	
+	for (size_t i = textureSetCount; i<dummy_texture_count; ++i) {
+		std::string textureBaseName = "textures";
+		
+		shader.set_texture(textureBaseName, Batch::get_dummy_texture(), i);
+	}
+	
+}
 
 void SkinnedMeshBatch::upload_vertex_data(ShaderWrapper& shader, int identifier, size_t batchIndex) {
 	const auto& batch = mBatches[identifier][batchIndex];
