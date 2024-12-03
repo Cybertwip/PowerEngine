@@ -97,17 +97,30 @@ void SkinnedMeshBatch::append(std::reference_wrapper<SkinnedMesh> meshRef) {
 	mMeshOffsetInBatch[instanceId][identifier] = batch.vertexOffset;
 	mMeshIndexCount[instanceId][identifier] = mesh.get_mesh_data().get_indices().size();
 	
+	auto& positions = mesh.get_flattened_positions();
+	auto& normals = mesh.get_flattened_normals();
+	auto& texCoords1 = mesh.get_flattened_tex_coords1();
+	auto& texCoords2 = mesh.get_flattened_tex_coords2();
+	auto& materialIds = mesh.get_flattened_material_ids();
+	auto& colors = mesh.get_flattened_colors();
+	auto& weights = mesh.get_flattened_weights();
+	auto& bone_ids = mesh.get_flattened_bone_ids();
+	
 	// Append vertex data
 	batch.positions.insert(batch.positions.end(),
-						   mesh.get_flattened_positions().begin(),
-						   mesh.get_flattened_positions().end());
-	// [Similar insertions for other attributes]
+						   positions.begin(),
+						   positions.end());
+	batch.normals.insert(batch.normals.end(), normals.begin(), normals.end());
+	batch.texCoords1.insert(batch.texCoords1.end(), texCoords1.begin(), texCoords1.end());
+	batch.texCoords2.insert(batch.texCoords2.end(), texCoords2.begin(), texCoords2.end());
+	batch.materialIds.insert(batch.materialIds.end(), materialIds.begin(), materialIds.end());
+	batch.colors.insert(batch.colors.end(), colors.begin(), colors.end());
 	batch.boneIds.insert(batch.boneIds.end(),
-						 mesh.get_flattened_bone_ids().begin(),
-						 mesh.get_flattened_bone_ids().end());
+						 bone_ids.begin(),
+						 bone_ids.end());
 	batch.boneWeights.insert(batch.boneWeights.end(),
-							 mesh.get_flattened_weights().begin(),
-							 mesh.get_flattened_weights().end());
+							 weights.begin(),
+							 weights.end());
 	
 	// Append and adjust indices
 	for (auto index : mesh.get_mesh_data().get_indices()) {
