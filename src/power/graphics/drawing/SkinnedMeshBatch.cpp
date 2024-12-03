@@ -246,7 +246,14 @@ void SkinnedMeshBatch::draw_content(const nanogui::Matrix4f& view, const nanogui
 					}
 					
 					auto& shader = mesh.get_shader();
-					// [Set uniforms and draw as before]
+					// Apply color component
+					shader.set_uniform("identifier", mesh.get_color_component().identifier());
+					
+					shader.set_uniform("color", glm_to_nanogui(mesh.get_color_component().get_color()));
+					
+					// Upload materials for the current mesh
+					upload_material_data(shader, mesh.get_mesh_data().get_material_properties());
+					
 					auto bones = SkinnedMeshBatchUtils::build_cpu_bones(mesh.get_skeleton_component());
 					shader.set_buffer("bones", nanogui::VariableType::Float32,
 									  {bones.size(), sizeof(SkinnedMeshBatchUtils::BoneCPU) / sizeof(float)},
