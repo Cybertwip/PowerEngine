@@ -223,7 +223,16 @@ void SkinnedMeshBatch::upload_vertex_data(ShaderWrapper& shader, int identifier,
 	
 	shader.persist_buffer("aPosition", nanogui::VariableType::Float32,
 						  {batch.positions.size() / 3, 3}, batch.positions.data());
-	// [Similar buffer uploads for other attributes]
+	shader.persist_buffer("aNormal", nanogui::VariableType::Float32,
+						  {batch.normals.size() / 3, 3}, batch.normals.data());
+	shader.persist_buffer("aTexcoords1", nanogui::VariableType::Float32,
+						  {batch.texCoords1.size() / 2, 2}, batch.texCoords1.data());
+	shader.persist_buffer("aTexcoords2", nanogui::VariableType::Float32,
+						  {batch.texCoords2.size() / 2, 2}, batch.texCoords2.data());
+	shader.persist_buffer("aMaterialId", nanogui::VariableType::Int32,
+						  {batch.materialIds.size(), 1}, batch.materialIds.data());
+	shader.persist_buffer("aColor", nanogui::VariableType::Float32,
+						  {batch.colors.size() / 4, 4}, batch.colors.data());
 	shader.persist_buffer("aBoneIds", nanogui::VariableType::Int32,
 						  {batch.boneIds.size() / 4, 4}, batch.boneIds.data());
 	shader.persist_buffer("aWeights", nanogui::VariableType::Float32,
@@ -246,6 +255,10 @@ void SkinnedMeshBatch::draw_content(const nanogui::Matrix4f& view, const nanogui
 					}
 					
 					auto& shader = mesh.get_shader();
+					shader.set_uniform("aProjection", projection);
+					shader.set_uniform("aView", view);
+					shader.set_uniform("aModel", mesh.get_model_matrix());
+
 					// Apply color component
 					shader.set_uniform("identifier", mesh.get_color_component().identifier());
 					
