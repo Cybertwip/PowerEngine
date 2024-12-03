@@ -53,7 +53,7 @@ FbxManagerInstance::~FbxManagerInstance() {
 
 FbxDefaultIOSettings::FbxDefaultIOSettings(const FbxManagerInstance& _manager)
 : io_settings_(nullptr) {
-	io_settings_ = FbxIOSettings::Create(_manager, IOSROOT);
+	io_settings_ = FbxIOSettings::Create(_manager.manager(), IOSROOT);
 	io_settings_->SetBoolProp(IMP_FBX_MATERIAL, false);
 	io_settings_->SetBoolProp(IMP_FBX_TEXTURE, false);
 	io_settings_->SetBoolProp(IMP_FBX_MODEL, false);
@@ -81,7 +81,7 @@ FbxSceneLoader::FbxSceneLoader(const char* _filename, const char* _password,
 							   const FbxDefaultIOSettings& _io_settings)
 : scene_(nullptr), converter_(nullptr) {
 	// Create an importer.
-	FbxImporter* importer = FbxImporter::Create(_manager, "ozz file importer");
+	FbxImporter* importer = FbxImporter::Create(_manager.manager(), "ozz file importer");
 	const bool initialized = importer->Initialize(_filename, -1, _io_settings);
 	
 	ImportScene(importer, initialized, _password, _manager, _io_settings);
@@ -95,7 +95,7 @@ FbxSceneLoader::FbxSceneLoader(FbxStream* _stream, const char* _password,
 							   const FbxDefaultIOSettings& _io_settings)
 : scene_(nullptr), converter_(nullptr) {
 	// Create an importer.
-	FbxImporter* importer = FbxImporter::Create(_manager, "ozz stream importer");
+	FbxImporter* importer = FbxImporter::Create(_manager.manager(), "ozz stream importer");
 	const bool initialized =
 	importer->Initialize(_stream, nullptr, -1, _io_settings);
 	
@@ -130,7 +130,7 @@ void FbxSceneLoader::ImportScene(FbxImporter* _importer,
 		}
 		
 		// Load the scene.
-		scene_ = FbxScene::Create(_manager, "ozz scene");
+		scene_ = FbxScene::Create(_manager.manager(), "ozz scene");
 		bool imported = _importer->Import(scene_);
 		
 		if (!imported &&  // The import file may have a password

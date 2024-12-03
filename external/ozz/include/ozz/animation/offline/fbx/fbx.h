@@ -52,7 +52,7 @@ class OZZ_ANIMFBX_DLL FbxManagerInstance {
   ~FbxManagerInstance();
 
   // Cast operator to get internal FbxManager instance.
-  operator FbxManager*() const { return fbx_manager_; }
+  FbxManager* manager() const { return fbx_manager_; }
 
  private:
   FbxManager* fbx_manager_;
