@@ -1,6 +1,54 @@
-// SkinnedMeshBatch.cpp
-// [Previous includes remain the same]
+#include "SkinnedMeshBatch.hpp"
 
+#include "components/ColorComponent.hpp"
+#include "components/MetadataComponent.hpp"
+#include "components/SkinnedAnimationComponent.hpp"
+
+#include "graphics/drawing/SkinnedMesh.hpp"
+#include "graphics/shading/ShaderWrapper.hpp"
+
+#include <nanogui/renderpass.h>
+
+#include <glm/gtc/type_ptr.hpp>
+
+
+namespace SkinnedMeshBatchUtils {
+struct BoneCPU {
+	float transform[4][4] =
+	{
+		{ 0.0f, 0.0f, 0.0f, 0.0f },
+		{ 0.0f, 0.0f, 0.0f, 0.0f },
+		{ 0.0f, 0.0f, 0.0f, 0.0f },
+		{ 0.0f, 0.0f, 0.0f, 0.0f }
+	};
+};
+
+// Retrieve the bones for rendering
+std::vector<BoneCPU> build_cpu_bones(SkeletonComponent& skeletonComponent) {
+	// Ensure we have a valid number of bones
+	size_t numBones = skeletonComponent.get_skeleton().num_bones();
+	
+	std::vector<BoneCPU> bonesCPU(numBones);
+	
+	for (size_t i = 0; i < numBones; ++i) {
+		Skeleton::Bone& bone = static_cast<Skeleton::Bone&>(skeletonComponent.get_skeleton().get_bone(i));
+		
+		// Get the bone transform as a glm::mat4
+		glm::mat4 boneTransform = bone.global;
+		
+		// Reference to the BoneCPU structure
+		BoneCPU& boneCPU = bonesCPU[i];
+		
+		// Copy each element from glm::mat4 to the BoneCPU's transform array
+		for (int row = 0; row < 4; ++row) {
+			for (int col = 0; col < 4; ++col) {
+				boneCPU.transform[row][col] = boneTransform[row][col];
+			}
+		}
+	}
+	return bonesCPU;
+}
+}
 SkinnedMeshBatch::SkinnedMeshBatch(nanogui::RenderPass& renderPass) : mRenderPass(renderPass) {
 }
 
