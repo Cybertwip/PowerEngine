@@ -149,7 +149,7 @@ void Application::initialize() {
 		actors.push_back(mCameraManager->active_camera()->get());
 	} else {
 		actors.push_back(mRenderCommon->camera_actor_loader().create_actor(mGlobalAnimationTimeProvider,
-																		   45.0f, 0.01f, 5e3f,
+																		   45.0f, 0.01f, 1e5f,
 																		   mRenderCommon->canvas()->fixed_size().x() /
 																		   static_cast<float>(mRenderCommon->canvas()->fixed_size().y())));
 	}
