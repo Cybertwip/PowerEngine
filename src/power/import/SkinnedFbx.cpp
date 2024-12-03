@@ -118,7 +118,6 @@ void SkinnedFbx::ProcessBones(FbxMesh* mesh) {
 	// Get the number of skins attached to the mesh
 	int skinCount = mesh->GetDeformerCount(FbxDeformer::eSkin);
 	if (skinCount == 0) {
-		std::cerr << "Warning: No skin deformer found for the mesh." << std::endl;
 		return;
 	}
 	
