@@ -17,7 +17,7 @@ else()
 endif()
 
 # Define IMGUI_NODE_EDITOR_ROOT_DIR pointing to project root directory
-set(IMGUI_FEATURE_LAYOUT_ROOT_DIR ${CMAKE_CURRENT_LIST_DIR}/ CACHE STRINg "${CMAKE_CURRENT_LISTS_DIR}")
+set(IMGUI_FEATURE_LAYOUT_ROOT_DIR ${CMAKE_CURRENT_LIST_DIR}/ CACHE STRING "${CMAKE_CURRENT_LISTS_DIR}")
 
 # Enable solution folders in Visual Studio and Folders in Xcode
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)

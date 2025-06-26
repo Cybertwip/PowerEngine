@@ -1,6 +1,10 @@
 set(BUILD_SHARED_LIBS OFF)
 
-cmake_minimum_required(VERSION 3.21)
+cmake_minimum_required(VERSION 3.5)
+
+cmake_policy(SET CMP0079 NEW)
+
+
 include(${CMAKE_ROOT}/Modules/ExternalProject.cmake)
 
 if (NOT POWER_ENGINE_DISTRIBUTION)
