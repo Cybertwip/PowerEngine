@@ -1,3 +1,0 @@
-[submodule "external/grpc"]
-	path = external/grpc
-	url = git@github.com:grpc/grpc.git
