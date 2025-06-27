@@ -202,7 +202,7 @@ ResourcesPanel::~ResourcesPanel() {
 
 void ResourcesPanel::refresh_file_view() {
 	nanogui::async([this](){
-		mFileView->refresh(mFilterText);
+		mFileView->refresh();
 	});
 }
 

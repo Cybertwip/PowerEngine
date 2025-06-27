@@ -3,6 +3,8 @@
 #include <nanogui/layout.h>
 #include <nanogui/screen.h>
 #include <nanogui/icons.h>
+#include <nanogui/button.h>
+#include <nanogui/imageview.h>
 
 #include <nanovg.h>
 
@@ -30,68 +32,31 @@ m_root_directory_node(root_directory_node),
 m_selected_directory_path(root_directory_node.FullPath),
 m_filter_text(filter_text),
 m_allowed_extensions(allowed_extensions),
-m_selected_button(nullptr),
-m_selected_node(nullptr),
-m_normal_button_color(nanogui::Color(200, 200, 200, 255)),
-m_selected_button_color(nanogui::Color(100, 100, 255, 255)),
-m_scroll_offset(0.0f),
-m_accumulated_scroll_delta(0.0f),
-m_total_rows(0),
-m_visible_rows(3),
-m_row_height(144), // Assuming row height of 144 pixels
-m_total_textures(16), // Example value, adjust as needed
-m_previous_first_visible_row(0),
-m_is_loading_thumbnail(false),
-m_previous_scroll_offset(0),
 m_columns(columns),
 mOnFileClicked(onFileClicked),
 mOnFileSelected(onFileSelected),
-m_recursive(recursive)
+m_recursive(recursive),
+m_selected_button(nullptr),
+m_selected_node(nullptr),
+m_normal_button_color(200, 200, 200, 255),
+m_selected_button_color(100, 100, 255, 255),
+m_scroll_offset(0.0f),
+m_row_height(144)
 {
-	// Initialize main layout using GridLayout
-	auto grid_layout = std::make_unique<nanogui::GridLayout>(
-															 nanogui::Orientation::Horizontal,
-															 m_columns, // Number of columns
-															 nanogui::Alignment::Middle,
-															 8, // Margin
-															 8  // Spacing between widgets
-															 );
+	set_layout(std::make_unique<nanogui::GridLayout>(nanogui::Orientation::Horizontal, m_columns, nanogui::Alignment::Middle, 8, 8));
 	
-	set_layout(std::move(grid_layout));
-	
-	// Initialize texture cache
-	initialize_texture_cache();
-	
-	m_drag_payload = std::make_shared<nanogui::ImageView>(parent, screen());
-	
-	m_drag_payload->set_image(
-							  std::make_shared<nanogui::Texture>(
-																 nanogui::Texture::PixelFormat::RGBA,       // Set pixel format to RGBA
-																 nanogui::Texture::ComponentFormat::UInt8,  // Use unsigned 8-bit components for each channel
-																 nanogui::Vector2i(512, 512),
-																 nanogui::Texture::InterpolationMode::Bilinear,
-																 nanogui::Texture::InterpolationMode::Nearest,
-																 nanogui::Texture::WrapMode::ClampToEdge
-																 ));
-	
-	m_drag_payload->set_visible(false);
-	
-	parent.remove_child(*m_drag_payload);
-	
-	// Create a content widget that will hold all file items
+	// Content widget to hold the scrollable items
 	m_content = std::make_shared<nanogui::Widget>(std::make_optional<std::reference_wrapper<nanogui::Widget>>(*this));
-	m_content->set_layout(std::make_unique<nanogui::GridLayout>(
-																nanogui::Orientation::Horizontal,
-																m_columns, // Number of columns
-																nanogui::Alignment::Middle,
-																8, // Margin
-																8  // Spacing
-																));
+	m_content->set_layout(std::make_unique<nanogui::GridLayout>(nanogui::Orientation::Horizontal, m_columns, nanogui::Alignment::Middle, 8, 8));
 	
-	m_content->set_position(nanogui::Vector2i(0, 0));
-	
-	// Initial population
+	// Initial population of the view
 	refresh();
+	
+	m_drag_payload = std::make_shared<nanogui::ImageView>(*this, screen());
+	m_drag_payload->set_visible(false);
+	// Keep the widget alive, but remove it from the layout tree for now.
+	// It will be temporarily attached to the screen's drag widget during a drag operation.
+	this->remove_child(*m_drag_payload);
 }
 
 // Destructor
@@ -143,159 +108,44 @@ void FileView::release_texture(std::shared_ptr<nanogui::Texture> texture) {
 		m_texture_cache.push_back(texture);
 	}
 }
-
 std::shared_ptr<nanogui::Button> FileView::acquire_button(const std::shared_ptr<DirectoryNode>& child) {
-	// Create item container
+	// 1. Create item container using the specified constructor pattern.
+	// This adds the widget to m_content and returns a shared_ptr.
 	auto item_container = std::make_shared<nanogui::Widget>(std::make_optional<std::reference_wrapper<nanogui::Widget>>(*m_content));
-	item_container->set_fixed_size(nanogui::Vector2i(144, m_row_height));
-	m_item_containers.push_back(item_container);
+	item_container->set_fixed_size({144, m_row_height});
+	item_container->set_layout(std::make_unique<nanogui::BoxLayout>(nanogui::Orientation::Vertical, nanogui::Alignment::Middle, 0, 5));
+	m_item_containers.push_back(item_container); // Store pointer to manage lifetime
 	
-	// Acquire a texture from cache or create a new one
-	auto texture = acquire_texture();
-	if (!texture) {
-		texture = std::make_shared<nanogui::Texture>(
-													 nanogui::Texture::PixelFormat::RGBA,
-													 nanogui::Texture::ComponentFormat::UInt8,
-													 nanogui::Vector2i(512, 512),
-													 nanogui::Texture::InterpolationMode::Bilinear,
-													 nanogui::Texture::InterpolationMode::Nearest,
-													 nanogui::Texture::WrapMode::ClampToEdge
-													 );
-		
-		m_used_textures.push_back(texture); // Add this line
-	}
-	
-	// Create the image view
-	auto image_view = std::make_shared<nanogui::ImageView>(*item_container, screen());
-	image_view->set_size(nanogui::Vector2i(144, 144));
-	image_view->set_fixed_size(nanogui::Vector2i(144, 144));
-	image_view->set_image(texture);
-	image_view->set_visible(true);
-	m_image_views.push_back(image_view);
-	
-	// Reuse button from cache or create a new one
-	std::shared_ptr<nanogui::Button> icon_button = std::make_shared<nanogui::Button>(*item_container, "", get_icon_for_file(*child));
-	
-	// Store the button
-	m_file_buttons.push_back(icon_button); // due to thread safety, first store, then set the callbacks
-	
-	item_container->remove_child(*image_view);
-	icon_button->add_child(*image_view);
-	
-	// Setup button properties
-	icon_button->set_fixed_size(nanogui::Vector2i(144, 144));
+	// 2. Create the main button as a child of the container.
+	auto icon_button = std::shared_ptr<nanogui::Button>(new nanogui::Button(*item_container, "", get_icon_for_file(*child)));
+	icon_button->set_fixed_size({144, 110});
 	icon_button->set_background_color(m_normal_button_color);
+	m_file_buttons.push_back(icon_button); // Store pointer
 	
-	// Set the callback for button interactions
-	icon_button->set_callback([this, icon_button, image_view, child]() {
-		int file_icon = get_icon_for_file(*child);
-		
-		// Handle selection
-		if (m_selected_button && m_selected_button != icon_button) {
-			m_selected_button->set_background_color(m_normal_button_color);
-		}
-		m_selected_button = icon_button;
-		icon_button->set_background_color(m_selected_button_color);
-		
-		// Store selected node
-		m_selected_node = child;
-		
-		// Handle click
-		nanogui::async([this]() {
-			if (m_selected_node) {
-				handle_file_click(*m_selected_node);
-			}
-		});
-		
-		
-		// Handle double-click
-		static std::chrono::time_point<std::chrono::high_resolution_clock> last_click_time = std::chrono::high_resolution_clock::time_point::min();
-		auto current_click_time = std::chrono::high_resolution_clock::now();
-		
-		if (last_click_time != std::chrono::high_resolution_clock::time_point::min()) {
-			auto click_duration = std::chrono::duration_cast<std::chrono::milliseconds>(current_click_time - last_click_time).count();
-			
-			if (click_duration < 400) { // 400 ms threshold for double-click
-				nanogui::async([this]() {
-					if (m_selected_node) {
-						handle_file_interaction(*m_selected_node);
-					}
-				});
-				
-				last_click_time = std::chrono::high_resolution_clock::time_point::min();
-			} else {
-				last_click_time = current_click_time;
-			}
-		} else {
-			last_click_time = current_click_time;
-		}
-		
-		if (file_icon == FA_WALKING || file_icon == FA_PERSON_BOOTH || file_icon == FA_OBJECT_GROUP || file_icon == FA_PHOTO_VIDEO) {
-			auto drag_widget = screen().drag_widget();
-			
-			drag_widget->add_child(*m_drag_payload);
-			
-			m_drag_payload->set_size(icon_button->fixed_size());
-			m_drag_payload->set_fixed_size(icon_button->fixed_size());
-			
-			if (file_icon == FA_PERSON_BOOTH) {
-				
-				auto thumbnail_data = load_file_to_vector("internal/ui/animation.png");
-				
-				nanogui::Texture::decompress_into(thumbnail_data, *m_drag_payload->image());
-				
-			} else if (file_icon == FA_PHOTO_VIDEO) {
-				
-				auto thumbnail_data = load_file_to_vector(child->FullPath);
-				
-				nanogui::Texture::decompress_into(thumbnail_data, *m_drag_payload->image());
-				
-			} else {
-				auto thumbnail_data = load_image_data(child->FullPath);
-				
-				nanogui::Texture::decompress_into(thumbnail_data, *m_drag_payload->image());
-			}
-			
-			m_drag_payload->set_image(m_drag_payload->image());
-			
-			m_drag_payload->image()->resize(nanogui::Vector2i(288, 288));
-			m_drag_payload->set_visible(true);
-			
-			drag_widget->set_size(icon_button->fixed_size());
-			
-			auto drag_start_position = icon_button->absolute_position();
-			drag_widget->set_position(drag_start_position);
-			
-			drag_widget->perform_layout(screen().nvg_context());
-			
-			screen().set_drag_widget(drag_widget, [this, drag_widget, child]() {
-				auto path = child->FullPath;
-				
-				screen().set_drag_widget(nullptr, nullptr);
-				
-				std::vector<std::string> path_vector = { path };
-				screen().drop_event(*this, path_vector);
-			});
-		}
-		
-	});
+	// 3. Create the image view. Note the parenting change below.
+	auto image_view = std::shared_ptr<nanogui::ImageView>(new nanogui::ImageView(*icon_button, screen())); // Parented to button
+	image_view->set_size({128, 128});
+	m_image_views.push_back(image_view); // Store pointer
 	
-	// Async thumbnail loading
-	m_thumbnail_load_queue.push([this, child, image_view, texture]() {
-		load_thumbnail(child, image_view, texture);
-	});
-	
-	// Create and store the label
+	// 4. Create the label as a child of the icon_button.
 	auto name_label = std::make_shared<nanogui::Label>(*icon_button, child->FileName);
 	name_label->set_fixed_width(144);
-	name_label->set_position(nanogui::Vector2i(0, 110));
+	// Position the label at the bottom of the button area.
+	name_label->set_position({0, static_cast<int>(icon_button->height() * 0.8)});
 	name_label->set_alignment(nanogui::Label::Alignment::Center);
-	m_name_labels.push_back(name_label);
+	m_name_labels.push_back(name_label); // Store pointer
 	
-	icon_button->perform_layout(screen().nvg_context());
+	// Asynchronously load the thumbnail into the image view
+	load_thumbnail(child, image_view);
+	
+	// Setup all interaction logic (click, double-click, drag)
+	setup_button_interactions(icon_button, child);
 	
 	return icon_button;
 }
+
+
+
 
 void FileView::set_selected_directory_path(const std::string& path) {
 	{
@@ -371,41 +221,27 @@ void FileView::handle_file_click(DirectoryNode& node) {
 		}
 	}
 }
-
-void FileView::load_thumbnail(const std::shared_ptr<DirectoryNode>& node,
-							  const std::shared_ptr<nanogui::ImageView>& image_view,
-							  std::shared_ptr<nanogui::Texture> texture) {
-	nanogui::async([this, node, image_view, texture]() {
-		// Load and process the thumbnail
-		// Example: Read image data from file
+void FileView::load_thumbnail(const std::shared_ptr<DirectoryNode>& node, std::shared_ptr<nanogui::ImageView> image_view) {
+	nanogui::async([this, node, image_view]() {
 		std::vector<uint8_t> thumbnail_data;
-		
 		if (get_icon_for_file(*node) == FA_PHOTO_VIDEO) {
-			
-			// One-liner to load PNG file into a vector of uint8_t
 			thumbnail_data = load_file_to_vector(node->FullPath);
 		} else {
 			thumbnail_data = load_image_data(node->FullPath);
 		}
 		
 		if (!thumbnail_data.empty()) {
+			auto texture = std::make_shared<nanogui::Texture>(
+															  nanogui::Texture::PixelFormat::RGBA,
+															  nanogui::Texture::ComponentFormat::UInt8,
+															  nanogui::Vector2i(512, 512)
+															  );
 			nanogui::Texture::decompress_into(thumbnail_data, *texture);
 			
+			// Update the UI on the main thread
+			perform_layout(screen().nvg_context());
 			image_view->set_image(texture);
-			image_view->set_visible(true);
-			
-			texture->resize(nanogui::Vector2i(288, 288));
-			image_view->perform_layout(screen().nvg_context());
-		} else {
-			thumbnail_data.resize(512 * 512 * 4);
-			texture->upload(thumbnail_data.data());
-			image_view->set_image(texture);
-			image_view->set_visible(true);
-			
-			texture->resize(nanogui::Vector2i(288, 288));
-			image_view->perform_layout(screen().nvg_context());
 		}
-		
 	});
 }
 
@@ -468,43 +304,20 @@ void FileView::ProcessEvents() {
 		});
 	}
 }
-
-void FileView::refresh(const std::string& filter_text) {
-	{
-		std::lock_guard<std::mutex> lock(m_mutex);
-		m_filter_text = filter_text;
-		
-		// Clear existing buttons and selection
-		clear_file_buttons();
-		m_selected_button = nullptr;
-		m_selected_node = nullptr;
-		
-		// Refresh the root directory node to get the latest contents
-		m_root_directory_node.refresh(m_allowed_extensions);
-		
-		// Clear existing child widgets in the content
-		m_content->shed_children();
-		
-		// Clear stored references to previously allocated objects
-		m_item_containers.clear();
-		m_image_views.clear();
-		m_name_labels.clear();
-		m_nodes.clear();
-		
-		// Reset scroll offset and row indices
-		m_scroll_offset = 0.0f;
-		m_previous_first_visible_row = 0;
-		
-		// Populate the file view with updated contents
-		populate_file_view();
-	}
+void FileView::refresh() {
+	// Clear existing items before repopulating
+	m_content->shed_children();
+	m_selected_button = nullptr;
+	m_selected_node = nullptr;
 	
-	// Perform layout to apply all changes
+	populate_file_view();
+	
+	// Redraw the screen with the new content
 	perform_layout(screen().nvg_context());
-	
-	scroll_event(nanogui::Vector2i(0, 0), nanogui::Vector2i(0, -1));
-	
 }
+
+
+
 void FileView::populate_file_view() {
 	if (m_selected_directory_path.empty()) {
 		return;
@@ -746,4 +559,89 @@ void FileView::collect_nodes_recursive(DirectoryNode* node, std::vector<std::sha
 			collect_nodes_recursive(child.get(), collected_nodes);
 		}
 	}
+}
+
+void FileView::setup_button_interactions(std::shared_ptr<nanogui::Button> button, const std::shared_ptr<DirectoryNode>& node) {
+	button->set_callback([this, button, node]() {
+		// Handle single-click selection
+		if (m_selected_button) {
+			m_selected_button->set_background_color(m_normal_button_color);
+		}
+		m_selected_button = button;
+		button->set_background_color(m_selected_button_color);
+		m_selected_node = node;
+		
+		if (mOnFileClicked) {
+			mOnFileClicked(node);
+		}
+	});
+	
+//	button->set_double_click_callback([this, node]() {
+//		// Handle double-click action (e.g., open directory or file)
+//		handle_file_interaction(*node);
+//	});
+	
+	// This callback is triggered when the user clicks and starts dragging the mouse.
+//	button->set_drag_callback([this, button, node](const nanogui::Vector2i& drag_amount) {
+//		// Start the drag operation only if the drag distance is meaningful
+//		if (drag_amount.x() > 5 || drag_amount.y() > 5) {
+//			initiate_drag_operation(button, node);
+//		}
+//	});
+}
+
+
+// Encapsulates the logic for initiating a drag operation.
+void FileView::initiate_drag_operation(std::shared_ptr<nanogui::Button> button, const std::shared_ptr<DirectoryNode>& node) {
+	// 1. Get the screen's existing, dedicated widget for drag operations.
+	auto* drag_container = screen().drag_widget();
+	if (!drag_container) {
+		// This should not happen in a normal NanoGUI app, but it's a safe check.
+		return;
+	}
+	// Ensure the container is empty before we add our payload.
+	drag_container->shed_children();
+	
+	// 2. Configure the reusable m_drag_payload with the item's image.
+	auto drag_texture = std::make_shared<nanogui::Texture>(
+														   nanogui::Texture::PixelFormat::RGBA,
+														   nanogui::Texture::ComponentFormat::UInt8,
+														   nanogui::Vector2i(512, 512)
+														   );
+	
+	std::vector<uint8_t> thumbnail_data;
+	if (get_icon_for_file(*node) == FA_PHOTO_VIDEO) {
+		thumbnail_data = load_file_to_vector(node->FullPath);
+	} else {
+		thumbnail_data = load_image_data(node->FullPath);
+	}
+	
+	if (!thumbnail_data.empty()) {
+		nanogui::Texture::decompress_into(thumbnail_data, *drag_texture);
+		m_drag_payload->set_image(drag_texture);
+	}
+	
+	// 3. Set up sizes and visibility.
+	m_drag_payload->set_size({128, 128});
+	m_drag_payload->set_visible(true);
+	
+	// Add the payload to the screen's drag container.
+	drag_container->add_child(*m_drag_payload);
+	drag_container->set_size(m_drag_payload->size());
+	drag_container->set_position(button->absolute_position() - parent()->get().absolute_position());
+	drag_container->perform_layout(screen().nvg_context());
+	
+	// 4. This is the core NanoGUI function to start the drag.
+	// It takes the container widget and a callback for when the drop occurs.
+	screen().set_drag_widget(drag_container, [this, node]() {
+		// This lambda is executed when the user releases the mouse.
+		std::vector<std::string> paths = { node->FullPath };
+		
+		// Dispatch the drop event to the main Application class.
+		screen().drop_event(*this, paths);
+		
+		// Clean up: hide the payload and release the screen's drag widget.
+		m_drag_payload->set_visible(false);
+		screen().set_drag_widget(nullptr, nullptr);
+	});
 }

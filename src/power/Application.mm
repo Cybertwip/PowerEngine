@@ -323,64 +323,56 @@ void Application::register_click_callback(std::function<void(bool, int, int, int
 }
 
 bool Application::drop_event(Widget& sender, const std::vector<std::string> & filenames) {
-	//if (&sender == mUiManager->status_bar_panel()->resources_panel().get()) {
 
 	mEventQueue.push_back([this, &sender, filenames](){
+		const std::string& path = filenames[0];
+
+		// 1. Check if the drop occurred on the Animation Panel
 		if (mUiCommon->animation_panel()->contains(m_mouse_pos, true, true)) {
-			if (filenames[0].find(".pan") != std::string::npos){
-				mUiCommon->animation_panel()->parse_file(filenames[0]);
+			if (path.find(".pan") != std::string::npos) {
+				mUiCommon->animation_panel()->parse_file(path);
+				return; // Event handled
 			}
 		}
-		
-		if (mRenderCommon->canvas()->contains(m_mouse_pos, true, true) && !mUiManager->status_bar_panel()->resources_panel()->contains(m_mouse_pos, true, true)) {
-			if (filenames[0].find(".psk") != std::string::npos || filenames[0].find(".pma") != std::string::npos){
-				mUiCommon->hierarchy_panel()->add_actor(mMeshActorLoader->create_actor(filenames[0], mGlobalAnimationTimeProvider, mPreviewAnimationTimeProvider, *mMeshShader, *mSkinnedShader));
-				
+
+		// 2. Check if the drop occurred on the main 3D Scene/Canvas
+		if (mRenderCommon->canvas()->contains(m_mouse_pos, true, true)) {
+			// You can add more specific exclusion zones if needed
+			// For example, !mUiManager->some_other_panel()->contains(m_mouse_pos)
+			
+			if (path.find(".psk") != std::string::npos || path.find(".pma") != std::string::npos) {
+				mUiCommon->hierarchy_panel()->add_actor(mMeshActorLoader->create_actor(path, mGlobalAnimationTimeProvider, mPreviewAnimationTimeProvider, *mMeshShader, *mSkinnedShader));
 				mUiCommon->scene_time_bar()->refresh_actors();
+				return; // Event handled
 			}
 		}
 	});
 }
 
 void Application::new_project_action() {
+	// Using nanogui::async to keep the UI responsive while the dialog is open.
 	nanogui::async([this]() {
-		nanogui::file_dialog_async(
-	   {{"", "Folders"}}, // Empty extension for folder selection
-	   true,              // Directory selection mode
-	   false,              // Multiple files
-	   [this](const std::vector<std::string>& folders) {
-		   if (folders.empty()) {
-			   return; // User canceled
-		   }
-		   
-		   std::string projectFolder = folders.front();
-		   try {
-			   // Create the folder and assign it to the DirectoryNode singleton
-			   if (DirectoryNode::createProjectFolder(projectFolder)) {
-				   std::cout << "New project folder created and assigned: " << projectFolder << std::endl;
-				   // Refresh the file view to reflect the new project structure
-				   
-				   
-				   // Clear existing actors and reset the scene
-				   mBlueprintManager->stop();
-				   mUiCommon->hierarchy_panel()->clear_actors();
-				   mExecutionManager->set_execution_mode(ExecutionManager::EExecutionMode::Editor);
-				   
-				   // Reset camera if needed
-				   if (mCameraManager->active_camera().has_value()) {
-					   mCameraManager->active_camera()->get().get_component<TransformComponent>().set_translation(glm::vec3(0, 100, 250));
-				   }
-				   nanogui::async([this]() {
-					   mUiManager->status_bar_panel()->resources_panel()-> refresh_file_view();
-				   });
-			   } else {
-				   std::cerr << "Failed to create or assign project folder: " << projectFolder << std::endl;
-			   }
-		   } catch (const std::filesystem::filesystem_error& e) {
-			   std::cerr << "Error creating project folder: " << e.what() << std::endl;
-		   }
-	   });
+		nanogui::file_dialog_async({{"", "Folders"}}, true, false,
+								   [this](const std::vector<std::string>& folders) {
+			if (folders.empty()) {
+				return; // User canceled
+			}
+			std::string projectFolder = folders.front();
+			try {
+				if (DirectoryNode::createProjectFolder(projectFolder)) {
+					// Reset the application state for the new project
+					mBlueprintManager->stop();
+					mUiCommon->hierarchy_panel()->clear_actors();
+					mExecutionManager->set_execution_mode(ExecutionManager::EExecutionMode::Editor);
+					
+					// Asynchronously refresh the file view to show the new project folder
+					nanogui::async([this]() {
+						mUiManager->status_bar_panel()->resources_panel()->refresh_file_view();
+					});
+				}
+			} catch (const std::exception& e) {
+				std::cerr << "Error creating project folder: " << e.what() << std::endl;
+			}
+		});
 	});
-
 }
-

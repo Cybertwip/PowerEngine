@@ -32,7 +32,7 @@ public:
 	virtual ~FileView();
 	
 	// Refresh the view with an optional filter text
-	void refresh(const std::string& filter_text = "");
+	void refresh();
 	
 	// Handle scroll events
 	virtual bool scroll_event(const nanogui::Vector2i& p, const nanogui::Vector2f& rel) override;
@@ -45,6 +45,10 @@ protected:
 	virtual void draw(NVGcontext* ctx) override;
 	
 private:
+	
+	void setup_button_interactions(std::shared_ptr<nanogui::Button> button, const std::shared_ptr<DirectoryNode>& node);
+		void initiate_drag_operation(std::shared_ptr<nanogui::Button> button, const std::shared_ptr<DirectoryNode>& node);
+
 	// Initialize texture cache
 	void initialize_texture_cache();
 	
@@ -75,9 +79,7 @@ private:
 	void handle_file_interaction(DirectoryNode& node);
 
 	// Asynchronously load thumbnail
-	void load_thumbnail(const std::shared_ptr<DirectoryNode>& node,
-						const std::shared_ptr<nanogui::ImageView>& image_view,
-						std::shared_ptr<nanogui::Texture> texture);
+	void load_thumbnail(const std::shared_ptr<DirectoryNode>& node, std::shared_ptr<nanogui::ImageView> image_view);
 	
 	// Load image data from a file
 	std::vector<uint8_t> load_image_data(const std::string& path);

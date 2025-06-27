@@ -59,7 +59,7 @@ on_model_selected_(on_model_selected)
 }
 
 void MeshPicker::refresh_file_list() {
-	mFileView->refresh(mFilterValue);
+//	mFileView->refresh(mFilterValue);
 }
 
 void MeshPicker::ProcessEvents() {
