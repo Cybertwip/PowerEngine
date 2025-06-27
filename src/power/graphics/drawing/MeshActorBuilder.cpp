@@ -313,20 +313,23 @@ Actor& MeshActorBuilder::build(Actor& actor, AnimationTimeProvider& timeProvider
 
 
 
-Actor& MeshActorBuilder::build(Actor& actor, AnimationTimeProvider& timeProvider, AnimationTimeProvider& previewTimeProvider, std::stringstream& fbxStream, const std::string& path, ShaderWrapper& meshShader, ShaderWrapper& skinnedShader) {
+Actor& MeshActorBuilder::build(Actor& actor, AnimationTimeProvider& timeProvider, AnimationTimeProvider& previewTimeProvider, std::stringstream& dataStream, const std::string& path, ShaderWrapper& meshShader, ShaderWrapper& skinnedShader) {
 	
 	std::string actorName = std::filesystem::path(path).stem().string();
 	
-	
+	auto testPath = std::filesystem::path(path);
+
+	auto testExtension = testPath.extension().string();
+
 	// Create Deserializer
 	CompressedSerialization::Deserializer deserializer;
 	
-	std::unique_ptr<CompressedMeshActor> compressedMeshActor;
+	std::unique_ptr<MeshActorImporter::CompressedMeshActor> compressedMeshActor;
 
-	if (path.contains("fbx")) {
-		compressedMeshActor = mMeshActorImporter->processFbx(path, directory);
-	} else if(path.contains("gr2")) {
-		compressedMeshActor = mMeshActorImporter->processGr2(path, directory);
+	if (testExtension == ".fbx") {
+		compressedMeshActor = mMeshActorImporter->processFbx(dataStream, actorName, "./dummyDestination/");
+	} else if(testExtension == ".gr2") {
+		compressedMeshActor = mMeshActorImporter->processGr2(dataStream, actorName, "./dummyDestination/");
 	}
 	
 	std::stringstream compressedData;
