@@ -10,10 +10,6 @@
 #include <entt/entt.hpp>
 
 class IActorVisualManager;
-//class PowerSettingsWindow;
-//class PowerPromptWindow;
-//class DeepMotionApiClient;
-//class DeepMotionSettingsWindow;
 class FileView;
 class ImportWindow;
 class MeshActorImporter;
@@ -21,8 +17,6 @@ class MeshActorExporter;
 class MeshActorLoader;
 class MeshActorBuilder;
 class MeshPicker;
-//class PowerAi;
-//class PromptWindow;
 class SceneTimeBar;
 class SelfContainedMeshCanvas;
 class ShaderManager;
@@ -34,7 +28,7 @@ public:
 	ResourcesPanel(nanogui::Widget& parent, nanogui::Screen& screen,
 				   DirectoryNode& root_directory_node, std::shared_ptr<IActorVisualManager> actorVisualManager,
 				   std::shared_ptr<SceneTimeBar> sceneTimeBar,
-				   AnimationTimeProvider& animationTimeProvider, AnimationTimeProvider& previewTimeProvider, MeshActorLoader& meshActorLoader, ShaderManager& shaderManager, /*DeepMotionApiClient& deepMotionApiClient, PowerAi& powerAi,*/ UiManager& uiManager);
+				   AnimationTimeProvider& animationTimeProvider, AnimationTimeProvider& previewTimeProvider, MeshActorLoader& meshActorLoader, ShaderManager& shaderManager, UiManager& uiManager);
 	
 	~ResourcesPanel();
 	
@@ -82,28 +76,13 @@ private:
 	std::shared_ptr<DirectoryNode> mSelectedNode;
 	
 	std::shared_ptr<ImportWindow> mImportWindow;
-	std::shared_ptr<MeshPicker> mMeshPicker;
-	
-//	std::shared_ptr<DeepMotionSettingsWindow> mDeepMotionSettings;
-
-//	std::shared_ptr<PowerSettingsWindow> mPowerSettingsWindow;
-
-//	std::shared_ptr<PowerPromptWindow> mPowerPromptWindow;
-
-//	std::shared_ptr<nanogui::Button> mArtButton;
-//	std::shared_ptr<nanogui::Button> mModelButton;
-//	std::shared_ptr<nanogui::Button> mAnimationButton;
-//	std::shared_ptr<nanogui::Button> mSceneButton;
 
 	std::unique_ptr<MeshActorImporter> mMeshActorImporter;
 	std::unique_ptr<MeshActorExporter> mMeshActorExporter;
 	
-//	std::shared_ptr<PromptWindow> mPromptWindow;
 	std::shared_ptr<SceneTimeBar> mSceneTimeBar;
 	
 	UiManager& mUiManager;
 	
-//	DeepMotionApiClient& mDeepMotionApiClient;
-//	PowerAi& mPowerAi;
 	ShaderManager& mShaderManager;
 };
