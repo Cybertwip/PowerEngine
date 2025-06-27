@@ -340,18 +340,47 @@ bool Application::drop_event(Widget& sender, const std::vector<std::string> & fi
 			}
 		}
 	});
-		
-	//}
 }
 
 void Application::new_project_action() {
-	// Clear existing actors and reset the scene
-	mBlueprintManager->stop();
-	mUiCommon->hierarchy_panel()->clear_actors();
-	mExecutionManager->set_execution_mode(ExecutionManager::EExecutionMode::Editor);
-	
-	// Reset camera if needed
-	if (mCameraManager->active_camera().has_value()) {
-		mCameraManager->active_camera()->get().get_component<TransformComponent>().set_translation(glm::vec3(0, 100, 250));
-	}
+	nanogui::async([this]() {
+		nanogui::file_dialog_async(
+	   {{"", "Folders"}}, // Empty extension for folder selection
+	   true,              // Directory selection mode
+	   true,              // Allow creating new directories
+	   [this](const std::vector<std::string>& folders) {
+		   if (folders.empty()) {
+			   return; // User canceled
+		   }
+		   
+		   std::string projectFolder = folders.front();
+		   try {
+			   // Create the folder and assign it to the DirectoryNode singleton
+			   if (DirectoryNode::createProjectFolder(projectFolder)) {
+				   std::cout << "New project folder created and assigned: " << projectFolder << std::endl;
+				   // Refresh the file view to reflect the new project structure
+				   
+				   
+				   // Clear existing actors and reset the scene
+				   mBlueprintManager->stop();
+				   mUiCommon->hierarchy_panel()->clear_actors();
+				   mExecutionManager->set_execution_mode(ExecutionManager::EExecutionMode::Editor);
+				   
+				   // Reset camera if needed
+				   if (mCameraManager->active_camera().has_value()) {
+					   mCameraManager->active_camera()->get().get_component<TransformComponent>().set_translation(glm::vec3(0, 100, 250));
+				   }
+				   nanogui::async([this]() {
+					   mUiManager->status_bar_panel()->resources_panel()-> refresh_file_view();
+				   });
+			   } else {
+				   std::cerr << "Failed to create or assign project folder: " << projectFolder << std::endl;
+			   }
+		   } catch (const std::filesystem::filesystem_error& e) {
+			   std::cerr << "Error creating project folder: " << e.what() << std::endl;
+		   }
+	   });
+	});
+
 }
+

@@ -246,42 +246,38 @@ void ResourcesPanel::refresh() {
 //	return Panel::keyboard_event(key, scancode, action, modifiers);
 //}
 
-
 void ResourcesPanel::import_assets() {
-	// Open a file dialog to select files to import
-	nanogui::async([this](){
+	nanogui::async([this]() {
 		nanogui::file_dialog_async(
-								   { {"fbx", "All Files"} }, false, false, [this](const std::vector<std::string>& files){
-									   
+								   {{"fbx", "All Files"}}, false, false, [this](const std::vector<std::string>& files) {
 									   for (const auto& file : files) {
-										   
 										   try {
-											   // Copy the selected file to the current directory
+											   // Copy the selected file to the current directory (singleton's path)
+											   std::string destinationPath = DirectoryNode::getInstance().FullPath + "/" + std::filesystem::path(file).filename().string();
+											   std::filesystem::copy(file, destinationPath, std::filesystem::copy_options::overwrite_existing);
 											   
-											   mImportWindow->Preview(file, mSelectedDirectoryPath);
+											   // Preview the imported file
+											   mImportWindow->Preview(file, DirectoryNode::getInstance().FullPath);
 											   
 										   } catch (const std::exception& e) {
 											   std::cerr << "Error importing asset: " << e.what() << std::endl;
 										   }
 									   }
 									   
-									   // Refresh the file view to display the newly imported assets
-									   nanogui::async([this](){
+									   // Refresh the singleton and file view
+									   nanogui::async([this]() {
+										   DirectoryNode::getInstance().refresh();
 										   refresh_file_view();
 									   });
-									   
 								   });
 	});
-	
-	
 }
 
 void ResourcesPanel::export_assets() {
 	if (mSelectedNode != nullptr) {
-		// Open a file dialog to select the destination directory
-		nanogui::async([this](){
+		nanogui::async([this]() {
 			nanogui::file_dialog_async(
-									   { {"fbx", "All Files"} }, true, false, [this](const std::vector<std::string>& files){
+									   {{"fbx", "All Files"}}, true, false, [this](const std::vector<std::string>& files) {
 										   if (files.empty()) {
 											   return; // User canceled
 										   }
@@ -289,7 +285,6 @@ void ResourcesPanel::export_assets() {
 										   std::string destinationFile = files.front();
 										   
 										   try {
-											   // Copy files or directories
 											   CompressedSerialization::Deserializer deserializer;
 											   
 											   // Load the serialized file
@@ -301,28 +296,25 @@ void ResourcesPanel::export_assets() {
 											   mMeshActorExporter->exportToFile(deserializer, mSelectedNode->FullPath, destinationFile);
 											   
 											   std::cout << "Assets exported to: " << destinationFile << std::endl;
-										   } catch (const fs::filesystem_error& e) {
+										   } catch (const std::filesystem::filesystem_error& e) {
 											   std::cerr << "Error exporting assets: " << e.what() << std::endl;
 										   }
 									   });
 		});
 	} else {
-		nanogui::async([this](){
+		nanogui::async([this]() {
 			nanogui::file_dialog_async(
-									   { {"mp4", "All Files"} }, true, false, [this](const std::vector<std::string>& files){
+									   {{"mp4", "All Files"}}, true, false, [this](const std::vector<std::string>& files) {
 										   if (files.empty()) {
 											   return; // User canceled
 										   }
 										   
 										   std::string destinationFile = files.front();
-										   
 										   mUiManager.export_movie(destinationFile);
 									   });
-			
 		});
 	}
 }
-
 void ResourcesPanel::process_events() {
 	mImportWindow->ProcessEvents();
 	mFileView->ProcessEvents();
