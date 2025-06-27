@@ -16,7 +16,6 @@ struct DirectoryNode : public std::enable_shared_from_this<DirectoryNode> {
 	// Prevent copying and moving
 	DirectoryNode(const DirectoryNode&) = delete;
 	DirectoryNode(DirectoryNode&&) = delete;
-	DirectoryNode& operator=(DirectoryNode&&) = delete;
 	
 	// Initialize or update the singleton with a new directory path
 	static bool initialize(const std::string& path) {
