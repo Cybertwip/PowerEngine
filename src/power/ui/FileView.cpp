@@ -38,8 +38,8 @@ mOnFileSelected(onFileSelected),
 m_recursive(recursive),
 m_selected_button(nullptr),
 m_selected_node(nullptr),
-m_normal_button_color(200, 200, 200, 255),
-m_selected_button_color(100, 100, 255, 255),
+m_normal_button_color(200, 200, 200, 0),
+m_selected_button_color(100, 100, 255, 0),
 m_scroll_offset(0.0f),
 m_accumulated_scroll_delta(0.0f),
 m_total_rows(0),
@@ -111,44 +111,40 @@ void FileView::release_texture(std::shared_ptr<nanogui::Texture> texture) {
 		m_texture_cache.push_back(texture);
 	}
 }
+
 std::shared_ptr<nanogui::Button> FileView::acquire_button(const std::shared_ptr<DirectoryNode>& child) {
-	// 1. Create item container using the specified constructor pattern.
-	// This adds the widget to m_content and returns a shared_ptr.
+	// 1. Create item container
 	auto item_container = std::make_shared<nanogui::Widget>(std::make_optional<std::reference_wrapper<nanogui::Widget>>(*m_content));
 	item_container->set_fixed_size({144, m_row_height});
 	item_container->set_layout(std::make_unique<nanogui::BoxLayout>(nanogui::Orientation::Vertical, nanogui::Alignment::Middle, 0, 5));
-	m_item_containers.push_back(item_container); // Store pointer to manage lifetime
+	m_item_containers.push_back(item_container);
 	
-	// 2. Create the main button as a child of the container.
+	// 2. Create the main button
 	auto icon_button = std::shared_ptr<nanogui::Button>(new nanogui::Button(*item_container, "", get_icon_for_file(*child)));
-	icon_button->set_fixed_size({144, 110});
+	icon_button->set_fixed_size({128, 128});
 	icon_button->set_background_color(m_normal_button_color);
-	m_file_buttons.push_back(icon_button); // Store pointer
+	m_file_buttons.push_back(icon_button);
 	
-	// 3. Create the image view. Note the parenting change below.
-	auto image_view = std::shared_ptr<nanogui::ImageView>(new nanogui::ImageView(*icon_button, screen())); // Parented to button
+	// 3. Create the image view
+	auto image_view = std::shared_ptr<nanogui::ImageView>(new nanogui::ImageView(*icon_button, screen()));
 	image_view->set_size({128, 128});
-	m_image_views.push_back(image_view); // Store pointer
+	m_image_views.push_back(image_view);
 	
-	// 4. Create the label as a child of the icon_button.
+	// 4. Create the label
 	auto name_label = std::make_shared<nanogui::Label>(*icon_button, child->FileName);
 	name_label->set_fixed_width(144);
-	// Position the label at the bottom of the button area.
 	name_label->set_position({0, static_cast<int>(icon_button->height() * 0.8)});
 	name_label->set_alignment(nanogui::Label::Alignment::Center);
-	m_name_labels.push_back(name_label); // Store pointer
+	m_name_labels.push_back(name_label);
 	
-	// Asynchronously load the thumbnail into the image view
+	// Asynchronously load the thumbnail
 	load_thumbnail(child, image_view);
 	
-	// Setup all interaction logic (click, double-click, drag)
-	setup_button_interactions(icon_button, child);
+	// MODIFICATION: Pass the image_view to the setup function
+	setup_button_interactions(icon_button, image_view, child);
 	
 	return icon_button;
 }
-
-
-
 
 void FileView::set_selected_directory_path(const std::string& path) {
 	{
@@ -565,8 +561,12 @@ void FileView::collect_nodes_recursive(DirectoryNode* node, std::vector<std::sha
 		}
 	}
 }
-void FileView::setup_button_interactions(std::shared_ptr<nanogui::Button> button, const std::shared_ptr<DirectoryNode>& node) {
-	// Setup single-click for selection
+void FileView::setup_button_interactions(
+										 std::shared_ptr<nanogui::Button> button,
+										 std::shared_ptr<nanogui::ImageView> image_view, // Receive the image_view
+										 const std::shared_ptr<DirectoryNode>& node)
+{
+	// Keep single-click on the button for selection. This is fine.
 	button->set_callback([this, button, node]() {
 		if (m_selected_button) {
 			m_selected_button->set_background_color(m_normal_button_color);
@@ -580,20 +580,27 @@ void FileView::setup_button_interactions(std::shared_ptr<nanogui::Button> button
 		}
 	});
 	
-	// Setup double-click (optional, but good practice)
+	// Keep double-click on the button. This is also fine.
 	button->set_double_click_callback([this, node]() {
 		handle_file_interaction(*node);
 	});
 	
-	// THIS IS THE MAIN FIX: Use the button's drag callback to initiate the screen drag operation.
-	button->set_drag_callback([this, button, node](const nanogui::Vector2i&, const nanogui::Vector2i& rel, int, int) {
+	// === THE FIX ===
+	// Move the drag callback from the button to the image_view.
+	// The image_view is the widget receiving the drag event.
+	image_view->set_drag_callback([this, button, node](const nanogui::Vector2i&, const nanogui::Vector2i& rel, int, int) {
 		// Check if a drag is not already active and if the mouse has moved enough
 		if (!m_is_dragging && (std::abs(rel.x()) > 5 || std::abs(rel.y()) > 5)) {
 			// Set a flag to ensure we only initiate the drag once per gesture
 			m_is_dragging = true;
+			
+			// Since the button is what's visually selected, we can still pass it.
 			initiate_drag_operation(button, node);
 		}
 	});
+	
+	// We no longer need this, as the button will never receive the drag event.
+	// button->set_drag_callback(...) // DELETE THIS
 }
 
 // This function now correctly initiates the drag operation at the start of the gesture.
@@ -634,7 +641,7 @@ void FileView::initiate_drag_operation(std::shared_ptr<nanogui::Button> button, 
 	drag_container->set_visible(true);
 	
 	// 4. This is the core step: "arm" the screen's drag system with the drop callback.
-	screen().set_drag_widget(drag_container, [this, node]() {
+	screen().set_drag_widget(drag_container, [this, drag_container, node]() {
 		// This lambda is the DROP HANDLER. It's executed when the user releases the mouse.
 		std::vector<std::string> paths = { node->FullPath };
 		
@@ -643,7 +650,6 @@ void FileView::initiate_drag_operation(std::shared_ptr<nanogui::Button> button, 
 		
 		// Clean up: hide the payload and release the screen's drag widget.
 		m_drag_payload->set_visible(false);
-		drag_container->remove_child(*m_drag_payload); // Important: remove child
 		screen().set_drag_widget(nullptr, nullptr);
 		
 		// Reset our local drag state flag

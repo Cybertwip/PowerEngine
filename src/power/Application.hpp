@@ -40,8 +40,10 @@ public:
 	}
 	
 	void do_drag_finish() {
-		m_children.clear(); // hollow clearing, deallocation is own responsibility
-		
+		// DANGEROUS: DO NOT DO THIS. It breaks ownership rules.
+		// The FileView which added the payload is responsible for removing it.
+		// m_children.clear(); // REMOVE THIS LINE
+
 		if (m_drag_callback) {
 			m_drag_callback();
 			m_drag_callback = nullptr;
@@ -152,6 +154,8 @@ protected:
 			m_drag_widget = nullptr;
 		} else {
 			// This function's role is to "arm" the drag system.
+			move_window_to_front(*m_draggable_window);
+			m_draggable_window->set_visible(true);
 			m_draggable_window->set_drag_callback(drag_callback);
 			m_drag_widget = m_draggable_window.get();
 			// Don't set m_drag_active here. It becomes active on mouse move.

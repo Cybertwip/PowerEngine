@@ -140,7 +140,11 @@ bool Widget::scroll_event(const Vector2i &p, const Vector2f &rel) {
 	return false;
 }
 
-bool Widget::mouse_drag_event(const Vector2i &, const Vector2i &, int, int) {
+bool Widget::mouse_drag_event(const Vector2i &p, const Vector2i &rel, int button, int modifiers) {
+	if (m_drag_callback) {
+		m_drag_callback(p, rel, button, modifiers);
+		return true;
+	}
 	return false;
 }
 

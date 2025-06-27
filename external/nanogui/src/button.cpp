@@ -134,7 +134,6 @@ bool Button::mouse_button_event(const Vector2i &p, int button, bool down, int) {
 	return false;
 }
 
-
 void Button::draw(NVGcontext *ctx) {
     NVGcolor grad_top = theme().m_button_gradient_top_unfocused;
     NVGcolor grad_bot = theme().m_button_gradient_bot_unfocused;

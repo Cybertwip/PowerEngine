@@ -264,6 +264,9 @@ public:
     /// Handle a mouse enter/leave event (default implementation: record this fact, but do nothing)
     virtual bool mouse_enter_event(const Vector2i &p, bool enter);
 
+	/// Set the drag callback
+	void set_drag_callback(const std::function<void(const Vector2i&, const Vector2i&, int, int)>& callback) { m_drag_callback = callback; }
+
     /// Handle a mouse scroll event (default implementation: propagate to children)
     virtual bool scroll_event(const Vector2i &p, const Vector2f &rel);
 
@@ -359,6 +362,11 @@ protected:
 	std::optional<std::reference_wrapper<Screen>> m_screen;
 	
 	bool m_initialized;
+	
+	
+	/// The callback issued for a drag event.
+	std::function<void(const Vector2i&, const Vector2i&, int, int)> m_drag_callback;
+
 	
 };
 

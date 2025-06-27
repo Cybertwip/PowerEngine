@@ -46,8 +46,13 @@ protected:
 	
 private:
 	
-	void setup_button_interactions(std::shared_ptr<nanogui::Button> button, const std::shared_ptr<DirectoryNode>& node);
-		void initiate_drag_operation(std::shared_ptr<nanogui::Button> button, const std::shared_ptr<DirectoryNode>& node);
+	void setup_button_interactions(
+								   std::shared_ptr<nanogui::Button> button,
+								   std::shared_ptr<nanogui::ImageView> image_view, // Add this parameter
+								   const std::shared_ptr<DirectoryNode>& node
+								   );
+
+	void initiate_drag_operation(std::shared_ptr<nanogui::Button> button, const std::shared_ptr<DirectoryNode>& node);
 
 	// Initialize texture cache
 	void initialize_texture_cache();

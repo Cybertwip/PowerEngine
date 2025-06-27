@@ -108,7 +108,6 @@ public:
 	/// Set the double-click callback
 	void set_double_click_callback(const std::function<void()> &callback) { m_double_click_callback = callback; }
 
-
     /// Return the change callback (for toggle buttons)
     const std::function<void(bool)> &change_callback() const { return m_change_callback; }
     /// Set the change callback (for toggle buttons).
