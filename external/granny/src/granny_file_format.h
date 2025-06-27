@@ -134,7 +134,7 @@ EXPTYPE enum grn_type_tag
     LastGRNStandardTag = 0xFFFFFFFF
 };
 // Changing the GRN file format? Remember to increment this number.
-#define CurrentGRNStandardTag (0x80000000 + 38) EXPMACRO
+#define CurrentGRNStandardTag (0x80000000 + 55) EXPMACRO
 
 #define CurrentGRNFileVersion 7 EXPMACRO
 #define GRNExtraTagCount 4 EXPMACRO

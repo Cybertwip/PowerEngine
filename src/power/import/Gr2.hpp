@@ -11,7 +11,6 @@
 #include <unordered_map>
 
 // Forward declarations for the Granny library types
-struct granny_animation;
 struct granny_file;
 struct granny_file_info;
 struct granny_node;
@@ -19,7 +18,7 @@ struct granny_mesh;
 struct granny_material;
 struct granny_model;
 struct granny_skeleton;
-
+struct granny_animation;
 
 class Gr2 {
 public:
@@ -37,8 +36,8 @@ public:
 	bool LoadFrom(const std::string& filename);
 	
 protected:
-	virtual void ProcessSkeletons(const granny_model* model, const granny_mesh* mesh, MeshData& meshData);
-	
+	virtual void ProcessMesh(const granny_mesh* mesh, const granny_model* model, int materialBaseIndex);
+
 	std::string mPath;
 	std::vector<std::unique_ptr<MeshData>> mMeshes;
 	std::vector<std::vector<std::shared_ptr<SerializableMaterialProperties>>> mMaterialProperties;
@@ -46,7 +45,6 @@ protected:
 private:
 	void ProcessFile(granny_file* file);
 	void ProcessModel(const granny_model* model);
-	void ProcessMesh(const granny_mesh* mesh, const granny_model* model, MeshData& resultMesh, int materialBaseIndex);
 	void ProcessMaterials(const granny_model* model);
 	
 	struct GrannyState {

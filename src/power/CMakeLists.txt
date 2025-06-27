@@ -285,7 +285,7 @@ ozz_animation_fbx
 riscv
 wasmtime
 zlib
-agnosgranny
+gstate
 #grpc++ 
 ${platform_specific_libraries})
 

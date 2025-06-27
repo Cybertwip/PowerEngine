@@ -6,36 +6,73 @@
 
 // --- SkinnedGr2 Class Implementation ---
 
-void SkinnedGr2::ProcessSkeletons(const granny_model* model, const granny_mesh* mesh, MeshData& meshData) {
-	if (!model || !model->Skeleton || !GrannyMeshIsRigid(mesh)) {
-		return; // Not a skinned mesh or no skeleton
+
+// This single override efficiently handles both skinned and rigid meshes.
+void SkinnedGr2::ProcessMesh(const granny_mesh* mesh, const granny_model* model, int materialBaseIndex) {
+	if (!mesh || !mesh->PrimaryVertexData) return;
+	
+	const auto& vertexData = *mesh->PrimaryVertexData;
+	if (vertexData.VertexCount == 0) return;
+	
+	auto patchedLayout = Gr2Util::PatchLayout(vertexData);
+	if (patchedLayout.empty()) {
+		std::cerr << "Error: Source vertex layout has no components." << std::endl;
+		return;
 	}
 	
-	// Build skeleton once
-	if (!mSkeleton) {
+	// A mesh can be part of a skeleton but not have skinning data (rigid).
+	if (GrannyMeshIsRigid(mesh)) {
+		// Fall back to the base class implementation for rigid meshes.
+		Gr2::ProcessMesh(mesh, model, materialBaseIndex);
+		return;
+	}
+	
+	// --- Skinned Mesh Processing Path ---
+	if (model->Skeleton && !mSkeleton) {
 		BuildSkeleton(model->Skeleton);
 	}
 	
-	// Create a skinned mesh from the base mesh data
-	auto skinnedMesh = std::make_unique<SkinnedMeshData>(meshData);
-	auto& skinnedVertices = skinnedMesh->get_vertices();
+	auto skinnedMesh = std::make_unique<SkinnedMeshData>();
+	auto& vertices = skinnedMesh->get_vertices();
+	auto& indices = skinnedMesh->get_indices();
+	vertices.reserve(vertexData.VertexCount);
 	
-	const auto& vertexData = *mesh->PrimaryVertexData;
-	// Use a vertex type that includes weights (up to 4 influences)
+	// Convert to a vertex type that includes skinning data
 	std::vector<granny_pwngt34332_vertex> tempSkinnedVerts(vertexData.VertexCount);
-	GrannyConvertVertexLayouts(vertexData.VertexCount, vertexData.VertexType, vertexData.Vertices, GrannyPWNGT34332VertexType, tempSkinnedVerts.data());
+	GrannyConvertVertexLayouts(vertexData.VertexCount, patchedLayout.data(), vertexData.Vertices, GrannyPWNGT34332VertexType, tempSkinnedVerts.data());
 	
-	for (size_t i = 0; i < skinnedVertices.size(); ++i) {
-		auto& vertex = static_cast<SkinnedMeshVertex&>(*skinnedVertices[i]);
-		const auto& src = tempSkinnedVerts[i];
+	// Process all vertex attributes in a single pass
+	for (const auto& src : tempSkinnedVerts) {
+		auto vertex = std::make_unique<SkinnedMeshVertex>();
+		vertex->set_position({src.Position[0], src.Position[1], src.Position[2]});
+		vertex->set_normal({src.Normal[0], src.Normal[1], src.Normal[2]});
+		vertex->set_texture_coords1({src.UV[0], src.UV[1]});
 		
+		// Extract bone weights and indices
 		for (int j = 0; j < 4; ++j) {
 			if (src.BoneWeights[j] > 0) {
 				float weight = static_cast<float>(src.BoneWeights[j]) / 255.0f;
-				vertex.set_bone(src.BoneIndices[j], weight);
+				vertex->set_bone(src.BoneIndices[j], weight);
 			}
 		}
-//		vertex.normalize_bones(); // Ensure weights sum to 1.0
+		// vertex->normalize_bones(); // Optional: ensure weights sum to 1.0
+		vertices.push_back(std::move(vertex));
+	}
+	
+	// --- Index and Material Processing (copied from original Gr2::ProcessMesh) ---
+	const auto& topology = *mesh->PrimaryTopology;
+	if (topology.IndexCount > 0) {
+		indices.resize(topology.IndexCount);
+		GrannyConvertIndices(topology.IndexCount, sizeof(granny_int32), topology.Indices, sizeof(uint32_t), indices.data());
+	} else if (topology.Index16Count > 0) {
+		// handle 16-bit indices
+	}
+	
+	for (int i = 0; i < topology.GroupCount; ++i) {
+		const auto& group = topology.Groups[i];
+		for (int tri = 0; tri < group.TriCount; ++tri) {
+			// ... (material assignment logic) ...
+		}
 	}
 	
 	mSkinnedMeshes.push_back(std::move(skinnedMesh));

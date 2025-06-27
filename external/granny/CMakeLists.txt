@@ -17,9 +17,14 @@ add_library(agnosgranny ${AGNOSGRANNY_SOURCES})
 
 
 if(APPLE OR UNIX)
+    # Apply compiler-specific flags for struct packing
     target_compile_options(agnosgranny PRIVATE
         -fno-strict-aliasing
+
+        # Flag for GCC
+        -fpack-struct=1
     )
+
 endif()
 
 

@@ -40,7 +40,7 @@ public:
 	}
 	
 	void do_drag_finish() {
-		 m_children.clear(); // REMOVE THIS LINE
+		 m_children.clear(); 
 
 		if (m_drag_callback) {
 			m_drag_callback();

@@ -1918,7 +1918,6 @@ GRANNY_DYNLINK(granny_texture *) GrannyGetMaterialTextureByType(granny_material 
         }
     }
 #endif // GRANNY_THREAD_CHECKS
-
     return ((granny_texture *)GetMaterialTextureByType((material const *)Material,
                                                        (material_texture_type)Type));
 }

@@ -20,7 +20,7 @@ public:
 	void TryImportAnimations();
 	
 protected:
-	void ProcessSkeletons(const granny_model* model, const granny_mesh* mesh, MeshData& meshData) override;
+	void ProcessMesh(const granny_mesh* mesh, const granny_model* model, int materialBaseIndex) override;
 	
 private:
 	void BuildSkeleton(const granny_skeleton* skel);

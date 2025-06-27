@@ -1,5 +1,6 @@
 #include "Gr2.hpp"
 #include "granny.h" // Use the provided granny.h
+#include "granny_data_type_definition.h" // Use the provided granny.h
 #include <fstream>
 #include <iostream>
 #include <filesystem>
@@ -26,13 +27,27 @@ inline glm::mat4 GrannyMatrixToGlm(const granny_matrix_4x4& grannyMatrix) {
 	memcpy(glm::value_ptr(result), grannyMatrix, sizeof(glm::mat4));
 	return result;
 }
+
+void CallbackFunc(granny_log_message_type Type,
+				  granny_log_message_origin Origin,
+				  char const* Message,
+				  void* UserData)
+{
+	char const* TypeString = GrannyGetLogMessageTypeString(Type);
+	char const* OriginString = GrannyGetLogMessageOriginString(Origin);
+	
+	printf("Granny says: %s (%s)\n"": %s\n", TypeString, OriginString, Message);
+}
+
+granny_log_callback LogCallback = { CallbackFunc, NULL };
+
 } // namespace Gr2Util
 
 // --- GrannyState RAII Implementation ---
 Gr2::GrannyState::GrannyState() {
 	// A handler for Granny's log messages can be set here if desired.
 	// For example: GrannySetLogCallback(&MyGrannyLogCallback);
-//	GrannySetLogCallback(nullptr); // Disable default logging
+	GrannySetLogCallback(&Gr2Util::LogCallback);
 	
 	// The default allocator is generally fine.
 	granny_allocate_callback* alloc;
@@ -85,41 +100,105 @@ void Gr2::ProcessFile(granny_file* file) {
 
 void Gr2::ProcessModel(const granny_model* model) {
 	if (!model) return;
-	
-	// Process materials for the entire model first.
 	ProcessMaterials(model);
-	
 	int materialBaseIndex = 0;
 	for (int i = 0; i < model->MeshBindingCount; ++i) {
 		const granny_mesh* mesh = model->MeshBindings[i].Mesh;
-		auto& resultMesh = mMeshes.emplace_back(std::make_unique<MeshData>());
-		
-		// Pass the material base index to correctly offset mesh-local material indices.
-		ProcessMesh(mesh, model, *resultMesh, materialBaseIndex);
-		
+		// This now calls the correct version (base or derived) polymorphically
+		ProcessMesh(mesh, model, materialBaseIndex);
 		if (mesh) {
 			materialBaseIndex += mesh->MaterialBindingCount;
 		}
-		
-		ProcessSkeletons(model, mesh, *resultMesh);
 	}
 }
 
+
 // The materialBaseIndex parameter is added to correctly map mesh-local material indices
 // to the model-global material list.
-void Gr2::ProcessMesh(const granny_mesh* mesh, const granny_model* model, MeshData& resultMesh, int materialBaseIndex) {
-	if (!mesh || !mesh->PrimaryVertexData) {
-		std::cerr << "Error: Invalid mesh or no vertex data." << std::endl;
+void Gr2::ProcessMesh(const granny_mesh* mesh, const granny_model* model, int materialBaseIndex) {
+	if (!mesh || !mesh->PrimaryVertexData) return;
+
+	auto& resultMesh = mMeshes.emplace_back(std::make_unique<MeshData>());
+
+	auto& vertices = resultMesh->get_vertices();
+	auto& indices = resultMesh->get_indices();
+	const auto& vertexData = *mesh->PrimaryVertexData;
+	
+	if (vertexData.VertexCount == 0) {
+		return; // Nothing to process
+	}
+	
+	// --- FIX STARTS HERE ---
+	
+	// The crash occurs because vertexData.VertexType doesn't contain the
+	// string names for its components. The conversion function needs these names
+	// to match components from the source layout to the destination layout.
+	// The names are instead stored in the separate vertexData.VertexComponentNames array.
+	//
+	// The solution is to create a temporary, "patched" layout definition.
+	// This patched layout will be a copy of the original, but with the .Name pointers
+	// correctly set to the strings from VertexComponentNames.
+	
+	// 1. Determine the number of components. We assume VertexComponentNameCount holds this value.
+	//    If that member doesn't exist, you may need to loop through vertexData.VertexType until
+	//    the 'Type' is EndMember.
+	int componentCount = 0;
+	if (vertexData.VertexType) {
+		for (const granny_data_type_definition* def = vertexData.VertexType; def->Type != granny::EndMember; ++def) {
+			componentCount++;
+		}
+	}
+	
+	// Safety check against the names array if it's available.
+	// int componentCount = vertexData.VertexComponentNameCount;
+	
+	if (componentCount == 0) {
+		std::cerr << "Error: Source vertex layout has no components." << std::endl;
 		return;
 	}
 	
-	auto& vertices = resultMesh.get_vertices();
-	auto& indices = resultMesh.get_indices();
-	const auto& vertexData = *mesh->PrimaryVertexData;
+	// 2. Create a C++ vector to hold the patched layout definition.
+	//    We need space for all components plus one for the terminating 'EndMember'.
+	std::vector<granny_data_type_definition> patchedSourceLayout;
+	patchedSourceLayout.reserve(componentCount + 1);
 	
-	// Convert vertex data to a known layout (PNT332) for easy parsing
+	// 3. Copy the layout info and patch the names.
+	for (int i = 0; i < componentCount; ++i) {
+		// Start with a copy of the original type definition entry.
+		granny_data_type_definition newDef = vertexData.VertexType[i];
+		
+		// Overwrite the Name pointer to point to the correct string from the names array.
+		// This is the critical step that fixes the crash.
+		newDef.Name = vertexData.VertexComponentNames[i];
+		
+		// Add the patched definition to our vector.
+		patchedSourceLayout.push_back(newDef);
+	}
+	
+	// 4. Add the mandatory terminator to the end of the layout definition array.
+	granny_data_type_definition endMember = {
+		GrannyEndMember, // Type
+		nullptr,           // Name
+		nullptr,           // ReferenceType
+		0,                 // ArrayWidth
+		{0, 0, 0},         // Extra
+		0                  // Ignored__Ignored
+	};
+	patchedSourceLayout.push_back(endMember);
+	
+	// --- FIX ENDS HERE ---
+	
+	// Now, convert the vertex data using the patched layout.
 	std::vector<granny_pnt332_vertex> tempVertices(vertexData.VertexCount);
-	GrannyConvertVertexLayouts(vertexData.VertexCount, vertexData.VertexType, vertexData.Vertices, GrannyPNT332VertexType, tempVertices.data());
+	
+	GrannyConvertVertexLayouts(
+							   vertexData.VertexCount,
+							   patchedSourceLayout.data(), // <-- Use the patched layout here
+							   vertexData.Vertices,
+							   GrannyPNT332VertexType,     // This is your target type
+							   tempVertices.data()
+							   );
+
 	
 	vertices.reserve(vertexData.VertexCount);
 	for (const auto& tv : tempVertices) {
@@ -195,7 +274,7 @@ void Gr2::ProcessMaterials(const granny_model* model) {
 			matData.mOpacity = 1.0f;
 			matData.mShininess = 32.0f;
 			
-			granny_texture* diffuseTexture = GrannyGetMaterialTextureByChannelName(material, "Diffuse Color");
+			granny_texture* diffuseTexture = GrannyGetMaterialTextureByType(material, GrannyDiffuseColorTexture);
 			
 			if (diffuseTexture && diffuseTexture->FromFileName) {
 				std::filesystem::path gr2FilePath = mPath;
@@ -218,9 +297,6 @@ void Gr2::ProcessMaterials(const granny_model* model) {
 	mMaterialProperties.push_back(std::move(serializableMaterials));
 }
 
-
-// Base class implementation is a no-op, to be overridden by SkinnedGr2.
-void Gr2::ProcessSkeletons(const granny_model* model, const granny_mesh* mesh, MeshData& meshData) {}
 
 std::vector<std::unique_ptr<MeshData>>& Gr2::GetMeshData() { return mMeshes; }
 void Gr2::SetMeshData(std::vector<std::unique_ptr<MeshData>>&& meshData) { mMeshes = std::move(meshData); }

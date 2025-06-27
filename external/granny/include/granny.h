@@ -704,6 +704,22 @@ typedef enum granny_log_message_origin
     GrannyOnePastLastMessageOrigin
 } granny_log_message_origin;
 
+#define GrannyDefaultAllocationAlignment 4
+#define GrannyMatrixBufferAlignment 16
+#define GrannyLocalPoseAlignment 16
+typedef enum granny_allocation_intent
+{
+	GrannyAllocationUnknown = 0,
+	GrannyAllocationTemporary = 1,
+	GrannyAllocationInstance = 2,
+	GrannyAllocationFileData = 3,
+	GrannyAllocationLongTerm = 4,
+	GrannyAllocationBuilder = 5,
+	Grannyallocation_intent_forceint = 0x7fffffff
+} granny_allocation_intent;
+GrannyTypeSizeCheck(sizeof(granny_allocation_intent) == sizeof(granny_int32));
+
+
 typedef struct granny_log_callback granny_log_callback;
 
 typedef struct granny_allocation_header granny_allocation_header;
