@@ -12,10 +12,6 @@
 #include "actors/Actor.hpp"
 #include "actors/ActorManager.hpp"
 #include "actors/IActorSelectedRegistry.hpp"
-#include "ai/DeepMotionApiClient.hpp"
-#include "ai/OpenAiApiClient.hpp"
-//#include "ai/PowerAi.hpp"
-#include "ai/TripoAiApiClient.hpp"
 
 #include "animation/HeuristicSkeletonPoser.hpp"  // debug
 #include "animation/Skeleton.hpp"  // debug

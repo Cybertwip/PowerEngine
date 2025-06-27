@@ -1,10 +1,5 @@
 #include "ui/ResourcesPanel.hpp"
 
-//#include "ai/OpenAiApiClient.hpp"
-//#include "ai/PowerPromptWindow.hpp"
-//#include "ai/PowerSettingsWindow.hpp"
-//#include "ai/DeepMotionSettingsWindow.hpp"
-//#include "ai/DeepMotionPromptWindow.hpp"
 #include "actors/IActorSelectedRegistry.hpp"
 #include "filesystem/MeshActorImporter.hpp"
 #include "filesystem/MeshActorExporter.hpp"
