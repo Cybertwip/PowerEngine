@@ -131,15 +131,6 @@ mShaderManager(shaderManager)
 	mToolbar = std::make_shared<nanogui::Widget>(std::make_optional<std::reference_wrapper<nanogui::Widget>>(*this));
 	mToolbar->set_layout(std::make_unique<nanogui::BoxLayout>(
 															  nanogui::Orientation::Horizontal, nanogui::Alignment::Middle, 10, 10));
-	
-	
-	mMeshPicker = std::make_shared<MeshPicker>(screen, mRootDirectoryNode, [this](std::shared_ptr<DirectoryNode> node){
-		mMeshPicker->set_visible(false);
-		mMeshPicker->set_modal(false);
-	});
-	
-	mMeshPicker->set_visible(false);
-	mMeshPicker->set_modal(false);
 
 	mImportWindow = std::make_shared<ImportWindow>(screen, *this, mShaderManager.render_pass(), mShaderManager);
 	
