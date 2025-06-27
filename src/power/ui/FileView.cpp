@@ -41,6 +41,9 @@ m_selected_node(nullptr),
 m_normal_button_color(200, 200, 200, 255),
 m_selected_button_color(100, 100, 255, 255),
 m_scroll_offset(0.0f),
+m_accumulated_scroll_delta(0.0f),
+m_total_rows(0),
+m_visible_rows(3),
 m_row_height(144)
 {
 	set_layout(std::make_unique<nanogui::GridLayout>(nanogui::Orientation::Horizontal, m_columns, nanogui::Alignment::Middle, 8, 8));
@@ -309,6 +312,8 @@ void FileView::refresh() {
 	m_content->shed_children();
 	m_selected_button = nullptr;
 	m_selected_node = nullptr;
+
+	m_root_directory_node.refresh();
 	
 	populate_file_view();
 	
@@ -560,10 +565,9 @@ void FileView::collect_nodes_recursive(DirectoryNode* node, std::vector<std::sha
 		}
 	}
 }
-
 void FileView::setup_button_interactions(std::shared_ptr<nanogui::Button> button, const std::shared_ptr<DirectoryNode>& node) {
+	// Setup single-click for selection
 	button->set_callback([this, button, node]() {
-		// Handle single-click selection
 		if (m_selected_button) {
 			m_selected_button->set_background_color(m_normal_button_color);
 		}
@@ -576,33 +580,32 @@ void FileView::setup_button_interactions(std::shared_ptr<nanogui::Button> button
 		}
 	});
 	
-//	button->set_double_click_callback([this, node]() {
-//		// Handle double-click action (e.g., open directory or file)
-//		handle_file_interaction(*node);
-//	});
+	// Setup double-click (optional, but good practice)
+	button->set_double_click_callback([this, node]() {
+		handle_file_interaction(*node);
+	});
 	
-	// This callback is triggered when the user clicks and starts dragging the mouse.
-//	button->set_drag_callback([this, button, node](const nanogui::Vector2i& drag_amount) {
-//		// Start the drag operation only if the drag distance is meaningful
-//		if (drag_amount.x() > 5 || drag_amount.y() > 5) {
-//			initiate_drag_operation(button, node);
-//		}
-//	});
+	// THIS IS THE MAIN FIX: Use the button's drag callback to initiate the screen drag operation.
+	button->set_drag_callback([this, button, node](const nanogui::Vector2i&, const nanogui::Vector2i& rel, int, int) {
+		// Check if a drag is not already active and if the mouse has moved enough
+		if (!m_is_dragging && (std::abs(rel.x()) > 5 || std::abs(rel.y()) > 5)) {
+			// Set a flag to ensure we only initiate the drag once per gesture
+			m_is_dragging = true;
+			initiate_drag_operation(button, node);
+		}
+	});
 }
 
-
-// Encapsulates the logic for initiating a drag operation.
+// This function now correctly initiates the drag operation at the start of the gesture.
 void FileView::initiate_drag_operation(std::shared_ptr<nanogui::Button> button, const std::shared_ptr<DirectoryNode>& node) {
-	// 1. Get the screen's existing, dedicated widget for drag operations.
+	// 1. Get the screen's dedicated widget for drag operations.
 	auto* drag_container = screen().drag_widget();
 	if (!drag_container) {
-		// This should not happen in a normal NanoGUI app, but it's a safe check.
 		return;
 	}
-	// Ensure the container is empty before we add our payload.
-	drag_container->shed_children();
 	
 	// 2. Configure the reusable m_drag_payload with the item's image.
+	// (This part of your logic was correct)
 	auto drag_texture = std::make_shared<nanogui::Texture>(
 														   nanogui::Texture::PixelFormat::RGBA,
 														   nanogui::Texture::ComponentFormat::UInt8,
@@ -621,20 +624,18 @@ void FileView::initiate_drag_operation(std::shared_ptr<nanogui::Button> button, 
 		m_drag_payload->set_image(drag_texture);
 	}
 	
-	// 3. Set up sizes and visibility.
+	// 3. Set up sizes and add the payload to the screen's drag container.
 	m_drag_payload->set_size({128, 128});
 	m_drag_payload->set_visible(true);
 	
-	// Add the payload to the screen's drag container.
 	drag_container->add_child(*m_drag_payload);
 	drag_container->set_size(m_drag_payload->size());
-	drag_container->set_position(button->absolute_position() - parent()->get().absolute_position());
-	drag_container->perform_layout(screen().nvg_context());
+	drag_container->set_position(screen().mouse_pos() - m_drag_payload->size() / 2); // Center on cursor
+	drag_container->set_visible(true);
 	
-	// 4. This is the core NanoGUI function to start the drag.
-	// It takes the container widget and a callback for when the drop occurs.
+	// 4. This is the core step: "arm" the screen's drag system with the drop callback.
 	screen().set_drag_widget(drag_container, [this, node]() {
-		// This lambda is executed when the user releases the mouse.
+		// This lambda is the DROP HANDLER. It's executed when the user releases the mouse.
 		std::vector<std::string> paths = { node->FullPath };
 		
 		// Dispatch the drop event to the main Application class.
@@ -642,6 +643,10 @@ void FileView::initiate_drag_operation(std::shared_ptr<nanogui::Button> button, 
 		
 		// Clean up: hide the payload and release the screen's drag widget.
 		m_drag_payload->set_visible(false);
+		drag_container->remove_child(*m_drag_payload); // Important: remove child
 		screen().set_drag_widget(nullptr, nullptr);
+		
+		// Reset our local drag state flag
+		m_is_dragging = false;
 	});
 }

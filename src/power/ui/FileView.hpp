@@ -161,4 +161,7 @@ private:
 	std::shared_ptr<nanogui::Widget> m_dummy_widget;
 	
 	std::shared_ptr<nanogui::ImageView> m_drag_payload;
+	
+	bool m_is_dragging = false; // Add this to prevent starting multiple drags
+
 };

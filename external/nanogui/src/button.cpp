@@ -55,44 +55,60 @@ bool Button::mouse_button_event(const Vector2i &p, int button, bool down, int) {
 	if (button == GLFW_MOUSE_BUTTON_1 && down) {
 		request_focus();
 	}
-
-    if (m_enabled == 1 &&
-        ((button == GLFW_MOUSE_BUTTON_1 && !(m_flags & MenuButton)) ||
-         (button == GLFW_MOUSE_BUTTON_2 &&  (m_flags & MenuButton)))) {
-        bool pushed_backup = m_pushed;
-        if (down) {
-            if (m_flags & RadioButton) {
-                if (m_button_group.empty()) {
-                    for (auto widget : parent()->get().children()) {
-                        auto b = dynamic_cast<Button*>(&widget.get());
-                        if (b != this && b && (b->flags() & RadioButton) && b->m_pushed) {
-                            b->m_pushed = false;
-                            if (b->m_change_callback)
-                                b->m_change_callback(false);
-                        }
-                    }
-                } else {
-                    for (auto b : m_button_group) {
-                        if (b != this && (b->flags() & RadioButton) && b->m_pushed) {
-                            b->m_pushed = false;
-                            if (b->m_change_callback)
-                                b->m_change_callback(false);
-                        }
-                    }
-                }
-            }
-            if (m_flags & PopupButton) {
-                for (auto widget : parent()->get().children()) {
-                    auto b = dynamic_cast<Button*>(&widget.get());
-                    if (b != this && b && (b->flags() & PopupButton) && b->m_pushed) {
-                        b->m_pushed = false;
-                        if (b->m_change_callback)
-                            b->m_change_callback(false);
-                    }
-                }
-                dynamic_cast<nanogui::PopupButton*>(this)->popup().request_focus();
-            }
-            if (m_flags & ToggleButton)
+	
+	if (m_enabled == 1 &&
+		((button == GLFW_MOUSE_BUTTON_1 && !(m_flags & MenuButton)) ||
+		 (button == GLFW_MOUSE_BUTTON_2 &&  (m_flags & MenuButton)))) {
+		
+		// --- Double-click detection ---
+		if (button == GLFW_MOUSE_BUTTON_1 && down) {
+			double time = glfwGetTime();
+			if (time - m_last_click_time < 0.25) { // 250ms threshold
+				if (m_double_click_callback) {
+					m_double_click_callback();
+				}
+				// Reset timer to prevent a third click from triggering another double-click
+				m_last_click_time = 0;
+				return true; // Consume event, overriding single-click
+			}
+			m_last_click_time = time;
+		}
+		// --- End double-click detection ---
+		
+		bool pushed_backup = m_pushed;
+		if (down) {
+			if (m_flags & RadioButton) {
+				if (m_button_group.empty()) {
+					for (auto widget : parent()->get().children()) {
+						auto b = dynamic_cast<Button*>(&widget.get());
+						if (b != this && b && (b->flags() & RadioButton) && b->m_pushed) {
+							b->m_pushed = false;
+							if (b->m_change_callback)
+								b->m_change_callback(false);
+						}
+					}
+				} else {
+					for (auto b : m_button_group) {
+						if (b != this && (b->flags() & RadioButton) && b->m_pushed) {
+							b->m_pushed = false;
+							if (b->m_change_callback)
+								b->m_change_callback(false);
+						}
+					}
+				}
+			}
+			if (m_flags & PopupButton) {
+				for (auto widget : parent()->get().children()) {
+					auto b = dynamic_cast<Button*>(&widget.get());
+					if (b != this && b && (b->flags() & PopupButton) && b->m_pushed) {
+						b->m_pushed = false;
+						if (b->m_change_callback)
+							b->m_change_callback(false);
+					}
+				}
+				dynamic_cast<nanogui::PopupButton*>(this)->popup().request_focus();
+			}
+			if (m_flags & ToggleButton)
 			{
 				if (!m_programmable) {
 					m_pushed = !m_pushed;
@@ -100,23 +116,24 @@ bool Button::mouse_button_event(const Vector2i &p, int button, bool down, int) {
 			} else {
 				m_pushed = true;
 			}
-        }
+		}
 		
 		if (m_pushed || (m_flags & MenuButton) || (m_flags & ToggleButton)) {
-            if (m_flags & NormalButton)
-                m_pushed = false;
+			if (m_flags & NormalButton)
+				m_pushed = false;
 			
 			if (contains(p) && m_callback && down)
 				m_callback();
-		} 
+		}
 		
-        if (pushed_backup != m_pushed && m_change_callback)
-            m_change_callback(m_pushed);
-
-        return true;
-    }
-    return false;
+		if (pushed_backup != m_pushed && m_change_callback)
+			m_change_callback(m_pushed);
+		
+		return true;
+	}
+	return false;
 }
+
 
 void Button::draw(NVGcontext *ctx) {
     NVGcolor grad_top = theme().m_button_gradient_top_unfocused;

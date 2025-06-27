@@ -109,6 +109,8 @@ void Application::initialize() {
 		// which now directly contains our action method via the category.
 		[[NSBundle mainBundle] loadNibNamed:@"MainMenu" owner:NSApp topLevelObjects:nil];
 	}
+	
+	DraggableScreen::initialize();
 
 	mUiCommon = std::make_shared<UiCommon>(*this, screen(), *mActorManager, mGlobalAnimationTimeProvider, mPreviewAnimationTimeProvider);
 	
@@ -181,9 +183,7 @@ void Application::initialize() {
 	mUiCommon->hierarchy_panel()->add_actors(std::move(actors));
 	
 	set_background(mRenderCommon->canvas()->background_color());
-	
-	DraggableScreen::initialize();
-	
+		
 	mVirtualMachine = std::make_unique<VirtualMachine>();
 	
 	mCartridgeActorLoader = std::make_unique<CartridgeActorLoader>(*mVirtualMachine, *mMeshActorLoader, *mActorManager, *mUiCommon->hierarchy_panel(), mGlobalAnimationTimeProvider, mPreviewAnimationTimeProvider, *mMeshShader, *mSkinnedShader);

@@ -104,6 +104,10 @@ public:
     const std::function<void()> &callback() const { return m_callback; }
     /// Set the push callback (for any type of button).
     void set_callback(const std::function<void()> &callback) { m_callback = callback; }
+	
+	/// Set the double-click callback
+	void set_double_click_callback(const std::function<void()> &callback) { m_double_click_callback = callback; }
+
 
     /// Return the change callback (for toggle buttons)
     const std::function<void(bool)> &change_callback() const { return m_change_callback; }
@@ -158,12 +162,19 @@ protected:
 
     /// The callback issued for all types of buttons.
     std::function<void()> m_callback;
+	
+	/// The callback issued for a double-click event.
+	std::function<void()> m_double_click_callback;
 
     /// The callback issued for toggle buttons.
     std::function<void(bool)> m_change_callback;
 
     /// The button group for radio buttons.
     std::vector<Button *> m_button_group;
+	
+	/// The time of the last click, for double-click detection.
+	double m_last_click_time = 0.0;
+
 };
 
 NAMESPACE_END(nanogui)
