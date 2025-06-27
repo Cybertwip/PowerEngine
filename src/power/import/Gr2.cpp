@@ -282,11 +282,24 @@ void Gr2::ProcessMaterials(const granny_model* model) {
 				
 				std::ifstream textureFile(texturePath, std::ios::binary);
 				if (textureFile) {
+					// File opened successfully, read from it.
 					matData.mTextureDiffuse.assign(std::istreambuf_iterator<char>(textureFile),
 												   std::istreambuf_iterator<char>());
 					matData.mHasDiffuseTexture = true;
 				} else {
-					std::cerr << "Warning: Unable to open texture file: " << texturePath << std::endl;
+					// Warning: The external file was not found.
+					// We will now try to use the embedded texture data if it exists.
+					std::cerr << "Warning: Unable to open texture file: " << texturePath << ". ";
+					std::cerr << "Falling back to embedded texture data." << std::endl;
+					
+					// This is the new part: Fallback to PixelBytes
+					if (diffuseTexture->Images[0].MIPLevelCount > 0 && diffuseTexture->Images[0].MIPLevels[0].PixelBytes) {
+						granny_texture_mip_level* mip = &diffuseTexture->Images[0].MIPLevels[0];
+						const char* pixelData = static_cast<const char*>(mip->PixelBytes);
+						
+						matData.mTextureDiffuse.assign(pixelData, pixelData + mip->PixelByteCount);
+						matData.mHasDiffuseTexture = true;
+					}
 				}
 			}
 			uniqueMaterialMap[material] = serializableMaterials.size();

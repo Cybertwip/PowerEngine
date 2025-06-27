@@ -4,6 +4,34 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <numeric>
 
+// --- Utility Namespace ---
+namespace Gr2Util {
+// (Include your GrannyMatrixToGlm and LogCallback helpers here)
+
+// Helper to patch the vertex layout with names. Used by both base and derived classes.
+std::vector<granny_data_type_definition> PatchLayout(const granny_vertex_data& vertexData) {
+	int componentCount = 0;
+	if (vertexData.VertexType) {
+		for (const auto* def = vertexData.VertexType; def->Type != GrannyEndMember; ++def) {
+			componentCount++;
+		}
+	}
+	
+	std::vector<granny_data_type_definition> patchedLayout;
+	if (componentCount == 0) return patchedLayout;
+	
+	patchedLayout.reserve(componentCount + 1);
+	for (int i = 0; i < componentCount; ++i) {
+		auto newDef = vertexData.VertexType[i];
+		newDef.Name = vertexData.VertexComponentNames[i];
+		patchedLayout.push_back(newDef);
+	}
+	patchedLayout.push_back({GrannyEndMember});
+	return patchedLayout;
+}
+}
+
+
 // --- SkinnedGr2 Class Implementation ---
 
 
