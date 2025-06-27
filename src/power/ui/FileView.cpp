@@ -26,7 +26,7 @@ FileView::FileView(nanogui::Widget& parent,
 				   const std::string& filter_text,
 				   const std::set<std::string>& allowed_extensions)
 : nanogui::Widget(std::make_optional<std::reference_wrapper<Widget>>(parent)),
-m_root_directory_node(root_directory_node.shared_from_this()),
+m_root_directory_node(root_directory_node),
 m_selected_directory_path(root_directory_node.FullPath),
 m_filter_text(filter_text),
 m_allowed_extensions(allowed_extensions),
@@ -352,7 +352,7 @@ void FileView::handle_file_interaction(DirectoryNode& node) {
 		
 		m_filter_text = "";
 		
-		m_root_directory_node = node.shared_from_this();
+		m_root_directory_node = node;
 		
 		set_selected_directory_path(node.FullPath);
 		
@@ -480,7 +480,7 @@ void FileView::refresh(const std::string& filter_text) {
 		m_selected_node = nullptr;
 		
 		// Refresh the root directory node to get the latest contents
-		m_root_directory_node->refresh(m_allowed_extensions);
+		m_root_directory_node.refresh(m_allowed_extensions);
 		
 		// Clear existing child widgets in the content
 		m_content->shed_children();
@@ -510,7 +510,7 @@ void FileView::populate_file_view() {
 		return;
 	}
 	
-	DirectoryNode* selected_node = find_node_by_path(*m_root_directory_node, m_selected_directory_path);
+	DirectoryNode* selected_node = find_node_by_path(m_root_directory_node, m_selected_directory_path);
 	if (!selected_node) {
 		return;
 	}

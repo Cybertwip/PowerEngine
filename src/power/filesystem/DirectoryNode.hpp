@@ -15,7 +15,6 @@ struct DirectoryNode : public std::enable_shared_from_this<DirectoryNode> {
 	
 	// Prevent copying and moving
 	DirectoryNode(const DirectoryNode&) = delete;
-	DirectoryNode& operator=(const DirectoryNode&) = delete;
 	DirectoryNode(DirectoryNode&&) = delete;
 	DirectoryNode& operator=(DirectoryNode&&) = delete;
 	
