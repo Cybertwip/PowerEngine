@@ -89,11 +89,15 @@ void ImportWindow::Preview(const std::string& path, const std::string& directory
 	set_visible(true);
 	set_modal(true);
 	
-	std::unique_ptr<CompressedMeshActor> meshData;
+	auto testPath = std::filesystem::path(path);
 	
-	if (path.contains("fbx")) {
+	auto testExtension = testPath.extension().string();
+
+	std::unique_ptr<MeshActorImporter::CompressedMeshActor> meshData;
+	
+	if (testExtension == ".fbx") {
 		meshData = mMeshActorImporter->processFbx(path, directory);
-	} else if(path.contains("gr2")) {
+	} else if(testExtension == ".gr2") {
 		meshData = mMeshActorImporter->processGr2(path, directory);
 	}
 		
