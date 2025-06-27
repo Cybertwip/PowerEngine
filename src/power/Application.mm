@@ -347,7 +347,7 @@ void Application::new_project_action() {
 		nanogui::file_dialog_async(
 	   {{"", "Folders"}}, // Empty extension for folder selection
 	   true,              // Directory selection mode
-	   true,              // Allow creating new directories
+	   false,              // Multiple files
 	   [this](const std::vector<std::string>& folders) {
 		   if (folders.empty()) {
 			   return; // User canceled
