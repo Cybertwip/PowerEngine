@@ -249,7 +249,8 @@ void ResourcesPanel::refresh() {
 void ResourcesPanel::import_assets() {
 	nanogui::async([this]() {
 		nanogui::file_dialog_async(
-								   {{"fbx", "gr2", "All Files"}}, false, false, [this](const std::vector<std::string>& files) {
+								   {{"fbx", "Fbx Files"},
+								    {"gr2", "Granny2 Files"}}, false, false, [this](const std::vector<std::string>& files) {
 									   for (const auto& file : files) {
 										   try {
 											   // Copy the selected file to the current directory (singleton's path)
