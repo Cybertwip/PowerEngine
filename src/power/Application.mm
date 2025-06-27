@@ -362,10 +362,6 @@ void Application::new_project_action() {
 	mBlueprintManager->stop();
 	mUiCommon->hierarchy_panel()->clear_actors();
 	mExecutionManager->set_execution_mode(ExecutionManager::EExecutionMode::Editor);
-
-//	mCameraManager->reset();
-//	mRenderCommon->canvas()->clear();
-//	mExecutionManager->reset();
 	
 	// Reset camera if needed
 	if (mCameraManager->active_camera().has_value()) {

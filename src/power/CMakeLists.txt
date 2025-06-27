@@ -57,25 +57,7 @@ add_executable(PowerEngine
     ${CMAKE_CURRENT_LIST_DIR}/UiCommon.cpp
     ${CMAKE_CURRENT_LIST_DIR}/UiCommon.hpp
 
-    ${CMAKE_CURRENT_LIST_DIR}/ai/DeepMotionSettingsWindow.hpp
-    ${CMAKE_CURRENT_LIST_DIR}/ai/DeepMotionSettingsWindow.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/ai/DeepMotionApiClient.hpp
-    ${CMAKE_CURRENT_LIST_DIR}/ai/DeepMotionApiClient.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/ai/DeepMotionPromptWindow.hpp
-    ${CMAKE_CURRENT_LIST_DIR}/ai/DeepMotionPromptWindow.cpp
-
-    ${CMAKE_CURRENT_LIST_DIR}/ai/PowerSettingsWindow.hpp
-    ${CMAKE_CURRENT_LIST_DIR}/ai/PowerSettingsWindow.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/ai/OpenAiApiClient.hpp
-    ${CMAKE_CURRENT_LIST_DIR}/ai/OpenAiApiClient.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/ai/PowerAi.hpp
-    ${CMAKE_CURRENT_LIST_DIR}/ai/PowerAi.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/ai/PowerPromptWindow.hpp
-    ${CMAKE_CURRENT_LIST_DIR}/ai/PowerPromptWindow.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/ai/TripoAiApiClient.hpp
-    ${CMAKE_CURRENT_LIST_DIR}/ai/TripoAiApiClient.cpp
-
-${CMAKE_CURRENT_LIST_DIR}/actors/IActorManager.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/actors/IActorManager.hpp
     ${CMAKE_CURRENT_LIST_DIR}/actors/IActorSelectedCallback.hpp
     ${CMAKE_CURRENT_LIST_DIR}/actors/IActorSelectedRegistry.hpp
 
