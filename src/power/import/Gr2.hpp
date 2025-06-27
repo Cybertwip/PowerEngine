@@ -11,12 +11,15 @@
 #include <unordered_map>
 
 // Forward declarations for the Granny library types
+struct granny_animation;
 struct granny_file;
 struct granny_file_info;
 struct granny_node;
 struct granny_mesh;
 struct granny_material;
 struct granny_model;
+struct granny_skeleton;
+
 
 class Gr2 {
 public:
