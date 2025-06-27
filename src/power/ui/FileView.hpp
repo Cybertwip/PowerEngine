@@ -106,7 +106,7 @@ private:
 	void collect_nodes_recursive(DirectoryNode* node, std::vector<std::shared_ptr<DirectoryNode>>& collected_nodes);
 	
 	// Member Variables
-	DirectoryNode& m_root_directory_node;
+	std::shared_ptr<DirectoryNode> m_root_directory_node;
 	std::string m_selected_directory_path;
 	std::string m_filter_text;
 	std::set<std::string> m_allowed_extensions;
