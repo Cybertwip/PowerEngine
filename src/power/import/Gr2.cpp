@@ -32,7 +32,7 @@ inline glm::mat4 GrannyMatrixToGlm(const granny_matrix_4x4& grannyMatrix) {
 Gr2::GrannyState::GrannyState() {
 	// A handler for Granny's log messages can be set here if desired.
 	// For example: GrannySetLogCallback(&MyGrannyLogCallback);
-	GrannySetLogCallback(nullptr); // Disable default logging
+//	GrannySetLogCallback(nullptr); // Disable default logging
 	
 	// The default allocator is generally fine.
 	granny_allocate_callback* alloc;
