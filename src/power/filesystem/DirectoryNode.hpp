@@ -12,11 +12,7 @@ struct DirectoryNode : public std::enable_shared_from_this<DirectoryNode> {
 		static DirectoryNode instance;
 		return instance;
 	}
-	
-	// Prevent copying and moving
-	DirectoryNode(const DirectoryNode&) = delete;
-	DirectoryNode(DirectoryNode&&) = delete;
-	
+		
 	// Initialize or update the singleton with a new directory path
 	static bool initialize(const std::string& path) {
 		if (!std::filesystem::exists(path) || !std::filesystem::is_directory(path)) {
