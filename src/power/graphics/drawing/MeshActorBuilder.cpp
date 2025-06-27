@@ -321,7 +321,13 @@ Actor& MeshActorBuilder::build(Actor& actor, AnimationTimeProvider& timeProvider
 	// Create Deserializer
 	CompressedSerialization::Deserializer deserializer;
 	
-	auto compressedMeshActor = mMeshActorImporter->process(fbxStream, actorName, "./dummyDestination/");
+	std::unique_ptr<CompressedMeshActor> compressedMeshActor;
+
+	if (path.contains("fbx")) {
+		compressedMeshActor = mMeshActorImporter->processFbx(path, directory);
+	} else if(path.contains("gr2")) {
+		compressedMeshActor = mMeshActorImporter->processGr2(path, directory);
+	}
 	
 	std::stringstream compressedData;
 	

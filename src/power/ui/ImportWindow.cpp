@@ -89,7 +89,13 @@ void ImportWindow::Preview(const std::string& path, const std::string& directory
 	set_visible(true);
 	set_modal(true);
 	
-	auto meshData = mMeshActorImporter->process(path, directory);
+	std::unique_ptr<CompressedMeshActor> meshData;
+	
+	if (path.contains("fbx")) {
+		meshData = mMeshActorImporter->processFbx(path, directory);
+	} else if(path.contains("gr2")) {
+		meshData = mMeshActorImporter->processGr2(path, directory);
+	}
 		
 	auto actor = std::make_shared<Actor>(mDummyRegistry);
 	
