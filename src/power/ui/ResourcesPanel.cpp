@@ -1,10 +1,10 @@
 #include "ui/ResourcesPanel.hpp"
 
-#include "ai/OpenAiApiClient.hpp"
-#include "ai/PowerPromptWindow.hpp"
-#include "ai/PowerSettingsWindow.hpp"
-#include "ai/DeepMotionSettingsWindow.hpp"
-#include "ai/DeepMotionPromptWindow.hpp"
+//#include "ai/OpenAiApiClient.hpp"
+//#include "ai/PowerPromptWindow.hpp"
+//#include "ai/PowerSettingsWindow.hpp"
+//#include "ai/DeepMotionSettingsWindow.hpp"
+//#include "ai/DeepMotionPromptWindow.hpp"
 #include "actors/IActorSelectedRegistry.hpp"
 #include "filesystem/MeshActorImporter.hpp"
 #include "filesystem/MeshActorExporter.hpp"
@@ -116,7 +116,7 @@ const DirectoryNode* FindNodeByPath(const DirectoryNode& currentNode, const std:
 }
 
 
-ResourcesPanel::ResourcesPanel(nanogui::Widget& parent, nanogui::Screen& screen, DirectoryNode& root_directory_node, std::shared_ptr<IActorVisualManager> actorVisualManager, std::shared_ptr<SceneTimeBar> sceneTimeBar, AnimationTimeProvider& animationTimeProvider, AnimationTimeProvider& previewTimeProvider, MeshActorLoader& meshActorLoader, ShaderManager& shaderManager, DeepMotionApiClient& deepMotionApiClient, PowerAi& powerAi, UiManager& uiManager)
+ResourcesPanel::ResourcesPanel(nanogui::Widget& parent, nanogui::Screen& screen, DirectoryNode& root_directory_node, std::shared_ptr<IActorVisualManager> actorVisualManager, std::shared_ptr<SceneTimeBar> sceneTimeBar, AnimationTimeProvider& animationTimeProvider, AnimationTimeProvider& previewTimeProvider, MeshActorLoader& meshActorLoader, ShaderManager& shaderManager, /*DeepMotionApiClient& deepMotionApiClient, PowerAi& powerAi,*/ UiManager& uiManager)
 : Panel(parent, "Resources"),
 mRootDirectoryNode(root_directory_node),
 mActorVisualManager(actorVisualManager),
@@ -127,8 +127,8 @@ mSceneTimeBar(sceneTimeBar),
 mGlobalAnimationTimeProvider(animationTimeProvider),
 mPreviewTimeProvider(previewTimeProvider),
 mUiManager(uiManager),
-mDeepMotionApiClient(deepMotionApiClient),
-mPowerAi(powerAi),
+//mDeepMotionApiClient(deepMotionApiClient),
+//mPowerAi(powerAi),
 mShaderManager(shaderManager)
 {
 	// Set the layout
@@ -139,44 +139,44 @@ mShaderManager(shaderManager)
 	mToolbar->set_layout(std::make_unique<nanogui::BoxLayout>(
 															  nanogui::Orientation::Horizontal, nanogui::Alignment::Middle, 10, 10));
 	
-	mPromptWindow = std::make_shared<PromptWindow>(screen, *this, mDeepMotionApiClient, mShaderManager.render_pass(), mShaderManager);
+//	mPromptWindow = std::make_shared<PromptWindow>(screen, *this, mDeepMotionApiClient, mShaderManager.render_pass(), mShaderManager);
 	
 	mMeshPicker = std::make_shared<MeshPicker>(screen, mRootDirectoryNode, [this](std::shared_ptr<DirectoryNode> node){
 		mMeshPicker->set_visible(false);
 		mMeshPicker->set_modal(false);
 		
-		mPromptWindow->set_visible(true);
-		mPromptWindow->set_modal(true);
-		nanogui::async([this, node](){
-			mPromptWindow->Preview(node->FullPath, mSelectedDirectoryPath);
-		});
+//		mPromptWindow->set_visible(true);
+//		mPromptWindow->set_modal(true);
+//		nanogui::async([this, node](){
+//			mPromptWindow->Preview(node->FullPath, mSelectedDirectoryPath);
+//		});
 	});
 	
 	mMeshPicker->set_visible(false);
 	mMeshPicker->set_modal(false);
 	
-	/* Create the DeepMotion Settings Window (initially hidden) */
-	mDeepMotionSettings = std::make_shared<DeepMotionSettingsWindow>(screen, mDeepMotionApiClient, [this](){
-		mMeshPicker->set_visible(true);
-		mMeshPicker->set_modal(true);
-	});
-	
-	
-	mPowerPromptWindow = std::make_shared<PowerPromptWindow>(screen, *this, mPowerAi, mShaderManager.render_pass(), mShaderManager);
-	
-	mPowerSettingsWindow = std::make_shared<PowerSettingsWindow>(screen, mPowerAi, [this](){
-		mPowerPromptWindow->set_visible(true);
-		mPowerPromptWindow->set_modal(true);
-	});
-	
-	mPowerSettingsWindow->set_visible(false);
-	mPowerSettingsWindow->set_modal(false);
-	
-	mPowerPromptWindow->set_visible(false);
-	mPowerPromptWindow->set_modal(false);
-	
-	mDeepMotionSettings->set_visible(false);
-	mDeepMotionSettings->set_modal(false);
+//	/* Create the DeepMotion Settings Window (initially hidden) */
+//	mDeepMotionSettings = std::make_shared<DeepMotionSettingsWindow>(screen, mDeepMotionApiClient, [this](){
+//		mMeshPicker->set_visible(true);
+//		mMeshPicker->set_modal(true);
+//	});
+//	
+//	
+//	mPowerPromptWindow = std::make_shared<PowerPromptWindow>(screen, *this, mPowerAi, mShaderManager.render_pass(), mShaderManager);
+//	
+//	mPowerSettingsWindow = std::make_shared<PowerSettingsWindow>(screen, mPowerAi, [this](){
+//		mPowerPromptWindow->set_visible(true);
+//		mPowerPromptWindow->set_modal(true);
+//	});
+//	
+//	mPowerSettingsWindow->set_visible(false);
+//	mPowerSettingsWindow->set_modal(false);
+//	
+//	mPowerPromptWindow->set_visible(false);
+//	mPowerPromptWindow->set_modal(false);
+//	
+//	mDeepMotionSettings->set_visible(false);
+//	mDeepMotionSettings->set_modal(false);
 	
 	mImportWindow = std::make_shared<ImportWindow>(screen, *this, mShaderManager.render_pass(), mShaderManager);
 	
@@ -184,50 +184,50 @@ mShaderManager(shaderManager)
 	mImportWindow->set_modal(false);
 	
 	// Add the Add Asset button with a "+" icon
-	mAddButton = std::make_shared<nanogui::PopupButton>(*mToolbar, screen, "Add");
-	mAddButton->set_icon(FA_PLUS);
-	mAddButton->set_chevron_icon(0);
-	mAddButton->set_tooltip("Add Asset");
+//	mAddButton = std::make_shared<nanogui::PopupButton>(*mToolbar, screen, "Add");
+//	mAddButton->set_icon(FA_PLUS);
+//	mAddButton->set_chevron_icon(0);
+//	mAddButton->set_tooltip("Add Asset");
 	
-	mSceneButton = std::make_shared<nanogui::Button>(mAddButton->popup(), "Scene");
+//	mSceneButton = std::make_shared<nanogui::Button>(mAddButton->popup(), "Scene");
 	
-	mSceneButton->set_icon(FA_NEWSPAPER);
+//	mSceneButton->set_icon(FA_NEWSPAPER);
+//	
+//	mArtButton = std::make_shared<nanogui::Button>(mAddButton->popup(), "Art");
+//	
+//	mArtButton->set_icon(FA_PERSON_BOOTH);
+//	
+//	mArtButton->set_callback([this](){
+//		mPowerSettingsWindow->set_visible(true);
+//		mPowerSettingsWindow->set_modal(true);
+//		
+//		mAddButton->set_pushed(false);
+//		mAddButton->popup().set_visible(false);
+//		
+//	});
+//	
+//	mAnimationButton = std::make_shared<nanogui::Button>(mAddButton->popup(), "Animation");
 	
-	mArtButton = std::make_shared<nanogui::Button>(mAddButton->popup(), "Art");
-	
-	mArtButton->set_icon(FA_PERSON_BOOTH);
-	
-	mArtButton->set_callback([this](){
-		mPowerSettingsWindow->set_visible(true);
-		mPowerSettingsWindow->set_modal(true);
-		
-		mAddButton->set_pushed(false);
-		mAddButton->popup().set_visible(false);
-		
-	});
-	
-	mAnimationButton = std::make_shared<nanogui::Button>(mAddButton->popup(), "Animation");
-	
-	mAnimationButton->set_icon(FA_RUNNING);
-	
-	mAnimationButton->set_callback([this](){
-		//		if (deepmotion_settings->session_cookie().empty()) {
-		mDeepMotionSettings->set_visible(true);
-		mDeepMotionSettings->set_modal(true);
-		
-		mAddButton->set_pushed(false);
-		mAddButton->popup().set_visible(false);
-		//		}
-	});
-	
-	mAddButton->perform_layout(screen.nvg_context());
-	mAddButton->popup().perform_layout(screen.nvg_context());
-	
-	mDeepMotionSettings->perform_layout(screen.nvg_context());
+//	mAnimationButton->set_icon(FA_RUNNING);
+//	
+//	mAnimationButton->set_callback([this](){
+//		//		if (deepmotion_settings->session_cookie().empty()) {
+//		mDeepMotionSettings->set_visible(true);
+//		mDeepMotionSettings->set_modal(true);
+//		
+//		mAddButton->set_pushed(false);
+//		mAddButton->popup().set_visible(false);
+//		//		}
+//	});
+//	
+//	mAddButton->perform_layout(screen.nvg_context());
+//	mAddButton->popup().perform_layout(screen.nvg_context());
+//	
+//	mDeepMotionSettings->perform_layout(screen.nvg_context());
 	
 	// Add the Import Assets button with a "+" icon
 	mImportButton = std::make_shared<nanogui::Button>(*mToolbar, "Import");
-	mImportButton->set_icon(FA_UPLOAD);
+	mImportButton->set_icon(FA_DOWNLOAD);
 	mImportButton->set_tooltip("Import Assets");
 	mImportButton->set_callback([this]() {
 		import_assets();
@@ -235,7 +235,7 @@ mShaderManager(shaderManager)
 	
 	// Add the Export Assets button
 	mExportButton = std::make_shared<nanogui::Button>(*mToolbar, "Export");
-	mExportButton->set_icon(FA_DOWNLOAD);
+	mExportButton->set_icon(FA_UPLOAD);
 	mExportButton->set_tooltip("Export Assets");
 	mExportButton->set_callback([this]() {
 		export_assets();
@@ -413,8 +413,8 @@ void ResourcesPanel::export_assets() {
 
 void ResourcesPanel::process_events() {
 	mImportWindow->ProcessEvents();
-	mPromptWindow->ProcessEvents();
-	mPowerPromptWindow->ProcessEvents();
+//	mPromptWindow->ProcessEvents();
+//	mPowerPromptWindow->ProcessEvents();
 	mFileView->ProcessEvents();
 	mMeshPicker->ProcessEvents();
 }

@@ -7,6 +7,7 @@
 
 #include "components/MeshComponent.hpp"
 #include "filesystem/MeshActorImporter.hpp"
+#include "graphics/drawing/BatchUnit.hpp"
 #include "graphics/drawing/MeshActorBuilder.hpp"
 #include "graphics/drawing/MeshBatch.hpp"
 #include "import/SkinnedFbx.hpp"
@@ -36,5 +37,3 @@ Actor& MeshActorLoader::create_actor(const std::string& path, AnimationTimeProvi
 Actor& MeshActorLoader::create_actor(const std::string& actorName, PrimitiveShape primitiveShape, ShaderWrapper& meshShader) {
 	return mPrimitiveBuilder->build(mActorManager.create_actor(), actorName, primitiveShape, meshShader);
 }
-
-

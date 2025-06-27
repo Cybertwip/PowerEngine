@@ -19,6 +19,7 @@
 #include <algorithm>
 #include <memory>
 #include <utility> // For std::forward
+#include <optional>
 
 NAMESPACE_BEGIN(nanogui)
 

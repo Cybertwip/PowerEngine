@@ -104,4 +104,6 @@ void ActorManager::visit(Batch& batch) {
 						   mCameraManager.get_projection());
 }
 
-
+void ActorManager::clear_actors() {
+	mActors.clear();
+}

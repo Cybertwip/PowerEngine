@@ -1,7 +1,7 @@
 #include "PowerPromptWindow.hpp"
 
 #include "ShaderManager.hpp"
-#include "OpenAiApiClient.hpp"
+//#include "OpenAiApiClient.hpp"
 
 #include "animation/HeuristicSkeletonPoser.hpp"
 #include "animation/IBone.hpp"
@@ -46,7 +46,7 @@
 namespace fs = std::filesystem;
 
 PowerPromptWindow::PowerPromptWindow(nanogui::Screen& parent, ResourcesPanel& resourcesPanel, PowerAi& powerAi, nanogui::RenderPass& renderpass, ShaderManager& shaderManager)
-: nanogui::Window(parent), mResourcesPanel(resourcesPanel), mPowerAi(powerAi), mRenderPass(renderpass), mDummyAnimationTimeProvider(60 * 30) {
+: nanogui::Window(std::make_optional<std::reference_wrapper<Widget>>(parent)), mResourcesPanel(resourcesPanel), mPowerAi(powerAi), mRenderPass(renderpass), mDummyAnimationTimeProvider(60 * 30) {
 	
 	set_fixed_size(nanogui::Vector2i(600, 600)); // Adjusted size for better layout
 	set_layout(std::make_unique<nanogui::BoxLayout>(nanogui::Orientation::Vertical, nanogui::Alignment::Middle, 10, 10));

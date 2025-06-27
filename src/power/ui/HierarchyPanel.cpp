@@ -145,3 +145,11 @@ void HierarchyPanel::fire_actor_selected_event(std::optional<std::reference_wrap
 		mTreeView->set_selected(nullptr);
 	}
 }
+
+
+void HierarchyPanel::clear_actors() {
+	nanogui::async([this](){
+		mTreeView->clear();
+		fire_actor_selected_event(std::nullopt);
+	});
+}

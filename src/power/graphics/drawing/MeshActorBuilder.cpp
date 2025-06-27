@@ -260,7 +260,7 @@ Actor& MeshActorBuilder::build(Actor& actor, AnimationTimeProvider& timeProvider
 	CompressedSerialization::Deserializer deserializer;
 
 	if (extension == ".fbx") {
-		auto compressedMeshActor = mMeshActorImporter->process(path, "./dummyDestination/");
+		auto compressedMeshActor = mMeshActorImporter->processFbx(path, "./dummyDestination/");
 		
 		std::stringstream compressedData;
 		

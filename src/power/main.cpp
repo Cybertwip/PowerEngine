@@ -6,6 +6,14 @@
 
 #include "Application.hpp"
 
+#include "execution/BlueprintManager.hpp"
+#include "execution/ExecutionManager.hpp"
+#include "gizmo/GizmoManager.hpp"
+#include "graphics/drawing/SkinnedMeshBatch.hpp"
+#include "simulation/Cartridge.hpp"
+#include "simulation/CartridgeActorLoader.hpp"
+#include "simulation/SimulationServer.hpp"
+
 int main(int /* argc */, char ** /* argv */) {
 	stbi_set_flip_vertically_on_load(1);
 	

@@ -1,6 +1,7 @@
 #include "CameraActorLoader.hpp"
 
 #include "CameraManager.hpp"
+#include "ShaderManager.hpp"
 
 #include "actors/ActorManager.hpp"
 

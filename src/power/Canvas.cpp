@@ -5,12 +5,14 @@
 #include "graphics/drawing/Drawable.hpp"
 
 #include <nanogui/renderpass.h>
+#include <nanogui/screen.h>
 
 #if defined(NANOGUI_USE_METAL)
 #include <nanogui/metal.h>
 #include "MetalHelper.hpp"
 #endif
 
+#include <GLFW/glfw3.h>
 
 #include <iostream>
 

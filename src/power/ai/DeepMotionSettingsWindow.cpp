@@ -7,8 +7,9 @@
 
 #include <nanogui/layout.h>
 #include <nanogui/theme.h>
-#include <nanogui/imageview.h> // Added for nanogui::ImageView
-#include <nanogui/texture.h>    // Added for nanogui::Texture
+#include <nanogui/imageview.h>
+#include <nanogui/screen.h>
+#include <nanogui/texture.h>  
 
 #include <httplib.h>
 #include <json/json.h>

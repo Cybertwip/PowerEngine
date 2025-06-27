@@ -50,7 +50,12 @@ public:
 	
 	MeshActorImporter();
 	
-	std::unique_ptr<CompressedMeshActor> process(const std::string& path, const std::string& destination);
+	std::unique_ptr<CompressedMeshActor> processFbx(const std::string& path, const std::string& destination);
 	
-	std::unique_ptr<CompressedMeshActor> process(std::stringstream& data, const std::string& modelName, const std::string& destination);
+	std::unique_ptr<CompressedMeshActor> processFbx(std::stringstream& data, const std::string& modelName, const std::string& destination);
+	
+	std::unique_ptr<CompressedMeshActor> processGr2(const std::string& path, const std::string& destination);
+	
+	std::unique_ptr<CompressedMeshActor> processGr2(std::stringstream& data, const std::string& modelName, const std::string& destination);
+
 };

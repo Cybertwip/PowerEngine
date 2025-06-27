@@ -215,7 +215,7 @@ class GizmoManager;
 class MeshActor;
 class MeshActorLoader;
 class MeshBatch;
-class PowerAi;
+//class PowerAi;
 class RenderCommon;
 class ShaderManager;
 class ShaderWrapper;
@@ -239,12 +239,13 @@ class Application : public nanogui::DraggableScreen
 	virtual void process_events() override;
 
 	void register_click_callback(std::function<void(bool, int, int, int, int)> callback);
+	
+	void new_project_action();
 
    private:
 	bool drop_event(Widget& sender, const std::vector<std::string> & filenames) override;
 
 	bool mouse_button_event(const nanogui::Vector2i &p, int button, bool down, int modifiers) override;
-	
 	
 	AnimationTimeProvider mGlobalAnimationTimeProvider;
 	AnimationTimeProvider mPreviewAnimationTimeProvider;
@@ -274,10 +275,10 @@ class Application : public nanogui::DraggableScreen
 	std::shared_ptr<RenderCommon> mRenderCommon;
 	std::shared_ptr<UiCommon> mUiCommon;
 	std::unique_ptr<BlueprintManager> mBlueprintManager;
-	std::unique_ptr<PowerAi> mPowerAi;
-	std::unique_ptr<OpenAiApiClient> mOpenAiApiClient;
-	std::unique_ptr<TripoAiApiClient> mTripoAiApiClient;
-	std::unique_ptr<DeepMotionApiClient> mDeepMotionApiClient;
+//	std::unique_ptr<PowerAi> mPowerAi;
+//	std::unique_ptr<OpenAiApiClient> mOpenAiApiClient;
+//	std::unique_ptr<TripoAiApiClient> mTripoAiApiClient;
+//	std::unique_ptr<DeepMotionApiClient> mDeepMotionApiClient;
 	std::unique_ptr<CameraManager> mCameraManager;
 	std::unique_ptr<entt::registry> mEntityRegistry;
 	std::unique_ptr<SimulationServer> mSimulationServer;

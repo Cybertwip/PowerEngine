@@ -38,7 +38,7 @@ add_executable(PowerEngine
     ${APP_ICON}
     ${BUNDLE_MENU}
     ${PLATFORM_SPECIFIC_SOURCES}
-    ${CMAKE_CURRENT_LIST_DIR}/Application.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/Application.mm
     ${CMAKE_CURRENT_LIST_DIR}/Application.hpp
     ${CMAKE_CURRENT_LIST_DIR}/Canvas.cpp
     ${CMAKE_CURRENT_LIST_DIR}/Canvas.hpp
@@ -221,8 +221,14 @@ ${CMAKE_CURRENT_LIST_DIR}/actors/IActorManager.hpp
     ${CMAKE_CURRENT_LIST_DIR}/import/Fbx.hpp
     ${CMAKE_CURRENT_LIST_DIR}/import/Fbx.cpp
 
+    ${CMAKE_CURRENT_LIST_DIR}/import/Gr2.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/import/Gr2.cpp
+
     ${CMAKE_CURRENT_LIST_DIR}/import/SkinnedFbx.hpp
     ${CMAKE_CURRENT_LIST_DIR}/import/SkinnedFbx.cpp
+
+    ${CMAKE_CURRENT_LIST_DIR}/import/SkinnedGr2.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/import/SkinnedGr2.cpp
 
     ${CMAKE_CURRENT_LIST_DIR}/simulation/DebugBridgeCommon.hpp
     ${CMAKE_CURRENT_LIST_DIR}/simulation/DebugBridgeCommon.hpp
@@ -298,6 +304,7 @@ ozz_animation_fbx
 riscv
 wasmtime
 zlib
+agnosgranny
 #grpc++ 
 ${platform_specific_libraries})
 
@@ -352,5 +359,8 @@ endif()
 
 set_target_properties(json PROPERTIES UNITY_BUILD ON)
 set_target_properties(PowerEngine PROPERTIES UNITY_BUILD ON)
+
+set_source_files_properties(${CMAKE_CURRENT_LIST_DIR}/Application.mm PROPERTIES SKIP_UNITY_BUILD_INCLUSION TRUE)
+
 
  
