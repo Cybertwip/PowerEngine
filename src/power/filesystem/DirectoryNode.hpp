@@ -48,7 +48,7 @@ struct DirectoryNode : public std::enable_shared_from_this<DirectoryNode> {
 		// Iterate through the directory to rebuild the tree
 		for (const auto& entry : std::filesystem::directory_iterator(FullPath)) {
 			// Create a new node for each entry
-			auto newNode = std::make_shared<DirectoryNode>(DirectoryNode{entry.path().string()});
+			auto newNode = std::shared_ptr<DirectoryNode>(new DirectoryNode(entry.path().string()));
 			
 			if (entry.is_directory()) {
 				newNode->IsDirectory = true;
