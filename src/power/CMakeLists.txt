@@ -130,7 +130,6 @@ add_executable(PowerEngine
     ${CMAKE_CURRENT_LIST_DIR}/filesystem/CompressedSerialization.hpp
 
     ${CMAKE_CURRENT_LIST_DIR}/filesystem/DirectoryNode.hpp
-    ${CMAKE_CURRENT_LIST_DIR}/filesystem/DirectoryNode.cpp
 
     ${CMAKE_CURRENT_LIST_DIR}/filesystem/ImageUtils.hpp
     ${CMAKE_CURRENT_LIST_DIR}/filesystem/ImageUtils.cpp
