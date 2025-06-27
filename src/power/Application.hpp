@@ -40,9 +40,7 @@ public:
 	}
 	
 	void do_drag_finish() {
-		// DANGEROUS: DO NOT DO THIS. It breaks ownership rules.
-		// The FileView which added the payload is responsible for removing it.
-		// m_children.clear(); // REMOVE THIS LINE
+		 m_children.clear(); // REMOVE THIS LINE
 
 		if (m_drag_callback) {
 			m_drag_callback();
