@@ -278,7 +278,7 @@ void ResourcesPanel::export_assets() {
 	if (mSelectedNode != nullptr) {
 		nanogui::async([this]() {
 			nanogui::file_dialog_async(
-									   {{"fbx", "All Files"}}, true, false, [this](const std::vector<std::string>& files) {
+									   {{"fbx", "Fbx Files"}}, true, false, [this](const std::vector<std::string>& files) {
 										   if (files.empty()) {
 											   return; // User canceled
 										   }
