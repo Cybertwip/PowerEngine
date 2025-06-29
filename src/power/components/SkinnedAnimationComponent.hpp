@@ -44,6 +44,8 @@ public:
 		apply_pose_to_skeleton();
 	}
 	
+	~SkinnedPlaybackComponent() = default;
+	
 	void TriggerRegistration() override {
 		if(mRegistrationId != -1) {
 			mProvider.unregister_on_playback_changed_callback(mRegistrationId);
@@ -78,11 +80,11 @@ public:
 		if (!mFrozen) {
 			auto keyframe = evaluate_keyframe(mAnimationTimeProvider.GetTime());
 			
-			if (keyframe.has_value()) {
-				mProvider.setPlaybackState(keyframe->get().getPlaybackState());
-				mProvider.setPlaybackModifier(keyframe->get().getPlaybackModifier());
-				mProvider.setPlaybackTrigger(keyframe->get().getPlaybackTrigger());
-				mProvider.setPlaybackData(keyframe->get().getPlaybackData());
+			if (keyframe) {
+				mProvider.setPlaybackState(keyframe->getPlaybackState());
+				mProvider.setPlaybackModifier(keyframe->getPlaybackModifier());
+				mProvider.setPlaybackTrigger(keyframe->getPlaybackTrigger());
+				mProvider.setPlaybackData(keyframe->getPlaybackData());
 			} else {
 				evaluate_provider(mAnimationTimeProvider.GetTime(), mProvider.getPlaybackModifier());
 			}
@@ -96,13 +98,13 @@ public:
 	}
 	
 	bool IsSyncWithProvider() override {
-		auto& m1 = const_cast<PlaybackComponent::Keyframe&>(mProvider.get_state());
-		m1.time = mAnimationTimeProvider.GetTime();
+		auto m1 = mProvider.get_state();
+		m1->time = mAnimationTimeProvider.GetTime();
 		
 		auto m2 = evaluate_keyframe(mAnimationTimeProvider.GetTime());
 		
-		if (m2.has_value()) {
-			return m1 == m2->get();
+		if (m2) {
+			return m1 == m2;
 		} else {
 			return true;
 		}
@@ -111,11 +113,11 @@ public:
 	void SyncWithProvider() override {
 		auto keyframe = evaluate_keyframe(mAnimationTimeProvider.GetTime());
 		
-		if (keyframe.has_value()) {
-			mProvider.setPlaybackState(keyframe->get().getPlaybackState());
-			mProvider.setPlaybackModifier(keyframe->get().getPlaybackModifier());
-			mProvider.setPlaybackTrigger(keyframe->get().getPlaybackTrigger());
-			mProvider.setPlaybackData(keyframe->get().getPlaybackData());
+		if (keyframe) {
+			mProvider.setPlaybackState(keyframe->getPlaybackState());
+			mProvider.setPlaybackModifier(keyframe->getPlaybackModifier());
+			mProvider.setPlaybackTrigger(keyframe->getPlaybackTrigger());
+			mProvider.setPlaybackData(keyframe->getPlaybackData());
 		}
 	}
 	
@@ -126,8 +128,8 @@ public:
 	float GetPreviousKeyframeTime() override {
 		auto keyframe = get_previous_keyframe(mAnimationTimeProvider.GetTime());
 		
-		if (keyframe.has_value()) {
-			return keyframe->get().time;
+		if (keyframe) {
+			return keyframe->time;
 		} else {
 			return -1;
 		}
@@ -136,8 +138,8 @@ public:
 	float GetNextKeyframeTime() override {
 		auto keyframe = get_next_keyframe(mAnimationTimeProvider.GetTime());
 		
-		if (keyframe.has_value()) {
-			return keyframe->get().time;
+		if (keyframe) {
+			return keyframe->time;
 		} else {
 			return -1;
 		}
@@ -147,38 +149,38 @@ public:
 		apply_pose_to_skeleton(mDefaultPose);
 	}
 	
-	std::optional<std::reference_wrapper<PlaybackComponent::Keyframe>> evaluate_keyframe(float time) {
+	std::shared_ptr<PlaybackComponent::Keyframe> evaluate_keyframe(float time) {
 		if (keyframes_.empty()) {
-			return std::nullopt;
+			return nullptr;
 		}
 		
 		// Finding the next keyframe after the current time
 		auto nextKeyframeIt = std::upper_bound(keyframes_.begin(), keyframes_.end(), time,
-											   [](float t, const PlaybackComponent::Keyframe& kf) {
-			return t < kf.time;
+											   [](float t, const std::shared_ptr<PlaybackComponent::Keyframe>& kf) {
+			return t < kf->time;
 		});
 		
 		if (nextKeyframeIt == keyframes_.end()) {
 			// If there is no next keyframe, use the last keyframe
-			return evaluate_keyframe(std::ref(keyframes_.back()), time);
+			return evaluate_keyframe(keyframes_.back(), time);
 		}
 		
 		if (nextKeyframeIt == keyframes_.begin()) {
 			// If the current time is before the first keyframe
-			return evaluate_keyframe(std::ref(*nextKeyframeIt), time);
+			return evaluate_keyframe(*nextKeyframeIt, time);
 		}
 		
 		// Getting the previous keyframe (current keyframe)
 		auto currentKeyframeIt = nextKeyframeIt - 1;
 		
 		// Calculating interpolation factor
-		float segmentDuration = nextKeyframeIt->time - currentKeyframeIt->time;
-		float t = (time - currentKeyframeIt->time) / segmentDuration;
+		float segmentDuration = (*nextKeyframeIt)->time - (*currentKeyframeIt)->time;
+		float t = (time - (*currentKeyframeIt)->time) / segmentDuration;
 		
 		t = glm::clamp(t, 0.0f, 1.0f);
 		
 		// Handling playback modifiers (e.g., reverse)
-		PlaybackModifier currentModifier = currentKeyframeIt->getPlaybackModifier();
+		PlaybackModifier currentModifier = (*currentKeyframeIt)->getPlaybackModifier();
 		bool reverse = (currentModifier == PlaybackModifier::Reverse);
 		if (reverse) {
 			t = 1.0f - t;
@@ -187,7 +189,7 @@ public:
 		// Blending poses from current and next keyframes on a per-bone basis
 		blend_keyframes(*currentKeyframeIt, *nextKeyframeIt, time, t);
 		
-		return std::ref(*currentKeyframeIt);
+		return *currentKeyframeIt;
 	}
 	
 	void evaluate_provider(float time, PlaybackModifier modifier) {
@@ -229,12 +231,12 @@ private:
 			updateKeyframe(time, state, modifier, trigger, playbackData);
 			return;
 		}
-		PlaybackComponent::Keyframe keyframe(time, state, modifier, trigger, playbackData);
-		keyframes_.push_back(std::move(keyframe));
+		auto keyframe = std::make_shared<PlaybackComponent::Keyframe>(time, state, modifier, trigger, playbackData);
+		keyframes_.push_back(keyframe);
 		// Keeping keyframes sorted
 		std::sort(keyframes_.begin(), keyframes_.end(),
-				  [](const PlaybackComponent::Keyframe& a, const PlaybackComponent::Keyframe& b) {
-			return a.time < b.time;
+				  [](const std::shared_ptr<PlaybackComponent::Keyframe>& a, const std::shared_ptr<PlaybackComponent::Keyframe>& b) {
+			return a->time < b->time;
 		});
 		
 		updateAnimationOffset(time);
@@ -244,10 +246,10 @@ private:
 	void updateKeyframe(float time, PlaybackState state, PlaybackModifier modifier, PlaybackTrigger trigger, std::shared_ptr<PlaybackData> playbackData) {
 		auto it = findKeyframe(time);
 		if (it != keyframes_.end()) {
-			it->setPlaybackState(state);
-			it->setPlaybackModifier(modifier);
-			it->setPlaybackTrigger(trigger);
-			it->setPlaybackData(playbackData);
+			(*it)->setPlaybackState(state);
+			(*it)->setPlaybackModifier(modifier);
+			(*it)->setPlaybackTrigger(trigger);
+			(*it)->setPlaybackData(playbackData);
 		} else {
 			// If the keyframe does not exist, add it
 			addKeyframe(time, state, modifier, trigger, playbackData);
@@ -268,44 +270,44 @@ private:
 	}
 	
 	// Evaluating the playback state at a given time
-	std::optional<std::reference_wrapper<PlaybackComponent::Keyframe>> evaluate(float time) {
+	std::shared_ptr<PlaybackComponent::Keyframe> evaluate(float time) {
 		if (keyframes_.empty()) {
-			return std::nullopt; // Default state if no keyframes
+			return nullptr; // Default state if no keyframes
 		}
 		
 		// If time is before the first keyframe
-		if (time < keyframes_.front().time) {
+		if (time < keyframes_.front()->time) {
 			// Setting the model pose to the first keyframe's pose
-			evaluate_animation(keyframes_.front().getPlaybackData()->get_animation(), keyframes_.front().time);
+			evaluate_animation(keyframes_.front()->getPlaybackData()->get_animation(), keyframes_.front()->time);
 			
-			return std::nullopt;
+			return nullptr;
 		}
 		
 		// If time is after the last keyframe
-		if (time > keyframes_.back().time) {
+		if (time > keyframes_.back()->time) {
 			// Setting the model pose to the last keyframe's pose
-			evaluate_animation(keyframes_.back().getPlaybackData()->get_animation(), keyframes_.back().time);
+			evaluate_animation(keyframes_.back()->getPlaybackData()->get_animation(), keyframes_.back()->time);
 			
-			return std::ref(keyframes_.back());
+			return keyframes_.back();
 		}
 		
 		// Finding the first keyframe with time >= given time
 		auto it = std::lower_bound(keyframes_.begin(), keyframes_.end(), time,
-								   [](const PlaybackComponent::Keyframe& kf, float t) {
-			return kf.time < t;
+								   [](const std::shared_ptr<PlaybackComponent::Keyframe>& kf, float t) {
+			return kf->time < t;
 		});
 		
 		if (it != keyframes_.end()) {
-			if (it->time == time) {
-				return std::ref(*it);
+			if ((*it)->time == time) {
+				return *it;
 			} else if (it != keyframes_.begin()) {
 				// No exact match; use the closest keyframe to the left
-				return std::ref(*(it - 1));
+				return *(it - 1);
 			}
 		}
 		
 		// Fallback (should not reach here if bounds are respected)
-		return std::nullopt;
+		return nullptr;
 	}
 	
 	// Checking if the current time corresponds to an exact keyframe
@@ -314,29 +316,29 @@ private:
 	}
 	
 	// Getting the previous keyframe before the given time
-	std::optional<std::reference_wrapper<PlaybackComponent::Keyframe>> get_previous_keyframe(float time) {
-		if (keyframes_.empty()) return std::nullopt;
+	std::shared_ptr<PlaybackComponent::Keyframe> get_previous_keyframe(float time) {
+		if (keyframes_.empty()) return nullptr;
 		
 		auto it = std::lower_bound(keyframes_.begin(), keyframes_.end(), time,
-								   [](const PlaybackComponent::Keyframe& kf, float t) {
-			return kf.time < t;
+								   [](const std::shared_ptr<PlaybackComponent::Keyframe>& kf, float t) {
+			return kf->time < t;
 		});
 		
-		if (it == keyframes_.begin()) return std::nullopt; // No previous keyframe
+		if (it == keyframes_.begin()) return nullptr; // No previous keyframe
 		--it;
-		return std::ref(*it);
+		return *it;
 	}
 	
 	// Getting the next keyframe after the given time
-	std::optional<std::reference_wrapper<PlaybackComponent::Keyframe>> get_next_keyframe(float time) {
-		if (keyframes_.empty()) return std::nullopt;
+	std::shared_ptr<PlaybackComponent::Keyframe> get_next_keyframe(float time) {
+		if (keyframes_.empty()) return nullptr;
 		
 		auto it = std::upper_bound(keyframes_.begin(), keyframes_.end(), time,
-								   [](float t, const PlaybackComponent::Keyframe& kf) {
-			return t < kf.time;
+								   [](float t, const std::shared_ptr<PlaybackComponent::Keyframe>& kf) {
+			return t < kf->time;
 		});
-		if (it == keyframes_.end()) return std::nullopt; // No next keyframe
-		return std::ref(*it);
+		if (it == keyframes_.end()) return nullptr; // No next keyframe
+		return *it;
 	}
 	
 	float getAdjustedAnimationTime(float currentTime, float duration) {
@@ -351,32 +353,32 @@ private:
 		
 		// Initializing lastState and lastStateChangeTime based on the first keyframe
 		float lastStateChangeTime = mAnimationOffset;
-		PlaybackState lastState = keyframes_[0].getPlaybackState();
+		PlaybackState lastState = keyframes_[0]->getPlaybackState();
 		
 		size_t keyframeIndex = 0;
 		
 		// If the first keyframe is after currentTime, the animation hasn't started yet
-		if (keyframes_[0].time > currentTime) {
+		if (keyframes_[0]->time > currentTime) {
 			return 0.0f;
 		}
 		
 		// Processing keyframes
 		for (; keyframeIndex < keyframes_.size(); ++keyframeIndex) {
 			const auto& keyframe = keyframes_[keyframeIndex];
-			if (keyframe.time > currentTime) {
+			if (keyframe->time > currentTime) {
 				break;
 			}
 			
 			// Handling state changes
-			PlaybackState currentState = keyframe.getPlaybackState();
+			PlaybackState currentState = keyframe->getPlaybackState();
 			
 			if (currentState != lastState) {
 				if (lastState == PlaybackState::Play) {
 					// Accumulating the duration from the last play state to the current keyframe time
-					accumulatedPlayTime += keyframe.time - lastStateChangeTime;
+					accumulatedPlayTime += keyframe->time - lastStateChangeTime;
 				}
 				lastState = currentState;
-				lastStateChangeTime = keyframe.time;
+				lastStateChangeTime = keyframe->time;
 			}
 		}
 		
@@ -392,21 +394,21 @@ private:
 		return adjustedTime;
 	}
 	
-	std::optional<std::reference_wrapper<PlaybackComponent::Keyframe>> evaluate_keyframe(std::optional<std::reference_wrapper<PlaybackComponent::Keyframe>> keyframe, float time) {
+	std::shared_ptr<PlaybackComponent::Keyframe> evaluate_keyframe(std::shared_ptr<PlaybackComponent::Keyframe> keyframe, float time) {
 		std::optional<std::reference_wrapper<Animation>> animation;
 		
-		if (keyframe.has_value()) {
-			animation = keyframe->get().getPlaybackData()->get_animation();
+		if (keyframe) {
+			animation = keyframe->getPlaybackData()->get_animation();
 		} else {
-			return std::nullopt;
+			return nullptr;
 		}
 		
 		float duration = static_cast<float>(animation->get().get_duration());
 		
 		PlaybackModifier currentModifier = PlaybackModifier::Forward;
 		
-		if (keyframe.has_value()) {
-			currentModifier = keyframe->get().getPlaybackModifier();
+		if (keyframe) {
+			currentModifier = keyframe->getPlaybackModifier();
 		}
 		
 		bool reverse = currentModifier == PlaybackModifier::Reverse;
@@ -429,13 +431,13 @@ private:
 		return keyframe;
 	}
 	
-	std::optional<std::reference_wrapper<PlaybackComponent::Keyframe>> get_keyframe(float time) {
+	std::shared_ptr<PlaybackComponent::Keyframe> get_keyframe(float time) {
 		auto it = findKeyframe(time);
 		
 		if (it != keyframes_.end()) {
-			return std::ref(*it);
+			return *it;
 		} else {
-			return std::nullopt;
+			return nullptr;
 		}
 	}
 	
@@ -443,18 +445,18 @@ private:
 	// Checking if a keyframe exists at the given time
 	bool keyframeExists(float time) const {
 		return std::any_of(keyframes_.begin(), keyframes_.end(),
-						   [time](const PlaybackComponent::Keyframe& kf) { return kf.time == time; });
+						   [time](const std::shared_ptr<PlaybackComponent::Keyframe>& kf) { return kf->time == time; });
 	}
 	
 	// Finding a keyframe at the given time
-	typename std::vector<PlaybackComponent::Keyframe>::iterator findKeyframe(float time) {
+	typename std::vector<std::shared_ptr<PlaybackComponent::Keyframe>>::iterator findKeyframe(float time) {
 		return std::find_if(keyframes_.begin(), keyframes_.end(),
-							[time](const PlaybackComponent::Keyframe& kf) { return kf.time == time; });
+							[time](const std::shared_ptr<PlaybackComponent::Keyframe>& kf) { return kf->time == time; });
 	}
 	
-	typename std::vector<PlaybackComponent::Keyframe>::const_iterator findKeyframe(float time) const {
+	typename std::vector<std::shared_ptr<PlaybackComponent::Keyframe>>::const_iterator findKeyframe(float time) const {
 		return std::find_if(keyframes_.cbegin(), keyframes_.cend(),
-							[time](const PlaybackComponent::Keyframe& kf) { return kf.time == time; });
+							[time](const std::shared_ptr<PlaybackComponent::Keyframe>& kf) { return kf->time == time; });
 	}
 	
 	// Getting the current playback modifier at a given time
@@ -466,7 +468,7 @@ private:
 		// Finding the keyframe at or before the current time
 		auto prevKeyframeOpt = get_previous_keyframe(time);
 		if (prevKeyframeOpt) {
-			return prevKeyframeOpt->get().getPlaybackModifier();
+			return prevKeyframeOpt->getPlaybackModifier();
 		}
 		return std::nullopt;
 	}
@@ -495,88 +497,89 @@ private:
 		
 		// Finding the keyframe with the largest time less than or equal to the given time
 		auto keyframe_it = std::find_if(keyframes_.rbegin(), keyframes_.rend(),
-										[time](const PlaybackComponent::Keyframe& kf) { return kf.time <= time; });
+										[time](const std::shared_ptr<PlaybackComponent::Keyframe>& kf) { return kf->time <= time; });
 		
 		// Checking if the iterator is valid
 		if (keyframe_it != keyframes_.rend()) {
-			auto& currentAnimation = keyframes_.front().getPlaybackData()->get_animation();
+			auto& currentAnimation = keyframes_.front()->getPlaybackData()->get_animation();
 			
 			// Looping backwards through the keyframes starting from the found keyframe
 			for (auto it = keyframe_it; it != keyframes_.rend(); ++it) {
-				if (&it->getPlaybackData()->get_animation() != &currentAnimation) {
+				if (&(*it)->getPlaybackData()->get_animation() != &currentAnimation) {
 					// If the animation has changed, reset the offset and break
 					mAnimationOffset = 0.0f;
 					break;
 				} else {
-					mAnimationOffset = it->time;  // Set offset to the found keyframe's time
+					mAnimationOffset = (*it)->time;  // Set offset to the found keyframe's time
 				}
 			}
 		}
 	}
 	
-	std::optional<std::reference_wrapper<PlaybackComponent::Keyframe>> getPreviousPlayStateKeyframe(float fromTime) {
+	std::shared_ptr<PlaybackComponent::Keyframe> getPreviousPlayStateKeyframe(float fromTime) {
 		for (auto it = keyframes_.rbegin(); it != keyframes_.rend(); ++it) {
-			PlaybackComponent::Keyframe& kf = *it;
-			if (kf.time < fromTime && kf.getPlaybackState() == PlaybackState::Play) {
-				return std::ref(kf);
+			auto kf = *it;
+			if (kf->time < fromTime && kf->getPlaybackState() == PlaybackState::Play) {
+				return kf;
 			}
 		}
 		
-		return std::nullopt;
+		return nullptr;
 	}
 	
-	std::optional<std::reference_wrapper<PlaybackComponent::Keyframe>> getPreviousPauseStateKeyframe(float fromTime) {
+	std::shared_ptr<PlaybackComponent::Keyframe> getPreviousPauseStateKeyframe(float fromTime) {
 		for (auto it = keyframes_.rbegin(); it != keyframes_.rend(); ++it) {
-			PlaybackComponent::Keyframe& kf = *it;
-			if (kf.time < fromTime && kf.getPlaybackState() == PlaybackState::Pause) {
-				return std::ref(kf);
+
+			auto kf = *it;
+			if (kf->time < fromTime && kf->getPlaybackState() == PlaybackState::Pause) {
+				return kf;
 			}
 		}
 		
-		return std::nullopt;
+		return nullptr;
 	}
 	
-	std::optional<std::reference_wrapper<PlaybackComponent::Keyframe>> getFirstButPreviousPauseStateKeyframe(float fromTime) {
-		std::optional<std::reference_wrapper<PlaybackComponent::Keyframe>> keyframe;
+	std::shared_ptr<PlaybackComponent::Keyframe> getFirstButPreviousPauseStateKeyframe(float fromTime) {
+		std::shared_ptr<PlaybackComponent::Keyframe> keyframe;
 		for (auto it = keyframes_.rbegin(); it != keyframes_.rend(); ++it) {
-			PlaybackComponent::Keyframe& kf = *it;
-			if (kf.time < fromTime && kf.getPlaybackState() == PlaybackState::Play) {
+			auto kf = *it;
+			if (kf->time < fromTime && kf->getPlaybackState() == PlaybackState::Play) {
 				return keyframe;
-			} else if (kf.time < fromTime) {
-				keyframe = std::ref(kf);
+			} else if (kf->time < fromTime) {
+				keyframe = kf;
 			}
 		}
 		
-		return std::nullopt;
+		return nullptr;
 	}
 	
-	std::optional<std::reference_wrapper<PlaybackComponent::Keyframe>> getFirstButPreviousPlayStateKeyframe(float fromTime) {
-		std::optional<std::reference_wrapper<PlaybackComponent::Keyframe>> keyframe;
+	std::shared_ptr<PlaybackComponent::Keyframe> getFirstButPreviousPlayStateKeyframe(float fromTime) {
+		std::shared_ptr<PlaybackComponent::Keyframe> keyframe;
 		for (auto it = keyframes_.rbegin(); it != keyframes_.rend(); ++it) {
-			PlaybackComponent::Keyframe& kf = *it;
-			if (kf.time < fromTime && kf.getPlaybackState() == PlaybackState::Pause) {
+			auto kf = *it;
+			if (kf->time < fromTime && kf->getPlaybackState() == PlaybackState::Pause) {
 				return keyframe;
-			} else if (kf.time < fromTime) {
-				keyframe = std::ref(kf);
+			} else if (kf->time < fromTime) {
+				keyframe = kf;
 			}
 		}
 		
-		return std::nullopt;
+		return nullptr;
 	}
 	
 	// Blending two keyframes by interpolating each bone's transformation
-	void blend_keyframes(const PlaybackComponent::Keyframe& current,
-						 const PlaybackComponent::Keyframe& next,
+	void blend_keyframes(const std::shared_ptr<PlaybackComponent::Keyframe>& current,
+						 const std::shared_ptr<PlaybackComponent::Keyframe>& next,
 						 float time,
 						 float t) {
-		if (!current.getPlaybackData() || !next.getPlaybackData()) {
+		if (!current->getPlaybackData() || !next->getPlaybackData()) {
 			std::cerr << "Invalid playback data or animation in keyframes." << std::endl;
 			return;
 		}
 		
 		// Retrieving the associated animations
-		Animation& animationA = current.getPlaybackData()->get_animation();
-		Animation& animationB = next.getPlaybackData()->get_animation();
+		Animation& animationA = current->getPlaybackData()->get_animation();
+		Animation& animationB = next->getPlaybackData()->get_animation();
 		
 		// Getting the total number of bones from the skeleton
 		size_t numBones = mSkeletonComponent.get_skeleton().num_bones();
@@ -693,6 +696,6 @@ private:
 	float mAnimationOffset; // Animation offset time
 	std::vector<glm::mat4> mModelPose; // Buffers to store poses
 	std::vector<glm::mat4> mDefaultPose;
-	std::vector<PlaybackComponent::Keyframe> keyframes_; // Keyframes for playback control
+	std::vector<std::shared_ptr<PlaybackComponent::Keyframe>> keyframes_; // Keyframes for playback control
 	PlaybackState mLastPlaybackState = PlaybackState::Pause; // Current state tracking
 };

@@ -178,11 +178,11 @@ public:
 	using PlaybackChangedCallback = std::function<void(const PlaybackComponent&)>;
 		
 	PlaybackComponent()
-	: mState(0.0f,  // Use a meaningful time value
+	: mState(std::make_shared<Keyframe>(0.0f,  // Use a meaningful time value
 			 PlaybackState::Pause,
 			 PlaybackModifier::Forward,
 			 PlaybackTrigger::None,
-			 std::make_shared<PlaybackData>(std::make_unique<Animation>()))
+			 std::make_shared<PlaybackData>(std::move(std::make_unique<Animation>()))))
 	{
 	}
 	
@@ -200,70 +200,70 @@ public:
 	
 	// Getter for PlaybackState
 	PlaybackState getPlaybackState() const {
-		return mState.getPlaybackState();
+		return mState->getPlaybackState();
 	}
 	
 	// Setter for PlaybackState
 	void setPlaybackState(PlaybackState state) {
-		mState.setPlaybackState(state);
+		mState->setPlaybackState(state);
 		trigger_on_playback_changed();
 	}
 	
 	// Getter for PlaybackModifier
 	PlaybackModifier getPlaybackModifier() const {
-		return mState.getPlaybackModifier();
+		return mState->getPlaybackModifier();
 	}
 	
 	// Setter for PlaybackModifier
 	void setPlaybackModifier(PlaybackModifier modifier) {
-		mState.setPlaybackModifier(modifier);
+		mState->setPlaybackModifier(modifier);
 		trigger_on_playback_changed();
 	}
 	
 	// Getter for PlaybackTrigger
 	PlaybackTrigger getPlaybackTrigger() const {
-		return mState.getPlaybackTrigger();
+		return mState->getPlaybackTrigger();
 	}
 	
 	// Setter for PlaybackTrigger
 	void setPlaybackTrigger(PlaybackTrigger trigger) {
-		mState.setPlaybackTrigger(trigger);
+		mState->setPlaybackTrigger(trigger);
 		trigger_on_playback_changed();
 	}
 	
-	const Keyframe& get_state() const {
+	std::shared_ptr<Keyframe> get_state() const {
 		return mState;
 	}
 
 	void setPlaybackData(std::shared_ptr<PlaybackData> playbackData) {
 		assert(playbackData != nullptr);
-		mState.setPlaybackData(playbackData);
+		mState->setPlaybackData(playbackData);
 		trigger_on_playback_changed();
 	}
 
 	// Getter for PlaybackTrigger
 	std::shared_ptr<PlaybackData> getPlaybackData() const {
-		return mState.getPlaybackData();
+		return mState->getPlaybackData();
 	}
 
 	Animation& get_animation() const {
-		return mState.getPlaybackData()->get_animation();
+		return mState->getPlaybackData()->get_animation();
 	}
 	
 	void update_state(PlaybackState state, PlaybackModifier modifier, PlaybackTrigger trigger, std::shared_ptr<PlaybackData> playbackData) {
-		mState.setPlaybackState(state);
+		mState->setPlaybackState(state);
 
-		mState.setPlaybackModifier(modifier);
+		mState->setPlaybackModifier(modifier);
 
-		mState.setPlaybackTrigger(trigger);
+		mState->setPlaybackTrigger(trigger);
 
-		mState.setPlaybackData(playbackData);
+		mState->setPlaybackData(playbackData);
 
 		trigger_on_playback_changed();
 	}
 	
 private:
-	Keyframe mState;
+	std::shared_ptr<Keyframe> mState;
 
 	// Use an unordered_map to store callbacks with an integer key (ID)
 	std::unordered_map<int, PlaybackChangedCallback> callbacks;
