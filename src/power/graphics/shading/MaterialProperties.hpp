@@ -67,6 +67,6 @@ struct MaterialCPU
 	float mOpacity{1.0f};
 	float mHasDiffuseTexture{0.0f};
 	float _1 = 0.0f;
-};
+} __attribute__((packed));
 
 #endif
