@@ -128,7 +128,7 @@ void AnimationPanel::set_active_actor(std::optional<std::reference_wrapper<Actor
 			
 			auto state = playback.get_state();
 			
-			if (state->->getPlaybackState() == PlaybackState::Pause) {
+			if (state->getPlaybackState() == PlaybackState::Pause) {
 				mPlayPauseButton->set_pushed(false);
 				mReversePlayButton->set_pushed(false);
 			} else if (state->getPlaybackState() == PlaybackState::Play &&
