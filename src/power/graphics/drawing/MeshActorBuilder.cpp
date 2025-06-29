@@ -234,8 +234,6 @@ Actor& MeshActorBuilder::build_skinned(Actor& actor, AnimationTimeProvider& time
 
 	
 	actor.add_component<TransformAnimationComponent>(transformComponent, timeProvider);
-
-	auto& skeletonComponent = actor.get_component<SkeletonComponent>();
 	
 	return actor;
 }
