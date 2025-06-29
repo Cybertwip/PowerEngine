@@ -99,7 +99,7 @@ public:
 	float GetPreviousKeyframeTime() override {
 		auto keyframe = get_previous_keyframe(mAnimationTimeProvider.GetTime());
 		
-		if (keyframe.has_value()) {
+		if (keyframe) {
 			return keyframe->time;
 		} else {
 			return -1;
@@ -109,7 +109,7 @@ public:
 	float GetNextKeyframeTime() override {
 		auto keyframe = get_next_keyframe(mAnimationTimeProvider.GetTime());
 		
-		if (keyframe.has_value()) {
+		if (keyframe) {
 			return keyframe->time;
 		} else {
 			return -1;
@@ -140,12 +140,12 @@ private:
 			updateKeyframe(time, position, rotation, scale);
 			return;
 		}
-		Keyframe keyframe{ time, position, rotation, scale };
+		auto keyframe = std::make_shared<Keyframe>(time, position, rotation, scale);
 		keyframes_.push_back(keyframe);
 		// Keep keyframes sorted
 		std::sort(keyframes_.begin(), keyframes_.end(),
-				  [](const Keyframe& a, const Keyframe& b) {
-			return a.time < b.time;
+				  [](const std::shared_ptr<Keyframe>& a, const std::shared_ptr<Keyframe>& b) {
+			return a->time < b->time;
 		});
 	}
 	
@@ -154,9 +154,9 @@ private:
 						const glm::quat& rotation, const glm::vec3& scale) {
 		auto it = findKeyframe(time);
 		if (it != keyframes_.end()) {
-			it->position = position;
-			it->rotation = rotation;
-			it->scale = scale;
+			(*it)->position = position;
+			(*it)->rotation = rotation;
+			(*it)->scale = scale;
 		} else {
 			// Optionally handle the case where the keyframe does not exist
 			// For example, you could add the keyframe if it doesn't exist
@@ -180,33 +180,33 @@ private:
 		}
 		
 		// Clamp time to the bounds of the keyframes
-		if (time <= keyframes_.front().time) {
+		if (time <= keyframes_.front()->time) {
 			return decomposeKeyframe(keyframes_.front());
 		}
-		if (time >= keyframes_.back().time) {
+		if (time >= keyframes_.back()->time) {
 			return decomposeKeyframe(keyframes_.back());
 		}
 		
 		// Find the two keyframes surrounding the given time
 		auto it = std::lower_bound(keyframes_.begin(), keyframes_.end(), time,
-								   [](const Keyframe& kf, float t) {
-			return kf.time < t;
+								   [](const std::shared_ptr<Keyframe>& kf, float t) {
+			return kf->time < t;
 		});
 		
-		const Keyframe& next = *it;
-		const Keyframe& prev = *(it - 1);
+		auto next = *it;
+		auto prev = *(it - 1);
 		
 		// Compute interpolation factor
-		float factor = (time - prev.time) / (next.time - prev.time);
+		float factor = (time - prev->time) / (next->time - prev->time);
 		
 		// Interpolate position
-		glm::vec3 position = glm::mix(prev.position, next.position, factor);
+		glm::vec3 position = glm::mix(prev->position, next->position, factor);
 		
 		// Interpolate rotation
-		glm::quat rotation = glm::slerp(prev.rotation, next.rotation, factor);
+		glm::quat rotation = glm::slerp(prev->rotation, next->rotation, factor);
 		
 		// Interpolate scale
-		glm::vec3 scale = glm::mix(prev.scale, next.scale, factor);
+		glm::vec3 scale = glm::mix(prev->scale, next->scale, factor);
 		
 		// Compose the transformation matrix
 		return std::make_tuple(position, rotation, scale);
@@ -218,10 +218,10 @@ private:
 		}
 		
 		// Clamp time to the bounds of the keyframes
-		if (time <= keyframes_.front().time) {
+		if (time <= keyframes_.front()->time) {
 			return decomposeKeyframeAsMatrix(keyframes_.front());
 		}
-		if (time >= keyframes_.back().time) {
+		if (time >= keyframes_.back()->time) {
 			return decomposeKeyframeAsMatrix(keyframes_.back());
 		}
 		
@@ -231,20 +231,20 @@ private:
 			return kf.time < t;
 		});
 		
-		const Keyframe& next = *it;
-		const Keyframe& prev = *(it - 1);
+		auto next = *it;
+		auto prev = *(it - 1);
 		
 		// Compute interpolation factor
-		float factor = (time - prev.time) / (next.time - prev.time);
+		float factor = (time - prev->time) / (next->time - prev->time);
 		
 		// Interpolate position
-		glm::vec3 position = glm::mix(prev.position, next.position, factor);
+		glm::vec3 position = glm::mix(prev->position, next->position, factor);
 		
 		// Interpolate rotation
-		glm::quat rotation = glm::slerp(prev.rotation, next.rotation, factor);
+		glm::quat rotation = glm::slerp(prev->rotation, next->rotation, factor);
 		
 		// Interpolate scale
-		glm::vec3 scale = glm::mix(prev.scale, next.scale, factor);
+		glm::vec3 scale = glm::mix(prev->scale, next->scale, factor);
 		
 		// Compose the transformation matrix
 		return composeTransform(position, rotation, scale);
@@ -273,16 +273,16 @@ private:
 			return false;
 		}
 		
-		const Keyframe& prev = *(it - 1);
-		const Keyframe& next = *it;
+		auto prev = *(it - 1);
+		auto next = *it;
 		
 		// Return true if time is between two keyframes
-		return (time > prev.time && time < next.time);
+		return (time > prev->time && time < next->time);
 	}
 	
 	// New Methods to Get Previous and Next Keyframes
 	std::shared_ptr<Keyframe> get_previous_keyframe(float time) const {
-		if (keyframes_.empty()) return std::nullopt;
+		if (keyframes_.empty()) return nullptr;
 		
 		// Find the first keyframe where time is greater than or equal to the given time
 		auto it = std::lower_bound(keyframes_.begin(), keyframes_.end(), time,
@@ -290,20 +290,20 @@ private:
 			return kf->time < t;
 		});
 		
-		if (it == keyframes_.begin()) return std::nullopt; // No previous keyframe
+		if (it == keyframes_.begin()) return nullptr; // No previous keyframe
 		--it;
 		return *it;
 	}
 
 	std::shared_ptr<Keyframe> get_next_keyframe(float time) const {
-		if (keyframes_.empty()) return std::nullopt;
+		if (keyframes_.empty()) return nullptr;
 		
 		// Find the first keyframe with time greater than the given time
 		auto it = std::upper_bound(keyframes_.begin(), keyframes_.end(), time,
 								   [](const float t, const std::shared_ptr<Keyframe>& kf) {
 			return t < kf->time; // We are looking for the first keyframe where time is greater
 		});
-		if (it == keyframes_.end()) return std::nullopt; // No next keyframe
+		if (it == keyframes_.end()) return nullptr; // No next keyframe
 		return *it;
 	}
 
@@ -312,12 +312,12 @@ private:
 	std::vector<std::shared_ptr<Keyframe>> keyframes_;
 	
 	// Helper to compose a transformation matrix from a keyframe
-	std::tuple<glm::vec3, glm::quat, glm::vec3> decomposeKeyframe(const Keyframe& kf) const {
-		return std::make_tuple(kf.position, kf.rotation, kf.scale);
+	std::tuple<glm::vec3, glm::quat, glm::vec3> decomposeKeyframe(std::shared_ptr<Keyframe> kf) const {
+		return std::make_tuple(kf->position, kf->rotation, kf->scale);
 	}
 	
-	glm::mat4 decomposeKeyframeAsMatrix(const Keyframe& kf) const {
-		return composeTransform(kf.position, kf.rotation, kf.scale);
+	glm::mat4 decomposeKeyframeAsMatrix(std::shared_ptr<Keyframe> kf) const {
+		return composeTransform(kf->position, kf->rotation, kf->scale);
 	}
 
 	
@@ -338,13 +338,13 @@ private:
 	}
 	
 	// Helper to find a keyframe at the given time
-	typename std::vector<Keyframe>::iterator findKeyframe(float time) {
+	typename std::vector<std::shared_ptr<Keyframe>>::iterator findKeyframe(float time) {
 		return std::find_if(keyframes_.begin(), keyframes_.end(),
 							[time](const Keyframe& kf) { return kf.time == time; });
 	}
 	
-	typename std::vector<Keyframe>::const_iterator findKeyframe(float time) const {
+	typename std::vector<std::shared_ptr<Keyframe>>::const_iterator findKeyframe(float time) const {
 		return std::find_if(keyframes_.cbegin(), keyframes_.cend(),
-							[time](const Keyframe& kf) { return kf.time == time; });
+							[time](const std::shared_ptr<Keyframe>& kf) { return kf->time == time; });
 	}
 };
