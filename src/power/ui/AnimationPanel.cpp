@@ -126,17 +126,17 @@ void AnimationPanel::set_active_actor(std::optional<std::reference_wrapper<Actor
 			
 			auto& playback = actorRef.get_component<PlaybackComponent>();
 			
-			auto& state = playback.get_state();
+			auto state = playback.get_state();
 			
-			if (state.getPlaybackState() == PlaybackState::Pause) {
+			if (state->->getPlaybackState() == PlaybackState::Pause) {
 				mPlayPauseButton->set_pushed(false);
 				mReversePlayButton->set_pushed(false);
-			} else if (state.getPlaybackState() == PlaybackState::Play &&
-					   state.getPlaybackModifier() == PlaybackModifier::Forward) {
+			} else if (state->getPlaybackState() == PlaybackState::Play &&
+					   state->getPlaybackModifier() == PlaybackModifier::Forward) {
 				mPlayPauseButton->set_pushed(true);
 				mReversePlayButton->set_pushed(false);
-			} else if (state.getPlaybackState() == PlaybackState::Play &&
-					   state.getPlaybackModifier() == PlaybackModifier::Reverse) {
+			} else if (state->getPlaybackState() == PlaybackState::Play &&
+					   state->getPlaybackModifier() == PlaybackModifier::Reverse) {
 				mPlayPauseButton->set_pushed(false);
 				mReversePlayButton->set_pushed(true);
 			}
