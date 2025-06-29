@@ -159,7 +159,7 @@ void Fbx::LoadModel(const std::string& path) {
 	fbxsdk::FbxNode* rootNode = mSceneLoader->scene()->GetRootNode();
 	if (rootNode) {
 		// Start processing from the root node with an identity matrix.
-		ProcessNode(rootNode, glm::mat4(1.0f));
+		ProcessNode(rootNode);
 	}
 }
 
@@ -188,147 +188,124 @@ void Fbx::LoadModel(std::stringstream& data) {
 	
 	fbxsdk::FbxNode* rootNode = mSceneLoader->scene()->GetRootNode();
 	if (rootNode) {
-		ProcessNode(rootNode, glm::mat4(1.0f));
+		ProcessNode(rootNode);
 	}
 }
 
-void Fbx::ProcessNode(fbxsdk::FbxNode* node, const glm::mat4& parentTransform) {
+void Fbx::ProcessNode(fbxsdk::FbxNode* node) {
 	if (!node) return;
-	
-	// *** FIX 2: Apply Node Transformations ***
-	// Get the node's geometric transformation. This transform does not include parent transforms.
-	// It's the local rotation, scaling, and translation of the node.
-	fbxsdk::FbxAMatrix geoTransform = node->EvaluateLocalTransform();
-	glm::mat4 currentTransform = parentTransform * FbxUtil::ToGlmMat4(geoTransform);
-	
+		
 	// Process the mesh on the current node, if it exists
 	fbxsdk::FbxMesh* mesh = node->GetMesh();
 	if (mesh) {
-		ProcessMesh(mesh, node, currentTransform);
+		ProcessMesh(mesh, node);
 	}
 	
 	// Recursively process all child nodes
 	for (int i = 0; i < node->GetChildCount(); ++i) {
-		ProcessNode(node->GetChild(i), currentTransform);
+		ProcessNode(node->GetChild(i));
 	}
 }
 
-void Fbx::ProcessMesh(fbxsdk::FbxMesh* mesh, fbxsdk::FbxNode* node, const glm::mat4& transform) {
-	if (!mesh) return;
-	
-	// The FBX SDK requires a non-const manager to create a geometry converter.
-	FbxManager* sdkManager = mFbxManager->manager();
-	FbxGeometryConverter geometryConverter(sdkManager);
-	
-	// Ensure the mesh is triangulated, as we're rendering triangles.
-	if (!mesh->IsTriangleMesh()) {
-		mesh = static_cast<fbxsdk::FbxMesh*>(geometryConverter.Triangulate(mesh, true));
-		if (!mesh) {
-			std::cerr << "Error: Triangulation failed." << std::endl;
-			return;
-		}
+void Fbx::ProcessMesh(fbxsdk::FbxMesh* mesh, fbxsdk::FbxNode* node) {
+	if (!mesh) {
+		std::cerr << "Error: Invalid mesh pointer." << std::endl;
+		return;
 	}
 	
-	// Generate normals if they are missing.
-	if (mesh->GetElementNormalCount() < 1) {
-		mesh->GenerateNormals();
-	}
+	FbxGeometryConverter geometryConverter(mFbxManager->manager());
 	
+	// Critical: Triangulate always
+	mesh = static_cast<fbxsdk::FbxMesh*>(geometryConverter.Triangulate(mesh, false));
+
 	auto& resultMesh = mMeshes.emplace_back(std::make_unique<MeshData>());
 	std::vector<std::unique_ptr<MeshVertex>>& vertices = resultMesh->get_vertices();
 	std::vector<uint32_t>& indices = resultMesh->get_indices();
 	
 	int polygonCount = mesh->GetPolygonCount();
-	int vertexCounter = 0;
-	
-	// For transforming normals, we use the inverse transpose of the model matrix.
-	// This correctly handles non-uniform scaling.
-	glm::mat4 normalTransform = glm::transpose(glm::inverse(transform));
-	
-	// Iterate through all triangles
 	for (int i = 0; i < polygonCount; ++i) {
-		for (int j = 0; j < 3; ++j) {
+		int polygonSize = mesh->GetPolygonSize(i);
+		std::vector<uint32_t> polygonIndices;
+		for (int j = 0; j < polygonSize; ++j) {
 			int controlPointIndex = mesh->GetPolygonVertex(i, j);
-			
 			auto vertex = std::make_unique<MeshVertex>();
+			fbxsdk::FbxVector4 position = mesh->GetControlPointAt(controlPointIndex);
+			vertex->set_position({ static_cast<float>(position[0]),
+				static_cast<float>(position[1]),
+				static_cast<float>(position[2]) });
 			
-			// 1. Get and transform POSITION
-			// FIX: Replaced non-breaking spaces with regular spaces.
-			fbxsdk::FbxVector4 fbxPosition = mesh->GetControlPointAt(controlPointIndex);
-			glm::vec4 glmPosition = transform * glm::vec4(
-														  static_cast<float>(fbxPosition[0]),
-														  static_cast<float>(fbxPosition[1]),
-														  static_cast<float>(fbxPosition[2]),
-														  1.0f);
-			vertex->set_position({glmPosition.x, glmPosition.y, glmPosition.z});
-			
-			// 2. Get and transform NORMALS
-			fbxsdk::FbxVector4 fbxNormal;
-			if (mesh->GetPolygonVertexNormal(i, j, fbxNormal)) {
-				glm::vec4 glmNormal = normalTransform * glm::vec4(
-																  static_cast<float>(fbxNormal[0]),
-																  static_cast<float>(fbxNormal[1]),
-																  static_cast<float>(fbxNormal[2]),
-																  0.0f); // w = 0 for vectors
-				vertex->set_normal(glm::normalize(glm::vec3(glmNormal)));
+			fbxsdk::FbxVector4 normal;
+			if (mesh->GetPolygonVertexNormal(i, j, normal)) {
+				vertex->set_normal({ static_cast<float>(normal[0]),
+					static_cast<float>(normal[1]),
+					static_cast<float>(normal[2]) });
 			} else {
-				vertex->set_normal({0.0f, 1.0f, 0.0f}); // Default fallback
+				vertex->set_normal({ 0.0f, 1.0f, 0.0f });
 			}
 			
-			// 3. Get UVs (Texture Coordinates)
-			if (mesh->GetElementUVCount() > 0) {
-				fbxsdk::FbxGeometryElementUV* uvElement = mesh->GetElementUV(0);
-				fbxsdk::FbxVector2 fbxUV;
+			fbxsdk::FbxStringList uvSetNameList;
+			mesh->GetUVSetNames(uvSetNameList);
+			if (uvSetNameList.GetCount() > 0) {
+				const char* uvSetName = uvSetNameList.GetStringAt(0);
+				fbxsdk::FbxVector2 uv;
 				bool unmapped;
-				// Get UVs by polygon vertex for accuracy
-				if (mesh->GetPolygonVertexUV(i, j, uvElement->GetName(), fbxUV, unmapped)) {
-					vertex->set_texture_coords1({static_cast<float>(fbxUV[0]), 1.0f - static_cast<float>(fbxUV[1])}); // Invert Y for OpenGL
+				if (mesh->GetPolygonVertexUV(i, j, uvSetName, uv, unmapped)) {
+					vertex->set_texture_coords1({ static_cast<float>(uv[0]),
+						static_cast<float>(uv[1]) });
 				} else {
-					vertex->set_texture_coords1({0.0f, 0.0f});
+					vertex->set_texture_coords1(glm::vec2(0.0f, 0.0f));
 				}
 			} else {
-				vertex->set_texture_coords1({0.0f, 0.0f});
+				vertex->set_texture_coords1(glm::vec2(0.0f, 0.0f));
 			}
 			
-			// 4. Get VERTEX COLORS
 			if (mesh->GetElementVertexColorCount() > 0) {
 				fbxsdk::FbxGeometryElementVertexColor* colorElement = mesh->GetElementVertexColor(0);
-				fbxsdk::FbxColor fbxColor;
-				
-				// Determine the correct index for the color
-				int colorIndex = -1;
-				if (colorElement->GetMappingMode() == FbxGeometryElement::eByPolygonVertex) {
-					if (colorElement->GetReferenceMode() == FbxGeometryElement::eIndexToDirect) {
-						colorIndex = colorElement->GetIndexArray().GetAt(vertexCounter);
-					} else { // eDirect
-						colorIndex = vertexCounter;
-					}
-				} else if (colorElement->GetMappingMode() == FbxGeometryElement::eByControlPoint) {
-					if (colorElement->GetReferenceMode() == FbxGeometryElement::eIndexToDirect) {
-						colorIndex = colorElement->GetIndexArray().GetAt(controlPointIndex);
-					} else { // eDirect
-						colorIndex = controlPointIndex;
-					}
+				fbxsdk::FbxColor color;
+				int colorIndex = 0;
+				if (colorElement->GetMappingMode() == fbxsdk::FbxGeometryElement::eByControlPoint) {
+					colorIndex = controlPointIndex;
+				} else if (colorElement->GetMappingMode() == fbxsdk::FbxGeometryElement::eByPolygonVertex) {
+					colorIndex = mesh->GetPolygonVertexIndex(i) + j;
 				}
-				
-				if (colorIndex != -1) {
-					fbxColor = colorElement->GetDirectArray().GetAt(colorIndex);
-					vertex->set_color({(float)fbxColor.mRed, (float)fbxColor.mGreen, (float)fbxColor.mBlue, (float)fbxColor.mAlpha});
-				} else {
-					vertex->set_color({1.0f, 1.0f, 1.0f, 1.0f}); // Fallback
+				if (colorElement->GetReferenceMode() == fbxsdk::FbxGeometryElement::eDirect) {
+					color = colorElement->GetDirectArray().GetAt(colorIndex);
+				} else if (colorElement->GetReferenceMode() == fbxsdk::FbxGeometryElement::eIndexToDirect) {
+					int id = colorElement->GetIndexArray().GetAt(colorIndex);
+					color = colorElement->GetDirectArray().GetAt(id);
 				}
+				vertex->set_color({ static_cast<float>(color.mRed),
+					static_cast<float>(color.mGreen),
+					static_cast<float>(color.mBlue),
+					static_cast<float>(color.mAlpha) });
 			} else {
-				vertex->set_color({1.0f, 1.0f, 1.0f, 1.0f}); // Default to white
+				vertex->set_color({ 1.0f, 1.0f, 1.0f, 1.0f });
 			}
 			
+			int materialIndex = 0;
+			fbxsdk::FbxLayerElementArrayTemplate<int>* materialIndices = nullptr;
+			if (mesh->GetElementMaterial()) {
+				materialIndices = &mesh->GetElementMaterial()->GetIndexArray();
+				fbxsdk::FbxGeometryElement::EMappingMode materialMappingMode = mesh->GetElementMaterial()->GetMappingMode();
+				if (materialMappingMode == fbxsdk::FbxGeometryElement::eByPolygon) {
+					materialIndex = materialIndices->GetAt(i);
+				} else if (materialMappingMode == fbxsdk::FbxGeometryElement::eAllSame) {
+					materialIndex = materialIndices->GetAt(0);
+				}
+			}
+			vertex->set_material_id(materialIndex);
+			
 			vertices.push_back(std::move(vertex));
-			indices.push_back(vertexCounter);
-			vertexCounter++;
+			polygonIndices.push_back(static_cast<uint32_t>(vertices.size() - 1));
+		}
+		
+		for (size_t j = 1; j < polygonIndices.size() - 1; ++j) {
+			indices.push_back(polygonIndices[0]);
+			indices.push_back(polygonIndices[j]);
+			indices.push_back(polygonIndices[j + 1]);
 		}
 	}
-
 	
-
 	int materialCount = node->GetMaterialCount();
 	std::vector<std::shared_ptr<SerializableMaterialProperties>> serializableMaterials;
 	serializableMaterials.reserve(materialCount);

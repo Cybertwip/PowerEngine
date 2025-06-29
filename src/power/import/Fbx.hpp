@@ -48,8 +48,8 @@ protected:
 	std::unique_ptr<ozz::animation::offline::fbx::FbxSceneLoader> mSceneLoader;
 	
 private:
-	void ProcessNode(fbxsdk::FbxNode* node, const glm::mat4& parentTransform);
-	void ProcessMesh(fbxsdk::FbxMesh* mesh, fbxsdk::FbxNode* node, const glm::mat4& transform);
+	void ProcessNode(fbxsdk::FbxNode* node);
+	void ProcessMesh(fbxsdk::FbxMesh* mesh, fbxsdk::FbxNode* node);
 	
 	std::string mFBXFilePath;
 };
