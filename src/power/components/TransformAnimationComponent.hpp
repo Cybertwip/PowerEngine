@@ -227,8 +227,8 @@ private:
 		
 		// Find the two keyframes surrounding the given time
 		auto it = std::lower_bound(keyframes_.begin(), keyframes_.end(), time,
-								   [](const Keyframe& kf, float t) {
-			return kf.time < t;
+								   [](const std::shared_ptr<Keyframe>& kf, float t) {
+			return kf->time < t;
 		});
 		
 		auto next = *it;
@@ -264,7 +264,7 @@ private:
 		
 		// Find the two keyframes surrounding the given time
 		auto it = std::lower_bound(keyframes_.begin(), keyframes_.end(), time,
-								   [](const Keyframe& kf, float t) {
+								   [](const std::shared_ptr<Keyframe>& kf, float t) {
 			return kf.time < t;
 		});
 		
@@ -334,7 +334,7 @@ private:
 	// Helper to check if a keyframe exists at the given time
 	bool keyframeExists(float time) const {
 		return std::any_of(keyframes_.begin(), keyframes_.end(),
-						   [time](const Keyframe& kf) { return kf.time == time; });
+						   [time](const std::shared_ptr<Keyframe>& kf) { return kf.time == time; });
 	}
 	
 	// Helper to find a keyframe at the given time
