@@ -97,8 +97,6 @@ void ImportWindow::Preview(const std::string& path, const std::string& directory
 	
 	if (testExtension == ".fbx") {
 		meshData = mMeshActorImporter->processFbx(path, directory);
-	} else if(testExtension == ".gr2") {
-		meshData = mMeshActorImporter->processGr2(path, directory);
 	}
 		
 	auto actor = std::make_shared<Actor>(mDummyRegistry);

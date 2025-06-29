@@ -13,7 +13,7 @@
 CameraManager::CameraManager(entt::registry& registry)
     : mRegistry(registry), mActiveCamera(std::nullopt) {
 
-	}
+}
 
 CameraManager::~CameraManager() {
 }
@@ -27,22 +27,7 @@ void CameraManager::update_from(const ActorManager& actorManager) {
 		mCameras.push_back(camera);
 	}
 	
-	if (mActiveCamera.has_value()) {
-		auto it = std::find_if(mCameras.begin(), mCameras.end(), [this](auto& camera){
-			if (&camera.get() == &mActiveCamera->get()) {
-				return true;
-			} else {
-				return false;
-			}
-		});
-		
-		if (it == mCameras.end()) {
-			mActiveCamera = std::nullopt;
-		}
-	} else {
-		mActiveCamera = *mCameras.begin();
-	}
-
+	mActiveCamera = *mEngineCamera;
 }
 
 void CameraManager::update_view() {
@@ -95,10 +80,10 @@ void CameraManager::OnActorSelected(std::optional<std::reference_wrapper<Actor>>
 			mLastProjection = mActiveCamera->get().get_component<CameraComponent>().get_projection();
 
 		} else {
-			mActiveActor = actor;
+			mActiveCamera = *mEngineCamera;
 		}
 	} else {
-		mActiveCamera = std::nullopt;
+		mActiveCamera = *mEngineCamera;
 	}
 }
 
@@ -217,3 +202,13 @@ void CameraManager::pan_camera(float dx, float dy) {
 	}
 }
 
+Actor& CameraManager::create_engine_camera(AnimationTimeProvider& animationTimeProvider, float fov, float near, float far, float aspect){
+	
+	mEngineCamera = std::make_unique<Actor>(mRegistry);
+	
+	CameraActorBuilder::build(*mEngineCamera, animationTimeProvider, fov, near, far, aspect);
+	
+	mActiveCamera = *mEngineCamera;
+
+	return *mEngineCamera;
+}

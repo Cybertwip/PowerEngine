@@ -31,11 +31,6 @@ std::vector<granny_data_type_definition> PatchLayout(const granny_vertex_data& v
 }
 }
 
-
-// --- SkinnedGr2 Class Implementation ---
-
-
-// This single override efficiently handles both skinned and rigid meshes.
 void SkinnedGr2::ProcessMesh(const granny_mesh* mesh, const granny_model* model, int materialBaseIndex) {
 	if (!mesh || !mesh->PrimaryVertexData) return;
 	
@@ -87,19 +82,29 @@ void SkinnedGr2::ProcessMesh(const granny_mesh* mesh, const granny_model* model,
 		vertices.push_back(std::move(vertex));
 	}
 	
-	// --- Index and Material Processing (copied from original Gr2::ProcessMesh) ---
+	// Process indices from the primary topology
 	const auto& topology = *mesh->PrimaryTopology;
+	
 	if (topology.IndexCount > 0) {
 		indices.resize(topology.IndexCount);
 		GrannyConvertIndices(topology.IndexCount, sizeof(granny_int32), topology.Indices, sizeof(uint32_t), indices.data());
 	} else if (topology.Index16Count > 0) {
-		// handle 16-bit indices
+		indices.resize(topology.Index16Count);
+		GrannyConvertIndices(topology.Index16Count, sizeof(granny_uint16), topology.Indices16, sizeof(uint32_t), indices.data());
+	} else {
+		indices.clear(); // No indices
 	}
 	
+	// Process material assignments
 	for (int i = 0; i < topology.GroupCount; ++i) {
 		const auto& group = topology.Groups[i];
 		for (int tri = 0; tri < group.TriCount; ++tri) {
-			// ... (material assignment logic) ...
+			for (int v = 0; v < 3; ++v) {
+				uint32_t vertexIndex = indices[group.TriFirst * 3 + tri * 3 + v];
+				if (vertexIndex < vertices.size()) {
+					vertices[vertexIndex]->set_material_id(group.MaterialIndex + materialBaseIndex);
+				}
+			}
 		}
 	}
 	
@@ -147,8 +152,6 @@ void SkinnedGr2::ProcessAnimation(const granny_animation* grnAnim) {
 			granny_curve2* curves[] = {&transformTrack.PositionCurve, &transformTrack.OrientationCurve, &transformTrack.ScaleShearCurve};
 			std::vector<Animation::KeyFrame> keyframes;
 			
-			// For simplicity, we assume all curves on a track have the same knots.
-			// A more robust system would handle them separately.
 			granny_curve2& posCurve = transformTrack.PositionCurve;
 			if (GrannyCurveIsKeyframed(&posCurve))
 			{
@@ -168,7 +171,6 @@ void SkinnedGr2::ProcessAnimation(const granny_animation* grnAnim) {
 					keyframes[k].time = knotTimes[k];
 					keyframes[k].translation = glm::make_vec3(&posControls[k * 3]);
 					keyframes[k].rotation = glm::quat(rotControls[k*4+3], rotControls[k*4+0], rotControls[k*4+1], rotControls[k*4+2]); // W,X,Y,Z
-					// Scale is on the diagonal of the scale-shear matrix
 					keyframes[k].scale = { ssControls[k*9 + 0], ssControls[k*9 + 4], ssControls[k*9 + 8] };
 				}
 			}
@@ -186,8 +188,6 @@ void SkinnedGr2::ProcessAnimation(const granny_animation* grnAnim) {
 }
 
 void SkinnedGr2::TryImportAnimations() {
-	// This requires re-reading the file to get the info struct.
-	// In a real app, you'd likely hold onto the granny_file or granny_file_info.
 	granny_file* file = GrannyReadEntireFile(mPath.c_str());
 	if (!file) return;
 	

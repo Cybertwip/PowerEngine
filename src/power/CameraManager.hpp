@@ -11,6 +11,7 @@
 
 class Actor;
 class ActorManager;
+class AnimationTimeProvider;
 
 class IActorSelectedRegistry;
 class ScenePanel;
@@ -43,7 +44,7 @@ public:
 	void zoom_camera(float dy);
 	void pan_camera(float dx, float dy);
 
-
+	Actor& create_engine_camera(AnimationTimeProvider& animationTimeProvider, float fov, float near, float far, float aspect);
 private:
 	
 	void OnActorSelected(std::optional<std::reference_wrapper<Actor>> actor) override;
@@ -55,6 +56,8 @@ private:
 	
 	nanogui::Matrix4f mLastView;
 	nanogui::Matrix4f mLastProjection;
+	
+	std::unique_ptr<Actor> mEngineCamera;
 };
 
 

@@ -10,6 +10,11 @@ class TransformComponent;
 class CameraComponent
 {
 public:
+	enum class ECameraTag {
+		Engine,
+		Game
+	};
+	
 	CameraComponent(TransformComponent& transformComponent, float fov, float near, float far, float aspect);
     void update_view();
     
@@ -25,6 +30,10 @@ public:
 	void look_at(const glm::vec3& position);
 	void set_aspect_ratio(float ratio);
 	
+	void set_tag(ECameraTag tag) {
+		mTag = tag;
+	}
+	
 private:
 	TransformComponent& mTransformComponent;
 	
@@ -34,4 +43,6 @@ private:
     float mAspect;
     nanogui::Matrix4f mView;
     nanogui::Matrix4f mProjection;
+	
+	ECameraTag mTag;
 };

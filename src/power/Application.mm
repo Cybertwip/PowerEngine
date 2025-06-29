@@ -167,18 +167,10 @@ void Application::initialize() {
 	
 	std::vector<std::reference_wrapper<Actor>> actors;
 	
-	if (mCameraManager->active_camera().has_value()) {
-		actors.push_back(mCameraManager->active_camera()->get());
-	} else {
-		actors.push_back(mRenderCommon->camera_actor_loader().create_actor(mGlobalAnimationTimeProvider,
-																		   45.0f, 0.01f, 1e5f,
-																		   mRenderCommon->canvas()->fixed_size().x() /
-																		   static_cast<float>(mRenderCommon->canvas()->fixed_size().y())));
-	}
-	
-	if (mCameraManager->active_camera().has_value()) {
-		mCameraManager->active_camera()->get().get_component<TransformComponent>().set_translation(glm::vec3(0, 100, 250));
-	}
+	mRenderCommon->camera_actor_loader().setup_engine_camera(mGlobalAnimationTimeProvider,
+															 45.0f, 0.01f, 1e5f,
+															 mRenderCommon->canvas()->fixed_size().x() /
+															 static_cast<float>(mRenderCommon->canvas()->fixed_size().y()));
 	
 	mUiCommon->hierarchy_panel()->add_actors(std::move(actors));
 	

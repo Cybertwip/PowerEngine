@@ -202,14 +202,8 @@ add_executable(PowerEngine
     ${CMAKE_CURRENT_LIST_DIR}/import/Fbx.hpp
     ${CMAKE_CURRENT_LIST_DIR}/import/Fbx.cpp
 
-    ${CMAKE_CURRENT_LIST_DIR}/import/Gr2.hpp
-    ${CMAKE_CURRENT_LIST_DIR}/import/Gr2.cpp
-
     ${CMAKE_CURRENT_LIST_DIR}/import/SkinnedFbx.hpp
     ${CMAKE_CURRENT_LIST_DIR}/import/SkinnedFbx.cpp
-
-    ${CMAKE_CURRENT_LIST_DIR}/import/SkinnedGr2.hpp
-    ${CMAKE_CURRENT_LIST_DIR}/import/SkinnedGr2.cpp
 
     ${CMAKE_CURRENT_LIST_DIR}/simulation/DebugBridgeCommon.hpp
     ${CMAKE_CURRENT_LIST_DIR}/simulation/DebugBridgeCommon.hpp
@@ -285,7 +279,6 @@ ozz_animation_fbx
 riscv
 wasmtime
 zlib
-gstate
 #grpc++ 
 ${platform_specific_libraries})
 

@@ -19,6 +19,7 @@ class CameraActorLoader
 
 	~CameraActorLoader();
 	
+	void setup_engine_camera(AnimationTimeProvider& animationTimeProvider, float fov, float near, float far, float aspect);
 	
 	Actor& create_actor(AnimationTimeProvider& animationTimeProvider, float fov, float near, float far, float aspect);
 

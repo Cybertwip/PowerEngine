@@ -191,7 +191,9 @@ Actor& MeshActorBuilder::build_skinned(Actor& actor, AnimationTimeProvider& time
 	
 	if (model->GetSkeleton() != nullptr) {
 		// Skinned Mesh Handling
-		std::vector<std::unique_ptr<SkinnedMesh>> skinnedMeshComponentData; // Corrected type to SkinnedMesh
+		std::vector<std::unique_ptr<SkinnedMesh>> skinnedMeshComponentData;
+		
+		// Corrected type to SkinnedMesh
 		
 		// Create SkinnedAnimationPdo with deserialized skeleton
 		auto playbackData = std::make_shared<PlaybackData>( std::move(std::make_unique<Animation>())); // one animation per fbx at the moment
@@ -328,8 +330,6 @@ Actor& MeshActorBuilder::build(Actor& actor, AnimationTimeProvider& timeProvider
 
 	if (testExtension == ".fbx") {
 		compressedMeshActor = mMeshActorImporter->processFbx(dataStream, actorName, "./dummyDestination/");
-	} else if(testExtension == ".gr2") {
-		compressedMeshActor = mMeshActorImporter->processGr2(dataStream, actorName, "./dummyDestination/");
 	}
 	
 	std::stringstream compressedData;

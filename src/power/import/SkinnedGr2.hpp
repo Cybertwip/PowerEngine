@@ -30,4 +30,6 @@ private:
 	std::vector<std::unique_ptr<SkinnedMeshData>> mSkinnedMeshes;
 	std::vector<std::unique_ptr<Animation>> mAnimations;
 	std::unordered_map<std::string, int> mBoneMapping;
+	
+	friend class Gr2;
 };

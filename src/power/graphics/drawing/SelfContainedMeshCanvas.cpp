@@ -174,30 +174,33 @@ void SelfContainedMeshCanvas::update_camera_view() {
 void SelfContainedMeshCanvas::draw_content(const nanogui::Matrix4f& view,
 										   const nanogui::Matrix4f& projection) {
 	
-	DrawableComponent& drawableComponent = mPreviewActor->get().get_component<DrawableComponent>();
-	
-	Drawable& drawableRef = drawableComponent.drawable();
-	
-	if (mPreviewActor->get().find_component<SkinnedPlaybackComponent>()) {
-		auto& component = mPreviewActor->get().get_component<SkinnedPlaybackComponent>();
+	if (mPreviewActor.has_value()) {
+		DrawableComponent& drawableComponent = mPreviewActor->get().get_component<DrawableComponent>();
 		
-		component.Unfreeze();
+		Drawable& drawableRef = drawableComponent.drawable();
 		
-		component.evaluate_provider(mCurrentTime++, PlaybackModifier::Forward);
+		if (mPreviewActor->get().find_component<SkinnedPlaybackComponent>()) {
+			auto& component = mPreviewActor->get().get_component<SkinnedPlaybackComponent>();
+			
+			component.Unfreeze();
+			
+			component.evaluate_provider(mCurrentTime++, PlaybackModifier::Forward);
+		}
+		
+		drawableRef.draw_content(CanvasUtils::glm_to_nanogui(mModelMatrix), view, projection);
+		
+		mMeshBatch->draw_content(view, projection);
+		
+		mSkinnedMeshBatch->draw_content(view, projection);
+		
+		if (mPreviewActor->get().find_component<SkinnedPlaybackComponent>()) {
+			auto& animationComponent = mPreviewActor->get().get_component<SkinnedPlaybackComponent>();
+			
+			animationComponent.reset_pose();
+			
+		}
 	}
 	
-	drawableRef.draw_content(CanvasUtils::glm_to_nanogui(mModelMatrix), view, projection);
-	
-	mMeshBatch->draw_content(view, projection);
-	
-	mSkinnedMeshBatch->draw_content(view, projection);
-	
-	if (mPreviewActor->get().find_component<SkinnedPlaybackComponent>()) {
-		auto& animationComponent = mPreviewActor->get().get_component<SkinnedPlaybackComponent>();
-		
-		animationComponent.reset_pose();
-		
-	}
 }
 
 void SelfContainedMeshCanvas::draw_contents() {

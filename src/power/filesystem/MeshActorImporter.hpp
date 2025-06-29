@@ -54,8 +54,5 @@ public:
 	
 	std::unique_ptr<CompressedMeshActor> processFbx(std::stringstream& data, const std::string& modelName, const std::string& destination);
 	
-	std::unique_ptr<CompressedMeshActor> processGr2(const std::string& path, const std::string& destination);
-	
-	std::unique_ptr<CompressedMeshActor> processGr2(std::stringstream& data, const std::string& modelName, const std::string& destination);
 
 };
