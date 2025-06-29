@@ -41,8 +41,6 @@ public:
 		apply_pose_to_skeleton();
 	}
 	
-	~SkinnedAnimationComponent() = default;
-	
 	void TriggerRegistration() {
 		if(mRegistrationId != -1) {
 			unregister_on_playback_changed_callback(mRegistrationId);

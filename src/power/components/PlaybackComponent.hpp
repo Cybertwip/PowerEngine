@@ -72,18 +72,6 @@ public:
 			}
 		}
 		
-		// Copy constructor
-		Keyframe(const Keyframe& other) = delete;
-		
-		// Copy assignment operator
-		Keyframe& operator=(const Keyframe& other) = delete;
-		
-		// Move constructor
-		Keyframe(Keyframe&& other) = delete;
-		
-		// Move assignment operator
-		Keyframe& operator=(Keyframe&& other) = delete;
-		
 		// Getter for PlaybackState
 		PlaybackState getPlaybackState() const {
 			return mPlaybackState;
@@ -154,19 +142,6 @@ public:
 	{
 	}
 	
-	// Copy constructor
-	PlaybackComponent(const PlaybackComponent& other) = delete;
-	
-	// Copy assignment operator
-	PlaybackComponent& operator=(const PlaybackComponent& other) = delete;
-	
-	// Move constructor
-	PlaybackComponent(PlaybackComponent&& other) = delete;
-	
-	// Move assignment operator
-	PlaybackComponent& operator=(PlaybackComponent&& other) = delete;
-	
-
 	
 	// Callback registration, returns an ID for future unregistration
 	int register_on_playback_changed_callback(PlaybackChangedCallback callback) {
