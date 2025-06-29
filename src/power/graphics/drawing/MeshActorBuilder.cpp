@@ -10,8 +10,6 @@
 #include "components/PlaybackComponent.hpp"
 #include "components/SkinnedAnimationComponent.hpp"
 #include "components/SkinnedMeshComponent.hpp"
-#include "components/TimelineComponent.hpp"
-#include "components/TransformComponent.hpp"
 #include "components/TransformAnimationComponent.hpp"
 
 #include "filesystem/MeshActorImporter.hpp"
@@ -113,10 +111,10 @@ Actor& MeshActorBuilder::build_mesh(Actor& actor, AnimationTimeProvider& timePro
 	// Add DrawableComponent
 	actor.add_component<DrawableComponent>(std::move(drawableComponent));
 
-	actor.add_component<TransformComponent>();
+	auto& transformComponent = actor.add_component<TransformComponent>();
 
-	actor.add_component<TakeComponent>(std::move(std::make_unique<SimpleTakeComponent>(actor, timeProvider)));
-	
+	actor.add_component<TransformAnimationComponent>(transformComponent, timeProvider);
+
 	return actor;
 }
 
@@ -193,23 +191,16 @@ Actor& MeshActorBuilder::build_skinned(Actor& actor, AnimationTimeProvider& time
 		// Skinned Mesh Handling
 		std::vector<std::unique_ptr<SkinnedMesh>> skinnedMeshComponentData;
 		
-		// Corrected type to SkinnedMesh
-		
-		// Create SkinnedAnimationPdo with deserialized skeleton
-		auto playbackData = std::make_shared<PlaybackData>( std::move(std::make_unique<Animation>())); // one animation per fbx at the moment
-		
 		// Add PlaybackComponent
 		auto& playbackComponent = actor.add_component<PlaybackComponent>(std::make_shared<PlaybackComponent::Keyframe>(0.0f,  // Use a meaningful time value
 																									PlaybackState::Pause,
 																									PlaybackModifier::Forward,
 																									PlaybackTrigger::None,
 																									std::make_shared<PlaybackData>(std::move(std::make_unique<Animation>()))));
-
-		playbackComponent.setPlaybackData(playbackData);
 		
 		auto& skeletonComponent = actor.add_component<SkeletonComponent>((*model->GetSkeleton()));
 		
-		actor.add_component<SkinnedPlaybackComponent>(playbackComponent, skeletonComponent, previewTimeProvider);
+		actor.add_component<SkinnedPlaybackComponent>(std::ref(playbackComponent), skeletonComponent, previewTimeProvider);
 				
 		// Create SkinnedMesh instances from deserialized data
 		for (auto& skinnedMeshData : model->GetSkinnedMeshData()) {
@@ -246,9 +237,14 @@ Actor& MeshActorBuilder::build_skinned(Actor& actor, AnimationTimeProvider& time
 	// Add DrawableComponent
 	actor.add_component<DrawableComponent>(std::move(drawableComponent));
 	
-	actor.add_component<TransformComponent>();
+	auto& transformComponent = actor.add_component<TransformComponent>();
 
-	actor.add_component<TakeComponent>(	std::move(std::make_unique<SkinnedTakeComponent>(actor, timeProvider)));
+	
+	actor.add_component<TransformAnimationComponent>(transformComponent, timeProvider);
+
+	auto& skeletonComponent = actor.get_component<SkeletonComponent>();
+
+	actor.add_component<SkinnedAnimationComponent>(	skeletonComponent, timeProvider);
 	
 	return actor;
 }

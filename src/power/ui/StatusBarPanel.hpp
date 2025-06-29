@@ -17,13 +17,13 @@ class IActorVisualManager;
 class AnimationTimeProvider;
 class MeshActorLoader;
 class ResourcesPanel;
-class SceneTimeBar;
+//class SceneTimeBar;
 class ShaderManager;
 class UiManager;
 
 class StatusBarPanel : public Panel {
 public:
-	StatusBarPanel(nanogui::Widget& parent, nanogui::Screen& screen, std::shared_ptr<IActorVisualManager> actorVisualManager, std::shared_ptr<SceneTimeBar> sceneTimeBar, AnimationTimeProvider& animationTimeProvider, AnimationTimeProvider& previewTimeProvider, MeshActorLoader& meshActorLoader, ShaderManager& shaderManager, UiManager& uiManager, std::function<void(std::function<void(int, int)>)> applicationClickRegistrator);
+	StatusBarPanel(nanogui::Widget& parent, nanogui::Screen& screen, std::shared_ptr<IActorVisualManager> actorVisualManager, AnimationTimeProvider& animationTimeProvider, AnimationTimeProvider& previewTimeProvider, MeshActorLoader& meshActorLoader, ShaderManager& shaderManager, UiManager& uiManager, std::function<void(std::function<void(int, int)>)> applicationClickRegistrator);
 	
 	std::shared_ptr<ResourcesPanel> resources_panel() {
 		return mResourcesPanel;
@@ -37,7 +37,7 @@ private:
 	void toggle_resources_panel(bool active);
 	void animate_panel_position(const nanogui::Vector2i &targetPosition);
 	
-	std::shared_ptr<SceneTimeBar> mSceneTimeBar;
+//	std::shared_ptr<SceneTimeBar> mSceneTimeBar;
 	
 	std::shared_ptr<nanogui::Widget> mStatusBar;
 	

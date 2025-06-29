@@ -1,5 +1,8 @@
 #pragma once
 
+#include "components/TransformAnimationComponent.hpp"
+#include "components/SkinnedAnimationComponent.hpp"
+
 #include "graphics/drawing/Drawable.hpp"
 #include "graphics/shading/MeshData.hpp"
 #include "graphics/shading/MaterialProperties.hpp"

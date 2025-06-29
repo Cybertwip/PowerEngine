@@ -6,7 +6,7 @@
 #include "ui/AnimationPanel.hpp"
 #include "ui/HierarchyPanel.hpp"
 #include "ui/ScenePanel.hpp"
-#include "ui/SceneTimeBar.hpp"
+//#include "ui/SceneTimeBar.hpp"
 #include "ui/TransformPanel.hpp"
 #include "ui/UiManager.hpp"
 
@@ -83,5 +83,5 @@ UiCommon::UiCommon(nanogui::Widget& parent, nanogui::Screen& screen, ActorManage
 	//	rightWrapper->add_child(promptbox); // Add Grok third
 	
 	// Initialize the scene time bar
-	mSceneTimeBar = std::make_shared<SceneTimeBar>(*mScenePanel, mActorManager, mAnimationTimeProvider, mHierarchyPanel,  mScenePanel->fixed_width(), mScenePanel->fixed_height() * 0.25f);
+//	mSceneTimeBar = std::make_shared<SceneTimeBar>(*mScenePanel, mActorManager, mAnimationTimeProvider, mHierarchyPanel,  mScenePanel->fixed_width(), mScenePanel->fixed_height() * 0.25f);
 }

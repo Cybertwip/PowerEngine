@@ -10,7 +10,6 @@
 #include "components/DrawableComponent.hpp"
 //#include "components/MeshComponent.hpp"
 #include "components/MetadataComponent.hpp"
-#include "components/TimelineComponent.hpp"
 #include "components/TransformComponent.hpp"
 #include "components/TransformAnimationComponent.hpp"
 
@@ -26,9 +25,9 @@ Actor& CameraActorBuilder::build(Actor& actor,
 	
 	actor.add_component<MetadataComponent>(Hash32::generate_crc32_from_compressed_data(dummyData), "Camera");
 	actor.add_component<ColorComponent>(actor.identifier());
-	actor.add_component<CameraComponent>(actor.get_component<TransformComponent>(), fov, near, far, aspect);
+	auto& transformComponent = actor.add_component<CameraComponent>(actor.get_component<TransformComponent>(), fov, near, far, aspect);
 		
-	actor.add_component<TakeComponent>(std::move(std::make_unique<SimpleTakeComponent>(actor, animationTimeProvider)));
-	
+	actor.add_component<TransformAnimationComponent>(transformComponent, animationTimeProvider);
+
 	return actor;
 }

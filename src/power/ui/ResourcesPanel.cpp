@@ -7,7 +7,7 @@
 #include "ui/FileView.hpp"
 #include "ui/ImportWindow.hpp"
 #include "ui/MeshPicker.hpp"
-#include "ui/SceneTimeBar.hpp"
+//#include "ui/SceneTimeBar.hpp"
 #include "ui/UiManager.hpp"
 
 #include "MeshActorLoader.hpp"
@@ -111,14 +111,14 @@ const DirectoryNode* FindNodeByPath(const DirectoryNode& currentNode, const std:
 }
 
 
-ResourcesPanel::ResourcesPanel(nanogui::Widget& parent, nanogui::Screen& screen, DirectoryNode& root_directory_node, std::shared_ptr<IActorVisualManager> actorVisualManager, std::shared_ptr<SceneTimeBar> sceneTimeBar, AnimationTimeProvider& animationTimeProvider, AnimationTimeProvider& previewTimeProvider, MeshActorLoader& meshActorLoader, ShaderManager& shaderManager,  UiManager& uiManager)
+ResourcesPanel::ResourcesPanel(nanogui::Widget& parent, nanogui::Screen& screen, DirectoryNode& root_directory_node, std::shared_ptr<IActorVisualManager> actorVisualManager,  AnimationTimeProvider& animationTimeProvider, AnimationTimeProvider& previewTimeProvider, MeshActorLoader& meshActorLoader, ShaderManager& shaderManager,  UiManager& uiManager)
 : Panel(parent, "Resources"),
 mRootDirectoryNode(root_directory_node),
 mActorVisualManager(actorVisualManager),
 mMeshActorLoader(meshActorLoader),
 mMeshShader(std::make_unique<ShaderWrapper>(shaderManager.get_shader("mesh"))),
 mSkinnedShader(std::make_unique<ShaderWrapper>(shaderManager.get_shader("skinned_mesh"))),
-mSceneTimeBar(sceneTimeBar),
+//mSceneTimeBar(sceneTimeBar),
 mGlobalAnimationTimeProvider(animationTimeProvider),
 mPreviewTimeProvider(previewTimeProvider),
 mUiManager(uiManager),
@@ -181,7 +181,7 @@ mShaderManager(shaderManager)
 		if (filename.find(".psk") != std::string::npos || filename.find(".pma") != std::string::npos){
 			mActorVisualManager->add_actor(mMeshActorLoader.create_actor(filename, mGlobalAnimationTimeProvider, mPreviewTimeProvider, *mMeshShader, *mSkinnedShader));
 			
-			mSceneTimeBar->refresh_actors();
+//			mSceneTimeBar->refresh_actors();
 		}
 	});
 	

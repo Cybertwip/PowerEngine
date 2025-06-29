@@ -17,7 +17,7 @@ class MeshActorExporter;
 class MeshActorLoader;
 class MeshActorBuilder;
 class MeshPicker;
-class SceneTimeBar;
+//class SceneTimeBar;
 class SelfContainedMeshCanvas;
 class ShaderManager;
 class ShaderWrapper;
@@ -27,7 +27,6 @@ class ResourcesPanel : public Panel {
 public:
 	ResourcesPanel(nanogui::Widget& parent, nanogui::Screen& screen,
 				   DirectoryNode& root_directory_node, std::shared_ptr<IActorVisualManager> actorVisualManager,
-				   std::shared_ptr<SceneTimeBar> sceneTimeBar,
 				   AnimationTimeProvider& animationTimeProvider, AnimationTimeProvider& previewTimeProvider, MeshActorLoader& meshActorLoader, ShaderManager& shaderManager, UiManager& uiManager);
 	
 	~ResourcesPanel();
@@ -80,7 +79,7 @@ private:
 	std::unique_ptr<MeshActorImporter> mMeshActorImporter;
 	std::unique_ptr<MeshActorExporter> mMeshActorExporter;
 	
-	std::shared_ptr<SceneTimeBar> mSceneTimeBar;
+//	std::shared_ptr<SceneTimeBar> mSceneTimeBar;
 	
 	UiManager& mUiManager;
 	

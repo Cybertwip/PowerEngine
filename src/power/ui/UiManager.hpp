@@ -50,7 +50,7 @@ class GizmoManager;
 class Grid;
 class MeshActorLoader;
 class ScenePanel;
-class SceneTimeBar;
+//class SceneTimeBar;
 class ShaderManager;
 class StatusBarPanel;
 
@@ -69,7 +69,7 @@ public:
 			  std::shared_ptr<Canvas> canvas,
 			  std::shared_ptr<nanogui::Widget> statusBar,
 			  std::shared_ptr<AnimationPanel> animationPanel,
-			  std::shared_ptr<SceneTimeBar> sceneTimeBar,
+//			  std::shared_ptr<SceneTimeBar> sceneTimeBar,
 			  AnimationTimeProvider& animationTimeProvider,
 			  AnimationTimeProvider& previewTimeProvider,
 			  CameraManager& cameraManager,
@@ -108,7 +108,7 @@ private:
 	std::shared_ptr<Canvas> mCanvas;
 	std::shared_ptr<AnimationPanel> mAnimationPanel;
 	std::shared_ptr<nanogui::RenderPass> mRenderPass;
-	std::shared_ptr<SceneTimeBar> mSceneTimeBar;
+//	std::shared_ptr<SceneTimeBar> mSceneTimeBar;
 	glm::vec4 mSelectionColor;
 	std::shared_ptr<StatusBarPanel> mStatusBarPanel;
 	bool mIsMovieExporting;

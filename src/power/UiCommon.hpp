@@ -17,7 +17,7 @@ class AnimationPanel;
 class AnimationTimeProvider;
 class HierarchyPanel;
 class ScenePanel;
-class SceneTimeBar;
+//class SceneTimeBar;
 class ShaderManager;
 class StatusBarPanel;
 class TransformPanel;
@@ -47,9 +47,9 @@ public:
 		return mAnimationPanel;
 	}
 	
-	std::shared_ptr<SceneTimeBar> scene_time_bar() {
-		return mSceneTimeBar;
-	}
+//	std::shared_ptr<SceneTimeBar> scene_time_bar() {
+//		return mSceneTimeBar;
+//	}
 
 private:
 	std::shared_ptr<nanogui::Window> mMainWrapper;
@@ -61,7 +61,7 @@ private:
 	std::shared_ptr<AnimationPanel> mAnimationPanel;
 	std::shared_ptr<HierarchyPanel> mHierarchyPanel;
 	std::shared_ptr<nanogui::Widget> mStatusBar;
-	std::shared_ptr<SceneTimeBar> mSceneTimeBar;
+//	std::shared_ptr<SceneTimeBar> mSceneTimeBar;
 	
 	ActorManager& mActorManager;
 	AnimationTimeProvider& mAnimationTimeProvider;

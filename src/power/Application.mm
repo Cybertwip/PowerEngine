@@ -46,7 +46,7 @@
 #include "ui/AnimationPanel.hpp"
 #include "ui/HierarchyPanel.hpp"
 #include "ui/ScenePanel.hpp"
-#include "ui/SceneTimeBar.hpp"
+//#include "ui/SceneTimeBar.hpp"
 #include "ui/StatusBarPanel.hpp"
 #include "ui/ResourcesPanel.hpp"
 #include "ui/TransformPanel.hpp"
@@ -149,7 +149,7 @@ void Application::initialize() {
 											 mRenderCommon->canvas(),
 											 mUiCommon->status_bar(),
 											 mUiCommon->animation_panel(),
-											 mUiCommon->scene_time_bar(),
+//											 mUiCommon->scene_time_bar(),
 											 mGlobalAnimationTimeProvider, mPreviewAnimationTimeProvider,
 											 *mCameraManager,
 											 *mGizmoManager,
@@ -334,7 +334,7 @@ bool Application::drop_event(Widget& sender, const std::vector<std::string> & fi
 			
 			if (path.find(".psk") != std::string::npos || path.find(".pma") != std::string::npos) {
 				mUiCommon->hierarchy_panel()->add_actor(mMeshActorLoader->create_actor(path, mGlobalAnimationTimeProvider, mPreviewAnimationTimeProvider, *mMeshShader, *mSkinnedShader));
-				mUiCommon->scene_time_bar()->refresh_actors();
+//				mUiCommon->scene_time_bar()->refresh_actors();
 				return; // Event handled
 			}
 		}

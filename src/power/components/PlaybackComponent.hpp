@@ -71,46 +71,16 @@ public:
 		}
 		
 		// Copy constructor
-		Keyframe(const Keyframe& other)
-		: time(other.time),
-		mPlaybackState(other.mPlaybackState),
-		mPlaybackModifier(other.mPlaybackModifier),
-		mPlaybackTrigger(other.mPlaybackTrigger),
-		mPlaybackData(other.mPlaybackData) {
-		}
+		Keyframe(const Keyframe& other) = delete;
 		
 		// Copy assignment operator
-		Keyframe& operator=(const Keyframe& other) {
-			if (this != &other) {
-				time = other.time;
-				mPlaybackState = other.mPlaybackState;
-				mPlaybackModifier = other.mPlaybackModifier;
-				mPlaybackTrigger = other.mPlaybackTrigger;
-				mPlaybackData = other.mPlaybackData;
-			}
-			return *this;
-		}
+		Keyframe& operator=(const Keyframe& other) = delete;
 		
 		// Move constructor
-		Keyframe(Keyframe&& other) noexcept
-		: time(std::move(other.time)),
-		mPlaybackState(std::move(other.mPlaybackState)),
-		mPlaybackModifier(std::move(other.mPlaybackModifier)),
-		mPlaybackTrigger(std::move(other.mPlaybackTrigger)),
-		mPlaybackData(std::move(other.mPlaybackData)) {
-		}
+		Keyframe(Keyframe&& other) = delete;
 		
 		// Move assignment operator
-		Keyframe& operator=(Keyframe&& other) noexcept {
-			if (this != &other) {
-				time = std::move(other.time);
-				mPlaybackState = std::move(other.mPlaybackState);
-				mPlaybackModifier = std::move(other.mPlaybackModifier);
-				mPlaybackTrigger = std::move(other.mPlaybackTrigger);
-				mPlaybackData = std::move(other.mPlaybackData);
-			}
-			return *this;
-		}
+		Keyframe& operator=(Keyframe&& other) = delete;
 		
 		// Getter for PlaybackState
 		PlaybackState getPlaybackState() const {
@@ -181,6 +151,20 @@ public:
 	: mState(state)
 	{
 	}
+	
+	// Copy constructor
+	PlaybackComponent(const PlaybackComponent& other) = delete;
+	
+	// Copy assignment operator
+	PlaybackComponent& operator=(const PlaybackComponent& other) = delete;
+	
+	// Move constructor
+	PlaybackComponent(PlaybackComponent&& other) = delete;
+	
+	// Move assignment operator
+	PlaybackComponent& operator=(PlaybackComponent&& other) = delete;
+	
+
 	
 	// Callback registration, returns an ID for future unregistration
 	int register_on_playback_changed_callback(PlaybackChangedCallback callback) {
@@ -258,7 +242,7 @@ public:
 		trigger_on_playback_changed();
 	}
 	
-private:
+protected:
 	PlaybackComponent() = default;
 	
 	std::shared_ptr<Keyframe> mState;

@@ -21,10 +21,10 @@
 #include <optional>
 #include <functional>
 
-class SkinnedPlaybackComponent : public AnimationComponent {	
+class SkinnedPlaybackComponent : public PlaybackComponent {
 public:
-	SkinnedPlaybackComponent(PlaybackComponent& provider, SkeletonComponent& skeletonComponent, AnimationTimeProvider& animationTimeProvider)
-	: mProvider(provider), mSkeletonComponent(skeletonComponent), mAnimationTimeProvider(animationTimeProvider), mRegistrationId(-1), mFrozen(false)
+	SkinnedPlaybackComponent(SkeletonComponent& skeletonComponent, AnimationTimeProvider& animationTimeProvider)
+	: mSkeletonComponent(skeletonComponent), mAnimationTimeProvider(animationTimeProvider), mRegistrationId(-1), mFrozen(false)
 	, mAnimationOffset(0.0f) {
 		// Initializing pose buffers
 		size_t numBones = mSkeletonComponent.get_skeleton().num_bones();
@@ -43,59 +43,59 @@ public:
 	
 	~SkinnedPlaybackComponent() = default;
 	
-	void TriggerRegistration() override {
+	void TriggerRegistration() {
 		if(mRegistrationId != -1) {
-			mProvider.unregister_on_playback_changed_callback(mRegistrationId);
+			unregister_on_playback_changed_callback(mRegistrationId);
 			mRegistrationId = -1;
 		}
 		
-		mRegistrationId = mProvider.register_on_playback_changed_callback([this](const PlaybackComponent& playback) {
+		mRegistrationId = register_on_playback_changed_callback([this](const PlaybackComponent& playback) {
 			if (mFrozen) {
 				addKeyframe(mAnimationTimeProvider.GetTime(), playback.getPlaybackState(), playback.getPlaybackModifier(), playback.getPlaybackTrigger(), playback.getPlaybackData());
 			}
 		});
 	}
 	
-	void AddKeyframe() override {
-		addKeyframe(mAnimationTimeProvider.GetTime(), mProvider.getPlaybackState(), mProvider.getPlaybackModifier(), mProvider.getPlaybackTrigger(), mProvider.getPlaybackData());
+	void AddKeyframe() {
+		addKeyframe(mAnimationTimeProvider.GetTime(), getPlaybackState(), getPlaybackModifier(), getPlaybackTrigger(), getPlaybackData());
 	}
 	
-	void UpdateKeyframe() override {
-		updateKeyframe(mAnimationTimeProvider.GetTime(), mProvider.getPlaybackState(), mProvider.getPlaybackModifier(), mProvider.getPlaybackTrigger(),
-					   mProvider.getPlaybackData());
+	void UpdateKeyframe() {
+		updateKeyframe(mAnimationTimeProvider.GetTime(), getPlaybackState(), getPlaybackModifier(), getPlaybackTrigger(),
+					   getPlaybackData());
 	}
 	
-	void RemoveKeyframe() override {
+	void RemoveKeyframe() {
 		removeKeyframe(mAnimationTimeProvider.GetTime());
 	}
 	
-	void Freeze() override {
+	void Freeze() {
 		mFrozen = true;
 	}
 	
-	void Evaluate() override {
+	void Evaluate() {
 		if (!mFrozen) {
 			auto keyframe = evaluate_keyframe(mAnimationTimeProvider.GetTime());
 			
 			if (keyframe) {
-				mProvider.setPlaybackState(keyframe->getPlaybackState());
-				mProvider.setPlaybackModifier(keyframe->getPlaybackModifier());
-				mProvider.setPlaybackTrigger(keyframe->getPlaybackTrigger());
-				mProvider.setPlaybackData(keyframe->getPlaybackData());
+				setPlaybackState(keyframe->getPlaybackState());
+				setPlaybackModifier(keyframe->getPlaybackModifier());
+				setPlaybackTrigger(keyframe->getPlaybackTrigger());
+				setPlaybackData(keyframe->getPlaybackData());
 			} else {
-				evaluate_provider(mAnimationTimeProvider.GetTime(), mProvider.getPlaybackModifier());
+				evaluate_provider(mAnimationTimeProvider.GetTime(), getPlaybackModifier());
 			}
 		} else {
 			auto _ = evaluate_keyframe(mAnimationTimeProvider.GetTime());
 		}
 	}
 	
-	void Unfreeze() override {
+	void Unfreeze() {
 		mFrozen = false;
 	}
 	
-	bool IsSyncWithProvider() override {
-		auto m1 = mProvider.get_state();
+	bool IsSyncWithProvider() {
+		auto m1 = get_state();
 		m1->time = mAnimationTimeProvider.GetTime();
 		
 		auto m2 = evaluate_keyframe(mAnimationTimeProvider.GetTime());
@@ -107,22 +107,22 @@ public:
 		}
 	}
 	
-	void SyncWithProvider() override {
+	void SyncWithProvider() {
 		auto keyframe = evaluate_keyframe(mAnimationTimeProvider.GetTime());
 		
 		if (keyframe) {
-			mProvider.setPlaybackState(keyframe->getPlaybackState());
-			mProvider.setPlaybackModifier(keyframe->getPlaybackModifier());
-			mProvider.setPlaybackTrigger(keyframe->getPlaybackTrigger());
-			mProvider.setPlaybackData(keyframe->getPlaybackData());
+			setPlaybackState(keyframe->getPlaybackState());
+			setPlaybackModifier(keyframe->getPlaybackModifier());
+			setPlaybackTrigger(keyframe->getPlaybackTrigger());
+			setPlaybackData(keyframe->getPlaybackData());
 		}
 	}
 	
-	bool KeyframeExists() override {
+	bool KeyframeExists() {
 		return is_keyframe(mAnimationTimeProvider.GetTime());
 	}
 	
-	float GetPreviousKeyframeTime() override {
+	float GetPreviousKeyframeTime() {
 		auto keyframe = get_previous_keyframe(mAnimationTimeProvider.GetTime());
 		
 		if (keyframe) {
@@ -132,7 +132,7 @@ public:
 		}
 	}
 	
-	float GetNextKeyframeTime() override {
+	float GetNextKeyframeTime() {
 		auto keyframe = get_next_keyframe(mAnimationTimeProvider.GetTime());
 		
 		if (keyframe) {
@@ -190,7 +190,7 @@ public:
 	}
 	
 	void evaluate_provider(float time, PlaybackModifier modifier) {
-		Animation& animation = mProvider.get_animation();
+		Animation& animation = get_animation();
 		
 		if (animation.get_duration() > 0) {
 			float duration = static_cast<float>(animation.get_duration());
@@ -213,7 +213,6 @@ public:
 	}
 	
 private:
-	PlaybackComponent& mProvider;
 	SkeletonComponent& mSkeletonComponent;
 	AnimationTimeProvider& mAnimationTimeProvider;
 	int mRegistrationId;
