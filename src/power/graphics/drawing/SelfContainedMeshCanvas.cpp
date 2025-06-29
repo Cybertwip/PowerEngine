@@ -164,8 +164,8 @@ void SelfContainedMeshCanvas::draw_content(const nanogui::Matrix4f& view,
 			DrawableComponent& drawableComponent = mPreviewActor->get().get_component<DrawableComponent>();
 			Drawable& drawableRef = drawableComponent.drawable();
 			
-			if (mPreviewActor->get().find_component<SkinnedPlaybackComponent>()) {
-				auto& component = mPreviewActor->get().get_component<SkinnedPlaybackComponent>();
+			if (mPreviewActor->get().find_component<SkinnedAnimationComponent>()) {
+				auto& component = mPreviewActor->get().get_component<SkinnedAnimationComponent>();
 				component.Unfreeze();
 				component.evaluate_provider(mCurrentTime++, PlaybackModifier::Forward);
 			}
@@ -174,8 +174,8 @@ void SelfContainedMeshCanvas::draw_content(const nanogui::Matrix4f& view,
 			mMeshBatch->draw_content(view, projection);
 			mSkinnedMeshBatch->draw_content(view, projection);
 			
-			if (mPreviewActor->get().find_component<SkinnedPlaybackComponent>()) {
-				auto& animationComponent = mPreviewActor->get().get_component<SkinnedPlaybackComponent>();
+			if (mPreviewActor->get().find_component<SkinnedAnimationComponent>()) {
+				auto& animationComponent = mPreviewActor->get().get_component<SkinnedAnimationComponent>();
 				animationComponent.reset_pose();
 			}
 

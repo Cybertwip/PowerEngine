@@ -83,7 +83,7 @@ add_executable(PowerEngine
     ${CMAKE_CURRENT_LIST_DIR}/components/SkinnedAnimationComponent.hpp
     ${CMAKE_CURRENT_LIST_DIR}/components/SkeletonComponent.hpp
     ${CMAKE_CURRENT_LIST_DIR}/components/TransformAnimationComponent.hpp
-    ${CMAKE_CURRENT_LIST_DIR}/components/TimelineComponent.hpp
+    #${CMAKE_CURRENT_LIST_DIR}/components/TimelineComponent.hpp
     ${CMAKE_CURRENT_LIST_DIR}/components/CameraComponent.cpp
     ${CMAKE_CURRENT_LIST_DIR}/components/CameraComponent.hpp
     ${CMAKE_CURRENT_LIST_DIR}/components/Component.cpp

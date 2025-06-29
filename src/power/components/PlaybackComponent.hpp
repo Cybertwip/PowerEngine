@@ -1,5 +1,7 @@
 #pragma once
 
+#include "components/AnimationComponent.hpp"
+
 #include <functional>
 #include <memory>
 #include <vector>
@@ -47,7 +49,7 @@ enum class PlaybackTrigger {
 	FastForward
 };
 
-class PlaybackComponent {
+class PlaybackComponent : public AnimationComponent {
 public:
 	
 	struct Keyframe {

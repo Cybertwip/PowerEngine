@@ -21,9 +21,9 @@
 #include <optional>
 #include <functional>
 
-class SkinnedPlaybackComponent : public PlaybackComponent {
+class SkinnedAnimationComponent : public PlaybackComponent {
 public:
-	SkinnedPlaybackComponent(SkeletonComponent& skeletonComponent, AnimationTimeProvider& animationTimeProvider)
+	SkinnedAnimationComponent(SkeletonComponent& skeletonComponent, AnimationTimeProvider& animationTimeProvider)
 	: mSkeletonComponent(skeletonComponent), mAnimationTimeProvider(animationTimeProvider), mRegistrationId(-1), mFrozen(false)
 	, mAnimationOffset(0.0f) {
 		// Initializing pose buffers
@@ -41,7 +41,7 @@ public:
 		apply_pose_to_skeleton();
 	}
 	
-	~SkinnedPlaybackComponent() = default;
+	~SkinnedAnimationComponent() = default;
 	
 	void TriggerRegistration() {
 		if(mRegistrationId != -1) {

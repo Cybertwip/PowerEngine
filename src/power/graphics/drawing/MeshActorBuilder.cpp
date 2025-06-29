@@ -200,7 +200,7 @@ Actor& MeshActorBuilder::build_skinned(Actor& actor, AnimationTimeProvider& time
 		
 		auto& skeletonComponent = actor.add_component<SkeletonComponent>((*model->GetSkeleton()));
 		
-		actor.add_component<SkinnedPlaybackComponent>(std::ref(playbackComponent), skeletonComponent, previewTimeProvider);
+		actor.add_component<SkinnedAnimationComponent>(std::ref(playbackComponent), skeletonComponent, previewTimeProvider);
 				
 		// Create SkinnedMesh instances from deserialized data
 		for (auto& skinnedMeshData : model->GetSkinnedMeshData()) {

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "AnimationComponent.hpp"
+#include "PlaybackComponent.hpp"
 #include "TransformComponent.hpp"
 
 #include "animation/AnimationTimeProvider.hpp"
@@ -11,7 +12,7 @@
 #include <vector>
 #include <algorithm>
 
-class TransformAnimationComponent : public AnimationComponent {
+class TransformAnimationComponent : public PlaybackComponent {
 public:
 	TransformAnimationComponent(TransformComponent& provider, AnimationTimeProvider& animationTimeProvider) :
 	mProvider(provider), mAnimationTimeProvider(animationTimeProvider), mRegistrationId(-1), mFrozen(false) {
