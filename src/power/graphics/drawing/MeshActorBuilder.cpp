@@ -199,7 +199,11 @@ Actor& MeshActorBuilder::build_skinned(Actor& actor, AnimationTimeProvider& time
 		auto playbackData = std::make_shared<PlaybackData>( std::move(std::make_unique<Animation>())); // one animation per fbx at the moment
 		
 		// Add PlaybackComponent
-		auto& playbackComponent = actor.add_component<PlaybackComponent>();
+		auto& playbackComponent = actor.add_component<PlaybackComponent>(std::make_shared<PlaybackComponent::Keyframe>(0.0f,  // Use a meaningful time value
+																									PlaybackState::Pause,
+																									PlaybackModifier::Forward,
+																									PlaybackTrigger::None,
+																									std::make_shared<PlaybackData>(std::move(std::make_unique<Animation>()))));
 
 		playbackComponent.setPlaybackData(playbackData);
 		

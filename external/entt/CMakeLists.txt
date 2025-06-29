@@ -22,10 +22,10 @@ project(
 if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Debug)
 endif()
-
+    
 message(VERBOSE "*")
 message(VERBOSE "* ${PROJECT_NAME} v${PROJECT_VERSION} (${CMAKE_BUILD_TYPE})")
-message(VERBOSE "* Copyright (c) 2017-2024 Michele Caini <michele.caini@gmail.com>")
+message(VERBOSE "* Copyright (c) 2017-2025 Michele Caini <michele.caini@gmail.com>")
 message(VERBOSE "*")
 
 # CMake stuff
@@ -81,20 +81,6 @@ endif()
 
 # Add EnTT target
 
-option(ENTT_INCLUDE_HEADERS "Add all EnTT headers to the EnTT target." OFF)
-option(ENTT_INCLUDE_NATVIS "Add EnTT natvis files to the EnTT target." OFF)
-
-if(ENTT_INCLUDE_NATVIS)
-    if(MSVC)
-        set(ENTT_HAS_NATVIS TRUE CACHE BOOL "" FORCE)
-        mark_as_advanced(ENTT_HAS_NATVIS)
-    endif()
-
-    if(NOT ENTT_HAS_NATVIS)
-        message(VERBOSE "The option ENTT_INCLUDE_NATVIS is set but natvis files are not supported. They will not be added to the target.")
-    endif()
-endif()
-
 include(GNUInstallDirs)
 
 add_library(EnTT INTERFACE)
@@ -104,10 +90,30 @@ target_include_directories(
     EnTT
     INTERFACE
         $<BUILD_INTERFACE:${EnTT_SOURCE_DIR}/src>
+        $<BUILD_INTERFACE:${EnTT_SOURCE_DIR}/tools>
         $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
 )
 
 target_compile_features(EnTT INTERFACE cxx_std_17)
+
+if(ENTT_HAS_LIBCPP)
+    target_compile_options(EnTT BEFORE INTERFACE -stdlib=libc++)
+endif()
+
+if(ENTT_HAS_SANITIZER)
+    target_compile_options(EnTT INTERFACE $<$<CONFIG:Debug>:-fsanitize=address -fno-omit-frame-pointer -fsanitize=undefined>)
+    target_link_libraries(EnTT INTERFACE $<$<CONFIG:Debug>:-fsanitize=address -fno-omit-frame-pointer -fsanitize=undefined>)
+endif()
+
+if(ENTT_CLANG_TIDY_EXECUTABLE)
+    set(CMAKE_CXX_CLANG_TIDY "${ENTT_CLANG_TIDY_EXECUTABLE};--config-file=${EnTT_SOURCE_DIR}/.clang-tidy;--header-filter=${EnTT_SOURCE_DIR}/src/entt/.*")
+endif()
+
+# Add EnTT goodies
+
+option(ENTT_INCLUDE_HEADERS "Add all EnTT headers to the EnTT target." OFF)
+option(ENTT_INCLUDE_TOOLS "Add EnTT tools files to the EnTT target." OFF)
+option(ENTT_INCLUDE_NATVIS "Add EnTT natvis files to the EnTT target." OFF)
 
 if(ENTT_INCLUDE_HEADERS)
     target_sources(
@@ -191,133 +197,156 @@ if(ENTT_INCLUDE_HEADERS)
     )
 endif()
 
+if(ENTT_INCLUDE_TOOLS)
+    target_sources(
+        EnTT
+        INTERFACE
+            $<BUILD_INTERFACE:${EnTT_SOURCE_DIR}/tools/entt/davey/davey.hpp>
+    )
+endif()
+
+if(ENTT_INCLUDE_NATVIS)
+    if(MSVC)
+        set(ENTT_HAS_NATVIS TRUE CACHE BOOL "" FORCE)
+        mark_as_advanced(ENTT_HAS_NATVIS)
+    endif()
+
+    if(NOT ENTT_HAS_NATVIS)
+        message(VERBOSE "The option ENTT_INCLUDE_NATVIS is set but natvis files are not supported. They will not be added to the target.")
+    endif()
+endif()
+
 if(ENTT_HAS_NATVIS)
     target_sources(
         EnTT
         INTERFACE
-            $<BUILD_INTERFACE:${EnTT_SOURCE_DIR}/natvis/entt/config.natvis>
-            $<BUILD_INTERFACE:${EnTT_SOURCE_DIR}/natvis/entt/container.natvis>
-            $<BUILD_INTERFACE:${EnTT_SOURCE_DIR}/natvis/entt/core.natvis>
-            $<BUILD_INTERFACE:${EnTT_SOURCE_DIR}/natvis/entt/entity.natvis>
-            $<BUILD_INTERFACE:${EnTT_SOURCE_DIR}/natvis/entt/graph.natvis>
-            $<BUILD_INTERFACE:${EnTT_SOURCE_DIR}/natvis/entt/locator.natvis>
-            $<BUILD_INTERFACE:${EnTT_SOURCE_DIR}/natvis/entt/meta.natvis>
-            $<BUILD_INTERFACE:${EnTT_SOURCE_DIR}/natvis/entt/poly.natvis>
-            $<BUILD_INTERFACE:${EnTT_SOURCE_DIR}/natvis/entt/process.natvis>
-            $<BUILD_INTERFACE:${EnTT_SOURCE_DIR}/natvis/entt/resource.natvis>
-            $<BUILD_INTERFACE:${EnTT_SOURCE_DIR}/natvis/entt/signal.natvis>
+            $<BUILD_INTERFACE:${EnTT_SOURCE_DIR}/src/entt/natvis/config.natvis>
+            $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/entt/natvis/config.natvis>
+            $<BUILD_INTERFACE:${EnTT_SOURCE_DIR}/src/entt/natvis/container.natvis>
+            $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/entt/natvis/container.natvis>
+            $<BUILD_INTERFACE:${EnTT_SOURCE_DIR}/src/entt/natvis/core.natvis>
+            $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/entt/natvis/core.natvis>
+            $<BUILD_INTERFACE:${EnTT_SOURCE_DIR}/src/entt/natvis/entity.natvis>
+            $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/entt/natvis/entity.natvis>
+            $<BUILD_INTERFACE:${EnTT_SOURCE_DIR}/src/entt/natvis/graph.natvis>
+            $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/entt/natvis/graph.natvis>
+            $<BUILD_INTERFACE:${EnTT_SOURCE_DIR}/src/entt/natvis/locator.natvis>
+            $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/entt/natvis/locator.natvis>
+            $<BUILD_INTERFACE:${EnTT_SOURCE_DIR}/src/entt/natvis/meta.natvis>
+            $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/entt/natvis/meta.natvis>
+            $<BUILD_INTERFACE:${EnTT_SOURCE_DIR}/src/entt/natvis/poly.natvis>
+            $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/entt/natvis/poly.natvis>
+            $<BUILD_INTERFACE:${EnTT_SOURCE_DIR}/src/entt/natvis/process.natvis>
+            $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/entt/natvis/process.natvis>
+            $<BUILD_INTERFACE:${EnTT_SOURCE_DIR}/src/entt/natvis/resource.natvis>
+            $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/entt/natvis/resource.natvis>
+            $<BUILD_INTERFACE:${EnTT_SOURCE_DIR}/src/entt/natvis/signal.natvis>
+            $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/entt/natvis/signal.natvis>
     )
 endif()
 
-if(ENTT_HAS_SANITIZER)
-    target_compile_options(EnTT INTERFACE $<$<CONFIG:Debug>:-fsanitize=address -fno-omit-frame-pointer -fsanitize=undefined>)
-    target_link_libraries(EnTT INTERFACE $<$<CONFIG:Debug>:-fsanitize=address -fno-omit-frame-pointer -fsanitize=undefined>)
+# Install EnTT and all related files
+
+option(ENTT_INSTALL "Install EnTT and all related files." OFF)
+
+if(ENTT_INSTALL)
+    # Install pkg-config file
+
+    include(JoinPaths)
+
+    set(EnTT_PKGCONFIG ${CMAKE_CURRENT_BINARY_DIR}/entt.pc)
+
+    join_paths(EnTT_PKGCONFIG_INCLUDEDIR "\${prefix}" "${CMAKE_INSTALL_INCLUDEDIR}")
+
+    configure_file(
+        ${EnTT_SOURCE_DIR}/cmake/in/entt.pc.in
+        ${EnTT_PKGCONFIG}
+        @ONLY
+    )
+
+    install(
+        FILES ${EnTT_PKGCONFIG}
+        DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig
+    )
+
+    # Install EnTT
+
+    include(CMakePackageConfigHelpers)
+
+    install(
+        TARGETS EnTT
+        EXPORT EnTTTargets
+        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    )
+
+    write_basic_package_version_file(
+        EnTTConfigVersion.cmake
+        VERSION ${PROJECT_VERSION}
+        COMPATIBILITY AnyNewerVersion
+    )
+
+    configure_package_config_file(
+        ${EnTT_SOURCE_DIR}/cmake/in/EnTTConfig.cmake.in
+        EnTTConfig.cmake
+        INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/EnTT/cmake
+    )
+
+    export(
+        EXPORT EnTTTargets
+        FILE ${CMAKE_CURRENT_BINARY_DIR}/EnTTTargets.cmake
+        NAMESPACE EnTT::
+    )
+
+    install(
+        EXPORT EnTTTargets
+        FILE EnTTTargets.cmake
+        DESTINATION ${CMAKE_INSTALL_LIBDIR}/EnTT/cmake
+        NAMESPACE EnTT::
+    )
+
+    install(
+        FILES
+            ${PROJECT_BINARY_DIR}/EnTTConfig.cmake
+            ${PROJECT_BINARY_DIR}/EnTTConfigVersion.cmake
+        DESTINATION ${CMAKE_INSTALL_LIBDIR}/EnTT/cmake
+    )
+
+    install(
+        DIRECTORY src/
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+        FILES_MATCHING
+        PATTERN "*.h"
+        PATTERN "*.hpp"
+        PATTERN "*.natvis"
+    )
+
+    export(PACKAGE EnTT)
 endif()
 
-if(ENTT_CLANG_TIDY_EXECUTABLE)
-    set(CMAKE_CXX_CLANG_TIDY "${ENTT_CLANG_TIDY_EXECUTABLE};--config-file=${EnTT_SOURCE_DIR}/.clang-tidy;--header-filter=${EnTT_SOURCE_DIR}/src/entt/.*")
-endif()
-
-if(ENTT_HAS_LIBCPP)
-    target_compile_options(EnTT BEFORE INTERFACE -stdlib=libc++)
-endif()
-
-# Install pkg-config file
-
-include(JoinPaths)
-
-set(EnTT_PKGCONFIG ${CMAKE_CURRENT_BINARY_DIR}/entt.pc)
-
-join_paths(EnTT_PKGCONFIG_INCLUDEDIR "\${prefix}" "${CMAKE_INSTALL_INCLUDEDIR}")
-
-configure_file(
-    ${EnTT_SOURCE_DIR}/cmake/in/entt.pc.in
-    ${EnTT_PKGCONFIG}
-    @ONLY
-)
-
-install(
-    FILES ${EnTT_PKGCONFIG}
-    DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig
-)
-
-# Install EnTT
-
-include(CMakePackageConfigHelpers)
-
-install(
-    TARGETS EnTT
-    EXPORT EnTTTargets
-    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
-)
-
-write_basic_package_version_file(
-    EnTTConfigVersion.cmake
-    VERSION ${PROJECT_VERSION}
-    COMPATIBILITY AnyNewerVersion
-)
-
-configure_package_config_file(
-    ${EnTT_SOURCE_DIR}/cmake/in/EnTTConfig.cmake.in
-    EnTTConfig.cmake
-    INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/EnTT/cmake
-)
-
-export(
-    EXPORT EnTTTargets
-    FILE ${CMAKE_CURRENT_BINARY_DIR}/EnTTTargets.cmake
-    NAMESPACE EnTT::
-)
-
-install(
-    EXPORT EnTTTargets
-    FILE EnTTTargets.cmake
-    DESTINATION ${CMAKE_INSTALL_LIBDIR}/EnTT/cmake
-    NAMESPACE EnTT::
-)
-
-install(
-    FILES
-        ${PROJECT_BINARY_DIR}/EnTTConfig.cmake
-        ${PROJECT_BINARY_DIR}/EnTTConfigVersion.cmake
-    DESTINATION ${CMAKE_INSTALL_LIBDIR}/EnTT/cmake
-)
-
-install(
-    DIRECTORY src/
-    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
-    FILES_MATCHING
-    PATTERN "*.h"
-    PATTERN "*.hpp"
-)
-
-export(PACKAGE EnTT)
-
-# Tests
+# Tests and testbed
 
 option(ENTT_BUILD_TESTING "Enable building tests." OFF)
+option(ENTT_BUILD_TESTBED "Enable building testbed." OFF)
 
-if(ENTT_BUILD_TESTING)
-    option(ENTT_FIND_GTEST_PACKAGE "Enable finding gtest package." OFF)
-    option(ENTT_BUILD_BENCHMARK "Build benchmark." OFF)
-    option(ENTT_BUILD_EXAMPLE "Build examples." OFF)
-    option(ENTT_BUILD_LIB "Build lib tests." OFF)
-    option(ENTT_BUILD_SNAPSHOT "Build snapshot test with Cereal." OFF)
+if(ENTT_BUILD_TESTING OR ENTT_BUILD_TESTBED)
+    set(ENTT_ID_TYPE std::uint32_t CACHE STRING "Type of identifiers to use for tests and testbed")
+    set(ENTT_CXX_STD cxx_std_17 CACHE STRING "C++ standard revision to use for tests and testbed")
 
-    set(ENTT_ID_TYPE std::uint32_t CACHE STRING "Type of identifiers to use for the tests")
-    set(ENTT_CXX_STD cxx_std_17 CACHE STRING "C++ standard revision to use for the tests")
-
-    include(CTest)
-    enable_testing()
-    add_subdirectory(test)
-endif()
-
-# Tools
-
-option(ENTT_BUILD_TOOLS "Enable building tools." OFF)
-
-if(ENTT_BUILD_TOOLS)
-    add_subdirectory(tools)
+    # Tests and tesetbed do not work together because SDL gets confused with EnTT tests
+    if(ENTT_BUILD_TESTING)
+        option(ENTT_FIND_GTEST_PACKAGE "Enable finding gtest package." OFF)
+    
+        option(ENTT_BUILD_BENCHMARK "Build benchmark." OFF)
+        option(ENTT_BUILD_EXAMPLE "Build examples." OFF)
+        option(ENTT_BUILD_LIB "Build lib tests." OFF)
+        option(ENTT_BUILD_SNAPSHOT "Build snapshot test with Cereal." OFF)
+    
+        include(CTest)
+        enable_testing()
+        add_subdirectory(test)
+    elseif(ENTT_BUILD_TESTBED)
+        add_subdirectory(testbed)
+    endif()
 endif()
 
 # Documentation
@@ -325,9 +354,5 @@ endif()
 option(ENTT_BUILD_DOCS "Enable building with documentation." OFF)
 
 if(ENTT_BUILD_DOCS)
-    find_package(Doxygen 1.10)
-
-    if(DOXYGEN_FOUND)
-        add_subdirectory(docs)
-    endif()
+    add_subdirectory(docs)
 endif()

@@ -159,22 +159,26 @@ void SelfContainedMeshCanvas::draw_content(const nanogui::Matrix4f& view,
 	}
 	
 	try {
-		DrawableComponent& drawableComponent = mPreviewActor->get().get_component<DrawableComponent>();
-		Drawable& drawableRef = drawableComponent.drawable();
-		
-		if (mPreviewActor->get().find_component<SkinnedPlaybackComponent>()) {
-			auto& component = mPreviewActor->get().get_component<SkinnedPlaybackComponent>();
-			component.Unfreeze();
-			component.evaluate_provider(mCurrentTime++, PlaybackModifier::Forward);
-		}
-		
-		drawableRef.draw_content(CanvasUtils::glm_to_nanogui(mModelMatrix), view, projection);
-		mMeshBatch->draw_content(view, projection);
-		mSkinnedMeshBatch->draw_content(view, projection);
-		
-		if (mPreviewActor->get().find_component<SkinnedPlaybackComponent>()) {
-			auto& animationComponent = mPreviewActor->get().get_component<SkinnedPlaybackComponent>();
-			animationComponent.reset_pose();
+		if (mPreviewActor->get().find_component<DrawableComponent>()) {
+			
+			DrawableComponent& drawableComponent = mPreviewActor->get().get_component<DrawableComponent>();
+			Drawable& drawableRef = drawableComponent.drawable();
+			
+			if (mPreviewActor->get().find_component<SkinnedPlaybackComponent>()) {
+				auto& component = mPreviewActor->get().get_component<SkinnedPlaybackComponent>();
+				component.Unfreeze();
+				component.evaluate_provider(mCurrentTime++, PlaybackModifier::Forward);
+			}
+			
+			drawableRef.draw_content(CanvasUtils::glm_to_nanogui(mModelMatrix), view, projection);
+			mMeshBatch->draw_content(view, projection);
+			mSkinnedMeshBatch->draw_content(view, projection);
+			
+			if (mPreviewActor->get().find_component<SkinnedPlaybackComponent>()) {
+				auto& animationComponent = mPreviewActor->get().get_component<SkinnedPlaybackComponent>();
+				animationComponent.reset_pose();
+			}
+
 		}
 	} catch (const std::exception& e) {
 		std::cerr << "Error in draw_content: " << e.what() << std::endl;
@@ -185,6 +189,7 @@ void SelfContainedMeshCanvas::draw_content(const nanogui::Matrix4f& view,
 
 void SelfContainedMeshCanvas::draw_contents() {
 	std::unique_lock<std::mutex> lock(mMutex);
+	std::unique_lock<std::mutex> lockUpdate(mUpdateMutex);
 	
 	if (mPreviewActor.has_value() && mUpdate) {
 		update_camera_view();

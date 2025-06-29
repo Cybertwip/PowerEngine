@@ -236,9 +236,9 @@ TYPED_TEST(Poly, Functionalities) {
     ASSERT_TRUE(alias);
     ASSERT_TRUE(value);
 
-    ASSERT_EQ(empty.type(), entt::type_id<void>());
+    ASSERT_EQ(empty.info(), entt::type_id<void>());
     ASSERT_EQ(in_place.type(), entt::type_id<impl>());
-    ASSERT_EQ(alias.type(), entt::type_id<impl>());
+    ASSERT_EQ(alias.info(), entt::type_id<impl>());
     ASSERT_EQ(value.type(), entt::type_id<impl>());
 
     ASSERT_EQ(alias.data(), &instance);
@@ -251,7 +251,7 @@ TYPED_TEST(Poly, Functionalities) {
     ASSERT_TRUE(empty);
     ASSERT_NE(empty.data(), nullptr);
     ASSERT_NE(std::as_const(empty).data(), nullptr);
-    ASSERT_EQ(empty.type(), entt::type_id<impl>());
+    ASSERT_EQ(empty.info(), entt::type_id<impl>());
     ASSERT_EQ(empty->get(), 0);
 
     empty.template emplace<impl>(3);
@@ -265,7 +265,7 @@ TYPED_TEST(Poly, Functionalities) {
     ASSERT_NE(ref.data(), nullptr);
     ASSERT_EQ(ref.data(), in_place.data());
     ASSERT_EQ(std::as_const(ref).data(), std::as_const(in_place).data());
-    ASSERT_EQ(ref.type(), entt::type_id<impl>());
+    ASSERT_EQ(ref.info(), entt::type_id<impl>());
     ASSERT_EQ(ref->get(), 3);
 
     poly_type null{};
@@ -288,7 +288,7 @@ TYPED_TEST(Poly, Functionalities) {
     move.reset();
 
     ASSERT_FALSE(move);
-    ASSERT_EQ(move.type(), entt::type_id<void>());
+    ASSERT_EQ(move.info(), entt::type_id<void>());
 }
 
 TYPED_TEST(Poly, Owned) {
@@ -436,17 +436,13 @@ TYPED_TEST(Poly, SboAlignment) {
     std::array<poly_type, 2u> sbo = {over_aligned{}, over_aligned{}};
     const auto *data = sbo[0].data();
 
-    // NOLINTBEGIN(*-reinterpret-cast)
     ASSERT_TRUE((reinterpret_cast<std::uintptr_t>(sbo[0u].data()) % alignment) == 0u);
     ASSERT_TRUE((reinterpret_cast<std::uintptr_t>(sbo[1u].data()) % alignment) == 0u);
-    // NOLINTEND(*-reinterpret-cast)
 
     std::swap(sbo[0], sbo[1]);
 
-    // NOLINTBEGIN(*-reinterpret-cast)
     ASSERT_TRUE((reinterpret_cast<std::uintptr_t>(sbo[0u].data()) % alignment) == 0u);
     ASSERT_TRUE((reinterpret_cast<std::uintptr_t>(sbo[1u].data()) % alignment) == 0u);
-    // NOLINTEND(*-reinterpret-cast)
 
     ASSERT_NE(data, sbo[1].data());
 }
@@ -458,17 +454,13 @@ TYPED_TEST(Poly, NoSboAlignment) {
     std::array<poly_type, 2u> nosbo = {over_aligned{}, over_aligned{}};
     const auto *data = nosbo[0].data();
 
-    // NOLINTBEGIN(*-reinterpret-cast)
     ASSERT_TRUE((reinterpret_cast<std::uintptr_t>(nosbo[0u].data()) % alignment) == 0u);
     ASSERT_TRUE((reinterpret_cast<std::uintptr_t>(nosbo[1u].data()) % alignment) == 0u);
-    // NOLINTEND(*-reinterpret-cast)
 
     std::swap(nosbo[0], nosbo[1]);
 
-    // NOLINTBEGIN(*-reinterpret-cast)
     ASSERT_TRUE((reinterpret_cast<std::uintptr_t>(nosbo[0u].data()) % alignment) == 0u);
     ASSERT_TRUE((reinterpret_cast<std::uintptr_t>(nosbo[1u].data()) % alignment) == 0u);
-    // NOLINTEND(*-reinterpret-cast)
 
     ASSERT_EQ(data, nosbo[1].data());
 }

@@ -43,8 +43,10 @@ public:
 	void set_active_actor(std::optional<std::reference_wrapper<Actor>> actor);
 	
 	void set_update(bool update) {
-		std::unique_lock<std::mutex> lock(mUpdateMutex);
-		mUpdate = update;
+		nanogui::async([this, update]{
+			std::unique_lock<std::mutex> lock(mUpdateMutex);
+			mUpdate = update;
+		});
 	}
 	
 	void set_aspect_ratio(float ratio);

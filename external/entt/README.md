@@ -245,7 +245,7 @@ about and can use `EnTT` from a `CMake` project without problems.
 When using `CMake`, just enable the option `ENTT_INCLUDE_NATVIS` and enjoy
 it.<br/>
 Otherwise, most of the tools are covered via Natvis and all files can be found
-in the `natvis` directory, divided by module.<br/>
+in the `natvis` subdirectory, divided by module.<br/>
 If you spot errors or have suggestions, any contribution is welcome!
 
 ## Packaging Tools
@@ -403,7 +403,7 @@ know who has participated so far.
 
 # License
 
-Code and documentation Copyright (c) 2017-2024 Michele Caini.<br/>
+Code and documentation Copyright (c) 2017-2025 Michele Caini.<br/>
 Colorful logo Copyright (c) 2018-2021 Richard Caseres.
 
 Code released under

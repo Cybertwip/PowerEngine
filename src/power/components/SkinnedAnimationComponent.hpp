@@ -21,10 +21,7 @@
 #include <optional>
 #include <functional>
 
-class SkinnedPlaybackComponent : public AnimationComponent {
-private:
-	SkinnedPlaybackComponent();
-	
+class SkinnedPlaybackComponent : public AnimationComponent {	
 public:
 	SkinnedPlaybackComponent(PlaybackComponent& provider, SkeletonComponent& skeletonComponent, AnimationTimeProvider& animationTimeProvider)
 	: mProvider(provider), mSkeletonComponent(skeletonComponent), mAnimationTimeProvider(animationTimeProvider), mRegistrationId(-1), mFrozen(false)
