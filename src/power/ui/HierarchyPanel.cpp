@@ -49,6 +49,8 @@ void HierarchyPanel::remove_actor(std::reference_wrapper<Actor> actor) {
 	
 	mTreeView->clear();
 	
+	fire_actor_selected_event(std::nullopt);
+
 	mActorManager.remove_actor(actor);
 	
 	auto actors = mActorManager.get_actors_with_component<UiComponent>();
@@ -57,22 +59,22 @@ void HierarchyPanel::remove_actor(std::reference_wrapper<Actor> actor) {
 		populate_tree(actor);
 	}
 	
-	fire_actor_selected_event(std::nullopt);
 }
 
 void HierarchyPanel::remove_actors(const std::vector<std::reference_wrapper<Actor>>& actors) {
 	nanogui::async([this, actors](){
 		mTreeView->clear();
 		
+		fire_actor_selected_event(std::nullopt);
+
 		mActorManager.remove_actors(actors);
-		
+
 		auto existingActors = mActorManager.get_actors_with_component<UiComponent>();
 		
 		for (auto& actor : existingActors) {
 			populate_tree(actor);
 		}
 		
-		fire_actor_selected_event(std::nullopt);
 	});
 }
 

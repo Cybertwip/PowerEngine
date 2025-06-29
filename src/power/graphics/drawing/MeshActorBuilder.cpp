@@ -115,7 +115,7 @@ Actor& MeshActorBuilder::build_mesh(Actor& actor, AnimationTimeProvider& timePro
 
 	actor.add_component<TransformComponent>();
 
-	actor.add_component<TakeComponent>(std::make_unique<SimpleTakeComponent>(actor, timeProvider));
+	actor.add_component<TakeComponent>(std::move(std::make_unique<SimpleTakeComponent>(actor, timeProvider)));
 	
 	return actor;
 }
@@ -244,7 +244,7 @@ Actor& MeshActorBuilder::build_skinned(Actor& actor, AnimationTimeProvider& time
 	
 	actor.add_component<TransformComponent>();
 
-	actor.add_component<TakeComponent>(	std::make_unique<SkinnedTakeComponent>(actor, timeProvider));
+	actor.add_component<TakeComponent>(	std::move(std::make_unique<SkinnedTakeComponent>(actor, timeProvider)));
 	
 	return actor;
 }

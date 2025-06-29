@@ -25,7 +25,9 @@ struct PlaybackData {
 	}	
 	
 private:
-	PlaybackData();
+	PlaybackData(){
+		
+	}
 	std::unique_ptr<Animation> mAnimation;
 };
 
@@ -47,6 +49,7 @@ enum class PlaybackTrigger {
 
 class PlaybackComponent {
 public:
+	
 	struct Keyframe {
 		float time; // Keyframe time
 	private:
@@ -59,12 +62,33 @@ public:
 		// Constructors
 		Keyframe(float t, PlaybackState state, PlaybackModifier modifier, PlaybackTrigger trigger, std::shared_ptr<PlaybackData> playbackData)
 		: time(t), mPlaybackState(state), mPlaybackModifier(modifier), mPlaybackTrigger(trigger),
-			mPlaybackData(playbackData) {
-				assert(mPlaybackData != nullptr);
+		mPlaybackData(playbackData) {
+			assert(mPlaybackData != nullptr);
 			// Setting trigger sets state to Pause
 			if (trigger == PlaybackTrigger::Rewind || trigger == PlaybackTrigger::FastForward) {
 				mPlaybackState = PlaybackState::Pause;
 			}
+		}
+		
+		// Move constructor
+		Keyframe(Keyframe&& other) noexcept
+		: time(std::move(other.time)),
+		mPlaybackState(std::move(other.mPlaybackState)),
+		mPlaybackModifier(std::move(other.mPlaybackModifier)),
+		mPlaybackTrigger(std::move(other.mPlaybackTrigger)),
+		mPlaybackData(std::move(other.mPlaybackData)) {
+		}
+		
+		// Move assignment operator
+		Keyframe& operator=(Keyframe&& other) noexcept {
+			if (this != &other) {
+				time = std::move(other.time);
+				mPlaybackState = std::move(other.mPlaybackState);
+				mPlaybackModifier = std::move(other.mPlaybackModifier);
+				mPlaybackTrigger = std::move(other.mPlaybackTrigger);
+				mPlaybackData = std::move(other.mPlaybackData);
+			}
+			return *this;
 		}
 		
 		// Getter for PlaybackState
@@ -73,8 +97,8 @@ public:
 		}
 		
 		// Setter for PlaybackState
-		void setPlaybackState(PlaybackState state) {
-			mPlaybackState = state;
+		void setPlaybackState(std::reference_wrapper<PlaybackState> state) {
+			mPlaybackState = state.get();
 		}
 		
 		// Getter for PlaybackModifier
@@ -91,8 +115,8 @@ public:
 		PlaybackTrigger getPlaybackTrigger() const {
 			return mPlaybackTrigger;
 		}
-
-		// Getter for PlaybackTrigger
+		
+		// Getter for PlaybackData
 		std::shared_ptr<PlaybackData> getPlaybackData() const {
 			return mPlaybackData;
 		}
@@ -101,8 +125,7 @@ public:
 			assert(playbackData != nullptr);
 			mPlaybackData = playbackData;
 		}
-
-
+		
 		// Setter for PlaybackTrigger
 		void setPlaybackTrigger(PlaybackTrigger trigger) {
 			mPlaybackTrigger = trigger;
@@ -113,7 +136,7 @@ public:
 		}
 		
 		// Overloaded == operator for Keyframe
-		bool operator==(const Keyframe& rhs) {
+		bool operator==(const Keyframe& rhs) const {
 			return time == rhs.time &&
 			getPlaybackState() == rhs.getPlaybackState() &&
 			getPlaybackModifier() == rhs.getPlaybackModifier() &&
@@ -122,21 +145,30 @@ public:
 		}
 		
 		// Overloaded != operator for Keyframe
-		bool operator!=(const Keyframe& rhs) {
+		bool operator!=(const Keyframe& rhs) const {
 			return !(*this == rhs);
+		}
+		
+		// Delete copy constructor
+		Keyframe(const Keyframe&) = delete;
+		
+		// Delete copy assignment operator
+		Keyframe& operator=(const Keyframe&) = delete;
+		
+	private:
+		Keyframe() {
 		}
 	};
 public:
 	using PlaybackChangedCallback = std::function<void(const PlaybackComponent&)>;
 		
 	PlaybackComponent()
-	:
-	mState(0,
-		   PlaybackState::Pause,
-		   PlaybackModifier::Forward,
-		   PlaybackTrigger::None,
-		   std::make_shared<PlaybackData>(std::make_unique<Animation>())) {
-		
+	: mState(0.0f,  // Use a meaningful time value
+			 PlaybackState::Pause,
+			 PlaybackModifier::Forward,
+			 PlaybackTrigger::None,
+			 std::make_shared<PlaybackData>(std::make_unique<Animation>()))
+	{
 	}
 	
 	// Callback registration, returns an ID for future unregistration

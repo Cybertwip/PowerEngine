@@ -28,7 +28,7 @@ Actor& CameraActorBuilder::build(Actor& actor,
 	actor.add_component<ColorComponent>(actor.identifier());
 	actor.add_component<CameraComponent>(actor.get_component<TransformComponent>(), fov, near, far, aspect);
 		
-	actor.add_component<TakeComponent>(std::make_unique<SimpleTakeComponent>(actor, animationTimeProvider));
+	actor.add_component<TakeComponent>(std::move(std::make_unique<SimpleTakeComponent>(actor, animationTimeProvider)));
 	
 	return actor;
 }
