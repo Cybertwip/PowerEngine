@@ -155,7 +155,6 @@ public:
 		// Delete copy assignment operator
 		Keyframe& operator=(const Keyframe&) = delete;
 		
-	private:
 		Keyframe() {
 		}
 	};
