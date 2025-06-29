@@ -112,6 +112,8 @@ void AnimationPanel::parse_file(const std::string& path) {
 void AnimationPanel::set_active_actor(std::optional<std::reference_wrapper<Actor>> actor) {
 	mActiveActor = actor;
 	
+	mPreviewCanvas->set_active_actor(mActiveActor);
+
 	if (mActiveActor.has_value()) {
 		Actor& actorRef = mActiveActor->get();
 		
@@ -170,6 +172,4 @@ void AnimationPanel::set_active_actor(std::optional<std::reference_wrapper<Actor
 		set_visible(false);
 		parent()->get().perform_layout(screen().nvg_context());
 	}
-	
-	mPreviewCanvas->set_active_actor(mActiveActor);
 }

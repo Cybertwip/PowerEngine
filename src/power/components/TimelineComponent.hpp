@@ -13,7 +13,7 @@
 
 class TimelineComponent : public AnimationComponent {
 public:
-	TimelineComponent(std::vector<std::reference_wrapper<AnimationComponent>>&& components, AnimationTimeProvider& animationTimeProvider) : mAnimationTimeProvider(animationTimeProvider) {
+	TimelineComponent(std::vector<std::unique_ptr<AnimationComponent>>&& components, AnimationTimeProvider& animationTimeProvider) : mAnimationTimeProvider(animationTimeProvider) {
 		mComponents = std::move(components);
 	}
 	
@@ -21,49 +21,49 @@ public:
 	
 	void TriggerRegistration() override {
 		for (auto& component : mComponents) {
-			component.get().TriggerRegistration();
+			component->TriggerRegistration();
 		}
 	}
 	
 	void AddKeyframe() override {
 		for (auto& component : mComponents) {
-			component.get().AddKeyframe();
+			component->AddKeyframe();
 		}
 	}
 	
 	void UpdateKeyframe() override {
 		for (auto& component : mComponents) {
-			component.get().UpdateKeyframe();
+			component->UpdateKeyframe();
 		}
 	}
 	
 	void RemoveKeyframe() override {
 		for (auto& component : mComponents) {
-			component.get().RemoveKeyframe();
+			component->RemoveKeyframe();
 		}
 	}
 	
 	void Freeze() override {
 		for (auto& component : mComponents) {
-			component.get().Freeze();
+			component->Freeze();
 		}
 	}
 	
 	void Evaluate() override {
 		for (auto& component : mComponents) {
-			component.get().Evaluate();
+			component->Evaluate();
 		}
 	}
 	
 	void Unfreeze() override {
 		for (auto& component : mComponents) {
-			component.get().Unfreeze();
+			component->Unfreeze();
 		}
 	}
 	
 	bool IsSyncWithProvider() override {
 		for (auto& component : mComponents) {
-			if (!component.get().IsSyncWithProvider()) {
+			if (!component->IsSyncWithProvider()) {
 				return false;
 			}
 		}
@@ -73,13 +73,13 @@ public:
 	
 	void SyncWithProvider() override {
 		for (auto& component : mComponents) {
-			component.get().SyncWithProvider();
+			component->SyncWithProvider();
 		}
 	}
 
 	bool KeyframeExists() override {
 		for (auto& component : mComponents) {
-			if (component.get().KeyframeExists()) {
+			if (component->KeyframeExists()) {
 				return true;
 			}
 		}
@@ -94,7 +94,7 @@ public:
 		bool hasPrevKeyframe = false;
 		
 		for (auto& component : mComponents) {
-			float prevTime = component.get().GetPreviousKeyframeTime();
+			float prevTime = component->GetPreviousKeyframeTime();
 			if (prevTime != -1.0f) { // Assuming -1 indicates no keyframe
 				hasPrevKeyframe = true;
 				if (prevTime > latestPrevTime) {
@@ -114,7 +114,7 @@ public:
 		bool hasNextKeyframe = false;
 		
 		for (auto& component : mComponents) {
-			float nextTime = component.get().GetNextKeyframeTime();
+			float nextTime = component->GetNextKeyframeTime();
 			if (nextTime != -1.0f) { // Assuming -1 indicates no keyframe
 				hasNextKeyframe = true;
 				if (nextTime < earliestNextTime) {
@@ -127,7 +127,7 @@ public:
 	}
 
 private:
-	std::vector<std::reference_wrapper<AnimationComponent>> mComponents;
+	std::vector<std::unique_ptr<AnimationComponent>> mComponents;
 	
 	AnimationTimeProvider& mAnimationTimeProvider;
 };
@@ -144,15 +144,13 @@ public:
 		// Add TransformComponent and AnimationComponent
 		auto& transform = mActor.get_component<TransformComponent>();
 		
+		auto transformAnimationComponent = std::make_unique<TransformAnimationComponent>(transform, mTimeProvider);
+
+		std::vector<std::unique_ptr<AnimationComponent>> components;
 		
-		auto transformAnimationComponent = std::make_shared<TransformAnimationComponent>(transform, mTimeProvider);
+		components.push_back(std::move(transformAnimationComponent));
 		
-		mAnimationComponents.push_back(transformAnimationComponent);
-		
-		std::vector<std::reference_wrapper<AnimationComponent>> components = {
-			*transformAnimationComponent,
-		};
-		mTimelineComponents.push_back(std::make_shared<TimelineComponent>(std::move(components), mTimeProvider));
+		mTimelineComponents.push_back(std::make_unique<TimelineComponent>(std::move(components), mTimeProvider));
 	}
 	
 	void set_active_timeline(unsigned int index) {
@@ -251,9 +249,7 @@ protected:
 	Actor& mActor;
 	AnimationTimeProvider& mTimeProvider;
 	
-	std::vector<std::shared_ptr<AnimationComponent>> mAnimationComponents;
-
-	std::vector<std::shared_ptr<TimelineComponent>> mTimelineComponents;
+	std::vector<std::unique_ptr<TimelineComponent>> mTimelineComponents;
 
 private:
 	unsigned int mTimelineIndex;
@@ -270,25 +266,22 @@ public:
 		// Add TransformComponent and AnimationComponent
 		auto& transform = mActor.get_component<TransformComponent>();
 		
-		auto transformAnimationComponent = std::make_shared<TransformAnimationComponent>(transform, mTimeProvider);
-		
-		mAnimationComponents.push_back(transformAnimationComponent);
-		
+		auto transformAnimationComponent = std::make_unique<TransformAnimationComponent>(transform, mTimeProvider);
+				
 		// Add PlaybackComponent
 		auto& playbackComponent = mActor.get_component<PlaybackComponent>();
 		
 		auto& skeletonComponent = mActor.get_component<SkeletonComponent>();
 		
-		auto skinnedAnimationComponent = std::make_shared<SkinnedPlaybackComponent>(playbackComponent, skeletonComponent, mTimeProvider);
+		auto skinnedAnimationComponent = std::make_unique<SkinnedPlaybackComponent>(playbackComponent, skeletonComponent, mTimeProvider);
 		
-		mAnimationComponents.push_back(skinnedAnimationComponent);
+		std::vector<std::unique_ptr<AnimationComponent>> components;
 		
+		components.push_back(std::move(transformAnimationComponent));
+		
+		components.push_back(std::move(skinnedAnimationComponent));
 
-		std::vector<std::reference_wrapper<AnimationComponent>> components = {
-			*transformAnimationComponent,
-			*skinnedAnimationComponent
-		};
-		mTimelineComponents.push_back(std::make_shared<TimelineComponent>(std::move(components), mTimeProvider));
+		mTimelineComponents.push_back(std::make_unique<TimelineComponent>(std::move(components), mTimeProvider));
 	}
 };
 
