@@ -191,16 +191,9 @@ Actor& MeshActorBuilder::build_skinned(Actor& actor, AnimationTimeProvider& time
 		// Skinned Mesh Handling
 		std::vector<std::unique_ptr<SkinnedMesh>> skinnedMeshComponentData;
 		
-		// Add PlaybackComponent
-		auto& playbackComponent = actor.add_component<PlaybackComponent>(std::make_shared<PlaybackComponent::Keyframe>(0.0f,  // Use a meaningful time value
-																									PlaybackState::Pause,
-																									PlaybackModifier::Forward,
-																									PlaybackTrigger::None,
-																									std::make_shared<PlaybackData>(std::move(std::make_unique<Animation>()))));
-		
 		auto& skeletonComponent = actor.add_component<SkeletonComponent>((*model->GetSkeleton()));
 		
-		actor.add_component<SkinnedAnimationComponent>(std::ref(playbackComponent), skeletonComponent, previewTimeProvider);
+		actor.add_component<SkinnedAnimationComponent>( skeletonComponent, previewTimeProvider);
 				
 		// Create SkinnedMesh instances from deserialized data
 		for (auto& skinnedMeshData : model->GetSkinnedMeshData()) {

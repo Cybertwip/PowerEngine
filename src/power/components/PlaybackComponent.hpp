@@ -136,10 +136,15 @@ public:
 	};
 public:
 	using PlaybackChangedCallback = std::function<void(const PlaybackComponent&)>;
-		
-	PlaybackComponent(std::shared_ptr<Keyframe> state)
-	: mState(state)
+
+	PlaybackComponent()
+	: mState(std::make_shared<Keyframe>(0.0f,  // Use a meaningful time value
+														   PlaybackState::Pause,
+														   PlaybackModifier::Forward,
+														   PlaybackTrigger::None,
+														   std::make_shared<PlaybackData>(std::move(std::make_unique<Animation>()))))
 	{
+		
 	}
 	
 	
@@ -220,8 +225,6 @@ public:
 	}
 	
 protected:
-	PlaybackComponent() = default;
-	
 	std::shared_ptr<Keyframe> mState;
 
 	// Use an unordered_map to store callbacks with an integer key (ID)
