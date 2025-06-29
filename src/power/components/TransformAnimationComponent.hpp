@@ -340,7 +340,7 @@ private:
 	// Helper to find a keyframe at the given time
 	typename std::vector<std::shared_ptr<Keyframe>>::iterator findKeyframe(float time) {
 		return std::find_if(keyframes_.begin(), keyframes_.end(),
-							[time](const Keyframe& kf) { return kf.time == time; });
+							[time](const std::shared_ptr<Keyframe>& kf) { return kf->time == time; });
 	}
 	
 	typename std::vector<std::shared_ptr<Keyframe>>::const_iterator findKeyframe(float time) const {
