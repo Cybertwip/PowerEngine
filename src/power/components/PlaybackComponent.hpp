@@ -70,6 +70,27 @@ public:
 			}
 		}
 		
+		// Copy constructor
+		Keyframe(const Keyframe& other)
+		: time(other.time),
+		mPlaybackState(other.mPlaybackState),
+		mPlaybackModifier(other.mPlaybackModifier),
+		mPlaybackTrigger(other.mPlaybackTrigger),
+		mPlaybackData(other.mPlaybackData) {
+		}
+		
+		// Copy assignment operator
+		Keyframe& operator=(const Keyframe& other) {
+			if (this != &other) {
+				time = other.time;
+				mPlaybackState = other.mPlaybackState;
+				mPlaybackModifier = other.mPlaybackModifier;
+				mPlaybackTrigger = other.mPlaybackTrigger;
+				mPlaybackData = other.mPlaybackData;
+			}
+			return *this;
+		}
+		
 		// Move constructor
 		Keyframe(Keyframe&& other) noexcept
 		: time(std::move(other.time)),
@@ -149,12 +170,7 @@ public:
 			return !(*this == rhs);
 		}
 		
-		// Delete copy constructor
-		Keyframe(const Keyframe&) = delete;
-		
-		// Delete copy assignment operator
-		Keyframe& operator=(const Keyframe&) = delete;
-		
+	private:
 		Keyframe() {
 		}
 	};

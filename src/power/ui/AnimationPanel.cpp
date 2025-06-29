@@ -126,7 +126,7 @@ void AnimationPanel::set_active_actor(std::optional<std::reference_wrapper<Actor
 			
 			auto& playback = actorRef.get_component<PlaybackComponent>();
 			
-			auto state = playback.get_state();
+			auto& state = playback.get_state();
 			
 			if (state.getPlaybackState() == PlaybackState::Pause) {
 				mPlayPauseButton->set_pushed(false);
