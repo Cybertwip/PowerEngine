@@ -59,95 +59,76 @@ SelfContainedMeshCanvas::SelfContainedMeshCanvas(nanogui::Widget& parent, nanogu
 }
 
 void SelfContainedMeshCanvas::set_active_actor(std::optional<std::reference_wrapper<Actor>> actor) {
-	std::unique_lock<std::mutex> lock(mMutex);
 	clear();
+	
+	std::unique_lock<std::mutex> lock(mMutex);
 	mCurrentTime = 0;
 	
-	mPreviewActor = actor;
-	
-	if (mPreviewActor.has_value()) {
-		DrawableComponent& drawableComponent = mPreviewActor->get().get_component<DrawableComponent>();
-		const Drawable& drawableRef = drawableComponent.drawable();
-		
-		// Attempt to cast to SkinnedMeshComponent
-		const SkinnedMeshComponent* skinnedMeshComponent = dynamic_cast<const SkinnedMeshComponent*>(&drawableRef);
-		
-		if (skinnedMeshComponent) {
-			// Successfully cast to SkinnedMeshComponent
-			for (auto& skinnedData : skinnedMeshComponent->get_skinned_mesh_data()) {
-				mSkinnedMeshBatch->add_mesh(*skinnedData);
-				auto& vertices = skinnedData->get_mesh_data().get_vertices();
-
-				// Initialize min and max bounds with extreme values
-				mModelMinimumBounds = glm::vec3(std::numeric_limits<float>::max());
-				mModelMaximumBounds = glm::vec3(std::numeric_limits<float>::lowest());
-				
-				for (size_t i = 0; i < vertices.size(); i += 3) {
-					auto& vertex = vertices[i];
-					
-					mModelMinimumBounds = glm::min(mModelMinimumBounds, vertex->get_position());
-					mModelMaximumBounds = glm::max(mModelMaximumBounds, vertex->get_position());
-				}
-				
-				auto& skeletonComponent = skinnedData->get_skeleton_component();
-				
-				size_t numBones = skeletonComponent.get_skeleton().num_bones();
-				
-				for (size_t i = 0; i < numBones; ++i) {
-					Skeleton::Bone& bone = static_cast<Skeleton::Bone&>(skeletonComponent.get_skeleton().get_bone(i));
-					
-					auto transform = bone.global * glm::inverse(bone.offset);
-					
-					glm::vec3 scale;
-					glm::quat rotation;
-					glm::vec3 translation;
-					glm::vec3 skew;
-					glm::vec4 perspective;
-					glm::decompose(transform, scale, rotation, translation, skew, perspective);
-
-					mModelMinimumBounds = glm::min(mModelMinimumBounds, translation);
-					mModelMaximumBounds = glm::max(mModelMaximumBounds, translation);
-				}
-			}
+	if (actor.has_value()) {
+		try {
+			mPreviewActor = actor;
+			DrawableComponent& drawableComponent = mPreviewActor->get().get_component<DrawableComponent>();
+			const Drawable& drawableRef = drawableComponent.drawable();
 			
-			update_camera_view();
-			
-			set_update(true);
-		}
-		else {
-			// Attempt to cast to MeshComponent
-			const MeshComponent* meshComponent = dynamic_cast<const MeshComponent*>(&drawableRef);
-			if (meshComponent) {
-				// Successfully cast to MeshComponent
-				for (auto& meshData : meshComponent->get_mesh_data()) {
-					mMeshBatch->add_mesh(*meshData);
-					auto& vertices = meshData->get_mesh_data().get_vertices();
-					
-					// Initialize min and max bounds with extreme values
+			// Attempt to cast to SkinnedMeshComponent
+			const SkinnedMeshComponent* skinnedMeshComponent = dynamic_cast<const SkinnedMeshComponent*>(&drawableRef);
+			if (skinnedMeshComponent) {
+				for (auto& skinnedData : skinnedMeshComponent->get_skinned_mesh_data()) {
+					mSkinnedMeshBatch->add_mesh(*skinnedData);
+					auto& vertices = skinnedData->get_mesh_data().get_vertices();
 					mModelMinimumBounds = glm::vec3(std::numeric_limits<float>::max());
 					mModelMaximumBounds = glm::vec3(std::numeric_limits<float>::lowest());
-
+					
 					for (size_t i = 0; i < vertices.size(); i += 3) {
 						auto& vertex = vertices[i];
-						
 						mModelMinimumBounds = glm::min(mModelMinimumBounds, vertex->get_position());
 						mModelMaximumBounds = glm::max(mModelMaximumBounds, vertex->get_position());
 					}
+					
+					auto& skeletonComponent = skinnedData->get_skeleton_component();
+					size_t numBones = skeletonComponent.get_skeleton().num_bones();
+					for (size_t i = 0; i < numBones; ++i) {
+						Skeleton::Bone& bone = static_cast<Skeleton::Bone&>(skeletonComponent.get_skeleton().get_bone(i));
+						auto transform = bone.global * glm::inverse(bone.offset);
+						glm::vec3 scale, translation, skew;
+						glm::quat rotation;
+						glm::vec4 perspective;
+						glm::decompose(transform, scale, rotation, translation, skew, perspective);
+						mModelMinimumBounds = glm::min(mModelMinimumBounds, translation);
+						mModelMaximumBounds = glm::max(mModelMaximumBounds, translation);
+					}
 				}
-				
 				update_camera_view();
 				set_update(true);
-				
+			} else {
+				const MeshComponent* meshComponent = dynamic_cast<const MeshComponent*>(&drawableRef);
+				if (meshComponent) {
+					for (auto& meshData : meshComponent->get_mesh_data()) {
+						mMeshBatch->add_mesh(*meshData);
+						auto& vertices = meshData->get_mesh_data().get_vertices();
+						mModelMinimumBounds = glm::vec3(std::numeric_limits<float>::max());
+						mModelMaximumBounds = glm::vec3(std::numeric_limits<float>::lowest());
+						for (size_t i = 0; i < vertices.size(); i += 3) {
+							auto& vertex = vertices[i];
+							mModelMinimumBounds = glm::min(mModelMinimumBounds, vertex->get_position());
+							mModelMaximumBounds = glm::max(mModelMaximumBounds, vertex->get_position());
+						}
+					}
+					update_camera_view();
+					set_update(true);
+				} else {
+					std::cerr << "Error: DrawableComponent does not contain a SkinnedMeshComponent or MeshComponent." << std::endl;
+					mPreviewActor = std::nullopt;
+					set_update(false);
+				}
 			}
-			else {
-				// Handle the case where drawable is neither SkinnedMeshComponent nor MeshComponent
-				std::cerr << "Error: DrawableComponent does not contain a SkinnedMeshComponent or MeshComponent." << std::endl;
-				set_update(false);
-				return;
-			}
+		} catch (const std::exception& e) {
+			std::cerr << "Error setting active actor: " << e.what() << std::endl;
+			mPreviewActor = std::nullopt;
+			set_update(false);
 		}
-	}
-	else {
+	} else {
+		mPreviewActor = std::nullopt;
 		set_update(false);
 	}
 }
@@ -173,34 +154,33 @@ void SelfContainedMeshCanvas::update_camera_view() {
 
 void SelfContainedMeshCanvas::draw_content(const nanogui::Matrix4f& view,
 										   const nanogui::Matrix4f& projection) {
+	if (!mPreviewActor.has_value()) {
+		return; // Early exit if no actor is set
+	}
 	
-	if (mPreviewActor.has_value()) {
+	try {
 		DrawableComponent& drawableComponent = mPreviewActor->get().get_component<DrawableComponent>();
-		
 		Drawable& drawableRef = drawableComponent.drawable();
 		
 		if (mPreviewActor->get().find_component<SkinnedPlaybackComponent>()) {
 			auto& component = mPreviewActor->get().get_component<SkinnedPlaybackComponent>();
-			
 			component.Unfreeze();
-			
 			component.evaluate_provider(mCurrentTime++, PlaybackModifier::Forward);
 		}
 		
 		drawableRef.draw_content(CanvasUtils::glm_to_nanogui(mModelMatrix), view, projection);
-		
 		mMeshBatch->draw_content(view, projection);
-		
 		mSkinnedMeshBatch->draw_content(view, projection);
 		
 		if (mPreviewActor->get().find_component<SkinnedPlaybackComponent>()) {
 			auto& animationComponent = mPreviewActor->get().get_component<SkinnedPlaybackComponent>();
-			
 			animationComponent.reset_pose();
-			
 		}
+	} catch (const std::exception& e) {
+		std::cerr << "Error in draw_content: " << e.what() << std::endl;
+		mPreviewActor = std::nullopt; // Reset to avoid further crashes
+		set_update(false);
 	}
-	
 }
 
 void SelfContainedMeshCanvas::draw_contents() {
@@ -225,10 +205,11 @@ void SelfContainedMeshCanvas::draw_contents() {
 }
 
 void SelfContainedMeshCanvas::clear() {
+	std::unique_lock<std::mutex> lock(mMutex); // Ensure thread safety
 	set_update(false);
-	
 	mMeshBatch->clear();
 	mSkinnedMeshBatch->clear();
+	mPreviewActor = std::nullopt; // Reset mPreviewActor to avoid dangling references
 }
 
 void SelfContainedMeshCanvas::set_aspect_ratio(float ratio) {
