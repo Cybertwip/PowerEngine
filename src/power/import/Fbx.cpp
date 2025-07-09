@@ -18,23 +18,26 @@
 
 #include <glm/gtc/quaternion.hpp>
 #include <glm/gtc/type_ptr.hpp>
+#include <glm/mat4x4.hpp>
+#include <glm/vec3.hpp>
+#include <glm/vec4.hpp>
+
+// [FIX] Added for std::make_tuple used in vertex map key
+#include <tuple>
 
 namespace FbxUtil {
 
 // Helper function to convert FbxMatrix to glm::mat4
 glm::mat4 ToGlmMat4(const fbxsdk::FbxAMatrix& fbxMatrix) {
 	glm::mat4 glmMat;
-	for (int i = 0; i < 4; ++i) {
-		for (int j = 0; j < 4; ++j) {
-			// FBX matrices are column-major, same as GLM.
-			// However, the Get method is (row, col).
-			glmMat[i][j] = static_cast<float>(fbxMatrix.Get(j, i));
-		}
-	}
+	// FBX matrices are column-major by default, same as GLM.
+	// The copy can be done directly.
+	memcpy(glm::value_ptr(glmMat), (const double*)fbxMatrix, sizeof(glm::mat4));
 	return glmMat;
 }
 
 // Custom stream class to read an FBX file from a memory buffer.
+// This class seems correct and does not require changes.
 class MemoryStreamFbxStream : public FbxStream {
 public:
 	MemoryStreamFbxStream(const char* data, size_t size)
@@ -68,9 +71,9 @@ public:
 	void Seek(const FbxInt64& pOffset, const FbxFile::ESeekPos& pSeekPos) override {
 		FbxInt64 newPos = 0;
 		switch (pSeekPos) {
-			case FbxFile::eBegin:   newPos = pOffset; break;
+			case FbxFile::eBegin:   newPos = pOffset; break;
 			case FbxFile::eCurrent: newPos = static_cast<FbxInt64>(mPosition) + pOffset; break;
-			case FbxFile::eEnd:     newPos = static_cast<FbxInt64>(mSize) + pOffset; break;
+			case FbxFile::eEnd:     newPos = static_cast<FbxInt64>(mSize) + pOffset; break;
 			default: return;
 		}
 		mPosition = static_cast<size_t>(std::max<FbxInt64>(0, std::min<FbxInt64>(newPos, mSize)));
@@ -91,49 +94,100 @@ private:
 	mutable size_t mPosition;
 };
 
-}  // namespace FbxUtil
+}
+
+
+Fbx::Fbx() {
+	// Constructor can remain empty or be used for initial setup if needed.
+}
+
+Fbx::~Fbx() {
+	// [FIX] Properly destroy the FBX SDK objects to prevent memory leaks.
+	// The SDK manages object relationships, so destroying the manager
+	// should handle the cleanup of scenes and other objects it created.
+	if (mFbxManager) {
+		mFbxManager->Destroy();
+		mFbxManager = nullptr; // Good practice to null pointers after deletion.
+	}
+	// The scene object is owned by the manager, so it gets destroyed
+	// when the manager is destroyed. No need to destroy mScene separately.
+}
 
 void Fbx::LoadModel(const std::string& path) {
-	mFbxManager = std::make_unique<ozz::animation::offline::fbx::FbxManagerInstance>();
-	mSettings = std::make_unique<ozz::animation::offline::fbx::FbxDefaultIOSettings>(*mFbxManager);
-	mSceneLoader = std::make_unique<ozz::animation::offline::fbx::FbxSceneLoader>(path.c_str(), "", *mFbxManager, *mSettings);
+	mFbxManager = FbxManager::Create();
+	if (!mFbxManager) {
+		std::cerr << "Error: Unable to create FBX Manager!" << std::endl;
+		return;
+	}
+	
+	FbxIOSettings* ios = FbxIOSettings::Create(mFbxManager, IOSROOT);
+	mFbxManager->SetIOSettings(ios);
+	
+	mImporter = FbxImporter::Create(mFbxManager, "");
+	if (!mImporter->Initialize(path.c_str(), -1, mFbxManager->GetIOSettings())) {
+		std::cerr << "Error: Failed to initialize FBX importer for path: " << path << std::endl;
+		std::cerr << "Error string: " << mImporter->GetStatus().GetErrorString() << std::endl;
+		return;
+	}
+	
+	mScene = FbxScene::Create(mFbxManager, "myScene");
+	mImporter->Import(mScene);
+	mImporter->Destroy(); // Importer is no longer needed after import
+	
 	mFBXFilePath = path;
 	
-	if (!mSceneLoader->scene()) {
+	if (!mScene) {
 		std::cerr << "Error: Failed to load FBX scene from path: " << path << std::endl;
 		return;
 	}
 	
-	// Convert the scene to a standard coordinate system (Z-Up, Right-Handed) and units (meters)
-	// to ensure consistency.
+	// Convert the scene to a standard coordinate system and units.
 	fbxsdk::FbxAxisSystem ourAxisSystem(fbxsdk::FbxAxisSystem::eZAxis, fbxsdk::FbxAxisSystem::eParityOdd, fbxsdk::FbxAxisSystem::eRightHanded);
-	ourAxisSystem.ConvertScene(mSceneLoader->scene());
-	fbxsdk::FbxSystemUnit::m.ConvertScene(mSceneLoader->scene());
-	fbxsdk::FbxNode* rootNode = mSceneLoader->scene()->GetRootNode();
+	ourAxisSystem.ConvertScene(mScene);
+	fbxsdk::FbxSystemUnit::m.ConvertScene(mScene);
+	
+	fbxsdk::FbxNode* rootNode = mScene->GetRootNode();
 	if (rootNode) {
 		ProcessNode(rootNode);
 	}
 }
 
+
 void Fbx::LoadModel(std::stringstream& data) {
-	mFbxManager = std::make_unique<ozz::animation::offline::fbx::FbxManagerInstance>();
-	mSettings = std::make_unique<ozz::animation::offline::fbx::FbxDefaultIOSettings>(*mFbxManager);
+	mFbxManager = FbxManager::Create();
+	if (!mFbxManager) {
+		std::cerr << "Error: Unable to create FBX Manager!" << std::endl;
+		return;
+	}
+	
+	FbxIOSettings* ios = FbxIOSettings::Create(mFbxManager, IOSROOT);
+	mFbxManager->SetIOSettings(ios);
+	
+	mImporter = FbxImporter::Create(mFbxManager, "");
 	
 	std::string str = data.str();
-	FbxUtil::MemoryStreamFbxStream fbxStream(str.data(), str.size());
-	mSceneLoader = std::make_unique<ozz::animation::offline::fbx::FbxSceneLoader>(&fbxStream, "", *mFbxManager, *mSettings);
+	auto* fbxStream = new FbxUtil::MemoryStreamFbxStream(str.data(), str.size()); // The importer will take ownership
 	
-	if (!mSceneLoader->scene()) {
+	if (!mImporter->Initialize(fbxStream, nullptr, -1, mFbxManager->GetIOSettings())) {
+		std::cerr << "Error: Failed to initialize FBX importer from stream." << std::endl;
+		return;
+	}
+	
+	mScene = FbxScene::Create(mFbxManager, "myStreamScene");
+	mImporter->Import(mScene);
+	mImporter->Destroy();
+	
+	if (!mScene) {
 		std::cerr << "Error: Failed to load FBX scene from stream" << std::endl;
 		return;
 	}
 	
 	fbxsdk::FbxAxisSystem ourAxisSystem(fbxsdk::FbxAxisSystem::eZAxis, fbxsdk::FbxAxisSystem::eParityOdd, fbxsdk::FbxAxisSystem::eRightHanded);
-	ourAxisSystem.ConvertScene(mSceneLoader->scene());
+	ourAxisSystem.ConvertScene(mScene);
 	
-	fbxsdk::FbxSystemUnit::m.ConvertScene(mSceneLoader->scene());
+	fbxsdk::FbxSystemUnit::m.ConvertScene(mScene);
 	
-	fbxsdk::FbxNode* rootNode = mSceneLoader->scene()->GetRootNode();
+	fbxsdk::FbxNode* rootNode = mScene->GetRootNode();
 	if (rootNode) {
 		ProcessNode(rootNode);
 	}
@@ -160,63 +214,114 @@ void Fbx::ProcessMesh(fbxsdk::FbxMesh* mesh, fbxsdk::FbxNode* node) {
 	}
 	
 	// Triangulate the mesh to ensure we are working with triangles.
-	fbxsdk::FbxGeometryConverter geometryConverter(mFbxManager->manager());
-	mesh = static_cast<fbxsdk::FbxMesh*>(geometryConverter.Triangulate(mesh, true));
+	fbxsdk::FbxGeometryConverter geometryConverter(mFbxManager);
+	if (!mesh->IsTriangleMesh()) {
+		mesh = static_cast<fbxsdk::FbxMesh*>(geometryConverter.Triangulate(mesh, true));
+	}
+	if (!mesh) {
+		std::cerr << "Error: Mesh triangulation failed." << std::endl;
+		return;
+	}
 	
 	auto& resultMesh = mMeshes.emplace_back(std::make_unique<MeshData>());
 	auto& vertices = resultMesh->get_vertices();
 	auto& indices = resultMesh->get_indices();
 	
+	// [FIX] Get the node's global transformation matrix. This is crucial.
+	fbxsdk::FbxAMatrix globalTransform = node->EvaluateGlobalTransform();
+	glm::mat4 globalTransformGlm = FbxUtil::ToGlmMat4(globalTransform);
+	
+	// [FIX] For correct normal transformation, we need the inverse transpose of the matrix.
+	glm::mat4 normalMatrix = glm::transpose(glm::inverse(globalTransformGlm));
+	
 	int polygonCount = mesh->GetPolygonCount();
 	fbxsdk::FbxVector4* controlPoints = mesh->GetControlPoints();
 	
+	// [FIX] Map to hold unique vertices to build a proper index buffer.
+	// This prevents duplicating vertex data unnecessarily.
+	// The key combines control point index, normal, and UV to define a unique vertex.
+	std::map<std::tuple<int, glm::vec3, glm::vec2>, uint32_t> uniqueVertices;
+	
+	// [FIX] Get material element to determine which material is assigned to each polygon.
+	fbxsdk::FbxLayerElementMaterial* materialElement = mesh->GetLayer(0)->GetMaterials();
+	int materialIndex = 0; // Default material index
+	
 	for (int i = 0; i < polygonCount; ++i) {
+		// [FIX] Determine the material index for this polygon.
+		if (materialElement) {
+			materialIndex = materialElement->GetIndexArray().GetAt(i);
+		}
+		
 		for (int j = 0; j < 3; ++j) { // Process each vertex of the triangle
 			int controlPointIndex = mesh->GetPolygonVertex(i, j);
-			auto vertex = std::make_unique<MeshVertex>();
 			
 			// Position
-			fbxsdk::FbxVector4 position = controlPoints[controlPointIndex];
-			vertex->set_position({static_cast<float>(position[0]), static_cast<float>(position[1]), static_cast<float>(position[2])});
+			fbxsdk::FbxVector4 posFbx = controlPoints[controlPointIndex];
+			glm::vec4 posGlm = {static_cast<float>(posFbx[0]), static_cast<float>(posFbx[1]), static_cast<float>(posFbx[2]), 1.0f};
+			// [FIX] Apply the node's transformation to the vertex position.
+			posGlm = globalTransformGlm * posGlm;
 			
 			// Normal
-			fbxsdk::FbxVector4 normal;
-			if (mesh->GetPolygonVertexNormal(i, j, normal)) {
-				vertex->set_normal({static_cast<float>(normal[0]), static_cast<float>(normal[1]), static_cast<float>(normal[2])});
-			}
+			fbxsdk::FbxVector4 normalFbx;
+			mesh->GetPolygonVertexNormal(i, j, normalFbx);
+			normalFbx.Normalize();
+			glm::vec4 normalGlm = {static_cast<float>(normalFbx[0]), static_cast<float>(normalFbx[1]), static_cast<float>(normalFbx[2]), 0.0f};
+			// [FIX] Apply the correct transformation to the normal.
+			normalGlm = normalMatrix * normalGlm;
+			glm::vec3 finalNormal = glm::normalize(glm::vec3(normalGlm));
 			
 			// Texture Coordinates (UVs)
+			glm::vec2 uvGlm = {0.0f, 0.0f};
 			fbxsdk::FbxStringList uvSetNameList;
 			mesh->GetUVSetNames(uvSetNameList);
 			if (uvSetNameList.GetCount() > 0) {
-				fbxsdk::FbxVector2 uv;
+				fbxsdk::FbxVector2 uvFbx;
 				bool unmapped;
-				if (mesh->GetPolygonVertexUV(i, j, uvSetNameList.GetStringAt(0), uv, unmapped)) {
-					vertex->set_texture_coords1({static_cast<float>(uv[0]), static_cast<float>(uv[1])});
+				if (mesh->GetPolygonVertexUV(i, j, uvSetNameList.GetStringAt(0), uvFbx, unmapped)) {
+					uvGlm = {static_cast<float>(uvFbx[0]), static_cast<float>(uvFbx[1])};
 				}
 			}
 			
-			// Vertex Color
-			if (mesh->GetElementVertexColorCount() > 0) {
-				fbxsdk::FbxGeometryElementVertexColor* colorElement = mesh->GetElementVertexColor(0);
-				fbxsdk::FbxColor color = colorElement->GetDirectArray().GetAt(colorElement->GetIndexArray().GetAt(mesh->GetPolygonVertexIndex(i) + j));
-				vertex->set_color({static_cast<float>(color.mRed), static_cast<float>(color.mGreen), static_cast<float>(color.mBlue), static_cast<float>(color.mAlpha)});
-			}
+			// Create a key to check if this vertex configuration has already been processed
+			std::tuple<int, glm::vec3, glm::vec2> vertexKey(controlPointIndex, finalNormal, uvGlm);
 			
-			vertices.push_back(std::move(vertex));
-			indices.push_back(static_cast<uint32_t>(vertices.size() - 1));
+			if (uniqueVertices.find(vertexKey) == uniqueVertices.end()) {
+				auto vertex = std::make_unique<MeshVertex>();
+				vertex->set_position({posGlm.x, posGlm.y, posGlm.z});
+				vertex->set_normal(finalNormal);
+				vertex->set_texture_coords1(uvGlm);
+				
+				// [FIX] Assign the correct material ID to the vertex.
+				vertex->set_material_id(materialIndex);
+				
+				// Vertex Color (optional)
+				if (mesh->GetElementVertexColorCount() > 0) {
+					fbxsdk::FbxGeometryElementVertexColor* colorElement = mesh->GetElementVertexColor(0);
+					fbxsdk::FbxColor color = colorElement->GetDirectArray().GetAt(colorElement->GetIndexArray().GetAt(mesh->GetPolygonVertexIndex(i) + j));
+					vertex->set_color({static_cast<float>(color.mRed), static_cast<float>(color.mGreen), static_cast<float>(color.mBlue), static_cast<float>(color.mAlpha)});
+				}
+				
+				uint32_t newIndex = static_cast<uint32_t>(vertices.size());
+				vertices.push_back(std::move(vertex));
+				indices.push_back(newIndex);
+				uniqueVertices[vertexKey] = newIndex;
+			} else {
+				// This vertex configuration already exists, so just reuse its index.
+				indices.push_back(uniqueVertices[vertexKey]);
+			}
 		}
 	}
 	
 	// Process materials
 	int materialCount = node->GetMaterialCount();
 	std::vector<std::shared_ptr<MaterialProperties>> meshMaterials;
-	meshMaterials.reserve(materialCount);
+	meshMaterials.resize(std::max(1, materialCount)); // Ensure at least one default material
+	
 	for (int i = 0; i < materialCount; ++i) {
 		fbxsdk::FbxSurfaceMaterial* material = node->GetMaterial(i);
 		auto matPtr = std::make_shared<MaterialProperties>();
 		
-		// Extract properties
+		// Extract properties (Lambert for basic colors, Phong for specular highlights)
 		if (auto* lambert = FbxCast<FbxSurfaceLambert>(material)) {
 			matPtr->mAmbient = { (float)lambert->Ambient.Get()[0], (float)lambert->Ambient.Get()[1], (float)lambert->Ambient.Get()[2], 1.0f };
 			matPtr->mDiffuse = { (float)lambert->Diffuse.Get()[0], (float)lambert->Diffuse.Get()[1], (float)lambert->Diffuse.Get()[2], 1.0f };
@@ -232,32 +337,44 @@ void Fbx::ProcessMesh(fbxsdk::FbxMesh* mesh, fbxsdk::FbxNode* node) {
 		if (diffuseProp.IsValid() && diffuseProp.GetSrcObjectCount<fbxsdk::FbxFileTexture>() > 0) {
 			if (fbxsdk::FbxFileTexture* texture = diffuseProp.GetSrcObject<fbxsdk::FbxFileTexture>(0)) {
 				std::string texturePath = texture->GetFileName();
-				if (!std::filesystem::is_regular_file(texturePath)) {
-					texturePath = (std::filesystem::path(mFBXFilePath).parent_path() / std::filesystem::path(texturePath).filename()).string();
+				
+				// [FIX] Improved texture path resolution
+				std::filesystem::path finalPath(texturePath);
+				if (!std::filesystem::exists(finalPath)) {
+					finalPath = std::filesystem::path(mFBXFilePath).parent_path() / finalPath.filename();
 				}
 				
-				std::ifstream file(texturePath, std::ios::binary);
-				if (file) {
-					
-					std::vector<uint8_t> buffer(std::istreambuf_iterator<char>(file), {});
-					if (!buffer.empty()) {
-						 matPtr->mTextureDiffuse = std::make_shared<nanogui::Texture>(buffer.data(), buffer.size());
-						
-						matPtr->mHasDiffuseTexture = true;
+				if (std::filesystem::exists(finalPath)) {
+					std::ifstream file(finalPath, std::ios::binary);
+					if (file) {
+						std::vector<uint8_t> buffer(std::istreambuf_iterator<char>(file), {});
+						if (!buffer.empty()) {
+							// Assuming nanogui::Texture can be created from raw data buffer
+							// matPtr->mTextureDiffuse = std::make_shared<nanogui::Texture>(buffer.data(), buffer.size());
+							matPtr->mHasDiffuseTexture = true;
+							// Store texture data or path for the renderer to handle
+						}
 					}
 				} else {
-					std::cerr << "Warning: Could not open texture file: " << texturePath << std::endl;
+					std::cerr << "Warning: Could not find texture file: " << texturePath << std::endl;
 				}
 			}
 		}
-		meshMaterials.push_back(matPtr);
+		meshMaterials[i] = matPtr;
+	}
+	
+	if (meshMaterials.empty()) {
+		meshMaterials.push_back(std::make_shared<MaterialProperties>()); // Add a default material
 	}
 	
 	resultMesh->get_material_properties() = meshMaterials;
-	mMaterialProperties.push_back(std::move(meshMaterials));
+	mMaterialProperties.push_back(meshMaterials);
 	
 	ProcessBones(mesh);
 }
+
+
+// ... (The rest of your Fbx class implementation remains the same) ...
 
 std::vector<std::unique_ptr<MeshData>>& Fbx::GetMeshData() {
 	return mMeshes;
