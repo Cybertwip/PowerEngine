@@ -185,7 +185,6 @@ void FileView::initiate_drag_operation(const std::shared_ptr<DirectoryNode>& nod
 		
 		// Cleanup
 		m_drag_payload->set_visible(false);
-		drag_container->remove_child(*m_drag_payload); // Detach from drag container
 		this->add_child(*m_drag_payload); // Re-attach to FileView
 		this->remove_child(*m_drag_payload); // Detach again to hide from layout
 		
