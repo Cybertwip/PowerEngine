@@ -101,7 +101,7 @@ Actor& MeshActorBuilder::build_from_fbx_data(Actor& actor, AnimationTimeProvider
 			auto& skeletonComponent = actor.add_component<SkeletonComponent>((*skinnedModel->GetSkeleton()));
 			actor.add_component<SkinnedAnimationComponent>(skeletonComponent, previewTimeProvider);
 			
-			for (auto& skinnedMeshData : skinnedModel->GetSkinnedMeshData()) {
+			for (auto& skinnedMeshData : skinnedModel->GetMeshData()) {
 				skinnedMeshComponentData.push_back(std::make_unique<SkinnedMesh>(
 																				 *skinnedMeshData,
 																				 skinnedShader,

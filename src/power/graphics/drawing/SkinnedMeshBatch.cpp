@@ -89,12 +89,17 @@ void SkinnedMeshBatch::append(std::reference_wrapper<SkinnedMesh> meshRef) {
 	int identifier = shader.identifier();
 	
 	size_t vertexCount = mesh.get_mesh_data().get_vertices().size();
+	if (vertexCount == 0) {
+		return; // Don't append meshes with no vertices
+	}
+	
 	size_t batchIndex = find_or_create_batch(identifier, vertexCount);
 	BatchData& batch = mBatches[identifier][batchIndex];
 	
 	// Store mesh information
 	mMeshBatchIndex[instanceId][identifier] = batchIndex;
-	mMeshOffsetInBatch[instanceId][identifier] = batch.vertexOffset;
+	// [FIX] Store the INDEX offset, not the vertex offset, for the draw call.
+	mMeshOffsetInBatch[instanceId][identifier] = batch.indexOffset;
 	mMeshIndexCount[instanceId][identifier] = mesh.get_mesh_data().get_indices().size();
 	
 	auto& positions = mesh.get_flattened_positions();
@@ -107,20 +112,14 @@ void SkinnedMeshBatch::append(std::reference_wrapper<SkinnedMesh> meshRef) {
 	auto& bone_ids = mesh.get_flattened_bone_ids();
 	
 	// Append vertex data
-	batch.positions.insert(batch.positions.end(),
-						   positions.begin(),
-						   positions.end());
+	batch.positions.insert(batch.positions.end(), positions.begin(), positions.end());
 	batch.normals.insert(batch.normals.end(), normals.begin(), normals.end());
 	batch.texCoords1.insert(batch.texCoords1.end(), texCoords1.begin(), texCoords1.end());
 	batch.texCoords2.insert(batch.texCoords2.end(), texCoords2.begin(), texCoords2.end());
 	batch.materialIds.insert(batch.materialIds.end(), materialIds.begin(), materialIds.end());
 	batch.colors.insert(batch.colors.end(), colors.begin(), colors.end());
-	batch.boneIds.insert(batch.boneIds.end(),
-						 bone_ids.begin(),
-						 bone_ids.end());
-	batch.boneWeights.insert(batch.boneWeights.end(),
-							 weights.begin(),
-							 weights.end());
+	batch.boneIds.insert(batch.boneIds.end(), bone_ids.begin(), bone_ids.end());
+	batch.boneWeights.insert(batch.boneWeights.end(), weights.begin(), weights.end());
 	
 	// Append and adjust indices
 	for (auto index : mesh.get_mesh_data().get_indices()) {
@@ -134,6 +133,7 @@ void SkinnedMeshBatch::append(std::reference_wrapper<SkinnedMesh> meshRef) {
 	// Upload the current batch
 	upload_vertex_data(shader, identifier, batchIndex);
 }
+
 
 void SkinnedMeshBatch::remove(std::reference_wrapper<SkinnedMesh> meshRef) {
 	auto& mesh = meshRef.get();
@@ -254,6 +254,7 @@ void SkinnedMeshBatch::upload_vertex_data(ShaderWrapper& shader, int identifier,
 						  {batch.indices.size()}, batch.indices.data());
 }
 
+
 void SkinnedMeshBatch::draw_content(const nanogui::Matrix4f& view, const nanogui::Matrix4f& projection) {
 	for (const auto& [identifier, batches] : mBatches) {
 		for (size_t batchIndex = 0; batchIndex < batches.size(); ++batchIndex) {
@@ -270,16 +271,19 @@ void SkinnedMeshBatch::draw_content(const nanogui::Matrix4f& view, const nanogui
 					auto& shader = mesh.get_shader();
 					shader.set_uniform("aProjection", projection);
 					shader.set_uniform("aView", view);
-					shader.set_uniform("aModel", mesh.get_model_matrix());
-
+					
+					// [FIX] The model's transform is now baked into the vertex data.
+					// Pass an identity matrix to the shader to prevent a double transform.
+					shader.set_uniform("aModel", nanogui::Matrix4f());
+					
 					// Apply color component
 					shader.set_uniform("identifier", mesh.get_color_component().identifier());
-					
 					shader.set_uniform("color", glm_to_nanogui(mesh.get_color_component().get_color()));
 					
 					// Upload materials for the current mesh
 					upload_material_data(shader, mesh.get_mesh_data().get_material_properties());
 					
+					// Upload bone data for animation
 					auto bones = SkinnedMeshBatchUtils::build_cpu_bones(mesh.get_skeleton_component());
 					shader.set_buffer("bones", nanogui::VariableType::Float32,
 									  {bones.size(), sizeof(SkinnedMeshBatchUtils::BoneCPU) / sizeof(float)},
@@ -288,9 +292,12 @@ void SkinnedMeshBatch::draw_content(const nanogui::Matrix4f& view, const nanogui
 					size_t startIdx = mMeshOffsetInBatch[instanceId][identifier];
 					size_t count = mMeshIndexCount[instanceId][identifier];
 					
-					shader.begin();
-					shader.draw_array(nanogui::Shader::PrimitiveType::Triangle, startIdx, count, true);
-					shader.end();
+					if (count > 0) {
+						shader.begin();
+						// The 'startIdx' is an offset in the index buffer.
+						shader.draw_array(nanogui::Shader::PrimitiveType::Triangle, (uint32_t)startIdx, (uint32_t)count, true);
+						shader.end();
+					}
 				}
 			}
 		}

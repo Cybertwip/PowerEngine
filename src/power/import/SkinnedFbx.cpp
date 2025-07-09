@@ -98,21 +98,35 @@ void SkinnedFbx::ProcessBones(fbxsdk::FbxMesh* mesh, const std::multimap<int, ui
 	
 	int skinCount = mesh->GetDeformerCount(FbxDeformer::eSkin);
 	if (skinCount == 0) {
-		return; // Not a skinned mesh, nothing to do.
-	}
-	
-	// ... (The rest of the initial setup is the same)
-	FbxSkin* skin = static_cast<FbxSkin*>(mesh->GetDeformer(0, FbxDeformer::eSkin));
-	if (!skin) return;
-	
-	if (GetMeshData().empty()) {
-		std::cerr << "Error: No mesh data available to process bones." << std::endl;
+		// This is not a skinned mesh. The base MeshData in mMeshes is correct. Do nothing.
 		return;
 	}
-	auto& lastProcessedMesh = GetMeshData().back();
-	mSkinnedMeshes.push_back(std::make_unique<SkinnedMeshData>(*lastProcessedMesh));
-	auto& skinnedVertices = mSkinnedMeshes.back()->get_vertices();
 	
+	// This IS a skinned mesh. We must replace the base MeshData with a SkinnedMeshData.
+	if (mMeshes.empty()) {
+		std::cerr << "Error: ProcessBones called with no mesh data to upgrade." << std::endl;
+		return;
+	}
+	
+	// 1. Take ownership of the MeshData that was just created by the base class.
+	std::unique_ptr<MeshData> baseMeshData = std::move(mMeshes.back());
+	mMeshes.pop_back(); // Remove the now-empty pointer from the vector.
+	
+	// 2. Create the new SkinnedMeshData using its constructor, which converts the vertices.
+	auto skinnedData = std::make_unique<SkinnedMeshData>(*baseMeshData);
+	
+	// 3. Get a reference to the new SkinnedMeshVertex vector to apply weights to.
+	auto& skinnedVertices = skinnedData->get_vertices();
+	
+	// The rest of the logic remains the same, but it now operates on the correct 'skinnedData' object.
+	FbxSkin* skin = static_cast<FbxSkin*>(mesh->GetDeformer(0, FbxDeformer::eSkin));
+	if (!skin) {
+		// If getting the skin fails, at least put the mesh back.
+		mMeshes.push_back(std::move(skinnedData));
+		return;
+	}
+	
+	// (The following logic is the same as before)
 	std::unordered_map<std::string, FbxAMatrix> boneOffsetMatrices;
 	int clusterCount = skin->GetClusterCount();
 	for (int i = 0; i < clusterCount; ++i) {
@@ -141,56 +155,15 @@ void SkinnedFbx::ProcessBones(fbxsdk::FbxMesh* mesh, const std::multimap<int, ui
 		int indexCount = cluster->GetControlPointIndicesCount();
 		
 		for (int j = 0; j < indexCount; ++j) {
-			int controlPointIdx = controlPointIndices[j]; // This is the original index.
+			int controlPointIdx = controlPointIndices[j];
 			float weight = static_cast<float>(weights[j]);
-			
-			// [FIX] Use the map to find all final vertices associated with this control point.
 			auto range = controlPointToVertexMap.equal_range(controlPointIdx);
 			for (auto it = range.first; it != range.second; ++it) {
 				uint32_t finalVertexIndex = it->second;
-				
-				// Safely apply the weight to the correct vertex.
 				if (finalVertexIndex < skinnedVertices.size()) {
 					auto& vertex = static_cast<SkinnedMeshVertex&>(*skinnedVertices[finalVertexIndex]);
 					vertex.set_bone(boneID, weight);
 				}
-			}
-		}
-	}
-
-	
-	// Process all bones and their weights.
-	for (int i = 0; i < clusterCount; ++i) {
-		FbxCluster* cluster = skin->GetCluster(i);
-		FbxNode* boneNode = cluster->GetLink();
-		if (!boneNode) continue;
-		
-		// Ensure the bone and its parents are in our hierarchy map.
-		ProcessBoneAndParents(boneNode, boneOffsetMatrices);
-		
-		std::string boneName = boneNode->GetName();
-		if (mBoneMapping.find(boneName) == mBoneMapping.end()) {
-			continue; // Skip if bone exceeded MAX_BONES limit.
-		}
-		int boneID = mBoneMapping[boneName];
-		
-		// Assign weights to vertices.
-		int* controlPointIndices = cluster->GetControlPointIndices();
-		double* weights = cluster->GetControlPointWeights();
-		int indexCount = cluster->GetControlPointIndicesCount();
-		
-		for (int j = 0; j < indexCount; ++j) {
-			int vertexID = controlPointIndices[j];
-			float weight = static_cast<float>(weights[j]);
-			
-			// Add the bone influence to the corresponding vertex.
-			// Note: The base Fbx::ProcessMesh creates a unique vertex for each polygon corner.
-			// The control point index from the cluster maps to the original vertex position.
-			// A robust implementation needs a map from control point index to the final vertex indices.
-			// For now, we assume a direct mapping, which may not be correct for complex meshes.
-			if (vertexID >= 0 && static_cast<size_t>(vertexID) < skinnedVertices.size()) {
-				auto& vertex = static_cast<SkinnedMeshVertex&>(*skinnedVertices[vertexID]);
-				vertex.set_bone(boneID, weight);
 			}
 		}
 	}
@@ -203,6 +176,9 @@ void SkinnedFbx::ProcessBones(fbxsdk::FbxMesh* mesh, const std::multimap<int, ui
 			vertex.set_bone(DEFAULT_BONE_ID, 1.0f);
 		}
 	}
+	
+	mMeshes.push_back(std::move(skinnedData));
+
 	
 	// Build the skeleton from the processed hierarchy.
 	auto skeletonPointer = std::make_unique<Skeleton>();

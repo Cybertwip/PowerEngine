@@ -35,15 +35,7 @@ public:
 	void SetSkeleton(std::unique_ptr<Skeleton> skeleton) {
 		mSkeleton = std::move(skeleton);
 	}
-	
-	std::vector<std::unique_ptr<SkinnedMeshData>>& GetSkinnedMeshData() {
-		return mSkinnedMeshes;
-	}
-	
-	void SetSkinnedMeshData(std::vector<std::unique_ptr<SkinnedMeshData>>&& meshData) {
-		mSkinnedMeshes = std::move(meshData);
-	}
-	
+			
 	std::vector<std::unique_ptr<Animation>>& GetAnimationData() {
 		return mAnimations;
 	}
@@ -76,7 +68,6 @@ private:
 	std::unordered_map<std::string, fbxsdk::FbxNode*> mBoneNodes;
 	
 	std::unique_ptr<Skeleton> mSkeleton;
-	std::vector<std::unique_ptr<SkinnedMeshData>> mSkinnedMeshes;
 	
 	std::vector<std::unique_ptr<Animation>> mAnimations;
 	
