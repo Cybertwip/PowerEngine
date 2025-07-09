@@ -238,7 +238,11 @@ void Fbx::ProcessMesh(fbxsdk::FbxMesh* mesh, fbxsdk::FbxNode* node) {
 				
 				std::ifstream file(texturePath, std::ios::binary);
 				if (file) {
-					matPtr->mTextureDiffuse.assign(std::istreambuf_iterator<char>(file), std::istreambuf_iterator<char>());
+					
+					matPtr->mTextureDiffuse = std::make_unique<nanogui::Texture>(properties.mTextureDiffuse.data(),
+																		 properties.mTextureDiffuse.size());
+
+					
 					matPtr->mHasDiffuseTexture = true;
 				} else {
 					std::cerr << "Warning: Could not open texture file: " << texturePath << std::endl;

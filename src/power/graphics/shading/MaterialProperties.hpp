@@ -52,7 +52,6 @@ struct MaterialProperties
 	MaterialProperties(const MaterialProperties&) = delete;
 	MaterialProperties& operator=(const MaterialProperties&) = delete;
 	
-	bool deserialize(const SerializableMaterialProperties& properties);
 	std::vector<uint8_t> downloadTexture();
 };
 
