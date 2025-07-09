@@ -16,7 +16,6 @@
 #include "graphics/drawing/Mesh.hpp"
 #include "graphics/drawing/SkinnedMesh.hpp"
 #include "graphics/shading/MeshData.hpp"
-#include "graphics/shading/SkinnedMeshData.hpp" // Required for static_cast
 #include "import/ModelImporter.hpp"
 
 #include <filesystem>
