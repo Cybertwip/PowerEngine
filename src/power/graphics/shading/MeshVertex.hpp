@@ -36,11 +36,8 @@ public:
 	{
 		// No additional logic required since all members are copied
 	}
-	
-	virtual ~MeshVertex() {
-		
-	}
-	
+	virtual ~MeshVertex() = default;
+
 	// Bone and weight setters
 	void set_position(const glm::vec3 &vec);
 	void set_normal(const glm::vec3 &vec);

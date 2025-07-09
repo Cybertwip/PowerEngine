@@ -188,7 +188,9 @@ void ModelImporter::ProcessMesh(aiMesh* mesh, const aiScene* scene, const glm::m
                 unsigned int vertexID = bone->mWeights[j].mVertexId;
                 float weight = bone->mWeights[j].mWeight;
                 if (vertexID < skinnedVertices.size()) {
-                    skinnedVertices[vertexID]->set_bone(boneID, weight);
+					auto* skinnedVertex = dynamic_cast<SkinnedMeshVertex*>(vertices[vertexID].get());
+
+					skinnedVertex->set_bone(boneID, weight);
                 }
             }
         }
