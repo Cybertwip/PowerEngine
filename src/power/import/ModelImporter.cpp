@@ -246,10 +246,9 @@ std::shared_ptr<nanogui::Texture> ModelImporter::LoadMaterialTexture(aiMaterial*
     }
     
     if (std::filesystem::exists(texturePath)) {
-        // Example:
-        // std::ifstream file(texturePath, std::ios::binary);
-        // std::vector<uint8_t> buffer(std::istreambuf_iterator<char>(file), {});
-        // return std::make_shared<nanogui::Texture>(buffer.data(), buffer.size());
+         std::ifstream file(texturePath, std::ios::binary);
+         std::vector<uint8_t> buffer(std::istreambuf_iterator<char>(file), {});
+         return std::make_shared<nanogui::Texture>(buffer.data(), buffer.size());
         std::cout << "Found texture: " << texturePath << std::endl;
     } else {
         std::cerr << "Warning: Could not find texture file: " << str.C_Str() << std::endl;
