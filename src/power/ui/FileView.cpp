@@ -99,7 +99,6 @@ void FileView::refresh() {
 	m_selected_node = nullptr;
 	m_root_directory_node.refresh();
 	populate_file_view();
-	screen().perform_layout();
 }
 
 void FileView::populate_file_view() {
