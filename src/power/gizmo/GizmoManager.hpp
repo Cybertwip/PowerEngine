@@ -1,80 +1,93 @@
-#pragma once
+#ifndef GIZMOMANAGER_HPP
+#define GIZMOMANAGER_HPP
 
-#include "animation/AnimationTimeProvider.hpp"
-#include "graphics/drawing/Drawable.hpp"
-
-#include <nanogui/nanogui.h>
-
-#include <functional>
+#include <nanogui/widget.h>
+#include <nanogui/button.h>
+#include <glm/glm.hpp>
 #include <optional>
-#include <vector>
+#include <functional>
 #include <memory>
 
+// Forward declarations for Metal types (use void* to keep header C++ compatible)
+#ifdef __OBJC__
+@protocol MTLDevice, MTLRenderCommandEncoder, MTLRenderPipelineState, MTLDepthStencilState;
+#else
+typedef void* id;
+#endif
+
+// Forward declarations for C++ classes
 class Actor;
 class ActorManager;
-class MeshActorLoader;
-class ShaderManager;
-class ShaderWrapper;
 
-class GizmoManager : public Drawable {
-	enum class GizmoMode {
-		None,
-		Translation,
-		Rotation,
-		Scale
-	};
+enum class GizmoMode {
+	None,
+	Translation,
+	Rotation,
+	Scale
+};
 
+enum class GizmoAxis {
+	None,
+	X,
+	Y,
+	Z
+};
+
+class GizmoManager {
 public:
-	enum class GizmoAxis : int8_t {
-		None = 0,
-		X = -1,
-		Y = -2,
-		Z = -3
-	};
+	// Constructor now takes a Metal device and pixel format
+	GizmoManager(nanogui::Widget& parent, id<MTLDevice> device, unsigned long colorPixelFormat, ActorManager& actorManager);
+	~GizmoManager();
 	
-    GizmoManager(nanogui::Widget& parent, ShaderManager& shaderManager, ActorManager& actorManager, MeshActorLoader& meshActorLoader);
-	~GizmoManager() = default;
-	
-	void select(GizmoAxis gizmoId);
-
-	void hover(GizmoAxis gizmoId);
-
+	// Public interface remains the same
 	void select(std::optional<std::reference_wrapper<Actor>> actor);
-    
-	void translate(float px, float py);
-	void rotate(float px, float py);
-	void scale(float px, float py);
-
-	void transform(float px, float py);
-	
-    void draw();
-    
-    void draw_content(const nanogui::Matrix4f& model, const nanogui::Matrix4f& view, const nanogui::Matrix4f& projection) override;
-
-private:
 	void set_mode(GizmoMode mode);
-
-	AnimationTimeProvider mDummyAnimationTimeProvider;
+	GizmoMode get_mode() const { return mCurrentMode; }
+	void select_axis(GizmoAxis gizmoId);
+	void transform(float dx, float dy);
 	
-    ShaderManager& mShaderManager;
-    ActorManager& mActorManager;
-	MeshActorLoader& mMeshActorLoader;
-	std::unique_ptr<ShaderWrapper> mMeshShader;
-	std::unique_ptr<ShaderWrapper> mSkinnedShader;
-	Actor& mTranslationGizmo;
-	Actor& mRotationGizmo;
-	Actor& mScaleGizmo;
-
-	std::optional<std::reference_wrapper<Actor>> mActiveActor;
+	// Draw method now takes a Metal command encoder
+	void draw(id<MTLRenderCommandEncoder> encoder, const glm::mat4& view, const glm::mat4& projection);
 	
-	GizmoMode mCurrentMode = GizmoMode::Translation;  // Default mode is Translation
-
-	GizmoAxis mGizmoAxis = GizmoAxis::None;
-	
+private:
+	// UI elements
 	std::shared_ptr<nanogui::Button> mTranslationButton;
 	std::shared_ptr<nanogui::Button> mRotationButton;
 	std::shared_ptr<nanogui::Button> mScaleButton;
 	
-	std::optional<std::reference_wrapper<Actor>> mActiveGizmo;
+	// Core references
+	ActorManager& mActorManager;
+	id<MTLDevice> mDevice; // Store the device
+	
+	// State
+	GizmoMode mCurrentMode = GizmoMode::None;
+	GizmoAxis mActiveAxis = GizmoAxis::None;
+	std::optional<std::reference_wrapper<Actor>> mActiveActor;
+	
+	// Metal-specific resources (using void* for header compatibility)
+	void* mPipelineState = nullptr;
+	void* mDepthDisabledState = nullptr;
+	
+	struct GizmoMesh {
+		void* vbo = nullptr; // Will be an id<MTLBuffer>
+		int vertex_count = 0;
+		unsigned int primitiveType; // MTLPrimitiveType
+	};
+	
+	GizmoMesh mTranslationMeshes[3];
+	GizmoMesh mRotationMeshes[3];
+	GizmoMesh mScaleMeshes[3];
+	
+	// Initialization helpers
+	void create_procedural_gizmos();
+	void create_translation_gizmo();
+	void create_rotation_gizmo();
+	void create_scale_gizmo();
+	
+	// Transformation logic
+	void translate(float dx, float dy);
+	void rotate(float dx, float dy);
+	void scale(float dx, float dy);
 };
 
+#endif // GIZMOMANAGER_HPP

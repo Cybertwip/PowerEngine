@@ -139,7 +139,7 @@ add_executable(PowerEngine
     ${CMAKE_CURRENT_LIST_DIR}/filesystem/UrlOpener.hpp
 
     ${CMAKE_CURRENT_LIST_DIR}/gizmo/GizmoManager.hpp
-    ${CMAKE_CURRENT_LIST_DIR}/gizmo/GizmoManager.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/gizmo/GizmoManager.mm
 
     ${CMAKE_CURRENT_LIST_DIR}/grok/Client.hpp
     ${CMAKE_CURRENT_LIST_DIR}/grok/Client.cpp

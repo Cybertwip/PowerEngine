@@ -307,6 +307,7 @@ std::shared_ptr<nanogui::Texture> ModelImporter::LoadMaterialTexture(aiMaterial*
 	std::cerr << "Warning: Failed to load texture: " << textureIdentifier << std::endl;
 	return nullptr;
 }
+
 void ModelImporter::BuildSkeleton(const aiScene* scene) {
 	mSkeleton = std::make_unique<Skeleton>();
 	
