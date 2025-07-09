@@ -48,8 +48,7 @@ bool ModelImporter::LoadModel(const std::string& path) {
         aiProcess_GenSmoothNormals |
         aiProcess_CalcTangentSpace |
         aiProcess_JoinIdenticalVertices |
-        aiProcess_FlipUVs | // Often needed for OpenGL
-        aiProcess_GlobalScale
+        aiProcess_FlipUVs
     );
 
     if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode) {
@@ -75,8 +74,7 @@ bool ModelImporter::LoadModel(const std::vector<char>& data, const std::string& 
         aiProcess_GenSmoothNormals |
         aiProcess_CalcTangentSpace |
         aiProcess_JoinIdenticalVertices |
-        aiProcess_FlipUVs |
-        aiProcess_GlobalScale,
+        aiProcess_FlipUVs,
         formatHint.c_str()
     );
 
