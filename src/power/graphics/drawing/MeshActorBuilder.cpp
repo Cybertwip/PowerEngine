@@ -126,7 +126,7 @@ Actor& MeshActorBuilder::build_from_model_data(Actor& actor, AnimationTimeProvid
 	}
 	
 	// Handle animations if they exist
-	auto* skinnedMeshComp = dynamic_cast<SkinnedMeshComponent*>(actor.get_component<DrawableComponent>().get_drawable());
+	auto* skinnedMeshComp = dynamic_cast<SkinnedMeshComponent*>(actor.get_component<DrawableComponent>().drawable());
 	if (skinnedMeshComp) {
 		auto& animations = skinnedMeshComp->get_importer().GetAnimations();
 		if (!animations.empty()) {
