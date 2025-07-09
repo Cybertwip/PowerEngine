@@ -190,7 +190,7 @@ void ModelImporter::ProcessMesh(aiMesh* mesh, const aiScene* scene, const glm::m
                 if (vertexID < skinnedVertices.size()) {
 					auto* skinnedVertex = dynamic_cast<SkinnedMeshVertex*>(vertices[vertexID].get());
 
-                    skinnedVertices[vertexID]->set_bone(boneID, weight);
+					skinnedVertex->set_bone(boneID, weight);
                 }
             }
         }
@@ -292,7 +292,7 @@ void ModelImporter::BuildSkeleton(const aiScene* scene) {
 	
 	// Step 5: Update mBoneMapping to reflect correct indices in the skeleton
 	for (size_t i = 0; i < mSkeleton->num_bones(); ++i) {
-		const auto& bone = mSkeleton->get_bone(i);
+		auto& bone = mSkeleton->get_bone(i);
 		if (boneNames.find(bone.get_name()) != boneNames.end()) {
 			mBoneMapping[bone.get_name()] = static_cast<int>(i);
 		}
