@@ -1,308 +1,579 @@
 #include "GizmoManager.hpp"
-#include "actors/Actor.hpp"
-#include "components/TransformComponent.hpp"
+
+
+
+
+
 #include <nanogui/icons.h>
+
+
+
+#if defined(NANOGUI_USE_OPENGL) || defined(NANOGUI_USE_GLES)
+
 #include <nanogui/opengl.h>
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtc/type_ptr.hpp>
-#include <vector>
 
-// Helper to convert GLM matrix to NanoGUI matrix
-static nanogui::Matrix4f glm_to_nanogui(const glm::mat4& m) {
-	nanogui::Matrix4f result;
-	memcpy(result.m, glm::value_ptr(m), 16 * sizeof(float));
-	return result;
-}
 
-GizmoManager::GizmoManager(nanogui::Widget& parent, ShaderManager& shaderManager, ActorManager& actorManager)
-: mActorManager(actorManager) {
+
+#elif defined(NANOGUI_USE_METAL)
+
+#include "MetalHelper.hpp"
+
+#endif
+
+
+
+#include <cmath>
+
+
+
+#include "MeshActorLoader.hpp"
+
+#include "ShaderManager.hpp"
+
+#include "actors/Actor.hpp"
+
+#include "actors/ActorManager.hpp"
+
+#include "components/ColorComponent.hpp"
+
+#include "components/DrawableComponent.hpp"
+
+#include "components/TransformComponent.hpp"
+
+
+
+extern std::string get_resources_path();
+
+
+
+GizmoManager::GizmoManager(nanogui::Widget& parent, ShaderManager& shaderManager, ActorManager& actorManager, MeshActorLoader& meshActorLoader)
+
+: mDummyAnimationTimeProvider(60 * 30), mShaderManager(shaderManager), mActorManager(actorManager),
+
+mMeshActorLoader(meshActorLoader),
+
+mMeshShader(std::make_unique<ShaderWrapper>(shaderManager.get_shader("gizmo"))),
+
+mSkinnedShader(std::make_unique<ShaderWrapper>(shaderManager.get_shader("skinned_mesh"))),
+
+mTranslationGizmo(mMeshActorLoader.create_actor(get_resources_path() + "/internal/models/Gizmo/Translation.fbx", mDummyAnimationTimeProvider, mDummyAnimationTimeProvider, *mMeshShader, *mSkinnedShader)),
+
+mRotationGizmo(mMeshActorLoader.create_actor(get_resources_path() + "/internal/models/Gizmo/Rotation.fbx", mDummyAnimationTimeProvider, mDummyAnimationTimeProvider, *mMeshShader, *mSkinnedShader)),
+
+mScaleGizmo(mMeshActorLoader.create_actor(get_resources_path() + "/internal/models/Gizmo/Scale.fbx", mDummyAnimationTimeProvider, mDummyAnimationTimeProvider, *mMeshShader, *mSkinnedShader))
+
+{
 	
-	// Create or get a simple shader for drawing colored gizmos
-	if (!shaderManager.shader_exists("gizmo_shader")) {
-		// A simple pass-through shader
-		const std::string vs = R"(
-			#version 330 core
-			layout (location = 0) in vec3 aPos;
-			uniform mat4 model;
-			uniform mat4 view;
-			uniform mat4 projection;
-			void main() {
-				gl_Position = projection * view * model * vec4(aPos, 1.0);
-			}
-		)";
-		const std::string fs = R"(
-			#version 330 core
-			out vec4 FragColor;
-			uniform vec4 color;
-			void main() {
-				FragColor = color;
-			}
-		)";
-		shaderManager.create_shader("gizmo_shader", vs, fs);
-	}
-	mGizmoShader = std::make_unique<ShaderWrapper>(shaderManager.get_shader("gizmo_shader"));
 	
-	create_procedural_gizmos();
+	// Translation Button
+	
+	mTranslationButton = std::make_shared<nanogui::Button>(parent, "", FA_ARROWS_ALT);
+	
+	mTranslationButton->set_callback([this]() {
+		
+		set_mode(GizmoMode::Translation);
+		
+	});
+	
+	
+	// Rotation Button
+	
+	mRotationButton = std::make_shared<nanogui::Button>(parent, "", FA_REDO);
+	
+	mRotationButton->set_callback([this]() {
+		
+		set_mode(GizmoMode::Rotation);
+		
+	});
+	
+	
+	// Scale Button
+	
+	mScaleButton = std::make_shared<nanogui::Button>(parent, "", FA_EXPAND_ARROWS_ALT);
+	
+	mScaleButton->set_callback([this]() {
+		
+		set_mode(GizmoMode::Scale);
+		
+	});
+	
+	
+	mTranslationButton->set_size(nanogui::Vector2i(48, 48));
+	
+	mRotationButton->set_size(nanogui::Vector2i(48, 48));
+	
+	mScaleButton->set_size(nanogui::Vector2i(48, 48));
+	
+	
+	
+	mTranslationButton->set_position(nanogui::Vector2i(10,  parent.fixed_height() - mTranslationButton->height() - 10));
+	
+	mRotationButton->set_position(nanogui::Vector2i(mTranslationButton->position().x() + mTranslationButton->width() + 5, parent.fixed_height() - mRotationButton->height() - 10));
+	
+	mScaleButton->set_position(nanogui::Vector2i(mRotationButton->position().x() + mRotationButton->width() + 5, parent.fixed_height() - mScaleButton->height() - 10));
+	
+	
+	select(std::nullopt);
+	
+	
+	set_mode(GizmoMode::None);
 	
 }
 
-GizmoManager::~GizmoManager() {
-	cleanup();
-}
 
-void GizmoManager::cleanup() {
-	for (int i = 0; i < 3; ++i) {
-		glDeleteVertexArrays(1, &mTranslationMeshes[i].vao);
-		glDeleteBuffers(1, &mTranslationMeshes[i].vbo);
-		glDeleteVertexArrays(1, &mRotationMeshes[i].vao);
-		glDeleteBuffers(1, &mRotationMeshes[i].vbo);
-		glDeleteVertexArrays(1, &mScaleMeshes[i].vao);
-		glDeleteBuffers(1, &mScaleMeshes[i].vbo);
-	}
-}
 
-void GizmoManager::create_procedural_gizmos() {
-	create_translation_gizmo();
-	create_rotation_gizmo();
-	create_scale_gizmo();
-}
-
-// --- GEOMETRY CREATION ---
-
-void GizmoManager::create_translation_gizmo() {
-	const float line_length = 1.0f;
-	const float cone_height = 0.2f;
-	const float cone_radius = 0.08f;
-	const int cone_segments = 12;
+void GizmoManager::select(GizmoAxis gizmoId) {
 	
-	for (int i = 0; i < 3; ++i) { // 0=X, 1=Y, 2=Z
-		std::vector<glm::vec3> vertices;
-		glm::vec3 axis(i == 0, i == 1, i == 2);
-		
-		// Line part
-		vertices.push_back(glm::vec3(0.0f));
-		vertices.push_back(axis * line_length);
-		
-		// Cone part
-		glm::vec3 cone_base = axis * line_length;
-		glm::vec3 up(0,1,0);
-		if (i == 1) up = glm::vec3(-1,0,0); // If axis is Y, choose a different 'up'
-		glm::vec3 p1 = glm::normalize(glm::cross(axis, up));
-		glm::vec3 p2 = glm::normalize(glm::cross(axis, p1));
-		
-		for (int j = 0; j < cone_segments; ++j) {
-			float angle1 = 2.0f * M_PI * j / cone_segments;
-			float angle2 = 2.0f * M_PI * (j + 1) / cone_segments;
-			glm::vec3 c1 = cone_base + (p1 * cos(angle1) + p2 * sin(angle1)) * cone_radius;
-			glm::vec3 c2 = cone_base + (p1 * cos(angle2) + p2 * sin(angle2)) * cone_radius;
-			vertices.push_back(c1);
-			vertices.push_back(c2);
-			vertices.push_back(cone_base + axis * cone_height);
-		}
-		
-		mTranslationMeshes[i].vertex_count = vertices.size();
-		glGenVertexArrays(1, &mTranslationMeshes[i].vao);
-		glGenBuffers(1, &mTranslationMeshes[i].vbo);
-		glBindVertexArray(mTranslationMeshes[i].vao);
-		glBindBuffer(GL_ARRAY_BUFFER, mTranslationMeshes[i].vbo);
-		glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(glm::vec3), vertices.data(), GL_STATIC_DRAW);
-		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), (void*)0);
-		glEnableVertexAttribArray(0);
-		glBindVertexArray(0);
-	}
+	mGizmoAxis = gizmoId;
+	
 }
 
-void GizmoManager::create_rotation_gizmo() {
-	const int segments = 64;
-	for (int i = 0; i < 3; ++i) { // 0=X, 1=Y, 2=Z
-		std::vector<glm::vec3> vertices;
-		for (int j = 0; j <= segments; ++j) {
-			float angle = 2.0f * M_PI * j / segments;
-			float x = cos(angle);
-			float y = sin(angle);
-			if (i == 0) vertices.push_back({0, x, y}); // X-axis ring on YZ plane
-			if (i == 1) vertices.push_back({x, 0, y}); // Y-axis ring on XZ plane
-			if (i == 2) vertices.push_back({x, y, 0}); // Z-axis ring on XY plane
-		}
-		
-		mRotationMeshes[i].vertex_count = vertices.size();
-		glGenVertexArrays(1, &mRotationMeshes[i].vao);
-		glGenBuffers(1, &mRotationMeshes[i].vbo);
-		glBindVertexArray(mRotationMeshes[i].vao);
-		glBindBuffer(GL_ARRAY_BUFFER, mRotationMeshes[i].vbo);
-		glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(glm::vec3), vertices.data(), GL_STATIC_DRAW);
-		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), (void*)0);
-		glEnableVertexAttribArray(0);
-		glBindVertexArray(0);
-	}
+
+
+void GizmoManager::hover(GizmoAxis gizmoId) {
+	
+	// mTranslationGizmo->hover(gizmoId);
+	
+	// mRotationGizmo->hover(gizmoId);
+	
+	// mScaleGizmo->hover(gizmoId);
+	
 }
 
-void GizmoManager::create_scale_gizmo() {
-	const float line_length = 1.0f;
-	const float cube_size = 0.1f;
-	for (int i = 0; i < 3; ++i) { // 0=X, 1=Y, 2=Z
-		std::vector<glm::vec3> vertices;
-		glm::vec3 axis(i == 0, i == 1, i == 2);
-		
-		// Line
-		vertices.push_back(glm::vec3(0.0f));
-		vertices.push_back(axis * line_length);
-		
-		// Cube vertices
-		glm::vec3 c = axis * line_length;
-		glm::vec3 u(i == 1 ? 1:0, i == 1 ? 0:1, 0);
-		glm::vec3 v = glm::cross(axis, u);
-		u *= cube_size; v *= cube_size;
-		
-		glm::vec3 points[8] = {
-			c - u - v, c + u - v, c + u + v, c - u + v,
-			c - u - v + axis*cube_size*2, c + u - v + axis*cube_size*2,
-			c + u + v + axis*cube_size*2, c - u + v + axis*cube_size*2
-		};
-		int indices[] = {0,1, 1,2, 2,3, 3,0, 4,5, 5,6, 6,7, 7,4, 0,4, 1,5, 2,6, 3,7};
-		for(int idx : indices) vertices.push_back(points[idx]);
-		
-		mScaleMeshes[i].vertex_count = vertices.size();
-		glGenVertexArrays(1, &mScaleMeshes[i].vao);
-		glGenBuffers(1, &mScaleMeshes[i].vbo);
-		glBindVertexArray(mScaleMeshes[i].vao);
-		glBindBuffer(GL_ARRAY_BUFFER, mScaleMeshes[i].vbo);
-		glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(glm::vec3), vertices.data(), GL_STATIC_DRAW);
-		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), (void*)0);
-		glEnableVertexAttribArray(0);
-		glBindVertexArray(0);
-	}
-}
 
-// --- LOGIC ---
 
 void GizmoManager::select(std::optional<std::reference_wrapper<Actor>> actor) {
+	
 	mActiveActor = actor;
+	
+	
+	if (mActiveActor.has_value()) {
+		
+		set_mode(mCurrentMode);
+		
+	} else {
+		
+		mTranslationGizmo.get_component<ColorComponent>().set_visible(false);
+		
+		
+		mRotationGizmo.get_component<ColorComponent>().set_visible(false);
+		
+		
+		mScaleGizmo.get_component<ColorComponent>().set_visible(false);
+		
+	}
+	
 }
+
+
+
+void GizmoManager::translate(float px, float py) {
+	
+	auto& actor = mActiveActor.value().get();
+	
+	
+	switch (mGizmoAxis) {
+			
+		case GizmoAxis::X:{
+			
+			auto& transformComponent = actor.get_component<TransformComponent>();
+			
+			
+			auto translation = transformComponent.get_translation();
+			
+			
+			translation.x += px;
+			
+			
+			transformComponent.set_translation(translation);
+			
+		}
+			
+			break;
+			
+			
+		case GizmoAxis::Y:{
+			
+			auto& transformComponent = actor.get_component<TransformComponent>();
+			
+			
+			auto translation = transformComponent.get_translation();
+			
+			
+			translation.y += py;
+			
+			
+			transformComponent.set_translation(translation);
+			
+		}
+			
+			break;
+			
+			
+		case GizmoAxis::Z: {
+			
+			auto& transformComponent = actor.get_component<TransformComponent>();
+			
+			
+			auto translation = transformComponent.get_translation();
+			
+			
+			translation.z -= py; // Use py instead of px
+			
+			
+			transformComponent.set_translation(translation);
+			
+		}
+			
+			break;
+			
+			
+		default:
+			
+			break;
+			
+	}}
+
+
+
+
+
+void GizmoManager::rotate(float px, float py) {
+	
+	float angle = ((px + py) / 2.0f);
+	
+	
+	auto& actor = mActiveActor.value().get();
+	
+	
+	switch (mGizmoAxis) {
+			
+		case GizmoAxis::X:{
+			
+			auto& transformComponent = actor.get_component<TransformComponent>();
+			
+			
+			transformComponent.rotate(glm::vec3(1.0f, 0.0f, 0.0f), -angle); // Rotate around X-axis
+			
+		}
+			
+			break;
+			
+			
+		case GizmoAxis::Y:{
+			
+			auto& transformComponent = actor.get_component<TransformComponent>();
+			
+			
+			transformComponent.rotate(glm::vec3(0.0f, 0.0f, -1.0f), -angle); // Rotate around Z-axis
+			
+		}
+			
+			break;
+			
+			
+		case GizmoAxis::Z: {
+			
+			auto& transformComponent = actor.get_component<TransformComponent>();
+			
+			
+			transformComponent.rotate(glm::vec3(0.0f, 1.0f, 0.0f), angle); // Rotate around Y-axis
+			
+		}
+			
+			break;
+			
+			
+		default:
+			
+			break;
+			
+	}
+	
+	
+}
+
+
+
+void GizmoManager::scale(float px, float py) {
+	
+	auto& actor = mActiveActor.value().get();
+	
+	switch (mGizmoAxis) {
+			
+		case GizmoAxis::X:{
+			
+			auto& transformComponent = actor.get_component<TransformComponent>();
+			
+			
+			auto scale = transformComponent.get_scale();
+			
+			
+			scale.x += px;
+			
+			
+			transformComponent.set_scale(scale);
+			
+		}
+			
+			break;
+			
+			
+		case GizmoAxis::Y:{
+			
+			auto& transformComponent = actor.get_component<TransformComponent>();
+			
+			
+			auto scale = transformComponent.get_scale();
+			
+			
+			scale.y += py;
+			
+			
+			transformComponent.set_scale(scale);
+			
+		}
+			
+			break;
+			
+			
+		case GizmoAxis::Z: {
+			
+			auto& transformComponent = actor.get_component<TransformComponent>();
+			
+			
+			auto scale = transformComponent.get_scale();
+			
+			
+			scale.z -= py;
+			
+			
+			transformComponent.set_scale(scale);
+			
+		}
+			
+			break;
+			
+			
+		default:
+			
+			break;
+			
+	}
+	
+}
+
+
+
+void GizmoManager::transform(float px, float py) {
+	
+	if (mActiveActor.has_value()) {
+		
+		auto& actor = mActiveActor.value().get();
+		
+		
+		switch (mCurrentMode) {
+				
+			case GizmoMode::Translation:{
+				
+				translate(px, py);
+				
+			}
+				
+				break;
+				
+			case GizmoMode::Rotation:{
+				
+				rotate(px, py);
+				
+			}
+				
+				break;
+				
+			case GizmoMode::Scale:{
+				
+				scale(px * 0.01f, py * 0.01f);
+				
+			}
+				
+				break;
+				
+				
+			default:
+				
+				break;
+				
+		}
+		
+	}
+	
+}
+
+
 
 void GizmoManager::set_mode(GizmoMode mode) {
+	
 	mCurrentMode = mode;
-}
-
-void GizmoManager::select_axis(GizmoAxis gizmoId) {
-	mActiveAxis = gizmoId;
-}
-
-void GizmoManager::draw(const nanogui::Matrix4f& view, const nanogui::Matrix4f& projection) {
-	if (!mActiveActor.has_value() || mCurrentMode == GizmoMode::None) {
-		return;
+	
+	
+	mTranslationGizmo.get_component<ColorComponent>().set_visible(false);
+	
+	
+	mRotationGizmo.get_component<ColorComponent>().set_visible(false);
+	
+	
+	mScaleGizmo.get_component<ColorComponent>().set_visible(false);
+	
+	
+	switch (mCurrentMode) {
+			
+		case GizmoMode::Translation:{
+			
+			mActiveGizmo = mTranslationGizmo;
+			
+		}
+			
+			break;
+			
+		case GizmoMode::Rotation:
+			
+			mActiveGizmo = mRotationGizmo;
+			
+			break;
+			
+		case GizmoMode::Scale:
+			
+			mActiveGizmo = mScaleGizmo;
+			
+			break;
+			
+		default:
+			
+			mActiveGizmo = std::nullopt;
+			
+			break;
+			
 	}
 	
-	auto& actor = mActiveActor->get();
-	auto& transform = actor.get_component<TransformComponent>();
 	
-	// Gizmo model matrix calculation
-	glm::vec3 actor_pos = transform.get_translation();
-	
-	// Constant screen size scaling
-	auto view_inv = view.inverse();
-	glm::vec3 cam_pos(view_inv(0, 3), view_inv(1, 3), view_inv(2, 3));
-	float distance = glm::distance(cam_pos, actor_pos);
-	float scale_factor = distance * 0.1f; // Tweak this factor for desired on-screen size
-	
-	glm::mat4 scale_mat = glm::scale(glm::mat4(1.0f), glm::vec3(scale_factor));
-	glm::mat4 trans_mat = glm::translate(glm::mat4(1.0f), actor_pos);
-	
-	// For rotation gizmo, align with the object's rotation
-	glm::mat4 rot_mat = glm::mat4(1.0f);
-	if (mCurrentMode == GizmoMode::Rotation) {
-		rot_mat = glm::mat4_cast(transform.get_rotation());
-	}
-	
-	glm::mat4 model = trans_mat * rot_mat * scale_mat;
-	
-	// --- Drawing ---
-	mGizmoShader->bind();
-	mGizmoShader->set_uniform("view", view);
-	mGizmoShader->set_uniform("projection", projection);
-	mGizmoShader->set_uniform("model", glm_to_nanogui(model));
-	
-	// Select which gizmo mesh set to use
-	GizmoMesh* active_meshes = nullptr;
-	if (mCurrentMode == GizmoMode::Translation) active_meshes = mTranslationMeshes;
-	else if (mCurrentMode == GizmoMode::Rotation) active_meshes = mRotationMeshes;
-	else if (mCurrentMode == GizmoMode::Scale) active_meshes = mScaleMeshes;
-	
-	// Save previous GL state
-	GLboolean was_depth_test_enabled = glIsEnabled(GL_DEPTH_TEST);
-	glDisable(GL_DEPTH_TEST); // Draw gizmo on top of everything
-	
-	// Draw each axis with its color
-	for (int i = 0; i < 3; i++) {
-		glm::vec4 color(i == 0, i == 1, i == 2, 1.0f); // R, G, B
-		mGizmoShader->set_uniform("color", nanogui::Color(color.r, color.g, color.b, 1.0f));
+	if (mActiveActor.has_value() && mActiveGizmo.has_value()) {
 		
-		glBindVertexArray(active_meshes[i].vao);
-		if (mCurrentMode == GizmoMode::Translation && i==0) { // X Arrow
-			glDrawArrays(GL_LINES, 0, 2);
-			glDrawArrays(GL_TRIANGLES, 2, active_meshes[i].vertex_count - 2);
-		} else if(mCurrentMode == GizmoMode::Rotation) {
-			glDrawArrays(GL_LINE_STRIP, 0, active_meshes[i].vertex_count);
-		} else { // Fallback for other modes / axes
-			glDrawArrays(GL_LINES, 0, active_meshes[i].vertex_count);
-		}
+		mActiveGizmo->get().get_component<ColorComponent>().set_visible(true);
+		
 	}
-	glBindVertexArray(0);
 	
-	// Restore GL state
-	if (was_depth_test_enabled) {
-		glEnable(GL_DEPTH_TEST);
-	}
 }
 
 
-// --- TRANSFORMATION LOGIC (Unchanged from original post) ---
 
-void GizmoManager::translate(float dx, float dy) {
-	auto& actor = mActiveActor.value().get();
-	auto& transform = actor.get_component<TransformComponent>();
-	auto translation = transform.get_translation();
-	switch (mActiveAxis) {
-		case GizmoAxis::X: translation.x += dx; break;
-		case GizmoAxis::Y: translation.y += dy; break;
-		case GizmoAxis::Z: translation.z -= dy; break;
-		default: break;
-	}
-	transform.set_translation(translation);
+void GizmoManager::draw() {
+	
+	mActorManager.visit(*this);
+	
 }
 
-void GizmoManager::rotate(float dx, float dy) {
-	float angle = ((dx + dy) / 2.0f);
-	auto& actor = mActiveActor.value().get();
-	auto& transform = actor.get_component<TransformComponent>();
-	switch (mActiveAxis) {
-		case GizmoAxis::X: transform.rotate(glm::vec3(1.0f, 0.0f, 0.0f), -angle); break;
-		case GizmoAxis::Y: transform.rotate(glm::vec3(0.0f, 1.0f, 0.0f), angle); break;
-		case GizmoAxis::Z: transform.rotate(glm::vec3(0.0f, 0.0f, -1.0f), -angle); break;
-		default: break;
-	}
-}
 
-void GizmoManager::scale(float dx, float dy) {
-	auto& actor = mActiveActor.value().get();
-	auto& transform = actor.get_component<TransformComponent>();
-	auto scale = transform.get_scale();
-	switch (mActiveAxis) {
-		case GizmoAxis::X: scale.x += dx; break;
-		case GizmoAxis::Y: scale.y += dy; break;
-		case GizmoAxis::Z: scale.z -= dy; break;
-		default: break;
-	}
-	transform.set_scale(scale);
-}
 
-void GizmoManager::transform(float dx, float dy) {
-	if (mActiveActor.has_value() && mActiveAxis != GizmoAxis::None) {
-		switch (mCurrentMode) {
-			case GizmoMode::Translation: translate(dx, dy); break;
-			case GizmoMode::Rotation: rotate(dx, dy); break;
-			case GizmoMode::Scale: scale(dx * 0.01f, dy * 0.01f); break;
-			default: break;
+void GizmoManager::draw_content(const nanogui::Matrix4f& model, const nanogui::Matrix4f& view,
+								
+								const nanogui::Matrix4f& projection) {
+	
+	
+	if (mActiveActor.has_value() && mActiveGizmo.has_value()) {
+		
+		auto& actor = mActiveActor->get();
+		
+		auto& transformComponent = actor.get_component<TransformComponent>();
+		
+		
+		// Get the actor's transformation properties
+		
+		auto translation = transformComponent.get_translation();
+		
+		auto rotation = transformComponent.get_rotation(); // Actor's rotation (glm::quat)
+		
+		
+		glm::vec3 actorPosition(translation.x, translation.y, translation.z);
+		
+		
+		// --- FIX 1: Correct Camera Position and Scaling ---
+		
+		// The camera's world position is in the inverse of the view matrix.
+		
+		// We assume nanogui matrices are column-major like OpenGL/GLM.
+		
+		// The translation vector is the 4th column.
+		
+		auto viewInverse = view.inverse();
+		
+		glm::vec3 cameraPosition(viewInverse.m[3][0], viewInverse.m[3][1], viewInverse.m[3][2]);
+		
+		
+		// Calculate a scale factor to keep the gizmo a consistent size on screen
+		
+		float distance = glm::distance(cameraPosition, actorPosition);
+		
+		float visualScaleFactor = distance * 0.1f; // This factor may need tweaking
+		
+		glm::mat4 scaleMatrix = glm::scale(glm::mat4(1.0f), glm::vec3(visualScaleFactor));
+		
+		
+		// --- FIX 2: Correct Gizmo Rotation ---
+		
+		glm::mat4 actorTranslationMatrix = glm::translate(glm::mat4(1.0f), actorPosition);
+		
+		glm::mat4 actorRotationMatrix = glm::mat4_cast(rotation); // Convert actor's quaternion to a matrix
+		
+		
+		glm::mat4 finalRotationMatrix;
+		
+		
+		if (&mActiveGizmo->get() == &mRotationGizmo) {
+			
+			// The rotation gizmo MUST align with the actor's orientation.
+			
+			// We combine the actor's rotation with a correction for the model's default orientation.
+			
+			glm::mat4 modelCorrection = glm::mat4(1.0f);
+			
+			modelCorrection = glm::rotate(modelCorrection, glm::radians(180.0f), glm::vec3(0, 1, 0));
+			
+			modelCorrection = glm::rotate(modelCorrection, glm::radians(90.0f), glm::vec3(0, 0, 1));
+			
+			finalRotationMatrix = actorRotationMatrix * modelCorrection;
+			
+		} else {
+			
+			// For Translation and Scale, we'll keep the gizmo world-aligned (as the original code implied).
+			
+			// Its axes will not rotate with the actor. We only apply the model correction rotation.
+			
+			glm::mat4 modelCorrection = glm::mat4(1.0f);
+			
+			modelCorrection = glm::rotate(modelCorrection, glm::radians(90.0f), glm::vec3(1, 0, 0));
+			
+			modelCorrection = glm::rotate(modelCorrection, glm::radians(180.0f), glm::vec3(0, 1, 0));
+			
+			modelCorrection = glm::rotate(modelCorrection, glm::radians(90.0f), glm::vec3(0, 0, 1));
+			
+			finalRotationMatrix = modelCorrection;
+			
 		}
+		
+		
+		// Combine transformations in the correct order: Scale -> Rotate -> Translate
+		
+		auto gizmoModel = actorTranslationMatrix * finalRotationMatrix * scaleMatrix;
+		
+		
+		// Convert the final GLM matrix back to a nanogui matrix and draw
+		
+		auto gizmoMatrix = glm_to_nanogui(gizmoModel);
+		
+		auto& drawable = mActiveGizmo->get().get_component<DrawableComponent>();
+		
+		drawable.draw_content(gizmoMatrix, view, projection);
+		
 	}
+	
 }
