@@ -179,19 +179,11 @@ add_executable(PowerEngine
     ${CMAKE_CURRENT_LIST_DIR}/graphics/drawing/IMeshBatch.hpp
     ${CMAKE_CURRENT_LIST_DIR}/graphics/drawing/MeshBatch.hpp
     ${CMAKE_CURRENT_LIST_DIR}/graphics/drawing/MeshBatch.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/graphics/drawing/SelfContainedMeshBatch.hpp
-    ${CMAKE_CURRENT_LIST_DIR}/graphics/drawing/SelfContainedMeshBatch.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/graphics/drawing/SelfContainedMeshCanvas.hpp
-    ${CMAKE_CURRENT_LIST_DIR}/graphics/drawing/SelfContainedMeshCanvas.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/graphics/drawing/SharedSelfContainedMeshCanvas.hpp
-    ${CMAKE_CURRENT_LIST_DIR}/graphics/drawing/SharedSelfContainedMeshCanvas.cpp    
     ${CMAKE_CURRENT_LIST_DIR}/graphics/drawing/SkinnedMesh.hpp
     ${CMAKE_CURRENT_LIST_DIR}/graphics/drawing/SkinnedMesh.cpp
     ${CMAKE_CURRENT_LIST_DIR}/graphics/drawing/ISkinnedMeshBatch.hpp
     ${CMAKE_CURRENT_LIST_DIR}/graphics/drawing/SkinnedMeshBatch.hpp
     ${CMAKE_CURRENT_LIST_DIR}/graphics/drawing/SkinnedMeshBatch.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/graphics/drawing/SelfContainedSkinnedMeshBatch.hpp
-    ${CMAKE_CURRENT_LIST_DIR}/graphics/drawing/SelfContainedSkinnedMeshBatch.cpp
     ${CMAKE_CURRENT_LIST_DIR}/graphics/drawing/Billboard.hpp
     ${CMAKE_CURRENT_LIST_DIR}/graphics/drawing/Billboard.cpp
     ${CMAKE_CURRENT_LIST_DIR}/graphics/drawing/CameraActorBuilder.hpp

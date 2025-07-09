@@ -1,44 +1,42 @@
 #pragma once
 
 #include "Panel.hpp"
-
 #include "animation/AnimationTimeProvider.hpp"
 
+#include <optional>
+#include <string>
+
+// Forward declarations
+class Actor;
+
 namespace nanogui {
-class Canvas;
+class Screen;
 class ToolButton;
 class Widget;
-class Screen;
 }
-
-class Actor;
-class SelfContainedMeshCanvas;
-class TransformComponent;
 
 class AnimationPanel : public Panel {
 public:
 	AnimationPanel(nanogui::Widget& parent, nanogui::Screen& screen, AnimationTimeProvider& previewTimeProvider);
-	~AnimationPanel();
-
-    void set_active_actor(std::optional<std::reference_wrapper<Actor>> actor);
 	
+	// Sets the currently focused actor to control its animations
+	void set_active_actor(std::optional<std::reference_wrapper<Actor>> actor);
+	
+	// Loads an animation file for the active actor
 	void parse_file(const std::string& path);
 	
-	void update_with(int currentTime) {
-		mPreviewTimeProvider.SetTime(currentTime);
-	}
-    
+	// Externally updates the animation time
+	void update_with(int currentTime);
+	
 private:
-	AnimationTimeProvider mPreviewTimeProvider;
+	// Provides the time for the animation preview
+	AnimationTimeProvider& mPreviewTimeProvider;
 	
-    std::optional<std::reference_wrapper<Actor>> mActiveActor;
+	// The actor whose animations are being controlled
+	std::optional<std::reference_wrapper<Actor>> mActiveActor;
 	
-	std::shared_ptr<nanogui::ToolButton> mReversePlayButton; // New reverse play button
+	// UI Elements for playback control
+	std::shared_ptr<nanogui::ToolButton> mReversePlayButton;
 	std::shared_ptr<nanogui::ToolButton> mPlayPauseButton;
-
-	std::shared_ptr<nanogui::Widget> mCanvasPanel;
-
 	std::shared_ptr<nanogui::Widget> mPlaybackPanel;
-
-	std::shared_ptr<SelfContainedMeshCanvas> mPreviewCanvas;
 };

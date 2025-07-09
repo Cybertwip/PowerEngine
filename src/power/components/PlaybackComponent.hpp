@@ -6,19 +6,17 @@
 #include <memory>
 #include <vector>
 #include <unordered_map>
+#include <cassert>
 
 class Animation;
 
 struct PlaybackData {
 	PlaybackData(std::unique_ptr<Animation> animation) : mAnimation(std::move(animation)) {
-		
 		assert(mAnimation != nullptr);
 	}
 	
 	void set_animation(std::unique_ptr<Animation> animation) {
 		assert(animation != nullptr);
-		
-
 		mAnimation = std::move(animation);
 	}
 	

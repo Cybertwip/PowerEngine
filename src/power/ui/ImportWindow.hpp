@@ -1,65 +1,38 @@
 #pragma once
 
-#include "animation/AnimationTimeProvider.hpp"
-
-#include "filesystem/MeshActorImporter.hpp"
-
-#include <entt/entt.hpp>
-
 #include <nanogui/window.h>
 
 #include <memory>
+#include <string>
 
-class MeshActorBuilder;
-class IMeshBatch;
+// Forward declarations
 class ResourcesPanel;
-class ShaderWrapper;
-class ShaderManager;
-class SharedSelfContainedMeshCanvas;
-class ISkinnedMeshBatch;
-
-struct BatchUnit;
 
 namespace nanogui {
-class CheckBox;
-class RenderPass;
+class Button;
+class Widget;
+class Screen;
 }
 
 class ImportWindow : public nanogui::Window {
 public:
-	ImportWindow(nanogui::Screen& parent, ResourcesPanel& resourcesPanel, nanogui::RenderPass& renderpass, ShaderManager& shaderManager);
-		
+	// Constructor updated to remove dependencies on mesh-related managers
+	ImportWindow(nanogui::Screen& parent, ResourcesPanel& resourcesPanel);
+	
+	// Displays the window to the user
 	void Preview(const std::string& path, const std::string& directory);
-
+	
+	// Processes UI events
 	void ProcessEvents();
 	
 private:
+	// Handles the import logic after the user confirms
 	void ImportIntoProject();
 	
+	// A reference to the panel that displays project resources
 	ResourcesPanel& mResourcesPanel;
 	
-	std::unique_ptr<IMeshBatch> mMeshBatch;
-	std::unique_ptr<ISkinnedMeshBatch> mSkinnedMeshBatch;
-	
-	std::unique_ptr<BatchUnit> mBatchUnit;
-
-	std::unique_ptr<MeshActorBuilder> mMeshActorBuilder;
-
-	std::shared_ptr<SharedSelfContainedMeshCanvas> mPreviewCanvas;
-
-	std::shared_ptr<nanogui::CheckBox> mMeshCheckbox;
-	std::shared_ptr<nanogui::CheckBox> mAnimationsCheckbox;
-	
+	// UI Elements
 	std::shared_ptr<nanogui::Button> mCloseButton;
 	std::shared_ptr<nanogui::Button> mImportButton;
-	std::shared_ptr<nanogui::Widget> mCheckboxPanel;
-
-	nanogui::RenderPass& mRenderPass;
-	
-	entt::registry mDummyRegistry;
-	AnimationTimeProvider mDummyAnimationTimeProvider;
-	
-	std::unique_ptr<MeshActorImporter> mMeshActorImporter;
-	
-	std::unique_ptr<MeshActorImporter::CompressedMeshActor> mCompressedMeshData;
 };

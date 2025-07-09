@@ -38,7 +38,7 @@ mApplicationClickRegistrator(applicationClickRegistrator) {
 	mResourcesButton->set_enabled(false);
 	
 	// Resources panel setup
-	mResourcesPanel = std::make_shared<ResourcesPanel>(parent.parent()->get(), screen, rootNode, mActorVisualManager, animationTimeProvider, previewTimeProvider, mMeshActorLoader, mShaderManager, mUiManager);
+	mResourcesPanel = std::make_shared<ResourcesPanel>(parent.parent()->get(), screen, rootNode, animationTimeProvider, previewTimeProvider, mUiManager);
 	mResourcesPanel->set_visible(true);
 	// Add widgets to resourcesPanel here
 	
