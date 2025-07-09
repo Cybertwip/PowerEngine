@@ -10,6 +10,7 @@
 #include <string>
 #include <sstream>
 #include <map>
+#include <set>
 
 // Forward-declare Assimp types to avoid including assimp headers in your public header.
 struct aiScene;
@@ -41,6 +42,12 @@ private:
     void ProcessMesh(aiMesh* mesh, const aiScene* scene, const glm::mat4& transform);
     void ProcessMaterials(const aiScene* scene);
     void BuildSkeleton(const aiScene* scene);
+	void AddNodeToSkeleton(aiNode* node,
+						   int parentBoneId,
+						   const aiScene* scene,
+						   const std::set<std::string>& skeletonNodes,
+						   const std::set<std::string>& boneNames,
+						   const std::map<std::string, glm::mat4>& offsetMatrices);
     void ProcessAnimations(const aiScene* scene);
 
     // Helper to load textures
