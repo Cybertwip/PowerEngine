@@ -142,7 +142,7 @@ Actor& MeshActorBuilder::build_from_fbx_data(Actor& actor, AnimationTimeProvider
 			actor.add_component<PlaybackComponent>();
 		}
 		auto& playbackComponent = actor.get_component<PlaybackComponent>();
-		auto playbackData = std::make_shared<PlaybackData>(std::move(fbxData->mAnimations.value()->front()));
+		auto playbackData = std::make_shared<PlaybackData>(std::move(fbxData->mAnimations.value().front()));
 		playbackComponent.setPlaybackData(playbackData);
 	}
 	
