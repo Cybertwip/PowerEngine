@@ -332,7 +332,7 @@ bool Application::drop_event(Widget& sender, const std::vector<std::string> & fi
 			// You can add more specific exclusion zones if needed
 			// For example, !mUiManager->some_other_panel()->contains(m_mouse_pos)
 			
-			if (path.find(".psk") != std::string::npos || path.find(".pma") != std::string::npos) {
+			if (path.find(".fbx") != std::string::npos) {
 				mUiCommon->hierarchy_panel()->add_actor(mMeshActorLoader->create_actor(path, mGlobalAnimationTimeProvider, mPreviewAnimationTimeProvider, *mMeshShader, *mSkinnedShader));
 //				mUiCommon->scene_time_bar()->refresh_actors();
 				return; // Event handled

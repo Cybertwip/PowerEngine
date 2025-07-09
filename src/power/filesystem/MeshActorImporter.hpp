@@ -1,58 +1,25 @@
 #pragma once
 
-#include "filesystem/CompressedSerialization.hpp"
-
-#include <filesystem>
+#include "import/Fbx.hpp"
 #include <memory>
-#include <sstream>
-#include <string>
 #include <vector>
+#include <optional>
+#include <string>
+#include <sstream>
+
+class Animation;
 
 class MeshActorImporter {
 public:
-	struct CompressedMeshActor {
-		struct CompressedAsset {
-			std::unique_ptr<	CompressedSerialization::Serializer> mSerializer;
-			
-			void persist() {
-				
-				std::filesystem::path destPath(mPrecomputedPath);
-				
-				// Get the parent path (directories up to the file, but not including the file itself)
-				std::filesystem::path parentPath = destPath.parent_path();
-				
-				if (!std::filesystem::exists(parentPath)) {
-					std::filesystem::create_directories(parentPath);
-				}
-				
-				mSerializer->save_to_file(mPrecomputedPath);
-			}
-			
-			std::string mPrecomputedPath;
-		};
-		
-		CompressedAsset mMesh;
-		std::optional<std::vector<CompressedAsset>> mAnimations;
-		
-		void persist_mesh() {
-			mMesh.persist();
-		}
-		
-		void persist_animations() {
-			
-			if (mAnimations.has_value()) {
-				for (auto& animation : *mAnimations) {
-					animation.persist();
-				}
-			}
-		}
-	};
-	
-	MeshActorImporter();
-	
-	std::unique_ptr<CompressedMeshActor> processFbx(const std::string& path, const std::string& destination);
-	
-	std::unique_ptr<CompressedMeshActor> processFbx(std::stringstream& data, const std::string& modelName, const std::string& destination);
-	
+    // This struct will be the return type, containing the raw loaded data.
+    struct FbxData {
+        std::unique_ptr<Fbx> mModel;
+        std::optional<std::vector<std::unique_ptr<Animation>>> mAnimations;
+    };
 
+    MeshActorImporter();
+
+    // These methods will now return the FbxData struct directly.
+    std::unique_ptr<FbxData> processFbx(const std::string& path);
+    std::unique_ptr<FbxData> processFbx(std::stringstream& data, const std::string& modelName);
 };
