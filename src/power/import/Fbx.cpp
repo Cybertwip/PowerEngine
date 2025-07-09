@@ -106,7 +106,8 @@ void Fbx::LoadModel(const std::string& path) {
 	
 	// Convert the scene to a standard coordinate system (Z-Up, Right-Handed) and units (meters)
 	// to ensure consistency.
-	fbxsdk::FbxAxisSystem::ZUp.ConvertScene(mSceneLoader->scene());
+	fbxsdk::FbxAxisSystem ourAxisSystem(fbxsdk::FbxAxisSystem::eZAxis, fbxsdk::FbxAxisSystem::eParityOdd, fbxsdk::FbxAxisSystem::eRightHanded);
+	ourAxisSystem.ConvertScene(mSceneLoader->scene());
 	fbxsdk::FbxSystemUnit::m.ConvertScene(mSceneLoader->scene());
 	fbxsdk::FbxNode* rootNode = mSceneLoader->scene()->GetRootNode();
 	if (rootNode) {
