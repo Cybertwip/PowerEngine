@@ -3,7 +3,7 @@
 #include "animation/Animation.hpp"
 #include "animation/Skeleton.hpp"
 #include "graphics/shading/MeshData.hpp" // Assuming this is the correct header
-#include "graphics/shading/SkinnedMeshVertex.hpp" // Assuming this is the correct header
+#include "graphics/shading/MeshVertex.hpp" // Assuming this is the correct header
 
 #include <fbxsdk.h> // Include the main FBX SDK header
 
