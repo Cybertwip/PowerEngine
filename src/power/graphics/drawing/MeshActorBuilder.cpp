@@ -141,7 +141,7 @@ Actor& MeshActorBuilder::build_from_fbx_data(Actor& actor, AnimationTimeProvider
 		if (SkinnedFbx* skinnedModel = dynamic_cast<SkinnedFbx*>(model.get())) {
 
 			if (!actor.find_component<SkinnedAnimationComponent>()) {
-				actor.add_component<SkinnedAnimationComponent>((*(skinnedModel->GetSkeleton()), timeProvider));
+				actor.add_component<SkinnedAnimationComponent>(*(skinnedModel->GetSkeleton()), timeProvider);
 			}
 			
 			auto& playbackComponent = actor.get_component<SkinnedAnimationComponent>();
