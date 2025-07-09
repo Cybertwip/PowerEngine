@@ -338,7 +338,7 @@ void Fbx::ProcessMesh(fbxsdk::FbxMesh* mesh, fbxsdk::FbxNode* node) {
 					if (file) {
 						std::vector<uint8_t> buffer(std::istreambuf_iterator<char>(file), {});
 						if (!buffer.empty()) {
-							// matPtr->mTextureDiffuse = std::make_shared<nanogui::Texture>(buffer.data(), buffer.size());
+							 matPtr->mTextureDiffuse = std::make_shared<nanogui::Texture>(buffer.data(), buffer.size());
 							matPtr->mHasDiffuseTexture = true;
 						}
 					}
