@@ -233,28 +233,80 @@ void ModelImporter::ProcessMaterials(const aiScene* scene) {
 }
 
 std::shared_ptr<nanogui::Texture> ModelImporter::LoadMaterialTexture(aiMaterial* mat, const aiScene* scene, const std::string& typeName) {
-    // This is a placeholder for your texture loading logic
-    // You will need to implement this part based on how your NanoGUI/OpenGL texture loading works.
-    aiString str;
-    mat->GetTexture(aiTextureType_DIFFUSE, 0, &str);
-    std::filesystem::path texturePath(str.C_Str());
-    
-    if (!std::filesystem::exists(texturePath) && !mDirectory.empty()) {
-        texturePath = std::filesystem::path(mDirectory) / texturePath.filename();
-    }
-    
-    if (std::filesystem::exists(texturePath)) {
-         std::ifstream file(texturePath, std::ios::binary);
-         std::vector<uint8_t> buffer(std::istreambuf_iterator<char>(file), {});
-         return std::make_shared<nanogui::Texture>(buffer.data(), buffer.size());
-        std::cout << "Found texture: " << texturePath << std::endl;
-    } else {
-        std::cerr << "Warning: Could not find texture file: " << str.C_Str() << std::endl;
-    }
-
-    return nullptr;
+	// Determine the Assimp texture type from our internal type name.
+	aiTextureType assimpType;
+	if (typeName == "texture_diffuse") {
+		assimpType = aiTextureType_DIFFUSE;
+	} else {
+		// Extend with other types like "texture_specular" -> aiTextureType_SPECULAR if needed.
+		std::cerr << "Warning: Unknown texture type requested: " << typeName << std::endl;
+		return nullptr;
+	}
+	
+	if (mat->GetTextureCount(assimpType) == 0) {
+		return nullptr; // No texture of this type for the material.
+	}
+	
+	aiString str;
+	mat->GetTexture(assimpType, 0, &str);
+	std::string textureIdentifier = str.C_Str();
+	
+	// --- 1. Try to load texture from a file path ---
+	// This handles textures stored as separate files.
+	std::filesystem::path pathFromFile(textureIdentifier);
+	std::filesystem::path finalPath;
+	
+	// Check if the path is absolute and the file exists.
+	if (pathFromFile.is_absolute() && std::filesystem::exists(pathFromFile)) {
+		finalPath = pathFromFile;
+	}
+	// If not absolute, try resolving it relative to the model's directory.
+	// This is the most common case for portable models.
+	else if (!mDirectory.empty()) {
+		finalPath = std::filesystem::path(mDirectory) / pathFromFile;
+	}
+	
+	// If a valid path was found, try to load the file.
+	if (!finalPath.empty() && std::filesystem::exists(finalPath)) {
+		std::cout << "Found texture file, loading: " << finalPath << std::endl;
+		std::ifstream file(finalPath, std::ios::binary);
+		if (file) {
+			std::vector<uint8_t> buffer(std::istreambuf_iterator<char>(file), {});
+			// Create texture from the file data in memory.
+			// This assumes nanogui::Texture can be constructed from a memory buffer of a PNG/JPG.
+			return std::make_shared<nanogui::Texture>(buffer.data(), buffer.size());
+		}
+	}
+	
+	// --- 2. Fallback: Check for an embedded texture ---
+	// This is executed if the texture was not found as a separate file.
+	// Assimp's GetEmbeddedTexture can find textures referenced by an index (e.g., "*0")
+	// or by their original filename.
+	const aiTexture* embeddedTexture = scene->GetEmbeddedTexture(textureIdentifier.c_str());
+	if (embeddedTexture) {
+		std::cout << "Could not find texture as file. Attempting to load embedded texture: " << textureIdentifier << std::endl;
+		
+		// The texture data is in pcData.
+		// If mHeight is 0, the texture is compressed (e.g., PNG, JPG).
+		// The size of the compressed data is stored in mWidth.
+		if (embeddedTexture->mHeight == 0) {
+			return std::make_shared<nanogui::Texture>(
+													  reinterpret_cast<uint8_t*>(embeddedTexture->pcData),
+													  embeddedTexture->mWidth
+													  );
+		} else {
+			// The texture is uncompressed raw ARGB data. This requires special handling
+			// that is not implemented here, as nanogui::Texture likely expects a
+			// file format like PNG or JPG in its memory-based constructor.
+			std::cerr << "Warning: Loading uncompressed embedded textures is not implemented for texture: " << textureIdentifier << std::endl;
+			return nullptr;
+		}
+	}
+	
+	// If we reach here, the texture was not found in a file or as an embedded resource.
+	std::cerr << "Warning: Failed to load texture: " << textureIdentifier << std::endl;
+	return nullptr;
 }
-
 void ModelImporter::BuildSkeleton(const aiScene* scene) {
 	mSkeleton = std::make_unique<Skeleton>();
 	
