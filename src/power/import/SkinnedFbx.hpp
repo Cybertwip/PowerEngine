@@ -62,8 +62,8 @@ protected:
 	
 	void ProcessBoneAndParents(fbxsdk::FbxNode* boneNode, const std::unordered_map<std::string, fbxsdk::FbxAMatrix>& boneOffsetMatrices);
 	
-	void ProcessBones(fbxsdk::FbxMesh* mesh) override;
-	
+	void ProcessBones(fbxsdk::FbxMesh* mesh, const std::multimap<int, uint32_t>& controlPointToVertexMap) override;
+
 private:
 	struct BoneHierarchyInfo {
 		int bone_id;

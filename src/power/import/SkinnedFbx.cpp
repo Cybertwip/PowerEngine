@@ -93,21 +93,15 @@ void SkinnedFbx::ProcessBoneAndParents(FbxNode* boneNode, const std::unordered_m
 	}
 }
 
-void SkinnedFbx::ProcessBones(FbxMesh* mesh) {
+void SkinnedFbx::ProcessBones(fbxsdk::FbxMesh* mesh, const std::multimap<int, uint32_t>& controlPointToVertexMap) {
 	if (!mesh) return;
 	
 	int skinCount = mesh->GetDeformerCount(FbxDeformer::eSkin);
 	if (skinCount == 0) {
-		// This mesh is not skinned, so we just call the base implementation (which is empty)
-		// and let it be processed as a static mesh.
-		Fbx::ProcessBones(mesh);
-		return;
+		return; // Not a skinned mesh, nothing to do.
 	}
 	
-	if (skinCount > 1) {
-		std::cerr << "Warning: More than one skin deformer found on mesh. Only the first will be used." << std::endl;
-	}
-	
+	// ... (The rest of the initial setup is the same)
 	FbxSkin* skin = static_cast<FbxSkin*>(mesh->GetDeformer(0, FbxDeformer::eSkin));
 	if (!skin) return;
 	
@@ -116,26 +110,54 @@ void SkinnedFbx::ProcessBones(FbxMesh* mesh) {
 		return;
 	}
 	auto& lastProcessedMesh = GetMeshData().back();
-	
-	// Create a SkinnedMeshData instance to hold vertex bone data.
-	// This assumes SkinnedMeshData can be constructed from MeshData.
 	mSkinnedMeshes.push_back(std::make_unique<SkinnedMeshData>(*lastProcessedMesh));
 	auto& skinnedVertices = mSkinnedMeshes.back()->get_vertices();
 	
-	// Pre-calculate all bone offset matrices (inverse bind poses).
 	std::unordered_map<std::string, FbxAMatrix> boneOffsetMatrices;
 	int clusterCount = skin->GetClusterCount();
 	for (int i = 0; i < clusterCount; ++i) {
 		FbxCluster* cluster = skin->GetCluster(i);
 		FbxNode* boneNode = cluster->GetLink();
 		if (!boneNode) continue;
-		
 		std::string boneName = boneNode->GetName();
 		FbxAMatrix transformMatrix, transformLinkMatrix;
-		cluster->GetTransformMatrix(transformMatrix);       // The mesh's transform at bind time.
-		cluster->GetTransformLinkMatrix(transformLinkMatrix); // The bone's global transform at bind time.
+		cluster->GetTransformMatrix(transformMatrix);
+		cluster->GetTransformLinkMatrix(transformLinkMatrix);
 		boneOffsetMatrices[boneName] = transformLinkMatrix.Inverse() * transformMatrix;
 	}
+	
+	for (int i = 0; i < clusterCount; ++i) {
+		FbxCluster* cluster = skin->GetCluster(i);
+		FbxNode* boneNode = cluster->GetLink();
+		if (!boneNode) continue;
+		
+		ProcessBoneAndParents(boneNode, boneOffsetMatrices);
+		std::string boneName = boneNode->GetName();
+		if (mBoneMapping.find(boneName) == mBoneMapping.end()) continue;
+		int boneID = mBoneMapping[boneName];
+		
+		int* controlPointIndices = cluster->GetControlPointIndices();
+		double* weights = cluster->GetControlPointWeights();
+		int indexCount = cluster->GetControlPointIndicesCount();
+		
+		for (int j = 0; j < indexCount; ++j) {
+			int controlPointIdx = controlPointIndices[j]; // This is the original index.
+			float weight = static_cast<float>(weights[j]);
+			
+			// [FIX] Use the map to find all final vertices associated with this control point.
+			auto range = controlPointToVertexMap.equal_range(controlPointIdx);
+			for (auto it = range.first; it != range.second; ++it) {
+				uint32_t finalVertexIndex = it->second;
+				
+				// Safely apply the weight to the correct vertex.
+				if (finalVertexIndex < skinnedVertices.size()) {
+					auto& vertex = static_cast<SkinnedMeshVertex&>(*skinnedVertices[finalVertexIndex]);
+					vertex.set_bone(boneID, weight);
+				}
+			}
+		}
+	}
+
 	
 	// Process all bones and their weights.
 	for (int i = 0; i < clusterCount; ++i) {

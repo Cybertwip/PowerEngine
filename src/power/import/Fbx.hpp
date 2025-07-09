@@ -5,6 +5,7 @@
 #include <sstream>
 #include <string>
 #include <vector>
+#include <map>
 
 // Forward declarations to keep the header clean and reduce compile times.
 // The full fbxsdk headers will be included in the .cpp file.
@@ -41,8 +42,8 @@ public:
 	
 protected:
 	// This remains for potential extension by a skinned mesh class.
-	virtual void ProcessBones(fbxsdk::FbxMesh* mesh);
-	
+	virtual void ProcessBones(fbxsdk::FbxMesh* mesh, const std::multimap<int, uint32_t>& controlPointToVertexMap);
+
 	// --- Member Variables ---
 	
 	std::string mFBXFilePath;

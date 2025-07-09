@@ -217,10 +217,17 @@ void Fbx::ProcessNode(fbxsdk::FbxNode* node) {
 		ProcessNode(node->GetChild(i));
 	}
 }
+
+// In Fbx.cpp, replace the entire ProcessMesh function with this corrected version
+
 void Fbx::ProcessMesh(fbxsdk::FbxMesh* mesh, fbxsdk::FbxNode* node) {
 	if (!mesh) {
 		std::cerr << "Error: Invalid mesh pointer." << std::endl;
 		return;
+	}
+	
+	if (mesh->GetElementNormalCount() < 1) {
+		mesh->GenerateNormals();
 	}
 	
 	fbxsdk::FbxGeometryConverter geometryConverter(mFbxManager);
@@ -236,6 +243,9 @@ void Fbx::ProcessMesh(fbxsdk::FbxMesh* mesh, fbxsdk::FbxNode* node) {
 	auto& vertices = resultMesh->get_vertices();
 	auto& indices = resultMesh->get_indices();
 	
+	// [FIX] This map will link the original control point index to our new vertex buffer indices.
+	std::multimap<int, uint32_t> controlPointToVertexMap;
+	
 	fbxsdk::FbxAMatrix globalTransform = node->EvaluateGlobalTransform();
 	glm::mat4 globalTransformGlm = FbxUtil::ToGlmMat4(globalTransform);
 	glm::mat4 normalMatrix = glm::transpose(glm::inverse(globalTransformGlm));
@@ -243,7 +253,6 @@ void Fbx::ProcessMesh(fbxsdk::FbxMesh* mesh, fbxsdk::FbxNode* node) {
 	int polygonCount = mesh->GetPolygonCount();
 	fbxsdk::FbxVector4* controlPoints = mesh->GetControlPoints();
 	
-	// [FIX] Use the custom comparator for the map's key
 	std::map<std::tuple<int, glm::vec3, glm::vec2>, uint32_t, FbxUtil::CompareVertexKey> uniqueVertices;
 	
 	fbxsdk::FbxLayerElementMaterial* materialElement = mesh->GetLayer(0)->GetMaterials();
@@ -257,17 +266,16 @@ void Fbx::ProcessMesh(fbxsdk::FbxMesh* mesh, fbxsdk::FbxNode* node) {
 		for (int j = 0; j < 3; ++j) {
 			int controlPointIndex = mesh->GetPolygonVertex(i, j);
 			
+			// ... (rest of vertex processing logic is the same)
 			fbxsdk::FbxVector4 posFbx = controlPoints[controlPointIndex];
 			glm::vec4 posGlm = {static_cast<float>(posFbx[0]), static_cast<float>(posFbx[1]), static_cast<float>(posFbx[2]), 1.0f};
 			posGlm = globalTransformGlm * posGlm;
-			
 			fbxsdk::FbxVector4 normalFbx;
 			mesh->GetPolygonVertexNormal(i, j, normalFbx);
 			normalFbx.Normalize();
 			glm::vec4 normalGlm = {static_cast<float>(normalFbx[0]), static_cast<float>(normalFbx[1]), static_cast<float>(normalFbx[2]), 0.0f};
 			normalGlm = normalMatrix * normalGlm;
 			glm::vec3 finalNormal = glm::normalize(glm::vec3(normalGlm));
-			
 			glm::vec2 uvGlm = {0.0f, 0.0f};
 			fbxsdk::FbxStringList uvSetNameList;
 			mesh->GetUVSetNames(uvSetNameList);
@@ -278,7 +286,6 @@ void Fbx::ProcessMesh(fbxsdk::FbxMesh* mesh, fbxsdk::FbxNode* node) {
 					uvGlm = {static_cast<float>(uvFbx[0]), static_cast<float>(uvFbx[1])};
 				}
 			}
-			
 			std::tuple<int, glm::vec3, glm::vec2> vertexKey(controlPointIndex, finalNormal, uvGlm);
 			
 			if (uniqueVertices.find(vertexKey) == uniqueVertices.end()) {
@@ -287,7 +294,6 @@ void Fbx::ProcessMesh(fbxsdk::FbxMesh* mesh, fbxsdk::FbxNode* node) {
 				vertex->set_normal(finalNormal);
 				vertex->set_texture_coords1(uvGlm);
 				vertex->set_material_id(materialIndex);
-				
 				if (mesh->GetElementVertexColorCount() > 0) {
 					fbxsdk::FbxGeometryElementVertexColor* colorElement = mesh->GetElementVertexColor(0);
 					fbxsdk::FbxColor color = colorElement->GetDirectArray().GetAt(colorElement->GetIndexArray().GetAt(mesh->GetPolygonVertexIndex(i) + j));
@@ -298,13 +304,16 @@ void Fbx::ProcessMesh(fbxsdk::FbxMesh* mesh, fbxsdk::FbxNode* node) {
 				vertices.push_back(std::move(vertex));
 				indices.push_back(newIndex);
 				uniqueVertices[vertexKey] = newIndex;
+				
+				// [FIX] Populate the map: store that this new vertex came from this control point.
+				controlPointToVertexMap.insert({controlPointIndex, newIndex});
 			} else {
 				indices.push_back(uniqueVertices[vertexKey]);
 			}
 		}
 	}
-	
-	// ... The rest of the function remains the same
+
+
 	int materialCount = node->GetMaterialCount();
 	std::vector<std::shared_ptr<MaterialProperties>> meshMaterials;
 	meshMaterials.resize(std::max(1, materialCount));
@@ -327,7 +336,6 @@ void Fbx::ProcessMesh(fbxsdk::FbxMesh* mesh, fbxsdk::FbxNode* node) {
 		if (diffuseProp.IsValid() && diffuseProp.GetSrcObjectCount<fbxsdk::FbxFileTexture>() > 0) {
 			if (fbxsdk::FbxFileTexture* texture = diffuseProp.GetSrcObject<fbxsdk::FbxFileTexture>(0)) {
 				std::string texturePath = texture->GetFileName();
-				
 				std::filesystem::path finalPath(texturePath);
 				if (!std::filesystem::exists(finalPath)) {
 					finalPath = std::filesystem::path(mFBXFilePath).parent_path() / finalPath.filename();
@@ -359,7 +367,6 @@ void Fbx::ProcessMesh(fbxsdk::FbxMesh* mesh, fbxsdk::FbxNode* node) {
 	
 	ProcessBones(mesh);
 }
-
 
 std::vector<std::unique_ptr<MeshData>>& Fbx::GetMeshData() {
 	return mMeshes;
