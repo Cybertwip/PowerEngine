@@ -137,12 +137,6 @@ add_executable(PowerEngine
     ${CMAKE_CURRENT_LIST_DIR}/filesystem/MeshActorImporter.hpp
     ${CMAKE_CURRENT_LIST_DIR}/filesystem/MeshActorImporter.cpp
 
-    ${CMAKE_CURRENT_LIST_DIR}/filesystem/MeshActorExporter.hpp
-    ${CMAKE_CURRENT_LIST_DIR}/filesystem/MeshActorExporter.cpp
-
-    ${CMAKE_CURRENT_LIST_DIR}/filesystem/MeshDeserializer.hpp
-    ${CMAKE_CURRENT_LIST_DIR}/filesystem/MeshDeserializer.cpp
-
     ${CMAKE_CURRENT_LIST_DIR}/filesystem/VectorConversion.hpp
 
     ${CMAKE_CURRENT_LIST_DIR}/filesystem/UrlOpener.hpp

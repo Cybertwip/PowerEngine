@@ -1,7 +1,5 @@
 #pragma once
 
-#include "filesystem/CompressedSerialization.hpp"
-#include "graphics/drawing/Mesh.hpp"
 #include "graphics/shading/MaterialProperties.hpp"
 #include "ozz/animation/offline/fbx/fbx.h"
 #include <glm/glm.hpp>
@@ -12,6 +10,7 @@
 #include <unordered_map>
 #include <array>
 
+// Forward declaration
 struct MeshData;
 
 namespace fbxsdk {
@@ -31,17 +30,14 @@ public:
 	std::vector<std::unique_ptr<MeshData>>& GetMeshData();
 	void SetMeshData(std::vector<std::unique_ptr<MeshData>>&& meshData);
 	
-	std::vector<std::vector<std::shared_ptr<SerializableMaterialProperties>>>& GetMaterialProperties();
-	
-	bool SaveTo(const std::string& filename) const;
-	bool LoadFrom(const std::string& filename);
+	std::vector<std::vector<std::shared_ptr<MaterialProperties>>>& GetMaterialProperties();
 	
 protected:
 	virtual void ProcessBones(fbxsdk::FbxMesh* mesh);
 	
 	std::string mPath;
 	std::vector<std::unique_ptr<MeshData>> mMeshes;
-	std::vector<std::vector<std::shared_ptr<SerializableMaterialProperties>>> mMaterialProperties;
+	std::vector<std::vector<std::shared_ptr<MaterialProperties>>> mMaterialProperties;
 	
 	std::unique_ptr<ozz::animation::offline::fbx::FbxManagerInstance> mFbxManager;
 	std::unique_ptr<ozz::animation::offline::fbx::FbxDefaultIOSettings> mSettings;
