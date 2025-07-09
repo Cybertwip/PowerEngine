@@ -8,17 +8,11 @@
 #include <functional>
 #include <memory>
 
-// Forward declarations for Metal types (use void* to keep header C++ compatible)
-#ifdef __OBJC__
-@protocol MTLDevice, MTLRenderCommandEncoder, MTLRenderPipelineState, MTLDepthStencilState;
-#else
-typedef void* id;
-#endif
-
 // Forward declarations for C++ classes
 class Actor;
 class ActorManager;
 
+// Enum for Gizmo mode (Translate, Rotate, Scale)
 enum class GizmoMode {
 	None,
 	Translation,
@@ -26,6 +20,7 @@ enum class GizmoMode {
 	Scale
 };
 
+// Enum for the selected Gizmo axis
 enum class GizmoAxis {
 	None,
 	X,
@@ -35,19 +30,20 @@ enum class GizmoAxis {
 
 class GizmoManager {
 public:
-	// Constructor now takes a Metal device and pixel format
-	GizmoManager(nanogui::Widget& parent, id<MTLDevice> device, unsigned long colorPixelFormat, ActorManager& actorManager);
+	// Constructor and Draw now take void* for Metal objects
+	// to keep this header pure C++. The implementation will
+	// cast these to the appropriate Metal types.
+	GizmoManager(nanogui::Widget& parent, void* device, unsigned long colorPixelFormat, ActorManager& actorManager);
 	~GizmoManager();
 	
-	// Public interface remains the same
 	void select(std::optional<std::reference_wrapper<Actor>> actor);
 	void set_mode(GizmoMode mode);
 	GizmoMode get_mode() const { return mCurrentMode; }
 	void select_axis(GizmoAxis gizmoId);
 	void transform(float dx, float dy);
 	
-	// Draw method now takes a Metal command encoder
-	void draw(id<MTLRenderCommandEncoder> encoder, const glm::mat4& view, const glm::mat4& projection);
+	// The `encoder` parameter should be an `id<MTLRenderCommandEncoder>`
+	void draw(void* encoder, const glm::mat4& view, const glm::mat4& projection);
 	
 private:
 	// UI elements
@@ -57,21 +53,21 @@ private:
 	
 	// Core references
 	ActorManager& mActorManager;
-	id<MTLDevice> mDevice; // Store the device
+	void* mDevice = nullptr; // Opaque pointer to an id<MTLDevice>
 	
 	// State
 	GizmoMode mCurrentMode = GizmoMode::None;
 	GizmoAxis mActiveAxis = GizmoAxis::None;
 	std::optional<std::reference_wrapper<Actor>> mActiveActor;
 	
-	// Metal-specific resources (using void* for header compatibility)
-	void* mPipelineState = nullptr;
-	void* mDepthDisabledState = nullptr;
+	// Metal-specific resources (as opaque pointers)
+	void* mPipelineState = nullptr;      // Opaque pointer to an id<MTLRenderPipelineState>
+	void* mDepthDisabledState = nullptr; // Opaque pointer to an id<MTLDepthStencilState>
 	
 	struct GizmoMesh {
-		void* vbo = nullptr; // Will be an id<MTLBuffer>
+		void* vbo = nullptr; // Opaque pointer to an id<MTLBuffer>
 		int vertex_count = 0;
-		unsigned int primitiveType; // MTLPrimitiveType
+		unsigned int primitiveType; // Corresponds to MTLPrimitiveType enum
 	};
 	
 	GizmoMesh mTranslationMeshes[3];
