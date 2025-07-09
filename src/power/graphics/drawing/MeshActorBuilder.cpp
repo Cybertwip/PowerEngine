@@ -115,22 +115,24 @@ Actor& MeshActorBuilder::build_from_fbx_data(Actor& actor, AnimationTimeProvider
 			// Transfer ownership from unique_ptr<Fbx> to unique_ptr<SkinnedFbx>
 			std::unique_ptr<SkinnedFbx> skinnedModelPtr(static_cast<SkinnedFbx*>(model.release()));
 			drawableComponent = std::make_unique<SkinnedMeshComponent>(std::move(skinnedMeshComponentData), std::move(skinnedModelPtr));
+		} else { // it's a regular mesh
+			// --- Non-Skinned Mesh Handling ---
+			std::vector<std::unique_ptr<Mesh>> meshComponentData;
+			
+			for (auto& meshDataItem : staticModel->GetMeshData()) {
+				meshComponentData.push_back(std::make_unique<Mesh>(
+																   *meshDataItem,
+																   meshShader,
+																   
+																   mBatchUnit.mMeshBatch,
+																   metadataComponent,
+																   colorComponent
+																   ));
+			}
+			
+			drawableComponent = std::make_unique<MeshComponent>(std::move(meshComponentData), std::move(model));
+
 		}
-	} else if (Fbx* staticModel = dynamic_cast<Fbx*>(model.get())) {
-		// --- Non-Skinned Mesh Handling ---
-		std::vector<std::unique_ptr<Mesh>> meshComponentData;
-		
-		for (auto& meshDataItem : staticModel->GetMeshData()) {
-			meshComponentData.push_back(std::make_unique<Mesh>(
-															     *meshDataItem,
-															     meshShader,
-															     mBatchUnit.mMeshBatch,
-															     metadataComponent,
-															     colorComponent
-															     ));
-		}
-		
-		drawableComponent = std::make_unique<MeshComponent>(std::move(meshComponentData), std::move(model));
 	}
 	
 	if (drawableComponent) {
