@@ -119,7 +119,7 @@ Actor& MeshActorBuilder::build_from_fbx_data(Actor& actor, AnimationTimeProvider
 			// --- Non-Skinned Mesh Handling ---
 			std::vector<std::unique_ptr<Mesh>> meshComponentData;
 			
-			for (auto& meshDataItem : staticModel->GetMeshData()) {
+			for (auto& meshDataItem : skinnedModel->GetMeshData()) {
 				meshComponentData.push_back(std::make_unique<Mesh>(
 																   *meshDataItem,
 																   meshShader,
@@ -139,13 +139,17 @@ Actor& MeshActorBuilder::build_from_fbx_data(Actor& actor, AnimationTimeProvider
 		actor.add_component<DrawableComponent>(std::move(drawableComponent));
 	}
 	
+	
 	// Handle animations if they exist
-	if (fbxData->mAnimations.has_value() && !fbxData->mAnimations->empty()) {
-		// Attach animation data to the SkinnedAnimationComponent if it exists
-		if (actor.find_component<SkinnedAnimationComponent>()) {
-			auto& playbackComponent = actor.get_component<SkinnedAnimationComponent>();
-			auto playbackData = std::make_shared<PlaybackData>(std::move(fbxData->mAnimations.value().front()));
-			playbackComponent.setPlaybackData(playbackData);
+	if (SkinnedFbx* skinnedModel = dynamic_cast<SkinnedFbx*>(model.get())) {
+		
+		if (fbxData->mAnimations.has_value() && !fbxData->mAnimations->empty()) {
+			// Attach animation data to the SkinnedAnimationComponent if it exists
+			if (actor.find_component<SkinnedAnimationComponent>()) {
+				auto& playbackComponent = actor.get_component<SkinnedAnimationComponent>();
+				auto playbackData = std::make_shared<PlaybackData>(std::move(fbxData->mAnimations.value().front()));
+				playbackComponent.setPlaybackData(playbackData);
+			}
 		}
 	}
 	
