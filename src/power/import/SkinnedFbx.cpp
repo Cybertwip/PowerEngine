@@ -176,7 +176,7 @@ void SkinnedFbx::ProcessBones(FbxMesh* mesh) {
 	// Normalize weights for all vertices.
 	for (auto& vertexPtr : skinnedVertices) {
 		auto& vertex = static_cast<SkinnedMeshVertex&>(*vertexPtr);
-		vertex.normalize_weights();
+//		vertex.normalize_weights();
 		if (vertex.has_no_bones()) {
 			vertex.set_bone(DEFAULT_BONE_ID, 1.0f);
 		}
