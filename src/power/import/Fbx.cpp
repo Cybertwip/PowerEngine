@@ -87,6 +87,37 @@ private:
 	mutable size_t mPosition;
 };
 
+// Add this helper struct to Fbx.cpp
+struct CompareVertexKey {
+	bool operator()(const std::tuple<int, glm::vec3, glm::vec2>& a,
+					const std::tuple<int, glm::vec3, glm::vec2>& b) const {
+		// Perform a lexicographical comparison on the tuple elements
+		if (std::get<0>(a) < std::get<0>(b)) return true;
+		if (std::get<0>(b) < std::get<0>(a)) return false;
+		
+		// Element 0 is equal, compare element 1 (glm::vec3)
+		const auto& v3_a = std::get<1>(a);
+		const auto& v3_b = std::get<1>(b);
+		if (v3_a.x < v3_b.x) return true;
+		if (v3_b.x < v3_a.x) return false;
+		if (v3_a.y < v3_b.y) return true;
+		if (v3_b.y < v3_a.y) return false;
+		if (v3_a.z < v3_b.z) return true;
+		if (v3_b.z < v3_a.z) return false;
+		
+		// Elements 0 and 1 are equal, compare element 2 (glm::vec2)
+		const auto& v2_a = std::get<2>(a);
+		const auto& v2_b = std::get<2>(b);
+		if (v2_a.x < v2_b.x) return true;
+		if (v2_b.x < v2_a.x) return false;
+		if (v2_a.y < v2_b.y) return true;
+		if (v2_b.y < v2_a.y) return false;
+		
+		// All elements are equal
+		return false;
+	}
+};
+
 } // namespace FbxUtil
 
 Fbx::Fbx() {
@@ -186,7 +217,6 @@ void Fbx::ProcessNode(fbxsdk::FbxNode* node) {
 		ProcessNode(node->GetChild(i));
 	}
 }
-
 void Fbx::ProcessMesh(fbxsdk::FbxMesh* mesh, fbxsdk::FbxNode* node) {
 	if (!mesh) {
 		std::cerr << "Error: Invalid mesh pointer." << std::endl;
@@ -213,7 +243,8 @@ void Fbx::ProcessMesh(fbxsdk::FbxMesh* mesh, fbxsdk::FbxNode* node) {
 	int polygonCount = mesh->GetPolygonCount();
 	fbxsdk::FbxVector4* controlPoints = mesh->GetControlPoints();
 	
-	std::map<std::tuple<int, glm::vec3, glm::vec2>, uint32_t> uniqueVertices;
+	// [FIX] Use the custom comparator for the map's key
+	std::map<std::tuple<int, glm::vec3, glm::vec2>, uint32_t, FbxUtil::CompareVertexKey> uniqueVertices;
 	
 	fbxsdk::FbxLayerElementMaterial* materialElement = mesh->GetLayer(0)->GetMaterials();
 	int materialIndex = 0;
@@ -273,6 +304,7 @@ void Fbx::ProcessMesh(fbxsdk::FbxMesh* mesh, fbxsdk::FbxNode* node) {
 		}
 	}
 	
+	// ... The rest of the function remains the same
 	int materialCount = node->GetMaterialCount();
 	std::vector<std::shared_ptr<MaterialProperties>> meshMaterials;
 	meshMaterials.resize(std::max(1, materialCount));
@@ -282,12 +314,12 @@ void Fbx::ProcessMesh(fbxsdk::FbxMesh* mesh, fbxsdk::FbxNode* node) {
 		auto matPtr = std::make_shared<MaterialProperties>();
 		
 		if (auto* lambert = FbxCast<FbxSurfaceLambert>(material)) {
-			matPtr->mAmbient = { (float)lambert->Ambient.Get()[0], (float)lambert->Ambient.Get()[1], (float)lambert->Ambient.Get()[2], 1.0f };
-			matPtr->mDiffuse = { (float)lambert->Diffuse.Get()[0], (float)lambert->Diffuse.Get()[1], (float)lambert->Diffuse.Get()[2], 1.0f };
+			matPtr->mAmbient = {(float)lambert->Ambient.Get()[0], (float)lambert->Ambient.Get()[1], (float)lambert->Ambient.Get()[2], 1.0f};
+			matPtr->mDiffuse = {(float)lambert->Diffuse.Get()[0], (float)lambert->Diffuse.Get()[1], (float)lambert->Diffuse.Get()[2], 1.0f};
 			matPtr->mOpacity = 1.0f - (float)lambert->TransparencyFactor.Get();
 		}
 		if (auto* phong = FbxCast<FbxSurfacePhong>(material)) {
-			matPtr->mSpecular = { (float)phong->Specular.Get()[0], (float)phong->Specular.Get()[1], (float)phong->Specular.Get()[2], 1.0f };
+			matPtr->mSpecular = {(float)phong->Specular.Get()[0], (float)phong->Specular.Get()[1], (float)phong->Specular.Get()[2], 1.0f};
 			matPtr->mShininess = (float)phong->Shininess.Get();
 		}
 		
@@ -327,6 +359,7 @@ void Fbx::ProcessMesh(fbxsdk::FbxMesh* mesh, fbxsdk::FbxNode* node) {
 	
 	ProcessBones(mesh);
 }
+
 
 std::vector<std::unique_ptr<MeshData>>& Fbx::GetMeshData() {
 	return mMeshes;
