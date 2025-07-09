@@ -36,7 +36,7 @@
 #include "graphics/drawing/SkinnedMesh.hpp"
 #include "graphics/drawing/SkinnedMeshBatch.hpp"
 
-#include "import/Fbx.hpp"
+#include "import/ModelImporter.hpp"
 #include "simulation/Cartridge.hpp"
 #include "simulation/CartridgeActorLoader.hpp"
 #include "simulation/SimulationServer.hpp"

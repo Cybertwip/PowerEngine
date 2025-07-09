@@ -3,7 +3,7 @@
 #include "animation/Animation.hpp"
 #include "animation/Skeleton.hpp"
 #include "graphics/drawing/SkinnedMesh.hpp"
-#include "import/SkinnedFbx.hpp"
+#include "import/ModelImporter.hpp"
 
 SkinnedMeshComponent::SkinnedMeshComponent(std::vector<std::unique_ptr<SkinnedMesh>>&& skinnedMeshes, std::unique_ptr<SkinnedFbx> model) : mModel(std::move(model)) {
 	mSkinnedMeshes = std::move(skinnedMeshes);

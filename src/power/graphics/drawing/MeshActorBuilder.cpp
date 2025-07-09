@@ -1,7 +1,6 @@
 #include "graphics/drawing/MeshActorBuilder.hpp"
 
 #include "actors/Actor.hpp"
-
 #include "components/AnimationComponent.hpp"
 #include "components/ColorComponent.hpp"
 #include "components/DrawableComponent.hpp"
@@ -11,78 +10,67 @@
 #include "components/SkinnedAnimationComponent.hpp"
 #include "components/SkinnedMeshComponent.hpp"
 #include "components/TransformAnimationComponent.hpp"
-
-#include "filesystem/MeshActorImporter.hpp"
-
 #include "graphics/drawing/BatchUnit.hpp"
 #include "graphics/drawing/IMeshBatch.hpp"
 #include "graphics/drawing/ISkinnedMeshBatch.hpp"
 #include "graphics/drawing/Mesh.hpp"
 #include "graphics/drawing/SkinnedMesh.hpp"
-
 #include "graphics/shading/MeshData.hpp"
-
-#include "import/SkinnedFbx.hpp"
-#include "import/Fbx.hpp"
+#include "graphics/shading/SkinnedMeshData.hpp" // Required for static_cast
+#include "import/ModelImporter.hpp"
 
 #include <filesystem>
-#include <sstream>
 #include <iostream>
+#include <sstream>
+#include <vector>
+
+// Note: The MeshActorImporter is no longer needed.
+// #include "filesystem/MeshActorImporter.hpp"
 
 
 MeshActorBuilder::MeshActorBuilder(BatchUnit& batchUnit)
-: mBatchUnit(batchUnit), mMeshActorImporter(std::make_unique<MeshActorImporter>()) {
+: mBatchUnit(batchUnit) {
+	// The MeshActorImporter member is removed, so no initialization is needed.
 }
 
 Actor& MeshActorBuilder::build(Actor& actor, AnimationTimeProvider& timeProvider, AnimationTimeProvider& previewTimeProvider, const std::string& path, ShaderWrapper& meshShader, ShaderWrapper& skinnedShader) {
 	
 	std::filesystem::path filePath(path);
-	std::string extension = filePath.extension().string();
-	
-	if (extension != ".fbx") {
-		std::cerr << "Unsupported file extension: " << extension << ". Only .fbx is supported." << "\n";
-		return actor;
-	}
-	
 	std::string actorName = filePath.stem().string();
 	
-	// Directly process the FBX file to get the model and animation data.
-	auto fbxData = mMeshActorImporter->processFbx(path);
-	if (!fbxData || !fbxData->mModel) {
-		std::cerr << "Failed to process FBX file: " << path << "\n";
+	// Use the new ModelImporter directly.
+	auto importer = std::make_unique<ModelImporter>();
+	if (!importer->LoadModel(path)) {
+		std::cerr << "Failed to process model file with ModelImporter: " << path << "\n";
 		return actor;
 	}
 	
-	return build_from_fbx_data(actor, timeProvider, previewTimeProvider, std::move(fbxData), path, actorName, meshShader, skinnedShader);
+	// Pass the populated importer to the main build logic.
+	return build_from_model_data(actor, timeProvider, previewTimeProvider, std::move(importer), path, actorName, meshShader, skinnedShader);
 }
-
-
 
 Actor& MeshActorBuilder::build(Actor& actor, AnimationTimeProvider& timeProvider, AnimationTimeProvider& previewTimeProvider, std::stringstream& dataStream, const std::string& path, ShaderWrapper& meshShader, ShaderWrapper& skinnedShader) {
 	
 	std::filesystem::path filePath(path);
 	std::string extension = filePath.extension().string();
-	
-	if (extension != ".fbx") {
-		std::cerr << "Unsupported file extension: " << extension << ". Only .fbx is supported." << "\n";
-		return actor;
-	}
-	
 	std::string actorName = filePath.stem().string();
 	
-	// Directly process the FBX file from the stream.
-	auto fbxData = mMeshActorImporter->processFbx(dataStream, actorName);
-	if (!fbxData || !fbxData->mModel) {
-		std::cerr << "Failed to process FBX from stream: " << path << "\n";
+	// Convert stringstream to vector<char> for the ModelImporter API.
+	const std::string& s = dataStream.str();
+	std::vector<char> dataVec(s.begin(), s.end());
+	
+	// Use the new ModelImporter directly.
+	auto importer = std::make_unique<ModelImporter>();
+	if (!importer->LoadModel(dataVec, extension)) {
+		std::cerr << "Failed to process model from stream with ModelImporter: " << path << "\n";
 		return actor;
 	}
 	
-	return build_from_fbx_data(actor, timeProvider, previewTimeProvider, std::move(fbxData), path, actorName, meshShader, skinnedShader);
+	// Pass the populated importer to the main build logic.
+	return build_from_model_data(actor, timeProvider, previewTimeProvider, std::move(importer), path, actorName, meshShader, skinnedShader);
 }
 
-Actor& MeshActorBuilder::build_from_fbx_data(Actor& actor, AnimationTimeProvider& timeProvider, AnimationTimeProvider& previewTimeProvider, std::unique_ptr<MeshActorImporter::FbxData> fbxData, const std::string& path, const std::string& actorName, ShaderWrapper& meshShader, ShaderWrapper& skinnedShader) {
-	
-	auto& model = fbxData->mModel;
+Actor& MeshActorBuilder::build_from_model_data(Actor& actor, AnimationTimeProvider& timeProvider, AnimationTimeProvider& previewTimeProvider, std::unique_ptr<ModelImporter> importer, const std::string& path, const std::string& actorName, ShaderWrapper& meshShader, ShaderWrapper& skinnedShader) {
 	
 	// Add common components
 	auto& metadataComponent = actor.add_component<MetadataComponent>(Hash32::generate_crc32_from_string(path), actorName);
@@ -92,62 +80,62 @@ Actor& MeshActorBuilder::build_from_fbx_data(Actor& actor, AnimationTimeProvider
 	
 	std::unique_ptr<Drawable> drawableComponent;
 	
-	// Check if the model is skinned by attempting a dynamic cast
-	if (SkinnedFbx* skinnedModel = dynamic_cast<SkinnedFbx*>(model.get())) {
+	// The presence of a skeleton determines if the mesh is skinned.
+	if (importer->GetSkeleton()) {
 		// --- Skinned Mesh Handling ---
-		if (skinnedModel->GetSkeleton()) {
-			std::vector<std::unique_ptr<SkinnedMesh>> skinnedMeshComponentData;
-			
-			auto& skeletonComponent = actor.add_component<SkeletonComponent>((*skinnedModel->GetSkeleton()));
-			actor.add_component<SkinnedAnimationComponent>(skeletonComponent, previewTimeProvider);
-			
-			for (auto& skinnedMeshData : skinnedModel->GetMeshData()) {
-				skinnedMeshComponentData.push_back(std::make_unique<SkinnedMesh>(
-																				 *skinnedMeshData,
-																				 skinnedShader,
-																				 mBatchUnit.mSkinnedMeshBatch,
-																				 metadataComponent,
-																				 colorComponent,
-																				 skeletonComponent
-																				 ));
-			}
-			
-			// Transfer ownership from unique_ptr<Fbx> to unique_ptr<SkinnedFbx>
-			std::unique_ptr<SkinnedFbx> skinnedModelPtr(static_cast<SkinnedFbx*>(model.release()));
-			drawableComponent = std::make_unique<SkinnedMeshComponent>(std::move(skinnedMeshComponentData), std::move(skinnedModelPtr));
-		} else { // it's a regular mesh
-			// --- Non-Skinned Mesh Handling ---
-			std::vector<std::unique_ptr<Mesh>> meshComponentData;
-			
-			for (auto& meshDataItem : skinnedModel->GetMeshData()) {
-				meshComponentData.push_back(std::make_unique<Mesh>(
-																   *meshDataItem,
-																   meshShader,
-																   
-																   mBatchUnit.mMeshBatch,
-																   metadataComponent,
-																   colorComponent
-																   ));
-			}
-			
-			drawableComponent = std::make_unique<MeshComponent>(std::move(meshComponentData), std::move(model));
-
+		std::vector<std::unique_ptr<SkinnedMesh>> skinnedMeshComponentData;
+		
+		auto& skeletonComponent = actor.add_component<SkeletonComponent>(*(importer->GetSkeleton()));
+		actor.add_component<SkinnedAnimationComponent>(skeletonComponent, previewTimeProvider);
+		
+		for (auto& meshDataItem : importer->GetMeshData()) {
+			// ModelImporter guarantees SkinnedMeshData if a skeleton is present.
+			auto& skinnedMeshData = static_cast<SkinnedMeshData&>(*meshDataItem);
+			skinnedMeshComponentData.push_back(std::make_unique<SkinnedMesh>(
+																			 skinnedMeshData,
+																			 skinnedShader,
+																			 mBatchUnit.mSkinnedMeshBatch,
+																			 metadataComponent,
+																			 colorComponent,
+																			 skeletonComponent
+																			 ));
 		}
+		
+		// The SkinnedMeshComponent takes ownership of the importer to keep all data alive.
+		drawableComponent = std::make_unique<SkinnedMeshComponent>(std::move(skinnedMeshComponentData), std::move(importer));
+		
+	} else {
+		// --- Non-Skinned (Static) Mesh Handling ---
+		std::vector<std::unique_ptr<Mesh>> meshComponentData;
+		
+		for (auto& meshDataItem : importer->GetMeshData()) {
+			meshComponentData.push_back(std::make_unique<Mesh>(
+															   *meshDataItem,
+															   meshShader,
+															   mBatchUnit.mMeshBatch,
+															   metadataComponent,
+															   colorComponent
+															   ));
+		}
+		
+		// The MeshComponent takes ownership of the importer to keep all data alive.
+		drawableComponent = std::make_unique<MeshComponent>(std::move(meshComponentData), std::move(importer));
 	}
 	
 	if (drawableComponent) {
 		actor.add_component<DrawableComponent>(std::move(drawableComponent));
 	}
 	
-	
 	// Handle animations if they exist
-	if (SkinnedFbx* skinnedModel = dynamic_cast<SkinnedFbx*>(model.get())) {
-		
-		if (skinnedModel->GetSkeleton() && fbxData->mAnimations.has_value() && !fbxData->mAnimations->empty()) {
+	auto* skinnedMeshComp = dynamic_cast<SkinnedMeshComponent*>(actor.get_component<DrawableComponent>().get_drawable());
+	if (skinnedMeshComp) {
+		auto& animations = skinnedMeshComp->get_importer().GetAnimations();
+		if (!animations.empty()) {
 			// Attach animation data to the SkinnedAnimationComponent if it exists
 			if (actor.find_component<SkinnedAnimationComponent>()) {
 				auto& playbackComponent = actor.get_component<SkinnedAnimationComponent>();
-				auto playbackData = std::make_shared<PlaybackData>(std::move(fbxData->mAnimations.value().front()));
+				// Use the first animation by default
+				auto playbackData = std::make_shared<PlaybackData>(std::move(animations.front()));
 				playbackComponent.setPlaybackData(playbackData);
 			}
 		}

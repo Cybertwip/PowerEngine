@@ -6,11 +6,10 @@
 #include "animation/Skeleton.hpp"
 
 #include "components/MeshComponent.hpp"
-#include "filesystem/MeshActorImporter.hpp"
 #include "graphics/drawing/BatchUnit.hpp"
 #include "graphics/drawing/MeshActorBuilder.hpp"
 #include "graphics/drawing/MeshBatch.hpp"
-#include "import/SkinnedFbx.hpp"
+#include "import/ModelImporter.hpp"
 
 #include "simulation/PrimitiveBuilder.hpp"
 

@@ -3,7 +3,7 @@
 #include "animation/Animation.hpp"
 #include "animation/Skeleton.hpp"
 #include "graphics/drawing/Mesh.hpp"
-#include "import/Fbx.hpp"
+#include "import/ModelImporter.hpp"
 
 MeshComponent::MeshComponent(std::vector<std::unique_ptr<Mesh>>&& meshes, std::unique_ptr<Fbx> model) : mModel(std::move(model)) {
 	mMeshes = std::move(meshes);

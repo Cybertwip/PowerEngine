@@ -6,7 +6,7 @@
 #include "components/ColorComponent.hpp"
 #include "graphics/drawing/MeshBatch.hpp"
 #include "graphics/shading/ShaderWrapper.hpp"
-#include "import/Fbx.hpp"
+#include "import/ModelImporter.hpp"
 
 #include <GLFW/glfw3.h>
 #include <nanogui/renderpass.h>

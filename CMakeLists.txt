@@ -11,6 +11,8 @@ if (NOT POWER_ENGINE_DISTRIBUTION)
   set(CMAKE_BUILD_TYPE RelWithDebInfo CACHE STRING "Choose the type of build." FORCE)
 endif()
 
+set(ASSIMP_BUILD_MINIZIP NO CACHE STRING "Don't build minizip" FORCE)
+
 if(APPLE)
 project(
   PowerEngine
@@ -99,20 +101,15 @@ add_subdirectory(external/nanogui/)
 add_subdirectory(external/tinygizmo/) 
 add_subdirectory(external/websocketpp/) 
 add_subdirectory(external/ozz/) 
+add_subdirectory(external/assimp/) 
 
 add_subdirectory(src/power)
 
 target_link_libraries(nanogui PUBLIC glad glfw)
 
-#target_link_libraries(application nanogui entt)
-
 target_link_libraries(imgui-feature-layout glm json)
-#target_link_libraries(test PUBLIC imgui-feature-layout imgui-node-editor httplib::httplib zstr::zstr)
-#target_link_libraries(glcpp PUBLIC test)
-#target_link_libraries(SmallFBX zlib)
 
 
 if(APPLE)
-target_compile_definitions(imgui-feature-layout PUBLIC -DDEFAULT_CWD="${CMAKE_CURRENT_LIST_DIR}/Resources")
-#  target_compile_definitions(application PUBLIC -DDEFAULT_CWD="${CMAKE_CURRENT_LIST_DIR}/Resources")
+  target_compile_definitions(imgui-feature-layout PUBLIC -DDEFAULT_CWD="${CMAKE_CURRENT_LIST_DIR}/Resources")
 endif()

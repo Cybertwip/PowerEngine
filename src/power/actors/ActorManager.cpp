@@ -13,7 +13,7 @@
 #include "gizmo/GizmoManager.hpp"
 #include "graphics/drawing/Batch.hpp"
 #include "graphics/drawing/MeshActorBuilder.hpp"
-#include "import/Fbx.hpp"
+#include "import/ModelImporter.hpp"
 #include "ui/UiManager.hpp"
 
 ActorManager::ActorManager(entt::registry& registry, CameraManager& cameraManager) : mRegistry(registry), mCameraManager(cameraManager) {}
