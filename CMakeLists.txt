@@ -11,8 +11,6 @@ if (NOT POWER_ENGINE_DISTRIBUTION)
   set(CMAKE_BUILD_TYPE RelWithDebInfo CACHE STRING "Choose the type of build." FORCE)
 endif()
 
-set(ASSIMP_BUILD_MINIZIP NO CACHE STRING "Don't build minizip" FORCE)
-
 if(APPLE)
 project(
   PowerEngine

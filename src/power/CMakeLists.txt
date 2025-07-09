@@ -182,8 +182,12 @@ add_executable(PowerEngine
     ${CMAKE_CURRENT_LIST_DIR}/graphics/drawing/MeshActorBuilder.hpp
     ${CMAKE_CURRENT_LIST_DIR}/graphics/drawing/MeshActorBuilder.cpp
 
+    ${CMAKE_CURRENT_LIST_DIR}/import/ModelImporter.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/import/ModelImporter.cpp
+
     ${CMAKE_CURRENT_LIST_DIR}/simulation/DebugBridgeCommon.hpp
     ${CMAKE_CURRENT_LIST_DIR}/simulation/DebugBridgeCommon.hpp
+
     
     ${CMAKE_CURRENT_LIST_DIR}/simulation/Cartridge.hpp
     ${CMAKE_CURRENT_LIST_DIR}/simulation/ICartridge.hpp
