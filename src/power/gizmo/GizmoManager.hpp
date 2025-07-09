@@ -1,89 +1,80 @@
-#ifndef GIZMOMANAGER_HPP
-#define GIZMOMANAGER_HPP
+#pragma once
 
-#include <nanogui/widget.h>
-#include <nanogui/button.h>
-#include <glm/glm.hpp>
-#include <optional>
+#include "animation/AnimationTimeProvider.hpp"
+#include "graphics/drawing/Drawable.hpp"
+
+#include <nanogui/nanogui.h>
+
 #include <functional>
+#include <optional>
+#include <vector>
 #include <memory>
 
-// Forward declarations for C++ classes
 class Actor;
 class ActorManager;
+class MeshActorLoader;
+class ShaderManager;
+class ShaderWrapper;
 
-// Enum for Gizmo mode (Translate, Rotate, Scale)
-enum class GizmoMode {
-	None,
-	Translation,
-	Rotation,
-	Scale
-};
+class GizmoManager : public Drawable {
+	enum class GizmoMode {
+		None,
+		Translation,
+		Rotation,
+		Scale
+	};
 
-// Enum for the selected Gizmo axis
-enum class GizmoAxis {
-	None,
-	X,
-	Y,
-	Z
-};
-
-class GizmoManager {
 public:
-	// Constructor and Draw now take void* for Metal objects
-	// to keep this header pure C++. The implementation will
-	// cast these to the appropriate Metal types.
-	GizmoManager(nanogui::Widget& parent, void* device, unsigned long colorPixelFormat, ActorManager& actorManager);
-	~GizmoManager();
+	enum class GizmoAxis : int8_t {
+		None = 0,
+		X = -1,
+		Y = -2,
+		Z = -3
+	};
 	
+    GizmoManager(nanogui::Widget& parent, ShaderManager& shaderManager, ActorManager& actorManager, MeshActorLoader& meshActorLoader);
+	~GizmoManager() = default;
+	
+	void select(GizmoAxis gizmoId);
+
+	void hover(GizmoAxis gizmoId);
+
 	void select(std::optional<std::reference_wrapper<Actor>> actor);
-	void set_mode(GizmoMode mode);
-	GizmoMode get_mode() const { return mCurrentMode; }
-	void select_axis(GizmoAxis gizmoId);
-	void transform(float dx, float dy);
+    
+	void translate(float px, float py);
+	void rotate(float px, float py);
+	void scale(float px, float py);
+
+	void transform(float px, float py);
 	
-	// The `encoder` parameter should be an `id<MTLRenderCommandEncoder>`
-	void draw(void* encoder, const glm::mat4& view, const glm::mat4& projection);
-	
+    void draw();
+    
+    void draw_content(const nanogui::Matrix4f& model, const nanogui::Matrix4f& view, const nanogui::Matrix4f& projection) override;
+
 private:
-	// UI elements
+	void set_mode(GizmoMode mode);
+
+	AnimationTimeProvider mDummyAnimationTimeProvider;
+	
+    ShaderManager& mShaderManager;
+    ActorManager& mActorManager;
+	MeshActorLoader& mMeshActorLoader;
+	std::unique_ptr<ShaderWrapper> mMeshShader;
+	std::unique_ptr<ShaderWrapper> mSkinnedShader;
+	Actor& mTranslationGizmo;
+	Actor& mRotationGizmo;
+	Actor& mScaleGizmo;
+
+	std::optional<std::reference_wrapper<Actor>> mActiveActor;
+	
+	GizmoMode mCurrentMode = GizmoMode::Translation;  // Default mode is Translation
+
+	GizmoAxis mGizmoAxis = GizmoAxis::None;
+	
 	std::shared_ptr<nanogui::Button> mTranslationButton;
 	std::shared_ptr<nanogui::Button> mRotationButton;
 	std::shared_ptr<nanogui::Button> mScaleButton;
 	
-	// Core references
-	ActorManager& mActorManager;
-	void* mDevice = nullptr; // Opaque pointer to an id<MTLDevice>
-	
-	// State
-	GizmoMode mCurrentMode = GizmoMode::None;
-	GizmoAxis mActiveAxis = GizmoAxis::None;
-	std::optional<std::reference_wrapper<Actor>> mActiveActor;
-	
-	// Metal-specific resources (as opaque pointers)
-	void* mPipelineState = nullptr;      // Opaque pointer to an id<MTLRenderPipelineState>
-	void* mDepthDisabledState = nullptr; // Opaque pointer to an id<MTLDepthStencilState>
-	
-	struct GizmoMesh {
-		void* vbo = nullptr; // Opaque pointer to an id<MTLBuffer>
-		int vertex_count = 0;
-		unsigned int primitiveType; // Corresponds to MTLPrimitiveType enum
-	};
-	
-	GizmoMesh mTranslationMeshes[3];
-	GizmoMesh mRotationMeshes[3];
-	GizmoMesh mScaleMeshes[3];
-	
-	// Initialization helpers
-	void create_procedural_gizmos();
-	void create_translation_gizmo();
-	void create_rotation_gizmo();
-	void create_scale_gizmo();
-	
-	// Transformation logic
-	void translate(float dx, float dy);
-	void rotate(float dx, float dy);
-	void scale(float dx, float dy);
+	std::optional<std::reference_wrapper<Actor>> mActiveGizmo;
 };
 
-#endif // GIZMOMANAGER_HPP
