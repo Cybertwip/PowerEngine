@@ -143,7 +143,7 @@ Actor& MeshActorBuilder::build_from_fbx_data(Actor& actor, AnimationTimeProvider
 	// Handle animations if they exist
 	if (SkinnedFbx* skinnedModel = dynamic_cast<SkinnedFbx*>(model.get())) {
 		
-		if (fbxData->mAnimations.has_value() && !fbxData->mAnimations->empty()) {
+		if (skinnedModel->GetSkeleton() && fbxData->mAnimations.has_value() && !fbxData->mAnimations->empty()) {
 			// Attach animation data to the SkinnedAnimationComponent if it exists
 			if (actor.find_component<SkinnedAnimationComponent>()) {
 				auto& playbackComponent = actor.get_component<SkinnedAnimationComponent>();
