@@ -272,10 +272,8 @@ void SkinnedMeshBatch::draw_content(const nanogui::Matrix4f& view, const nanogui
 					shader.set_uniform("aProjection", projection);
 					shader.set_uniform("aView", view);
 					
-					// [FIX] The model's transform is now baked into the vertex data.
-					// Pass an identity matrix to the shader to prevent a double transform.
-					shader.set_uniform("aModel", nanogui::Matrix4f());
-					
+					shader.set_uniform("aModel", mesh.get_model_matrix());
+
 					// Apply color component
 					shader.set_uniform("identifier", mesh.get_color_component().identifier());
 					shader.set_uniform("color", glm_to_nanogui(mesh.get_color_component().get_color()));
