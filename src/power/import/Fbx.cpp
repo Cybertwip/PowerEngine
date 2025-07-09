@@ -365,7 +365,7 @@ void Fbx::ProcessMesh(fbxsdk::FbxMesh* mesh, fbxsdk::FbxNode* node) {
 	resultMesh->get_material_properties() = meshMaterials;
 	mMaterialProperties.push_back(meshMaterials);
 	
-	ProcessBones(mesh);
+	ProcessBones(mesh, controlPointToVertexMap);
 }
 
 std::vector<std::unique_ptr<MeshData>>& Fbx::GetMeshData() {
@@ -380,6 +380,6 @@ std::vector<std::vector<std::shared_ptr<MaterialProperties>>>& Fbx::GetMaterialP
 	return mMaterialProperties;
 }
 
-void Fbx::ProcessBones(fbxsdk::FbxMesh* /*mesh*/) {
+void Fbx::ProcessBones(fbxsdk::FbxMesh* /*mesh*/, const std::multimap<int, uint32_t>& /*controlPointToVertexMap*/) {
 	// Base implementation is empty. SkinnedFbx will override this.
 }
