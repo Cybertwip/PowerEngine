@@ -112,27 +112,28 @@ Fbx::~Fbx() {
 	// The scene object is owned by the manager, so it gets destroyed
 	// when the manager is destroyed. No need to destroy mScene separately.
 }
-
 void Fbx::LoadModel(const std::string& path) {
-	mFbxManager = FbxManager::Create();
+	// The FbxManager should be created in the constructor and stored
+	// but for this function, we'll assume it's ready.
 	if (!mFbxManager) {
-		std::cerr << "Error: Unable to create FBX Manager!" << std::endl;
+		std::cerr << "Error: FbxManager not initialized!" << std::endl;
 		return;
 	}
 	
-	FbxIOSettings* ios = FbxIOSettings::Create(mFbxManager, IOSROOT);
-	mFbxManager->SetIOSettings(ios);
+	// [FIX] Declare mImporter as a local variable here.
+	fbxsdk::FbxImporter* importer = FbxImporter::Create(mFbxManager, "");
 	
-	mImporter = FbxImporter::Create(mFbxManager, "");
-	if (!mImporter->Initialize(path.c_str(), -1, mFbxManager->GetIOSettings())) {
+	// Use the local 'importer' variable.
+	if (!importer->Initialize(path.c_str(), -1, mFbxManager->GetIOSettings())) {
 		std::cerr << "Error: Failed to initialize FBX importer for path: " << path << std::endl;
-		std::cerr << "Error string: " << mImporter->GetStatus().GetErrorString() << std::endl;
+		std::cerr << "Error string: " << importer->GetStatus().GetErrorString() << std::endl;
+		importer->Destroy(); // Clean up on failure
 		return;
 	}
 	
 	mScene = FbxScene::Create(mFbxManager, "myScene");
-	mImporter->Import(mScene);
-	mImporter->Destroy(); // Importer is no longer needed after import
+	importer->Import(mScene);
+	importer->Destroy(); // Importer is no longer needed after import
 	
 	mFBXFilePath = path;
 	
@@ -141,7 +142,7 @@ void Fbx::LoadModel(const std::string& path) {
 		return;
 	}
 	
-	// Convert the scene to a standard coordinate system and units.
+	// ... (rest of the function remains the same)
 	fbxsdk::FbxAxisSystem ourAxisSystem(fbxsdk::FbxAxisSystem::eZAxis, fbxsdk::FbxAxisSystem::eParityOdd, fbxsdk::FbxAxisSystem::eRightHanded);
 	ourAxisSystem.ConvertScene(mScene);
 	fbxsdk::FbxSystemUnit::m.ConvertScene(mScene);
@@ -152,36 +153,35 @@ void Fbx::LoadModel(const std::string& path) {
 	}
 }
 
-
 void Fbx::LoadModel(std::stringstream& data) {
-	mFbxManager = FbxManager::Create();
 	if (!mFbxManager) {
-		std::cerr << "Error: Unable to create FBX Manager!" << std::endl;
+		std::cerr << "Error: FbxManager not initialized!" << std::endl;
 		return;
 	}
 	
-	FbxIOSettings* ios = FbxIOSettings::Create(mFbxManager, IOSROOT);
-	mFbxManager->SetIOSettings(ios);
-	
-	mImporter = FbxImporter::Create(mFbxManager, "");
+	// [FIX] Declare mImporter as a local variable here.
+	fbxsdk::FbxImporter* importer = FbxImporter::Create(mFbxManager, "");
 	
 	std::string str = data.str();
-	auto* fbxStream = new FbxUtil::MemoryStreamFbxStream(str.data(), str.size()); // The importer will take ownership
+	// The stream object must exist for the duration of the import.
+	FbxUtil::MemoryStreamFbxStream fbxStream(str.data(), str.size());
 	
-	if (!mImporter->Initialize(fbxStream, nullptr, -1, mFbxManager->GetIOSettings())) {
+	if (!importer->Initialize(&fbxStream, nullptr, -1, mFbxManager->GetIOSettings())) {
 		std::cerr << "Error: Failed to initialize FBX importer from stream." << std::endl;
+		importer->Destroy(); // Clean up on failure
 		return;
 	}
 	
 	mScene = FbxScene::Create(mFbxManager, "myStreamScene");
-	mImporter->Import(mScene);
-	mImporter->Destroy();
+	importer->Import(mScene);
+	importer->Destroy(); // Importer is no longer needed
 	
 	if (!mScene) {
 		std::cerr << "Error: Failed to load FBX scene from stream" << std::endl;
 		return;
 	}
 	
+	// ... (rest of the function remains the same)
 	fbxsdk::FbxAxisSystem ourAxisSystem(fbxsdk::FbxAxisSystem::eZAxis, fbxsdk::FbxAxisSystem::eParityOdd, fbxsdk::FbxAxisSystem::eRightHanded);
 	ourAxisSystem.ConvertScene(mScene);
 	
