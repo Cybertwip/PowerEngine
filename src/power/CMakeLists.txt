@@ -25,11 +25,16 @@ set(platform_specific_libraries)
 if(APPLE)
     add_library(power_metal
     ${CMAKE_CURRENT_LIST_DIR}/MetalHelper.hpp
-    ${CMAKE_CURRENT_LIST_DIR}/MetalHelper.mm)
+    ${CMAKE_CURRENT_LIST_DIR}/MetalHelper.mm
+    ${CMAKE_CURRENT_LIST_DIR}/platform/Apple/ContextMenu.mm)
+
+    target_include_directories(power_metal PUBLIC ${CMAKE_CURRENT_LIST_DIR}/platform)
 
     set(platform_specific_libraries power_metal)
     
     target_link_libraries(power_metal nanogui)
+
+    set (PLATFORM_SPECIFIC_SOURCES ${CMAKE_CURRENT_LIST_DIR}/Application.mm)
 endif()
 
 
@@ -38,7 +43,6 @@ add_executable(PowerEngine
     ${APP_ICON}
     ${BUNDLE_MENU}
     ${PLATFORM_SPECIFIC_SOURCES}
-    ${CMAKE_CURRENT_LIST_DIR}/Application.mm
     ${CMAKE_CURRENT_LIST_DIR}/Application.hpp
     ${CMAKE_CURRENT_LIST_DIR}/Canvas.cpp
     ${CMAKE_CURRENT_LIST_DIR}/Canvas.hpp
@@ -188,7 +192,8 @@ add_executable(PowerEngine
     ${CMAKE_CURRENT_LIST_DIR}/simulation/DebugBridgeCommon.hpp
     ${CMAKE_CURRENT_LIST_DIR}/simulation/DebugBridgeCommon.hpp
 
-    
+    ${CMAKE_CURRENT_LIST_DIR}/platform/ContextMenu.hpp
+
     ${CMAKE_CURRENT_LIST_DIR}/simulation/Cartridge.hpp
     ${CMAKE_CURRENT_LIST_DIR}/simulation/ICartridge.hpp
     ${CMAKE_CURRENT_LIST_DIR}/simulation/ICartridgeActorLoader.hpp

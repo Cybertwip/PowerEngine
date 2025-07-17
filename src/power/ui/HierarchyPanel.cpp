@@ -1,4 +1,3 @@
-// HierarchyPanel.cpp
 #include "ui/HierarchyPanel.hpp"
 
 #include "ui/AnimationPanel.hpp"
@@ -8,6 +7,9 @@
 #include <nanogui/layout.h>
 #include <nanogui/opengl.h>
 #include <nanogui/treeviewitem.h>
+#include <nanogui/popup.h>
+#include <nanogui/button.h>
+#include <GLFW/glfw3.h>
 
 #include "actors/Actor.hpp"
 #include "actors/ActorManager.hpp"
@@ -25,15 +27,41 @@ HierarchyPanel::HierarchyPanel(nanogui::Widget& parent, std::shared_ptr<ScenePan
 	
 	mTreeView = std::make_shared<nanogui::TreeView>(*mScrollPanel);
 	mTreeView->set_layout(
-						  std::make_unique<nanogui::BoxLayout>(nanogui::Orientation::Vertical, nanogui::Alignment::Fill));
+						      std::make_unique<nanogui::BoxLayout>(nanogui::Orientation::Vertical, nanogui::Alignment::Fill));
 	
+	mContextMenu = std::make_unique<ContextMenu>();
+	
+	// Populate it with items dynamically.
+	mContextMenu->addItem("Action from C++ function", []() {
+		std::cout << "Callback executed from a menu created in a C++ function!" << std::endl;
+	});
+	mContextMenu->addItem("Another action", []() {
+		std::cout << "This is the second callback." << std::endl;
+	});
+
 }
 
+
 bool HierarchyPanel::mouse_drag_event(const nanogui::Vector2i &p, const nanogui::Vector2i &rel,
-									  int button, int modifiers) {
+									    int button, int modifiers) {
 	// Disable dragging
 	return mScrollPanel->mouse_drag_event(p, rel, button, modifiers);
 }
+
+bool HierarchyPanel::mouse_button_event(const nanogui::Vector2i &p, int button, bool down, int modifiers) {
+	if (Panel::mouse_button_event(p, button, down, modifiers)) {
+		return true;
+	}
+	
+	if (button == GLFW_MOUSE_BUTTON_RIGHT && !down && mSelectedActor.has_value() && contains(p)) {
+		return true;
+		
+		
+	}
+	
+	return false;
+}
+
 
 void HierarchyPanel::add_actors(const std::vector<std::reference_wrapper<Actor>> &actors) {
 	for (auto &actor : actors) {
@@ -50,7 +78,7 @@ void HierarchyPanel::remove_actor(std::reference_wrapper<Actor> actor) {
 	mTreeView->clear();
 	
 	fire_actor_selected_event(std::nullopt);
-
+	
 	mActorManager.remove_actor(actor);
 	
 	auto actors = mActorManager.get_actors_with_component<UiComponent>();
@@ -66,9 +94,9 @@ void HierarchyPanel::remove_actors(const std::vector<std::reference_wrapper<Acto
 		mTreeView->clear();
 		
 		fire_actor_selected_event(std::nullopt);
-
+		
 		mActorManager.remove_actors(actors);
-
+		
 		auto existingActors = mActorManager.get_actors_with_component<UiComponent>();
 		
 		for (auto& actor : existingActors) {
@@ -88,7 +116,7 @@ void HierarchyPanel::populate_tree(Actor &actor, std::shared_ptr<nanogui::TreeVi
 								OnActorSelected(actor);
 							})
 	: mTreeView->add_node(std::string{actor.get_component<MetadataComponent>().name()},
-						  [this, &actor]() {
+						    [this, &actor]() {
 		OnActorSelected(actor);
 	});
 	
@@ -118,6 +146,7 @@ void HierarchyPanel::UnregisterOnActorSelectedCallback(IActorSelectedCallback& c
 }
 
 void HierarchyPanel::OnActorSelected(std::optional<std::reference_wrapper<Actor>> actor) {
+	mSelectedActor = actor;
 	
 	if (actor.has_value()) {
 		mTransformPanel->set_active_actor(actor);
@@ -125,7 +154,7 @@ void HierarchyPanel::OnActorSelected(std::optional<std::reference_wrapper<Actor>
 		for (auto& callbackRef : mActorSelectedCallbacks) {
 			callbackRef.get().OnActorSelected(actor);
 		}
-
+		
 	} else {
 		mTreeView->set_selected(nullptr);
 		mTransformPanel->set_active_actor(actor);
@@ -135,6 +164,7 @@ void HierarchyPanel::OnActorSelected(std::optional<std::reference_wrapper<Actor>
 }
 
 void HierarchyPanel::fire_actor_selected_event(std::optional<std::reference_wrapper<Actor>> actor) {
+	mSelectedActor = actor;
 	
 	mTransformPanel->set_active_actor(actor);
 	mAnimationPanel->set_active_actor(actor);
@@ -142,7 +172,7 @@ void HierarchyPanel::fire_actor_selected_event(std::optional<std::reference_wrap
 	for (auto& callbackRef : mActorSelectedCallbacks) {
 		callbackRef.get().OnActorSelected(actor);
 	}
-
+	
 	if (!actor.has_value()) {
 		mTreeView->set_selected(nullptr);
 	}
