@@ -44,6 +44,9 @@ public:
 	void visit(GizmoManager& gizmoManager);
 	void visit(UiManager& uiManager);
 	void visit(Batch& batch);
+
+	void save_scene(const std::string& filepath);
+	void load_scene(const std::string& filepath);
 	
 private:
 	entt::registry& mRegistry;

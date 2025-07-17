@@ -194,6 +194,10 @@ add_executable(PowerEngine
 
     ${CMAKE_CURRENT_LIST_DIR}/platform/ContextMenu.hpp
 
+    ${CMAKE_CURRENT_LIST_DIR}/serialization/SceneSerializer.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/serialization/SceneSerializer.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/serialization/UUID.hpp
+
     ${CMAKE_CURRENT_LIST_DIR}/simulation/Cartridge.hpp
     ${CMAKE_CURRENT_LIST_DIR}/simulation/ICartridge.hpp
     ${CMAKE_CURRENT_LIST_DIR}/simulation/ICartridgeActorLoader.hpp
@@ -326,5 +330,64 @@ set_target_properties(PowerEngine PROPERTIES UNITY_BUILD ON)
 
 set_source_files_properties(${CMAKE_CURRENT_LIST_DIR}/Application.mm PROPERTIES SKIP_UNITY_BUILD_INCLUSION TRUE)
 
+
+
+file(GLOB FBS_FILES "${CMAKE_CURRENT_SOURCE_DIR}/buffers/*.fbs")
+set(GENERATED_HEADERS_DIR "${CMAKE_CURRENT_BINARY_DIR}/serialization")
+file(MAKE_DIRECTORY ${GENERATED_HEADERS_DIR}) # Ensure this directory exists
+
+# A list to hold the full paths of all generated headers.
+set(GENERATED_HEADERS "")
+
+foreach(FBS_FILE ${FBS_FILES})
+  # Get the base filename without the extension (e.g., "monster_schema")
+  get_filename_component(SCHEMA_NAME ${FBS_FILE} NAME_WE)
+
+  # Define the full path for the output header.
+  # Flatbuffers appends "_generated.h" to the schema filename.
+  set(OUTPUT_HEADER "${GENERATED_HEADERS_DIR}/${SCHEMA_NAME}_generated.h")
+  list(APPEND GENERATED_HEADERS ${OUTPUT_HEADER})
+
+  # add_custom_command defines the rule to generate one header.
+  add_custom_command(
+    OUTPUT ${OUTPUT_HEADER}
+    # COMMAND: The command to run.
+    # We use the 'flatc' target to get the path to the compiled compiler.
+    #   --cpp: Generate C++ code.
+    #   -o:    Specify the output directory.
+    #   ${FBS_FILE}: The input schema file.
+    COMMAND
+      $<TARGET_FILE:flatc> --cpp -o ${GENERATED_HEADERS_DIR} ${FBS_FILE}
+
+    # DEPENDS: This command depends on the input .fbs file and the flatc compiler itself.
+    # If either changes, the command will re-run.
+    DEPENDS
+      ${FBS_FILE}
+      flatc
+
+    # COMMENT: A message that will be printed during the build.
+    COMMENT "Generating C++ header from ${FBS_FILE}..."
+  )
+endforeach()
+
+# add_custom_target groups all the generated outputs into a single, dependable target.
+# When another target depends on `generate_headers`, CMake ensures all custom commands
+# associated with ${GENERATED_HEADERS} are executed first.
+add_custom_target(
+  generate_headers
+  DEPENDS ${GENERATED_HEADERS}
+)
+
+add_dependencies(PowerEngine generate_headers)
+
+target_include_directories(PowerEngine
+  PUBLIC
+    ${GENERATED_HEADERS_DIR}
+)
+
+target_link_libraries(PowerEngine
+  PRIVATE
+    flatbuffers
+)
 
  

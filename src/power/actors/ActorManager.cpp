@@ -1,9 +1,13 @@
 #include "ActorManager.hpp"
 
-#include <nanogui/opengl.h>
+#include <unordered_set>
 
 #include "CameraManager.hpp"
 #include "MeshActorLoader.hpp"
+// INTEGRATION: Include the serializer
+#include "serialization/SceneSerializer.hpp"
+#include "serialization/UUID.hpp"
+
 #include "actors/Actor.hpp"
 #include "components/CameraComponent.hpp"
 #include "components/ColorComponent.hpp"
@@ -19,91 +23,128 @@
 ActorManager::ActorManager(entt::registry& registry, CameraManager& cameraManager) : mRegistry(registry), mCameraManager(cameraManager) {}
 
 Actor& ActorManager::create_actor() {
-	mActors.push_back(std::make_unique<Actor>(mRegistry));
-	return *mActors.back();
+    // This correctly creates an Actor which in turn creates an entity and adds an IDComponent
+    mActors.push_back(std::make_unique<Actor>(mRegistry));
+    return *mActors.back();
 }
 
 void ActorManager::remove_actor(Actor& actor) {
-	// Find the unique_ptr that owns the actor
-	auto it = std::find_if(mActors.begin(), mActors.end(),
-						   [&actor](const std::unique_ptr<Actor>& ptr) {
-		return ptr.get() == &actor;
-	});
-	
-	if (it != mActors.end()) {
-		// Remove the Actor from the mActors vector
-		mActors.erase(it);
-	} else {
-		// Handle the case where the actor was not found
-		// This could be a warning or exception based on your design
-		throw std::runtime_error("Attempted to remove an actor that does not exist.");
-	}
+    // The actor's destructor will handle destroying the entt::entity.
+    // We just need to remove the manager's handle to it.
+    auto it = std::find_if(mActors.begin(), mActors.end(),
+                           [&actor](const std::unique_ptr<Actor>& ptr) {
+        return ptr.get() == &actor;
+    });
+    
+    if (it != mActors.end()) {
+        mActors.erase(it);
+    } else {
+        throw std::runtime_error("Attempted to remove an actor that does not exist in the manager.");
+    }
 }
 
 void ActorManager::remove_actors(const std::vector<std::reference_wrapper<Actor>>& actors) {
-	// Step 1: Collect pointers to actors to remove
-	std::unordered_set<Actor*> actors_to_remove;
-	for (const auto& actor_ref : actors) {
-		actors_to_remove.insert(&actor_ref.get());
-	}
-	
-	// Step 2: Verify that all actors exist in mActors
-	for (Actor* actor_ptr : actors_to_remove) {
-		auto it = std::find_if(mActors.begin(), mActors.end(),
-							   [actor_ptr](const std::unique_ptr<Actor>& ptr) {
-			return ptr.get() == actor_ptr;
-		});
-		if (it == mActors.end()) {
-			throw std::runtime_error("Attempted to remove an actor that does not exist.");
-		}
-	}
-	
-	// Step 3: Remove the actors from mActors using std::erase_if
-	std::erase_if(mActors, [&actors_to_remove](const std::unique_ptr<Actor>& ptr) {
-		return actors_to_remove.find(ptr.get()) != actors_to_remove.end();
-	});
+    std::unordered_set<Actor*> actors_to_remove;
+    for (const auto& actor_ref : actors) {
+        actors_to_remove.insert(&actor_ref.get());
+    }
+    
+    // The actors' destructors will be called automatically when they are erased,
+    // which will in turn destroy their associated entt::entity.
+    std::erase_if(mActors, [&actors_to_remove](const std::unique_ptr<Actor>& ptr) {
+        return actors_to_remove.count(ptr.get());
+    });
 }
 
 
 void ActorManager::draw() {
     mCameraManager.update_view();
 
-	for (auto& actor : mActors) {
-		auto& drawable = actor.get()->get_component<DrawableComponent>();
-		
-		auto& transform = actor.get()->get_component<TransformComponent>();
-		
-		auto& color = actor.get()->get_component<ColorComponent>();
-		
-		color.set_color(glm::vec4(1.0f, 1.0f, 1.0f, 1.0f));
+    // This logic is fine, but be aware it will throw an exception if an actor
+    // is missing a required component.
+    for (auto& actor : mActors) {
+        if (actor->find_component<DrawableComponent>() &&
+            actor->find_component<TransformComponent>() &&
+            actor->find_component<ColorComponent>())
+        {
+            auto& drawable = actor->get_component<DrawableComponent>();
+            auto& transform = actor->get_component<TransformComponent>();
+            auto& color = actor->get_component<ColorComponent>();
+            
+            color.set_color(glm::vec4(1.0f, 1.0f, 1.0f, 1.0f));
 
-        nanogui::Matrix4f model = glm_to_nanogui(transform.get_matrix());
+            nanogui::Matrix4f model = glm_to_nanogui(transform.get_matrix());
 
-        drawable.draw_content(model, mCameraManager.get_view(), mCameraManager.get_projection());
+            drawable.draw_content(model, mCameraManager.get_view(), mCameraManager.get_projection());
+        }
     }
 }
 
 void ActorManager::visit(GizmoManager& gizmoManager) {
     mCameraManager.update_view();
-	
-	gizmoManager.draw_content(nanogui::Matrix4f::identity(), mCameraManager.get_view(),
-							  mCameraManager.get_projection());
+    
+    gizmoManager.draw_content(nanogui::Matrix4f::identity(), mCameraManager.get_view(),
+                              mCameraManager.get_projection());
 }
 
 void ActorManager::visit(UiManager& uiManager) {
-	mCameraManager.update_view();
-	
-	uiManager.draw_content(nanogui::Matrix4f::identity(), mCameraManager.get_view(),
-							  mCameraManager.get_projection());
+    mCameraManager.update_view();
+    
+    uiManager.draw_content(nanogui::Matrix4f::identity(), mCameraManager.get_view(),
+                              mCameraManager.get_projection());
 }
 
 void ActorManager::visit(Batch& batch) {
-	mCameraManager.update_view();
-	
-	batch.draw_content(mCameraManager.get_view(),
-						   mCameraManager.get_projection());
+    mCameraManager.update_view();
+    
+    batch.draw_content(mCameraManager.get_view(),
+                           mCameraManager.get_projection());
 }
 
 void ActorManager::clear_actors() {
-	mActors.clear();
+    // First, clear the vector of Actor wrappers. This will call their destructors,
+    // which in turn will destroy all entities in the registry.
+    mActors.clear();
+    // Finally, ensure the registry itself is cleared of any leftover data.
+    mRegistry.clear();
+}
+
+
+void ActorManager::save_scene(const std::string& filepath) {
+    SceneSerializer serializer;
+
+    // IMPORTANT: Register all serializable components
+    serializer.register_component<IDComponent>();
+    serializer.register_component<TransformComponent>();
+    serializer.register_component<CameraComponent>();
+    // serializer.register_component<MeshComponent>();      // TODO: Add serialization logic
+    // serializer.register_component<ColorComponent>();     // TODO: Add serialization logic
+    // serializer.register_component<DrawableComponent>();  // TODO: Add serialization logic
+
+    serializer.serialize(mRegistry, filepath);
+}
+
+void ActorManager::load_scene(const std::string& filepath) {
+    SceneSerializer serializer;
+    
+    // Register all serializable components, matching what you have in save_scene
+    serializer.register_component<IDComponent>();
+    serializer.register_component<TransformComponent>();
+    serializer.register_component<CameraComponent>();
+    // serializer.register_component<MeshComponent>();      // TODO: Add deserialization logic
+    // serializer.register_component<ColorComponent>();     // TODO: Add deserialization logic
+    // serializer.register_component<DrawableComponent>();  // TODO: Add deserialization logic
+
+    // First, clear existing C++ Actor wrappers. The serializer will clear the registry.
+    mActors.clear();
+    
+    serializer.deserialize(mRegistry, filepath);
+
+    // After deserializing, the registry is full of entities with components.
+    // We now need to re-create our C++ Actor wrappers to manage them.
+    auto view = mRegistry.view<IDComponent>();
+    for (auto entity_handle : view) {
+        // Use the Actor constructor that takes an existing entity handle
+        mActors.push_back(std::make_unique<Actor>(mRegistry, entity_handle));
+    }
 }
