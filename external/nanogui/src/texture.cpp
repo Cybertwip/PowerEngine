@@ -43,7 +43,7 @@ m_mipmap_manual(false) {
 	
 	int channels = 0;
 	// Attempt to load image data using stb_image
-	unsigned char* image_data = stbi_load_from_memory(data, size, &m_size.x(), &m_size.y(), &channels, 4);
+	unsigned char* image_data = stbi_load_from_memory(data, size, &m_size.x(), &m_size.y(), &channels, 0);
 	
 	// Define a shared_ptr with a custom deleter to handle both loaded and raw data
 	std::shared_ptr<uint8_t> texture_data_holder;

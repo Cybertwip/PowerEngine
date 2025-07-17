@@ -30,24 +30,25 @@ public:
 	~FileView();
 	
 	void refresh();
-	void set_selected_directory_path(const std::string& path);
 	void set_filter_text(const std::string& filter);
-	void handle_file_interaction(DirectoryNode& node);
-	void handle_file_click(DirectoryNode& node);
 	void ProcessEvents();
 	
 private:
 	void populate_file_view();
 	void create_file_item(const std::shared_ptr<DirectoryNode>& node);
-	DirectoryNode* find_node_by_path(DirectoryNode& root, const std::string& path) const;
 	int get_icon_for_file(const DirectoryNode& node) const;
 	void collect_nodes_recursive(DirectoryNode* node, std::vector<std::shared_ptr<DirectoryNode>>& collected_nodes);
+	
+	// Navigation and interaction handlers
+	void handle_file_interaction(DirectoryNode& node);
+	void handle_file_click(DirectoryNode& node);
 	
 	// Drag and Drop functionality
 	void initiate_drag_operation(const std::shared_ptr<DirectoryNode>& node);
 	
-	// Root node of the directory tree
-	DirectoryNode& m_root_directory_node;
+	// MODIFIED: Keep track of the initial root and the currently viewed directory.
+	DirectoryNode& m_initial_root_node;
+	DirectoryNode& m_current_directory_node;
 	
 	// Callbacks
 	std::function<void(std::shared_ptr<DirectoryNode>)> mOnFileClicked;
@@ -59,7 +60,6 @@ private:
 	std::shared_ptr<nanogui::Label> m_drag_payload;
 	
 	// State variables
-	std::string m_selected_directory_path;
 	std::string m_filter_text;
 	std::set<std::string> m_allowed_extensions;
 	bool m_recursive;

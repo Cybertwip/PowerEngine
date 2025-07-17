@@ -12,8 +12,6 @@
 
 #include <nanogui/opengl.h>
 
-
-
 #elif defined(NANOGUI_USE_METAL)
 
 #include "MetalHelper.hpp"

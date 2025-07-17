@@ -15,8 +15,6 @@
 #include "simulation/SimulationServer.hpp"
 
 int main(int /* argc */, char ** /* argv */) {
-	stbi_set_flip_vertically_on_load(1);
-	
 	std::cout << std::filesystem::current_path().string() << std::endl;
 	nanogui::init();
 	

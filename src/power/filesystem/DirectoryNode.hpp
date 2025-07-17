@@ -12,7 +12,7 @@ struct DirectoryNode : public std::enable_shared_from_this<DirectoryNode> {
 		static DirectoryNode instance;
 		return instance;
 	}
-		
+	
 	// Initialize or update the singleton with a new directory path
 	static bool initialize(const std::string& path) {
 		if (!std::filesystem::exists(path) || !std::filesystem::is_directory(path)) {
@@ -23,30 +23,29 @@ struct DirectoryNode : public std::enable_shared_from_this<DirectoryNode> {
 		instance.FullPath = path;
 		instance.FileName = std::filesystem::path(path).filename().string();
 		instance.IsDirectory = true;
+		instance.Parent = nullptr; // Root has no parent
 		instance.Children.clear(); // Clear existing children before refreshing
 		return instance.refresh(); // Refresh the node to build its tree structure
 	}
 	
 	bool refresh(const std::set<std::string>& allowedExtensions = {".psk", ".pma", ".pan", ".psq", ".psn", ".png"}) {
-		// Clear all existing children to rebuild the tree from scratch
 		Children.clear();
 		
-		bool hasValidChildren = false; // Track if there are any valid children
-		
-		// Check if the current node's path still exists and is a directory
 		if (!std::filesystem::exists(FullPath) || !std::filesystem::is_directory(FullPath)) {
 			IsDirectory = false;
 			return false;
 		}
 		
-		// Iterate through the directory to rebuild the tree
+		// This flag is used in the original code to only show directories that contain valid files.
+		// We will keep this logic.
+		bool hasValidChildren = false;
+		
 		for (const auto& entry : std::filesystem::directory_iterator(FullPath)) {
-			// Create a new node for each entry
 			auto newNode = std::shared_ptr<DirectoryNode>(new DirectoryNode(entry.path().string()));
+			newNode->Parent = this; // MODIFIED: Set the parent pointer
 			
 			if (entry.is_directory()) {
 				newNode->IsDirectory = true;
-				// Recursively refresh child directories, and only add them if they contain valid files
 				if (newNode->refresh(allowedExtensions)) {
 					Children.push_back(newNode);
 					hasValidChildren = true;
@@ -64,11 +63,9 @@ struct DirectoryNode : public std::enable_shared_from_this<DirectoryNode> {
 	// Method to create a new project folder and assign it to the singleton
 	static bool createProjectFolder(const std::string& folderPath) {
 		try {
-			// Create the directory if it doesn't exist
 			if (!std::filesystem::exists(folderPath)) {
 				std::filesystem::create_directories(folderPath);
 			}
-			// Initialize the singleton with the new folder path
 			return initialize(folderPath);
 		} catch (const std::filesystem::filesystem_error&) {
 			return false;
@@ -79,11 +76,12 @@ struct DirectoryNode : public std::enable_shared_from_this<DirectoryNode> {
 	std::string FileName;
 	std::vector<std::shared_ptr<DirectoryNode>> Children;
 	bool IsDirectory;
+	DirectoryNode* Parent; // ADDED: Pointer to the parent node for navigation.
 	
 private:
 	// Private constructor for singleton and node creation
 	explicit DirectoryNode(const std::string& path = "")
-	: FullPath(path), FileName(std::filesystem::path(path).filename().string()), IsDirectory(false) {}
+	: FullPath(path), FileName(std::filesystem::path(path).filename().string()), IsDirectory(false), Parent(nullptr) {}
 	
 	// Allow shared_ptr construction
 	friend class std::enable_shared_from_this<DirectoryNode>;

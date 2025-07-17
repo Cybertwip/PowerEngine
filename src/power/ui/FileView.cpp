@@ -21,8 +21,8 @@ FileView::FileView(
 				   const std::string& filter_text,
 				   const std::set<std::string>& allowed_extensions)
 : nanogui::Widget(std::make_optional<std::reference_wrapper<Widget>>(parent)),
-m_root_directory_node(root_directory_node),
-m_selected_directory_path(root_directory_node.FullPath),
+m_initial_root_node(root_directory_node), // ADDED: Store the absolute root
+m_current_directory_node(root_directory_node), // MODIFIED: This now represents the currently viewed directory
 m_filter_text(filter_text),
 m_allowed_extensions(allowed_extensions),
 m_recursive(recursive),
@@ -52,11 +52,6 @@ FileView::~FileView() {
 	// Shared pointers and NanoGUI handle cleanup
 }
 
-void FileView::set_selected_directory_path(const std::string& path) {
-	m_selected_directory_path = path;
-	refresh();
-}
-
 void FileView::set_filter_text(const std::string& filter) {
 	m_filter_text = filter;
 	refresh();
@@ -69,22 +64,14 @@ int FileView::get_icon_for_file(const DirectoryNode& node) const {
 	return FA_FILE;
 }
 
-DirectoryNode* FileView::find_node_by_path(DirectoryNode& root, const std::string& path) const {
-	if (root.FullPath == path) return &root;
-	for (const auto& child : root.Children) {
-		if (child->IsDirectory) {
-			if (DirectoryNode* found = find_node_by_path(*child, path)) return found;
-		}
-	}
-	return nullptr;
-}
-
 void FileView::handle_file_interaction(DirectoryNode& node) {
 	if (node.IsDirectory) {
+		// If a directory is double-clicked, navigate into it
 		m_filter_text = "";
-		m_root_directory_node = node;
-		set_selected_directory_path(node.FullPath);
+		m_current_directory_node = node;
+		refresh();
 	} else {
+		// If a file is double-clicked, trigger the selection callback
 		if (mOnFileSelected) mOnFileSelected(node.shared_from_this());
 	}
 }
@@ -97,26 +84,41 @@ void FileView::refresh() {
 	m_content_panel->shed_children();
 	m_selected_button = nullptr;
 	m_selected_node = nullptr;
-	m_root_directory_node.refresh();
+	m_current_directory_node.refresh(m_allowed_extensions); // Refresh contents of the current directory
 	populate_file_view();
 	perform_layout(screen().nvg_context());
 }
 
 void FileView::populate_file_view() {
-	DirectoryNode* selected_node = find_node_by_path(m_root_directory_node, m_selected_directory_path);
-	if (!selected_node) {
-		selected_node = &m_root_directory_node;
-		m_selected_directory_path = selected_node->FullPath;
+	// ADDED: Add a "Navigate Up" button if not at the root directory
+	if (&m_current_directory_node != &m_initial_root_node && m_current_directory_node.Parent) {
+		auto up_button = std::make_shared<nanogui::Button>(*m_content_panel, "..", FA_ARROW_UP);
+		up_button->set_fixed_height(28);
+		up_button->set_icon_position(nanogui::Button::IconPosition::Left);
+		up_button->set_background_color(m_normal_button_color);
+		
+		// Define the action when the "Up" button is clicked
+		up_button->set_callback([this]() {
+			if (m_current_directory_node.Parent) {
+				// Navigate to the parent directory and refresh the view
+				m_current_directory_node = *m_current_directory_node.Parent;
+				refresh();
+			}
+		});
 	}
-	
-	selected_node->refresh(m_allowed_extensions);
 	
 	std::vector<std::shared_ptr<DirectoryNode>> collected_nodes;
 	if (m_recursive) {
-		collect_nodes_recursive(selected_node, collected_nodes);
+		collect_nodes_recursive(&m_current_directory_node, collected_nodes);
 	} else {
-		collected_nodes = selected_node->Children;
+		collected_nodes = m_current_directory_node.Children;
 	}
+	
+	// Sort nodes to show directories first, then files alphabetically
+	std::sort(collected_nodes.begin(), collected_nodes.end(), [](const auto& a, const auto& b){
+		if (a->IsDirectory != b->IsDirectory) return a->IsDirectory;
+		return a->FileName < b->FileName;
+	});
 	
 	for (const auto& child : collected_nodes) {
 		if (!m_filter_text.empty()) {
@@ -165,28 +167,22 @@ void FileView::initiate_drag_operation(const std::shared_ptr<DirectoryNode>& nod
 	auto* drag_container = screen().drag_widget();
 	if (!drag_container) return;
 	
-	// Configure the payload label
 	m_drag_payload->set_caption(node->FileName);
-//	m_drag_payload->set_icon(get_icon_for_file(*node));
 	m_drag_payload->set_visible(true);
 	m_drag_payload->set_size(m_drag_payload->preferred_size(screen().nvg_context()));
 	
-	// Attach payload to the screen's drag container
 	drag_container->add_child(*m_drag_payload);
 	drag_container->set_size(m_drag_payload->size());
 	drag_container->set_position(screen().mouse_pos() - m_drag_payload->size() / 2);
 	drag_container->set_visible(true);
 	
-	// Set the drop handler
 	screen().set_drag_widget(drag_container, [this, drag_container, node]() {
-		// This lambda is the DROP HANDLER
 		std::vector<std::string> paths = { node->FullPath };
 		screen().drop_event(*this, paths);
 		
-		// Cleanup
 		m_drag_payload->set_visible(false);
-		this->add_child(*m_drag_payload); // Re-attach to FileView
-		this->remove_child(*m_drag_payload); // Detach again to hide from layout
+		this->add_child(*m_drag_payload);
+		this->remove_child(*m_drag_payload);
 		
 		screen().set_drag_widget(nullptr, nullptr);
 		m_is_dragging = false;
