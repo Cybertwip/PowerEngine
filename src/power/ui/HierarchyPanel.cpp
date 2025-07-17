@@ -26,8 +26,7 @@ HierarchyPanel::HierarchyPanel(nanogui::Widget& parent, std::shared_ptr<ScenePan
 	mScrollPanel->set_fixed_size({0, 12 * 25});
 	
 	mTreeView = std::make_shared<nanogui::TreeView>(*mScrollPanel);
-	mTreeView->set_layout(
-						      std::make_unique<nanogui::BoxLayout>(nanogui::Orientation::Vertical, nanogui::Alignment::Fill));
+	mTreeView->set_layout(std::make_unique<nanogui::BoxLayout>(nanogui::Orientation::Vertical, nanogui::Alignment::Fill));
 	
 	mContextMenu = std::make_unique<ContextMenu>();
 	
