@@ -58,6 +58,8 @@ private:
 	std::shared_ptr<nanogui::VScrollPanel> m_vscroll;
 	std::shared_ptr<nanogui::Widget> m_content_panel;
 	std::shared_ptr<nanogui::Label> m_drag_payload;
+	std::shared_ptr<nanogui::Button> m_cd_up_button;
+	std::vector<std::shared_ptr<nanogui::Button>> m_file_buttons;
 	
 	// State variables
 	std::string m_filter_text;

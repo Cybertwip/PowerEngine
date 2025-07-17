@@ -22,7 +22,7 @@ FileView::FileView(
 				   const std::set<std::string>& allowed_extensions)
 : nanogui::Widget(std::make_optional<std::reference_wrapper<Widget>>(parent)),
 m_initial_root_node(root_directory_node),
-m_current_directory_node(&root_directory_node), // MODIFIED: Initialize the pointer
+m_current_directory_node(&root_directory_node),
 m_filter_text(filter_text),
 m_allowed_extensions(allowed_extensions),
 m_recursive(recursive),
@@ -30,8 +30,8 @@ mOnFileClicked(onFileClicked),
 mOnFileSelected(onFileSelected),
 m_selected_button(nullptr),
 m_selected_node(nullptr),
-m_normal_button_color(0, 0),
-m_selected_button_color(0, 100, 255, 50)
+m_normal_button_color(0, 0), // Transparent background
+m_selected_button_color(0, 100, 255, 50) // Semi-transparent blue for selection
 {
 	set_layout(std::make_unique<nanogui::BoxLayout>(nanogui::Orientation::Vertical, nanogui::Alignment::Fill));
 	m_vscroll = std::make_shared<nanogui::VScrollPanel>(*this);
@@ -39,6 +39,7 @@ m_selected_button_color(0, 100, 255, 50)
 	m_content_panel = std::make_shared<nanogui::Widget>(*m_vscroll);
 	m_content_panel->set_layout(std::make_unique<nanogui::BoxLayout>(nanogui::Orientation::Vertical, nanogui::Alignment::Fill, 0, 2));
 	
+	// Create the drag payload widget but keep it detached and invisible
 	m_drag_payload = std::make_shared<nanogui::Label>(*this, "");
 	m_drag_payload->set_visible(false);
 	this->remove_child(*m_drag_payload);
@@ -46,7 +47,10 @@ m_selected_button_color(0, 100, 255, 50)
 	refresh();
 }
 
-FileView::~FileView() {}
+// Destructor
+FileView::~FileView() {
+	// Shared pointers and NanoGUI handle cleanup
+}
 
 void FileView::set_filter_text(const std::string& filter) {
 	m_filter_text = filter;
@@ -63,7 +67,7 @@ int FileView::get_icon_for_file(const DirectoryNode& node) const {
 void FileView::handle_file_interaction(DirectoryNode& node) {
 	if (node.IsDirectory) {
 		m_filter_text = "";
-		m_current_directory_node = &node; // MODIFIED: Point to the new directory
+		m_current_directory_node = &node;
 		refresh();
 	} else {
 		if (mOnFileSelected) mOnFileSelected(node.shared_from_this());
@@ -76,26 +80,31 @@ void FileView::handle_file_click(DirectoryNode& node) {
 
 void FileView::refresh() {
 	m_content_panel->shed_children();
+	m_file_buttons.clear();
 	m_selected_button = nullptr;
 	m_selected_node = nullptr;
-	if (m_current_directory_node) {
-		m_current_directory_node->refresh(m_allowed_extensions);
-		populate_file_view();
-	}
+	m_initial_root_node.refresh();
+	populate_file_view();
 	perform_layout(screen().nvg_context());
 }
 
 void FileView::populate_file_view() {
-	// MODIFIED: Check address of initial root against the current node pointer
+	if (!m_current_directory_node) {
+		m_current_directory_node = &m_initial_root_node;
+	}
+	
+	m_current_directory_node->refresh(m_allowed_extensions);
+	
+	// Add "cd up" button if not at the initial root and a parent exists.
+	// This assumes DirectoryNode has a `Parent` member pointing to its parent.
 	if (m_current_directory_node != &m_initial_root_node && m_current_directory_node->Parent) {
-		auto up_button = std::make_shared<nanogui::Button>(*m_content_panel, "..", FA_ARROW_UP);
-		up_button->set_fixed_height(28);
-		up_button->set_icon_position(nanogui::Button::IconPosition::Left);
-		up_button->set_background_color(m_normal_button_color);
-		
-		up_button->set_callback([this]() {
+		m_cd_up_button = std::make_shared<nanogui::Button>(*m_content_panel, "..", FA_ARROW_UP);
+		m_cd_up_button->set_fixed_height(28);
+		m_cd_up_button->set_icon_position(nanogui::Button::IconPosition::Left);
+		m_cd_up_button->set_background_color(m_normal_button_color);
+		m_cd_up_button->set_callback([this]() {
 			if (m_current_directory_node->Parent) {
-				m_current_directory_node = m_current_directory_node->Parent; // MODIFIED: Navigate up
+				m_current_directory_node = m_current_directory_node->Parent;
 				refresh();
 			}
 		});
@@ -107,11 +116,6 @@ void FileView::populate_file_view() {
 	} else {
 		collected_nodes = m_current_directory_node->Children;
 	}
-	
-	std::sort(collected_nodes.begin(), collected_nodes.end(), [](const auto& a, const auto& b){
-		if (a->IsDirectory != b->IsDirectory) return a->IsDirectory;
-		return a->FileName < b->FileName;
-	});
 	
 	for (const auto& child : collected_nodes) {
 		if (!m_filter_text.empty()) {
@@ -132,6 +136,8 @@ void FileView::create_file_item(const std::shared_ptr<DirectoryNode>& node) {
 	item_button->set_background_color(m_normal_button_color);
 	item_button->set_flags(nanogui::Button::Flags::ToggleButton);
 	
+	m_file_buttons.push_back(item_button);
+	
 	item_button->set_change_callback([this, item_button, node](bool state) {
 		if (m_selected_button) {
 			m_selected_button->set_background_color(m_normal_button_color);
@@ -147,6 +153,7 @@ void FileView::create_file_item(const std::shared_ptr<DirectoryNode>& node) {
 		handle_file_interaction(*node);
 	});
 	
+	// Add drag-and-drop functionality
 	item_button->set_drag_callback([this, node](const nanogui::Vector2i&, const nanogui::Vector2i& rel, int, int) {
 		if (!m_is_dragging && (std::abs(rel.x()) > 5 || std::abs(rel.y()) > 5)) {
 			m_is_dragging = true;
@@ -155,27 +162,32 @@ void FileView::create_file_item(const std::shared_ptr<DirectoryNode>& node) {
 	});
 }
 
-
 void FileView::initiate_drag_operation(const std::shared_ptr<DirectoryNode>& node) {
 	auto* drag_container = screen().drag_widget();
 	if (!drag_container) return;
 	
+	// Configure the payload label
 	m_drag_payload->set_caption(node->FileName);
+	//	m_drag_payload->set_icon(get_icon_for_file(*node));
 	m_drag_payload->set_visible(true);
 	m_drag_payload->set_size(m_drag_payload->preferred_size(screen().nvg_context()));
 	
+	// Attach payload to the screen's drag container
 	drag_container->add_child(*m_drag_payload);
 	drag_container->set_size(m_drag_payload->size());
 	drag_container->set_position(screen().mouse_pos() - m_drag_payload->size() / 2);
 	drag_container->set_visible(true);
 	
+	// Set the drop handler
 	screen().set_drag_widget(drag_container, [this, drag_container, node]() {
+		// This lambda is the DROP HANDLER
 		std::vector<std::string> paths = { node->FullPath };
 		screen().drop_event(*this, paths);
 		
+		// Cleanup
 		m_drag_payload->set_visible(false);
-		this->add_child(*m_drag_payload);
-		this->remove_child(*m_drag_payload);
+		this->add_child(*m_drag_payload); // Re-attach to FileView
+		this->remove_child(*m_drag_payload); // Detach again to hide from layout
 		
 		screen().set_drag_widget(nullptr, nullptr);
 		m_is_dragging = false;
