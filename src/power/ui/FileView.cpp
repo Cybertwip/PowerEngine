@@ -21,8 +21,8 @@ FileView::FileView(
 				   const std::string& filter_text,
 				   const std::set<std::string>& allowed_extensions)
 : nanogui::Widget(std::make_optional<std::reference_wrapper<Widget>>(parent)),
-m_initial_root_node(root_directory_node), // ADDED: Store the absolute root
-m_current_directory_node(root_directory_node), // MODIFIED: This now represents the currently viewed directory
+m_initial_root_node(root_directory_node),
+m_current_directory_node(&root_directory_node), // MODIFIED: Initialize the pointer
 m_filter_text(filter_text),
 m_allowed_extensions(allowed_extensions),
 m_recursive(recursive),
@@ -30,8 +30,8 @@ mOnFileClicked(onFileClicked),
 mOnFileSelected(onFileSelected),
 m_selected_button(nullptr),
 m_selected_node(nullptr),
-m_normal_button_color(0, 0), // Transparent background
-m_selected_button_color(0, 100, 255, 50) // Semi-transparent blue for selection
+m_normal_button_color(0, 0),
+m_selected_button_color(0, 100, 255, 50)
 {
 	set_layout(std::make_unique<nanogui::BoxLayout>(nanogui::Orientation::Vertical, nanogui::Alignment::Fill));
 	m_vscroll = std::make_shared<nanogui::VScrollPanel>(*this);
@@ -39,7 +39,6 @@ m_selected_button_color(0, 100, 255, 50) // Semi-transparent blue for selection
 	m_content_panel = std::make_shared<nanogui::Widget>(*m_vscroll);
 	m_content_panel->set_layout(std::make_unique<nanogui::BoxLayout>(nanogui::Orientation::Vertical, nanogui::Alignment::Fill, 0, 2));
 	
-	// Create the drag payload widget but keep it detached and invisible
 	m_drag_payload = std::make_shared<nanogui::Label>(*this, "");
 	m_drag_payload->set_visible(false);
 	this->remove_child(*m_drag_payload);
@@ -47,10 +46,7 @@ m_selected_button_color(0, 100, 255, 50) // Semi-transparent blue for selection
 	refresh();
 }
 
-// Destructor
-FileView::~FileView() {
-	// Shared pointers and NanoGUI handle cleanup
-}
+FileView::~FileView() {}
 
 void FileView::set_filter_text(const std::string& filter) {
 	m_filter_text = filter;
@@ -66,12 +62,10 @@ int FileView::get_icon_for_file(const DirectoryNode& node) const {
 
 void FileView::handle_file_interaction(DirectoryNode& node) {
 	if (node.IsDirectory) {
-		// If a directory is double-clicked, navigate into it
 		m_filter_text = "";
-		m_current_directory_node = node;
+		m_current_directory_node = &node; // MODIFIED: Point to the new directory
 		refresh();
 	} else {
-		// If a file is double-clicked, trigger the selection callback
 		if (mOnFileSelected) mOnFileSelected(node.shared_from_this());
 	}
 }
@@ -84,24 +78,24 @@ void FileView::refresh() {
 	m_content_panel->shed_children();
 	m_selected_button = nullptr;
 	m_selected_node = nullptr;
-	m_current_directory_node.refresh(m_allowed_extensions); // Refresh contents of the current directory
-	populate_file_view();
+	if (m_current_directory_node) {
+		m_current_directory_node->refresh(m_allowed_extensions);
+		populate_file_view();
+	}
 	perform_layout(screen().nvg_context());
 }
 
 void FileView::populate_file_view() {
-	// ADDED: Add a "Navigate Up" button if not at the root directory
-	if (&m_current_directory_node != &m_initial_root_node && m_current_directory_node.Parent) {
+	// MODIFIED: Check address of initial root against the current node pointer
+	if (m_current_directory_node != &m_initial_root_node && m_current_directory_node->Parent) {
 		auto up_button = std::make_shared<nanogui::Button>(*m_content_panel, "..", FA_ARROW_UP);
 		up_button->set_fixed_height(28);
 		up_button->set_icon_position(nanogui::Button::IconPosition::Left);
 		up_button->set_background_color(m_normal_button_color);
 		
-		// Define the action when the "Up" button is clicked
 		up_button->set_callback([this]() {
-			if (m_current_directory_node.Parent) {
-				// Navigate to the parent directory and refresh the view
-				m_current_directory_node = *m_current_directory_node.Parent;
+			if (m_current_directory_node->Parent) {
+				m_current_directory_node = m_current_directory_node->Parent; // MODIFIED: Navigate up
 				refresh();
 			}
 		});
@@ -109,12 +103,11 @@ void FileView::populate_file_view() {
 	
 	std::vector<std::shared_ptr<DirectoryNode>> collected_nodes;
 	if (m_recursive) {
-		collect_nodes_recursive(&m_current_directory_node, collected_nodes);
+		collect_nodes_recursive(m_current_directory_node, collected_nodes);
 	} else {
-		collected_nodes = m_current_directory_node.Children;
+		collected_nodes = m_current_directory_node->Children;
 	}
 	
-	// Sort nodes to show directories first, then files alphabetically
 	std::sort(collected_nodes.begin(), collected_nodes.end(), [](const auto& a, const auto& b){
 		if (a->IsDirectory != b->IsDirectory) return a->IsDirectory;
 		return a->FileName < b->FileName;
@@ -154,7 +147,6 @@ void FileView::create_file_item(const std::shared_ptr<DirectoryNode>& node) {
 		handle_file_interaction(*node);
 	});
 	
-	// Add drag-and-drop functionality
 	item_button->set_drag_callback([this, node](const nanogui::Vector2i&, const nanogui::Vector2i& rel, int, int) {
 		if (!m_is_dragging && (std::abs(rel.x()) > 5 || std::abs(rel.y()) > 5)) {
 			m_is_dragging = true;
@@ -162,6 +154,7 @@ void FileView::create_file_item(const std::shared_ptr<DirectoryNode>& node) {
 		}
 	});
 }
+
 
 void FileView::initiate_drag_operation(const std::shared_ptr<DirectoryNode>& node) {
 	auto* drag_container = screen().drag_widget();

@@ -48,13 +48,13 @@ private:
 	
 	// MODIFIED: Keep track of the initial root and the currently viewed directory.
 	DirectoryNode& m_initial_root_node;
-	DirectoryNode& m_current_directory_node;
+	DirectoryNode* m_current_directory_node; // MODIFIED: This is now a pointer.
 	
 	// Callbacks
 	std::function<void(std::shared_ptr<DirectoryNode>)> mOnFileClicked;
 	std::function<void(std::shared_ptr<DirectoryNode>)> mOnFileSelected;
 	
-	// UI components as shared pointers
+	// UI components
 	std::shared_ptr<nanogui::VScrollPanel> m_vscroll;
 	std::shared_ptr<nanogui::Widget> m_content_panel;
 	std::shared_ptr<nanogui::Label> m_drag_payload;
