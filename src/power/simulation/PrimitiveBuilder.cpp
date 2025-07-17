@@ -339,7 +339,6 @@ std::unique_ptr<MeshData> create_translation_gizmo_mesh_data() {
 	return meshData;
 }
 
-// Generates MeshData for the Rotation Gizmo
 std::unique_ptr<MeshData> create_rotation_gizmo_mesh_data() {
 	auto meshData = std::make_unique<MeshData>();
 	auto& vertices = meshData->get_vertices();
@@ -357,24 +356,33 @@ std::unique_ptr<MeshData> create_rotation_gizmo_mesh_data() {
 	
 	auto create_torus = [&](uint32_t materialId, const glm::quat& rotation) {
 		uint32_t base_vertex = vertices.size();
-		for (int i = 0; i <= ringSegments; i++) {
+		// Generate vertices
+		for (int i = 0; i <= ringSegments; i++) { // Main ring segments
 			float u = (float)i / ringSegments * 2.0f * glm::pi<float>();
-			glm::vec3 ringPos(cos(u) * ringRadius, sin(u) * ringRadius, 0);
+			float cos_u = cos(u);
+			float sin_u = sin(u);
 			
-			for (int j = 0; j <= tubeSegments; j++) {
+			for (int j = 0; j <= tubeSegments; j++) { // Tube segments
 				float v = (float)j / tubeSegments * 2.0f * glm::pi<float>();
-				glm::vec3 tubePos(cos(v) * tubeRadius, sin(v) * tubeRadius, 0);
+				float cos_v = cos(v);
+				float sin_v = sin(v);
 				
-				glm::vec4 normal(tubePos, 0);
-				normal = glm::rotate(glm::quat(cos(u/2), 0,0,sin(u/2)), normal);
+				// Parametric equation for a torus centered at the origin
+				glm::vec3 pos;
+				pos.x = (ringRadius + tubeRadius * cos_v) * cos_u;
+				pos.y = (ringRadius + tubeRadius * cos_v) * sin_u;
+				pos.z = tubeRadius * sin_v;
 				
-				auto finalPos = ringPos + glm::vec3(rotation * glm::vec4(tubePos.x, 0, tubePos.y, 0));
-				auto vertex = std::make_unique<MeshVertex>(finalPos);
+				// Apply the overall rotation to orient the torus in space
+				pos = rotation * pos;
+				
+				auto vertex = std::make_unique<MeshVertex>(pos);
 				vertex->set_material_id(materialId);
 				vertices.emplace_back(std::move(vertex));
 			}
 		}
 		
+		// Generate indices for the torus surface
 		for (int i = 0; i < ringSegments; i++) {
 			for (int j = 0; j < tubeSegments; j++) {
 				int p1 = base_vertex + i * (tubeSegments + 1) + j;
@@ -387,16 +395,20 @@ std::unique_ptr<MeshData> create_rotation_gizmo_mesh_data() {
 		}
 	};
 	
-	// X-Axis Ring (Red)
+	// X-Axis Ring (Red): Circles the X-axis, lies in the YZ plane.
+	// Achieved by rotating the default XY-plane torus 90 degrees around the Y-axis.
 	create_torus(0, glm::angleAxis(glm::half_pi<float>(), glm::vec3(0, 1, 0)));
-	// Y-Axis Ring (Green)
+	
+	// Y-Axis Ring (Green): Circles the Y-axis, lies in the XZ plane.
+	// Achieved by rotating the default XY-plane torus 90 degrees around the X-axis.
 	create_torus(1, glm::angleAxis(glm::half_pi<float>(), glm::vec3(1, 0, 0)));
-	// Z-Axis Ring (Blue)
-	create_torus(2, glm::quat(1,0,0,0));
+	
+	// Z-Axis Ring (Blue): Circles the Z-axis, lies in the XY plane.
+	// No rotation needed for the default torus.
+	create_torus(2, glm::quat(1, 0, 0, 0));
 	
 	return meshData;
 }
-
 
 // Generates MeshData for the Scale Gizmo
 std::unique_ptr<MeshData> create_scale_gizmo_mesh_data() {

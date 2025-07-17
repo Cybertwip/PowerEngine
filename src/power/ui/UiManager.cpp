@@ -167,7 +167,7 @@ UiManager::UiManager(nanogui::Screen& screen, std::shared_ptr<IActorSelectedRegi
 	};
 	
 	// Register click callback with ScenePanel
-	scenePanel->register_click_callback(GLFW_MOUSE_BUTTON_1, [this, readFromFramebuffer](bool down, int width, int height, int x, int y) {		
+	scenePanel->register_click_callback(GLFW_MOUSE_BUTTON_1, [this, readFromFramebuffer](bool down, int width, int height, int x, int y) {
 		if (down) {
 			int id = readFromFramebuffer(width, height, x, y);
 			
@@ -257,30 +257,37 @@ UiManager::UiManager(nanogui::Screen& screen, std::shared_ptr<IActorSelectedRegi
 	
 	// Initialize StatusBarPanel
 	mStatusBarPanel = std::make_shared<StatusBarPanel>(*statusBar, screen, mActorVisualManager, animationTimeProvider, previewTimeProvider,
-										 mMeshActorLoader, mShaderManager, *this, applicationClickRegistrator);
+													   mMeshActorLoader, mShaderManager, *this, applicationClickRegistrator);
 	
 	mStatusBarPanel->set_fixed_width(statusBar->fixed_height());
 	mStatusBarPanel->set_fixed_height(statusBar->fixed_height());
 	mStatusBarPanel->set_layout(std::make_unique<nanogui::BoxLayout>(nanogui::Orientation::Horizontal,
-													   nanogui::Alignment::Minimum, 4, 2));
+																	   nanogui::Alignment::Minimum, 4, 2));
 	
 	// Initialize selection color
 	mSelectionColor = glm::normalize(glm::vec4(0.83f, 0.68f, 0.21f, 1.0f)); // A gold-ish color
 	
 	scenePanel->register_motion_callback(GLFW_MOUSE_BUTTON_RIGHT, [this](int width, int height, int x, int y, int dx, int dy, int button, bool down){
-		if (down) {
+		// Only rotate camera if no actor is selected (i.e., gizmo is not active)
+		if (down && !mActiveActor.has_value()) {
 			mCameraManager.rotate_camera(-dx, -dy);
 		}
 	});
-
+	
 	scenePanel->register_motion_callback(GLFW_MOUSE_BUTTON_MIDDLE, [this](int width, int height, int x, int y, int dx, int dy, int button, bool down){
-		mCameraManager.pan_camera(dx, dy);
+		// Only pan camera if no actor is selected
+		if (!mActiveActor.has_value()) {
+			mCameraManager.pan_camera(dx, dy);
+		}
 	});
 	
 	scenePanel->register_scroll_callback([this](int width, int height, int x, int y, int dx, int dy){
-		mCameraManager.zoom_camera(-dy);
+		// Only zoom camera if no actor is selected
+		if (!mActiveActor.has_value()) {
+			mCameraManager.zoom_camera(-dy);
+		}
 	});
-
+	
 }
 
 // ==============================
@@ -309,9 +316,9 @@ void UiManager::export_movie(const std::string& path) {
 	mGizmoManager.select(mActiveActor);
 	mGizmoManager.select(GizmoManager::GizmoAxis(0));
 	
-//	mSceneTimeBar->stop_playback();
-//	mSceneTimeBar->toggle_play_pause(true);
-
+	//	mSceneTimeBar->stop_playback();
+	//	mSceneTimeBar->toggle_play_pause(true);
+	
 	nanogui::async([this, path]() {
 		mIsMovieExporting = true;
 		
@@ -326,7 +333,7 @@ bool UiManager::is_movie_exporting() const {
 
 void UiManager::draw() {
 	if (mIsMovieExporting) {
-//		mSceneTimeBar->update();
+		//		mSceneTimeBar->update();
 		// Begin the first render pass for actors
 		mCanvas->render_pass().clear_color(0, mCanvas->background_color());
 		mCanvas->render_pass().clear_color(1, nanogui::Color(0.0f, 0.0f, 0.0f, 0.0f));
@@ -371,41 +378,41 @@ void UiManager::draw() {
 			}
 		});
 		
-//		if (!mSceneTimeBar->is_playing()) {
-//			mIsMovieExporting = false;
-//			
-//			// Assemble the movie using ffmpeg
-//			std::ostringstream ffmpeg_command;
-//			ffmpeg_command << "/usr/local/bin/ffmpeg -y -framerate 60 -i \""
-//			<< mMovieExportDirectory << "/frame%0" << mFramePadding
-//			<< "d.jpg\" -c:v libx264 -pix_fmt yuv420p \""
-//			<< mMovieExportFile << "\"";
-//			
-//			std::cout << "Running ffmpeg command: " << ffmpeg_command.str() << std::endl;
-//			
-//			int ret = std::system(ffmpeg_command.str().c_str());
-//			if (ret != 0) {
-//				std::cerr << "ffmpeg failed with return code: " << ret << std::endl;
-//			} else {
-//				std::cout << "Movie exported successfully to: " << mMovieExportFile << std::endl;
-//			}
-//			
-//			// Optional: Clean up frame images
-//			for (int i = 0; i < mFrameCounter; ++i) {
-//				std::ostringstream cleanup_stream;
-//				cleanup_stream << "frame" << std::setw(mFramePadding) << std::setfill('0') << i << ".jpg";
-//				std::string cleanup_filename = cleanup_stream.str();
-//				std::filesystem::path cleanup_path = std::filesystem::path(mMovieExportDirectory) / cleanup_filename;
-//				if (std::remove(cleanup_path.string().c_str()) != 0) {
-//					std::cerr << "Failed to delete frame: " << cleanup_path << std::endl;
-//				}
-//			}
-//		}
+		//		if (!mSceneTimeBar->is_playing()) {
+		//			mIsMovieExporting = false;
+		//
+		//			// Assemble the movie using ffmpeg
+		//			std::ostringstream ffmpeg_command;
+		//			ffmpeg_command << "/usr/local/bin/ffmpeg -y -framerate 60 -i \""
+		//			<< mMovieExportDirectory << "/frame%0" << mFramePadding
+		//			<< "d.jpg\" -c:v libx264 -pix_fmt yuv420p \""
+		//			<< mMovieExportFile << "\"";
+		//
+		//			std::cout << "Running ffmpeg command: " << ffmpeg_command.str() << std::endl;
+		//
+		//			int ret = std::system(ffmpeg_command.str().c_str());
+		//			if (ret != 0) {
+		//				std::cerr << "ffmpeg failed with return code: " << ret << std::endl;
+		//			} else {
+		//				std::cout << "Movie exported successfully to: " << mMovieExportFile << std::endl;
+		//			}
+		//
+		//			// Optional: Clean up frame images
+		//			for (int i = 0; i < mFrameCounter; ++i) {
+		//				std::ostringstream cleanup_stream;
+		//				cleanup_stream << "frame" << std::setw(mFramePadding) << std::setfill('0') << i << ".jpg";
+		//				std::string cleanup_filename = cleanup_stream.str();
+		//				std::filesystem::path cleanup_path = std::filesystem::path(mMovieExportDirectory) / cleanup_filename;
+		//				if (std::remove(cleanup_path.string().c_str()) != 0) {
+		//					std::cerr << "Failed to delete frame: " << cleanup_path << std::endl;
+		//				}
+		//			}
+		//		}
 	} else {
 		// Update UI elements
-//		mSceneTimeBar->update();
-//		mSceneTimeBar->overlay();
-//		mAnimationPanel->update_with(mSceneTimeBar->current_time());
+		//		mSceneTimeBar->update();
+		//		mSceneTimeBar->overlay();
+		//		mAnimationPanel->update_with(mSceneTimeBar->current_time());
 		
 		// Begin the first render pass for main actors
 		mCanvas->render_pass().clear_color(0, mCanvas->background_color());
@@ -426,16 +433,16 @@ void UiManager::draw() {
 		mActorManager.visit(batch_unit.mSkinnedMeshBatch);
 		
 		mActorManager.visit(*this);
-				
+		
 		mCanvas->render_pass().set_depth_test(nanogui::RenderPass::DepthTest::Less, true);
-
+		
 		// Draw gizmos
 		mGizmoManager.draw();
 		auto& gizmo_batch_unit = mGizmoActorLoader.get_batch_unit();
 		mActorManager.visit(gizmo_batch_unit.mMeshBatch);
 		mActorManager.visit(gizmo_batch_unit.mSkinnedMeshBatch);
 	}
-
+	
 }
 
 void UiManager::draw_content(const nanogui::Matrix4f& model,
@@ -449,7 +456,7 @@ void UiManager::remove_active_actor() {
 	std::async([this]() {
 		if (mActiveActor.has_value()) {
 			mActorVisualManager->remove_actor(mActiveActor->get());
-//			mSceneTimeBar->refresh_actors();
+			//			mSceneTimeBar->refresh_actors();
 		}
 	});
 }
@@ -461,4 +468,3 @@ void UiManager::process_events() {
 std::shared_ptr<StatusBarPanel> UiManager::status_bar_panel() {
 	return mStatusBarPanel;
 }
-
