@@ -70,15 +70,28 @@ void CameraManager::look_at(const glm::vec3& position) {
 
 
 void CameraManager::OnActorSelected(std::optional<std::reference_wrapper<Actor>> actor) {
+	
 	if (actor) {
 		if (actor->get().find_component<CameraComponent>()) {
-			mActiveCamera = actor;
-			mActiveActor = std::nullopt;
 			
-			mLastView = mActiveCamera->get().get_component<CameraComponent>().get_view();
-			
-			mLastProjection = mActiveCamera->get().get_component<CameraComponent>().get_projection();
-
+			if (actor->get().get_component<CameraComponent>().active()) {
+				mActiveCamera = actor;
+				mActiveActor = std::nullopt;
+				
+				mLastView = mActiveCamera->get().get_component<CameraComponent>().get_view();
+				
+				mLastProjection = mActiveCamera->get().get_component<CameraComponent>().get_projection();
+				
+				auto cameras = actorManager.get_actors_with_component<CameraComponent>();
+				
+				for (auto& camera : cameras) {
+					camera.set_active(false);
+				}
+				
+				actor->get().get_component<CameraComponent>().set_active(true);
+			} else {
+				mActiveCamera = *mEngineCamera;
+			}
 		} else {
 			mActiveCamera = *mEngineCamera;
 		}
@@ -209,6 +222,8 @@ Actor& CameraManager::create_engine_camera(AnimationTimeProvider& animationTimeP
 	CameraActorBuilder::build(*mEngineCamera, animationTimeProvider, fov, near, far, aspect);
 	
 	mActiveCamera = *mEngineCamera;
+	
+	mEngineCamera->get_component<CameraComponent>().set_active(true);
 
 	return *mEngineCamera;
 }

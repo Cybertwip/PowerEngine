@@ -13,7 +13,8 @@ CameraComponent::CameraComponent(TransformComponent& transformComponent, float f
 , mFov(fov)
 , mNear(near)
 , mFar(far)
-, mAspect(aspect) {
+, mAspect(aspect)
+, mActive(false) {
 	mProjection = nanogui::Matrix4f::perspective(mFov, mNear, mFar, mAspect);
 	update_view();
 }

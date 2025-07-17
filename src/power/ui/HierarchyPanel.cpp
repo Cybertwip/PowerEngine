@@ -59,9 +59,7 @@ bool HierarchyPanel::mouse_button_event(const nanogui::Vector2i &p, int button, 
 	}
 	
 	if (button == GLFW_MOUSE_BUTTON_RIGHT && down && mSelectedActor.has_value() && contains(p)) {
-		
 		mContextMenu->show();
-		return true;
 	}
 	
 	return false;

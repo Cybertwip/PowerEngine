@@ -68,6 +68,14 @@ public:
 		mAspect = aspect;
 		update_view();
 	}
+	
+	bool active() const {
+		return mActive;
+	}
+	
+	void set_active(bool active) {
+		mActive = active;
+	}
 
 private:
 	TransformComponent& mTransformComponent;
@@ -80,4 +88,6 @@ private:
     nanogui::Matrix4f mProjection;
 	
 	ECameraTag mTag;
+	
+	bool mActive;
 };

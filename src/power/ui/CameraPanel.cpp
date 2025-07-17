@@ -88,6 +88,15 @@ CameraPanel::CameraPanel(nanogui::Widget& parent)
     mControlButton->set_callback([this] {
         mIsControlling = !mIsControlling;
         mControlButton->set_caption(mIsControlling ? "Release" : "Control");
+		
+		if (mActiveActor.has_value()) {
+			// Check if the actor has the required component.
+			if (mActiveActor->get().find_component<CameraComponent>()) {
+				auto& cameraComponent = mActiveActor->get().get_component<CameraComponent>();
+				cameraComponent.set_active(mIsControlling);
+			}
+		}
+		
         // The actual control/release logic would be implemented here or in a controller system.
     });
 
