@@ -82,9 +82,7 @@ void CameraManager::OnActorSelected(std::optional<std::reference_wrapper<Actor>>
 				
 				mLastProjection = mActiveCamera->get().get_component<CameraComponent>().get_projection();
 				
-				auto cameras = actorManager.get_actors_with_component<CameraComponent>();
-				
-				for (auto& camera : cameras) {
+				for (auto& camera : mCameras) {
 					camera.set_active(false);
 				}
 				
