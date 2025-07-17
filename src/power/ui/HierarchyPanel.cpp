@@ -1,6 +1,7 @@
 #include "ui/HierarchyPanel.hpp"
 
 #include "ui/AnimationPanel.hpp"
+#include "ui/CameraPanel.hpp"
 #include "ui/ScenePanel.hpp"
 #include "ui/TransformPanel.hpp"
 
@@ -14,10 +15,12 @@
 #include "actors/Actor.hpp"
 #include "actors/ActorManager.hpp"
 #include "actors/IActorSelectedCallback.hpp"
+#include "components/CameraComponent.hpp"
 #include "components/MetadataComponent.hpp"
+#include "components/TransformComponent.hpp"
 #include "components/UiComponent.hpp"
 
-HierarchyPanel::HierarchyPanel(nanogui::Widget& parent, std::shared_ptr<ScenePanel> scenePanel, std::shared_ptr<TransformPanel> transformPanel, std::shared_ptr<AnimationPanel> animationPanel, ActorManager& actorManager) : Panel(parent, "Actors"), mTransformPanel(transformPanel), mAnimationPanel(animationPanel), mActorManager(actorManager) {
+HierarchyPanel::HierarchyPanel(nanogui::Widget& parent, std::shared_ptr<ScenePanel> scenePanel, std::shared_ptr<TransformPanel> transformPanel, std::shared_ptr<AnimationPanel> animationPanel, ActorManager& actorManager) : Panel(parent, "Actors"), mTransformPanel(transformPanel), mCameraPanel(cameraPanel), mAnimationPanel(animationPanel), mActorManager(actorManager) {
 	set_position(nanogui::Vector2i(0, 0));
 	set_layout(std::make_unique<nanogui::GroupLayout>());
 	
@@ -31,11 +34,14 @@ HierarchyPanel::HierarchyPanel(nanogui::Widget& parent, std::shared_ptr<ScenePan
 	mContextMenu = std::make_unique<ContextMenu>();
 	
 	// Populate it with items dynamically.
-	mContextMenu->addItem("Action from C++ function", []() {
-		std::cout << "Callback executed from a menu created in a C++ function!" << std::endl;
+	mContextMenu->addItem("Add Blueprint Component", [this]() {
+//		mSelectedActor
 	});
-	mContextMenu->addItem("Another action", []() {
-		std::cout << "This is the second callback." << std::endl;
+	mContextMenu->addItem("Add Camera Component", [this]() {
+		if (!mSelectedActor->get().find_component<CameraComponent>()) {
+			mSelectedActor->get().add_component<CameraComponent>(mSelectedActor->get().get_component<TransformComponent>());
+		}
+
 	});
 
 }
@@ -149,6 +155,7 @@ void HierarchyPanel::OnActorSelected(std::optional<std::reference_wrapper<Actor>
 	
 	if (actor.has_value()) {
 		mTransformPanel->set_active_actor(actor);
+		mCameraPanel->set_active_actor(actor);
 		mAnimationPanel->set_active_actor(actor);
 		for (auto& callbackRef : mActorSelectedCallbacks) {
 			callbackRef.get().OnActorSelected(actor);
@@ -157,6 +164,7 @@ void HierarchyPanel::OnActorSelected(std::optional<std::reference_wrapper<Actor>
 	} else {
 		mTreeView->set_selected(nullptr);
 		mTransformPanel->set_active_actor(actor);
+		mCameraPanel->set_active_actor(actor);
 		mAnimationPanel->set_active_actor(actor);
 	}
 	
@@ -166,8 +174,9 @@ void HierarchyPanel::fire_actor_selected_event(std::optional<std::reference_wrap
 	mSelectedActor = actor;
 	
 	mTransformPanel->set_active_actor(actor);
+	mCameraPanel->set_active_actor(actor);
 	mAnimationPanel->set_active_actor(actor);
-	
+
 	for (auto& callbackRef : mActorSelectedCallbacks) {
 		callbackRef.get().OnActorSelected(actor);
 	}

@@ -53,7 +53,6 @@ private:
 	std::shared_ptr<nanogui::Widget> mRotatePanel;
 	std::shared_ptr<nanogui::Widget> mScalePanel;
 
-
     std::optional<std::reference_wrapper<Actor>> mActiveActor;
 	
 	int mTransformRegistrationId;

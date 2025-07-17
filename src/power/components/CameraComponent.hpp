@@ -14,8 +14,7 @@ public:
 		Engine,
 		Game
 	};
-	
-	CameraComponent(TransformComponent& transformComponent, float fov, float near, float far, float aspect);
+	CameraComponent(TransformComponent& transformComponent, float fov = 45.0f, float near = 0.01f, float far = 1e5f, float aspect = 16.0f / 9.0f);
     void update_view();
     
     const nanogui::Matrix4f& get_view() const {
@@ -34,6 +33,42 @@ public:
 		mTag = tag;
 	}
 	
+	float get_fov() const {
+		return mFov;
+	}
+
+	float get_near() const {
+		return mNear;
+	}
+	
+	float get_far() const {
+		return mFar;
+	}
+	
+	float get_aspect() const {
+		return mAspect;
+	}
+	
+	void set_fov(float fov) {
+		mFov = fov;
+		update_view();
+	}
+	
+	void set_near(float near) {
+		mNear = near;
+		update_view();
+	}
+
+	void set_far(float far) {
+		mFar = far;
+		update_view();
+	}
+
+	void set_aspect(float aspect) {
+		mAspect = aspect;
+		update_view();
+	}
+
 private:
 	TransformComponent& mTransformComponent;
 	

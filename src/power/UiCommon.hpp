@@ -14,6 +14,7 @@ class Window;
 class Actor;
 class ActorManager;
 class AnimationPanel;
+class CameraPanel;
 class AnimationTimeProvider;
 class HierarchyPanel;
 class ScenePanel;
@@ -42,6 +43,10 @@ public:
 	std::shared_ptr<TransformPanel> transform_panel() {
 		return mTransformPanel;
 	}
+	
+	std::shared_ptr<CameraPanel> camera_panel() {
+		return mCameraPanel;
+	}
 
 	std::shared_ptr<AnimationPanel> animation_panel() {
 		return mAnimationPanel;
@@ -58,6 +63,7 @@ private:
 	std::shared_ptr<nanogui::Window> mRightWrapper;
 	std::shared_ptr<ScenePanel> mScenePanel;
 	std::shared_ptr<TransformPanel> mTransformPanel;
+	std::shared_ptr<CameraPanel> mCameraPanel;
 	std::shared_ptr<AnimationPanel> mAnimationPanel;
 	std::shared_ptr<HierarchyPanel> mHierarchyPanel;
 	std::shared_ptr<nanogui::Widget> mStatusBar;

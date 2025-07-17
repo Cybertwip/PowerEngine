@@ -4,6 +4,7 @@
 #include "components/UiComponent.hpp"
 #include "grok/PromptBox.hpp"
 #include "ui/AnimationPanel.hpp"
+#include "ui/CameraPanel.hpp"
 #include "ui/HierarchyPanel.hpp"
 #include "ui/ScenePanel.hpp"
 //#include "ui/SceneTimeBar.hpp"
@@ -65,9 +66,11 @@ UiCommon::UiCommon(nanogui::Widget& parent, nanogui::Screen& screen, ActorManage
 	
 	mTransformPanel = std::make_shared<TransformPanel>(*mRightWrapper);
 	
+	mCameraPanel = std::make_shared<CameraPanel>(*mRightWrapper);
+
 	mAnimationPanel = std::make_shared<AnimationPanel>(*mRightWrapper, screen, mPreviewTimeProvider);
 	
-	mHierarchyPanel = std::make_shared<HierarchyPanel>(*mRightWrapper, mScenePanel, mTransformPanel, mAnimationPanel, mActorManager);
+	mHierarchyPanel = std::make_shared<HierarchyPanel>(*mRightWrapper, mScenePanel, mTransformPanel, mCameraPanel, mAnimationPanel, mActorManager);
 	
 	//	auto promptbox = new PromptBox(*rightWrapper);
 	//	promptbox->inc_ref();

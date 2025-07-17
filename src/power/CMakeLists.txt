@@ -210,6 +210,8 @@ add_executable(PowerEngine
 
     ${CMAKE_CURRENT_LIST_DIR}/ui/AnimationPanel.hpp
     ${CMAKE_CURRENT_LIST_DIR}/ui/AnimationPanel.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/ui/CameraPanel.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/ui/CameraPanel.cpp
     ${CMAKE_CURRENT_LIST_DIR}/ui/FileView.hpp
     ${CMAKE_CURRENT_LIST_DIR}/ui/FileView.cpp
     ${CMAKE_CURRENT_LIST_DIR}/ui/HierarchyPanel.hpp

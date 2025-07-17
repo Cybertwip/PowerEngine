@@ -19,6 +19,7 @@ class IActorSelectedCallback;
 class Actor;
 class ActorManager;
 class AnimationPanel;
+class CameraPanel;
 class ScenePanel;
 class TransformPanel;
 
@@ -63,6 +64,7 @@ private:
 	
 private:
 	std::shared_ptr<TransformPanel> mTransformPanel;
+	std::shared_ptr<CameraPanel> mCameraPanel;
 	std::shared_ptr<AnimationPanel> mAnimationPanel;
 	std::shared_ptr<nanogui::VScrollPanel> mScrollPanel;
 	ActorManager& mActorManager;
