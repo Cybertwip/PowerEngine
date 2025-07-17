@@ -1,0 +1,65 @@
+// A namespace for our serialized data structures
+namespace Power.Schema;
+
+// Basic data types used by components
+struct Vec3 {
+  x:float;
+  y:float;
+  z:float;
+}
+
+struct Quat {
+  w:float;
+  x:float;
+  y:float;
+  z:float;
+}
+
+// === Component Tables ===
+// Each component that can be serialized gets its own table.
+// Only include data that needs to be saved, not runtime state like callbacks.
+
+table TransformComponent {
+  translation:Vec3;
+  rotation:Quat;
+  scale:Vec3;
+}
+
+table CameraComponent {
+  fov:float;
+  near:float;
+  far:float;
+  aspect:float;
+  active:bool;
+  // Note: We don't save the TransformComponent reference directly.
+  // We will restore it during deserialization.
+}
+
+// === Union for Generic Components ===
+// This union lists all possible component types that can be serialized.
+union ComponentData {
+  TransformComponent,
+  CameraComponent
+  // Add new component types here in the future
+}
+
+// A wrapper table for the union
+table Component {
+  data:ComponentData;
+}
+
+// === Entity and Scene Definitions ===
+
+table Entity {
+  // Use a 64-bit unsigned integer for our UUID.
+  uuid:ulong;
+  components:[Component];
+}
+
+table Scene {
+  entities:[Entity];
+}
+
+// The root of our file will be a Scene
+root_type Scene;
+
