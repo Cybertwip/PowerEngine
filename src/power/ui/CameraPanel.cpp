@@ -127,6 +127,7 @@ void CameraPanel::update_values_from(const CameraComponent& camera) {
     mNearBox->set_value(camera.get_near());
     mFarBox->set_value(camera.get_far());
     mAspectBox->set_value(camera.get_aspect());
+	mIsControlling = camera.active();
 }
 
 // Manages panel visibility and data binding based on the selected actor.
