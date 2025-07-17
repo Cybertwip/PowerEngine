@@ -471,108 +471,56 @@ void GizmoManager::draw() {
 	
 }
 
-
-
 void GizmoManager::draw_content(const nanogui::Matrix4f& model, const nanogui::Matrix4f& view,
-								
 								const nanogui::Matrix4f& projection) {
-	
 	
 	if (mActiveActor.has_value() && mActiveGizmo.has_value()) {
 		
 		auto& actor = mActiveActor->get();
-		
 		auto& transformComponent = actor.get_component<TransformComponent>();
 		
-		
 		// Get the actor's transformation properties
-		
 		auto translation = transformComponent.get_translation();
-		
 		auto rotation = transformComponent.get_rotation(); // Actor's rotation (glm::quat)
-		
 		
 		glm::vec3 actorPosition(translation.x, translation.y, translation.z);
 		
-		
 		// --- FIX 1: Correct Camera Position and Scaling ---
-		
-		// The camera's world position is in the inverse of the view matrix.
-		
-		// We assume nanogui matrices are column-major like OpenGL/GLM.
-		
-		// The translation vector is the 4th column.
-		
 		auto viewInverse = view.inverse();
-		
 		glm::vec3 cameraPosition(viewInverse.m[3][0], viewInverse.m[3][1], viewInverse.m[3][2]);
 		
-		
 		// Calculate a scale factor to keep the gizmo a consistent size on screen
-		
 		float distance = glm::distance(cameraPosition, actorPosition);
-		
 		float visualScaleFactor = distance * 0.1f; // This factor may need tweaking
-		
 		glm::mat4 scaleMatrix = glm::scale(glm::mat4(1.0f), glm::vec3(visualScaleFactor));
 		
-		
 		// --- FIX 2: Correct Gizmo Rotation ---
-		
 		glm::mat4 actorTranslationMatrix = glm::translate(glm::mat4(1.0f), actorPosition);
-		
 		glm::mat4 actorRotationMatrix = glm::mat4_cast(rotation); // Convert actor's quaternion to a matrix
-		
 		
 		glm::mat4 finalRotationMatrix;
 		
-		
 		if (&mActiveGizmo->get() == &mRotationGizmo) {
-			
 			// The rotation gizmo MUST align with the actor's orientation.
-			
-			// We combine the actor's rotation with a correction for the model's default orientation.
-			
+			// (This part may also need review, but let's fix the translation gizmo first)
 			glm::mat4 modelCorrection = glm::mat4(1.0f);
-			
 			modelCorrection = glm::rotate(modelCorrection, glm::radians(180.0f), glm::vec3(0, 1, 0));
-			
 			modelCorrection = glm::rotate(modelCorrection, glm::radians(90.0f), glm::vec3(0, 0, 1));
-			
 			finalRotationMatrix = actorRotationMatrix * modelCorrection;
 			
 		} else {
-			
-			// For Translation and Scale, we'll keep the gizmo world-aligned (as the original code implied).
-			
-			// Its axes will not rotate with the actor. We only apply the model correction rotation.
-			
-			glm::mat4 modelCorrection = glm::mat4(1.0f);
-			
-			modelCorrection = glm::rotate(modelCorrection, glm::radians(90.0f), glm::vec3(1, 0, 0));
-			
-			modelCorrection = glm::rotate(modelCorrection, glm::radians(180.0f), glm::vec3(0, 1, 0));
-			
-			modelCorrection = glm::rotate(modelCorrection, glm::radians(90.0f), glm::vec3(0, 0, 1));
-			
-			finalRotationMatrix = modelCorrection;
-			
+			// For Translation and Scale, align the gizmo to the world.
+			// Let's remove all correctional rotations and use the gizmo's default orientation.
+			// This assumes the gizmo model is authored in the correct coordinate system.
+			finalRotationMatrix = glm::mat4(1.0f); // Use Identity Matrix (no rotation)
 		}
 		
-		
 		// Combine transformations in the correct order: Scale -> Rotate -> Translate
-		
 		auto gizmoModel = actorTranslationMatrix * finalRotationMatrix * scaleMatrix;
 		
-		
 		// Convert the final GLM matrix back to a nanogui matrix and draw
-		
 		auto gizmoMatrix = glm_to_nanogui(gizmoModel);
-		
 		auto& drawable = mActiveGizmo->get().get_component<DrawableComponent>();
-		
 		drawable.draw_content(gizmoMatrix, view, projection);
-		
 	}
-	
 }
