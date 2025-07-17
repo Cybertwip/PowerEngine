@@ -191,7 +191,7 @@ void GizmoManager::translate(float px, float py) {
 			break;
 			
 			
-		case GizmoAxis::Y:{
+		case GizmoAxis::Z:{
 			
 			auto& transformComponent = actor.get_component<TransformComponent>();
 			
@@ -209,7 +209,7 @@ void GizmoManager::translate(float px, float py) {
 			break;
 			
 			
-		case GizmoAxis::Z: {
+		case GizmoAxis::Y: {
 			
 			auto& transformComponent = actor.get_component<TransformComponent>();
 			
