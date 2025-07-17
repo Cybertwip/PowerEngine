@@ -7,6 +7,7 @@
 
 #include "actors/Actor.hpp"
 #include "components/CameraComponent.hpp"
+#include "components/UiComponent.hpp"
 
 // Constructor: Sets up the entire UI layout and initializes members.
 CameraPanel::CameraPanel(nanogui::Widget& parent)
@@ -94,6 +95,10 @@ CameraPanel::CameraPanel(nanogui::Widget& parent)
 			if (mActiveActor->get().find_component<CameraComponent>()) {
 				auto& cameraComponent = mActiveActor->get().get_component<CameraComponent>();
 				cameraComponent.set_active(mIsControlling);
+				
+				if (mActiveActor->get().find_component<UiComponent>()) {
+					mActiveActor->get().get_component<UiComponent>().select();
+				}
 			}
 		}
 		
