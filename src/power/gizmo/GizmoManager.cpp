@@ -54,11 +54,12 @@ mMeshShader(std::make_unique<ShaderWrapper>(shaderManager.get_shader("gizmo"))),
 
 mSkinnedShader(std::make_unique<ShaderWrapper>(shaderManager.get_shader("skinned_mesh"))),
 
-mTranslationGizmo(mMeshActorLoader.create_actor(get_resources_path() + "/internal/models/Gizmo/Translation.fbx", mDummyAnimationTimeProvider, mDummyAnimationTimeProvider, *mMeshShader, *mSkinnedShader)),
+// MODIFICATION: Create gizmos from procedural primitives instead of FBX files.
+mTranslationGizmo(mMeshActorLoader.create_actor("TranslationGizmo", PrimitiveShape::TranslationGizmo, *mMeshShader)),
 
-mRotationGizmo(mMeshActorLoader.create_actor(get_resources_path() + "/internal/models/Gizmo/Rotation.fbx", mDummyAnimationTimeProvider, mDummyAnimationTimeProvider, *mMeshShader, *mSkinnedShader)),
+mRotationGizmo(mMeshActorLoader.create_actor("RotationGizmo", PrimitiveShape::RotationGizmo, *mMeshShader)),
 
-mScaleGizmo(mMeshActorLoader.create_actor(get_resources_path() + "/internal/models/Gizmo/Scale.fbx", mDummyAnimationTimeProvider, mDummyAnimationTimeProvider, *mMeshShader, *mSkinnedShader))
+mScaleGizmo(mMeshActorLoader.create_actor("ScaleGizmo", PrimitiveShape::ScaleGizmo, *mMeshShader))
 
 {
 	

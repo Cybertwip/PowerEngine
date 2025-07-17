@@ -1,19 +1,27 @@
 #include "simulation/PrimitiveBuilder.hpp"
 
 #include "actors/Actor.hpp"
-
 #include "components/ColorComponent.hpp"
-#include "components/TransformComponent.hpp"
 #include "components/DrawableComponent.hpp"
+#include "components/MetadataComponent.hpp"
 #include "components/PrimitiveComponent.hpp"
-
+#include "components/TransformComponent.hpp"
 #include "graphics/drawing/Mesh.hpp"
-
 #include "graphics/shading/MaterialProperties.hpp"
 
+#include <glm/glm.hpp>
+#include <glm/gtc/constants.hpp>
+#include <glm/gtx/quaternion.hpp>
 #include <stdexcept>
 #include <vector>
-#include <cmath>
+
+// Helper function to create a new material
+static std::shared_ptr<MaterialProperties> create_material(const glm::vec4& color) {
+	auto material = std::make_shared<MaterialProperties>();
+	material->mDiffuse = color;
+	return material;
+}
+
 
 // Scaling factor
 const float SCALE_FACTOR = 100.0f;
@@ -226,8 +234,215 @@ std::unique_ptr<MeshData> create_cuboid_mesh_data(float width, float height, flo
 	return meshData;
 }
 
+// Helper function to add vertices and indices for a unit cube, transformed and colored.
+static void add_cube(std::vector<std::unique_ptr<MeshVertex>>& vertices,
+					 std::vector<unsigned int>& indices,
+					 uint32_t materialId,
+					 const glm::mat4& transform) {
+	uint32_t base_vertex = vertices.size();
+	
+	// 8 vertices of a cube
+	glm::vec3 v[8] = {
+		{-0.5f, -0.5f, -0.5f}, {0.5f, -0.5f, -0.5f}, {0.5f, 0.5f, -0.5f}, {-0.5f, 0.5f, -0.5f},
+		{-0.5f, -0.5f,  0.5f}, {0.5f, -0.5f,  0.5f}, {0.5f, 0.5f,  0.5f}, {-0.5f, 0.5f,  0.5f}
+	};
+	
+	for (int i = 0; i < 8; ++i) {
+		auto vertex = std::make_unique<MeshVertex>(glm::vec3(transform * glm::vec4(v[i], 1.0f)));
+		vertex->set_material_id(materialId);
+		vertices.emplace_back(std::move(vertex));
+	}
+	
+	// 12 triangles for a cube
+	unsigned int ind[] = {
+		0, 1, 2, 2, 3, 0, 4, 5, 6, 6, 7, 4,
+		0, 3, 7, 7, 4, 0, 1, 5, 6, 6, 2, 1,
+		3, 2, 6, 6, 7, 3, 0, 1, 5, 5, 4, 0
+	};
+	
+	for (int i = 0; i < 36; ++i) {
+		indices.emplace_back(base_vertex + ind[i]);
+	}
+}
+
+// Helper function to add vertices and indices for a cone, transformed and colored.
+static void add_cone(std::vector<std::unique_ptr<MeshVertex>>& vertices,
+					 std::vector<unsigned int>& indices,
+					 uint32_t materialId,
+					 const glm::mat4& transform,
+					 int segments = 12) {
+	uint32_t base_vertex = vertices.size();
+	uint32_t tip_vertex = base_vertex;
+	uint32_t base_center_vertex = base_vertex + 1;
+	
+	// Tip and base center vertices
+	vertices.emplace_back(std::make_unique<MeshVertex>(glm::vec3(transform * glm::vec4(0, 0.5f, 0, 1.0f))));
+	vertices.back()->set_material_id(materialId);
+	vertices.emplace_back(std::make_unique<MeshVertex>(glm::vec3(transform * glm::vec4(0, -0.5f, 0, 1.0f))));
+	vertices.back()->set_material_id(materialId);
+	
+	// Base vertices
+	for (int i = 0; i < segments; ++i) {
+		float angle = (float)i / segments * 2.0f * glm::pi<float>();
+		float x = cos(angle) * 0.5f;
+		float z = sin(angle) * 0.5f;
+		vertices.emplace_back(std::make_unique<MeshVertex>(glm::vec3(transform * glm::vec4(x, -0.5f, z, 1.0f))));
+		vertices.back()->set_material_id(materialId);
+	}
+	
+	// Indices for sides and base
+	for (int i = 0; i < segments; ++i) {
+		indices.emplace_back(tip_vertex);
+		indices.emplace_back(base_vertex + 2 + i);
+		indices.emplace_back(base_vertex + 2 + (i + 1) % segments);
+		
+		indices.emplace_back(base_center_vertex);
+		indices.emplace_back(base_vertex + 2 + (i + 1) % segments);
+		indices.emplace_back(base_vertex + 2 + i);
+	}
+}
+
+// Generates MeshData for the Translation Gizmo
+std::unique_ptr<MeshData> create_translation_gizmo_mesh_data() {
+	auto meshData = std::make_unique<MeshData>();
+	auto& vertices = meshData->get_vertices();
+	auto& indices = meshData->get_indices();
+	
+	const float shaftLength = 1.5f;
+	const float shaftRadius = 0.03f;
+	const float headLength = 0.4f;
+	const float headRadius = 0.1f;
+	
+	// Materials: 0=Red(X), 1=Green(Y), 2=Blue(Z)
+	meshData->get_material_properties().push_back(create_material({1, 0, 0, 1}));
+	meshData->get_material_properties().push_back(create_material({0, 1, 0, 1}));
+	meshData->get_material_properties().push_back(create_material({0, 0, 1, 1}));
+	
+	// X-Axis Arrow
+	glm::mat4 shaftX = glm::translate(glm::mat4(1.0f), {shaftLength * 0.5f, 0, 0}) * glm::scale(glm::mat4(1.0f), {shaftLength, shaftRadius, shaftRadius});
+	add_cube(vertices, indices, 0, shaftX);
+	glm::mat4 headX = glm::translate(glm::mat4(1.0f), {shaftLength, 0, 0}) * glm::rotate(glm::mat4(1.0f), -glm::half_pi<float>(), {0, 0, 1}) * glm::scale(glm::mat4(1.0f), {headLength, headRadius * 2, headRadius * 2});
+	add_cone(vertices, indices, 0, headX);
+	
+	// Y-Axis Arrow
+	glm::mat4 shaftY = glm::translate(glm::mat4(1.0f), {0, shaftLength * 0.5f, 0}) * glm::scale(glm::mat4(1.0f), {shaftRadius, shaftLength, shaftRadius});
+	add_cube(vertices, indices, 1, shaftY);
+	glm::mat4 headY = glm::translate(glm::mat4(1.0f), {0, shaftLength, 0}) * glm::scale(glm::mat4(1.0f), {headRadius * 2, headLength, headRadius * 2});
+	add_cone(vertices, indices, 1, headY);
+	
+	// Z-Axis Arrow
+	glm::mat4 shaftZ = glm::translate(glm::mat4(1.0f), {0, 0, shaftLength * 0.5f}) * glm::scale(glm::mat4(1.0f), {shaftRadius, shaftRadius, shaftLength});
+	add_cube(vertices, indices, 2, shaftZ);
+	glm::mat4 headZ = glm::translate(glm::mat4(1.0f), {0, 0, shaftLength}) * glm::rotate(glm::mat4(1.0f), glm::half_pi<float>(), {1, 0, 0}) * glm::scale(glm::mat4(1.0f), {headRadius * 2, headLength, headRadius * 2});
+	add_cone(vertices, indices, 2, headZ);
+	
+	return meshData;
+}
+
+// Generates MeshData for the Rotation Gizmo
+std::unique_ptr<MeshData> create_rotation_gizmo_mesh_data() {
+	auto meshData = std::make_unique<MeshData>();
+	auto& vertices = meshData->get_vertices();
+	auto& indices = meshData->get_indices();
+	
+	const float ringRadius = 1.0f;
+	const float tubeRadius = 0.04f;
+	const int ringSegments = 48;
+	const int tubeSegments = 12;
+	
+	// Materials: 0=Red(X), 1=Green(Y), 2=Blue(Z)
+	meshData->get_material_properties().push_back(create_material({1, 0, 0, 1}));
+	meshData->get_material_properties().push_back(create_material({0, 1, 0, 1}));
+	meshData->get_material_properties().push_back(create_material({0, 0, 1, 1}));
+	
+	auto create_torus = [&](uint32_t materialId, const glm::quat& rotation) {
+		uint32_t base_vertex = vertices.size();
+		for (int i = 0; i <= ringSegments; i++) {
+			float u = (float)i / ringSegments * 2.0f * glm::pi<float>();
+			glm::vec3 ringPos(cos(u) * ringRadius, sin(u) * ringRadius, 0);
+			
+			for (int j = 0; j <= tubeSegments; j++) {
+				float v = (float)j / tubeSegments * 2.0f * glm::pi<float>();
+				glm::vec3 tubePos(cos(v) * tubeRadius, sin(v) * tubeRadius, 0);
+				
+				glm::vec4 normal(tubePos, 0);
+				normal = glm::rotate(glm::quat(cos(u/2), 0,0,sin(u/2)), normal);
+				
+				auto finalPos = ringPos + glm::vec3(rotation * glm::vec4(tubePos.x, 0, tubePos.y, 0));
+				auto vertex = std::make_unique<MeshVertex>(finalPos);
+				vertex->set_material_id(materialId);
+				vertices.emplace_back(std::move(vertex));
+			}
+		}
+		
+		for (int i = 0; i < ringSegments; i++) {
+			for (int j = 0; j < tubeSegments; j++) {
+				int p1 = base_vertex + i * (tubeSegments + 1) + j;
+				int p2 = base_vertex + i * (tubeSegments + 1) + (j + 1);
+				int p3 = base_vertex + (i + 1) * (tubeSegments + 1) + (j + 1);
+				int p4 = base_vertex + (i + 1) * (tubeSegments + 1) + j;
+				indices.insert(indices.end(), { (unsigned)p1, (unsigned)p2, (unsigned)p3 });
+				indices.insert(indices.end(), { (unsigned)p1, (unsigned)p3, (unsigned)p4 });
+			}
+		}
+	};
+	
+	// X-Axis Ring (Red)
+	create_torus(0, glm::angleAxis(glm::half_pi<float>(), glm::vec3(0, 1, 0)));
+	// Y-Axis Ring (Green)
+	create_torus(1, glm::angleAxis(glm::half_pi<float>(), glm::vec3(1, 0, 0)));
+	// Z-Axis Ring (Blue)
+	create_torus(2, glm::quat(1,0,0,0));
+	
+	return meshData;
+}
+
+
+// Generates MeshData for the Scale Gizmo
+std::unique_ptr<MeshData> create_scale_gizmo_mesh_data() {
+	auto meshData = std::make_unique<MeshData>();
+	auto& vertices = meshData->get_vertices();
+	auto& indices = meshData->get_indices();
+	
+	const float shaftLength = 1.5f;
+	const float shaftRadius = 0.03f;
+	const float headSize = 0.15f;
+	
+	// Materials: 0=Red(X), 1=Green(Y), 2=Blue(Z)
+	meshData->get_material_properties().push_back(create_material({1, 0, 0, 1}));
+	meshData->get_material_properties().push_back(create_material({0, 1, 0, 1}));
+	meshData->get_material_properties().push_back(create_material({0, 0, 1, 1}));
+	
+	// X-Axis Handle
+	glm::mat4 shaftX = glm::translate(glm::mat4(1.0f), {shaftLength * 0.5f, 0, 0}) * glm::scale(glm::mat4(1.0f), {shaftLength, shaftRadius, shaftRadius});
+	add_cube(vertices, indices, 0, shaftX);
+	glm::mat4 headX = glm::translate(glm::mat4(1.0f), {shaftLength, 0, 0}) * glm::scale(glm::mat4(1.0f), glm::vec3(headSize));
+	add_cube(vertices, indices, 0, headX);
+	
+	// Y-Axis Handle
+	glm::mat4 shaftY = glm::translate(glm::mat4(1.0f), {0, shaftLength * 0.5f, 0}) * glm::scale(glm::mat4(1.0f), {shaftRadius, shaftLength, shaftRadius});
+	add_cube(vertices, indices, 1, shaftY);
+	glm::mat4 headY = glm::translate(glm::mat4(1.0f), {0, shaftLength, 0}) * glm::scale(glm::mat4(1.0f), glm::vec3(headSize));
+	add_cube(vertices, indices, 1, headY);
+	
+	// Z-Axis Handle
+	glm::mat4 shaftZ = glm::translate(glm::mat4(1.0f), {0, 0, shaftLength * 0.5f}) * glm::scale(glm::mat4(1.0f), {shaftRadius, shaftRadius, shaftLength});
+	add_cube(vertices, indices, 2, shaftZ);
+	glm::mat4 headZ = glm::translate(glm::mat4(1.0f), {0, 0, shaftLength}) * glm::scale(glm::mat4(1.0f), glm::vec3(headSize));
+	add_cube(vertices, indices, 2, headZ);
+	
+	return meshData;
+}
+
+
 std::unique_ptr<MeshData> PrimitiveBuilder::create_mesh_data(PrimitiveShape primitiveShape) {
 	switch (primitiveShape) {
+		case PrimitiveShape::TranslationGizmo:
+			return create_translation_gizmo_mesh_data();
+		case PrimitiveShape::RotationGizmo:
+			return create_rotation_gizmo_mesh_data();
+		case PrimitiveShape::ScaleGizmo:
+			return create_scale_gizmo_mesh_data();
 		case PrimitiveShape::Cube:
 			return create_cube_mesh_data();
 		case PrimitiveShape::Sphere:
@@ -236,24 +451,24 @@ std::unique_ptr<MeshData> PrimitiveBuilder::create_mesh_data(PrimitiveShape prim
 			// Example dimensions scaled by SCALE_FACTOR; these could be parameters if needed
 			return create_cuboid_mesh_data(1.0f, 2.0f, 1.0f);
 		default:
-			throw std::invalid_argument("Unsupported PrimitiveShape.");
+			throw std::invalid_argument("Unsupported or unimplemented PrimitiveShape for gizmo.");
 	}
 }
 
 PrimitiveBuilder::PrimitiveBuilder(IMeshBatch& meshBatch)
-: mMeshBatch(meshBatch) {
-}
+: mMeshBatch(meshBatch) {}
 
 Actor& PrimitiveBuilder::build(Actor& actor, const std::string& actorName, PrimitiveShape primitiveShape, ShaderWrapper& meshShader) {
-	// Create MeshData for the specified primitive shape
 	std::unique_ptr<MeshData> meshData = create_mesh_data(primitiveShape);
 	if (!meshData) {
 		throw std::runtime_error("Failed to create MeshData for the specified PrimitiveShape.");
 	}
 	
 	std::string crcGenerator = "";
-	
 	switch (primitiveShape) {
+		case PrimitiveShape::TranslationGizmo: crcGenerator = "TranslationGizmo"; break;
+		case PrimitiveShape::RotationGizmo: crcGenerator = "RotationGizmo"; break;
+		case PrimitiveShape::ScaleGizmo: crcGenerator = "ScaleGizmo"; break;
 		case PrimitiveShape::Cube:
 			crcGenerator = "Cube";
 			break;
@@ -263,15 +478,13 @@ Actor& PrimitiveBuilder::build(Actor& actor, const std::string& actorName, Primi
 		case PrimitiveShape::Cuboid:
 			crcGenerator = "Cuboid";
 			break;
+			// Cases for Cube, Sphere, etc.
+		default: crcGenerator = "UnknownPrimitive"; break;
 	}
 	
 	auto& metadataComponent = actor.add_component<MetadataComponent>(Hash32::generate_crc32_from_string(crcGenerator), actorName);
-	
-	// Retrieve or create ColorComponent
-	// Assuming the Actor does not already have a ColorComponent
 	auto& colorComponent = actor.add_component<ColorComponent>(actor.identifier());
-		
-	// Create Mesh
+	
 	std::unique_ptr<Mesh> mesh = std::make_unique<Mesh>(
 														*meshData,
 														meshShader,
@@ -280,17 +493,9 @@ Actor& PrimitiveBuilder::build(Actor& actor, const std::string& actorName, Primi
 														colorComponent
 														);
 	
-	// Create PrimitiveComponent with the Mesh
-	std::unique_ptr<PrimitiveComponent> primitiveComponent = std::make_unique<PrimitiveComponent>(std::move(mesh), std::move(meshData));
-	
-	// Create DrawableComponent and add to Actor
-	// If PrimitiveComponent is a Drawable, it can be wrapped in a DrawableComponent
-	std::unique_ptr<DrawableComponent> drawableComponent = std::make_unique<DrawableComponent>(std::move(primitiveComponent));
-	
-	actor.add_component<DrawableComponent>(std::move(drawableComponent));
-	
-	// Add TransformComponent for positioning and scaling
-	auto& transformComponent = actor.add_component<TransformComponent>();
+	auto primitiveComponent = std::make_unique<PrimitiveComponent>(std::move(mesh), std::move(meshData));
+	actor.add_component<DrawableComponent>(std::make_unique<DrawableComponent>(std::move(primitiveComponent)));
+	actor.add_component<TransformComponent>();
 	
 	return actor;
 }
