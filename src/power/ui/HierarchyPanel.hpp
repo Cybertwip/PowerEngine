@@ -31,7 +31,7 @@ class Button; // Forward-declare Button
 
 class HierarchyPanel : public IActorSelectedRegistry, public IActorVisualManager, public Panel {
 public:
-	HierarchyPanel(nanogui::Widget& parent, std::shared_ptr<ScenePanel> scenePanel, std::shared_ptr<TransformPanel> transformPanel, std::shared_ptr<AnimationPanel> animationPanel, ActorManager& actorManager);
+	HierarchyPanel(nanogui::Widget& parent, std::shared_ptr<ScenePanel> scenePanel, std::shared_ptr<TransformPanel> transformPanel, std::shared_ptr<CameraPanel> cameraPanel, std::shared_ptr<AnimationPanel> animationPanel, ActorManager& actorManager);
 	
 	~HierarchyPanel() = default;
 	

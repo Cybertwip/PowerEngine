@@ -20,7 +20,7 @@
 #include "components/TransformComponent.hpp"
 #include "components/UiComponent.hpp"
 
-HierarchyPanel::HierarchyPanel(nanogui::Widget& parent, std::shared_ptr<ScenePanel> scenePanel, std::shared_ptr<TransformPanel> transformPanel, std::shared_ptr<AnimationPanel> animationPanel, ActorManager& actorManager) : Panel(parent, "Actors"), mTransformPanel(transformPanel), mCameraPanel(cameraPanel), mAnimationPanel(animationPanel), mActorManager(actorManager) {
+HierarchyPanel::HierarchyPanel(nanogui::Widget& parent, std::shared_ptr<ScenePanel> scenePanel, std::shared_ptr<TransformPanel> transformPanel, std::shared_ptr<CameraPanel> cameraPanel, std::shared_ptr<AnimationPanel> animationPanel, ActorManager& actorManager) : Panel(parent, "Actors"), mTransformPanel(transformPanel), mCameraPanel(cameraPanel), mAnimationPanel(animationPanel), mActorManager(actorManager) {
 	set_position(nanogui::Vector2i(0, 0));
 	set_layout(std::make_unique<nanogui::GroupLayout>());
 	
