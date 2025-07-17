@@ -36,11 +36,15 @@ HierarchyPanel::HierarchyPanel(nanogui::Widget& parent, std::shared_ptr<ScenePan
 	// Populate it with items dynamically.
 	mContextMenu->addItem("Add Blueprint Component", [this]() {
 //		mSelectedActor
+		
+		refresh_selected_actor();
 	});
 	mContextMenu->addItem("Add Camera Component", [this]() {
 		if (!mSelectedActor->get().find_component<CameraComponent>()) {
 			mSelectedActor->get().add_component<CameraComponent>(mSelectedActor->get().get_component<TransformComponent>());
 		}
+		
+		refresh_selected_actor();
 
 	});
 
@@ -190,4 +194,21 @@ void HierarchyPanel::clear_actors() {
 		mTreeView->clear();
 		fire_actor_selected_event(std::nullopt);
 	});
+}
+
+void HierarchyPanel::refresh_selected_actor() {
+	if (mSelectedActor.has_value()) {
+		mTransformPanel->set_active_actor(mSelectedActor);
+		mCameraPanel->set_active_actor(mSelectedActor);
+		mAnimationPanel->set_active_actor(mSelectedActor);
+		for (auto& callbackRef : mActorSelectedCallbacks) {
+			callbackRef.get().OnActorSelected(mSelectedActor);
+		}
+	} else {
+		mTreeView->set_selected(nullptr);
+		mTransformPanel->set_active_actor(mSelectedActor);
+		mCameraPanel->set_active_actor(mSelectedActor);
+		mAnimationPanel->set_active_actor(mSelectedActor);
+	}
+
 }

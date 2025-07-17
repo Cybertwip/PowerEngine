@@ -62,6 +62,8 @@ private:
 	
 	void OnActorSelected(std::optional<std::reference_wrapper<Actor>> actor);
 	
+	void refresh_selected_actor();
+	
 private:
 	std::shared_ptr<TransformPanel> mTransformPanel;
 	std::shared_ptr<CameraPanel> mCameraPanel;
