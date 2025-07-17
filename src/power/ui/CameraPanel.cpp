@@ -20,7 +20,7 @@ CameraPanel::CameraPanel(nanogui::Widget& parent)
     auto gatherValuesCallback = [this](float) {
         if (mActiveActor.has_value()) {
             // Check if the actor actually has a camera component before proceeding.
-            if (mActiveActor->get().has_component<CameraComponent>()) {
+            if (mActiveActor->get().find_component<CameraComponent>()) {
                 auto& camera = mActiveActor->get().get_component<CameraComponent>();
                 gather_values_into(camera);
             }
@@ -128,7 +128,7 @@ void CameraPanel::set_active_actor(std::optional<std::reference_wrapper<Actor>> 
     bool shouldBeVisible = false;
     if (mActiveActor.has_value()) {
         // Check if the actor has the required component.
-        if (mActiveActor->get().has_component<CameraComponent>()) {
+        if (mActiveActor->get().find_component<CameraComponent>()) {
             auto& cameraComponent = mActiveActor->get().get_component<CameraComponent>();
             update_values_from(cameraComponent);
             shouldBeVisible = true;
@@ -138,6 +138,6 @@ void CameraPanel::set_active_actor(std::optional<std::reference_wrapper<Actor>> 
     // Set visibility and refresh the layout.
     set_visible(shouldBeVisible);
     if (parent()) {
-        parent()->perform_layout(screen()->nvg_context());
+        parent()->get().perform_layout(screen().nvg_context());
     }
 }
