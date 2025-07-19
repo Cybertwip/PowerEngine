@@ -8,12 +8,85 @@ struct Vec3 {
   z:float;
 }
 
+// ADDED: A struct for 2D integer vectors, used for node positions.
+struct Vec2i {
+    x:int;
+    y:int;
+}
+
 struct Quat {
   w:float;
   x:float;
   y:float;
   z:float;
 }
+
+// === Blueprint Enums ===
+// Enums mirroring the C++ definitions for the blueprint system.
+enum NodeType : ubyte { KeyPress, KeyRelease, String, Print }
+enum PinType : ubyte { Flow, Bool, Int, Float, String, Object, Function, Delegate }
+enum PinSubType : ubyte { None, Actor, Light, Camera, Animation, Sequence, Composition }
+enum PinKind : ubyte { Output, Input }
+
+
+// === Blueprint Data Payloads ===
+// FlatBuffers unions cannot contain scalar types (like int, bool).
+// We wrap them in tables to be included in the union.
+table IntVal   { val:int; }
+table FloatVal { val:float; }
+table BoolVal  { val:bool; }
+
+// A table for the simplified Entity struct payload.
+table BlueprintEntityPayload { id:int; }
+
+// A union to represent the std::variant payload in CorePin and DataCoreNode.
+union BlueprintPayloadData {
+  s:string,
+  i:IntVal,
+  f:FloatVal,
+  b:BoolVal,
+  e:BlueprintEntityPayload
+}
+
+// A wrapper for the payload union to make it nullable.
+table BlueprintPayload {
+    data:BlueprintPayloadData;
+}
+
+
+// === Blueprint Structure ===
+// Defines the serializable structure of the blueprint graph.
+table BlueprintPin {
+    id:int;
+    type:PinType;
+    subtype:PinSubType;
+    kind:PinKind;
+    data:BlueprintPayload;
+}
+
+table BlueprintNode {
+    id:long;
+    type:NodeType;
+    position:Vec2i;
+    inputs:[BlueprintPin];
+    outputs:[BlueprintPin];
+    data:BlueprintPayload; // For DataCoreNode's specific data.
+}
+
+table BlueprintLink {
+    id:int;
+    start_node_id:long;
+    start_pin_id:int;
+    end_node_id:long;
+    end_pin_id:int;
+}
+
+// The main table for the blueprint component.
+table BlueprintComponent {
+    nodes:[BlueprintNode];
+    links:[BlueprintLink];
+}
+
 
 // === Component Tables ===
 // Each component that can be serialized gets its own table.
@@ -32,7 +105,6 @@ table CameraComponent {
   active:bool;
 }
 
-// ADDED: Table for the model metadata
 table ModelMetadataComponent {
   model_path:string;
 }
@@ -43,7 +115,8 @@ table ModelMetadataComponent {
 union ComponentData {
   TransformComponent,
   CameraComponent,
-  ModelMetadataComponent // ADDED: New component to the union
+  ModelMetadataComponent,
+  BlueprintComponent // ADDED: New component to the union
 }
 
 // A wrapper table for the union

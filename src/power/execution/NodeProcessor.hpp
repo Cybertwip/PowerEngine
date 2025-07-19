@@ -54,6 +54,11 @@ public:
 	CoreNode& get_node(long long id);
 	
 	void break_links(CoreNode& node);
+	
+public:
+	const std::vector<std::unique_ptr<CoreNode>>& get_nodes() const { return nodes; }
+	const std::vector<std::unique_ptr<Link>>& get_links() const { return links; }
+
 
 private:
 	long long next_id;

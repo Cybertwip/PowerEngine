@@ -393,8 +393,6 @@ void Application::new_project_action() {
 	});
 }
 
-
-
 void Application::new_scene_action() {
 	mActorManager->clear_actors();
 }
@@ -415,8 +413,6 @@ void Application::save_scene_action() {
 	});
 
 }
-
-
 
 void Application::load_scene_action() {
 	nanogui::async([this]() {
