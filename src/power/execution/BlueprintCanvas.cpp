@@ -218,6 +218,9 @@ void BlueprintCanvas::draw() {
 	
 	render_pass().set_depth_test(nanogui::RenderPass::DepthTest::Always, true); // draw on top
 	mGrid->draw_content(nanogui::Matrix4f::identity(), mView, mProjection);
+	
+	mLoadBlueprintButton->draw(screen().nvg_context());
+	mSaveBlueprintButton->draw(screen().nvg_context());
 }
 
 void BlueprintCanvas::draw(NVGcontext *ctx) {
