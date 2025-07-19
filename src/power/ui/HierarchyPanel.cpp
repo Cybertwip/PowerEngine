@@ -39,8 +39,20 @@ HierarchyPanel::HierarchyPanel(nanogui::Widget& parent, std::shared_ptr<ScenePan
 		auto& actor = mActorManager.create_actor();
 		actor.add_component<TransformComponent>();
 		
-		auto& metadataComponent = actor.add_component<MetadataComponent>(actor.identifier(), "Actor");
-
+		// Determine the new actor's name based on the current number of actors.
+		// We get the count of actors that already have a name via the MetadataComponent.
+		const auto& actors = mActorManager.get_actors_with_component<MetadataComponent>();
+		const size_t actorCount = actors.size();
+		
+		std::string actorName = "Actor";
+		if (actorCount > 0) {
+			// For subsequent actors, append a number, e.g., "Actor 1", "Actor 2", etc.
+			actorName += " " + std::to_string(actorCount);
+		}
+		
+		// Add the metadata component with the generated name.
+		auto& metadataComponent = actor.add_component<MetadataComponent>(actor.identifier(), actorName);
+		
 		add_actor(std::ref(actor));
 	});
 	
@@ -55,11 +67,11 @@ HierarchyPanel::HierarchyPanel(nanogui::Widget& parent, std::shared_ptr<ScenePan
 	
 	// Populate it with items dynamically.
 	mContextMenu->addItem("Add Blueprint Component", [this]() {
-//		mSelectedActor
+		//		mSelectedActor
 		
 		if(!mSelectedActor->get().find_component<BlueprintComponent>()) {
 			auto node_processor = std::make_unique<NodeProcessor>();
-
+			
 			mSelectedActor->get().add_component<BlueprintComponent>(std::move(node_processor));
 		}
 		
@@ -71,14 +83,14 @@ HierarchyPanel::HierarchyPanel(nanogui::Widget& parent, std::shared_ptr<ScenePan
 		}
 		
 		refresh_selected_actor();
-
+		
 	});
-
+	
 }
 
 
 bool HierarchyPanel::mouse_drag_event(const nanogui::Vector2i &p, const nanogui::Vector2i &rel,
-									    int button, int modifiers) {
+									  int button, int modifiers) {
 	// Disable dragging
 	return mScrollPanel->mouse_drag_event(p, rel, button, modifiers);
 }
@@ -155,7 +167,7 @@ void HierarchyPanel::populate_tree(Actor &actor, std::shared_ptr<nanogui::TreeVi
 								OnActorSelected(actor);
 							})
 	: mTreeView->add_node(std::string{actor.get_component<MetadataComponent>().name()},
-						    [this, &actor]() {
+						  [this, &actor]() {
 		OnActorSelected(actor);
 	});
 	
@@ -210,7 +222,7 @@ void HierarchyPanel::fire_actor_selected_event(std::optional<std::reference_wrap
 	mTransformPanel->set_active_actor(actor);
 	mCameraPanel->set_active_actor(actor);
 	mAnimationPanel->set_active_actor(actor);
-
+	
 	for (auto& callbackRef : mActorSelectedCallbacks) {
 		callbackRef.get().OnActorSelected(actor);
 	}
@@ -242,5 +254,5 @@ void HierarchyPanel::refresh_selected_actor() {
 		mCameraPanel->set_active_actor(mSelectedActor);
 		mAnimationPanel->set_active_actor(mSelectedActor);
 	}
-
+	
 }
