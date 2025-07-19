@@ -35,7 +35,7 @@ public:
      * @param skinnedShader The shader to use for skinned meshes.
      * @return A reference to the configured actor.
      */
-    Actor& build(Actor& actor, AnimationTimeProvider& timeProvider, AnimationTimeProvider& previewTimeProvider, const std::string& path, ShaderWrapper& meshShader, ShaderWrapper& skinnedShader);
+    Actor& build(Actor& actor, AnimationTimeProvider& timeProvider, const std::string& path, ShaderWrapper& meshShader, ShaderWrapper& skinnedShader);
 
     /**
      * @brief Builds an actor from a model file provided as a memory stream.
@@ -48,7 +48,7 @@ public:
      * @param skinnedShader The shader to use for skinned meshes.
      * @return A reference to the configured actor.
      */
-    Actor& build(Actor& actor, AnimationTimeProvider& timeProvider, AnimationTimeProvider& previewTimeProvider, std::stringstream& dataStream, const std::string& path, ShaderWrapper& meshShader, ShaderWrapper& skinnedShader);
+    Actor& build(Actor& actor, AnimationTimeProvider& timeProvider, std::stringstream& dataStream, const std::string& path, ShaderWrapper& meshShader, ShaderWrapper& skinnedShader);
 
 private:
     /**
@@ -58,7 +58,6 @@ private:
     Actor& build_from_model_data(
         Actor& actor,
         AnimationTimeProvider& timeProvider,
-        AnimationTimeProvider& previewTimeProvider,
         std::unique_ptr<ModelImporter> importer,
         const std::string& path,
         const std::string& actorName,

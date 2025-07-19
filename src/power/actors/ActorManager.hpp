@@ -17,6 +17,7 @@ class MeshActorLoader;
 class GizmoManager;
 class UiManager;
 class Batch;
+class SerializationModule;
 
 class ActorManager : public IActorManager {
 public:
@@ -46,12 +47,19 @@ public:
 	void visit(Batch& batch);
 
 	void save_scene(const std::string& filepath);
-	void load_scene(const std::string& filepath);
-	
+	void load_scene(const std::string& filepath);	
 private:
+	Actor& create_actor(entt::entity entity);
+	entt::registry& registry() {
+		return mRegistry;
+	}
+
 	entt::registry& mRegistry;
     CameraManager& mCameraManager;
     std::vector<std::unique_ptr<Actor>> mActors;
+
+private:
+	friend class SerializationModule;
 
 };
 

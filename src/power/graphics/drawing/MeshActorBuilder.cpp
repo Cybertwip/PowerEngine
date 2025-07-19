@@ -6,6 +6,7 @@
 #include "components/DrawableComponent.hpp"
 #include "components/MeshComponent.hpp"
 #include "components/MetadataComponent.hpp"
+#include "components/ModelMetadataComponent.hpp"
 #include "components/PlaybackComponent.hpp"
 #include "components/SkinnedAnimationComponent.hpp"
 #include "components/SkinnedMeshComponent.hpp"
@@ -23,16 +24,12 @@
 #include <sstream>
 #include <vector>
 
-// Note: The MeshActorImporter is no longer needed.
-// #include "filesystem/MeshActorImporter.hpp"
-
-
 MeshActorBuilder::MeshActorBuilder(BatchUnit& batchUnit)
 : mBatchUnit(batchUnit) {
 	// The MeshActorImporter member is removed, so no initialization is needed.
 }
 
-Actor& MeshActorBuilder::build(Actor& actor, AnimationTimeProvider& timeProvider, AnimationTimeProvider& previewTimeProvider, const std::string& path, ShaderWrapper& meshShader, ShaderWrapper& skinnedShader) {
+Actor& MeshActorBuilder::build(Actor& actor, AnimationTimeProvider& timeProvider, const std::string& path, ShaderWrapper& meshShader, ShaderWrapper& skinnedShader) {
 	
 	std::filesystem::path filePath(path);
 	std::string actorName = filePath.stem().string();
@@ -45,10 +42,10 @@ Actor& MeshActorBuilder::build(Actor& actor, AnimationTimeProvider& timeProvider
 	}
 	
 	// Pass the populated importer to the main build logic.
-	return build_from_model_data(actor, timeProvider, previewTimeProvider, std::move(importer), path, actorName, meshShader, skinnedShader);
+	return build_from_model_data(actor, timeProvider, std::move(importer), path, actorName, meshShader, skinnedShader);
 }
 
-Actor& MeshActorBuilder::build(Actor& actor, AnimationTimeProvider& timeProvider, AnimationTimeProvider& previewTimeProvider, std::stringstream& dataStream, const std::string& path, ShaderWrapper& meshShader, ShaderWrapper& skinnedShader) {
+Actor& MeshActorBuilder::build(Actor& actor, AnimationTimeProvider& timeProvider, std::stringstream& dataStream, const std::string& path, ShaderWrapper& meshShader, ShaderWrapper& skinnedShader) {
 	
 	std::filesystem::path filePath(path);
 	std::string extension = filePath.extension().string();
@@ -66,16 +63,14 @@ Actor& MeshActorBuilder::build(Actor& actor, AnimationTimeProvider& timeProvider
 	}
 	
 	// Pass the populated importer to the main build logic.
-	return build_from_model_data(actor, timeProvider, previewTimeProvider, std::move(importer), path, actorName, meshShader, skinnedShader);
+	return build_from_model_data(actor, timeProvider, std::move(importer), path, actorName, meshShader, skinnedShader);
 }
 
-Actor& MeshActorBuilder::build_from_model_data(Actor& actor, AnimationTimeProvider& timeProvider, AnimationTimeProvider& previewTimeProvider, std::unique_ptr<ModelImporter> importer, const std::string& path, const std::string& actorName, ShaderWrapper& meshShader, ShaderWrapper& skinnedShader) {
+Actor& MeshActorBuilder::build_from_model_data(Actor& actor, AnimationTimeProvider& timeProvider, std::unique_ptr<ModelImporter> importer, const std::string& path, const std::string& actorName, ShaderWrapper& meshShader, ShaderWrapper& skinnedShader) {
 	
 	// Add common components
 	auto& metadataComponent = actor.add_component<MetadataComponent>(Hash32::generate_crc32_from_string(path), actorName);
 	auto& colorComponent = actor.add_component<ColorComponent>(actor.identifier());
-	auto& transformComponent = actor.add_component<TransformComponent>();
-	actor.add_component<TransformAnimationComponent>(transformComponent, timeProvider);
 	
 	std::unique_ptr<Drawable> drawableComponent;
 	
@@ -85,7 +80,7 @@ Actor& MeshActorBuilder::build_from_model_data(Actor& actor, AnimationTimeProvid
 		std::vector<std::unique_ptr<SkinnedMesh>> skinnedMeshComponentData;
 		
 		auto& skeletonComponent = actor.add_component<SkeletonComponent>(*(importer->GetSkeleton()));
-		actor.add_component<SkinnedAnimationComponent>(skeletonComponent, previewTimeProvider);
+		actor.add_component<SkinnedAnimationComponent>(skeletonComponent, timeProvider);
 		
 		for (auto& meshDataItem : importer->GetMeshData()) {
 			// ModelImporter guarantees SkinnedMeshData if a skeleton is present.
@@ -139,6 +134,9 @@ Actor& MeshActorBuilder::build_from_model_data(Actor& actor, AnimationTimeProvid
 			}
 		}
 	}
+	
+	
+	actor.add_component<ModelMetadataComponent>(path);
 	
 	return actor;
 }

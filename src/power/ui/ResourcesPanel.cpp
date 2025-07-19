@@ -52,11 +52,10 @@ bool RenameFileOrDirectory(const std::string& oldPath, const std::string& newNam
 }
 
 
-ResourcesPanel::ResourcesPanel(nanogui::Widget& parent, nanogui::Screen& screen, DirectoryNode& root_directory_node, AnimationTimeProvider& animationTimeProvider, AnimationTimeProvider& previewTimeProvider, UiManager& uiManager)
+ResourcesPanel::ResourcesPanel(nanogui::Widget& parent, nanogui::Screen& screen, DirectoryNode& root_directory_node, AnimationTimeProvider& animationTimeProvider, UiManager& uiManager)
 : Panel(parent, "Resources"),
 mRootDirectoryNode(root_directory_node),
 mGlobalAnimationTimeProvider(animationTimeProvider),
-mPreviewTimeProvider(previewTimeProvider),
 mUiManager(uiManager)
 {
 	// Set the layout

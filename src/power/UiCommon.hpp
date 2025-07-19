@@ -26,7 +26,7 @@ class UiManager;
 
 class UiCommon {
 public:
-    UiCommon(nanogui::Widget& parent, nanogui::Screen& screen, ActorManager& actorManager, AnimationTimeProvider& animationTimeProvider, AnimationTimeProvider& previewTimeProvider);
+    UiCommon(nanogui::Widget& parent, nanogui::Screen& screen, ActorManager& actorManager, AnimationTimeProvider& animationTimeProvider);
         
 	std::shared_ptr<HierarchyPanel> hierarchy_panel() {
         return mHierarchyPanel;
@@ -71,5 +71,4 @@ private:
 	
 	ActorManager& mActorManager;
 	AnimationTimeProvider& mAnimationTimeProvider;
-	AnimationTimeProvider& mPreviewTimeProvider;
 };

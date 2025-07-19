@@ -205,6 +205,10 @@ class Application : public nanogui::DraggableScreen
 	void register_click_callback(std::function<void(bool, int, int, int, int)> callback);
 	
 	void new_project_action();
+	
+	void new_scene_action();
+	void save_scene_action();
+	void load_scene_action();
 
    private:
 	bool drop_event(Widget& sender, const std::vector<std::string> & filenames) override;
@@ -212,7 +216,6 @@ class Application : public nanogui::DraggableScreen
 	bool mouse_button_event(const nanogui::Vector2i &p, int button, bool down, int modifiers) override;
 	
 	AnimationTimeProvider mGlobalAnimationTimeProvider;
-	AnimationTimeProvider mPreviewAnimationTimeProvider;
 	std::unique_ptr<ActorManager> mActorManager;
 
 	std::unique_ptr<ExecutionManager> mExecutionManager;

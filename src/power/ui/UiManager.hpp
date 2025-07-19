@@ -71,7 +71,6 @@ public:
 			  std::shared_ptr<AnimationPanel> animationPanel,
 //			  std::shared_ptr<SceneTimeBar> sceneTimeBar,
 			  AnimationTimeProvider& animationTimeProvider,
-			  AnimationTimeProvider& previewTimeProvider,
 			  CameraManager& cameraManager,
 			  GizmoManager& gizmoManager,
 			  std::function<void(std::function<void(int, int)>)> applicationClickRegistrator);

@@ -23,7 +23,7 @@ class UiManager;
 
 class StatusBarPanel : public Panel {
 public:
-	StatusBarPanel(nanogui::Widget& parent, nanogui::Screen& screen, std::shared_ptr<IActorVisualManager> actorVisualManager, AnimationTimeProvider& animationTimeProvider, AnimationTimeProvider& previewTimeProvider, MeshActorLoader& meshActorLoader, ShaderManager& shaderManager, UiManager& uiManager, std::function<void(std::function<void(int, int)>)> applicationClickRegistrator);
+	StatusBarPanel(nanogui::Widget& parent, nanogui::Screen& screen, std::shared_ptr<IActorVisualManager> actorVisualManager, AnimationTimeProvider& animationTimeProvider, MeshActorLoader& meshActorLoader, ShaderManager& shaderManager, UiManager& uiManager, std::function<void(std::function<void(int, int)>)> applicationClickRegistrator);
 	
 	std::shared_ptr<ResourcesPanel> resources_panel() {
 		return mResourcesPanel;

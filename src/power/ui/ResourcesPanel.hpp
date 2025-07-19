@@ -18,7 +18,7 @@ class ResourcesPanel : public Panel {
 public:
 	ResourcesPanel(nanogui::Widget& parent, nanogui::Screen& screen,
 				   DirectoryNode& root_directory_node,
-				   AnimationTimeProvider& animationTimeProvider, AnimationTimeProvider& previewTimeProvider, UiManager& uiManager);
+				   AnimationTimeProvider& animationTimeProvider, UiManager& uiManager);
 	
 	~ResourcesPanel();
 	
@@ -37,7 +37,6 @@ private:
 	void export_assets();
 	
 	AnimationTimeProvider& mGlobalAnimationTimeProvider;
-	AnimationTimeProvider& mPreviewTimeProvider;
 	DirectoryNode& mRootDirectoryNode;
 	std::string mSelectedDirectoryPath;
 	

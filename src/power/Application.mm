@@ -70,6 +70,9 @@ static Application* g_App = nullptr;
 // We add our action method directly to NSApplication.
 @interface NSApplication (PowerEngineActions)
 - (IBAction)newProjectAction:(id)sender;
+- (IBAction)newSceneAction:(id)sender;
+- (IBAction)saveSceneAction:(id)sender;
+- (IBAction)loadSceneAction:(id)sender;
 @end
 
 @implementation NSApplication (PowerEngineActions)
@@ -79,13 +82,30 @@ static Application* g_App = nullptr;
 		g_App->new_project_action();
 	}
 }
-@end
+- (IBAction)newSceneAction:(id)sender {
+	// This Objective-C method calls the C++ method on our app instance.
+	if (g_App) {
+		g_App->new_scene_action();
+	}
+}
 
+- (IBAction)saveSceneAction:(id)sender {
+	// This Objective-C method calls the C++ method on our app instance.
+	if (g_App) {
+		g_App->save_scene_action();
+	}
+}
+- (IBAction)loadSceneAction:(id)sender {
+	// This Objective-C method calls the C++ method on our app instance.
+	if (g_App) {
+		g_App->load_scene_action();
+	}
+}
+@end
 
 Application::Application()
 : nanogui::DraggableScreen("Power Engine")
 , mGlobalAnimationTimeProvider(60 * 30)
-, mPreviewAnimationTimeProvider(60 * 30)
 {
 	g_App = this;
 
@@ -110,7 +130,7 @@ void Application::initialize() {
 	
 	DraggableScreen::initialize();
 
-	mUiCommon = std::make_shared<UiCommon>(*this, screen(), *mActorManager, mGlobalAnimationTimeProvider, mPreviewAnimationTimeProvider);
+	mUiCommon = std::make_shared<UiCommon>(*this, screen(), *mActorManager, mGlobalAnimationTimeProvider);
 	
 	mRenderCommon = std::make_shared<RenderCommon>(*mUiCommon->scene_panel(), *this, *mEntityRegistry, *mActorManager, *mCameraManager);
 	
@@ -148,7 +168,7 @@ void Application::initialize() {
 											 mUiCommon->status_bar(),
 											 mUiCommon->animation_panel(),
 //											 mUiCommon->scene_time_bar(),
-											 mGlobalAnimationTimeProvider, mPreviewAnimationTimeProvider,
+											 mGlobalAnimationTimeProvider,
 											 *mCameraManager,
 											 *mGizmoManager,
 											 [this](std::function<void(int, int)> callback){
@@ -176,7 +196,7 @@ void Application::initialize() {
 		
 	mVirtualMachine = std::make_unique<VirtualMachine>();
 	
-	mCartridgeActorLoader = std::make_unique<CartridgeActorLoader>(*mVirtualMachine, *mMeshActorLoader, *mActorManager, *mUiCommon->hierarchy_panel(), mGlobalAnimationTimeProvider, mPreviewAnimationTimeProvider, *mMeshShader, *mSkinnedShader);
+	mCartridgeActorLoader = std::make_unique<CartridgeActorLoader>(*mVirtualMachine, *mMeshActorLoader, *mActorManager, *mUiCommon->hierarchy_panel(), mGlobalAnimationTimeProvider, *mMeshShader, *mSkinnedShader);
 	
 	mCartridge = std::make_unique<Cartridge>(*mVirtualMachine, *mCartridgeActorLoader, *mCameraManager);
 
@@ -208,10 +228,10 @@ bool Application::keyboard_event(int key, int scancode, int action, int modifier
 	}
 	
 	// Detect "New Project" trigger (e.g., Ctrl + N)
-	if (key == GLFW_KEY_N && action == GLFW_PRESS && modifiers & GLFW_MOD_CONTROL) {
-		new_project_action();
-		return true;
-	}
+//	if (key == GLFW_KEY_N && action == GLFW_PRESS && modifiers & GLFW_MOD_CONTROL) {
+//		new_project_action();
+//		return true;
+//	}
 //	if (key == GLFW_KEY_ENTER && action == GLFW_PRESS) {
 ////		mMeshActorLoader->cleanup();
 //		auto& skinnedActor = mMeshActorLoader->create_actor("test.fbx", mGlobalAnimationTimeProvider, *mMeshShader, *mSkinnedShader);
@@ -331,7 +351,7 @@ bool Application::drop_event(Widget& sender, const std::vector<std::string> & fi
 			// For example, !mUiManager->some_other_panel()->contains(m_mouse_pos)
 			
 			if (path.find(".fbx") != std::string::npos) {
-				mUiCommon->hierarchy_panel()->add_actor(mMeshActorLoader->create_actor(path, mGlobalAnimationTimeProvider, mPreviewAnimationTimeProvider, *mMeshShader, *mSkinnedShader));
+				mUiCommon->hierarchy_panel()->add_actor(mMeshActorLoader->create_actor(path, mGlobalAnimationTimeProvider, *mMeshShader, *mSkinnedShader));
 //				mUiCommon->scene_time_bar()->refresh_actors();
 				return; // Event handled
 			}
@@ -340,6 +360,95 @@ bool Application::drop_event(Widget& sender, const std::vector<std::string> & fi
 }
 
 void Application::new_project_action() {
+	// Using nanogui::async to keep the UI responsive while the dialog is open.
+	nanogui::async([this]() {
+		nanogui::file_dialog_async({{"", "Folders"}}, true, false,
+								   [this](const std::vector<std::string>& folders) {
+			if (folders.empty()) {
+				return; // User canceled
+			}
+			std::string projectFolder = folders.front();
+			try {
+				if (DirectoryNode::createProjectFolder(projectFolder)) {
+					// Reset the application state for the new project
+					mBlueprintManager->stop();
+					mUiCommon->hierarchy_panel()->clear_actors();
+					mExecutionManager->set_execution_mode(ExecutionManager::EExecutionMode::Editor);
+					
+					// Asynchronously refresh the file view to show the new project folder
+					nanogui::async([this]() {
+						mUiManager->status_bar_panel()->resources_panel()->refresh_file_view();
+					});
+				}
+			} catch (const std::exception& e) {
+				std::cerr << "Error creating project folder: " << e.what() << std::endl;
+			}
+		});
+	});
+}
+
+
+
+void Application::new_scene_action() {
+	// Using nanogui::async to keep the UI responsive while the dialog is open.
+	nanogui::async([this]() {
+		nanogui::file_dialog_async({{"", "Folders"}}, true, false,
+								   [this](const std::vector<std::string>& folders) {
+			if (folders.empty()) {
+				return; // User canceled
+			}
+			std::string projectFolder = folders.front();
+			try {
+				if (DirectoryNode::createProjectFolder(projectFolder)) {
+					// Reset the application state for the new project
+					mBlueprintManager->stop();
+					mUiCommon->hierarchy_panel()->clear_actors();
+					mExecutionManager->set_execution_mode(ExecutionManager::EExecutionMode::Editor);
+					
+					// Asynchronously refresh the file view to show the new project folder
+					nanogui::async([this]() {
+						mUiManager->status_bar_panel()->resources_panel()->refresh_file_view();
+					});
+				}
+			} catch (const std::exception& e) {
+				std::cerr << "Error creating project folder: " << e.what() << std::endl;
+			}
+		});
+	});
+}
+
+
+void Application::save_scene_action() {
+	// Using nanogui::async to keep the UI responsive while the dialog is open.
+	nanogui::async([this]() {
+		nanogui::file_dialog_async({{"", "Folders"}}, true, false,
+								   [this](const std::vector<std::string>& folders) {
+			if (folders.empty()) {
+				return; // User canceled
+			}
+			std::string projectFolder = folders.front();
+			try {
+				if (DirectoryNode::createProjectFolder(projectFolder)) {
+					// Reset the application state for the new project
+					mBlueprintManager->stop();
+					mUiCommon->hierarchy_panel()->clear_actors();
+					mExecutionManager->set_execution_mode(ExecutionManager::EExecutionMode::Editor);
+					
+					// Asynchronously refresh the file view to show the new project folder
+					nanogui::async([this]() {
+						mUiManager->status_bar_panel()->resources_panel()->refresh_file_view();
+					});
+				}
+			} catch (const std::exception& e) {
+				std::cerr << "Error creating project folder: " << e.what() << std::endl;
+			}
+		});
+	});
+}
+
+
+
+void Application::load_scene_action() {
 	// Using nanogui::async to keep the UI responsive while the dialog is open.
 	nanogui::async([this]() {
 		nanogui::file_dialog_async({{"", "Folders"}}, true, false,

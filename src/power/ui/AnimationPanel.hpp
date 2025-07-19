@@ -17,21 +17,15 @@ class Widget;
 
 class AnimationPanel : public Panel {
 public:
-	AnimationPanel(nanogui::Widget& parent, nanogui::Screen& screen, AnimationTimeProvider& previewTimeProvider);
+	AnimationPanel(nanogui::Widget& parent, nanogui::Screen& screen);
 	
 	// Sets the currently focused actor to control its animations
 	void set_active_actor(std::optional<std::reference_wrapper<Actor>> actor);
 	
 	// Loads an animation file for the active actor
 	void parse_file(const std::string& path);
-	
-	// Externally updates the animation time
-	void update_with(int currentTime);
-	
-private:
-	// Provides the time for the animation preview
-	AnimationTimeProvider& mPreviewTimeProvider;
-	
+		
+private:	
 	// The actor whose animations are being controlled
 	std::optional<std::reference_wrapper<Actor>> mActiveActor;
 	

@@ -96,6 +96,7 @@ add_executable(PowerEngine
     ${CMAKE_CURRENT_LIST_DIR}/components/DrawableComponent.cpp
     ${CMAKE_CURRENT_LIST_DIR}/components/DrawableComponent.hpp
     ${CMAKE_CURRENT_LIST_DIR}/components/MetadataComponent.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/components/ModelMetadataComponent.hpp
     ${CMAKE_CURRENT_LIST_DIR}/components/PlaybackComponent.hpp
     ${CMAKE_CURRENT_LIST_DIR}/components/TransformComponent.hpp
     ${CMAKE_CURRENT_LIST_DIR}/components/UiComponent.hpp
@@ -197,6 +198,10 @@ add_executable(PowerEngine
     ${CMAKE_CURRENT_LIST_DIR}/serialization/SceneSerializer.hpp
     ${CMAKE_CURRENT_LIST_DIR}/serialization/SceneSerializer.cpp
     ${CMAKE_CURRENT_LIST_DIR}/serialization/UUID.hpp
+
+    ${CMAKE_CURRENT_LIST_DIR}/serialization/SerializationModule.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/serialization/SerializationModule.hpp
+
 
     ${CMAKE_CURRENT_LIST_DIR}/simulation/Cartridge.hpp
     ${CMAKE_CURRENT_LIST_DIR}/simulation/ICartridge.hpp

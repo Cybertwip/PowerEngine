@@ -13,8 +13,8 @@
 
 #include <iostream>
 
-AnimationPanel::AnimationPanel(nanogui::Widget& parent, nanogui::Screen& screen, AnimationTimeProvider& previewTimeProvider)
-: Panel(parent, "Animation"), mActiveActor(std::nullopt), mPreviewTimeProvider(previewTimeProvider) {
+AnimationPanel::AnimationPanel(nanogui::Widget& parent, nanogui::Screen& screen)
+: Panel(parent, "Animation"), mActiveActor(std::nullopt) {
 	set_position(nanogui::Vector2i(0, 0));
 	set_layout(std::make_unique<nanogui::BoxLayout>(nanogui::Orientation::Vertical, nanogui::Alignment::Fill, 10, 10));
 	
@@ -112,6 +112,3 @@ void AnimationPanel::set_active_actor(std::optional<std::reference_wrapper<Actor
 	}
 }
 
-void AnimationPanel::update_with(int currentTime) {
-	mPreviewTimeProvider.SetTime(currentTime);
-}

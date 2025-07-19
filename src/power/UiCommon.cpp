@@ -15,10 +15,9 @@ class UIPanel : public ScenePanel {
 	
 };
 
-UiCommon::UiCommon(nanogui::Widget& parent, nanogui::Screen& screen, ActorManager& actorManager, AnimationTimeProvider& animationTimeProvider, AnimationTimeProvider& previewTimeProvider)
+UiCommon::UiCommon(nanogui::Widget& parent, nanogui::Screen& screen, ActorManager& actorManager, AnimationTimeProvider& animationTimeProvider)
 : mActorManager(actorManager)
-, mAnimationTimeProvider(animationTimeProvider)
-, mPreviewTimeProvider(previewTimeProvider) {
+, mAnimationTimeProvider(animationTimeProvider) {
 	
 	mMainWrapper = std::make_shared<nanogui::Window>(parent, "");
 	
@@ -68,7 +67,7 @@ UiCommon::UiCommon(nanogui::Widget& parent, nanogui::Screen& screen, ActorManage
 	
 	mCameraPanel = std::make_shared<CameraPanel>(*mRightWrapper);
 
-	mAnimationPanel = std::make_shared<AnimationPanel>(*mRightWrapper, screen, mPreviewTimeProvider);
+	mAnimationPanel = std::make_shared<AnimationPanel>(*mRightWrapper, screen);
 	
 	mHierarchyPanel = std::make_shared<HierarchyPanel>(*mRightWrapper, mScenePanel, mTransformPanel, mCameraPanel, mAnimationPanel, mActorManager);
 	

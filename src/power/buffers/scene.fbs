@@ -17,7 +17,6 @@ struct Quat {
 
 // === Component Tables ===
 // Each component that can be serialized gets its own table.
-// Only include data that needs to be saved, not runtime state like callbacks.
 
 table TransformComponent {
   translation:Vec3;
@@ -31,16 +30,20 @@ table CameraComponent {
   far:float;
   aspect:float;
   active:bool;
-  // Note: We don't save the TransformComponent reference directly.
-  // We will restore it during deserialization.
 }
+
+// ADDED: Table for the model metadata
+table ModelMetadataComponent {
+  model_path:string;
+}
+
 
 // === Union for Generic Components ===
 // This union lists all possible component types that can be serialized.
 union ComponentData {
   TransformComponent,
-  CameraComponent
-  // Add new component types here in the future
+  CameraComponent,
+  ModelMetadataComponent // ADDED: New component to the union
 }
 
 // A wrapper table for the union
@@ -62,4 +65,3 @@ table Scene {
 
 // The root of our file will be a Scene
 root_type Scene;
-

@@ -28,6 +28,12 @@ Actor& ActorManager::create_actor() {
     return *mActors.back();
 }
 
+Actor& ActorManager::create_actor(entt::entity entity) {
+    // This correctly creates an Actor which in turn creates an entity and adds an IDComponent
+    mActors.push_back(std::make_unique<Actor>(mRegistry, entity));
+    return *mActors.back();
+}
+
 void ActorManager::remove_actor(Actor& actor) {
     // The actor's destructor will handle destroying the entt::entity.
     // We just need to remove the manager's handle to it.
@@ -109,42 +115,3 @@ void ActorManager::clear_actors() {
     mRegistry.clear();
 }
 
-
-void ActorManager::save_scene(const std::string& filepath) {
-    SceneSerializer serializer;
-
-    // IMPORTANT: Register all serializable components
-    serializer.register_component<IDComponent>();
-    serializer.register_component<TransformComponent>();
-    serializer.register_component<CameraComponent>();
-    // serializer.register_component<MeshComponent>();      // TODO: Add serialization logic
-    // serializer.register_component<ColorComponent>();     // TODO: Add serialization logic
-    // serializer.register_component<DrawableComponent>();  // TODO: Add serialization logic
-
-    serializer.serialize(mRegistry, filepath);
-}
-
-void ActorManager::load_scene(const std::string& filepath) {
-    SceneSerializer serializer;
-    
-    // Register all serializable components, matching what you have in save_scene
-    serializer.register_component<IDComponent>();
-    serializer.register_component<TransformComponent>();
-    serializer.register_component<CameraComponent>();
-    // serializer.register_component<MeshComponent>();      // TODO: Add deserialization logic
-    // serializer.register_component<ColorComponent>();     // TODO: Add deserialization logic
-    // serializer.register_component<DrawableComponent>();  // TODO: Add deserialization logic
-
-    // First, clear existing C++ Actor wrappers. The serializer will clear the registry.
-    mActors.clear();
-    
-    serializer.deserialize(mRegistry, filepath);
-
-    // After deserializing, the registry is full of entities with components.
-    // We now need to re-create our C++ Actor wrappers to manage them.
-    auto view = mRegistry.view<IDComponent>();
-    for (auto entity_handle : view) {
-        // Use the Actor constructor that takes an existing entity handle
-        mActors.push_back(std::make_unique<Actor>(mRegistry, entity_handle));
-    }
-}

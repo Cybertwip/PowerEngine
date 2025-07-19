@@ -98,7 +98,6 @@ UiManager::UiManager(nanogui::Screen& screen, std::shared_ptr<IActorSelectedRegi
 					 std::shared_ptr<nanogui::Widget> statusBar,
 					 std::shared_ptr<AnimationPanel> animationPanel,
 					 AnimationTimeProvider& animationTimeProvider,
-					 AnimationTimeProvider& previewTimeProvider,
 					 CameraManager& cameraManager,
 					 GizmoManager& gizmoManager,
 					 std::function<void(std::function<void(int, int)>)> applicationClickRegistrator)
@@ -256,7 +255,7 @@ UiManager::UiManager(nanogui::Screen& screen, std::shared_ptr<IActorSelectedRegi
 	});
 	
 	// Initialize StatusBarPanel
-	mStatusBarPanel = std::make_shared<StatusBarPanel>(*statusBar, screen, mActorVisualManager, animationTimeProvider, previewTimeProvider,
+	mStatusBarPanel = std::make_shared<StatusBarPanel>(*statusBar, screen, mActorVisualManager, animationTimeProvider,
 													   mMeshActorLoader, mShaderManager, *this, applicationClickRegistrator);
 	
 	mStatusBarPanel->set_fixed_width(statusBar->fixed_height());
