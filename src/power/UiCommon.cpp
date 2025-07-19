@@ -77,15 +77,15 @@ UiCommon::UiCommon(nanogui::Widget& parent, nanogui::Screen& screen, ActorManage
 	//	auto promptbox = new PromptBox(*rightWrapper);
 	//	promptbox->inc_ref();
 	
-	mRightWrapper->remove_child(*mHierarchyToolPanel);
 	mRightWrapper->remove_child(*mHierarchyPanel);
+	mRightWrapper->remove_child(*mHierarchyToolPanel);
 	mRightWrapper->remove_child(*mTransformPanel);
 	mRightWrapper->remove_child(*mCameraPanel);
 	mRightWrapper->remove_child(*mAnimationPanel);
 	//	rightWrapper->remove_child(promptbox);
 	
-	mRightWrapper->add_child(*mHierarchyToolPanel); // Add HierarchyPanel first
 	mRightWrapper->add_child(*mHierarchyPanel); // Add HierarchyPanel first
+	mRightWrapper->add_child(*mHierarchyToolPanel); // Add HierarchyPanel first
 	mRightWrapper->add_child(*mTransformPanel); // Add TransformPanel second
 	mRightWrapper->add_child(*mCameraPanel); // Add TransformPanel second
 	mRightWrapper->add_child(*mAnimationPanel); // Add AnimationPanel third

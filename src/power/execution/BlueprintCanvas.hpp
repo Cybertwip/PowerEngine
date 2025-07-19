@@ -68,6 +68,8 @@ private:
 	VisualBlueprintNode* find_node(long long id);
 
 private:
+	std::unique_ptr<nanogui::Button> mLoadBlueprintButton;
+	std::unique_ptr<nanogui::Button> mSaveBlueprintButton;
 	std::unique_ptr<ShaderManager> mShaderManager;
 	std::unique_ptr<Grid2d> mGrid;
 	static std::unique_ptr<nanogui::Popup> SContextMenu;

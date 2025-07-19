@@ -12,7 +12,7 @@
 
 
 HierarchyToolPanel::HierarchyToolPanel(nanogui::Widget& parent, ActorManager& actorManager, HierarchyPanel& hierarchyPanel)
-: Panel(parent, "Actors")
+: Panel(parent, "")
 , mActorManager(actorManager)
 , mHierarchyPanel(hierarchyPanel) {
 	set_position(nanogui::Vector2i(0, 0));

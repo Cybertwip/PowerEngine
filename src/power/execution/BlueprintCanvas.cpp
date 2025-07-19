@@ -34,6 +34,44 @@ BlueprintCanvas::BlueprintCanvas(ScenePanel& parent, nanogui::Screen& screen, No
 	
 	mGrid = std::make_unique<Grid2d>(*mShaderManager);
 	
+	mLoadBlueprintButton = std::make_unique<nanogui::Button>(std::ref(*this), "", FA_DOWNLOAD);
+	mSaveBlueprintButton = std::make_unique<nanogui::Button>(std::ref(*this), "", FA_SAVE);
+
+	
+	mLoadBlueprintButton->set_callback([this]() {
+		// Export functionality is now limited to exporting a movie
+		nanogui::async([this]() {
+			nanogui::file_dialog_async(
+									   {{"bpn", "Blueprint Files"}}, false, false, [this](const std::vector<std::string>& files) {
+										   if (files.empty()) {
+											   return; // User canceled
+										   }
+										   
+										   std::string destinationFile = files.front();
+										   
+										   
+										   
+									   });
+		});
+		
+	});
+	
+	mSaveBlueprintButton->set_callback([this]() {
+		// Export functionality is now limited to exporting a movie
+		nanogui::async([this]() {
+			nanogui::file_dialog_async(
+									   {{"bpn", "Blueprint Files"}}, true, false, [this](const std::vector<std::string>& files) {
+										   if (files.empty()) {
+											   return; // User canceled
+										   }
+										   
+										   std::string destinationFile = files.front();
+									   });
+		});
+		
+
+	});
+	
 	assert(!SContextMenu); // Unique instance allowed;
 	
 	BlueprintCanvas::SContextMenu = std::make_unique<nanogui::Popup>(*this);
