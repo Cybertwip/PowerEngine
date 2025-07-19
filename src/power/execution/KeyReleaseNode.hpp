@@ -15,7 +15,7 @@ class KeyReleaseCoreNode : public DataCoreNode {
 public:
 	KeyReleaseCoreNode(long long id);
 	
-	std::optional<std::variant<Entity, std::string, int, float, bool>> get_data() override {
+	std::optional<std::variant<Entity, std::string, int, float, bool>> get_data() const override {
 		return mKeyCode;
 	}
 	

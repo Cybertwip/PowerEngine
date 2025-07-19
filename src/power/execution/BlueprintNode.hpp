@@ -210,11 +210,11 @@ public:
 	
 	void reset_flow();
 	
-	const std::vector<std::unique_ptr<CorePin>>& get_inputs() {
+	const std::vector<std::unique_ptr<CorePin>>& get_inputs() const {
 		return inputs;
 	}
 	
-	const std::vector<std::unique_ptr<CorePin>>& get_outputs() {
+	const std::vector<std::unique_ptr<CorePin>>& get_outputs() const {
 		return outputs;
 	}
 	
@@ -258,7 +258,7 @@ public:
 	DataCoreNode(NodeType type, long long id, nanogui::Color color = nanogui::Color(255, 255, 255, 255)) : CoreNode(type, id, color) {
 		
 	}
-	virtual std::optional<std::variant<Entity, std::string, int, float, bool>> get_data() = 0;
+	virtual std::optional<std::variant<Entity, std::string, int, float, bool>> get_data() const = 0;
 	
 	virtual void set_data(std::optional<std::variant<Entity, std::string, int, float, bool>> data) = 0;
 };

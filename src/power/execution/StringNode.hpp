@@ -15,7 +15,7 @@ public:
 
 	void set_data(std::optional<std::variant<Entity, std::string, int, float, bool>> data) override;
 
-	std::optional<std::variant<Entity, std::string, int, float, bool>> get_data() override;
+	std::optional<std::variant<Entity, std::string, int, float, bool>> get_data() const override;
 	
 private:
 	CorePin& mOutput;
