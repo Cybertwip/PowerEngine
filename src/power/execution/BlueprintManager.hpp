@@ -46,7 +46,6 @@ public:
 		
 		mBlueprintButton->set_text_color(nanogui::Color(135, 206, 235, 255));
 		
-		// Position the button in the lower-right corner
 		mBlueprintButton->set_position(nanogui::Vector2i(parent.fixed_width() * 0.5f - mBlueprintButton->fixed_width() * 0.5f, parent.fixed_height() - mBlueprintButton->fixed_height() - 20));
 		
 		mBlueprintButton->set_callback([this](){
@@ -72,13 +71,56 @@ public:
 		mBlueprintButton->set_enabled(false);
 		
 		mRegistry->RegisterOnActorSelectedCallback(*this);
+		
+		
+		mLoadBlueprintButton = std::make_unique<nanogui::Button>(std::ref(*this), "", FA_DOWNLOAD);
+		mSaveBlueprintButton = std::make_unique<nanogui::Button>(std::ref(*this), "", FA_SAVE);
+		
+		const nanogui::Vector2i button_size(30, 30);
+		const int padding = 15;
+		mLoadBlueprintButton->set_fixed_size(button_size);
+		mLoadBlueprintButton->set_position({padding, padding});
+		mSaveBlueprintButton->set_fixed_size(button_size);
+		mSaveBlueprintButton->set_position({padding + button_size.x() + 5, padding});
+		
+		mLoadBlueprintButton->set_callback([this]() {
+			nanogui::async([this]() {
+				nanogui::file_dialog_async(
+										   {{"bpn", "Blueprint Files"}}, false, false, [this](const std::vector<std::string>& files) {
+											   if (files.empty()) {
+												   return; // User canceled
+											   }
+											   
+											   std::string destinationFile = files.front();
+											   
+											   
+											   
+										   });
+			});
+			
+		});
+		
+		mSaveBlueprintButton->set_callback([this]() {
+			nanogui::async([this]() {
+				nanogui::file_dialog_async(
+										   {{"bpn", "Blueprint Files"}}, true, false, [this](const std::vector<std::string>& files) {
+											   if (files.empty()) {
+												   return; // User canceled
+											   }
+											   
+											   std::string destinationFile = files.front();
+										   });
+			});
+			
+			
+		});
 	}
 	
 	~BlueprintPanel() override {
 		mRegistry->UnregisterOnActorSelectedCallback(*this);
 	}
 	
-	void OnActorSelected(std::optional<std::reference_wrapper<Actor>> actor) override {		
+	void OnActorSelected(std::optional<std::reference_wrapper<Actor>> actor) override {
 		mActiveActor = actor;
 		
 		if (mActiveActor.has_value()) {
@@ -181,7 +223,7 @@ public:
 
 private:
 	void draw(NVGcontext *ctx) override {
-		ScenePanel::draw(ctx);
+		Widget::draw(ctx);
 	}
 	
 private:
@@ -200,6 +242,10 @@ private:
 
 	bool mActive;
 	bool mCommitted;
+	
+	std::unique_ptr<nanogui::Button> mLoadBlueprintButton;
+	std::unique_ptr<nanogui::Button> mSaveBlueprintButton;
+
 };
 
 class BlueprintManager {

@@ -34,42 +34,6 @@ BlueprintCanvas::BlueprintCanvas(ScenePanel& parent, nanogui::Screen& screen, No
 	
 	mGrid = std::make_unique<Grid2d>(*mShaderManager);
 	
-	mLoadBlueprintButton = std::make_unique<nanogui::Button>(std::ref(*this), "", FA_DOWNLOAD);
-	mSaveBlueprintButton = std::make_unique<nanogui::Button>(std::ref(*this), "", FA_SAVE);
-
-	
-	mLoadBlueprintButton->set_callback([this]() {
-		nanogui::async([this]() {
-			nanogui::file_dialog_async(
-									   {{"bpn", "Blueprint Files"}}, false, false, [this](const std::vector<std::string>& files) {
-										   if (files.empty()) {
-											   return; // User canceled
-										   }
-										   
-										   std::string destinationFile = files.front();
-										   
-										   
-										   
-									   });
-		});
-		
-	});
-	
-	mSaveBlueprintButton->set_callback([this]() {
-		nanogui::async([this]() {
-			nanogui::file_dialog_async(
-									   {{"bpn", "Blueprint Files"}}, true, false, [this](const std::vector<std::string>& files) {
-										   if (files.empty()) {
-											   return; // User canceled
-										   }
-										   
-										   std::string destinationFile = files.front();
-									   });
-		});
-		
-
-	});
-	
 	assert(!SContextMenu); // Unique instance allowed;
 	
 	BlueprintCanvas::SContextMenu = std::make_unique<nanogui::Popup>(*this);
@@ -218,9 +182,6 @@ void BlueprintCanvas::draw() {
 	
 	render_pass().set_depth_test(nanogui::RenderPass::DepthTest::Always, true); // draw on top
 	mGrid->draw_content(nanogui::Matrix4f::identity(), mView, mProjection);
-	
-	mLoadBlueprintButton->draw(screen().nvg_context());
-	mSaveBlueprintButton->draw(screen().nvg_context());
 }
 
 void BlueprintCanvas::draw(NVGcontext *ctx) {
@@ -380,6 +341,7 @@ void BlueprintCanvas::draw(NVGcontext *ctx) {
 		nvgTranslate(ctx, canvas_position.x(), canvas_position.y());
 		nvgTranslate(ctx, -m_pos.x(), -m_pos.y());
 	}
+
 }
 
 void BlueprintCanvas::setup_options() {
