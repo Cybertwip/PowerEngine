@@ -186,6 +186,7 @@ class ShaderManager;
 class ShaderWrapper;
 class SimulationServer;
 class SkinnedMeshBatch;
+class SerializationModule;
 class UiCommon;
 class UiManager;
 
@@ -245,6 +246,7 @@ class Application : public nanogui::DraggableScreen
 	std::unique_ptr<CameraManager> mCameraManager;
 	std::unique_ptr<entt::registry> mEntityRegistry;
 	std::unique_ptr<SimulationServer> mSimulationServer;
+	std::unique_ptr<SerializationModule> mSerializationModule;
 
 	std::queue<std::tuple<bool, int, int, int, int>> mClickQueue;
 	std::vector<std::function<void(bool, int, int, int, int)>> mClickCallbacks;

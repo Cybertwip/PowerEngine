@@ -8,7 +8,7 @@
 SerializationModule::SerializationModule(ActorManager& actorManager, MeshActorBuilder& actorBuilder, AnimationTimeProvider& timeProvider, ShaderWrapper& meshShader, ShaderWrapper& skinnedShader)
 : mActorManager(actorManager)
 , mMeshActorBuilder(actorBuilder)
-, mAnimationTimeProvider(timeProvider);
+, mTimeProvider(timeProvider)
 , mMeshShader(meshShader)
 , mSkinnedMeshShader(skinnedShader) {
 	// IMPORTANT: Register all serializable components

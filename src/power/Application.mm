@@ -37,6 +37,7 @@
 #include "graphics/drawing/SkinnedMeshBatch.hpp"
 
 #include "import/ModelImporter.hpp"
+#include "serialization/SerializationModule.hpp"
 #include "simulation/Cartridge.hpp"
 #include "simulation/CartridgeActorLoader.hpp"
 #include "simulation/SimulationServer.hpp"

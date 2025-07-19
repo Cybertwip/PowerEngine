@@ -17,7 +17,7 @@ public:
 private:
 	ActorManager& mActorManager;
 	MeshActorBuilder& mMeshActorBuilder;
-	AnimationTimeProvider& mAnimationTimeProvider;
+	AnimationTimeProvider& mTimeProvider;
 	ShaderWrapper& mMeshShader;
 	ShaderWrapper& mSkinnedMeshShader;
 	SceneSerializer mSceneSerializer;
