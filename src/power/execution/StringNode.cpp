@@ -10,7 +10,7 @@ StringCoreNode::StringCoreNode(long long id)
 	
 }
 
-std::optional<std::variant<Entity, std::string, int, float, bool>> StringCoreNode::get_data() {
+std::optional<std::variant<Entity, std::string, int, float, bool>> StringCoreNode::get_data() const {
 	return mOutput.get_data();
 }
 
