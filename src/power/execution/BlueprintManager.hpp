@@ -83,7 +83,7 @@ public:
 		mActiveActor = actor;
 		
 		if (mActiveActor.has_value()) {
-			if (mActiveActor.find_component<BlueprintComponent>()) {
+			if (mActiveActor->get().find_component<BlueprintComponent>()) {
 				deserialize(mActiveActor->get());
 				mBlueprintButton->set_enabled(true);
 			}
