@@ -78,9 +78,7 @@ public:
 		mRegistry->UnregisterOnActorSelectedCallback(*this);
 	}
 	
-	void OnActorSelected(std::optional<std::reference_wrapper<Actor>> actor) override {
-		commit();
-		
+	void OnActorSelected(std::optional<std::reference_wrapper<Actor>> actor) override {		
 		mActiveActor = actor;
 		
 		if (mActiveActor.has_value()) {
