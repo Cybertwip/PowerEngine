@@ -424,8 +424,10 @@ void UiManager::draw() {
 		mActorManager.draw();
 		
 		if (mActiveActor) {
-			auto& color = mActiveActor->get().get_component<ColorComponent>();
-			color.set_color(mSelectionColor);
+			if (mActiveActor->get().find_component<ColorComponent>()) {
+				auto& color = mActiveActor->get().get_component<ColorComponent>();
+				color.set_color(mSelectionColor);
+			}
 		}
 		
 		auto& batch_unit = mMeshActorLoader.get_batch_unit();
