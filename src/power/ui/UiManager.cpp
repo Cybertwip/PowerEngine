@@ -304,6 +304,7 @@ UiManager::~UiManager() {
 void UiManager::OnActorSelected(std::optional<std::reference_wrapper<Actor>> actor) {
 	mActiveActor = actor;
 	mGizmoManager.select(std::nullopt);
+	mCameraManager.update_from(mActorManager);
 }
 
 void UiManager::export_movie(const std::string& path) {

@@ -79,6 +79,7 @@ public:
 	}
 	
 	void OnActorSelected(std::optional<std::reference_wrapper<Actor>> actor) override {
+		commit();
 		
 		mActiveActor = actor;
 		

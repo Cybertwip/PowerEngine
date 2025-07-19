@@ -20,6 +20,7 @@ class Actor;
 class ActorManager;
 class AnimationPanel;
 class CameraPanel;
+class HierarchyToolPanel;
 class ScenePanel;
 class TransformPanel;
 
@@ -40,7 +41,7 @@ public:
 	void add_actor(std::reference_wrapper<Actor> actor) override;
 	
 	void remove_actor(std::reference_wrapper<Actor> actor) override;
-	
+
 	void remove_actors(const std::vector<std::reference_wrapper<Actor>>& actors) override;
 	
 	void clear_actors();
@@ -65,6 +66,8 @@ private:
 	void refresh_selected_actor();
 	
 private:
+	void remove_selected_actor();
+	
 	std::shared_ptr<TransformPanel> mTransformPanel;
 	std::shared_ptr<CameraPanel> mCameraPanel;
 	std::shared_ptr<AnimationPanel> mAnimationPanel;
@@ -75,4 +78,6 @@ private:
 	void populate_tree(Actor& actor, std::shared_ptr<nanogui::TreeViewItem> parentNode = nullptr);
 	
 	std::unique_ptr<ContextMenu> mContextMenu;
+	
+	friend class HierarchyToolPanel;
 };

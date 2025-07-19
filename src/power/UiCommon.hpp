@@ -14,15 +14,17 @@ class Window;
 class Actor;
 class ActorManager;
 class AnimationPanel;
+class BlueprintManager;
+class CameraManager;
 class CameraPanel;
 class AnimationTimeProvider;
 class HierarchyPanel;
+class HierarchyToolPanel;
 class ScenePanel;
 //class SceneTimeBar;
 class ShaderManager;
 class StatusBarPanel;
 class TransformPanel;
-class UiManager;
 
 class UiCommon {
 public:
@@ -66,6 +68,7 @@ private:
 	std::shared_ptr<CameraPanel> mCameraPanel;
 	std::shared_ptr<AnimationPanel> mAnimationPanel;
 	std::shared_ptr<HierarchyPanel> mHierarchyPanel;
+	std::shared_ptr<HierarchyToolPanel> mHierarchyToolPanel;
 	std::shared_ptr<nanogui::Widget> mStatusBar;
 //	std::shared_ptr<SceneTimeBar> mSceneTimeBar;
 	

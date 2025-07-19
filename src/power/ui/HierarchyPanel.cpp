@@ -24,7 +24,7 @@
 #include "execution/NodeProcessor.hpp"
 
 
-HierarchyPanel::HierarchyPanel(nanogui::Widget& parent, std::shared_ptr<ScenePanel> scenePanel, std::shared_ptr<TransformPanel> transformPanel, std::shared_ptr<CameraPanel> cameraPanel, std::shared_ptr<AnimationPanel> animationPanel, ActorManager& actorManager) : Panel(parent, "Actors"), mTransformPanel(transformPanel), mCameraPanel(cameraPanel), mAnimationPanel(animationPanel), mActorManager(actorManager) {
+HierarchyPanel::HierarchyPanel(nanogui::Widget& parent, std::shared_ptr<ScenePanel> scenePanel, std::shared_ptr<TransformPanel> transformPanel, std::shared_ptr<CameraPanel> cameraPanel, std::shared_ptr<AnimationPanel> animationPanel, ActorManager& actorManager) : Panel(parent, ""), mTransformPanel(transformPanel), mCameraPanel(cameraPanel), mAnimationPanel(animationPanel), mActorManager(actorManager) {
 	set_position(nanogui::Vector2i(0, 0));
 	set_layout(std::make_unique<nanogui::GroupLayout>());
 	
@@ -88,6 +88,10 @@ void HierarchyPanel::add_actors(const std::vector<std::reference_wrapper<Actor>>
 
 void HierarchyPanel::add_actor(std::reference_wrapper<Actor> actor) {
 	populate_tree(actor.get());
+}
+
+void HierarchyPanel::remove_selected_actor() {
+	remove_actor(std::ref(*mSelectedActor));
 }
 
 void HierarchyPanel::remove_actor(std::reference_wrapper<Actor> actor) {

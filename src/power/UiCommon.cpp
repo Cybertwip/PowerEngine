@@ -6,6 +6,7 @@
 #include "ui/AnimationPanel.hpp"
 #include "ui/CameraPanel.hpp"
 #include "ui/HierarchyPanel.hpp"
+#include "ui/HierarchyToolPanel.hpp"
 #include "ui/ScenePanel.hpp"
 //#include "ui/SceneTimeBar.hpp"
 #include "ui/TransformPanel.hpp"
@@ -70,16 +71,20 @@ UiCommon::UiCommon(nanogui::Widget& parent, nanogui::Screen& screen, ActorManage
 	mAnimationPanel = std::make_shared<AnimationPanel>(*mRightWrapper, screen);
 	
 	mHierarchyPanel = std::make_shared<HierarchyPanel>(*mRightWrapper, mScenePanel, mTransformPanel, mCameraPanel, mAnimationPanel, mActorManager);
-	
+
+	mHierarchyToolPanel = std::make_shared<HierarchyToolPanel>(*mRightWrapper, mActorManager, *mHierarchyPanel);
+
 	//	auto promptbox = new PromptBox(*rightWrapper);
 	//	promptbox->inc_ref();
 	
+	mRightWrapper->remove_child(*mHierarchyToolPanel);
 	mRightWrapper->remove_child(*mHierarchyPanel);
 	mRightWrapper->remove_child(*mTransformPanel);
 	mRightWrapper->remove_child(*mCameraPanel);
 	mRightWrapper->remove_child(*mAnimationPanel);
 	//	rightWrapper->remove_child(promptbox);
 	
+	mRightWrapper->add_child(*mHierarchyToolPanel); // Add HierarchyPanel first
 	mRightWrapper->add_child(*mHierarchyPanel); // Add HierarchyPanel first
 	mRightWrapper->add_child(*mTransformPanel); // Add TransformPanel second
 	mRightWrapper->add_child(*mCameraPanel); // Add TransformPanel second
