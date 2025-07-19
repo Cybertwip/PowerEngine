@@ -97,6 +97,7 @@ add_executable(PowerEngine
     ${CMAKE_CURRENT_LIST_DIR}/components/DrawableComponent.hpp
     ${CMAKE_CURRENT_LIST_DIR}/components/MetadataComponent.hpp
     ${CMAKE_CURRENT_LIST_DIR}/components/ModelMetadataComponent.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/components/BlueprintMetadataComponent.hpp
     ${CMAKE_CURRENT_LIST_DIR}/components/PlaybackComponent.hpp
     ${CMAKE_CURRENT_LIST_DIR}/components/TransformComponent.hpp
     ${CMAKE_CURRENT_LIST_DIR}/components/UiComponent.hpp
@@ -195,6 +196,8 @@ add_executable(PowerEngine
 
     ${CMAKE_CURRENT_LIST_DIR}/platform/ContextMenu.hpp
 
+    ${CMAKE_CURRENT_LIST_DIR}/serialization/BlueprintSerializer.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/serialization/BlueprintSerializer.cpp
     ${CMAKE_CURRENT_LIST_DIR}/serialization/SceneSerializer.hpp
     ${CMAKE_CURRENT_LIST_DIR}/serialization/SceneSerializer.cpp
     ${CMAKE_CURRENT_LIST_DIR}/serialization/UUID.hpp

@@ -1,0 +1,67 @@
+// File: blueprint.fbs
+namespace Power.Schema;
+
+// A struct for 2D integer vectors, used for node positions.
+struct Vec2i {
+    x:int;
+    y:int;
+}
+
+// Enums mirroring the C++ definitions for the blueprint system.
+enum NodeType : ubyte { KeyPress, KeyRelease, String, Print }
+enum PinType : ubyte { Flow, Bool, Int, Float, String, Object, Function, Delegate }
+enum PinSubType : ubyte { None, Actor, Light, Camera, Animation, Sequence, Composition }
+enum PinKind : ubyte { Output, Input }
+
+// --- Data Payload Definitions ---
+table IntVal   { val:int; }
+table FloatVal { val:float; }
+table BoolVal  { val:bool; }
+table BlueprintEntityPayload { id:int; }
+
+union BlueprintPayloadData {
+  s:string,
+  i:IntVal,
+  f:FloatVal,
+  b:BoolVal,
+  e:BlueprintEntityPayload
+}
+
+table BlueprintPayload {
+    data:BlueprintPayloadData;
+}
+
+// --- Blueprint Structure Definitions ---
+table BlueprintPin {
+    id:int;
+    type:PinType;
+    subtype:PinSubType;
+    kind:PinKind;
+    data:BlueprintPayload;
+}
+
+table BlueprintNode {
+    id:long;
+    type:NodeType;
+    position:Vec2i;
+    inputs:[BlueprintPin];
+    outputs:[BlueprintPin];
+    data:BlueprintPayload;
+}
+
+table BlueprintLink {
+    id:int;
+    start_node_id:long;
+    start_pin_id:int;
+    end_node_id:long;
+    end_pin_id:int;
+}
+
+// --- Root Definition ---
+// The main table for the blueprint asset file.
+table Blueprint {
+    nodes:[BlueprintNode];
+    links:[BlueprintLink];
+}
+
+root_type Blueprint;

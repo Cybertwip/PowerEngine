@@ -6,6 +6,7 @@
 #include "components/CameraComponent.hpp"
 #include "components/ModelMetadataComponent.hpp"
 #include "components/BlueprintComponent.hpp"
+#include "components/BlueprintMetadataComponent.hpp"
 #include "execution/BlueprintNode.hpp"
 #include "execution/KeyPressNode.hpp"
 #include "execution/KeyReleaseNode.hpp"
@@ -191,135 +192,26 @@ std::optional<std::variant<Entity, std::string, int, float, bool>> deserialize_p
 	}
 }
 
-
 template<>
-void SceneSerializer::register_component<BlueprintComponent>() {
-	entt::id_type type_id = entt::type_id<BlueprintComponent>().hash();
-	
-	m_serializers[type_id] = {
-		// --- SERIALIZE ---
-		.serialize = [](flatbuffers::FlatBufferBuilder& builder, const entt::registry& registry, entt::entity entity) {
-			const auto& bp_comp = registry.get<BlueprintComponent>(entity);
-			auto& node_processor = bp_comp.node_processor();
-			
-			// 1. Serialize all nodes in the blueprint graph
-			std::vector<flatbuffers::Offset<Power::Schema::BlueprintNode>> node_offsets;
-			for(const auto& node_ptr : node_processor.get_nodes()) {
-				const auto& node = *node_ptr;
-				
-				// Serialize input pins for the current node
-				std::vector<flatbuffers::Offset<Power::Schema::BlueprintPin>> input_pin_offsets;
-				for (const auto& pin_ptr : node.get_inputs()) {
-					auto payload_offset = serialize_payload(builder, pin_ptr->get_data());
-					auto pin_offset = Power::Schema::CreateBlueprintPin(builder, pin_ptr->id,
-																		static_cast<Power::Schema::PinType>(pin_ptr->type),
-																		static_cast<Power::Schema::PinSubType>(pin_ptr->subtype),
-																		static_cast<Power::Schema::PinKind>(pin_ptr->kind), payload_offset);
-					input_pin_offsets.push_back(pin_offset);
-				}
-				
-				// Serialize output pins for the current node
-				std::vector<flatbuffers::Offset<Power::Schema::BlueprintPin>> output_pin_offsets;
-				for (const auto& pin_ptr : node.get_outputs()) {
-					auto payload_offset = serialize_payload(builder, pin_ptr->get_data());
-					auto pin_offset = Power::Schema::CreateBlueprintPin(builder, pin_ptr->id,
-																		static_cast<Power::Schema::PinType>(pin_ptr->type),
-																		static_cast<Power::Schema::PinSubType>(pin_ptr->subtype),
-																		static_cast<Power::Schema::PinKind>(pin_ptr->kind), payload_offset);
-					output_pin_offsets.push_back(pin_offset);
-				}
-				
-				auto inputs_vec = builder.CreateVector(input_pin_offsets);
-				auto outputs_vec = builder.CreateVector(output_pin_offsets);
-				auto position = Power::Schema::Vec2i(node.position.x(), node.position.y());
-				
-				// Serialize node-specific data (for DataCoreNode derivatives)
-				flatbuffers::Offset<Power::Schema::BlueprintPayload> node_data_offset = 0;
-				if (auto* data_node = dynamic_cast<const DataCoreNode*>(&node)) {
-					node_data_offset = serialize_payload(builder, data_node->get_data());
-				}
-				
-				auto node_offset = Power::Schema::CreateBlueprintNode(builder, node.id,
-																	  static_cast<Power::Schema::NodeType>(node.type), &position,
-																	  inputs_vec, outputs_vec, node_data_offset);
-				node_offsets.push_back(node_offset);
-			}
-			auto nodes_vector = builder.CreateVector(node_offsets);
-			
-			// 2. Serialize all links in the blueprint graph
-			std::vector<flatbuffers::Offset<Power::Schema::BlueprintLink>> link_offsets;
-			for (const auto& link_ptr : node_processor.get_links()) {
-				auto link_offset = Power::Schema::CreateBlueprintLink(builder, link_ptr->get_id(),
-																	  link_ptr->get_start().node.id, link_ptr->get_start().id,
-																	  link_ptr->get_end().node.id, link_ptr->get_end().id);
-				link_offsets.push_back(link_offset);
-			}
-			auto links_vector = builder.CreateVector(link_offsets);
-			
-			// 3. Create the final BlueprintComponent table
-			auto bp_comp_offset = Power::Schema::CreateBlueprintComponent(builder, nodes_vector, links_vector);
-			return bp_comp_offset.Union();
-		},
-		// --- DESERIALIZE ---
-			.deserialize = [](entt::registry& registry, entt::entity entity, const void* data) {
-				const auto* comp_data = static_cast<const Power::Schema::BlueprintComponent*>(data);
-				auto node_processor = std::make_unique<NodeProcessor>();
-				
-				if (!comp_data->nodes()) {
-					registry.emplace<BlueprintComponent>(entity, std::move(node_processor));
-					return;
-				}
-				
-				// Map pin IDs to their C++ objects for re-linking
-				std::unordered_map<int, CorePin*> pin_map;
-				
-				// 1. Re-create all nodes and their pins
-				for (const auto* fbs_node : *comp_data->nodes()) {
-					CoreNode* new_node_ptr = nullptr;
-					switch(static_cast<NodeType>(fbs_node->type())) {
-						case NodeType::KeyPress:   new_node_ptr = &node_processor->spawn_node<KeyPressCoreNode>(fbs_node->id()); break;
-						case NodeType::KeyRelease: new_node_ptr = &node_processor->spawn_node<KeyReleaseCoreNode>(fbs_node->id()); break;
-						case NodeType::String:     new_node_ptr = &node_processor->spawn_node<StringCoreNode>(fbs_node->id()); break;
-						case NodeType::Print:      new_node_ptr = &node_processor->spawn_node<PrintCoreNode>(fbs_node->id()); break;
-					}
-					
-					if(!new_node_ptr) continue;
-					
-					new_node_ptr->set_position({fbs_node->position()->x(), fbs_node->position()->y()});
-					
-					// Restore node-specific data
-					if (auto* data_node = dynamic_cast<DataCoreNode*>(new_node_ptr)) {
-						data_node->set_data(deserialize_payload(fbs_node->data()));
-					}
-					
-					// Restore pin data and populate the pin_map
-					for (const auto* fbs_pin : *fbs_node->inputs()) {
-						auto& pin = new_node_ptr->get_pin(fbs_pin->id());
-						pin.set_data(deserialize_payload(fbs_pin->data()));
-						pin_map[pin.id] = &pin;
-					}
-					for (const auto* fbs_pin : *fbs_node->outputs()) {
-						auto& pin = new_node_ptr->get_pin(fbs_pin->id());
-						pin.set_data(deserialize_payload(fbs_pin->data()));
-						pin_map[pin.id] = &pin;
-					}
-				}
-				
-				// 2. Re-create all links between the restored pins
-				if (comp_data->links()) {
-					for (const auto* fbs_link : *comp_data->links()) {
-						if (pin_map.count(fbs_link->start_pin_id()) && pin_map.count(fbs_link->end_pin_id())) {
-							node_processor->create_link(fbs_link->id(), *pin_map.at(fbs_link->start_pin_id()), *pin_map.at(fbs_link->end_pin_id()));
-						}
-					}
-				}
-				
-				registry.emplace<BlueprintComponent>(entity, std::move(node_processor));
-			}
-	};
-	m_component_type_map[static_cast<uint8_t>(Power::Schema::ComponentData_BlueprintComponent)] = type_id;
+void SceneSerializer::register_component<BlueprintMetadataComponent>() {
+    entt::id_type type_id = entt::type_id<BlueprintMetadataComponent>().hash();
+    
+    m_serializers[type_id] = {
+        .serialize = [](flatbuffers::FlatBufferBuilder& builder, const entt::registry& registry, entt::entity entity) {
+            const auto& comp = registry.get<BlueprintMetadataComponent>(entity);
+            auto path_offset = builder.CreateString(comp.blueprint_path());
+            auto metadata_offset = Power::Schema::CreateBlueprintMetadataComponent(builder, path_offset);
+            return metadata_offset.Union();
+        },
+        .deserialize = [](entt::registry& registry, entt::entity entity, const void* data) {
+            const auto* comp_data = static_cast<const Power::Schema::BlueprintMetadataComponent*>(data);
+            std::string path = comp_data->blueprint_path()->str();
+            registry.emplace<BlueprintMetadataComponent>(entity, path);
+        }
+    };
+    
+    m_component_type_map[static_cast<uint8_t>(Power::Schema::ComponentData_BlueprintMetadataComponent)] = type_id;
 }
-// ✅ END: BLUEPRINT COMPONENT SERIALIZATION
 
 
 // --- Main Serialization/Deserialization Logic (Unchanged) ---

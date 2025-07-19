@@ -1,17 +1,15 @@
-// A namespace for our serialized data structures
+// File: scene.fbs
+
+// Include external definitions.
+include "blueprint.fbs";
+
 namespace Power.Schema;
 
-// Basic data types used by components
+// --- Basic Data Types ---
 struct Vec3 {
   x:float;
   y:float;
   z:float;
-}
-
-// ADDED: A struct for 2D integer vectors, used for node positions.
-struct Vec2i {
-    x:int;
-    y:int;
 }
 
 struct Quat {
@@ -21,76 +19,7 @@ struct Quat {
   z:float;
 }
 
-// === Blueprint Enums ===
-// Enums mirroring the C++ definitions for the blueprint system.
-enum NodeType : ubyte { KeyPress, KeyRelease, String, Print }
-enum PinType : ubyte { Flow, Bool, Int, Float, String, Object, Function, Delegate }
-enum PinSubType : ubyte { None, Actor, Light, Camera, Animation, Sequence, Composition }
-enum PinKind : ubyte { Output, Input }
-
-
-// === Blueprint Data Payloads ===
-// FlatBuffers unions cannot contain scalar types (like int, bool).
-// We wrap them in tables to be included in the union.
-table IntVal   { val:int; }
-table FloatVal { val:float; }
-table BoolVal  { val:bool; }
-
-// A table for the simplified Entity struct payload.
-table BlueprintEntityPayload { id:int; }
-
-// A union to represent the std::variant payload in CorePin and DataCoreNode.
-union BlueprintPayloadData {
-  s:string,
-  i:IntVal,
-  f:FloatVal,
-  b:BoolVal,
-  e:BlueprintEntityPayload
-}
-
-// A wrapper for the payload union to make it nullable.
-table BlueprintPayload {
-    data:BlueprintPayloadData;
-}
-
-
-// === Blueprint Structure ===
-// Defines the serializable structure of the blueprint graph.
-table BlueprintPin {
-    id:int;
-    type:PinType;
-    subtype:PinSubType;
-    kind:PinKind;
-    data:BlueprintPayload;
-}
-
-table BlueprintNode {
-    id:long;
-    type:NodeType;
-    position:Vec2i;
-    inputs:[BlueprintPin];
-    outputs:[BlueprintPin];
-    data:BlueprintPayload; // For DataCoreNode's specific data.
-}
-
-table BlueprintLink {
-    id:int;
-    start_node_id:long;
-    start_pin_id:int;
-    end_node_id:long;
-    end_pin_id:int;
-}
-
-// The main table for the blueprint component.
-table BlueprintComponent {
-    nodes:[BlueprintNode];
-    links:[BlueprintLink];
-}
-
-
-// === Component Tables ===
-// Each component that can be serialized gets its own table.
-
+// --- Component Tables ---
 table TransformComponent {
   translation:Vec3;
   rotation:Quat;
@@ -109,25 +38,25 @@ table ModelMetadataComponent {
   model_path:string;
 }
 
+// ADDED: New metadata component for blueprints.
+table BlueprintMetadataComponent {
+  blueprint_path:string;
+}
 
-// === Union for Generic Components ===
-// This union lists all possible component types that can be serialized.
+// --- Component Union ---
 union ComponentData {
   TransformComponent,
   CameraComponent,
   ModelMetadataComponent,
-  BlueprintComponent // ADDED: New component to the union
+  BlueprintMetadataComponent // ADDED
 }
 
-// A wrapper table for the union
 table Component {
   data:ComponentData;
 }
 
-// === Entity and Scene Definitions ===
-
+// --- Entity and Scene Definitions ---
 table Entity {
-  // Use a 64-bit unsigned integer for our UUID.
   uuid:ulong;
   components:[Component];
 }
@@ -136,5 +65,4 @@ table Scene {
   entities:[Entity];
 }
 
-// The root of our file will be a Scene
 root_type Scene;

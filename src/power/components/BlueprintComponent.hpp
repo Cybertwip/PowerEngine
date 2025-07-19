@@ -2,6 +2,7 @@
 
 #include <memory>
 
+class Actor;
 class NodeProcessor;
 
 class BlueprintComponent {
@@ -11,6 +12,8 @@ public:
 	NodeProcessor& node_processor() const;
 
 	void update();
+
+	void save_blueprint(const std::string& to_file);
 	
 private:
 	std::unique_ptr<NodeProcessor> mNodeProcessor;
