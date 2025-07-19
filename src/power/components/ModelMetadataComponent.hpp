@@ -9,7 +9,7 @@ public:
 	: mModelPath(modelPath) {
     }
 	
-	std::string_view model_path() const {
+	const std::string& model_path() const {
 		return mModelPath;
 	}
 
