@@ -11,6 +11,10 @@ NodeProcessor& BlueprintComponent::node_processor() {
 	return *mNodeProcessor;
 }
 
+const NodeProcessor& BlueprintComponent::node_processor() {
+	return *mNodeProcessor;
+}
+
 void BlueprintComponent::update() {
 	mNodeProcessor->evaluate();
 }

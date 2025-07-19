@@ -9,7 +9,9 @@ public:
 	BlueprintComponent(std::unique_ptr<NodeProcessor> nodeProcessor);
 	
 	NodeProcessor& node_processor();
-	
+
+	const NodeProcessor& node_processor();
+
 	void update();
 	
 private:

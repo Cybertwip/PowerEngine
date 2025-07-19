@@ -199,7 +199,7 @@ void SceneSerializer::register_component<BlueprintComponent>() {
 	m_serializers[type_id] = {
 		// --- SERIALIZE ---
 		.serialize = [](flatbuffers::FlatBufferBuilder& builder, const entt::registry& registry, entt::entity entity) {
-			auto& bp_comp = registry.get<BlueprintComponent>(entity);
+			const auto& bp_comp = registry.get<BlueprintComponent>(entity);
 			auto& node_processor = bp_comp.node_processor();
 			
 			// 1. Serialize all nodes in the blueprint graph
