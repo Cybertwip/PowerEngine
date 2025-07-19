@@ -1,6 +1,7 @@
 #pragma once
 
 #include "animation/AnimationTimeProvider.hpp"
+#include "serialization/SerializationModule.hpp"
 
 #include <entt/entt.hpp>
 
