@@ -13,6 +13,7 @@
 #include "simulation/Cartridge.hpp"
 #include "simulation/CartridgeActorLoader.hpp"
 #include "simulation/SimulationServer.hpp"
+#include "serialization/SceneSerializer.hpp"
 
 int main(int /* argc */, char ** /* argv */) {
 	std::cout << std::filesystem::current_path().string() << std::endl;
