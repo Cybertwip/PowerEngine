@@ -23,7 +23,7 @@ Actor& CameraActorBuilder::build(Actor& actor,
 	std::stringstream dummyData;
 	dummyData << actor.identifier();
 	
-	actor.add_component<MetadataComponent>(Hash32::generate_crc32_from_compressed_data(dummyData), "Camera");
+	auto& metadataComponent = actor.add_component<MetadataComponent>(actor.identifier(), "Camera");
 	actor.add_component<ColorComponent>(actor.identifier());
 	actor.add_component<CameraComponent>(actor.get_component<TransformComponent>(), fov, near, far, aspect);
 	

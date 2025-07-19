@@ -24,7 +24,7 @@
 #include "execution/NodeProcessor.hpp"
 
 
-HierarchyPanel::HierarchyPanel(nanogui::Widget& parent, std::shared_ptr<ScenePanel> scenePanel, std::shared_ptr<TransformPanel> transformPanel, std::shared_ptr<CameraPanel> cameraPanel, std::shared_ptr<AnimationPanel> animationPanel, ActorManager& actorManager) : Panel(parent, ""), mTransformPanel(transformPanel), mCameraPanel(cameraPanel), mAnimationPanel(animationPanel), mActorManager(actorManager) {
+HierarchyPanel::HierarchyPanel(nanogui::Widget& parent, std::shared_ptr<ScenePanel> scenePanel, std::shared_ptr<TransformPanel> transformPanel, std::shared_ptr<CameraPanel> cameraPanel, std::shared_ptr<AnimationPanel> animationPanel, ActorManager& actorManager) : Panel(parent, "Actors"), mTransformPanel(transformPanel), mCameraPanel(cameraPanel), mAnimationPanel(animationPanel), mActorManager(actorManager) {
 	set_position(nanogui::Vector2i(0, 0));
 	set_layout(std::make_unique<nanogui::GroupLayout>());
 	
@@ -36,7 +36,12 @@ HierarchyPanel::HierarchyPanel(nanogui::Widget& parent, std::shared_ptr<ScenePan
 	});
 	
 	mAddActorButton->set_callback([this](){
-		auto& _ = mActorManager.create_actor();
+		auto& actor = mActorManager.create_actor();
+		actor.add_component<TransformComponent>();
+		
+		auto& metadataComponent = actor.add_component<MetadataComponent>(actor.identifier(), "Actor");
+
+		add_actor(std::ref(actor));
 	});
 	
 	mScrollPanel = std::make_shared<nanogui::VScrollPanel>(*this);

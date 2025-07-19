@@ -172,7 +172,6 @@ void ResourcesPanel::import_assets() {
 }
 
 void ResourcesPanel::export_assets() {
-	// Export functionality is now limited to exporting a movie
 	nanogui::async([this]() {
 		nanogui::file_dialog_async(
 								   {{"mp4", "MP4 Video"}}, true, false, [this](const std::vector<std::string>& files) {

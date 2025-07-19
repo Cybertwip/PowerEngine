@@ -398,7 +398,6 @@ void Application::new_scene_action() {
 }
 
 void Application::save_scene_action() {
-	// Export functionality is now limited to exporting a movie
 	nanogui::async([this]() {
 		nanogui::file_dialog_async(
 								   {{"pwr", "Scene Files"}}, true, false, [this](const std::vector<std::string>& files) {

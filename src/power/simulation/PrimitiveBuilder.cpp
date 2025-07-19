@@ -494,7 +494,7 @@ Actor& PrimitiveBuilder::build(Actor& actor, const std::string& actorName, Primi
 		default: crcGenerator = "UnknownPrimitive"; break;
 	}
 	
-	auto& metadataComponent = actor.add_component<MetadataComponent>(Hash32::generate_crc32_from_string(crcGenerator), actorName);
+	auto& metadataComponent = actor.add_component<MetadataComponent>(actor.identifier(), actorName);
 	auto& colorComponent = actor.add_component<ColorComponent>(actor.identifier());
 	
 	std::unique_ptr<Mesh> mesh = std::make_unique<Mesh>(

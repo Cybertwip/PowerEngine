@@ -39,7 +39,6 @@ BlueprintCanvas::BlueprintCanvas(ScenePanel& parent, nanogui::Screen& screen, No
 
 	
 	mLoadBlueprintButton->set_callback([this]() {
-		// Export functionality is now limited to exporting a movie
 		nanogui::async([this]() {
 			nanogui::file_dialog_async(
 									   {{"bpn", "Blueprint Files"}}, false, false, [this](const std::vector<std::string>& files) {
@@ -57,7 +56,6 @@ BlueprintCanvas::BlueprintCanvas(ScenePanel& parent, nanogui::Screen& screen, No
 	});
 	
 	mSaveBlueprintButton->set_callback([this]() {
-		// Export functionality is now limited to exporting a movie
 		nanogui::async([this]() {
 			nanogui::file_dialog_async(
 									   {{"bpn", "Blueprint Files"}}, true, false, [this](const std::vector<std::string>& files) {
