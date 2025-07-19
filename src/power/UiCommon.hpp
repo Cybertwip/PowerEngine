@@ -19,7 +19,6 @@ class CameraManager;
 class CameraPanel;
 class AnimationTimeProvider;
 class HierarchyPanel;
-class HierarchyToolPanel;
 class ScenePanel;
 //class SceneTimeBar;
 class ShaderManager;
