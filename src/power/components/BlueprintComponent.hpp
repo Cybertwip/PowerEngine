@@ -8,9 +8,7 @@ class BlueprintComponent {
 public:
 	BlueprintComponent(std::unique_ptr<NodeProcessor> nodeProcessor);
 	
-	NodeProcessor& node_processor();
-
-	const NodeProcessor& node_processor();
+	NodeProcessor& node_processor() const;
 
 	void update();
 	

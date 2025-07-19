@@ -7,11 +7,7 @@ BlueprintComponent::BlueprintComponent(std::unique_ptr<NodeProcessor> nodeProces
 	
 }
 
-NodeProcessor& BlueprintComponent::node_processor() {
-	return *mNodeProcessor;
-}
-
-const NodeProcessor& BlueprintComponent::node_processor() {
+NodeProcessor& BlueprintComponent::node_processor() const {
 	return *mNodeProcessor;
 }
 
