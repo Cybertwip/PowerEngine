@@ -29,7 +29,6 @@ public:
      * @brief Builds an actor from a model file specified by a path.
      * @param actor The actor to build upon.
      * @param timeProvider The main time provider for animations.
-     * @param previewTimeProvider The time provider for previewing animations.
      * @param path The filesystem path to the model file.
      * @param meshShader The shader to use for non-skinned meshes.
      * @param skinnedShader The shader to use for skinned meshes.
@@ -41,7 +40,6 @@ public:
      * @brief Builds an actor from a model file provided as a memory stream.
      * @param actor The actor to build upon.
      * @param timeProvider The main time provider for animations.
-     * @param previewTimeProvider The time provider for previewing animations.
      * @param dataStream A stringstream containing the model file data.
      * @param path A string representing the original path or name, used for identification and determining file type.
      * @param meshShader The shader to use for non-skinned meshes.
