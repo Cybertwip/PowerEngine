@@ -1,9 +1,12 @@
 #pragma once
 
+#include <memory>
+
 class ActorManager;
 class AnimationTimeProvider;
 class MeshActorBuilder;
 class ShaderWrapper;
+class SceneSerializer;
 
 class SerializationModule {
 public:
@@ -20,5 +23,5 @@ private:
 	AnimationTimeProvider& mTimeProvider;
 	ShaderWrapper& mMeshShader;
 	ShaderWrapper& mSkinnedMeshShader;
-	SceneSerializer mSceneSerializer;
+	std::unique_ptr<SceneSerializer> mSceneSerializer;
 };

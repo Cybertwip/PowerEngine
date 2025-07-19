@@ -10,25 +10,26 @@ SerializationModule::SerializationModule(ActorManager& actorManager, MeshActorBu
 , mMeshActorBuilder(actorBuilder)
 , mTimeProvider(timeProvider)
 , mMeshShader(meshShader)
-, mSkinnedMeshShader(skinnedShader) {
+, mSkinnedMeshShader(skinnedShader)
+, mSceneSerializer(std::make_unique<SceneSerializer>()) {
 	// IMPORTANT: Register all serializable components
 	
-    mSceneSerializer.register_component<IDComponent>();
-	mSceneSerializer.register_component<TransformComponent>();
-	mSceneSerializer.register_component<CameraComponent>();
-	mSceneSerializer.register_component<ModelMetadataComponent>();
+    mSceneSerializer->register_component<IDComponent>();
+	mSceneSerializer->register_component<TransformComponent>();
+	mSceneSerializer->register_component<CameraComponent>();
+	mSceneSerializer->register_component<ModelMetadataComponent>();
 
 }
 
 void SerializationModule::save_scene(const std::string& filepath) {	
-	mSceneSerializer.serialize(mActorManager.registry(), filepath);
+	mSceneSerializer->serialize(mActorManager.registry(), filepath);
 }
 
 void SerializationModule::load_scene(const std::string& filepath) {
 	
     mActorManager.clear_actors();
 
-	mSceneSerializer.deserialize(mActorManager.registry(), filepath);
+	mSceneSerializer->deserialize(mActorManager.registry(), filepath);
 	
 	// After deserializing, the registry is full of entities with components.
 	// We now need to re-create our C++ Actor wrappers to manage them.
