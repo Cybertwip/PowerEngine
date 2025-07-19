@@ -396,88 +396,40 @@ void Application::new_project_action() {
 
 
 void Application::new_scene_action() {
-	// Using nanogui::async to keep the UI responsive while the dialog is open.
-	nanogui::async([this]() {
-		nanogui::file_dialog_async({{"", "Folders"}}, true, false,
-								   [this](const std::vector<std::string>& folders) {
-			if (folders.empty()) {
-				return; // User canceled
-			}
-			std::string projectFolder = folders.front();
-			try {
-				if (DirectoryNode::createProjectFolder(projectFolder)) {
-					// Reset the application state for the new project
-					mBlueprintManager->stop();
-					mUiCommon->hierarchy_panel()->clear_actors();
-					mExecutionManager->set_execution_mode(ExecutionManager::EExecutionMode::Editor);
-					
-					// Asynchronously refresh the file view to show the new project folder
-					nanogui::async([this]() {
-						mUiManager->status_bar_panel()->resources_panel()->refresh_file_view();
-					});
-				}
-			} catch (const std::exception& e) {
-				std::cerr << "Error creating project folder: " << e.what() << std::endl;
-			}
-		});
-	});
+	mActorManager->clear_actors();
 }
 
 
 void Application::save_scene_action() {
-	// Using nanogui::async to keep the UI responsive while the dialog is open.
+	// Export functionality is now limited to exporting a movie
 	nanogui::async([this]() {
-		nanogui::file_dialog_async({{"", "Folders"}}, true, false,
-								   [this](const std::vector<std::string>& folders) {
-			if (folders.empty()) {
-				return; // User canceled
-			}
-			std::string projectFolder = folders.front();
-			try {
-				if (DirectoryNode::createProjectFolder(projectFolder)) {
-					// Reset the application state for the new project
-					mBlueprintManager->stop();
-					mUiCommon->hierarchy_panel()->clear_actors();
-					mExecutionManager->set_execution_mode(ExecutionManager::EExecutionMode::Editor);
-					
-					// Asynchronously refresh the file view to show the new project folder
-					nanogui::async([this]() {
-						mUiManager->status_bar_panel()->resources_panel()->refresh_file_view();
-					});
-				}
-			} catch (const std::exception& e) {
-				std::cerr << "Error creating project folder: " << e.what() << std::endl;
-			}
-		});
+		nanogui::file_dialog_async(
+								   {{"scn", "Scene"}}, true, false, [this](const std::vector<std::string>& files) {
+									   if (files.empty()) {
+										   return; // User canceled
+									   }
+									   
+									   std::string destinationFile = files.front();
+									   
+									   mSerializationModule->save_scene(destinationFile);
+								   });
 	});
+
 }
 
 
 
 void Application::load_scene_action() {
-	// Using nanogui::async to keep the UI responsive while the dialog is open.
 	nanogui::async([this]() {
-		nanogui::file_dialog_async({{"", "Folders"}}, true, false,
-								   [this](const std::vector<std::string>& folders) {
-			if (folders.empty()) {
-				return; // User canceled
-			}
-			std::string projectFolder = folders.front();
-			try {
-				if (DirectoryNode::createProjectFolder(projectFolder)) {
-					// Reset the application state for the new project
-					mBlueprintManager->stop();
-					mUiCommon->hierarchy_panel()->clear_actors();
-					mExecutionManager->set_execution_mode(ExecutionManager::EExecutionMode::Editor);
-					
-					// Asynchronously refresh the file view to show the new project folder
-					nanogui::async([this]() {
-						mUiManager->status_bar_panel()->resources_panel()->refresh_file_view();
-					});
-				}
-			} catch (const std::exception& e) {
-				std::cerr << "Error creating project folder: " << e.what() << std::endl;
-			}
-		});
+		nanogui::file_dialog_async(
+								   {{"scn", "Scene"}}, false, false, [this](const std::vector<std::string>& files) {
+									   if (files.empty()) {
+										   return; // User canceled
+									   }
+									   
+									   std::string destinationFile = files.front();
+									   
+									   mSerializationModule->load_scene(destinationFile);
+								   });
 	});
 }
