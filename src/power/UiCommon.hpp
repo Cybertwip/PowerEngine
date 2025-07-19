@@ -68,7 +68,6 @@ private:
 	std::shared_ptr<CameraPanel> mCameraPanel;
 	std::shared_ptr<AnimationPanel> mAnimationPanel;
 	std::shared_ptr<HierarchyPanel> mHierarchyPanel;
-	std::shared_ptr<HierarchyToolPanel> mHierarchyToolPanel;
 	std::shared_ptr<nanogui::Widget> mStatusBar;
 //	std::shared_ptr<SceneTimeBar> mSceneTimeBar;
 	

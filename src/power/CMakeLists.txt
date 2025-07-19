@@ -228,8 +228,6 @@ add_executable(PowerEngine
     ${CMAKE_CURRENT_LIST_DIR}/ui/FileView.cpp
     ${CMAKE_CURRENT_LIST_DIR}/ui/HierarchyPanel.hpp
     ${CMAKE_CURRENT_LIST_DIR}/ui/HierarchyPanel.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/ui/HierarchyToolPanel.hpp
-    ${CMAKE_CURRENT_LIST_DIR}/ui/HierarchyToolPanel.cpp
     ${CMAKE_CURRENT_LIST_DIR}/ui/ImportWindow.hpp
     ${CMAKE_CURRENT_LIST_DIR}/ui/ImportWindow.cpp
     ${CMAKE_CURRENT_LIST_DIR}/ui/MeshPicker.hpp

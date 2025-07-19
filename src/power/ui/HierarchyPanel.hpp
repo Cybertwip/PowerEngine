@@ -68,6 +68,10 @@ private:
 private:
 	void remove_selected_actor();
 	
+	std::shared_ptr<nanogui::Button> mRemoveActorButton;
+	std::shared_ptr<nanogui::Button> mAddActorButton;
+
+	
 	std::shared_ptr<TransformPanel> mTransformPanel;
 	std::shared_ptr<CameraPanel> mCameraPanel;
 	std::shared_ptr<AnimationPanel> mAnimationPanel;

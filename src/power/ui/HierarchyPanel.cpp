@@ -24,9 +24,20 @@
 #include "execution/NodeProcessor.hpp"
 
 
-HierarchyPanel::HierarchyPanel(nanogui::Widget& parent, std::shared_ptr<ScenePanel> scenePanel, std::shared_ptr<TransformPanel> transformPanel, std::shared_ptr<CameraPanel> cameraPanel, std::shared_ptr<AnimationPanel> animationPanel, ActorManager& actorManager) : Panel(parent, "Actors"), mTransformPanel(transformPanel), mCameraPanel(cameraPanel), mAnimationPanel(animationPanel), mActorManager(actorManager) {
+HierarchyPanel::HierarchyPanel(nanogui::Widget& parent, std::shared_ptr<ScenePanel> scenePanel, std::shared_ptr<TransformPanel> transformPanel, std::shared_ptr<CameraPanel> cameraPanel, std::shared_ptr<AnimationPanel> animationPanel, ActorManager& actorManager) : Panel(parent, ""), mTransformPanel(transformPanel), mCameraPanel(cameraPanel), mAnimationPanel(animationPanel), mActorManager(actorManager) {
 	set_position(nanogui::Vector2i(0, 0));
 	set_layout(std::make_unique<nanogui::GroupLayout>());
+	
+	mRemoveActorButton = std::make_shared<nanogui::Button>(*this, "-");
+	mAddActorButton = std::make_shared<nanogui::Button>(*this, "+");
+	
+	mRemoveActorButton->set_callback([this](){
+		remove_selected_actor();
+	});
+	
+	mAddActorButton->set_callback([this](){
+		auto& _ = mActorManager.create_actor();
+	});
 	
 	mScrollPanel = std::make_shared<nanogui::VScrollPanel>(*this);
 	
@@ -91,7 +102,9 @@ void HierarchyPanel::add_actor(std::reference_wrapper<Actor> actor) {
 }
 
 void HierarchyPanel::remove_selected_actor() {
-	remove_actor(std::ref(*mSelectedActor));
+	if (mSelectedActor.has_value()) {
+		remove_actor(std::ref(*mSelectedActor));
+	}
 }
 
 void HierarchyPanel::remove_actor(std::reference_wrapper<Actor> actor) {
