@@ -15,10 +15,14 @@
 #include "actors/Actor.hpp"
 #include "actors/ActorManager.hpp"
 #include "actors/IActorSelectedCallback.hpp"
+#include "components/BlueprintComponent.hpp"
 #include "components/CameraComponent.hpp"
 #include "components/MetadataComponent.hpp"
 #include "components/TransformComponent.hpp"
 #include "components/UiComponent.hpp"
+
+#include "execution/NodeProcessor.hpp"
+
 
 HierarchyPanel::HierarchyPanel(nanogui::Widget& parent, std::shared_ptr<ScenePanel> scenePanel, std::shared_ptr<TransformPanel> transformPanel, std::shared_ptr<CameraPanel> cameraPanel, std::shared_ptr<AnimationPanel> animationPanel, ActorManager& actorManager) : Panel(parent, "Actors"), mTransformPanel(transformPanel), mCameraPanel(cameraPanel), mAnimationPanel(animationPanel), mActorManager(actorManager) {
 	set_position(nanogui::Vector2i(0, 0));
@@ -36,6 +40,12 @@ HierarchyPanel::HierarchyPanel(nanogui::Widget& parent, std::shared_ptr<ScenePan
 	// Populate it with items dynamically.
 	mContextMenu->addItem("Add Blueprint Component", [this]() {
 //		mSelectedActor
+		
+		if(!mSelectedActor->get().find_component<BlueprintComponent>()) {
+			auto node_processor = std::make_unique<NodeProcessor>();
+
+			mSelectedActor->get().add_component<BlueprintComponent>(std::move(node_processor));
+		}
 		
 		refresh_selected_actor();
 	});
