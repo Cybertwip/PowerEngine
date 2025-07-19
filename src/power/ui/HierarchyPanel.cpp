@@ -76,6 +76,8 @@ HierarchyPanel::HierarchyPanel(nanogui::Widget& parent, std::shared_ptr<ScenePan
 		}
 		
 		refresh_selected_actor();
+		
+		fire_actor_selected_event(mSelectedActor);
 	});
 	mContextMenu->addItem("Add Camera Component", [this]() {
 		if (!mSelectedActor->get().find_component<CameraComponent>()) {
@@ -83,7 +85,9 @@ HierarchyPanel::HierarchyPanel(nanogui::Widget& parent, std::shared_ptr<ScenePan
 		}
 		
 		refresh_selected_actor();
-		
+	
+		fire_actor_selected_event(mSelectedActor);
+
 	});
 	
 }
