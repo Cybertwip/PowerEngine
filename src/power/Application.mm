@@ -210,7 +210,7 @@ void Application::initialize() {
 		}
 	});
 	
-	mSerializationModule = std::make_unique<SerializationModule>(*mActorManager, *mMeshActorLoader, mGlobalAnimationTimeProvider, *mMeshShader, *mSkinnedShader);
+	mSerializationModule = std::make_unique<SerializationModule>(*mActorManager, *mMeshActorBuilder, mGlobalAnimationTimeProvider, *mMeshShader, *mSkinnedShader);
 	
 	mBlueprintManager = std::make_unique<BlueprintManager>(*mRenderCommon->canvas(), mUiCommon->hierarchy_panel(), *mActorManager);
 	
