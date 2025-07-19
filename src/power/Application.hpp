@@ -180,6 +180,7 @@ class CameraManager;
 class ExecutionManager;
 class GizmoManager;
 class MeshActor;
+class MeshActorBuilder;
 class MeshActorLoader;
 class MeshBatch;
 class RenderCommon;
@@ -233,6 +234,7 @@ class Application : public nanogui::DraggableScreen
 	std::unique_ptr<GizmoManager> mGizmoManager;
 	std::unique_ptr<MeshActorLoader> mGizmoActorLoader;
 	std::unique_ptr<MeshActorLoader> mMeshActorLoader;
+	std::unique_ptr<MeshActorBuilder> mMeshActorBuilder;
 	std::unique_ptr<ShaderWrapper> mSkinnedShader;
 	std::unique_ptr<ShaderWrapper> mMeshShader;
 	std::unique_ptr<BatchUnit> mBatchUnit;

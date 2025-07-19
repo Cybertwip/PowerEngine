@@ -152,9 +152,11 @@ void Application::initialize() {
 	
 	mSkinnedShader = std::make_unique<ShaderWrapper>(mRenderCommon->shader_manager().get_shader("skinned_mesh"));
 	
-	mMeshActorLoader = std::make_unique<MeshActorLoader>(*mActorManager, mRenderCommon->shader_manager(), *mBatchUnit);
+	mMeshActorBuilder = std::make_unique<MeshActorBuilder>(*mBatchUnit);
+		
+	mMeshActorLoader = std::make_unique<MeshActorLoader>(*mActorManager, mRenderCommon->shader_manager(), *mBatchUnit, *mMeshActorBuilder);
 	
-	mGizmoActorLoader = std::make_unique<MeshActorLoader>(*mActorManager, mRenderCommon->shader_manager(), *mGizmoBatchUnit);
+	mGizmoActorLoader = std::make_unique<MeshActorLoader>(*mActorManager, mRenderCommon->shader_manager(), *mGizmoBatchUnit, *mMeshActorBuilder);
 	
 	mGizmoManager = std::make_unique<GizmoManager>(*mRenderCommon->canvas(), mRenderCommon->shader_manager(), *mActorManager, *mGizmoActorLoader);
 	

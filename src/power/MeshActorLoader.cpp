@@ -13,12 +13,12 @@
 
 #include "simulation/PrimitiveBuilder.hpp"
 
-MeshActorLoader::MeshActorLoader(ActorManager& actorManager, ShaderManager& shaderManager, BatchUnit& batchUnit)
+MeshActorLoader::MeshActorLoader(ActorManager& actorManager, ShaderManager& shaderManager, BatchUnit& batchUnit, MeshActorBuilder& actorBuilder)
     
-: mActorManager(actorManager),
-mMeshActorBuilder(std::make_unique<MeshActorBuilder>(batchUnit)),
-mPrimitiveBuilder(std::make_unique<PrimitiveBuilder>(batchUnit.mMeshBatch)),
-mBatchUnit(batchUnit) {
+: mActorManager(actorManager)
+, mPrimitiveBuilder(std::make_unique<PrimitiveBuilder>(batchUnit.mMeshBatch))
+, mBatchUnit(batchUnit)
+, mMeshActorBuilder(actorBuilder){
 		  
 }
 
@@ -30,7 +30,7 @@ const BatchUnit& MeshActorLoader::get_batch_unit() {
 }
 
 Actor& MeshActorLoader::create_actor(const std::string& path, AnimationTimeProvider& timeProvider, ShaderWrapper& meshShader, ShaderWrapper& skinnedShader) {
-	Actor& actor = mMeshActorBuilder->build(mActorManager.create_actor(), timeProvider, path, meshShader, skinnedShader);
+	Actor& actor = mMeshActorBuilder.build(mActorManager.create_actor(), timeProvider, path, meshShader, skinnedShader);
 	
 	auto& transformComponent = actor.add_component<TransformComponent>();
 	actor.add_component<TransformAnimationComponent>(transformComponent, timeProvider);

@@ -20,8 +20,8 @@ struct BatchUnit;
 
 class MeshActorLoader
 {
-   public:
-    MeshActorLoader(ActorManager& actorManager, ShaderManager& shaderManager, BatchUnit& batchUnit);
+public:
+    explicit MeshActorLoader(ActorManager& actorManager, ShaderManager& shaderManager, BatchUnit& batchUnit, MeshActorBuilder& meshActorBuilder);
 
 	~MeshActorLoader();
 	
@@ -31,10 +31,10 @@ class MeshActorLoader
 	
 	const BatchUnit& get_batch_unit();
 
-   private:
+private:
 	ActorManager& mActorManager;
 	
-	std::unique_ptr<MeshActorBuilder> mMeshActorBuilder;
+	MeshActorBuilder& mMeshActorBuilder;
 	std::unique_ptr<PrimitiveBuilder> mPrimitiveBuilder;
 
 	BatchUnit& mBatchUnit;
