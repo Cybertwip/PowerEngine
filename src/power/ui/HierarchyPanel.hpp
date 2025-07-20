@@ -68,6 +68,8 @@ private:
 private:
 	void remove_selected_actor();
 	
+	std::unique_ptr<nanogui::Widget> mButtonContainer;
+	
 	std::shared_ptr<nanogui::Button> mRemoveActorButton;
 	std::shared_ptr<nanogui::Button> mAddActorButton;
 
