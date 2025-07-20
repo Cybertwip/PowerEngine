@@ -7,6 +7,7 @@
 #include "components/ModelMetadataComponent.hpp"
 #include "components/BlueprintComponent.hpp"
 #include "components/BlueprintMetadataComponent.hpp"
+#include "components/MetadataComponent.hpp"
 #include "execution/BlueprintNode.hpp"
 #include "execution/KeyPressNode.hpp"
 #include "execution/KeyReleaseNode.hpp"
@@ -194,27 +195,50 @@ std::optional<std::variant<Entity, std::string, int, float, bool>> deserialize_p
 
 template<>
 void SceneSerializer::register_component<BlueprintMetadataComponent>() {
-    entt::id_type type_id = entt::type_id<BlueprintMetadataComponent>().hash();
-    
-    m_serializers[type_id] = {
-        .serialize = [](flatbuffers::FlatBufferBuilder& builder, const entt::registry& registry, entt::entity entity) {
-            const auto& comp = registry.get<BlueprintMetadataComponent>(entity);
-            auto path_offset = builder.CreateString(comp.blueprint_path());
-            auto metadata_offset = Power::Schema::CreateBlueprintMetadataComponent(builder, path_offset);
-            return metadata_offset.Union();
-        },
-        .deserialize = [](entt::registry& registry, entt::entity entity, const void* data) {
-            const auto* comp_data = static_cast<const Power::Schema::BlueprintMetadataComponent*>(data);
-            std::string path = comp_data->blueprint_path()->str();
-            registry.emplace<BlueprintMetadataComponent>(entity, path);
-        }
-    };
-    
-    m_component_type_map[static_cast<uint8_t>(Power::Schema::ComponentData_BlueprintMetadataComponent)] = type_id;
+	entt::id_type type_id = entt::type_id<BlueprintMetadataComponent>().hash();
+	
+	m_serializers[type_id] = {
+		.serialize = [](flatbuffers::FlatBufferBuilder& builder, const entt::registry& registry, entt::entity entity) {
+			const auto& comp = registry.get<BlueprintMetadataComponent>(entity);
+			auto path_offset = builder.CreateString(comp.blueprint_path());
+			auto metadata_offset = Power::Schema::CreateBlueprintMetadataComponent(builder, path_offset);
+			return metadata_offset.Union();
+		},
+			.deserialize = [](entt::registry& registry, entt::entity entity, const void* data) {
+				const auto* comp_data = static_cast<const Power::Schema::BlueprintMetadataComponent*>(data);
+				std::string path = comp_data->blueprint_path()->str();
+				registry.emplace<BlueprintMetadataComponent>(entity, path);
+			}
+	};
+	
+	m_component_type_map[static_cast<uint8_t>(Power::Schema::ComponentData_BlueprintMetadataComponent)] = type_id;
 }
 
+// MetadataComponent Registration
+template<>
+void SceneSerializer::register_component<MetadataComponent>() {
+	entt::id_type type_id = entt::type_id<MetadataComponent>().hash();
+	
+	m_serializers[type_id] = {
+		// --- SERIALIZE ---
+		.serialize = [](flatbuffers::FlatBufferBuilder& builder, const entt::registry& registry, entt::entity entity) {
+			const auto& comp = registry.get<MetadataComponent>(entity);
+			auto name_offset = builder.CreateString(std::string(comp.name()));
+			auto metadata_offset = Power::Schema::CreateMetadataComponent(builder, comp.identifier(), name_offset);
+			return metadata_offset.Union();
+		},
+		// --- DESERIALIZE ---
+			.deserialize = [](entt::registry& registry, entt::entity entity, const void* data) {
+				const auto* comp_data = static_cast<const Power::Schema::MetadataComponent*>(data);
+				std::string name = comp_data->name()->str();
+				registry.emplace<MetadataComponent>(entity, comp_data->identifier(), name);
+			}
+	};
+	
+	// Assumes 'MetadataComponent' is defined in your FlatBuffers schema and the corresponding enum is 'ComponentData_MetadataComponent'
+	m_component_type_map[static_cast<uint8_t>(Power::Schema::ComponentData_MetadataComponent)] = type_id;
+}
 
-// --- Main Serialization/Deserialization Logic (Unchanged) ---
 
 void SceneSerializer::serialize(entt::registry& registry, const std::string& filepath) {
 	flatbuffers::FlatBufferBuilder builder;

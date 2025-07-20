@@ -43,12 +43,19 @@ table BlueprintMetadataComponent {
   blueprint_path:string;
 }
 
+// ADDED: Generic metadata component.
+table MetadataComponent {
+  identifier:int;
+  name:string;
+}
+
 // --- Component Union ---
 union ComponentData {
   TransformComponent,
   CameraComponent,
   ModelMetadataComponent,
-  BlueprintMetadataComponent // ADDED
+  BlueprintMetadataComponent, // ADDED
+  MetadataComponent // ADDED
 }
 
 table Component {

@@ -136,6 +136,10 @@ Actor& MeshActorBuilder::build_from_model_data(Actor& actor, AnimationTimeProvid
 	}
 	
 	
+	if (actor.find_component<ModelMetadataComponent>()) {
+		actor.remove_component<ModelMetadataComponent>();
+	}
+	
 	actor.add_component<ModelMetadataComponent>(path);
 	
 	return actor;
