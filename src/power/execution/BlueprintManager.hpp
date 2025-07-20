@@ -222,8 +222,8 @@ public:
 	}
 	
 	void update_buttons(const nanogui::Vector2f& position) {
-		mLoadBlueprintButton->set_position(nanogui::Vector2i(position.x() + padding, position.y() + padding));
-		mSaveBlueprintButton->set_position(nanogui::Vector2i(mButtonSize + position.x() + padding * 2, position.y() + padding));
+		mLoadBlueprintButton->set_position(nanogui::Vector2i(position.x(), position.y() + padding));
+		mSaveBlueprintButton->set_position(nanogui::Vector2i(mButtonSize + position.x() + padding, position.y() + padding));
 	}
 
 private:
@@ -299,7 +299,7 @@ public:
 		const int steps = 20;
 		const auto stepDelay = std::chrono::milliseconds(16); // ~60 FPS
 		nanogui::Vector2f startPos = mBlueprintPanel->position();
-		nanogui::Vector2f buttonPadding = startPos + padding;
+		nanogui::Vector2f buttonPadding = nanogui::Vector2f(startPos.x(), startPos.y() + padding);
 		nanogui::Vector2f step = (nanogui::Vector2f(targetPosition) - startPos) / (steps - 1);
 		
 		for (int i = 0; i < steps; ++i) {

@@ -10,6 +10,7 @@
 #include <nanogui/treeviewitem.h>
 #include <nanogui/popup.h>
 #include <nanogui/button.h>
+#include <nanogui/widget.h>
 #include <GLFW/glfw3.h>
 
 #include "actors/Actor.hpp"
@@ -28,8 +29,14 @@ HierarchyPanel::HierarchyPanel(nanogui::Widget& parent, std::shared_ptr<ScenePan
 	set_position(nanogui::Vector2i(0, 0));
 	set_layout(std::make_unique<nanogui::GroupLayout>());
 	
-	mRemoveActorButton = std::make_shared<nanogui::Button>(*this, "-");
-	mAddActorButton = std::make_shared<nanogui::Button>(*this, "+");
+	// Create a container widget for the buttons to lay them out horizontally.
+	auto* button_container = new nanogui::Widget(this);
+	// Use a GridLayout with 2 columns to make each button take up 50% of the width.
+	// Parameters: Horizontal orientation, 2 columns, Fill alignment, 0 margin, 2px spacing.
+	button_container->set_layout(new nanogui::GridLayout(nanogui::Orientation::Horizontal, 2, nanogui::Alignment::Fill, 0, 2));
+	
+	mRemoveActorButton = std::make_shared<nanogui::Button>(*button_container, "-");
+	mAddActorButton = std::make_shared<nanogui::Button>(*button_container, "+");
 	
 	mRemoveActorButton->set_callback([this](){
 		remove_selected_actor();
@@ -85,9 +92,9 @@ HierarchyPanel::HierarchyPanel(nanogui::Widget& parent, std::shared_ptr<ScenePan
 		}
 		
 		refresh_selected_actor();
-	
+		
 		fire_actor_selected_event(mSelectedActor);
-
+		
 	});
 	
 }
