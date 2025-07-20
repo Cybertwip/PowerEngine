@@ -104,14 +104,21 @@ void FileView::refresh() {
 	m_initial_root_node->refresh(m_allowed_extensions);
 	
 	populate_file_view();
-	perform_layout(screen().nvg_context());
+}
+
+nanogui::Vector2i FileView::preferred_size(NVGcontext* ctx) {
+	// The preferred size of this widget is the preferred size of its scroll panel.
+	if (m_vscroll) {
+		return m_vscroll->preferred_size(ctx);
+	}
+	return nanogui::Vector2i(0, 0);
 }
 
 void FileView::perform_layout(NVGcontext* ctx) {
 	// Manually set the VScrollPanel to fill this entire widget
 	if (m_vscroll) {
 		m_vscroll->set_position({0, 0});
-		m_vscroll->set_size(size()); // Use the size of the FileView widget itself
+		m_vscroll->set_fixed_size(fixed_size()); // Use the size of the FileView widget itself
 	}
 	// Call the base class implementation to handle children's layouts
 	Widget::perform_layout(ctx);

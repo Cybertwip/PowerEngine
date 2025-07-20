@@ -35,6 +35,8 @@ public:
 	void ProcessEvents();
 	
 private:
+	nanogui::Vector2i preferred_size(NVGcontext* ctx) override;
+
 	void perform_layout(NVGcontext* ctx) override;
 
 	void populate_file_view();
