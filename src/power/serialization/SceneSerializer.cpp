@@ -206,23 +206,23 @@ void SceneSerializer::serialize(entt::registry& registry, const std::string& fil
 	for (auto entity_handle : id_view) {
 		std::vector<flatbuffers::Offset<Power::Schema::Component>> component_offsets;
 		
-		// Use registry.visit to iterate only over components on this entity
-		registry.visit(entity_handle, [&](const entt::id_type type_id) {
-			// Check if a serializer is registered for this component type
-			if (m_serializers.count(type_id)) {
-				auto& serializer = m_serializers.at(type_id);
-				
-				// Ensure the component has a serialize function (e.g., skip IDComponent)
-				if (serializer.serialize) {
-					// Use our new reverse map for a fast, direct lookup
+		// MODIFIED: Reverted to this loop for compatibility with older EnTT versions.
+		for (auto&& [type_id, storage] : registry.storage()) {
+			// Check if the current entity actually has this component.
+			if (storage.contains(entity_handle)) {
+				// Ensure a serializer is registered and it's not a no-op (like for IDComponent).
+				if (m_serializers.count(type_id) && m_serializers.at(type_id).serialize) {
+					
+					// KEEPING THE FIX: Use the efficient reverse map to find the enum type.
 					if (m_type_id_to_enum_map.count(type_id)) {
+						auto& serializer = m_serializers.at(type_id);
 						auto component_offset = serializer.serialize(builder, registry, entity_handle);
 						auto component_type_enum = static_cast<Power::Schema::ComponentData>(m_type_id_to_enum_map.at(type_id));
 						component_offsets.push_back(Power::Schema::CreateComponent(builder, component_type_enum, component_offset));
 					}
 				}
 			}
-		});
+		}
 		
 		if (!component_offsets.empty()) {
 			UUID uuid = id_view.get<const IDComponent>(entity_handle).uuid;
