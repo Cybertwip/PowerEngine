@@ -10,11 +10,12 @@
 #include "components/BlueprintComponent.hpp"
 #include <unordered_set>
 
-NodeProcessor::NodeProcessor() {
+NodeProcessor::NodeProcessor() : next_id(1) {
+	
 }
 
 long long NodeProcessor::get_next_id() {
-	return CoreNode::get_next_id();
+	return next_id++;
 }
 
 void NodeProcessor::build_node(CoreNode& node){

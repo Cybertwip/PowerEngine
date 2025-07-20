@@ -180,7 +180,7 @@ public:
 		mEvaluate = evaluate;
 	}
 
-	CoreNode(NodeType type, long long id, nanogui::Color color = nanogui::Color(255, 255, 255, 255)) : type(type), id(id), color(color) {
+	CoreNode(NodeType type, long long id, nanogui::Color color = nanogui::Color(255, 255, 255, 255)) : type(type), id(id), color(color), next_id(1) {
 		
 	}
 	
@@ -239,12 +239,11 @@ public:
 		// Pin not found
 		assert(false);
 	}
-	
-	static long long get_next_id();
-	static long long set_next_id(long long id);
 
+		
 private:
-	static long long next_id;
+	long long get_next_id();
+	long long next_id;
 	
 	std::function<void()> mLink;
 	std::function<void()> mEvaluate;
