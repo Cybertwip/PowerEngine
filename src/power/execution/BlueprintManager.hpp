@@ -55,16 +55,17 @@ public:
 			}
 			
 			if (mDisplaying) {
-				mBlueprintActionTriggerCallback(false, nullptr);
-				
-				mDisplaying = false;
+				mBlueprintActionTriggerCallback(false, [this](){
+					mDisplaying = false;
+					clear();
+				});
 			} else {
 				mBlueprintActionTriggerCallback(true, [this](){
 					clear();
 					deserialize(mActiveActor->get());
+					
+					mDisplaying = true;
 				});
-				
-				mDisplaying = true;
 			}
 		});
 		
