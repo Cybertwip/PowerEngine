@@ -260,8 +260,7 @@ UiManager::UiManager(nanogui::Screen& screen, std::shared_ptr<IActorSelectedRegi
 	
 	mStatusBarPanel->set_fixed_width(statusBar->fixed_height());
 	mStatusBarPanel->set_fixed_height(statusBar->fixed_height());
-	mStatusBarPanel->set_layout(std::make_unique<nanogui::BoxLayout>(nanogui::Orientation::Horizontal,
-																	   nanogui::Alignment::Minimum, 4, 2));
+	mStatusBarPanel->set_layout(std::make_unique<nanogui::BoxLayout>(nanogui::Orientation::Horizontal, nanogui::Alignment::Minimum, 4, 2));
 	
 	// Initialize selection color
 	mSelectionColor = glm::normalize(glm::vec4(0.83f, 0.68f, 0.21f, 1.0f)); // A gold-ish color

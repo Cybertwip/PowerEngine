@@ -29,6 +29,11 @@ public:
 
 	Actor& create_actor(const std::string& actorName, PrimitiveShape primitiveShape, ShaderWrapper& meshShader);
 	
+	
+	std::unique_ptr<Actor> create_unique_actor(entt::registry& registry, const std::string& path, AnimationTimeProvider& timeProvider, ShaderWrapper& meshShader, ShaderWrapper& skinnedShader);
+	
+	std::unique_ptr<Actor> create_unique_actor(entt::registry& registry, const std::string& actorName, PrimitiveShape primitiveShape, ShaderWrapper& meshShader);
+
 	const BatchUnit& get_batch_unit();
 
 private:

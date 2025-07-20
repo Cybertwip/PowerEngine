@@ -51,8 +51,6 @@ public:
     
     void draw_content(const nanogui::Matrix4f& model, const nanogui::Matrix4f& view, const nanogui::Matrix4f& projection) override;
 	
-	void rebuild_gizmos();
-
 private:
 	void set_mode(GizmoMode mode);
 
@@ -63,9 +61,9 @@ private:
 	MeshActorLoader& mMeshActorLoader;
 	std::unique_ptr<ShaderWrapper> mMeshShader;
 	std::unique_ptr<ShaderWrapper> mSkinnedShader;
-	std::reference_wrapper<Actor> mTranslationGizmo;
-	std::reference_wrapper<Actor> mRotationGizmo;
-	std::reference_wrapper<Actor> mScaleGizmo;
+	std::unique_ptr<Actor> mTranslationGizmo;
+	std::unique_ptr<Actor> mRotationGizmo;
+	std::unique_ptr<Actor> mScaleGizmo;
 
 	std::optional<std::reference_wrapper<Actor>> mActiveActor;
 	
@@ -78,5 +76,7 @@ private:
 	std::shared_ptr<nanogui::Button> mScaleButton;
 	
 	std::optional<std::reference_wrapper<Actor>> mActiveGizmo;
+	
+	entt::registry mRegistry;
 };
 
