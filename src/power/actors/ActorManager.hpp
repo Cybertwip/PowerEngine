@@ -52,7 +52,9 @@ private:
 	}
 	
 	const std::vector<std::reference_wrapper<Actor>> get_actors() const {
-		
+
+		std::vector<std::reference_wrapper<Actor>> actors;
+
 		for (auto& actor : mActors) {
 			actors.push_back(*actor);
 		}
