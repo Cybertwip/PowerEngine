@@ -23,9 +23,9 @@ SerializationModule::SerializationModule(ActorManager& actorManager, MeshActorBu
     mSceneSerializer->register_component<IDComponent>();
     mSceneSerializer->register_component<TransformComponent>();
     mSceneSerializer->register_component<CameraComponent>();
-	mSceneSerializer->register_component<MetadataComponent>();
 	mSceneSerializer->register_component<ModelMetadataComponent>();
 	mSceneSerializer->register_component<BlueprintMetadataComponent>(); // MODIFIED
+	mSceneSerializer->register_component<MetadataComponent>();
 }
 
 void SerializationModule::save_scene(const std::string& filepath) {
@@ -45,9 +45,9 @@ void SerializationModule::load_scene(const std::string& filepath) {
     BlueprintSerializer blueprint_serializer;
     
     // Iterate through all newly created entities to perform post-processing
-	auto actor_refs = mActorManager.get_actors();
-    for (auto& actor_ref : actor_refs) {
-		auto& actor = actor_ref.get();
+    auto view = mActorManager.registry().view<IDComponent>();
+    for (auto entity_handle : view) {
+        auto& actor = mActorManager.create_actor(entity_handle);
         
         // Post-process models, as before
         if (actor.find_component<ModelMetadataComponent>()) {

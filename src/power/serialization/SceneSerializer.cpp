@@ -1,5 +1,5 @@
 #include "SceneSerializer.hpp"
-#include "scene_generated.h" // Include the generated header
+#include "scene_generated.h"
 
 // Your actual component headers
 #include "components/TransformComponent.hpp"
@@ -8,16 +8,7 @@
 #include "components/BlueprintComponent.hpp"
 #include "components/BlueprintMetadataComponent.hpp"
 #include "components/MetadataComponent.hpp"
-#include "execution/BlueprintNode.hpp"
-#include "execution/KeyPressNode.hpp"
-#include "execution/KeyReleaseNode.hpp"
-#include "execution/StringNode.hpp"
-#include "execution/PrintNode.hpp"
-
-#include "execution/NodeProcessor.hpp"
-
-#include "serialization/UUID.hpp"
-
+#include "serialization/UUID.hpp" // Make sure IDComponent is included
 
 #include <fstream>
 #include <vector>
@@ -36,10 +27,51 @@ Power::Schema::Quat create_quat(const glm::quat& q) {
 // We define the registration logic inside the .cpp file
 template<typename T>
 void SceneSerializer::register_component() {
-	// This function will be specialized for each component type
-	// If you try to register an unknown component, it should fail to compile
 	static_assert(sizeof(T) == 0, "Component type not registered for serialization.");
 }
+
+// --- Helper macro to reduce registration boilerplate ---
+#define REGISTER_COMPONENT(TYPE, ENUM) \
+template<> \
+void SceneSerializer::register_component<TYPE>() { \
+entt::id_type type_id = entt::type_id<TYPE>().hash(); \
+m_serializers[type_id] = { \
+.serialize = [](flatbuffers::FlatBufferBuilder& builder, const entt::registry& registry, entt::entity entity) { \
+const auto& comp = registry.get<TYPE>(entity); \
+return comp.serialize(builder); \
+}, \
+.deserialize = [](entt::registry& registry, entt::entity entity, const void* data) { \
+TYPE::deserialize(registry, entity, data); \
+} \
+}; \
+auto enum_val = static_cast<uint8_t>(Power::Schema::ComponentData_##ENUM); \
+m_component_type_map[enum_val] = type_id; \
+m_type_id_to_enum_map[type_id] = enum_val; /* MODIFIED: Populate reverse map */ \
+}
+
+// To use the macro, you'll need to add serialize/deserialize static methods to your components.
+// For example, in TransformComponent.hpp/cpp:
+/*
+ struct TransformComponent {
+ // ... existing members and methods
+ public:
+ static flatbuffers::Offset<void> serialize(flatbuffers::FlatBufferBuilder& builder, const TransformComponent& comp) {
+ auto translation = create_vec3(comp.get_translation());
+ auto rotation = create_quat(comp.get_rotation());
+ auto scale = create_vec3(comp.get_scale());
+ auto offset = Power::Schema::CreateTransformComponent(builder, &translation, &rotation, &scale);
+ return offset.Union();
+ }
+ static void deserialize(entt::registry& registry, entt::entity entity, const void* data) {
+ const auto* comp_data = static_cast<const Power::Schema::TransformComponent*>(data);
+ auto& comp = registry.emplace<TransformComponent>(entity);
+ comp.set_translation({comp_data->translation()->x(), comp_data->translation()->y(), comp_data->translation()->z()});
+ comp.set_rotation({comp_data->rotation()->w(), comp_data->rotation()->x(), comp_data->rotation()->y(), comp_data->rotation()->z()});
+ comp.set_scale({comp_data->scale()->x(), comp_data->scale()->y(), comp_data->scale()->z()});
+ }
+ };
+ */
+// You would do this for all serializable components. For brevity, the original long-form specializations are kept below.
 
 // --- Specializations for each component ---
 
@@ -47,19 +79,15 @@ void SceneSerializer::register_component() {
 template<>
 void SceneSerializer::register_component<TransformComponent>() {
 	entt::id_type type_id = entt::type_id<TransformComponent>().hash();
-	
 	m_serializers[type_id] = {
-		// --- SERIALIZE ---
 		.serialize = [](flatbuffers::FlatBufferBuilder& builder, const entt::registry& registry, entt::entity entity) {
 			const auto& comp = registry.get<TransformComponent>(entity);
 			auto translation = create_vec3(comp.get_translation());
 			auto rotation = create_quat(comp.get_rotation());
 			auto scale = create_vec3(comp.get_scale());
-			
 			auto transform_offset = Power::Schema::CreateTransformComponent(builder, &translation, &rotation, &scale);
 			return transform_offset.Union();
 		},
-		// --- DESERIALIZE ---
 			.deserialize = [](entt::registry& registry, entt::entity entity, const void* data) {
 				const auto* comp_data = static_cast<const Power::Schema::TransformComponent*>(data);
 				auto& comp = registry.emplace<TransformComponent>(entity);
@@ -68,23 +96,21 @@ void SceneSerializer::register_component<TransformComponent>() {
 				comp.set_scale({comp_data->scale()->x(), comp_data->scale()->y(), comp_data->scale()->z()});
 			}
 	};
-	m_component_type_map[static_cast<uint8_t>(Power::Schema::ComponentData_TransformComponent)] = type_id;
+	auto enum_val = static_cast<uint8_t>(Power::Schema::ComponentData_TransformComponent);
+	m_component_type_map[enum_val] = type_id;
+	m_type_id_to_enum_map[type_id] = enum_val; // MODIFIED
 }
-
 
 // CameraComponent Registration
 template<>
 void SceneSerializer::register_component<CameraComponent>() {
 	entt::id_type type_id = entt::type_id<CameraComponent>().hash();
-	
 	m_serializers[type_id] = {
-		// --- SERIALIZE ---
 		.serialize = [](flatbuffers::FlatBufferBuilder& builder, const entt::registry& registry, entt::entity entity) {
 			const auto& comp = registry.get<CameraComponent>(entity);
 			auto camera_offset = Power::Schema::CreateCameraComponent(builder, comp.get_fov(), comp.get_near(), comp.get_far(), comp.get_aspect(), comp.active());
 			return camera_offset.Union();
 		},
-		// --- DESERIALIZE ---
 			.deserialize = [](entt::registry& registry, entt::entity entity, const void* data) {
 				const auto* comp_data = static_cast<const Power::Schema::CameraComponent*>(data);
 				auto& transform = registry.get<TransformComponent>(entity);
@@ -92,46 +118,43 @@ void SceneSerializer::register_component<CameraComponent>() {
 				comp.set_active(comp_data->active());
 			}
 	};
-	m_component_type_map[static_cast<uint8_t>(Power::Schema::ComponentData_CameraComponent)] = type_id;
+	auto enum_val = static_cast<uint8_t>(Power::Schema::ComponentData_CameraComponent);
+	m_component_type_map[enum_val] = type_id;
+	m_type_id_to_enum_map[type_id] = enum_val; // MODIFIED
 }
 
 // IDComponent Registration (no-op for serialization)
 template<>
 void SceneSerializer::register_component<IDComponent>() {
-	m_serializers[entt::type_id<IDComponent>().hash()] = {
-		.serialize = nullptr,
-		.deserialize = nullptr
-	};
+	m_serializers[entt::type_id<IDComponent>().hash()] = { .serialize = nullptr, .deserialize = nullptr };
 }
 
 // ModelMetadataComponent Registration
 template<>
 void SceneSerializer::register_component<ModelMetadataComponent>() {
 	entt::id_type type_id = entt::type_id<ModelMetadataComponent>().hash();
-	
 	m_serializers[type_id] = {
-		// --- SERIALIZE ---
 		.serialize = [](flatbuffers::FlatBufferBuilder& builder, const entt::registry& registry, entt::entity entity) {
 			const auto& comp = registry.get<ModelMetadataComponent>(entity);
 			auto model_path_offset = builder.CreateString(comp.model_path());
 			auto metadata_offset = Power::Schema::CreateModelMetadataComponent(builder, model_path_offset);
 			return metadata_offset.Union();
 		},
-		// --- DESERIALIZE ---
 			.deserialize = [](entt::registry& registry, entt::entity entity, const void* data) {
 				const auto* comp_data = static_cast<const Power::Schema::ModelMetadataComponent*>(data);
 				std::string model_path = comp_data->model_path()->str();
 				registry.emplace<ModelMetadataComponent>(entity, model_path);
 			}
 	};
-	
-	m_component_type_map[static_cast<uint8_t>(Power::Schema::ComponentData_ModelMetadataComponent)] = type_id;
+	auto enum_val = static_cast<uint8_t>(Power::Schema::ComponentData_ModelMetadataComponent);
+	m_component_type_map[enum_val] = type_id;
+	m_type_id_to_enum_map[type_id] = enum_val; // MODIFIED
 }
 
+// BlueprintMetadataComponent Registration
 template<>
 void SceneSerializer::register_component<BlueprintMetadataComponent>() {
 	entt::id_type type_id = entt::type_id<BlueprintMetadataComponent>().hash();
-	
 	m_serializers[type_id] = {
 		.serialize = [](flatbuffers::FlatBufferBuilder& builder, const entt::registry& registry, entt::entity entity) {
 			const auto& comp = registry.get<BlueprintMetadataComponent>(entity);
@@ -145,36 +168,36 @@ void SceneSerializer::register_component<BlueprintMetadataComponent>() {
 				registry.emplace<BlueprintMetadataComponent>(entity, path);
 			}
 	};
-	
-	m_component_type_map[static_cast<uint8_t>(Power::Schema::ComponentData_BlueprintMetadataComponent)] = type_id;
+	auto enum_val = static_cast<uint8_t>(Power::Schema::ComponentData_BlueprintMetadataComponent);
+	m_component_type_map[enum_val] = type_id;
+	m_type_id_to_enum_map[type_id] = enum_val; // MODIFIED
 }
 
 // MetadataComponent Registration
 template<>
 void SceneSerializer::register_component<MetadataComponent>() {
 	entt::id_type type_id = entt::type_id<MetadataComponent>().hash();
-	
 	m_serializers[type_id] = {
-		// --- SERIALIZE ---
 		.serialize = [](flatbuffers::FlatBufferBuilder& builder, const entt::registry& registry, entt::entity entity) {
 			const auto& comp = registry.get<MetadataComponent>(entity);
 			auto name_offset = builder.CreateString(std::string(comp.name()));
 			auto metadata_offset = Power::Schema::CreateMetadataComponent(builder, comp.identifier(), name_offset);
 			return metadata_offset.Union();
 		},
-		// --- DESERIALIZE ---
 			.deserialize = [](entt::registry& registry, entt::entity entity, const void* data) {
 				const auto* comp_data = static_cast<const Power::Schema::MetadataComponent*>(data);
 				std::string name = comp_data->name()->str();
 				registry.emplace<MetadataComponent>(entity, comp_data->identifier(), name);
 			}
 	};
-	
-	// Assumes 'MetadataComponent' is defined in your FlatBuffers schema and the corresponding enum is 'ComponentData_MetadataComponent'
-	m_component_type_map[static_cast<uint8_t>(Power::Schema::ComponentData_MetadataComponent)] = type_id;
+	auto enum_val = static_cast<uint8_t>(Power::Schema::ComponentData_MetadataComponent);
+	m_component_type_map[enum_val] = type_id;
+	m_type_id_to_enum_map[type_id] = enum_val; // MODIFIED
 }
 
-
+// =================================================================
+//                    FIXED SERIALIZE FUNCTION
+// =================================================================
 void SceneSerializer::serialize(entt::registry& registry, const std::string& filepath) {
 	flatbuffers::FlatBufferBuilder builder;
 	std::vector<flatbuffers::Offset<Power::Schema::Entity>> entity_offsets;
@@ -183,31 +206,26 @@ void SceneSerializer::serialize(entt::registry& registry, const std::string& fil
 	for (auto entity_handle : id_view) {
 		std::vector<flatbuffers::Offset<Power::Schema::Component>> component_offsets;
 		
-		for (auto&& [type_id, storage] : registry.storage()) {
-			if (type_id != entt::type_id<IDComponent>().hash() && storage.contains(entity_handle) && m_serializers.count(type_id)) {
+		// Use registry.visit to iterate only over components on this entity
+		registry.visit(entity_handle, [&](const entt::id_type type_id) {
+			// Check if a serializer is registered for this component type
+			if (m_serializers.count(type_id)) {
 				auto& serializer = m_serializers.at(type_id);
 				
+				// Ensure the component has a serialize function (e.g., skip IDComponent)
 				if (serializer.serialize) {
-					auto component_offset = serializer.serialize(builder, registry, entity_handle);
-					
-					Power::Schema::ComponentData component_type_enum = Power::Schema::ComponentData_NONE;
-					for(const auto& [key, val] : m_component_type_map) {
-						if (val == type_id) {
-							component_type_enum = static_cast<Power::Schema::ComponentData>(key);
-							break;
-						}
-					}
-					
-					if (component_type_enum != Power::Schema::ComponentData_NONE) {
+					// Use our new reverse map for a fast, direct lookup
+					if (m_type_id_to_enum_map.count(type_id)) {
+						auto component_offset = serializer.serialize(builder, registry, entity_handle);
+						auto component_type_enum = static_cast<Power::Schema::ComponentData>(m_type_id_to_enum_map.at(type_id));
 						component_offsets.push_back(Power::Schema::CreateComponent(builder, component_type_enum, component_offset));
 					}
 				}
 			}
-		}
+		});
 		
 		if (!component_offsets.empty()) {
 			UUID uuid = id_view.get<const IDComponent>(entity_handle).uuid;
-			
 			auto components_vector = builder.CreateVector(component_offsets);
 			auto entity_offset = Power::Schema::CreateEntity(builder, uuid, components_vector);
 			entity_offsets.push_back(entity_offset);
@@ -222,20 +240,21 @@ void SceneSerializer::serialize(entt::registry& registry, const std::string& fil
 	ofs.write(reinterpret_cast<const char*>(builder.GetBufferPointer()), builder.GetSize());
 }
 
+// Your deserialize function was already correct, but here it is for completeness.
 void SceneSerializer::deserialize(entt::registry& registry, const std::string& filepath) {
 	std::ifstream ifs(filepath, std::ios::binary | std::ios::ate);
 	if (!ifs.is_open()) return;
 	
 	auto size = ifs.tellg();
+	if(size == 0) return;
 	ifs.seekg(0, std::ios::beg);
 	std::vector<char> buffer(size);
-	if(size == 0) return;
 	ifs.read(buffer.data(), size);
 	
 	registry.clear();
 	
 	auto scene = Power::Schema::GetScene(buffer.data());
-	if (!scene->entities()) return;
+	if (!scene || !scene->entities()) return;
 	
 	std::unordered_map<UUID, entt::entity> uuid_map;
 	
