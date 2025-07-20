@@ -7,6 +7,7 @@ enum PrimitiveShape : int8_t {
 	Cube,
 	Sphere,
 	Cuboid,
+	Sprite,
 	TranslationGizmo,
 	RotationGizmo,
 	ScaleGizmo

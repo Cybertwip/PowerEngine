@@ -13,13 +13,15 @@
 
 #include "simulation/PrimitiveBuilder.hpp"
 
+// Use the provided ImageUtils to get texture dimensions.
+#include "filesystem/ImageUtils.hpp"
+
 MeshActorLoader::MeshActorLoader(ActorManager& actorManager, ShaderManager& shaderManager, BatchUnit& batchUnit, MeshActorBuilder& actorBuilder)
-    
 : mActorManager(actorManager)
 , mPrimitiveBuilder(std::make_unique<PrimitiveBuilder>(batchUnit.mMeshBatch))
 , mBatchUnit(batchUnit)
 , mMeshActorBuilder(actorBuilder){
-		  
+	
 }
 
 MeshActorLoader::~MeshActorLoader() {
@@ -36,11 +38,39 @@ Actor& MeshActorLoader::create_actor(const std::string& path, AnimationTimeProvi
 	actor.add_component<TransformAnimationComponent>(transformComponent, timeProvider);
 	
 	return actor;
-
+	
 }
 
 Actor& MeshActorLoader::create_actor(const std::string& actorName, PrimitiveShape primitiveShape, ShaderWrapper& meshShader) {
 	return mPrimitiveBuilder->build(mActorManager.create_actor(), actorName, primitiveShape, meshShader);
+}
+
+Actor& MeshActorLoader::create_sprite_actor(const std::string& actorName, const std::string& texturePath, ShaderWrapper& meshShader) {
+	// 1. Get texture dimensions to create a mesh of the same size.
+	int width = 0;
+	int height = 0;
+	int channels = 0;
+	std::vector<uint8_t> pixels; // Required by the function, but we only need the dimensions here.
+	
+	// Use the ImageUtils function to read the PNG and get its dimensions.
+	if (!read_png_file_to_vector(texturePath, pixels, width, height, channels)) {
+		// Error handling: texture not found or is invalid.
+		// For now, we'll default to a 100x100 sprite and log an error.
+		width = 100;
+		height = 100;
+		// In a real application, you would use a proper logging system.
+		fprintf(stderr, "Warning: Could not load texture dimensions for '%s'. Defaulting to 100x100.\n", texturePath.c_str());
+	}
+	
+	// 2. Create an actor and build the sprite primitive with the correct dimensions and texture.
+	return mPrimitiveBuilder->build_sprite(
+										   mActorManager.create_actor(),
+										   actorName,
+										   texturePath,
+										   static_cast<float>(width),
+										   static_cast<float>(height),
+										   meshShader
+										   );
 }
 
 
@@ -66,4 +96,3 @@ std::unique_ptr<Actor> MeshActorLoader::create_unique_actor(entt::registry& regi
 	
 	return std::move(unique_actor);
 }
-
