@@ -25,8 +25,8 @@ public:
 	, mRegistry(registry)
 	, mActorManager(actorManager)
 	, mBlueprintActionTriggerCallback(blueprintActionTriggerCallback)
-	, mActive(false)
-	, mCommitted(true) {
+	, mCommitted(false)
+	, mDisplaying(false) {
 		// Set the layout to horizontal with some padding
 		set_layout(std::make_unique<nanogui::GroupLayout>(0, 0, 0));
 		
@@ -52,18 +52,20 @@ public:
 		mBlueprintButton->set_callback([this](){
 			if (!mCommitted) {
 				commit();
-			} else {
-				mActive = !mActive;
-				
-				if (mActive) {
-					if (mActiveActor) {
-						deserialize(mActiveActor->get());
-					}
-				}
-				
-				mBlueprintActionTriggerCallback(mActive, [this](){
+			}
+			
+			if (mDisplaying) {
+				mBlueprintActionTriggerCallback(false, [this](){
 					clear();
 				});
+				
+				mDisplaying = false;
+			} else {
+				mBlueprintActionTriggerCallback(true, [this](){
+					deserialize(mActiveActor->get());
+				});
+				
+				mDisplaying = true;
 			}
 		});
 		
@@ -150,15 +152,11 @@ public:
 		
 		if (mActiveActor.has_value()) {
 			if (mActiveActor->get().find_component<BlueprintComponent>()) {
-				deserialize(mActiveActor->get());
 				mBlueprintButton->set_enabled(true);
 			}
 		} else {
 			mBlueprintButton->set_enabled(false);
 			mBlueprintButton->set_pushed(false);
-			mBlueprintActionTriggerCallback(false, [this](){
-				clear();
-			});
 		}
 	}
 	
@@ -269,9 +267,9 @@ private:
 	
 	std::vector<std::reference_wrapper<Actor>> mBlueprintActors;
 
-	bool mActive;
 	bool mCommitted;
-	
+	bool mDisplaying;
+
 	const int mButtonSize = 32;
 	const int padding = 15;
 
