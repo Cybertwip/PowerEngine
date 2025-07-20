@@ -46,7 +46,7 @@ public:
 	}
 	
 private:
-	int mKeyCode;
+	long mKeyCode;
 	bool mConfigured;
 	bool mTriggered;
 	
