@@ -240,10 +240,11 @@ public:
 		assert(false);
 	}
 
-		
-private:
+	
 	static long long get_next_id();
 	static long long set_next_id(long long id);
+
+private:
 	static long long next_id;
 	
 	std::function<void()> mLink;
