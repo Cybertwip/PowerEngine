@@ -59,8 +59,8 @@ public:
 						mDisplaying = false;
 					});
 				} else {
+					clear();
 					mBlueprintActionTriggerCallback(true, [this](){
-						clear();
 						deserialize(mActiveActor->get());
 						mDisplaying = true;
 					});
