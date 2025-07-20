@@ -397,6 +397,7 @@ void Application::new_scene_action() {
 	mUiCommon->hierarchy_panel()->fire_actor_selected_event(std::nullopt);
 	mActorManager->clear_actors();
 	
+	mUiCommon->hierarchy_panel()->clear_actors();
 	
 	mRenderCommon->camera_actor_loader().setup_engine_camera(mGlobalAnimationTimeProvider,
 															 45.0f, 0.01f, 1e5f,
@@ -434,6 +435,11 @@ void Application::load_scene_action() {
 									   std::string destinationFile = files.front();
 
 									   mUiCommon->hierarchy_panel()->fire_actor_selected_event(std::nullopt);
+									   
+									   mActorManager->clear_actors();
+									   
+									   mUiCommon->hierarchy_panel()->clear_actors();
+
 
 									   mSerializationModule->load_scene(destinationFile);
 
