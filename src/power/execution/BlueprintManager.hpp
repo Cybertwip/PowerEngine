@@ -123,11 +123,12 @@ public:
 													   
 													   mActiveActor->get().get_component<BlueprintComponent>().save_blueprint(destinationFile);
 													   
-													   if (mActiveActor.find_component<BlueprintMetadataComponent>()) {
-														   mActiveActor.remove_component<BlueprintMetadataComponent>(
+													   if (mActiveActor->get().find_component<BlueprintMetadataComponent>()) {
+													
+													   mActiveActor->get().remove_component<BlueprintMetadataComponent>(
 													   }
 													   
-													   auto& _ mActiveActor.add_component<BlueprintMetadataComponent>(destinationFile);
+													   auto& _ mActiveActor->get().add_component<BlueprintMetadataComponent>(destinationFile);
 												   }
 												   
 											   }
