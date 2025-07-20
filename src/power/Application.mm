@@ -451,6 +451,8 @@ void Application::load_scene_action() {
 																								mRenderCommon->canvas()->fixed_size().x() /
 																								static_cast<float>(mRenderCommon->canvas()->fixed_size().y()));
 
+									   
+									   mUiCommon->hierarchy_panel()->reload();
 
 								   });
 	});

@@ -53,6 +53,8 @@ public:
 	
 	bool mouse_button_event(const nanogui::Vector2i &p, int button, bool down, int modifiers) override;
 	
+	void reload();
+	
 private:
 	std::vector<std::reference_wrapper<IActorSelectedCallback>> mActorSelectedCallbacks;
 	std::optional<std::reference_wrapper<Actor>> mSelectedActor;

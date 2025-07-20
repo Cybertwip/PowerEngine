@@ -267,3 +267,7 @@ void HierarchyPanel::refresh_selected_actor() {
 	}
 	
 }
+
+void HierarchyPanel::reload() {
+	add_actors(mActorManager.get_actors());
+}
