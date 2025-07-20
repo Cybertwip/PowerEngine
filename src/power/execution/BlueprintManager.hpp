@@ -54,15 +54,14 @@ public:
 				commit();
 			} else {
 				if (mDisplaying) {
-					clear();
 					mBlueprintActionTriggerCallback(false, [this](){
+						clear();
 						mDisplaying = false;
 					});
 				} else {
-					clear();
 					mBlueprintActionTriggerCallback(true, [this](){
+						clear();
 						deserialize(mActiveActor->get());
-						
 						mDisplaying = true;
 					});
 				}
