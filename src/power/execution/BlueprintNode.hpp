@@ -147,7 +147,7 @@ public:
 	}
 	
 private:
-	std::optional<std::variant<Entity, std::string, int, float, bool>> mData;
+	std::optional<std::variant<Entity, std::string, long, float, bool>> mData;
 };
 
 class CoreNode {
