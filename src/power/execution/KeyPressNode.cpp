@@ -29,7 +29,7 @@ KeyPressCoreNode::KeyPressCoreNode(UUID id)
 	
 }
 
-void KeyPressCoreNode::set_data(std::optional<std::variant<Entity, std::string, int, float, bool>> data) {
+void KeyPressCoreNode::set_data(std::optional<std::variant<Entity, std::string, long, float, bool>> data) {
 	if (data.has_value()) {
 		mKeyCode = std::get<int>(data.value());
 		mConfigured = true;

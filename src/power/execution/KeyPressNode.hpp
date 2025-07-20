@@ -15,11 +15,11 @@ class KeyPressCoreNode : public DataCoreNode {
 public:
 	KeyPressCoreNode(UUID id);
 	
-	std::optional<std::variant<Entity, std::string, int, float, bool>> get_data() const override {
+	std::optional<std::variant<Entity, std::string, long, float, bool>> get_data() const override {
 		return mKeyCode;
 	}
 	
-	void set_data(std::optional<std::variant<Entity, std::string, int, float, bool>> data) override;
+	void set_data(std::optional<std::variant<Entity, std::string, long, float, bool>> data) override;
 
 	int keycode() {
 		return mKeyCode;

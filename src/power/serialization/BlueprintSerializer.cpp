@@ -16,25 +16,22 @@
 namespace {
 
 // Helper function to serialize the data payload from a C++ variant to a FlatBuffers union.
-// This function checks the type of data in the variant and creates the corresponding FlatBuffers object.
 flatbuffers::Offset<Power::Schema::BlueprintPayload> serialize_payload(
 																	   flatbuffers::FlatBufferBuilder& builder,
-																	   const std::optional<std::variant<Entity, std::string, int, float, bool>>& data)
+																	   const std::optional<std::variant<Entity, std::string, long, float, bool>>& data)
 {
 	if (!data.has_value()) {
-		// If there's no data, we don't create a payload.
 		return 0;
 	}
 	
 	Power::Schema::BlueprintPayloadData payload_type = Power::Schema::BlueprintPayloadData::BlueprintPayloadData_NONE;
 	flatbuffers::Offset<void> payload_offset;
 	
-	// Use std::visit to handle the different types within the std::variant.
 	std::visit([&](auto&& arg) {
 		using T = std::decay_t<decltype(arg)>;
 		if constexpr (std::is_same_v<T, std::string>) {
 			payload_type = Power::Schema::BlueprintPayloadData::BlueprintPayloadData_s;
-			payload_offset = builder.CreateString(arg).Union();
+			payload_offset = Power::Schema::CreateStringVal(builder, builder.CreateString(arg)).Union();
 		} else if constexpr (std::is_same_v<T, int>) {
 			payload_type = Power::Schema::BlueprintPayloadData::BlueprintPayloadData_i;
 			payload_offset = Power::Schema::CreateIntVal(builder, arg).Union();
@@ -50,8 +47,9 @@ flatbuffers::Offset<Power::Schema::BlueprintPayload> serialize_payload(
 		}
 	}, data.value());
 	
-	// If a payload was created, wrap it in a BlueprintPayload object.
-	if (payload_type != Power::Schema::BlueprintPayloadData::BlueprintPayloadData_s) {
+	// FIXED: Condition was incorrect, preventing strings from being saved.
+	// If a payload was created (i.e., its type is not NONE), wrap it in a BlueprintPayload object.
+	if (payload_type != Power::Schema::BlueprintPayloadData::BlueprintPayloadData_NONE) {
 		return Power::Schema::CreateBlueprintPayload(builder, payload_type, payload_offset);
 	}
 	
@@ -59,17 +57,18 @@ flatbuffers::Offset<Power::Schema::BlueprintPayload> serialize_payload(
 }
 
 // Helper function to deserialize a FlatBuffers payload union back into a C++ variant.
-std::optional<std::variant<Entity, std::string, int, float, bool>> deserialize_payload(
+std::optional<std::variant<Entity, std::string, long, float, bool>> deserialize_payload(
 																					   const Power::Schema::BlueprintPayload* payload)
 {
-	if (!payload || payload->data_type() == Power::Schema::BlueprintPayloadData::BlueprintPayloadData_s) {
+	// FIXED: Condition was incorrect, preventing strings from being loaded.
+	if (!payload || payload->data_type() == Power::Schema::BlueprintPayloadData::BlueprintPayloadData_NONE) {
 		return std::nullopt;
 	}
 	
-	// Switch on the payload type to extract the correct data.
 	switch (payload->data_type()) {
 		case Power::Schema::BlueprintPayloadData::BlueprintPayloadData_s:
-			return payload->data_as_s()->str();
+			// FIXED: Correctly access the string value.
+			return payload->data_as_s()->str()->str();
 		case Power::Schema::BlueprintPayloadData::BlueprintPayloadData_i:
 			return payload->data_as_i()->val();
 		case Power::Schema::BlueprintPayloadData::BlueprintPayloadData_f:
@@ -77,7 +76,6 @@ std::optional<std::variant<Entity, std::string, int, float, bool>> deserialize_p
 		case Power::Schema::BlueprintPayloadData::BlueprintPayloadData_b:
 			return payload->data_as_b()->val();
 		case Power::Schema::BlueprintPayloadData::BlueprintPayloadData_e:
-			// Note: The schema only stores the ID for an entity.
 			return Entity{payload->data_as_e()->id(), std::nullopt};
 		default:
 			return std::nullopt;
@@ -86,18 +84,12 @@ std::optional<std::variant<Entity, std::string, int, float, bool>> deserialize_p
 
 } // namespace
 
-/**
- * @brief Serializes the entire state of a NodeProcessor to a binary file.
- * @param node_processor The node processor containing the blueprint graph to save.
- * @param filepath The path to the file where the blueprint will be saved.
- */
+
 void BlueprintSerializer::serialize(const NodeProcessor& node_processor, const std::string& filepath) {
 	flatbuffers::FlatBufferBuilder builder(1024);
 	
-	// --- 1. Serialize all nodes and their pins ---
 	std::vector<flatbuffers::Offset<Power::Schema::BlueprintNode>> node_offsets;
-	for (const auto& node : node_processor.nodes) {
-		// Serialize input pins
+	for (const auto& node : node_processor.get_nodes()) {
 		std::vector<flatbuffers::Offset<Power::Schema::BlueprintPin>> input_pin_offsets;
 		for (const auto& pin : node->get_inputs()) {
 			auto pin_payload_offset = serialize_payload(builder, pin->get_data());
@@ -110,7 +102,6 @@ void BlueprintSerializer::serialize(const NodeProcessor& node_processor, const s
 																		  pin_payload_offset));
 		}
 		
-		// Serialize output pins
 		std::vector<flatbuffers::Offset<Power::Schema::BlueprintPin>> output_pin_offsets;
 		for (const auto& pin : node->get_outputs()) {
 			auto pin_payload_offset = serialize_payload(builder, pin->get_data());
@@ -123,13 +114,11 @@ void BlueprintSerializer::serialize(const NodeProcessor& node_processor, const s
 																		   pin_payload_offset));
 		}
 		
-		// Serialize node-specific data if it's a DataCoreNode
 		flatbuffers::Offset<Power::Schema::BlueprintPayload> node_payload_offset = 0;
 		if (auto* data_node = dynamic_cast<const DataCoreNode*>(node.get())) {
 			node_payload_offset = serialize_payload(builder, data_node->get_data());
 		}
 		
-		// Create the node
 		auto position = Power::Schema::Vec2i(node->position.x(), node->position.y());
 		node_offsets.push_back(Power::Schema::CreateBlueprintNode(
 																  builder,
@@ -141,9 +130,8 @@ void BlueprintSerializer::serialize(const NodeProcessor& node_processor, const s
 																  node_payload_offset));
 	}
 	
-	// --- 2. Serialize all links ---
 	std::vector<flatbuffers::Offset<Power::Schema::BlueprintLink>> link_offsets;
-	for (const auto& link : node_processor.links) {
+	for (const auto& link : node_processor.get_links()) {
 		link_offsets.push_back(Power::Schema::CreateBlueprintLink(
 																  builder,
 																  link->get_id(),
@@ -153,25 +141,18 @@ void BlueprintSerializer::serialize(const NodeProcessor& node_processor, const s
 																  link->get_end().id));
 	}
 	
-	// --- 3. Create the root Blueprint object ---
 	auto blueprint_offset = Power::Schema::CreateBlueprint(
 														   builder,
 														   builder.CreateVector(node_offsets),
 														   builder.CreateVector(link_offsets));
 	builder.Finish(blueprint_offset);
 	
-	// --- 4. Write the buffer to a file ---
 	std::ofstream ofs(filepath, std::ios::binary);
 	ofs.write(reinterpret_cast<const char*>(builder.GetBufferPointer()), builder.GetSize());
 }
 
-/**
- * @brief Deserializes a blueprint from a file into a NodeProcessor.
- * @param node_processor The node processor to populate with the loaded data.
- * @param filepath The path to the blueprint file to load.
- */
+
 void BlueprintSerializer::deserialize(NodeProcessor& node_processor, const std::string& filepath) {
-	// --- 1. Read the file into a buffer ---
 	std::ifstream ifs(filepath, std::ios::binary | std::ios::ate);
 	if (!ifs.is_open()) return;
 	
@@ -183,22 +164,18 @@ void BlueprintSerializer::deserialize(NodeProcessor& node_processor, const std::
 	ifs.read(buffer.data(), size);
 	ifs.close();
 	
-	// --- 2. Get the root Blueprint object and verify it ---
 	auto blueprint = Power::Schema::GetBlueprint(buffer.data());
 	auto verifier = flatbuffers::Verifier(reinterpret_cast<const uint8_t*>(buffer.data()), buffer.size());
 	if (!blueprint->Verify(verifier)) {
-		// Handle error: buffer is not a valid blueprint
 		return;
 	}
 	
 	node_processor.clear();
 	
-	// --- 3. First Pass: Deserialize all nodes and their pins ---
 	if (blueprint->nodes()) {
 		for (const auto* fb_node : *blueprint->nodes()) {
 			if (!fb_node) continue;
 			
-			// Spawn the correct C++ node type based on the serialized type
 			CoreNode* core_node_ptr = nullptr;
 			switch (fb_node->type()) {
 				case Power::Schema::NodeType::NodeType_KeyPress:
@@ -216,46 +193,51 @@ void BlueprintSerializer::deserialize(NodeProcessor& node_processor, const std::
 			}
 			if (!core_node_ptr) continue;
 			
-			// Set node properties
 			core_node_ptr->set_position({fb_node->position()->x(), fb_node->position()->y()});
 			
-			// Deserialize node-level data payload
 			if (auto* data_node = dynamic_cast<DataCoreNode*>(core_node_ptr)) {
 				if (fb_node->data()) {
 					data_node->set_data(deserialize_payload(fb_node->data()));
 				}
 			}
 			
-			// Deserialize pin data
-			if (fb_node->inputs()) {
-				for (const auto* fb_pin : *fb_node->inputs()) {
+			// --- FIXED PIN DESERIALIZATION LOGIC ---
+			// Get non-const access to the pins that were just randomly generated.
+			auto& core_inputs = const_cast<std::vector<std::unique_ptr<CorePin>>&>(core_node_ptr->get_inputs());
+			auto& core_outputs = const_cast<std::vector<std::unique_ptr<CorePin>>&>(core_node_ptr->get_outputs());
+			
+			// Overwrite the new pins' IDs and data with the saved data.
+			if (fb_node->inputs() && core_inputs.size() == fb_node->inputs()->size()) {
+				for (flatbuffers::uoffset_t i = 0; i < core_inputs.size(); ++i) {
+					const auto* fb_pin = fb_node->inputs()->Get(i);
 					if (!fb_pin) continue;
-					auto& core_pin = core_node_ptr->get_pin(fb_pin->id());
-					core_pin.set_data(deserialize_payload(fb_pin->data()));
+					core_inputs[i]->id = fb_pin->id(); // CRITICAL: Assign the saved ID
+					core_inputs[i]->set_data(deserialize_payload(fb_pin->data()));
 				}
 			}
-			if (fb_node->outputs()) {
-				for (const auto* fb_pin : *fb_node->outputs()) {
+			if (fb_node->outputs() && core_outputs.size() == fb_node->outputs()->size()) {
+				for (flatbuffers::uoffset_t i = 0; i < core_outputs.size(); ++i) {
+					const auto* fb_pin = fb_node->outputs()->Get(i);
 					if (!fb_pin) continue;
-					auto& core_pin = core_node_ptr->get_pin(fb_pin->id());
-					core_pin.set_data(deserialize_payload(fb_pin->data()));
+					core_outputs[i]->id = fb_pin->id(); // CRITICAL: Assign the saved ID
+					core_outputs[i]->set_data(deserialize_payload(fb_pin->data()));
 				}
 			}
 		}
 	}
 	
-	// --- 4. Second Pass: Deserialize all links ---
-	// This must be done after all nodes are created.
 	if (blueprint->links()) {
 		for (const auto* fb_link : *blueprint->links()) {
 			if (!fb_link) continue;
-			auto& start_node = node_processor.get_node(fb_link->start_node_id());
-			auto& end_node = node_processor.get_node(fb_link->end_node_id());
+			// This now works because the pins have the correct, deserialized IDs.
+			auto* start_node = node_processor.find_node(fb_link->start_node_id());
+			auto* end_node = node_processor.find_node(fb_link->end_node_id());
 			
-			auto& start_pin = start_node.get_pin(fb_link->start_pin_id());
-			auto& end_pin = end_node.get_pin(fb_link->end_pin_id());
-			
-			node_processor.create_link(fb_link->id(), start_pin, end_pin);
+			if(start_node && end_node) {
+				auto& start_pin = start_node->get_pin(fb_link->start_pin_id());
+				auto& end_pin = end_node->get_pin(fb_link->end_pin_id());
+				node_processor.create_link(fb_link->id(), start_pin, end_pin);
+			}
 		}
 	}
 }

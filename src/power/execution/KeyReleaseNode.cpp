@@ -29,7 +29,7 @@ KeyReleaseCoreNode::KeyReleaseCoreNode(UUID id)
 	});
 }
 
-void KeyReleaseCoreNode::set_data(std::optional<std::variant<Entity, std::string, int, float, bool>> data) {
+void KeyReleaseCoreNode::set_data(std::optional<std::variant<Entity, std::string, long, float, bool>> data) {
 	if (data.has_value()) {
 		mKeyCode = std::get<int>(data.value());
 		mConfigured = true;

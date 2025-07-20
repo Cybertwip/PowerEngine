@@ -10,11 +10,11 @@ StringCoreNode::StringCoreNode(UUID id)
 	
 }
 
-std::optional<std::variant<Entity, std::string, int, float, bool>> StringCoreNode::get_data() const {
+std::optional<std::variant<Entity, std::string, long, float, bool>> StringCoreNode::get_data() const {
 	return mOutput.get_data();
 }
 
-void StringCoreNode::set_data(std::optional<std::variant<Entity, std::string, int, float, bool>> data) {
+void StringCoreNode::set_data(std::optional<std::variant<Entity, std::string, long, float, bool>> data) {
 	mOutput.set_data(data);
 }
 
