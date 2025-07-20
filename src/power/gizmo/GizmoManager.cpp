@@ -526,7 +526,7 @@ void GizmoManager::draw_content(const nanogui::Matrix4f& model, const nanogui::M
 }
 
 
-void GizemoManager::rebuild_gizmos() {
+void GizmoManager::rebuild_gizmos() {
 	mTranslationGizmo = mMeshActorLoader.create_actor("TranslationGizmo", PrimitiveShape::TranslationGizmo, *mMeshShader);
 	
 	mRotationGizmo = mMeshActorLoader.create_actor("RotationGizmo", PrimitiveShape::RotationGizmo, *mMeshShader);
