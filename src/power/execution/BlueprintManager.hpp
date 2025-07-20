@@ -5,6 +5,7 @@
 #include "actors/Actor.hpp"
 #include "actors/ActorManager.hpp"
 #include "components/BlueprintComponent.hpp"
+#include "components/BlueprintMetadataComponent.hpp"
 #include "components/TransformComponent.hpp"
 #include "graphics/drawing/Grid.hpp"
 #include "simulation/SimulationServer.hpp"
@@ -125,8 +126,9 @@ public:
 													   
 													   if (mActiveActor->get().find_component<BlueprintMetadataComponent>()) {
 													
-													   mActiveActor->get().remove_component<BlueprintMetadataComponent>(
-													   }
+													
+												   mActiveActor->get().remove_component<BlueprintMetadataComponent>();
+												   }
 													   
 													   auto& _ mActiveActor->get().add_component<BlueprintMetadataComponent>(destinationFile);
 												   }
