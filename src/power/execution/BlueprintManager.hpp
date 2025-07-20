@@ -79,8 +79,8 @@ public:
 		const nanogui::Vector2i button_size(30, 30);
 		const int padding = 15;
 		
-		mLoadBlueprintButton->set_position(nanogui::Vector2i(0, canvas.fixed_height()));
-		mSaveBlueprintButton->set_position(nanogui::Vector2i(0, canvas.fixed_height()));
+		mLoadBlueprintButton->set_position(nanogui::Vector2i(0, parent.fixed_height()));
+		mSaveBlueprintButton->set_position(nanogui::Vector2i(0, parent.fixed_height()));
 
 		mLoadBlueprintButton->set_fixed_size(button_size);
 		mSaveBlueprintButton->set_fixed_size(button_size);
@@ -222,7 +222,7 @@ public:
 		}
 	}
 	
-	void update_buttons(nanogui::Vector2f& position) {
+	void update_buttons(const nanogui::Vector2f& position) {
 		mLoadBlueprintButton->set_position(position);
 		mSaveBlueprintButton->set_position(nanogui::Vector2i(position.x() + padding, position.y()));
 	}
