@@ -34,7 +34,7 @@ flatbuffers::Offset<Power::Schema::BlueprintPayload> serialize_payload(
 			payload_offset = Power::Schema::CreateStringVal(builder, builder.CreateString(arg)).Union();
 		} else if constexpr (std::is_same_v<T, int>) {
 			payload_type = Power::Schema::BlueprintPayloadData::BlueprintPayloadData_i;
-			payload_offset = Power::Schema::CreateIntVal(builder, arg).Union();
+			payload_offset = Power::Schema::CreateLongVal(builder, arg).Union();
 		} else if constexpr (std::is_same_v<T, float>) {
 			payload_type = Power::Schema::BlueprintPayloadData::BlueprintPayloadData_f;
 			payload_offset = Power::Schema::CreateFloatVal(builder, arg).Union();

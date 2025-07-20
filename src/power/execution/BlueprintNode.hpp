@@ -54,7 +54,7 @@ class CoreNode;
 class Link;
 
 struct Entity {
-	int id;
+	UUID id;
 	std::optional<std::variant<std::string, int, float, bool>> payload;
 };
 
