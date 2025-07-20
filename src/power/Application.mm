@@ -28,6 +28,8 @@
 #include "execution/BlueprintManager.hpp"
 #include "execution/ExecutionManager.hpp"
 
+#include "filesystem/DirectoryNode.hpp"
+
 #include "gizmo/GizmoManager.hpp"
 #include "graphics/drawing/BatchUnit.hpp"
 #include "graphics/drawing/Mesh.hpp"
