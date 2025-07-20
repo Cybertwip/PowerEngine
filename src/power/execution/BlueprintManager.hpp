@@ -302,9 +302,15 @@ public:
 		mBlueprintPanel->set_visible(true);
 
 		if (active) {
-			mAnimationFuture = std::async(std::launch::async, [this]() {
+			mAnimationFuture = std::async(std::launch::async, [this, onPanelToggle]() {
 				auto target = nanogui::Vector2i(0, mCanvas.fixed_height() * 0.25f);
 				animate_panel_position(target);
+				
+				
+				if (onPanelToggle) {
+					onPanelToggle();
+				}
+
 			});
 		} else {
 			mAnimationFuture = std::async(std::launch::async, [this, onPanelToggle]() {
