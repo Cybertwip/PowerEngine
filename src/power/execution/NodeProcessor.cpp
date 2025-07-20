@@ -154,7 +154,6 @@ void NodeProcessor::serialize(BlueprintCanvas& canvas, Actor& actor) {
 						for (const auto& pin : pins) {
 							if (pin && this->is_pin_connected(*pin)) {
 								is_connected = true;
-								return;
 							}
 						}
 					};
