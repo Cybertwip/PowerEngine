@@ -55,8 +55,7 @@ public:
 			}
 			
 			if (mDisplaying) {
-				mBlueprintActionTriggerCallback(false, [this](){
-				});
+				mBlueprintActionTriggerCallback(false, nullptr);
 				
 				mDisplaying = false;
 			} else {
@@ -312,7 +311,10 @@ public:
 				animate_panel_position(target);
 				
 				mBlueprintPanel->set_visible(false);
-				onPanelToggle();
+				
+				if (onPanelToggle) {
+					onPanelToggle();
+				}
 			});
 		}
 	}
