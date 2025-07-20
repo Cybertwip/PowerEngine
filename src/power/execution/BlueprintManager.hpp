@@ -25,7 +25,7 @@ public:
 	, mRegistry(registry)
 	, mActorManager(actorManager)
 	, mBlueprintActionTriggerCallback(blueprintActionTriggerCallback)
-	, mCommitted(false)
+	, mCommitted(true)
 	, mDisplaying(false) {
 		// Set the layout to horizontal with some padding
 		set_layout(std::make_unique<nanogui::GroupLayout>(0, 0, 0));

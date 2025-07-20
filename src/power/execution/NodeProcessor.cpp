@@ -70,13 +70,13 @@ void NodeProcessor::evaluate() {
 }
 
 void NodeProcessor::serialize(BlueprintCanvas& canvas, Actor& actor) {
-	
+	auto node_processor = std::make_unique<NodeProcessor>();
+
 	if(actor.find_component<BlueprintComponent>()) {
 		actor.remove_component<BlueprintComponent>();
 	}
 	
 	if (!nodes.empty()) {
-		auto node_processor = std::make_unique<NodeProcessor>();
 		
 		for (auto& node : nodes) {
 			switch (node->type) {
@@ -156,9 +156,9 @@ void NodeProcessor::serialize(BlueprintCanvas& canvas, Actor& actor) {
 			}
 		}
 		
-		actor.add_component<BlueprintComponent>(std::move(node_processor));
 	}
 	
+	actor.add_component<BlueprintComponent>(std::move(node_processor));
 }
 
 void NodeProcessor::deserialize(BlueprintCanvas& canvas, Actor& actor) {
