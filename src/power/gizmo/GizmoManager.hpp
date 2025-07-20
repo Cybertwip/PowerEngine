@@ -3,6 +3,8 @@
 #include "animation/AnimationTimeProvider.hpp"
 #include "graphics/drawing/Drawable.hpp"
 
+#include <entt/entt.hpp>
+
 #include <nanogui/nanogui.h>
 
 #include <functional>
