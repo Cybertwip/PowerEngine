@@ -4,7 +4,7 @@
 
 #include <GLFW/glfw3.h>
 
-KeyPressCoreNode::KeyPressCoreNode(long long id)
+KeyPressCoreNode::KeyPressCoreNode(UUID id)
 : DataCoreNode(NodeType::KeyPress, id, nanogui::Color(255, 0, 255, 255))
 , mOutput(add_output(PinType::Flow, PinSubType::None))
 , mKeyCode(-1)

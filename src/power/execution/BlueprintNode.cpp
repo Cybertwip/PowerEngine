@@ -2,6 +2,8 @@
 
 #include "BlueprintCanvas.hpp"
 
+#include "serialization/UUID.hpp"
+
 void CoreNode::build() {
 	for (auto& input : inputs) {
 		input->kind = PinKind::Input;
@@ -24,8 +26,8 @@ void CoreNode::reset_flow() {
 	}
 }
 
-long long CoreNode::get_next_id() {
-	return next_id++;
+UUID CoreNode::get_next_id() {
+	return UUIDGenerator::generate();
 }
 
 VisualPin::VisualPin(nanogui::Widget& parent, CorePin& core_pin)

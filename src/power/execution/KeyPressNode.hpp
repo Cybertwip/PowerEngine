@@ -13,7 +13,7 @@ class BlueprintCanvas;
 
 class KeyPressCoreNode : public DataCoreNode {
 public:
-	KeyPressCoreNode(long long id);
+	KeyPressCoreNode(UUID id);
 	
 	std::optional<std::variant<Entity, std::string, int, float, bool>> get_data() const override {
 		return mKeyCode;

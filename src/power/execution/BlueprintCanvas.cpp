@@ -419,7 +419,7 @@ void BlueprintCanvas::link(CorePin& start, CorePin& end) {
 	mOnCanvasModifiedCallback();
 }
 
-VisualBlueprintNode* BlueprintCanvas::find_node(long long id) {
+VisualBlueprintNode* BlueprintCanvas::find_node(UUID id) {
 	
 	auto node_it = std::find_if(mVisualNodes.begin(), mVisualNodes.end(), [id](auto& node) {
 		return node->core_node().id == id;

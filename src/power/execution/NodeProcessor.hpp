@@ -26,7 +26,7 @@ public:
 	void clear();
 	
 	template<typename T>
-	T& spawn_node(long long id) {
+	T& spawn_node(UUID id) {
 		auto node = std::make_unique<T>(id);
 		build_node(*node);
 		T& node_ref = *node;
@@ -34,7 +34,7 @@ public:
 		return node_ref;
 	}
 	
-	void create_link(long long id, CorePin& output, CorePin& input){
+	void create_link(UUID id, CorePin& output, CorePin& input){
 		auto link = std::make_unique<Link>(id, output, input);
 		
 		output.links.push_back(link.get());
@@ -43,7 +43,7 @@ public:
 		links.push_back(std::move(link));
 	}
 	
-	void create_link(BlueprintCanvas& canvas, long long id, VisualPin& output, VisualPin& input){
+	void create_link(BlueprintCanvas& canvas, UUID id, VisualPin& output, VisualPin& input){
 		auto link = std::make_unique<Link>(id, output.core_pin(), input.core_pin());
 		links.push_back(std::move(link));
 		
@@ -53,7 +53,7 @@ public:
 		canvas.add_link(output, input);
 	}
 	
-	CoreNode& get_node(long long id);
+	CoreNode& get_node(UUID id);
 	
 	/**
 	 * @brief Safely finds a node by its ID.
@@ -61,7 +61,7 @@ public:
 	 * @return A pointer to the node if found, otherwise nullptr. This is useful for handling cases
 	 * where a node might be disconnected or no longer exists, preventing crashes.
 	 */
-	CoreNode* find_node(long long id);
+	CoreNode* find_node(UUID id);
 	
 	void break_links(CoreNode& node);
 	
@@ -70,10 +70,7 @@ public:
 	const std::vector<std::unique_ptr<Link>>& get_links() const { return links; }
 	
 	
-private:
-	void set_next_id(long long id);
-	
-	long long next_id;
+private: 
 	std::vector<std::unique_ptr<Link>> links;
 	std::vector<std::unique_ptr<CoreNode>> nodes;
 	

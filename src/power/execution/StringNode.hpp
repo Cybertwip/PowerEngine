@@ -11,7 +11,7 @@ class BlueprintCanvas;
 
 class StringCoreNode : public DataCoreNode {
 public:
-	StringCoreNode(long long id);
+	StringCoreNode(UUID id);
 
 	void set_data(std::optional<std::variant<Entity, std::string, int, float, bool>> data) override;
 

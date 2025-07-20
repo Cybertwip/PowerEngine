@@ -1,6 +1,7 @@
 #pragma once
 
 #include "execution/BlueprintCanvas.hpp"
+#include "serialization/UUID.hpp"
 
 #include <nanogui/icons.h>
 #include <nanogui/toolbutton.h>
@@ -115,7 +116,7 @@ private:
 
 class CorePin {
 public:
-	int id;
+	UUID id;
 	CoreNode& node;
 	PinType type;
 	PinSubType subtype;
@@ -124,7 +125,7 @@ public:
 	
 	std::vector<Link*> links;
 	
-	CorePin(CoreNode& parent, int id, PinType type, PinSubType subtype = PinSubType::None)
+	CorePin(CoreNode& parent, UUID id, PinType type, PinSubType subtype = PinSubType::None)
 	: id(id), node(parent), type(type), subtype(subtype), kind(PinKind::Input) {
 		if (type == PinType::Bool) {
 			set_data(true);
@@ -152,7 +153,7 @@ private:
 class CoreNode {
 public:
 	NodeType type;
-	long long id;
+	UUID id;
 	nanogui::Color color;
 	bool root_node = false;
 	nanogui::Vector2i position;
@@ -180,7 +181,7 @@ public:
 		mEvaluate = evaluate;
 	}
 
-	CoreNode(NodeType type, long long id, nanogui::Color color = nanogui::Color(255, 255, 255, 255)) : type(type), id(id), color(color), next_id(1) {
+	CoreNode(NodeType type, UUID id, nanogui::Color color = nanogui::Color(255, 255, 255, 255)) : type(type), id(id), color(color) {
 		
 	}
 	
@@ -221,7 +222,7 @@ public:
 		this->position = position;
 	}
 	
-	CorePin& get_pin(long long id) {
+	CorePin& get_pin(UUID id) {
 		// Search through input pins
 		for (const auto& input : inputs) {
 			if (input->id == id) {
@@ -242,8 +243,7 @@ public:
 
 		
 private:
-	long long get_next_id();
-	long long next_id;
+	UUID get_next_id();
 	
 	std::function<void()> mLink;
 	std::function<void()> mEvaluate;
@@ -254,7 +254,7 @@ private:
 
 class DataCoreNode : public CoreNode {
 public:
-	DataCoreNode(NodeType type, long long id, nanogui::Color color = nanogui::Color(255, 255, 255, 255)) : CoreNode(type, id, color) {
+	DataCoreNode(NodeType type, UUID id, nanogui::Color color = nanogui::Color(255, 255, 255, 255)) : CoreNode(type, id, color) {
 		
 	}
 	virtual std::optional<std::variant<Entity, std::string, int, float, bool>> get_data() const = 0;
@@ -331,7 +331,7 @@ public:
 		return mCoreNode;
 	}
 	
-	VisualPin* find_pin(long long id) {
+	VisualPin* find_pin(UUID id) {
 		// Search through visual pins
 		for (const auto& pin : mVisualPins) {
 			if (pin->core_pin().id == id) {
@@ -364,7 +364,7 @@ private:
 
 class Link {
 public:
-	Link(int id, CorePin& start, CorePin& end)
+	Link(UUID id, CorePin& start, CorePin& end)
 	: id(id), mStart(start), mEnd(end), color(nanogui::Color(255, 255, 255, 255)) {
 	}
 	

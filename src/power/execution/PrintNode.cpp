@@ -2,7 +2,7 @@
 
 #include <iostream>
 
-PrintCoreNode::PrintCoreNode(long long id)
+PrintCoreNode::PrintCoreNode(UUID id)
 : CoreNode(NodeType::Print, id, nanogui::Color(255, 0, 255, 255)) {
 	auto& input_flow = add_input(PinType::Flow, PinSubType::None);
 	auto& input = add_input(PinType::String, PinSubType::None);

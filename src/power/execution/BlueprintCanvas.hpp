@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Canvas.hpp"
+#include "serialization/UUID.hpp"
 
 #include <nanogui/button.h>
 #include <nanogui/popup.h>
@@ -65,7 +66,7 @@ private:
 	
 	void setup_options();
 	
-	VisualBlueprintNode* find_node(long long id);
+	VisualBlueprintNode* find_node(UUID id);
 
 private:
 	std::unique_ptr<ShaderManager> mShaderManager;

@@ -1,4 +1,3 @@
-
 #include "Canvas.hpp"
 #include "actors/Actor.hpp"
 #include "BlueprintNode.hpp"
@@ -8,14 +7,17 @@
 #include "PrintNode.hpp"
 #include "StringNode.hpp"
 #include "components/BlueprintComponent.hpp"
+
+#include "serialization/UUID.hpp"
+
 #include <unordered_set>
 
-NodeProcessor::NodeProcessor() : next_id(1) {
+NodeProcessor::NodeProcessor() {
 	
 }
 
 long long NodeProcessor::get_next_id() {
-	return next_id++;
+	return UUIDGenerator::generate();
 }
 
 void NodeProcessor::build_node(CoreNode& node){
@@ -99,29 +101,26 @@ void NodeProcessor::serialize(BlueprintCanvas& canvas, Actor& actor) {
 					break;
 			}
 			
+			// Source node is the original node in the canvas
 			auto& source_node = *node;
-			// Safely find the newly created node
+			// Target node is the newly spawned node in our temporary processor
 			if (auto* target_node = node_processor->find_node(node->id)) {
+				// Get non-const access to the pin vectors. This assumes pin creation order is identical.
+				auto& target_inputs = const_cast<std::vector<std::unique_ptr<CorePin>>&>(target_node->get_inputs());
+				auto& target_outputs = const_cast<std::vector<std::unique_ptr<CorePin>>&>(target_node->get_outputs());
 				const auto& source_inputs = source_node.get_inputs();
-				const auto& target_inputs = target_node->get_inputs();
+				const auto& source_outputs = source_node.get_outputs();
 				
-				for (const auto& source_pin : source_inputs) {
-					for (const auto& target_pin : target_inputs) {
-						if (target_pin) {
-							target_pin->set_data(source_pin->get_data());
-						}
-					}
+				// Copy input pin IDs and data
+				for (size_t i = 0; i < source_inputs.size(); ++i) {
+					target_inputs[i]->id = source_inputs[i]->id; // <-- The critical fix
+					target_inputs[i]->set_data(source_inputs[i]->get_data());
 				}
 				
-				const auto& source_outputs = source_node.get_outputs();
-				const auto& target_outputs = target_node->get_outputs();
-				
-				for (const auto& source_pin : source_outputs) {
-					for (const auto& target_pin : target_outputs) {
-						if (target_pin) {
-							target_pin->set_data(source_pin->get_data());
-						}
-					}
+				// Copy output pin IDs and data
+				for (size_t i = 0; i < source_outputs.size(); ++i) {
+					target_outputs[i]->id = source_outputs[i]->id; // <-- The critical fix
+					target_outputs[i]->set_data(source_outputs[i]->get_data());
 				}
 			}
 		}
@@ -130,7 +129,6 @@ void NodeProcessor::serialize(BlueprintCanvas& canvas, Actor& actor) {
 			auto& start_pin = link->get_start();
 			auto& end_pin = link->get_end();
 			
-			// Safely find the source and destination nodes before creating a link
 			auto* target_source_node = node_processor->find_node(start_pin.node.id);
 			auto* target_destination_node = node_processor->find_node(end_pin.node.id);
 			
@@ -142,7 +140,6 @@ void NodeProcessor::serialize(BlueprintCanvas& canvas, Actor& actor) {
 		}
 		
 		for (auto& node : nodes) {
-			// Safely find the target node before attempting a dynamic_cast
 			if (auto* target_node = node_processor->find_node(node->id)) {
 				auto* that_node = dynamic_cast<DataCoreNode*>(target_node);
 				auto* this_node = dynamic_cast<DataCoreNode*>(node.get());
@@ -160,15 +157,15 @@ void NodeProcessor::serialize(BlueprintCanvas& canvas, Actor& actor) {
 
 void NodeProcessor::deserialize(BlueprintCanvas& canvas, Actor& actor) {
 	
-	canvas.clear(); // must clean after deallocation
+	canvas.clear();
 	clear();
 	
 	if (actor.find_component<BlueprintComponent>()) {
 		auto& blueprint_component = actor.get_component<BlueprintComponent>();
-		
 		auto& node_processor = blueprint_component.node_processor();
 		
 		for (auto& node : node_processor.nodes) {
+			// Spawn nodes in the canvas (target) from the component's data (source)
 			switch (node->type) {
 				case NodeType::KeyPress:
 					canvas.spawn_node<KeyPressVisualNode>(node->position, spawn_node<KeyPressCoreNode>(node->id));
@@ -179,41 +176,36 @@ void NodeProcessor::deserialize(BlueprintCanvas& canvas, Actor& actor) {
 				case NodeType::String:
 					canvas.spawn_node<StringVisualNode>(node->position, spawn_node<StringCoreNode>(node->id));
 					break;
-					
 				case NodeType::Print:
 					canvas.spawn_node<PrintVisualNode>(node->position, spawn_node<PrintCoreNode>(node->id));
 					break;
 			}
 			
+			// Source node is from the component's processor
 			auto& source_node = *node;
-			// Safely find the newly created node
+			// Target node is the one just spawned in this (the canvas's) processor
 			if (auto* target_node = find_node(node->id)) {
+				// Get non-const access to the pin vectors.
+				auto& target_inputs = const_cast<std::vector<std::unique_ptr<CorePin>>&>(target_node->get_inputs());
+				auto& target_outputs = const_cast<std::vector<std::unique_ptr<CorePin>>&>(target_node->get_outputs());
 				const auto& source_inputs = source_node.get_inputs();
-				const auto& target_inputs = target_node->get_inputs();
+				const auto& source_outputs = source_node.get_outputs();
 				
-				for (const auto& source_pin : source_inputs) {
-					for (const auto& target_pin : target_inputs) {
-						if (target_pin) {
-							target_pin->set_data(source_pin->get_data());
-						}
-					}
+				// Copy input pin IDs and data
+				for (size_t i = 0; i < source_inputs.size(); ++i) {
+					target_inputs[i]->id = source_inputs[i]->id; // <-- The critical fix
+					target_inputs[i]->set_data(source_inputs[i]->get_data());
 				}
 				
-				const auto& source_outputs = source_node.get_outputs();
-				const auto& target_outputs = target_node->get_outputs();
-				
-				for (const auto& source_pin : source_outputs) {
-					for (const auto& target_pin : target_outputs) {
-						if (target_pin) {
-							target_pin->set_data(source_pin->get_data());
-						}
-					}
+				// Copy output pin IDs and data
+				for (size_t i = 0; i < source_outputs.size(); ++i) {
+					target_outputs[i]->id = source_outputs[i]->id; // <-- The critical fix
+					target_outputs[i]->set_data(source_outputs[i]->get_data());
 				}
 			}
 		}
 		
 		for (auto& node : node_processor.nodes) {
-			// Safely find the target node before attempting a dynamic_cast
 			if(auto* target_node = find_node(node->id)) {
 				auto* this_node = dynamic_cast<DataCoreNode*>(target_node);
 				auto* that_node = dynamic_cast<DataCoreNode*>(node.get());
@@ -228,7 +220,6 @@ void NodeProcessor::deserialize(BlueprintCanvas& canvas, Actor& actor) {
 			auto& start_pin = link->get_start();
 			auto& end_pin = link->get_end();
 			
-			// Safely find the source and destination nodes before creating a link
 			auto* target_source_node = find_node(start_pin.node.id);
 			auto* target_destination_node = find_node(end_pin.node.id);
 			
@@ -245,57 +236,43 @@ void NodeProcessor::deserialize(BlueprintCanvas& canvas, Actor& actor) {
 	}
 }
 
-CoreNode& NodeProcessor::get_node(long long id) {
+CoreNode& NodeProcessor::get_node(UUID id) {
 	auto node_it = std::find_if(nodes.begin(), nodes.end(), [id](auto& node) {
 		return node->id == id;
 	});
 	
-	// WARNING: This will crash if the node is not found. Consider using find_node() instead.
 	if (node_it == nodes.end()) {
-		// This is a fallback to prevent a crash, but indicates a logic error.
-		// A more robust solution would be to throw an exception or handle the error gracefully.
 		throw std::runtime_error("Node with ID " + std::to_string(id) + " not found.");
 	}
 	return *node_it->get();
 }
 
-/**
- * @brief This is the implementation for the new safe find_node function.
- */
-CoreNode* NodeProcessor::find_node(long long id) {
-	// Use std::find_if to locate the node with the matching ID.
+CoreNode* NodeProcessor::find_node(UUID id) {
 	auto node_it = std::find_if(nodes.begin(), nodes.end(), [id](const std::unique_ptr<CoreNode>& node) {
 		return node->id == id;
 	});
 	
-	// If the iterator is not at the end, the node was found.
 	if (node_it != nodes.end()) {
-		// Return a raw pointer to the node.
 		return node_it->get();
 	}
 	
-	// If the node was not found, return nullptr.
 	return nullptr;
 }
 
 
 void NodeProcessor::break_links(CoreNode& node) {
 	
-	// Create a vector to store links that need to be removed
 	std::vector<Link*> links_to_remove;
 	
-	// Find all links connected to the node's input or output pins
 	for (auto& link : links) {
 		const auto& start_pin = link->get_start();
 		const auto& end_pin = link->get_end();
 		
-		// Check if either end of the link connects to the node
 		if (&start_pin.node == &node || &end_pin.node == &node) {
 			links_to_remove.push_back(link.get());
 		}
 	}
 	
-	// Remove the identified links
 	links.erase(
 				std::remove_if(links.begin(), links.end(),
 							   [&links_to_remove](const std::unique_ptr<Link>& link) {
@@ -309,5 +286,4 @@ void NodeProcessor::break_links(CoreNode& node) {
 void NodeProcessor::clear() {
 	nodes.clear();
 	links.clear();
-	next_id = 1;
 }

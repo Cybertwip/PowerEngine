@@ -13,7 +13,7 @@ class BlueprintCanvas;
 
 class KeyReleaseCoreNode : public DataCoreNode {
 public:
-	KeyReleaseCoreNode(long long id);
+	KeyReleaseCoreNode(UUID id);
 	
 	std::optional<std::variant<Entity, std::string, int, float, bool>> get_data() const override {
 		return mKeyCode;

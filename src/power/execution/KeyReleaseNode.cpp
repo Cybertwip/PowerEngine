@@ -4,7 +4,7 @@
 
 #include <GLFW/glfw3.h>
 
-KeyReleaseCoreNode::KeyReleaseCoreNode(long long id)
+KeyReleaseCoreNode::KeyReleaseCoreNode(UUID id)
 : DataCoreNode(NodeType::KeyRelease, id, nanogui::Color(255, 0, 255, 255))
 , mOutput(add_output(PinType::Flow, PinSubType::None))
 , mKeyCode(-1)

@@ -11,7 +11,7 @@ class BlueprintCanvas;
 
 class PrintCoreNode : public CoreNode {
 public:
-	PrintCoreNode(long long id);
+	PrintCoreNode(UUID id);
 };
 
 class PrintVisualNode : public VisualBlueprintNode {
