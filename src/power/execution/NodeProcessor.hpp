@@ -8,6 +8,7 @@
 class Actor;
 
 class BlueprintCanvas;
+class BlueprintSerializer;
 
 class NodeProcessor {
 public:
@@ -61,8 +62,12 @@ public:
 
 
 private:
+	void set_next_id(long long id);
+	
 	long long next_id;
 	std::vector<std::unique_ptr<Link>> links;
 	std::vector<std::unique_ptr<CoreNode>> nodes;
+	
+	friend class BlueprintSerializer;
 
 };
