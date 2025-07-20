@@ -65,13 +65,6 @@ public:
 	
 	void break_links(CoreNode& node);
 	
-	/**
-	 * @brief Checks if a given pin is connected to any link.
-	 * @param pin The pin to check.
-	 * @return True if the pin is part of at least one link, false otherwise.
-	 */
-	bool is_pin_connected(const CorePin& pin) const;
-	
 public:
 	const std::vector<std::unique_ptr<CoreNode>>& get_nodes() const { return nodes; }
 	const std::vector<std::unique_ptr<Link>>& get_links() const { return links; }

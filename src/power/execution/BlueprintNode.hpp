@@ -180,7 +180,7 @@ public:
 		mEvaluate = evaluate;
 	}
 
-	CoreNode(NodeType type, long long id, nanogui::Color color = nanogui::Color(255, 255, 255, 255)) : type(type), id(id), color(color), next_id(1) {
+	CoreNode(NodeType type, long long id, nanogui::Color color = nanogui::Color(255, 255, 255, 255)) : type(type), id(id), color(color) {
 		
 	}
 	
@@ -242,8 +242,9 @@ public:
 
 		
 private:
-	long long get_next_id();
-	long long next_id;
+	static long long get_next_id();
+	static long long set_next_id(long long id);
+	static long long next_id;
 	
 	std::function<void()> mLink;
 	std::function<void()> mEvaluate;

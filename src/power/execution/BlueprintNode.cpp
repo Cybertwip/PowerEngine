@@ -2,6 +2,8 @@
 
 #include "BlueprintCanvas.hpp"
 
+long long CoreNode::next_id = 1;
+
 void CoreNode::build() {
 	for (auto& input : inputs) {
 		input->kind = PinKind::Input;
@@ -27,6 +29,11 @@ void CoreNode::reset_flow() {
 long long CoreNode::get_next_id() {
 	return next_id++;
 }
+
+long long CoreNode::set_next_id(long long id) {
+	next_id = id;
+}
+
 
 VisualPin::VisualPin(nanogui::Widget& parent, CorePin& core_pin)
 : nanogui::ToolButton(parent, FA_CIRCLE_NOTCH, "")
