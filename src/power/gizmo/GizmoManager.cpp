@@ -500,7 +500,7 @@ void GizmoManager::draw_content(const nanogui::Matrix4f& model, const nanogui::M
 		
 		glm::mat4 finalRotationMatrix;
 		
-		if (&mActiveGizmo->get() == &mRotationGizmo) {
+		if (&mActiveGizmo->get() == &(mRotationGizmo.get())) {
 			// The rotation gizmo MUST align with the actor's orientation.
 			// (This part may also need review, but let's fix the translation gizmo first)
 			glm::mat4 modelCorrection = glm::mat4(1.0f);
