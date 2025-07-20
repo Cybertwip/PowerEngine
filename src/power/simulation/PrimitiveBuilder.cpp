@@ -495,14 +495,6 @@ Actor& PrimitiveBuilder::build(Actor& actor, const std::string& actorName, Primi
 	return actor;
 }
 
-
-// Helper to create a material. Assumed to exist from your previous code.
-static std::shared_ptr<MaterialProperties> create_material(const glm::vec4& color) {
-	auto material = std::make_shared<MaterialProperties>();
-	material->mDiffuse = color;
-	return material;
-}
-
 // Helper function to create MeshData for a Sprite.
 // This creates a two-sided, textured quad.
 std::unique_ptr<MeshData> create_sprite_mesh_data(float width, float height, const std::string& texturePath) {
