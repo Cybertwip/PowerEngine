@@ -115,7 +115,7 @@ Application::Application()
 	
 	mEntityRegistry = std::make_unique<entt::registry>();
 	
-	mCameraManager = std::make_unique<CameraManager>(*mEntityRegistry);
+	mCameraManager = std::make_unique<CameraManager>();
 	
 	mActorManager  = std::make_unique<ActorManager>(*mEntityRegistry, *mCameraManager);
 

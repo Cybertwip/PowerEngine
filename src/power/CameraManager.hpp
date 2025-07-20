@@ -19,7 +19,7 @@ class ScenePanel;
 class CameraManager : public IActorSelectedCallback, public ICameraManager
 {
 public:
-    CameraManager(entt::registry& registry);
+    CameraManager();
 	
 	~CameraManager();
 	
