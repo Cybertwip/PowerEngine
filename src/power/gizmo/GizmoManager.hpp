@@ -50,6 +50,8 @@ public:
     void draw();
     
     void draw_content(const nanogui::Matrix4f& model, const nanogui::Matrix4f& view, const nanogui::Matrix4f& projection) override;
+	
+	void rebuild_gizmos();
 
 private:
 	void set_mode(GizmoMode mode);

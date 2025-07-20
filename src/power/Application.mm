@@ -399,6 +399,8 @@ void Application::new_scene_action() {
 	
 	mUiCommon->hierarchy_panel()->clear_actors();
 	
+	mGizmoManager->rebuild_gizmos();
+	
 	mRenderCommon->camera_actor_loader().setup_engine_camera(mGlobalAnimationTimeProvider,
 															 45.0f, 0.01f, 1e5f,
 															 mRenderCommon->canvas()->fixed_size().x() /
@@ -440,9 +442,9 @@ void Application::load_scene_action() {
 									   
 									   mUiCommon->hierarchy_panel()->clear_actors();
 
-
 									   mSerializationModule->load_scene(destinationFile);
 
+									   mGizmoManager->rebuild_gizmos();
 									   
 									   mRenderCommon->camera_actor_loader().setup_engine_camera(mGlobalAnimationTimeProvider,
 																								45.0f, 0.01f, 1e5f,

@@ -524,3 +524,13 @@ void GizmoManager::draw_content(const nanogui::Matrix4f& model, const nanogui::M
 		drawable.draw_content(gizmoMatrix, view, projection);
 	}
 }
+
+
+void GizemoManager::rebuild_gizmos() {
+	mTranslationGizmo = mMeshActorLoader.create_actor("TranslationGizmo", PrimitiveShape::TranslationGizmo, *mMeshShader);
+	
+	mRotationGizmo = mMeshActorLoader.create_actor("RotationGizmo", PrimitiveShape::RotationGizmo, *mMeshShader);
+	
+	mScaleGizmo = mMeshActorLoader.create_actor("ScaleGizmo", PrimitiveShape::ScaleGizmo, *mMeshShader);
+
+}
