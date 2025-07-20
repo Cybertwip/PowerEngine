@@ -64,7 +64,7 @@ table Component {
 
 // --- Entity and Scene Definitions ---
 table Entity {
-  uuid:ulong;
+  uuid:long;
   components:[Component];
 }
 
