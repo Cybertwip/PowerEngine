@@ -10,8 +10,8 @@
 #include <glm/gtx/quaternion.hpp>
 #include <glm/gtx/matrix_decompose.hpp>
 
-CameraManager::CameraManager(entt::registry& registry)
-    : mRegistry(registry), mActiveCamera(std::nullopt) {
+CameraManager::CameraManager()
+: mActiveCamera(std::nullopt) {
 
 }
 

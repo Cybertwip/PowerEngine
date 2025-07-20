@@ -49,7 +49,7 @@ private:
 	
 	void OnActorSelected(std::optional<std::reference_wrapper<Actor>> actor) override;
 
-    entt::registry& mRegistry;
+    entt::registry mRegistry;
 	std::optional<std::reference_wrapper<Actor>> mActiveCamera;
 	std::vector<std::reference_wrapper<Actor>> mCameras;
 	
