@@ -15,14 +15,14 @@ enum PinKind : ubyte { Output, Input }
 
 // --- Data Payload Definitions ---
 table StringVal { str:string; } // ADDED: Table to correctly wrap string payloads.
-table IntVal    { val:int; }
+table LongVal    { val:long; }
 table FloatVal  { val:float; }
 table BoolVal   { val:bool; }
 table BlueprintEntityPayload { id:long; } // CHANGED: Entity ID to long for consistency.
 
 union BlueprintPayloadData {
     s:StringVal, // CHANGED: Use the StringVal table instead of raw string.
-    i:IntVal,
+    i:LongVal,
     f:FloatVal,
     b:BoolVal,
     e:BlueprintEntityPayload
