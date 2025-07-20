@@ -56,12 +56,12 @@ public:
 			
 			if (mDisplaying) {
 				mBlueprintActionTriggerCallback(false, [this](){
-					clear();
 				});
 				
 				mDisplaying = false;
 			} else {
 				mBlueprintActionTriggerCallback(true, [this](){
+					clear();
 					deserialize(mActiveActor->get());
 				});
 				
