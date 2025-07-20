@@ -394,6 +394,8 @@ void Application::new_project_action() {
 }
 
 void Application::new_scene_action() {
+	mUiCommon->hierarchy_panel()->fire_actor_selected_event(std::nullopt);
+	
 	mActorManager->clear_actors();
 }
 
@@ -421,9 +423,15 @@ void Application::load_scene_action() {
 										   return; // User canceled
 									   }
 									   
-									   std::string destinationFile = files.front();
 									   
+									   
+									   std::string destinationFile = files.front();
+
+									   mUiCommon->hierarchy_panel()->fire_actor_selected_event(std::nullopt);
+
 									   mSerializationModule->load_scene(destinationFile);
+									   
+
 								   });
 	});
 }
