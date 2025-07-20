@@ -76,8 +76,7 @@ public:
 		mLoadBlueprintButton = std::make_unique<nanogui::Button>(std::ref(parent), "", FA_DOWNLOAD);
 		mSaveBlueprintButton = std::make_unique<nanogui::Button>(std::ref(parent), "", FA_SAVE);
 		
-		const nanogui::Vector2i button_size(30, 30);
-		const int padding = 15;
+		const nanogui::Vector2i button_size(mButtonSize, mButtonSize);
 		
 		mLoadBlueprintButton->set_position(nanogui::Vector2i(0, parent.fixed_height()));
 		mSaveBlueprintButton->set_position(nanogui::Vector2i(0, parent.fixed_height()));
@@ -223,8 +222,8 @@ public:
 	}
 	
 	void update_buttons(const nanogui::Vector2f& position) {
-		mLoadBlueprintButton->set_position(position);
-		mSaveBlueprintButton->set_position(nanogui::Vector2i(position.x() + padding, position.y()));
+		mLoadBlueprintButton->set_position(nanogui::Vector2i(position.x() + padding, position.y()));
+		mSaveBlueprintButton->set_position(nanogui::Vector2i(mButtonSize + position.x() + padding, position.y()));
 	}
 
 private:
@@ -249,6 +248,7 @@ private:
 	bool mActive;
 	bool mCommitted;
 	
+	const int mButtonSize = 32;
 	const int padding = 15;
 
 	std::unique_ptr<nanogui::Button> mLoadBlueprintButton;
@@ -341,5 +341,5 @@ private:
 	std::shared_ptr<BlueprintPanel> mBlueprintPanel;
 	std::future<void> mAnimationFuture;
 	
-	const int padding = 5;
+	const int padding = 15;
 };
