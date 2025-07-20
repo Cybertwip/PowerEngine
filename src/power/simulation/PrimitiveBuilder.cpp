@@ -501,8 +501,8 @@ std::unique_ptr<MeshData> create_sprite_mesh_data(float width, float height, con
 	auto meshData = std::make_unique<MeshData>();
 	
 	// Calculate scaled half-dimensions for the vertices
-	const float half_width_scaled = (width / 2.0f) / SCALE_FACTOR;
-	const float half_height_scaled = (height / 2.0f) / SCALE_FACTOR;
+	const float half_width_scaled = (width / 2.0f) * SCALE_FACTOR / 10.0f;
+	const float half_height_scaled = (height / 2.0f) * SCALE_FACTOR / 10.0f;
 	
 	// Define 4 vertices for a quad in the XY plane using the scaled dimensions
 	std::vector<std::unique_ptr<MeshVertex>> vertices;
@@ -514,12 +514,12 @@ std::unique_ptr<MeshData> create_sprite_mesh_data(float width, float height, con
 	// Define the normal vector for the sprite (facing the positive Z-axis)
 	glm::vec3 normal(0.0f, 0.0f, 1.0f);
 	
-	// Define texture coordinates for each vertex
+	// Define texture coordinates for each vertex (V-coordinate is flipped)
 	glm::vec2 tex_coords[] = {
-		{0.0f, 0.0f}, // For vertex 0 (Bottom-Left)
-		{1.0f, 0.0f}, // For vertex 1 (Bottom-Right)
-		{1.0f, 1.0f}, // For vertex 2 (Top-Right)
-		{0.0f, 1.0f}  // For vertex 3 (Top-Left)
+		{0.0f, 1.0f}, // For vertex 0 (Bottom-Left) -> Maps to Top-Left of texture
+		{1.0f, 1.0f}, // For vertex 1 (Bottom-Right) -> Maps to Top-Right of texture
+		{1.0f, 0.0f}, // For vertex 2 (Top-Right) -> Maps to Bottom-Right of texture
+		{0.0f, 0.0f}  // For vertex 3 (Top-Left) -> Maps to Bottom-Left of texture
 	};
 	
 	// Assign properties (normal, texture coordinates, material ID) to each vertex
@@ -566,7 +566,6 @@ std::unique_ptr<MeshData> create_sprite_mesh_data(float width, float height, con
 	
 	return meshData;
 }
-
 // This is the new overload for building sprites.
 Actor& PrimitiveBuilder::build_sprite(Actor& actor, const std::string& actorName, const std::string& texturePath, float width, float height, ShaderWrapper& meshShader) {
 	std::unique_ptr<MeshData> meshData = create_sprite_mesh_data(width, height, texturePath);

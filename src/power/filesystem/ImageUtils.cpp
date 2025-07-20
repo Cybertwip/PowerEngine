@@ -112,7 +112,7 @@ bool write_to_png(const std::vector<uint8_t>& pixels,
 	std::vector<unsigned char> flipped_pixels = pixels;
 	
 	// Flip the image vertically
-//	flip_image_vertically(flipped_pixels.data(), width, height, channels);
+	flip_image_vertically(flipped_pixels.data(), width, height, channels);
 	
 	// Use stb_image_write's function to write PNG to the callback
 	if (!stbi_write_png_to_func(png_write_callback, &ctx, width, height, channels, flipped_pixels.data(), stride_in_bytes)) {
