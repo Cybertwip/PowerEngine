@@ -35,8 +35,8 @@ HierarchyPanel::HierarchyPanel(nanogui::Widget& parent, std::shared_ptr<ScenePan
 	// Parameters: Horizontal orientation, 2 columns, Fill alignment, 0 margin, 2px spacing.
 	mButtonContainer->set_layout(std::make_unique< nanogui::GridLayout>(nanogui::Orientation::Horizontal, 2, nanogui::Alignment::Fill, 0, 2));
 	
-	mRemoveActorButton = std::make_shared<nanogui::Button>(*mButtonContainer, "-");
 	mAddActorButton = std::make_shared<nanogui::Button>(*mButtonContainer, "+");
+	mRemoveActorButton = std::make_shared<nanogui::Button>(*mButtonContainer, "-");
 	
 	mRemoveActorButton->set_callback([this](){
 		remove_selected_actor();

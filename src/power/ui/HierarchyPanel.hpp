@@ -70,8 +70,8 @@ private:
 	
 	std::unique_ptr<nanogui::Widget> mButtonContainer;
 	
-	std::shared_ptr<nanogui::Button> mRemoveActorButton;
 	std::shared_ptr<nanogui::Button> mAddActorButton;
+	std::shared_ptr<nanogui::Button> mRemoveActorButton;
 
 	
 	std::shared_ptr<TransformPanel> mTransformPanel;
