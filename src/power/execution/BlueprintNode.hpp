@@ -239,7 +239,6 @@ public:
 		// Pin not found
 		assert(false);
 	}
-
 	
 	static long long get_next_id();
 	static long long set_next_id(long long id);
