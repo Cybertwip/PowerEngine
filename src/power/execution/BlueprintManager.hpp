@@ -97,7 +97,7 @@ public:
 											   if (mActiveActor.has_value()) {
 												   if (mActiveActor->get().find_component<BlueprintComponent>()) {
 													   
-													   mActiveActor->get().get_component<BlueprintComponent>().deserialize(destinationFile);
+													   mActiveActor->get().get_component<BlueprintComponent>().load_blueprint(destinationFile);
 												   }
 												   
 											   }
@@ -120,7 +120,7 @@ public:
 											   if (mActiveActor.has_value()) {
 												   if (mActiveActor->get().find_component<BlueprintComponent>()) {
 													   
-													   mActiveActor->get().get_component<BlueprintComponent>().serialize(destinationFile);
+													   mActiveActor->get().get_component<BlueprintComponent>().save_blueprint(destinationFile);
 												   }
 												   
 											   }

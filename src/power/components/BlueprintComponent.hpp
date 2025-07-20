@@ -14,7 +14,9 @@ public:
 	void update();
 
 	void save_blueprint(const std::string& to_file);
-	
+
+	void load_blueprint(const std::string& from_file);
+
 private:
 	std::unique_ptr<NodeProcessor> mNodeProcessor;
 };
