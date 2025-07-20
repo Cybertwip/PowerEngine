@@ -94,7 +94,13 @@ public:
 											   
 											   std::string destinationFile = files.front();
 											   
-											   
+											   if (mActiveActor.has_value()) {
+												   if (mActiveActor->get().find_component<BlueprintComponent>()) {
+													   
+													   mActiveActor->get().find_component<BlueprintComponent>().deserialize(destinationFile);
+												   }
+												   
+											   }
 											   
 										   });
 			});
@@ -110,6 +116,15 @@ public:
 											   }
 											   
 											   std::string destinationFile = files.front();
+											   
+											   if (mActiveActor.has_value()) {
+												   if (mActiveActor->get().find_component<BlueprintComponent>()) {
+													   
+													   mActiveActor->get().find_component<BlueprintComponent>().serialize(destinationFile);
+												   }
+												   
+											   }
+
 										   });
 			});
 			
