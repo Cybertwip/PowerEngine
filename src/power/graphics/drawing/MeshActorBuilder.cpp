@@ -69,7 +69,14 @@ Actor& MeshActorBuilder::build(Actor& actor, AnimationTimeProvider& timeProvider
 Actor& MeshActorBuilder::build_from_model_data(Actor& actor, AnimationTimeProvider& timeProvider, std::unique_ptr<ModelImporter> importer, const std::string& path, const std::string& actorName, ShaderWrapper& meshShader, ShaderWrapper& skinnedShader) {
 	
 	// Add common components
-	auto& metadataComponent = actor.add_component<MetadataComponent>(actor.identifier(), actorName);
+	
+	if (!actor.find_component<MetadataComponent>()) {
+		auto& _ = actor.add_component<MetadataComponent>(actor.identifier(), actorName);
+	}
+	
+	auto& metadataComponent = actor.get_component<MetadataComponent>();
+
+
 	auto& colorComponent = actor.add_component<ColorComponent>(actor.identifier());
 	
 	std::unique_ptr<Drawable> drawableComponent;

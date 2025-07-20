@@ -34,7 +34,7 @@ public:
 		std::vector<std::reference_wrapper<Actor>> actors;
 		for (auto& actor : mActors) {
 			if (actor->find_component<T>()) {
-				actors.push_back(*actor);
+				actors.push_back(std::ref(*actor));
 			}
 		}
 		
@@ -56,7 +56,7 @@ private:
 		std::vector<std::reference_wrapper<Actor>> actors;
 
 		for (auto& actor : mActors) {
-			actors.push_back(*actor);
+			actors.push_back(std::ref(*actor));
 		}
 		
 		return actors;
