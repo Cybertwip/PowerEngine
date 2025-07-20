@@ -61,8 +61,6 @@ mRotationGizmo(std::move(mMeshActorLoader.create_unique_actor(mRegistry, "Rotati
 
 mScaleGizmo(std::move(mMeshActorLoader.create_unique_actor(mRegistry, "ScaleGizmo", PrimitiveShape::ScaleGizmo, *mMeshShader)))
 {
-	
-	
 	// Translation Button
 	
 	mTranslationButton = std::make_shared<nanogui::Button>(parent, "", FA_ARROWS_ALT);

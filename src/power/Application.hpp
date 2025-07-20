@@ -231,7 +231,6 @@ class Application : public nanogui::DraggableScreen
 	std::unique_ptr<CartridgeActorLoader> mCartridgeActorLoader;
 	std::unique_ptr<Canvas> mCanvas; // Place appropriately based on actual dependencies
 	std::unique_ptr<UiManager> mUiManager;
-	std::unique_ptr<GizmoManager> mGizmoManager;
 	std::unique_ptr<MeshActorLoader> mGizmoActorLoader;
 	std::unique_ptr<MeshActorLoader> mMeshActorLoader;
 	std::unique_ptr<MeshActorBuilder> mMeshActorBuilder;
@@ -243,6 +242,7 @@ class Application : public nanogui::DraggableScreen
 	std::unique_ptr<MeshBatch> mMeshBatch;
 	std::unique_ptr<MeshBatch> mGizmoMeshBatch;
 	std::unique_ptr<SkinnedMeshBatch> mGizmoSkinnedMeshBatch;
+	std::unique_ptr<GizmoManager> mGizmoManager;
 	std::shared_ptr<RenderCommon> mRenderCommon;
 	std::shared_ptr<UiCommon> mUiCommon;
 	std::unique_ptr<BlueprintManager> mBlueprintManager;
