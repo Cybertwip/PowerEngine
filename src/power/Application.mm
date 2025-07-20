@@ -358,7 +358,11 @@ bool Application::drop_event(Widget& sender, const std::vector<std::string> & fi
 			
 			if (path.find(".fbx") != std::string::npos) {
 				mUiCommon->hierarchy_panel()->add_actor(mMeshActorLoader->create_actor(path, mGlobalAnimationTimeProvider, *mMeshShader, *mSkinnedShader));
-//				mUiCommon->scene_time_bar()->refresh_actors();
+				//				mUiCommon->scene_time_bar()->refresh_actors();
+				return; // Event handled
+			} else if (path.find(".png") != std::string::npos) {
+				mUiCommon->hierarchy_panel()->add_actor(mMeshActorLoader->create_sprite_actor("Sprite", path, mGlobalAnimationTimeProvider, *mMeshShader, *mSkinnedShader));
+				//				mUiCommon->scene_time_bar()->refresh_actors();
 				return; // Event handled
 			}
 		}
