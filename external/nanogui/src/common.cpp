@@ -312,16 +312,11 @@ void mainloop() {
 	
 	mainloop_active = true;
 	
-	try {
-		while (mainloop_active)
-			mainloop_iteration();
-		
-		/* Process events once more */
-		glfwPollEvents();
-	} catch (const std::exception &e) {
-		std::cerr << "Caught exception in main loop: " << e.what() << std::endl;
-		leave();
-	}
+	while (mainloop_active)
+		mainloop_iteration();
+	
+	/* Process events once more */
+	glfwPollEvents();
 	
 	// Stop the redraw thread after exiting the main loop
 	stop_redraw_thread();

@@ -1,4 +1,3 @@
-
 #include "Canvas.hpp"
 #include "actors/Actor.hpp"
 #include "BlueprintNode.hpp"
@@ -44,7 +43,7 @@ void NodeProcessor::evaluate() {
 		
 		
 		if (in_pin.type == PinType::Flow) {
-			bool can_flow = false;  // Initialize to false
+			bool can_flow = false; // Initialize to false
 			
 			for (auto& other_link : links) {
 				auto& other_pin = other_link->get_end();
@@ -148,7 +147,27 @@ void NodeProcessor::serialize(BlueprintCanvas& canvas, Actor& actor) {
 				auto* this_node = dynamic_cast<DataCoreNode*>(node.get());
 				
 				if (that_node && this_node) {
-					that_node->set_data(this_node->get_data());
+					// Check if any of the original node's pins are connected in the current (original) graph.
+					// This prevents transferring data for disconnected data nodes.
+					bool is_connected = false;
+					const auto check_pins = [this, &is_connected](const auto& pins) {
+						for (const auto& pin : pins) {
+							if (pin && this->is_pin_connected(*pin)) {
+								is_connected = true;
+								return;
+							}
+						}
+					};
+					
+					check_pins(this_node->get_inputs());
+					if (!is_connected) {
+						check_pins(this_node->get_outputs());
+					}
+					
+					// Only transfer data if the node is part of a connection.
+					if (is_connected) {
+						that_node->set_data(this_node->get_data());
+					}
 				}
 			}
 		}
@@ -276,6 +295,18 @@ CoreNode* NodeProcessor::find_node(long long id) {
 	
 	// If the node was not found, return nullptr.
 	return nullptr;
+}
+
+/**
+ * @brief Checks if a given pin is connected to any link.
+ * @param pin The pin to check.
+ * @return True if the pin is part of at least one link, false otherwise.
+ */
+bool NodeProcessor::is_pin_connected(const CorePin& pin) const {
+	// Iterate through all links to see if the given pin is a start or end point.
+	return std::any_of(links.begin(), links.end(), [&pin](const std::unique_ptr<Link>& link) {
+		return &link->get_start() == &pin || &link->get_end() == &pin;
+	});
 }
 
 

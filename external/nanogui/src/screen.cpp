@@ -618,30 +618,26 @@ void Screen::cursor_pos_callback_event(double x, double y) {
 #endif
 	
 	m_last_interaction = glfwGetTime();
-	try {
-		p -= Vector2i(1, 2);
-		
-		bool ret = false;
-		if (!m_drag_active) {
-			Widget* widget = find_widget(p);
-			if (widget != nullptr && widget->cursor() != m_cursor) {
-				m_cursor = widget->cursor();
-				glfwSetCursor(m_glfw_window, m_cursors[(int) m_cursor]);
-			}
-		} else {
-			ret = m_drag_widget->mouse_drag_event(
-												  p - m_drag_widget->parent()->get().absolute_position(), p - m_mouse_pos,
-												  m_mouse_state, m_modifiers);
+	p -= Vector2i(1, 2);
+	
+	bool ret = false;
+	if (!m_drag_active) {
+		Widget* widget = find_widget(p);
+		if (widget != nullptr && widget->cursor() != m_cursor) {
+			m_cursor = widget->cursor();
+			glfwSetCursor(m_glfw_window, m_cursors[(int) m_cursor]);
 		}
-		
-		if (!ret)
-			ret = mouse_motion_event(p, p - m_mouse_pos, m_mouse_state, m_modifiers);
-		
-		m_mouse_pos = p;
-		m_redraw |= ret;
-	} catch (const std::exception &e) {
-		std::cerr << "Caught exception in event handler: " << e.what() << std::endl;
+	} else {
+		ret = m_drag_widget->mouse_drag_event(
+											  p - m_drag_widget->parent()->get().absolute_position(), p - m_mouse_pos,
+											  m_mouse_state, m_modifiers);
 	}
+	
+	if (!ret)
+		ret = mouse_motion_event(p, p - m_mouse_pos, m_mouse_state, m_modifiers);
+	
+	m_mouse_pos = p;
+	m_redraw |= ret;
 }
 
 void Screen::mouse_button_callback_event(int button, int action, int modifiers) {
@@ -652,70 +648,58 @@ void Screen::mouse_button_callback_event(int button, int action, int modifiers) 
 	if (button == GLFW_MOUSE_BUTTON_1 && modifiers == GLFW_MOD_CONTROL)
 		button = GLFW_MOUSE_BUTTON_2;
 #endif
-	
-	try {
-		if (m_focused_widget) {
-			auto window =
-			dynamic_cast<Window*>(&m_focused_widget->get());
-			if (window && window->modal()) {
-				if (!window->contains(m_mouse_pos))
-					return;
-			}
+	if (m_focused_widget) {
+		auto window =
+		dynamic_cast<Window*>(&m_focused_widget->get());
+		if (window && window->modal()) {
+			if (!window->contains(m_mouse_pos))
+				return;
 		}
-		
-		if (action == GLFW_PRESS)
-			m_mouse_state |= 1 << button;
-		else
-			m_mouse_state &= ~(1 << button);
-		
-		auto drop_widget = find_widget(m_mouse_pos);
-		if (m_drag_active && action == GLFW_RELEASE && m_drag_widget &&
-			drop_widget != m_drag_widget) {
-			m_redraw |= m_drag_widget->mouse_button_event(
-														  m_mouse_pos - m_drag_widget->absolute_position(), button,
-														  false, m_modifiers);
-		}
-		
-		if (drop_widget != nullptr && drop_widget->cursor() != m_cursor) {
-			m_cursor = drop_widget->cursor();
-			glfwSetCursor(m_glfw_window, m_cursors[(int) m_cursor]);
-		}
-		
-		bool btn12 = button == GLFW_MOUSE_BUTTON_1 || button == GLFW_MOUSE_BUTTON_2;
-		
-		if (!m_drag_active && action == GLFW_PRESS && btn12) {
-			m_drag_widget = find_widget(m_mouse_pos);
-			if (m_drag_widget == this)
-				m_drag_widget = nullptr;
-			m_drag_active = m_drag_widget != nullptr;
-		} else if (m_drag_active && action == GLFW_RELEASE && btn12) {
-			m_drag_active = false;
-			m_drag_widget = nullptr;
-		}
-		
-		m_redraw |= mouse_button_event(m_mouse_pos, button,
-									   action == GLFW_PRESS, m_modifiers);
-	} catch (const std::exception &e) {
-		std::cerr << "Caught exception in event handler: " << e.what() << std::endl;
 	}
+	
+	if (action == GLFW_PRESS)
+		m_mouse_state |= 1 << button;
+	else
+		m_mouse_state &= ~(1 << button);
+	
+	auto drop_widget = find_widget(m_mouse_pos);
+	if (m_drag_active && action == GLFW_RELEASE && m_drag_widget &&
+		drop_widget != m_drag_widget) {
+		m_redraw |= m_drag_widget->mouse_button_event(
+													  m_mouse_pos - m_drag_widget->absolute_position(), button,
+													  false, m_modifiers);
+	}
+	
+	if (drop_widget != nullptr && drop_widget->cursor() != m_cursor) {
+		m_cursor = drop_widget->cursor();
+		glfwSetCursor(m_glfw_window, m_cursors[(int) m_cursor]);
+	}
+	
+	bool btn12 = button == GLFW_MOUSE_BUTTON_1 || button == GLFW_MOUSE_BUTTON_2;
+	
+	if (!m_drag_active && action == GLFW_PRESS && btn12) {
+		m_drag_widget = find_widget(m_mouse_pos);
+		if (m_drag_widget == this)
+			m_drag_widget = nullptr;
+		m_drag_active = m_drag_widget != nullptr;
+	} else if (m_drag_active && action == GLFW_RELEASE && btn12) {
+		m_drag_active = false;
+		m_drag_widget = nullptr;
+	}
+	
+	m_redraw |= mouse_button_event(m_mouse_pos, button,
+								   action == GLFW_PRESS, m_modifiers);
+
 }
 
 void Screen::key_callback_event(int key, int scancode, int action, int mods) {
 	m_last_interaction = glfwGetTime();
-	try {
-		m_redraw |= keyboard_event(key, scancode, action, mods);
-	} catch (const std::exception &e) {
-		std::cerr << "Caught exception in event handler: " << e.what() << std::endl;
-	}
+	m_redraw |= keyboard_event(key, scancode, action, mods);
 }
 
 void Screen::char_callback_event(unsigned int codepoint) {
 	m_last_interaction = glfwGetTime();
-	try {
-		m_redraw |= keyboard_character_event(codepoint);
-	} catch (const std::exception &e) {
-		std::cerr << "Caught exception in event handler: " << e.what() << std::endl;
-	}
+	m_redraw |= keyboard_character_event(codepoint);
 }
 
 void Screen::drop_callback_event(int count, const char **filenames) {
@@ -727,19 +711,15 @@ void Screen::drop_callback_event(int count, const char **filenames) {
 
 void Screen::scroll_callback_event(double x, double y) {
 	m_last_interaction = glfwGetTime();
-	try {
-		if (m_focused_widget) {
-			auto window =
-			dynamic_cast<Window*>(&m_focused_widget->get());
-			if (window && window->modal()) {
-				if (!window->contains(m_mouse_pos))
-					return;
-			}
+	if (m_focused_widget) {
+		auto window =
+		dynamic_cast<Window*>(&m_focused_widget->get());
+		if (window && window->modal()) {
+			if (!window->contains(m_mouse_pos))
+				return;
 		}
-		m_redraw |= scroll_event(m_mouse_pos, Vector2f(x, y));
-	} catch (const std::exception &e) {
-		std::cerr << "Caught exception in event handler: " << e.what() << std::endl;
 	}
+	m_redraw |= scroll_event(m_mouse_pos, Vector2f(x, y));
 }
 
 void Screen::resize_callback_event(int, int) {
@@ -765,11 +745,7 @@ void Screen::resize_callback_event(int, int) {
 		m_depth_texture->resize(fb_size);
 #endif
 
-	try {
-		resize_event(m_size);
-	} catch (const std::exception &e) {
-		std::cerr << "Caught exception in event handler: " << e.what() << std::endl;
-	}
+	resize_event(m_size);
 	redraw();
 }
 // src/screen.cpp
