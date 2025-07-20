@@ -45,9 +45,9 @@ void SerializationModule::load_scene(const std::string& filepath) {
     BlueprintSerializer blueprint_serializer;
     
     // Iterate through all newly created entities to perform post-processing
-    auto view = mActorManager.registry().view<IDComponent>();
-    for (auto entity_handle : view) {
-        auto& actor = mActorManager.create_actor(entity_handle);
+	auto actor_refs = mActorManager.get_actors();
+    for (auto& actor_ref : actor_refs) {
+		auto& actor = actor_ref.get();
         
         // Post-process models, as before
         if (actor.find_component<ModelMetadataComponent>()) {
