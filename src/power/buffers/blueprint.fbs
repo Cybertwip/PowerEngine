@@ -18,7 +18,7 @@ table StringVal { str:string; } // ADDED: Table to correctly wrap string payload
 table LongVal    { val:long; }
 table FloatVal  { val:float; }
 table BoolVal   { val:bool; }
-table BlueprintEntityPayload { id:long; } // CHANGED: Entity ID to long for consistency.
+table BlueprintEntityPayload { id:ulong; } // CHANGED: Entity ID to long for consistency.
 
 union BlueprintPayloadData {
     s:StringVal, // CHANGED: Use the StringVal table instead of raw string.
@@ -34,7 +34,7 @@ table BlueprintPayload {
 
 // --- Blueprint Structure Definitions ---
 table BlueprintPin {
-    id:long; // CHANGED: Pin ID must be 64-bit to match UUID.
+    id:ulong; // CHANGED: Pin ID must be 64-bit to match UUID.
     type:PinType;
     subtype:PinSubType;
     kind:PinKind;
@@ -42,7 +42,7 @@ table BlueprintPin {
 }
 
 table BlueprintNode {
-    id:long;
+    id:ulong;
     type:NodeType;
     position:Vec2i;
     inputs:[BlueprintPin];
@@ -51,7 +51,7 @@ table BlueprintNode {
 }
 
 table BlueprintLink {
-    id:long;            // CHANGED: Link ID must be 64-bit to match UUID.
+    id:ulong;            // CHANGED: Link ID must be 64-bit to match UUID.
     start_node_id:long;
     start_pin_id:long;  // CHANGED: Must match the 64-bit Pin ID.
     end_node_id:long;
