@@ -326,7 +326,7 @@ if(APPLE)
 
     set_target_properties(PowerEngine PROPERTIES 
                       XCODE_GENERATE_SCHEME TRUE
-                      XCODE_SCHEME_WORKING_DIRECTORY  "$<TARGET_FILE_DIR:PowerEngine>/../Resources")
+                      XCODE_SCHEME_WORKING_DIRECTORY  "${CMAKE_CURRENT_LIST_DIR}/../../sandbox")
 
 
     # Set release build type and enable optimizations

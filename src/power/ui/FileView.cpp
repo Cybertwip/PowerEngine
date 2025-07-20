@@ -95,16 +95,19 @@ void FileView::populate_file_view() {
 	
 	m_current_directory_node->refresh(m_allowed_extensions);
 	
-	// Add "cd up" button if not at the initial root and a parent exists.
-	// This assumes DirectoryNode has a `Parent` member pointing to its parent.
 	if (m_current_directory_node != &m_initial_root_node && m_current_directory_node->Parent) {
 		m_cd_up_button = std::make_shared<nanogui::Button>(*m_content_panel, "..", FA_ARROW_UP);
 		m_cd_up_button->set_fixed_height(28);
 		m_cd_up_button->set_icon_position(nanogui::Button::IconPosition::Left);
 		m_cd_up_button->set_background_color(m_normal_button_color);
 		m_cd_up_button->set_callback([this]() {
-			if (m_current_directory_node->Parent) {
-				m_current_directory_node = m_current_directory_node->Parent;
+			// To access a weak_ptr, you must first 'lock' it to get a temporary shared_ptr.
+			// If the parent object still exists, the lock succeeds.
+			if (auto parent_ptr = m_current_directory_node->Parent.lock()) {
+				// Note: You may need to change m_current_directory_node to be a
+				// std::shared_ptr<DirectoryNode> instead of a raw pointer.
+				// If so, the assignment would be: m_current_directory_node = parent_ptr;
+				m_current_directory_node = parent_ptr.get();
 				refresh();
 			}
 		});
@@ -112,11 +115,35 @@ void FileView::populate_file_view() {
 	
 	std::vector<std::shared_ptr<DirectoryNode>> collected_nodes;
 	if (m_recursive) {
+		// This uses the corrected recursive function from the previous answer
 		collect_nodes_recursive(m_current_directory_node, collected_nodes);
 	} else {
-		collected_nodes = m_current_directory_node->Children;
+		// CORRECTED non-recursive logic
+		for (const auto& child : m_current_directory_node->Children) {
+			// Directories are always shown in a non-recursive view.
+			if (child->IsDirectory) {
+				collected_nodes.push_back(child);
+				continue;
+			}
+			
+			// For files, we must manually apply the extension filter.
+			if (m_allowed_extensions.empty()) {
+				// If no filter is set, add all files.
+				collected_nodes.push_back(child);
+			} else {
+				// Otherwise, check if the file's extension is allowed.
+				const auto pos = child->FileName.find_last_of('.');
+				if (pos != std::string::npos) {
+					std::string extension = child->FileName.substr(pos + 1);
+					if (m_allowed_extensions.count(extension)) {
+						collected_nodes.push_back(child);
+					}
+				}
+			}
+		}
 	}
 	
+	// This loop now receives a correctly filtered list in both cases.
 	for (const auto& child : collected_nodes) {
 		if (!m_filter_text.empty()) {
 			std::string filename = child->FileName;
@@ -128,7 +155,6 @@ void FileView::populate_file_view() {
 		create_file_item(child);
 	}
 }
-
 void FileView::create_file_item(const std::shared_ptr<DirectoryNode>& node) {
 	auto item_button = std::make_shared<nanogui::Button>(*m_content_panel, node->FileName, get_icon_for_file(*node));
 	item_button->set_fixed_height(28);
@@ -196,18 +222,38 @@ void FileView::initiate_drag_operation(const std::shared_ptr<DirectoryNode>& nod
 
 
 void FileView::collect_nodes_recursive(DirectoryNode* node, std::vector<std::shared_ptr<DirectoryNode>>& collected_nodes) {
+	// Iterate through all children of the current node
 	for (const auto& child : node->Children) {
-		if (!m_allowed_extensions.empty() && !child->IsDirectory) {
-			std::string extension = child->FileName.substr(child->FileName.find_last_of('.') + 1);
-			if (m_allowed_extensions.find(extension) == m_allowed_extensions.end()) continue;
-		}
-		collected_nodes.push_back(child);
+		// If the child is a directory, recurse into it to find files.
+		// The directory itself is not added to the list.
 		if (child->IsDirectory) {
 			collect_nodes_recursive(child.get(), collected_nodes);
 		}
+		// If the child is a file, check if it should be added.
+		else {
+			// Case 1: No extension filter is active, so add all files.
+			if (m_allowed_extensions.empty()) {
+				collected_nodes.push_back(child);
+			}
+			// Case 2: An extension filter is active.
+			else {
+				// Safely find the last '.' in the filename.
+				const auto pos = child->FileName.find_last_of('.');
+				
+				// Check that a dot was found and it's not the only character.
+				if (pos != std::string::npos) {
+					// Extract the extension.
+					std::string extension = child->FileName.substr(pos + 1);
+					// If the extension is in the allowed set, add the file.
+					// std::set::count is an efficient way to check for existence.
+					if (m_allowed_extensions.count(extension)) {
+						collected_nodes.push_back(child);
+					}
+				}
+			}
+		}
 	}
 }
-
 void FileView::ProcessEvents() {
 	// No async processing needed
 }
