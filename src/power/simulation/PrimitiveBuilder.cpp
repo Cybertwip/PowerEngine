@@ -500,21 +500,29 @@ Actor& PrimitiveBuilder::build(Actor& actor, const std::string& actorName, Primi
 std::unique_ptr<MeshData> create_sprite_mesh_data(float width, float height, const std::string& texturePath) {
 	auto meshData = std::make_unique<MeshData>();
 	
-	// Define 4 vertices for a quad in the XY plane
-	std::vector<std::unique_ptr<MeshVertex>> vertices;
-	vertices.emplace_back(std::make_unique<MeshVertex>(glm::vec3(-width / 2.0f, -height / 2.0f, 0.0f))); // 0: Bottom-Left
-	vertices.emplace_back(std::make_unique<MeshVertex>(glm::vec3( width / 2.0f, -height / 2.0f, 0.0f))); // 1: Bottom-Right
-	vertices.emplace_back(std::make_unique<MeshVertex>(glm::vec3( width / 2.0f,  height / 2.0f, 0.0f))); // 2: Top-Right
-	vertices.emplace_back(std::make_unique<MeshVertex>(glm::vec3(-width / 2.0f,  height / 2.0f, 0.0f))); // 3: Top-Left
+	// Calculate scaled half-dimensions for the vertices
+	const float half_width_scaled = (width / 2.0f) / SCALE_FACTOR;
+	const float half_height_scaled = (height / 2.0f) / SCALE_FACTOR;
 	
+	// Define 4 vertices for a quad in the XY plane using the scaled dimensions
+	std::vector<std::unique_ptr<MeshVertex>> vertices;
+	vertices.emplace_back(std::make_unique<MeshVertex>(glm::vec3(-half_width_scaled, -half_height_scaled, 0.0f))); // 0: Bottom-Left
+	vertices.emplace_back(std::make_unique<MeshVertex>(glm::vec3( half_width_scaled, -half_height_scaled, 0.0f))); // 1: Bottom-Right
+	vertices.emplace_back(std::make_unique<MeshVertex>(glm::vec3( half_width_scaled,  half_height_scaled, 0.0f))); // 2: Top-Right
+	vertices.emplace_back(std::make_unique<MeshVertex>(glm::vec3(-half_width_scaled,  half_height_scaled, 0.0f))); // 3: Top-Left
+	
+	// Define the normal vector for the sprite (facing the positive Z-axis)
 	glm::vec3 normal(0.0f, 0.0f, 1.0f);
+	
+	// Define texture coordinates for each vertex
 	glm::vec2 tex_coords[] = {
-		{0.0f, 0.0f}, // For vertex 0
-		{1.0f, 0.0f}, // For vertex 1
-		{1.0f, 1.0f}, // For vertex 2
-		{0.0f, 1.0f}  // For vertex 3
+		{0.0f, 0.0f}, // For vertex 0 (Bottom-Left)
+		{1.0f, 0.0f}, // For vertex 1 (Bottom-Right)
+		{1.0f, 1.0f}, // For vertex 2 (Top-Right)
+		{0.0f, 1.0f}  // For vertex 3 (Top-Left)
 	};
 	
+	// Assign properties (normal, texture coordinates, material ID) to each vertex
 	for (size_t i = 0; i < vertices.size(); ++i) {
 		vertices[i]->set_normal(normal);
 		vertices[i]->set_texture_coords1(tex_coords[i]);
@@ -538,19 +546,22 @@ std::unique_ptr<MeshData> create_sprite_mesh_data(float width, float height, con
 	// Assign material properties
 	auto material = create_material({1.0f, 1.0f, 1.0f, 1.0f}); // Default white diffuse color
 	
-	// If a valid path was found, try to load the file.
+	// If a valid path was provided, try to load the texture file.
 	if (!texturePath.empty() && std::filesystem::exists(texturePath)) {
 		std::cout << "Found texture file, loading: " << texturePath << std::endl;
 		std::ifstream file(texturePath, std::ios::binary);
 		if (file) {
+			// Read file into a buffer
 			std::vector<uint8_t> buffer(std::istreambuf_iterator<char>(file), {});
 			// Create texture from the file data in memory.
-			// This assumes nanogui::Texture can be constructed from a memory buffer of a PNG/JPG.
 			material->mTextureDiffuse =  std::make_shared<nanogui::Texture>(buffer.data(), buffer.size());
+			
+			material->mHasDiffuseTexture = true;
 		}
 	}
 	
-	//	material->mTwoSided = true; // A hint for the renderer to disable back-face culling
+	// A hint for the renderer to disable back-face culling could be set here
+	// material->mTwoSided = true;
 	meshData->get_material_properties().push_back(material);
 	
 	return meshData;
