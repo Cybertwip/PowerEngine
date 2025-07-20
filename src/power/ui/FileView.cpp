@@ -49,7 +49,6 @@ m_is_dragging(false),
 m_normal_button_color(0, 0),
 m_selected_button_color(0, 100, 255, 50)
 {
-	set_layout(std::make_unique<nanogui::BoxLayout>(nanogui::Orientation::Vertical, nanogui::Alignment::Fill));
 	m_vscroll = std::make_shared<nanogui::VScrollPanel>(*this);
 	
 	m_content_panel = std::make_shared<nanogui::Widget>(*m_vscroll);
@@ -107,6 +106,17 @@ void FileView::refresh() {
 	populate_file_view();
 	perform_layout(screen().nvg_context());
 }
+
+void FileView::perform_layout(NVGcontext* ctx) {
+	// Manually set the VScrollPanel to fill this entire widget
+	if (m_vscroll) {
+		m_vscroll->set_position({0, 0});
+		m_vscroll->set_size(size()); // Use the size of the FileView widget itself
+	}
+	// Call the base class implementation to handle children's layouts
+	Widget::perform_layout(ctx);
+}
+
 
 void FileView::populate_file_view() {
 	if (!m_current_directory_node) {
