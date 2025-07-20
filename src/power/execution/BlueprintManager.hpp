@@ -222,8 +222,8 @@ public:
 	}
 	
 	void update_buttons(const nanogui::Vector2f& position) {
-		mLoadBlueprintButton->set_position(nanogui::Vector2i(position.x() + padding, position.y()));
-		mSaveBlueprintButton->set_position(nanogui::Vector2i(mButtonSize + position.x() + padding, position.y()));
+		mLoadBlueprintButton->set_position(nanogui::Vector2i(position.x() + padding, position.y() - padding));
+		mSaveBlueprintButton->set_position(nanogui::Vector2i(mButtonSize + position.x() + padding, position.y() - padding));
 	}
 
 private:
