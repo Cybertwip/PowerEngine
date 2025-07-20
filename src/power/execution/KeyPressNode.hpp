@@ -21,7 +21,7 @@ public:
 	
 	void set_data(std::optional<std::variant<Entity, std::string, long, float, bool>> data) override;
 
-	int keycode() {
+	long keycode() {
 		return mKeyCode;
 	}
 	
@@ -29,7 +29,7 @@ public:
 		return mConfigured;
 	}
 	
-	void set_keycode(int keycode) {
+	void set_keycode(long keycode) {
 		mKeyCode = keycode;
 	}
 	
