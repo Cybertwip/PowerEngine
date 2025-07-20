@@ -15,7 +15,7 @@ KeyPressCoreNode::KeyPressCoreNode(UUID id)
 		assert(mWindow);
 		
 		if (configured()) {
-			int action = glfwGetKey(mWindow, keycode());
+			int action = static_cast<int>(glfwGetKey(mWindow, keycode()));
 			
 			if ((action == GLFW_PRESS || action == GLFW_REPEAT) && !mTriggered) {
 				mTriggered = true;

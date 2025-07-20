@@ -13,7 +13,7 @@ KeyReleaseCoreNode::KeyReleaseCoreNode(UUID id)
 	set_evaluate([this]() {
 		assert(mWindow);
 		if (configured()) {
-			int action = glfwGetKey(mWindow, keycode());
+			int action = static_cast<int>(glfwGetKey(mWindow, keycode()));
 			
 			output().can_flow = action == GLFW_RELEASE && mTriggered; // Reset the triggered action.
 			
@@ -74,7 +74,7 @@ void KeyReleaseVisualNode::perform_layout(NVGcontext *ctx) {
 	auto data = mCoreNode.get_data();
 	
 	if (data.has_value()) {
-		auto* caption = glfwGetKeyName(mCoreNode.keycode(), -1);
+		auto* caption = glfwGetKeyName(static_cast<int>(mCoreNode.keycode()), -1);
 		
 		if (caption != nullptr) {
 			mActionButton.set_caption(caption);
