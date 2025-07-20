@@ -246,7 +246,10 @@ void HierarchyPanel::fire_actor_selected_event(std::optional<std::reference_wrap
 
 void HierarchyPanel::clear_actors() {
 	mTreeView->clear();
-	fire_actor_selected_event(std::nullopt);
+
+	nanogui::async([this](){
+		fire_actor_selected_event(std::nullopt);
+	});
 }
 
 void HierarchyPanel::refresh_selected_actor() {
