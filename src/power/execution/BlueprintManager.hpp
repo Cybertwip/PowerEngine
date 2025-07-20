@@ -58,8 +58,6 @@ public:
 					if (mActiveActor) {
 						deserialize(mActiveActor->get());
 					}
-				} else {
-					commit();
 				}
 				
 				mBlueprintActionTriggerCallback(mActive, [this](){
@@ -98,6 +96,9 @@ public:
 												   if (mActiveActor->get().find_component<BlueprintComponent>()) {
 													   
 													   mActiveActor->get().get_component<BlueprintComponent>().load_blueprint(destinationFile);
+													   
+													   deserialize(mActiveActor->get());
+
 												   }
 												   
 											   }
