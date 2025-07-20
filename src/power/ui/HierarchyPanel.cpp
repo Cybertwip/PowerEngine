@@ -30,7 +30,7 @@ HierarchyPanel::HierarchyPanel(nanogui::Widget& parent, std::shared_ptr<ScenePan
 	set_layout(std::make_unique<nanogui::GroupLayout>());
 	
 	// Create a container widget for the buttons to lay them out horizontally.
-	mButtonContainer = std::make_unique<nanogui::Widget>(std::ref(*this));
+	mButtonContainer = std::make_unique<nanogui::Widget>(*this);
 	// Use a GridLayout with 2 columns to make each button take up 50% of the width.
 	// Parameters: Horizontal orientation, 2 columns, Fill alignment, 0 margin, 2px spacing.
 	mButtonContainer->set_layout(std::make_unique< nanogui::GridLayout>(nanogui::Orientation::Horizontal, 2, nanogui::Alignment::Fill, 0, 2));
