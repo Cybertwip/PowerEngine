@@ -222,8 +222,8 @@ public:
 	}
 	
 	void update_buttons(const nanogui::Vector2f& position) {
-		mLoadBlueprintButton->set_position(nanogui::Vector2i(position.x() + padding, position.y() - padding));
-		mSaveBlueprintButton->set_position(nanogui::Vector2i(mButtonSize + position.x() + padding, position.y() - padding));
+		mLoadBlueprintButton->set_position(nanogui::Vector2i(position.x() + padding, position.y() + padding));
+		mSaveBlueprintButton->set_position(nanogui::Vector2i(mButtonSize + position.x() + padding, position.y() + padding));
 	}
 
 private:
@@ -249,7 +249,7 @@ private:
 	bool mCommitted;
 	
 	const int mButtonSize = 32;
-	const int padding = 15;
+	const int padding = 48;
 
 	std::unique_ptr<nanogui::Button> mLoadBlueprintButton;
 	std::unique_ptr<nanogui::Button> mSaveBlueprintButton;
