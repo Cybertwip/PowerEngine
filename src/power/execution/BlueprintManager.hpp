@@ -73,15 +73,17 @@ public:
 		mRegistry->RegisterOnActorSelectedCallback(*this);
 		
 		
-		mLoadBlueprintButton = std::make_unique<nanogui::Button>(std::ref(*this), "", FA_DOWNLOAD);
-		mSaveBlueprintButton = std::make_unique<nanogui::Button>(std::ref(*this), "", FA_SAVE);
+		mLoadBlueprintButton = std::make_unique<nanogui::Button>(std::ref(parent), "", FA_DOWNLOAD);
+		mSaveBlueprintButton = std::make_unique<nanogui::Button>(std::ref(parent), "", FA_SAVE);
 		
 		const nanogui::Vector2i button_size(30, 30);
 		const int padding = 15;
+		
+		mLoadBlueprintButton->set_position(nanogui::Vector2i(0, canvas.fixed_height()));
+		mSaveBlueprintButton->set_position(nanogui::Vector2i(0, canvas.fixed_height()));
+
 		mLoadBlueprintButton->set_fixed_size(button_size);
-		mLoadBlueprintButton->set_position({padding, padding});
 		mSaveBlueprintButton->set_fixed_size(button_size);
-		mSaveBlueprintButton->set_position({padding + button_size.x() + 5, padding});
 		
 		mLoadBlueprintButton->set_callback([this]() {
 			nanogui::async([this]() {
@@ -220,10 +222,14 @@ public:
 		}
 	}
 	
+	void update_buttons(nanogui::Vector2f& position) {
+		mLoadBlueprintButton->set_position(position);
+		mSaveBlueprintButton->set_position(nanogui::Vector2i(position.x() + padding, position.y()));
+	}
 
 private:
 	void draw(NVGcontext *ctx) override {
-		Widget::draw(ctx);
+		ScenePanel::draw(ctx);
 	}
 	
 private:
@@ -243,6 +249,8 @@ private:
 	bool mActive;
 	bool mCommitted;
 	
+	const int padding = 15;
+
 	std::unique_ptr<nanogui::Button> mLoadBlueprintButton;
 	std::unique_ptr<nanogui::Button> mSaveBlueprintButton;
 
@@ -291,12 +299,14 @@ public:
 		const int steps = 20;
 		const auto stepDelay = std::chrono::milliseconds(16); // ~60 FPS
 		nanogui::Vector2f startPos = mBlueprintPanel->position();
+		nanogui::Vector2f buttonPadding = startPos + padding;
 		nanogui::Vector2f step = (nanogui::Vector2f(targetPosition) - startPos) / (steps - 1);
 		
 		for (int i = 0; i < steps; ++i) {
 			// This check ensures we can stop the animation if another toggle happens
 			if (mAnimationFuture.wait_for(std::chrono::seconds(0)) != std::future_status::ready) {
 				mBlueprintPanel->set_position(startPos + step * i);
+				mBlueprintPanel->update_buttons(buttonPadding + step * i);
 				std::this_thread::sleep_for(stepDelay);
 			} else {
 				break; // Stop animation if future is no longer valid (another animation started)
@@ -331,4 +341,5 @@ private:
 	std::shared_ptr<BlueprintPanel> mBlueprintPanel;
 	std::future<void> mAnimationFuture;
 	
+	const int padding = 5;
 };
