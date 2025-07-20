@@ -52,8 +52,14 @@ private:
 	}
 	
 	const std::vector<std::reference_wrapper<Actor>> get_actors() const {
-		return mActors;
+		
+		for (auto& actor : mActors) {
+			actors.push_back(*actor);
+		}
+		
+		return actors;
 	}
+
 
 	entt::registry& mRegistry;
     CameraManager& mCameraManager;
