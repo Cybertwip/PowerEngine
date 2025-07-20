@@ -396,6 +396,11 @@ void Application::new_project_action() {
 void Application::new_scene_action() {
 	mUiCommon->hierarchy_panel()->fire_actor_selected_event(std::nullopt);
 	
+	mRenderCommon->camera_actor_loader().setup_engine_camera(mGlobalAnimationTimeProvider,
+															 45.0f, 0.01f, 1e5f,
+															 mRenderCommon->canvas()->fixed_size().x() /
+															 static_cast<float>(mRenderCommon->canvas()->fixed_size().y()));
+
 	mActorManager->clear_actors();
 }
 
@@ -428,6 +433,11 @@ void Application::load_scene_action() {
 									   std::string destinationFile = files.front();
 
 									   mUiCommon->hierarchy_panel()->fire_actor_selected_event(std::nullopt);
+
+									   mRenderCommon->camera_actor_loader().setup_engine_camera(mGlobalAnimationTimeProvider,
+																								45.0f, 0.01f, 1e5f,
+																								mRenderCommon->canvas()->fixed_size().x() /
+																								static_cast<float>(mRenderCommon->canvas()->fixed_size().y()));
 
 									   mSerializationModule->load_scene(destinationFile);
 									   
