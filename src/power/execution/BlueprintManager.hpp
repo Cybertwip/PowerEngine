@@ -129,8 +129,7 @@ public:
 													
 												   mActiveActor->get().remove_component<BlueprintMetadataComponent>();
 												   }
-													   
-													   auto& _ = mActiveActor->get().add_component<BlueprintMetadataComponent>(destinationFile);
+												   auto& _ = mActiveActor->get().add_component<BlueprintMetadataComponent>(destinationFile);
 												   }
 												   
 											   }
