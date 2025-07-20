@@ -63,9 +63,9 @@ private:
 	MeshActorLoader& mMeshActorLoader;
 	std::unique_ptr<ShaderWrapper> mMeshShader;
 	std::unique_ptr<ShaderWrapper> mSkinnedShader;
-	Actor& mTranslationGizmo;
-	Actor& mRotationGizmo;
-	Actor& mScaleGizmo;
+	std::reference_wrapper<Actor> mTranslationGizmo;
+	std::reference_wrapper<Actor> mRotationGizmo;
+	std::reference_wrapper<Actor> mScaleGizmo;
 
 	std::optional<std::reference_wrapper<Actor>> mActiveActor;
 	

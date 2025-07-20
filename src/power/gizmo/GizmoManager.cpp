@@ -55,11 +55,11 @@ mMeshShader(std::make_unique<ShaderWrapper>(shaderManager.get_shader("gizmo"))),
 mSkinnedShader(std::make_unique<ShaderWrapper>(shaderManager.get_shader("skinned_mesh"))),
 
 // MODIFICATION: Create gizmos from procedural primitives instead of FBX files.
-mTranslationGizmo(mMeshActorLoader.create_actor("TranslationGizmo", PrimitiveShape::TranslationGizmo, *mMeshShader)),
+mTranslationGizmo(std::ref(mMeshActorLoader.create_actor("TranslationGizmo", PrimitiveShape::TranslationGizmo, *mMeshShader))),
 
-mRotationGizmo(mMeshActorLoader.create_actor("RotationGizmo", PrimitiveShape::RotationGizmo, *mMeshShader)),
+mRotationGizmo(std::ref(mMeshActorLoader.create_actor("RotationGizmo", PrimitiveShape::RotationGizmo, *mMeshShader))),
 
-mScaleGizmo(mMeshActorLoader.create_actor("ScaleGizmo", PrimitiveShape::ScaleGizmo, *mMeshShader))
+mScaleGizmo(std::ref(mMeshActorLoader.create_actor("ScaleGizmo", PrimitiveShape::ScaleGizmo, *mMeshShader)))
 
 {
 	
@@ -152,13 +152,13 @@ void GizmoManager::select(std::optional<std::reference_wrapper<Actor>> actor) {
 		
 	} else {
 		
-		mTranslationGizmo.get_component<ColorComponent>().set_visible(false);
+		mTranslationGizmo.get().get_component<ColorComponent>().set_visible(false);
 		
 		
-		mRotationGizmo.get_component<ColorComponent>().set_visible(false);
+		mRotationGizmo.get().get_component<ColorComponent>().set_visible(false);
 		
 		
-		mScaleGizmo.get_component<ColorComponent>().set_visible(false);
+		mScaleGizmo.get().get_component<ColorComponent>().set_visible(false);
 		
 	}
 	
@@ -415,20 +415,20 @@ void GizmoManager::set_mode(GizmoMode mode) {
 	mCurrentMode = mode;
 	
 	
-	mTranslationGizmo.get_component<ColorComponent>().set_visible(false);
+	mTranslationGizmo.get().get_component<ColorComponent>().set_visible(false);
 	
 	
-	mRotationGizmo.get_component<ColorComponent>().set_visible(false);
+	mRotationGizmo.get().get_component<ColorComponent>().set_visible(false);
 	
 	
-	mScaleGizmo.get_component<ColorComponent>().set_visible(false);
+	mScaleGizmo.get().get_component<ColorComponent>().set_visible(false);
 	
 	
 	switch (mCurrentMode) {
 			
 		case GizmoMode::Translation:{
 			
-			mActiveGizmo = mTranslationGizmo;
+			mActiveGizmo = mTranslationGizmo.get();
 			
 		}
 			
@@ -436,13 +436,13 @@ void GizmoManager::set_mode(GizmoMode mode) {
 			
 		case GizmoMode::Rotation:
 			
-			mActiveGizmo = mRotationGizmo;
+			mActiveGizmo = mRotationGizmo.get();
 			
 			break;
 			
 		case GizmoMode::Scale:
 			
-			mActiveGizmo = mScaleGizmo;
+			mActiveGizmo = mScaleGizmo.get();
 			
 			break;
 			
@@ -527,10 +527,10 @@ void GizmoManager::draw_content(const nanogui::Matrix4f& model, const nanogui::M
 
 
 void GizmoManager::rebuild_gizmos() {
-	mTranslationGizmo = mMeshActorLoader.create_actor("TranslationGizmo", PrimitiveShape::TranslationGizmo, *mMeshShader);
+	mTranslationGizmo = std::ref(mMeshActorLoader.create_actor("TranslationGizmo", PrimitiveShape::TranslationGizmo, *mMeshShader));
 	
-	mRotationGizmo = mMeshActorLoader.create_actor("RotationGizmo", PrimitiveShape::RotationGizmo, *mMeshShader);
+	mRotationGizmo = std::ref(mMeshActorLoader.create_actor("RotationGizmo", PrimitiveShape::RotationGizmo, *mMeshShader));
 	
-	mScaleGizmo = mMeshActorLoader.create_actor("ScaleGizmo", PrimitiveShape::ScaleGizmo, *mMeshShader);
+	mScaleGizmo = std::ref(mMeshActorLoader.create_actor("ScaleGizmo", PrimitiveShape::ScaleGizmo, *mMeshShader));
 
 }
