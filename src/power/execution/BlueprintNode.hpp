@@ -138,7 +138,7 @@ public:
 		}
 	}
 	
-	virtual std::optional<std::variant<Entity, std::string, int, float, bool>> get_data() {
+	virtual std::optional<std::variant<Entity, std::string, long, float, bool>> get_data() {
 		return mData;
 	}
 	
