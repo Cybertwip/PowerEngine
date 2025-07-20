@@ -11,7 +11,6 @@
 #include <unordered_set>
 
 NodeProcessor::NodeProcessor() {
-	CoreNode::set_next_id(1);
 }
 
 long long NodeProcessor::get_next_id() {
