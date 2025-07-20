@@ -657,6 +657,19 @@ void Screen::mouse_button_callback_event(int button, int action, int modifiers) 
 		}
 	}
 	
+	
+	bool btn12 = button == GLFW_MOUSE_BUTTON_1 || button == GLFW_MOUSE_BUTTON_2;
+	
+	if (!m_drag_active && action == GLFW_PRESS && btn12) {
+		m_drag_widget = find_widget(m_mouse_pos);
+		if (m_drag_widget == this)
+			m_drag_widget = nullptr;
+		m_drag_active = m_drag_widget != nullptr;
+	} else if (m_drag_active && action == GLFW_RELEASE && btn12) {
+		m_drag_active = false;
+		m_drag_widget = nullptr;
+	}
+
 	if (action == GLFW_PRESS)
 		m_mouse_state |= 1 << button;
 	else
@@ -673,18 +686,6 @@ void Screen::mouse_button_callback_event(int button, int action, int modifiers) 
 	if (drop_widget != nullptr && drop_widget->cursor() != m_cursor) {
 		m_cursor = drop_widget->cursor();
 		glfwSetCursor(m_glfw_window, m_cursors[(int) m_cursor]);
-	}
-	
-	bool btn12 = button == GLFW_MOUSE_BUTTON_1 || button == GLFW_MOUSE_BUTTON_2;
-	
-	if (!m_drag_active && action == GLFW_PRESS && btn12) {
-		m_drag_widget = find_widget(m_mouse_pos);
-		if (m_drag_widget == this)
-			m_drag_widget = nullptr;
-		m_drag_active = m_drag_widget != nullptr;
-	} else if (m_drag_active && action == GLFW_RELEASE && btn12) {
-		m_drag_active = false;
-		m_drag_widget = nullptr;
 	}
 	
 	m_redraw |= mouse_button_event(m_mouse_pos, button,

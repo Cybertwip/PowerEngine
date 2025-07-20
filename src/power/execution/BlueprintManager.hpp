@@ -101,6 +101,7 @@ public:
 													   
 													   deserialize(mActiveActor->get());
 
+													   on_canvas_modified();
 												   }
 												   
 											   }
