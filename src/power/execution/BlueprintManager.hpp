@@ -52,20 +52,20 @@ public:
 		mBlueprintButton->set_callback([this](){
 			if (!mCommitted) {
 				commit();
-			}
-			
-			if (mDisplaying) {
-				mBlueprintActionTriggerCallback(false, [this](){
-					mDisplaying = false;
-					clear();
-				});
 			} else {
-				mBlueprintActionTriggerCallback(true, [this](){
-					clear();
-					deserialize(mActiveActor->get());
-					
-					mDisplaying = true;
-				});
+				if (mDisplaying) {
+					mBlueprintActionTriggerCallback(false, [this](){
+						mDisplaying = false;
+						clear();
+					});
+				} else {
+					mBlueprintActionTriggerCallback(true, [this](){
+						clear();
+						deserialize(mActiveActor->get());
+						
+						mDisplaying = true;
+					});
+				}
 			}
 		});
 		
