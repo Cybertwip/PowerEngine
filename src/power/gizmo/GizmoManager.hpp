@@ -55,6 +55,8 @@ public:
 	
 private:
 	void set_mode(GizmoMode mode);
+	
+	entt::registry mRegistry;
 
 	AnimationTimeProvider mDummyAnimationTimeProvider;
 	
@@ -78,7 +80,5 @@ private:
 	std::shared_ptr<nanogui::Button> mScaleButton;
 	
 	std::optional<std::reference_wrapper<Actor>> mActiveGizmo;
-	
-	entt::registry mRegistry;
 };
 
