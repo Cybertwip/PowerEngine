@@ -17,9 +17,10 @@ class DirectoryNode;
 
 class FileView : public nanogui::Widget {
 public:
+	// MODIFIED: Constructor now accepts a shared_ptr for the root node to ensure safe memory management.
 	FileView(
 			 nanogui::Widget& parent,
-			 DirectoryNode& root_directory_node,
+			 std::shared_ptr<DirectoryNode> root_directory_node,
 			 bool recursive,
 			 std::function<void(std::shared_ptr<DirectoryNode>)> onFileClicked,
 			 std::function<void(std::shared_ptr<DirectoryNode>)> onFileSelected,
@@ -37,18 +38,19 @@ private:
 	void populate_file_view();
 	void create_file_item(const std::shared_ptr<DirectoryNode>& node);
 	int get_icon_for_file(const DirectoryNode& node) const;
-	void collect_nodes_recursive(DirectoryNode* node, std::vector<std::shared_ptr<DirectoryNode>>& collected_nodes);
+	// MODIFIED: Takes a shared_ptr to align with the rest of the memory management strategy.
+	void collect_nodes_recursive(std::shared_ptr<DirectoryNode> node, std::vector<std::shared_ptr<DirectoryNode>>& collected_nodes);
 	
-	// Navigation and interaction handlers
-	void handle_file_interaction(DirectoryNode& node);
-	void handle_file_click(DirectoryNode& node);
+	// MODIFIED: Handlers now take a const shared_ptr reference for consistency and safety.
+	void handle_file_interaction(const std::shared_ptr<DirectoryNode>& node);
+	void handle_file_click(const std::shared_ptr<DirectoryNode>& node);
 	
 	// Drag and Drop functionality
 	void initiate_drag_operation(const std::shared_ptr<DirectoryNode>& node);
 	
-	// MODIFIED: Keep track of the initial root and the currently viewed directory.
-	DirectoryNode& m_initial_root_node;
-	DirectoryNode* m_current_directory_node; // MODIFIED: This is now a pointer.
+	// MODIFIED: Use shared_ptr to manage the lifetime of DirectoryNode objects safely, preventing dangling pointers.
+	std::shared_ptr<DirectoryNode> m_initial_root_node;
+	std::shared_ptr<DirectoryNode> m_current_directory_node;
 	
 	// Callbacks
 	std::function<void(std::shared_ptr<DirectoryNode>)> mOnFileClicked;

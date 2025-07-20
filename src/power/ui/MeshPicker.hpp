@@ -20,7 +20,7 @@ public:
 	 * @param root_directory_node Reference to the root DirectoryNode.
 	 * @param on_model_selected Callback function triggered on model selection.
 	 */
-	MeshPicker(nanogui::Screen& parent, DirectoryNode& root_directory_node,
+	MeshPicker(nanogui::Screen& parent, std::shared_ptr<DirectoryNode> root_directory_node,
 			   std::function<void(std::shared_ptr<DirectoryNode>)> on_model_selected);
 	
 	void ProcessEvents();
@@ -28,7 +28,7 @@ public:
 private:
 	void refresh_file_list();
 	
-	DirectoryNode& root_directory_node_;
+	std::shared_ptr<DirectoryNode> root_directory_node_;
 	std::function<void(std::shared_ptr<DirectoryNode>)> on_model_selected_;
 	
 	std::shared_ptr<nanogui::TextBox> filter_box_;

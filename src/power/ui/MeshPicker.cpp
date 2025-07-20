@@ -16,7 +16,7 @@
 #include <iostream>
 #include <chrono> // For double-click detection
 
-MeshPicker::MeshPicker(nanogui::Screen& parent, DirectoryNode& root_directory_node,
+MeshPicker::MeshPicker(nanogui::Screen& parent, std::shared_ptr<DirectoryNode> root_directory_node,
 					   std::function<void(std::shared_ptr<DirectoryNode>)> on_model_selected)
 : nanogui::Window(parent),
 root_directory_node_(root_directory_node),

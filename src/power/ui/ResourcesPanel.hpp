@@ -1,23 +1,29 @@
 #pragma once
 
 #include "Panel.hpp"
-
 #include "animation/AnimationTimeProvider.hpp"
-#include "filesystem/DirectoryNode.hpp"
 
-#include <nanogui/nanogui.h>
-
-#include <entt/entt.hpp>
+#include <nanogui/widget.h>
+#include <memory>
+#include <string>
 
 // Forward declarations
+class DirectoryNode;
 class FileView;
 class ImportWindow;
 class UiManager;
+namespace nanogui {
+class Screen;
+class Button;
+class TextBox;
+}
+
 
 class ResourcesPanel : public Panel {
 public:
+	// MODIFIED: Constructor now accepts a shared_ptr for the root node to ensure safe memory management.
 	ResourcesPanel(nanogui::Widget& parent, nanogui::Screen& screen,
-				   DirectoryNode& root_directory_node,
+				   std::shared_ptr<DirectoryNode> root_directory_node,
 				   AnimationTimeProvider& animationTimeProvider, UiManager& uiManager);
 	
 	~ResourcesPanel();
@@ -37,20 +43,21 @@ private:
 	void export_assets();
 	
 	AnimationTimeProvider& mGlobalAnimationTimeProvider;
-	DirectoryNode& mRootDirectoryNode;
+	// MODIFIED: Use a shared_ptr to manage the root node's lifetime, preventing dangling references.
+	std::shared_ptr<DirectoryNode> mRootDirectoryNode;
 	std::string mSelectedDirectoryPath;
 	
 	std::shared_ptr<FileView> mFileView;
 	
 	// UI elements
-	std::shared_ptr<Widget> mToolbar;
+	std::shared_ptr<nanogui::Widget> mToolbar;
 	std::shared_ptr<nanogui::Button> mImportButton;
 	std::shared_ptr<nanogui::Button> mExportButton;
 	std::shared_ptr<nanogui::TextBox> mFilterBox;
 	
 	std::string mFilterText;
 	
-	std::vector<std::shared_ptr<nanogui::Button>> mFileButtons;
+	// The currently selected node in the FileView.
 	std::shared_ptr<DirectoryNode> mSelectedNode;
 	
 	std::shared_ptr<ImportWindow> mImportWindow;

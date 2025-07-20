@@ -11,9 +11,6 @@
 
 #include <filesystem>
 
-
-static DirectoryNode& rootNode = DirectoryNode::getInstance();
-
 StatusBarPanel::StatusBarPanel(nanogui::Widget& parent, nanogui::Screen& screen, std::shared_ptr<IActorVisualManager>  actorVisualManager, AnimationTimeProvider& animationTimeProvider, MeshActorLoader& meshActorLoader, ShaderManager& shaderManager,  UiManager& uiManager, std::function<void(std::function<void(int, int)>)> applicationClickRegistrator) : Panel(parent, ""),
 mActorVisualManager(actorVisualManager),
 mMeshActorLoader(meshActorLoader),
@@ -23,7 +20,7 @@ mApplicationClickRegistrator(applicationClickRegistrator) {
 	
 	set_layout(std::make_unique<nanogui::GroupLayout>());
 	
-	rootNode.initialize(std::filesystem::current_path().string());
+	auto rootNode = DirectoryNode::initialize(std::filesystem::current_path().string());
 	
 	// Status bar setup
 	mStatusBar = std::make_shared<nanogui::Widget>(std::make_optional<std::reference_wrapper<nanogui::Widget>>(*this));
