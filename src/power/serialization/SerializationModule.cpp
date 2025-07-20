@@ -8,6 +8,7 @@
 // ADDED: Include new/relevant components
 #include "components/BlueprintMetadataComponent.hpp"
 #include "components/BlueprintComponent.hpp"
+#include "components/MetadataComponent.hpp"
 #include "execution/NodeProcessor.hpp"
 
 
@@ -22,8 +23,9 @@ SerializationModule::SerializationModule(ActorManager& actorManager, MeshActorBu
     mSceneSerializer->register_component<IDComponent>();
     mSceneSerializer->register_component<TransformComponent>();
     mSceneSerializer->register_component<CameraComponent>();
-    mSceneSerializer->register_component<ModelMetadataComponent>();
-    mSceneSerializer->register_component<BlueprintMetadataComponent>(); // MODIFIED
+	mSceneSerializer->register_component<MetadataComponent>();
+	mSceneSerializer->register_component<ModelMetadataComponent>();
+	mSceneSerializer->register_component<BlueprintMetadataComponent>(); // MODIFIED
 }
 
 void SerializationModule::save_scene(const std::string& filepath) {
