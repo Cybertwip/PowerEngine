@@ -157,6 +157,11 @@ public:
 		} else {
 			mBlueprintButton->set_enabled(false);
 			mBlueprintButton->set_pushed(false);
+			
+			mBlueprintActionTriggerCallback(false, [this](){
+				mDisplaying = false;
+				clear();
+			});
 		}
 	}
 	
