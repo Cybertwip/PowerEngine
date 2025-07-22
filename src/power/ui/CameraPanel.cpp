@@ -112,12 +112,13 @@ CameraPanel::CameraPanel(nanogui::Widget& parent)
 	mOrthoCheck = std::make_shared<nanogui::CheckBox>(*mCheckboxContainer, "Orthographic");
 	mOrthoCheck->set_callback([this](bool checked) {
 		if (mActiveActor.has_value()) {
-			if (auto* camera = mActiveActor->get().find_component<CameraComponent>()) {
+			if (mActiveActor->get().find_component<CameraComponent>()) {
+				auto* camera = mActiveActor->get().get_component<CameraComponent>()
 				camera->set_orthographic(checked);
 				mFovBox->set_enabled(!checked);
 				mFovLabel->set_enabled(!checked);
 				// Request a layout refresh to reflect the enabled/disabled state change.
-				if (parent()) {
+				if (parent().has_value()) {
 					parent()->get().perform_layout(screen().nvg_context());
 				}
 			}
