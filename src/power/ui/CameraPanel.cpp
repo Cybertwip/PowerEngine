@@ -132,7 +132,7 @@ CameraPanel::CameraPanel(nanogui::Widget& parentWidget)
 			if (mActiveActor->get().find_component<CameraComponent>()) {
 				
 				auto& camera = mActiveActor->get().get_component<CameraComponent>();
-				camera->set_default(checked);
+				camera.set_default(checked);
 			}
 		}
 	});
