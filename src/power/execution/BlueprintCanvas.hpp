@@ -54,6 +54,12 @@ public:
 		mOnCanvasModifiedCallback();
 	}
 	
+	void on_modified() {
+		if (mOnCanvasModifiedCallback) {
+			mOnCanvasModifiedCallback();
+		}
+	}
+	
 private:
 	// Override mouse_button_event to consume the event
 	// Delegation is done via the passthrough widgets

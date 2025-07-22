@@ -100,7 +100,7 @@ bool KeyReleaseVisualNode::keyboard_event(int key, int scancode, int action, int
 			mActionButton.set_caption(caption);
 			
 			// FIX: Notify the canvas that a change has occurred.
-			m_parent.on_modified();
+			mCanvas.on_modified();
 		}
 		// FIX: Return true because the event was handled.
 		return true;

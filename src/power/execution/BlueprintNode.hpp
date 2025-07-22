@@ -349,10 +349,11 @@ protected:
 
 	std::vector<std::unique_ptr<nanogui::Widget>> data_widgets;
 	
+	BlueprintCanvas& mCanvas;
+
 private:
 	void create_visual_pins();
 	void draw(NVGcontext *ctx) override;
-	BlueprintCanvas& mCanvas;
 	CoreNode& mCoreNode;
 	std::unique_ptr<nanogui::Widget> mFlowContainer;
 	std::unique_ptr<nanogui::Widget> mColumnContainer;
