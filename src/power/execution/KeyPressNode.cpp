@@ -34,10 +34,7 @@ KeyPressCoreNode::KeyPressCoreNode(UUID id)
 /**
  * @brief This is now the single source of truth for updating the node's data.
  */
-void KeyPressCoreNode::set_data(std::optional<std::variant<Entity, std::string, long, float, bool>> data) {
-	// FIX: Call the base class to store the raw data payload for persistence.
-	DataCoreNode::set_data(data);
-	
+void KeyPressCoreNode::set_data(std::optional<std::variant<Entity, std::string, long, float, bool>> data) {	
 	if (data.has_value() && std::holds_alternative<long>(data.value())) {
 		// FIX: Update the specific state of this node from the data.
 		mKeyCode = static_cast<int>(std::get<long>(data.value()));
