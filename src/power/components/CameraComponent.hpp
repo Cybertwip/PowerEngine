@@ -14,7 +14,7 @@ public:
 		Game
 	};
 	
-	CameraComponent(TransformComponent& transformComponent, bool isDefault = false, bool isOrthographic = false, float fov = 45.0f, float near = 0.01f, float far = 1e5f, float aspect = 16.0f / 9.0f);
+	CameraComponent(TransformComponent& transformComponent, float fov = 45.0f, float near = 0.01f, float far = 1e5f, float aspect = 16.0f / 9.0f, bool isDefault = false, bool isOrthographic = false);
 	
 	void update_view();
 	

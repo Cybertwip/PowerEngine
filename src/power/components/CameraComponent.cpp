@@ -8,7 +8,7 @@
 #include "components/MetadataComponent.hpp"
 #include "components/TransformComponent.hpp"
 
-CameraComponent::CameraComponent(TransformComponent& transformComponent, bool isDefault, bool isOrthographic, float fov, float near, float far, float aspect)
+CameraComponent::CameraComponent(TransformComponent& transformComponent, float fov, float near, float far, float aspect, bool isDefault, bool isOrthographic)
 : mTransformComponent(transformComponent)
 , mFov(fov)
 , mNear(near)
