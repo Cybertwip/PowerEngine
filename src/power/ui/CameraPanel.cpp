@@ -113,7 +113,7 @@ CameraPanel::CameraPanel(nanogui::Widget& parent)
 	mOrthoCheck->set_callback([this](bool checked) {
 		if (mActiveActor.has_value()) {
 			if (mActiveActor->get().find_component<CameraComponent>()) {
-				auto* camera = mActiveActor->get().get_component<CameraComponent>()
+				auto* camera = mActiveActor->get().get_component<CameraComponent>();
 				camera->set_orthographic(checked);
 				mFovBox->set_enabled(!checked);
 				mFovLabel->set_enabled(!checked);
