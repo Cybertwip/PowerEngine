@@ -257,6 +257,7 @@ public:
 	DataCoreNode(NodeType type, UUID id, nanogui::Color color = nanogui::Color(255, 255, 255, 255)) : CoreNode(type, id, color) {
 		
 	}
+	
 	virtual std::optional<std::variant<Entity, std::string, long, float, bool>> get_data() const = 0;
 	
 	virtual void set_data(std::optional<std::variant<Entity, std::string, long, float, bool>> data) = 0;
