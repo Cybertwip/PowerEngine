@@ -11,8 +11,8 @@
 #include "components/UiComponent.hpp"
 
 // Constructor: Sets up the entire UI layout and initializes members.
-CameraPanel::CameraPanel(nanogui::Widget& parent)
-: Panel(parent, "Camera"), mActiveActor(std::nullopt), mIsControlling(false) {
+CameraPanel::CameraPanel(nanogui::Widget& parentWidget)
+: Panel(parentWidget, "Camera"), mActiveActor(std::nullopt), mIsControlling(false) {
 	
 	// Set the main layout for this panel.
 	set_layout(std::make_unique<nanogui::GroupLayout>());
@@ -113,8 +113,8 @@ CameraPanel::CameraPanel(nanogui::Widget& parent)
 	mOrthoCheck->set_callback([this](bool checked) {
 		if (mActiveActor.has_value()) {
 			if (mActiveActor->get().find_component<CameraComponent>()) {
-				auto* camera = mActiveActor->get().get_component<CameraComponent>();
-				camera->set_orthographic(checked);
+				auto& camera = mActiveActor->get().get_component<CameraComponent>();
+				camera.set_orthographic(checked);
 				mFovBox->set_enabled(!checked);
 				mFovLabel->set_enabled(!checked);
 				// Request a layout refresh to reflect the enabled/disabled state change.
@@ -129,7 +129,9 @@ CameraPanel::CameraPanel(nanogui::Widget& parent)
 	mDefaultCheck = std::make_shared<nanogui::CheckBox>(*mCheckboxContainer, "Default");
 	mDefaultCheck->set_callback([this](bool checked) {
 		if (mActiveActor.has_value()) {
-			if (auto* camera = mActiveActor->get().find_component<CameraComponent>()) {
+			if (mActiveActor->get().find_component<CameraComponent>()) {
+				
+				auto& camera = mActiveActor->get().get_component<CameraComponent>();
 				camera->set_default(checked);
 			}
 		}
