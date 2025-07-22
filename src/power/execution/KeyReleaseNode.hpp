@@ -2,53 +2,40 @@
 
 #include "BlueprintNode.hpp"
 
-#include <nanogui/button.h>
-
 #include <memory>
 #include <optional>
 #include <string>
 #include <variant>
 
+// Forward declarations
 class BlueprintCanvas;
+struct GLFWwindow;
 
 class KeyReleaseCoreNode : public DataCoreNode {
 public:
-	KeyReleaseCoreNode(UUID id);
+	explicit KeyReleaseCoreNode(UUID id);
 	
-	std::optional<std::variant<Entity, std::string, long, float, bool>> get_data() const override {
-		return mKeyCode;
-	}
-	
+	/**
+	 * @brief Sets the node's data. This is the single entry point for updating state,
+	 * used by both the UI and the deserializer.
+	 */
 	void set_data(std::optional<std::variant<Entity, std::string, long, float, bool>> data) override;
 	
-	long keycode() {
-		return mKeyCode;
-	}
+	/**
+	 * @brief Gets the node's data for serialization.
+	 */
+	[[nodiscard]] std::optional<std::variant<Entity, std::string, long, float, bool>> get_data() const override;
 	
-	bool configured() {
-		return mConfigured;
-	}
+	[[nodiscard]] int keycode() const { return mKeyCode; }
+	[[nodiscard]] bool configured() const { return mConfigured; }
+	[[nodiscard]] CorePin& output() { return mOutput; }
 	
-	void set_keycode(long keycode) {
-		mKeyCode = keycode;
-	}
-	
-	void set_configured(bool configured) {
-		mConfigured = configured;
-	}
-	
-	CorePin& output() {
-		return mOutput;
-	}
-	
-	void set_window(GLFWwindow* window) {
-		mWindow = window;
-	}
+	void set_window(GLFWwindow* window) { mWindow = window; }
 	
 private:
-	long mKeyCode;
+	int mKeyCode; // Use `int` for GLFW key codes
 	bool mConfigured;
-	bool mTriggered;
+	bool mWasPressed; // State tracking to detect the release event
 	
 	CorePin& mOutput;
 	GLFWwindow* mWindow;
@@ -63,10 +50,7 @@ public:
 	void perform_layout(NVGcontext *ctx) override;
 	
 private:
-	nanogui::Button& mActionButton;
+	PassThroughButton& mActionButton;
 	KeyReleaseCoreNode& mCoreNode;
-	
-	bool mTriggered;
 	bool mListening;
 };
-
