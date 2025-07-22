@@ -24,7 +24,7 @@ public:
 	/**
 	 * @brief Gets the node's data for serialization.
 	 */
-	[[nodiscard]] std::optional<std::variant<Entity, std::string, long, float, bool>> get_data() const override;
+	std::optional<std::variant<Entity, std::string, long, float, bool>> get_data() const override;
 	
 	[[nodiscard]] int keycode() const { return mKeyCode; }
 	[[nodiscard]] bool configured() const { return mConfigured; }
