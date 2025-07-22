@@ -8,15 +8,30 @@
 #include "components/MetadataComponent.hpp"
 #include "components/TransformComponent.hpp"
 
-CameraComponent::CameraComponent(TransformComponent& transformComponent, float fov, float near, float far, float aspect)
+CameraComponent::CameraComponent(TransformComponent& transformComponent, bool isDefault, bool isOrthographic, float fov, float near, float far, float aspect)
 : mTransformComponent(transformComponent)
 , mFov(fov)
 , mNear(near)
 , mFar(far)
 , mAspect(aspect)
-, mActive(false) {
-	mProjection = nanogui::Matrix4f::perspective(mFov, mNear, mFar, mAspect);
+, mActive(false)
+, mDefault(isDefault)
+, mOrthographic(isOrthographic) {
+	update_projection();
 	update_view();
+}
+
+void CameraComponent::update_projection() {
+	if (mOrthographic) {
+		// Define a fixed vertical size and derive width from the aspect ratio
+		constexpr float orthoSize = 10.0f;
+		float right = orthoSize * mAspect * 0.5f;
+		float top = orthoSize * 0.5f;
+		
+		mProjection = nanogui::Matrix4f::ortho(-right, right, -top, top, mNear, mFar);
+	} else {
+		mProjection = nanogui::Matrix4f::perspective(mFov, mNear, mFar, mAspect);
+	}
 }
 
 void CameraComponent::update_view() {
@@ -54,10 +69,10 @@ void CameraComponent::look_at(const glm::vec3& targetPosition) {
 	glm::vec3 direction = glm::normalize(target - position);
 	
 	if (glm::abs(glm::dot(direction, worldUp)) > 0.999f) {
-		// Adjust the up vector slightly
+		// Adjust the up vector slightly to avoid issues when looking straight up or down
 		worldUp = glm::vec3(0.0f, 0.0f, -1.0f);
 	}
-
+	
 	// Create the view matrix using glm::lookAt
 	glm::mat4 viewMatrix = glm::lookAt(position, position + direction, worldUp);
 	
@@ -70,10 +85,4 @@ void CameraComponent::look_at(const glm::vec3& targetPosition) {
 	
 	// Set the camera's rotation
 	cameraTransform.set_rotation(orientation);
-}
-
-
-void CameraComponent::set_aspect_ratio(float ratio) {
-	mAspect = ratio;
-	mProjection = nanogui::Matrix4f::perspective(mFov, mNear, mFar, mAspect);
 }

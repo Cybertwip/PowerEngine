@@ -1,7 +1,6 @@
 #pragma once
 
 #include <glm/glm.hpp>
-
 #include <nanogui/vector.h>
 
 class Actor;
@@ -14,20 +13,21 @@ public:
 		Engine,
 		Game
 	};
-	CameraComponent(TransformComponent& transformComponent, float fov = 45.0f, float near = 0.01f, float far = 1e5f, float aspect = 16.0f / 9.0f);
-    void update_view();
-    
-    const nanogui::Matrix4f& get_view() const {
-        return mView;
-    }
-    
-    const nanogui::Matrix4f& get_projection() const {
-        return mProjection;
-    }
+	
+	CameraComponent(TransformComponent& transformComponent, bool isDefault = false, bool isOrthographic = false, float fov = 45.0f, float near = 0.01f, float far = 1e5f, float aspect = 16.0f / 9.0f);
+	
+	void update_view();
+	
+	const nanogui::Matrix4f& get_view() const {
+		return mView;
+	}
+	
+	const nanogui::Matrix4f& get_projection() const {
+		return mProjection;
+	}
 	
 	void look_at(Actor& actor);
 	void look_at(const glm::vec3& position);
-	void set_aspect_ratio(float ratio);
 	
 	void set_tag(ECameraTag tag) {
 		mTag = tag;
@@ -36,7 +36,7 @@ public:
 	float get_fov() const {
 		return mFov;
 	}
-
+	
 	float get_near() const {
 		return mNear;
 	}
@@ -51,22 +51,22 @@ public:
 	
 	void set_fov(float fov) {
 		mFov = fov;
-		update_view();
+		update_projection();
 	}
 	
 	void set_near(float near) {
 		mNear = near;
-		update_view();
+		update_projection();
 	}
-
+	
 	void set_far(float far) {
 		mFar = far;
-		update_view();
+		update_projection();
 	}
-
+	
 	void set_aspect(float aspect) {
 		mAspect = aspect;
-		update_view();
+		update_projection();
 	}
 	
 	bool active() const {
@@ -76,18 +76,39 @@ public:
 	void set_active(bool active) {
 		mActive = active;
 	}
-
+	
+	bool is_default() const {
+		return mDefault;
+	}
+	
+	void set_default(bool isDefault) {
+		mDefault = isDefault;
+	}
+	
+	bool is_orthographic() const {
+		return mOrthographic;
+	}
+	
+	void set_orthographic(bool isOrthographic) {
+		mOrthographic = isOrthographic;
+		update_projection();
+	}
+	
 private:
+	void update_projection();
+	
 	TransformComponent& mTransformComponent;
 	
-    float mFov;
-    float mNear;
-    float mFar;
-    float mAspect;
-    nanogui::Matrix4f mView;
-    nanogui::Matrix4f mProjection;
+	float mFov;
+	float mNear;
+	float mFar;
+	float mAspect;
+	nanogui::Matrix4f mView;
+	nanogui::Matrix4f mProjection;
 	
 	ECameraTag mTag;
 	
 	bool mActive;
+	bool mDefault;
+	bool mOrthographic;
 };
