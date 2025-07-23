@@ -432,4 +432,22 @@ VisualBlueprintNode* BlueprintCanvas::find_node(UUID id) {
 	return nullptr;
 }
 
+bool BlueprintCanvas::keyboard_event(int key, int scancode, int action, int modifiers) {
+	// First, let the base canvas class handle its own events if needed.
+	if (Canvas::keyboard_event(key, scancode, action, modifiers))
+		return true;
+	
+	// Iterate through all visual nodes and forward the event to each one.
+	// If a node handles the event (returns true), we can stop.
+	for (auto& node : mVisualNodes) {
+		if (node->keyboard_event(key, scancode, action, modifiers)) {
+			return true;
+		}
+	}
+	
+	// No node handled the event.
+	return false;
+}
+
+
 std::unique_ptr<nanogui::Popup> BlueprintCanvas::SContextMenu;

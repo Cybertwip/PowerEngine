@@ -66,7 +66,7 @@ public:
 		if (mExecutionMode == EExecutionMode::Game || mExecutionMode == EExecutionMode::Laboratory) {
 			mSimulationTime++; // will overflow in a few million of years. Maybe adding a two/x+-variable timer? Just in case.
 			
-			mBlueprintManager.update();
+			//mBlueprintManager.update();
 		}
 	}
 	

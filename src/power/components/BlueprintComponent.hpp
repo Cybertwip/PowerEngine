@@ -11,8 +11,6 @@ public:
 	
 	NodeProcessor& node_processor() const;
 
-	void update();
-
 	void save_blueprint(const std::string& to_file);
 
 	void load_blueprint(const std::string& from_file);

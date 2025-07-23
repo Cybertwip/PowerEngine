@@ -18,9 +18,7 @@ public:
 	long long get_next_id();
 	
 	void build_node(CoreNode& node);
-	
-	void evaluate();
-	
+		
 	void serialize(BlueprintCanvas& canvas, Actor& actor);
 	void deserialize(BlueprintCanvas& canvas, Actor& actor);
 	void clear();

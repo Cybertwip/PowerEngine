@@ -4,6 +4,44 @@
 
 #include "serialization/UUID.hpp"
 
+void CoreNode::raise_event()  {
+	for (const auto& input_pin : inputs) {
+		// We only care about connected data pins.
+		if (input_pin->type != PinType::Flow && !input_pin->links.empty()) {
+			CoreNode& source_node = input_pin->links[0]->get_start().node;
+			
+			if (auto* data_node = dynamic_cast<DataCoreNode*>(&source_node)) {
+				input_pin->set_data(data_node->get_data());
+			}
+		}
+	}
+	if (this->evaluate()) {
+		// Step 3: PUSH this node's output data to connected nodes.
+		// This prepares the next node in the sequence.
+		for (const auto& output_pin : outputs) {
+			if (output_pin->type != PinType::Flow) {
+				// Get the data this node just computed.
+				auto data_to_push = output_pin->get_data();
+				// Transfer it to the input pin of any connected node.
+				for (Link* link : output_pin->links) {
+					link->get_end().set_data(data_to_push);
+				}
+			}
+		}
+		
+		// Step 4: Propagate the execution flow.
+		for (const auto& output_pin : outputs) {
+			if (output_pin->type == PinType::Flow) {
+				for (Link* link : output_pin->links) {
+					link->get_end().node.raise_event();
+				}
+				// A node can only have one output flow pin.
+				break;
+			}
+		}
+	}
+}
+
 void CoreNode::build() {
 	for (auto& input : inputs) {
 		input->kind = PinKind::Input;
@@ -12,19 +50,19 @@ void CoreNode::build() {
 		output->kind = PinKind::Output;
 	}
 }
-
-void CoreNode::reset_flow() {
-	for (auto& input : inputs) {
-		if (input->type == PinType::Flow) {
-			input->can_flow = false;
-		}
-	}
-	for (auto& output : outputs) {
-		if (output->type == PinType::Flow) {
-			output->can_flow = false;
-		}
-	}
-}
+//
+//void CoreNode::reset_flow() {
+//	for (auto& input : inputs) {
+//		if (input->type == PinType::Flow) {
+//			input->can_flow = false;
+//		}
+//	}
+//	for (auto& output : outputs) {
+//		if (output->type == PinType::Flow) {
+//			output->can_flow = false;
+//		}
+//	}
+//}
 
 UUID CoreNode::get_next_id() {
 	return UUIDGenerator::generate();

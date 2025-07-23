@@ -11,34 +11,27 @@ class BlueprintCanvas;
 
 class StringCoreNode : public DataCoreNode {
 public:
-	StringCoreNode(UUID id);
+    explicit StringCoreNode(UUID id);
 
-	void set_data(std::optional<std::variant<Entity, std::string, long, float, bool>> data) override;
+    /**
+     * @brief Sets the node's internal string value.
+     */
+    void set_data(std::optional<std::variant<Entity, std::string, long, float, bool>> data) override;
 
-	std::optional<std::variant<Entity, std::string, long, float, bool>> get_data() const override;
-	
+    /**
+     * @brief Gets the node's internal string value.
+     */
+    std::optional<std::variant<Entity, std::string, long, float, bool>> get_data() const override;
+    
 private:
-	CorePin& mOutput;
+    std::string mValue;
 };
 
 class StringVisualNode : public VisualBlueprintNode {
 public:
-	StringVisualNode(BlueprintCanvas& parent, nanogui::Vector2i position, nanogui::Vector2i size, StringCoreNode& coreNode);
-	
-	void perform_layout(NVGcontext *ctx) override {
-		VisualBlueprintNode::perform_layout(ctx);
-		
-		auto data = mCoreNode.get_data();
-		
-		if (data.has_value()) {
-			mTextBox.set_value(std::get<std::string>(*data));
-		} else {
-			mTextBox.set_value("");
-		}
-	}
-	
+    StringVisualNode(BlueprintCanvas& parent, nanogui::Vector2i position, nanogui::Vector2i size, StringCoreNode& coreNode);
+    
 private:
-	nanogui::TextBox& mTextBox;
-	StringCoreNode& mCoreNode;
+    nanogui::TextBox& mTextBox;
+    StringCoreNode& mCoreNode;
 };
-

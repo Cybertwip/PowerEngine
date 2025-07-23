@@ -12,10 +12,6 @@ NodeProcessor& BlueprintComponent::node_processor() const {
     return *mNodeProcessor;
 }
 
-void BlueprintComponent::update() {
-    mNodeProcessor->evaluate();
-}
-
 // MODIFIED: Function implemented
 void BlueprintComponent::save_blueprint(const std::string& to_file) {
 	BlueprintSerializer serializer;

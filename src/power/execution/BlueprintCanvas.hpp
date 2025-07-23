@@ -60,6 +60,8 @@ public:
 		}
 	}
 	
+	bool keyboard_event(int key, int scancode, int action, int modifiers) override;
+	
 private:
 	// Override mouse_button_event to consume the event
 	// Delegation is done via the passthrough widgets

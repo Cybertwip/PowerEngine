@@ -190,6 +190,11 @@ public:
 		
 		bool handled = nanogui::Widget::keyboard_event(key, scancode, action, modifiers);
 		
+		
+		if (!handled) {
+			handled = mCanvas->keyboard_event(key, scancode, action, modifiers);
+		}
+		
 		if (!handled) {
 			if (key == GLFW_KEY_DELETE && action == GLFW_PRESS) {
 				auto* selected_node = mCanvas->selected_node();
@@ -240,12 +245,6 @@ public:
 	
 	void stop() {
 		mBlueprintActors.clear();
-	}
-	
-	void update() {
-		for (auto& actor : mBlueprintActors) {
-			actor.get().get_component<BlueprintComponent>().update(); //might be slow with thousands of objets due to get_component
-		}
 	}
 	
 	void update_buttons(const nanogui::Vector2f& position) {
@@ -356,10 +355,6 @@ public:
 	
 	void stop() {
 		mBlueprintPanel->stop();
-	}
-	
-	void update() {
-		mBlueprintPanel->update();
 	}
 	
 	void commit() {
