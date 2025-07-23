@@ -1,9 +1,8 @@
-// src/reflection.h
 #pragma once
 
 #include <string>
 #include <vector>
-#include <rttr/core/type.h>
+#include <rttr/type.h>
 
 namespace power::reflection {
 

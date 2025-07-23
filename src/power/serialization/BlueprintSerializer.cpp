@@ -91,7 +91,6 @@ std::optional<std::any> deserialize_payload(
 
 } // namespace
 
-
 void BlueprintSerializer::serialize(const NodeProcessor& node_processor, const std::string& filepath) {
 	flatbuffers::FlatBufferBuilder builder(1024);
 	

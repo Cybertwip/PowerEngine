@@ -205,6 +205,10 @@ add_executable(PowerEngine
 
     ${CMAKE_CURRENT_LIST_DIR}/platform/ContextMenu.hpp
 
+    ${CMAKE_CURRENT_LIST_DIR}/reflection/PowerReflection.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/reflection/PowerReflection.cpp
+
+
     ${CMAKE_CURRENT_LIST_DIR}/serialization/BlueprintSerializer.hpp
     ${CMAKE_CURRENT_LIST_DIR}/serialization/BlueprintSerializer.cpp
     ${CMAKE_CURRENT_LIST_DIR}/serialization/SceneSerializer.hpp

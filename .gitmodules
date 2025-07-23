@@ -4,6 +4,3 @@
 [submodule "external/cpp-peglib"]
 	path = external/cpp-peglib
 	url = git@github.com:yhirose/cpp-peglib.git
-[submodule "external/rttr"]
-	path = external/rttr
-	url = git@github.com:rttrorg/rttr.git
