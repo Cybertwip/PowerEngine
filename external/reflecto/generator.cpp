@@ -7,8 +7,8 @@
 #include <memory>
 #include "peglib.h"
 
-// A simple struct to hold information about each reflectable struct found.
-struct ReflectableStruct {
+// A simple struct to hold information about each reflectable type found.
+struct ReflectableTypeInfo {
 	std::string name;
 	std::vector<std::string> fields;
 	std::vector<std::string> methods;
@@ -38,16 +38,15 @@ int main(int argc, char** argv) {
 	std::string parent_dir = header_full_path.parent_path().filename().string();
 	std::string correct_include_path = parent_dir + "/" + filename;
 	
-	// --- Grammar to find structs and members marked for reflection ---
+	// --- Grammar to find structs and classes marked for reflection ---
 	const auto grammar = R"(
-		# Top-level rule: A file is a sequence of content, which can be a struct or other text.
-		File             <- (Struct / OtherContent)*
+		# Top-level rule: A file is a sequence of content, which can be a reflectable type or other text.
+		File             <- (ReflectableItem / OtherContent)*
 	
-		# A struct is defined by our attribute, with explicit whitespace/comment handling.
-		# This now only accepts the attribute AFTER the 'struct' keyword, as per user's requirement.
-		Struct           <- 'struct' _ ATTR_REFLECTABLE _ Name _ '{' _ Members _ '};'
+		# A reflectable item can be a 'struct' or a 'class'.
+		ReflectableItem  <- ('struct' / 'class') _ ATTR_REFLECTABLE _ Name _ '{' _ Members _ '};'
 	
-		# Members are a collection of fields, methods, or other things inside a struct.
+		# Members are a collection of fields, methods, or other things inside a type.
 		Members          <- (Field / Method / OtherInStruct)*
 	
 		# A field is marked with the 'field' attribute.
@@ -69,7 +68,7 @@ int main(int argc, char** argv) {
 		Initializer      <- '=' (!';' .)*
 	
 		# Rules to consume content that we want to ignore.
-		OtherContent     <- (!('struct' _ ATTR_REFLECTABLE) .)+
+		OtherContent     <- (!(('struct' / 'class') _ ATTR_REFLECTABLE) .)+
 		OtherInStruct    <- (!('}' / ATTR_FIELD / ATTR_METHOD) .)+
 	
 		# Attribute definitions with flexible spacing.
@@ -94,7 +93,7 @@ int main(int argc, char** argv) {
 		return 1;
 	}
 	
-	std::vector<ReflectableStruct> reflectables;
+	std::vector<ReflectableTypeInfo> reflectableTypes;
 	
 	// --- Setup Semantic Actions to build the data structure from the bottom up ---
 	
@@ -136,28 +135,28 @@ int main(int argc, char** argv) {
 		return std::make_any<std::shared_ptr<std::vector<MemberInfo>>>(members);
 	};
 	
-	// The Struct rule now assembles the final struct from the name and the vector of members.
-	parser["Struct"] = [&](const peg::SemanticValues& sv) {
-		ReflectableStruct current_struct;
+	// The ReflectableItem rule now assembles the final type info from the name and the vector of members.
+	parser["ReflectableItem"] = [&](const peg::SemanticValues& sv) {
+		ReflectableTypeInfo current_type;
 		
 		for (const auto& item_any : sv) {
 			if (item_any.type() == typeid(std::string)) {
-				current_struct.name = std::any_cast<std::string>(item_any);
+				current_type.name = std::any_cast<std::string>(item_any);
 			} else if (item_any.type() == typeid(std::shared_ptr<std::vector<MemberInfo>>)) {
 				auto members_ptr = std::any_cast<std::shared_ptr<std::vector<MemberInfo>>>(item_any);
 				for (const auto& member : *members_ptr) {
 					if (member.type == MemberInfo::FIELD) {
-						current_struct.fields.push_back(member.name);
+						current_type.fields.push_back(member.name);
 					} else if (member.type == MemberInfo::METHOD) {
-						current_struct.methods.push_back(member.name);
+						current_type.methods.push_back(member.name);
 					}
 				}
 			}
 		}
 		
-		if (!current_struct.name.empty()) {
-			reflectables.push_back(current_struct);
-			std::cout << "Successfully parsed struct: " << current_struct.name << "\n";
+		if (!current_type.name.empty()) {
+			reflectableTypes.push_back(current_type);
+			std::cout << "Successfully parsed type: " << current_type.name << "\n";
 		}
 	};
 	
@@ -169,14 +168,14 @@ int main(int argc, char** argv) {
 	
 	std::string content(std::istreambuf_iterator<char>(ifs), {});
 	
-	// Parse the file content. The semantic actions will populate the 'reflectables' vector.
+	// Parse the file content. The semantic actions will populate the 'reflectableTypes' vector.
 	if (!parser.parse(content)) {
 		std::cerr << "Error: Failed to parse file " << input_path << std::endl;
 		return 1;
 	}
 	
-	if (reflectables.empty()) {
-		std::cout << "No reflectable structs found in " << input_path << ". No file will be generated." << std::endl;
+	if (reflectableTypes.empty()) {
+		std::cout << "No reflectable types found in " << input_path << ". No file will be generated." << std::endl;
 		return 0;
 	}
 	
@@ -196,7 +195,7 @@ int main(int argc, char** argv) {
 	ofs << "#include \"" << correct_include_path << "\"\n";
 	ofs << "#include \"reflection/PowerReflection.hpp\"\n\n";
 	
-	for (const auto& s : reflectables) {
+	for (const auto& s : reflectableTypes) {
 		ofs << "// --- Reflection metadata for " << s.name << " ---\n";
 		ofs << "REFL_AUTO(\n";
 		ofs << "    type(" << s.name << ")";
