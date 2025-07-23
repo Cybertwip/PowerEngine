@@ -86,6 +86,8 @@ set(FLATBUFFERS_BUILD_TESTS OFF CACHE BOOL "Disable Flatbuffers Tests" FORCE)
 
 
 # add external libraries
+add_subdirectory(external/assimp/) 
+add_subdirectory(external/cpp-peglib/)
 add_subdirectory(external/entt/)
 add_subdirectory(external/flatbuffers)
 add_subdirectory(external/glad/)
@@ -103,7 +105,9 @@ add_subdirectory(external/nanogui/)
 add_subdirectory(external/tinygizmo/) 
 add_subdirectory(external/websocketpp/) 
 add_subdirectory(external/ozz/) 
-add_subdirectory(external/assimp/) 
+add_subdirectory(external/rttr/) 
+add_subdirectory(external/reflecto/)
+
 
 add_subdirectory(src/power)
 

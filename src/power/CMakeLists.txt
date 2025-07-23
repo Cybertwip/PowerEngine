@@ -37,12 +37,18 @@ if(APPLE)
     set (PLATFORM_SPECIFIC_SOURCES ${CMAKE_CURRENT_LIST_DIR}/Application.mm)
 endif()
 
+generate_reflection_sources(
+  execution_reflection
+  ${CMAKE_CURRENT_LIST_DIR}/execution
+  ${CMAKE_CURRENT_LIST_DIR}/reflected/execution
+)
 
 add_executable(PowerEngine
     ${BUNDLE}
     ${APP_ICON}
     ${BUNDLE_MENU}
     ${PLATFORM_SPECIFIC_SOURCES}
+    ${GENERATED_REFLECTION_FILES}
     ${CMAKE_CURRENT_LIST_DIR}/Application.hpp
     ${CMAKE_CURRENT_LIST_DIR}/Canvas.cpp
     ${CMAKE_CURRENT_LIST_DIR}/Canvas.hpp
@@ -396,6 +402,10 @@ target_include_directories(PowerEngine
 target_link_libraries(PowerEngine
   PRIVATE
     flatbuffers
+    peglib
+    RTTR::Core_Lib
+    reflecto
 )
+
 
  
