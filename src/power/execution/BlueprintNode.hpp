@@ -205,12 +205,6 @@ public:
     bool root_node = false;
     nanogui::Vector2i position;
     
-    void link() {
-        if (mLink) {
-            mLink();
-        }
-    }
-    
     /**
      * @brief Executes the node's internal logic.
      * @return True to continue the execution flow, false to stop it.
@@ -221,10 +215,6 @@ public:
     }
 
 	void raise_event();
-	
-    void set_link(std::function<void()> link) {
-        mLink = link;
-    }
 
     CoreNode(NodeType type, UUID id, nanogui::Color color = nanogui::Color(255, 255, 255, 255)) : type(type), id(id), color(color) {
         
@@ -289,9 +279,7 @@ public:
         
 private:
     UUID get_next_id();
-    
-    std::function<void()> mLink;
-    
+	
     std::vector<std::unique_ptr<CorePin>> inputs;
     std::vector<std::unique_ptr<CorePin>> outputs;
 };
