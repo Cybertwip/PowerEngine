@@ -410,7 +410,7 @@ target_link_libraries(PowerEngine
   PRIVATE
     flatbuffers
     peglib
-    RTTR::Core_Lib
+    refl-cpp
     reflecto
 )
 
