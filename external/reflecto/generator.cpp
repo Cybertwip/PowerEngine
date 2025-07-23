@@ -2,6 +2,7 @@
 #include <iostream>
 #include <fstream>
 #include <filesystem>
+#include <any>
 #include "peglib.h"
 
 int main(int argc, char** argv) {
@@ -34,11 +35,11 @@ int main(int argc, char** argv) {
 	std::vector<std::string> field_names;
 	std::vector<std::string> method_names;
 	
-	// FIX: Use .string() to correctly extract the string representation from the parse result.
-	// This resolves the "No viable overloaded '='" and "No matching member function" errors.
-	parser["Struct"] = [&](const peg::SemanticValues& sv) { struct_name = sv[0].string(); };
-	parser["Field"]  = [&](const peg::SemanticValues& sv) { field_names.push_back(std::string(sv[1].string())); };
-	parser["Method"] = [&](const peg::SemanticValues& sv) { method_names.push_back(std::string(sv[1].string())); };
+	// FIX: Use std::any_cast<std::string> to correctly extract the string from the std::any object.
+	// This resolves the "No member named 'string' in 'std::any'" error.
+	parser["Struct"] = [&](const peg::SemanticValues& sv) { struct_name = std::any_cast<std::string>(sv[0]); };
+	parser["Field"]  = [&](const peg::SemanticValues& sv) { field_names.push_back(std::any_cast<std::string>(sv[1])); };
+	parser["Method"] = [&](const peg::SemanticValues& sv) { method_names.push_back(std::any_cast<std::string>(sv[1])); };
 	
 	std::ifstream ifs(input_path);
 	if (!ifs) {
