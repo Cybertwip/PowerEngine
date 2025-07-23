@@ -43,12 +43,15 @@ generate_reflection_sources(
   ${CMAKE_CURRENT_LIST_DIR}/reflected/execution
 )
 
+list(APPEND ALL_GENERATED_SOURCES ${EXECUTION_GENERATED_SOURCES})
+
+
 add_executable(PowerEngine
     ${BUNDLE}
     ${APP_ICON}
     ${BUNDLE_MENU}
     ${PLATFORM_SPECIFIC_SOURCES}
-    ${GENERATED_REFLECTION_FILES}
+    ${ALL_GENERATED_SOURCES}
     ${CMAKE_CURRENT_LIST_DIR}/Application.hpp
     ${CMAKE_CURRENT_LIST_DIR}/Canvas.cpp
     ${CMAKE_CURRENT_LIST_DIR}/Canvas.hpp

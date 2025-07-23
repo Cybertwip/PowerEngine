@@ -14,9 +14,9 @@ target_link_libraries(generator PRIVATE peglib)
 # This function can be called multiple times for different source directories.
 #
 # Parameters:
-#   TARGET_NAME: A unique name for the generation target (e.g., "execution_reflection").
-#   SOURCE_PATH: The absolute path to the directory to scan for headers.
-#   OUTPUT_VAR: The variable name that will hold the list of generated source files.
+#     TARGET_NAME: A unique name for the generation target (e.g., "execution_reflection").
+#     SOURCE_PATH: The absolute path to the directory to scan for headers.
+#     OUTPUT_VAR:  The variable name that will hold the list of generated source files.
 #
 function(generate_reflection_sources TARGET_NAME SOURCE_PATH OUTPUT_VAR)
     # Define the output directory for this specific generation task.
@@ -35,15 +35,24 @@ function(generate_reflection_sources TARGET_NAME SOURCE_PATH OUTPUT_VAR)
         # Get the path of the header relative to the source directory to preserve structure.
         file(RELATIVE_PATH RELATIVE_HEADER_PATH ${SOURCE_PATH} ${HEADER_FILE})
 
-        # Construct the full path for the output file.
-        set(GENERATED_FILE "${REFLECTION_OUTPUT_DIR}/${RELATIVE_HEADER_PATH}.cpp")
+        # --- CORRECTED FILENAME LOGIC (CMake < 3.20 compatible) ---
+        # Get the directory part of the relative path (e.g., "execution/nodes")
+        get_filename_component(RELATIVE_DIR ${RELATIVE_HEADER_PATH} DIRECTORY)
+        
+        # Get just the filename with its extension (e.g., "BlueprintCanvas.hpp")
+        get_filename_component(HEADER_NAME ${RELATIVE_HEADER_PATH} NAME)
+        # Use a regex to strip the extension, creating the "stem" (e.g., "BlueprintCanvas")
+        string(REGEX REPLACE "\\.[^.]*$" "" HEADER_STEM ${HEADER_NAME})
+
+        # Construct the full path for the output file with the new naming scheme.
+        set(GENERATED_FILE "${REFLECTION_OUTPUT_DIR}/${RELATIVE_DIR}/${HEADER_STEM}.generated.cpp")
         list(APPEND CURRENTLY_GENERATED_FILES ${GENERATED_FILE})
 
         # Define the rule to generate one C++ file from one header.
         add_custom_command(
             OUTPUT  ${GENERATED_FILE}
             COMMAND
-                $<TARGET_FILE:generator> ${HEADER_FILE} ${GENERATED_FILE}
+                $<TARGET_FILE:generator> ${HEADER_FILE} ${GENERATED_FILE} ${RELATIVE_HEADER_PATH}
             DEPENDS
                 generator ${HEADER_FILE}
             COMMENT "Reflecting: ${RELATIVE_HEADER_PATH}"
@@ -66,7 +75,6 @@ function(generate_reflection_sources TARGET_NAME SOURCE_PATH OUTPUT_VAR)
     target_include_directories(reflecto INTERFACE ${REFLECTION_OUTPUT_DIR})
 
 endfunction()
-
 
 # --- 3. Create a Central Target and Interface Library ---
 # This is a global target that all individual generation targets will depend on.

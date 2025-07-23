@@ -18,18 +18,27 @@ int main(int argc, char** argv) {
 	peg::parser parser(R"(
 		File            <- _ Struct* _
 		Struct          <- '[[powergen::reflectable]]' _ 'struct' _ Name '{' _ Members '};' _
-		Members         <- (Field | Method | Other)*
+		Members         <- (Field / Method / Other)*
 		Field           <- '[[powergen::field]]' _ Type Name ';' _
 		Method          <- '[[powergen::method]]' _ Type Name '(' PList? ')' CQual? '{' Body '}' _
-		
-		Name            <- < [a-zA-Z_][a-zA-Z0-9_]* >
-		Type            <- Name ('<' Type '>')?
-		PList           <- Type Name (',' PList)?
+	
+		Name            <- < [a-zA-Z_][a-zA-Z0-9_:]* >  # Allow namespaces like std::
+		Type            <- Name ('<' Type (',' _ Type)* '>')? ('&' / 'const' / '*')*
+		PList           <- Type Name (',' _ PList)?
 		CQual           <- 'const'
-		Body            <- (!'}' .)*
-		Other           <- (!'}' .)*
-		~_              <- [ \t\r\n]*
+		Body            <- ( !'}' . )*
+	
+		# --- REVISED SKIPPING LOGIC ---
+		# Other now safely consumes a single character if it's not part of a known rule.
+		# This is slow but prevents the parser from getting stuck or overflowing the stack.
+		Other           <- !'}' .
+	
+		# --- IMPROVED WHITESPACE/COMMENT HANDLING ---
+		# ~_ now consumes whitespace AND C++ comments
+		~_              <- ( [ \t\r\n] / CppComment )*
+		CppComment      <- '//' [^\r\n]* / '/*' ( !'*/' . )* '*/'
 	)");
+
 	
 	std::string struct_name;
 	std::vector<std::string> field_names;
