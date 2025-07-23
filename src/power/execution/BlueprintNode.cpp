@@ -79,10 +79,10 @@ inline VisualBlueprintNode::VisualBlueprintNode(BlueprintCanvas& parent, const s
 	mLeftColumn = std::make_unique<nanogui::Widget>(*mColumnContainer);
 	mLeftColumn->set_layout(std::make_unique<nanogui::BoxLayout>(nanogui::Orientation::Vertical, nanogui::Alignment::Minimum, 0, 0));
 	
-	mDataColumn = std::make_unique<nanogui::Widget>(mColumnContainer.get());
+	mDataColumn = std::make_unique<nanogui::Widget>((mColumnContainer);
 	mDataColumn->set_layout(std::make_unique<nanogui::BoxLayout>(nanogui::Orientation::Vertical, nanogui::Alignment::Minimum, 0, 0));
 	
-	mRightColumn = std::make_unique<nanogui::Widget>(mColumnContainer.get());
+	mRightColumn = std::make_unique<nanogui::Widget>(*mColumnContainer);
 	mRightColumn->set_layout(std::make_unique<nanogui::BoxLayout>(nanogui::Orientation::Vertical, nanogui::Alignment::Minimum, 0, 0));
 	mRightColumn->set_position(nanogui::Vector2i(fixed_size().x() - 48, 0));
 	
