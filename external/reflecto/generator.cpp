@@ -44,7 +44,8 @@ int main(int argc, char** argv) {
 		File             <- (Struct / OtherContent)*
 	
 		# A struct is defined by our attribute, with explicit whitespace/comment handling.
-		Struct           <- ATTR_REFLECTABLE _ 'struct' _ Name _ '{' _ Members _ '};'
+		# This now only accepts the attribute AFTER the 'struct' keyword, as per user's requirement.
+		Struct           <- 'struct' _ ATTR_REFLECTABLE _ Name _ '{' _ Members _ '};'
 	
 		# Members are a collection of fields, methods, or other things inside a struct.
 		Members          <- (Field / Method / OtherInStruct)*
@@ -68,7 +69,7 @@ int main(int argc, char** argv) {
 		Initializer      <- '=' (!';' .)*
 	
 		# Rules to consume content that we want to ignore.
-		OtherContent     <- (!ATTR_REFLECTABLE .)+
+		OtherContent     <- (!('struct' _ ATTR_REFLECTABLE) .)+
 		OtherInStruct    <- (!('}' / ATTR_FIELD / ATTR_METHOD) .)+
 	
 		# Attribute definitions with flexible spacing.
@@ -210,12 +211,8 @@ int main(int argc, char** argv) {
 		
 		ofs << "// Static registration helper for the Power Reflection system\n";
 		ofs << "namespace {\n";
-		ofs << "    struct AutoRegister_" << s.name << " {\n";
-		ofs << "        AutoRegister_" << s.name << "() {\n";
-		ofs << "            power::reflection::registerType<" << s.name << ">();\n";
-		ofs << "        }\n";
-		ofs << "    };\n";
-		ofs << "    static AutoRegister_" << s.name << " auto_register_" << s.name << ";\n";
+		ofs << "    // This static instance of AutoRegistrator will call the registration function at startup.\n";
+		ofs << "    power::reflection::AutoRegistrator<" << s.name << "> auto_register_" << s.name << ";\n";
 		ofs << "}\n\n";
 		
 		std::cout << "Generated Power Reflection code for " << s.name << " from " << input_path << std::endl;
