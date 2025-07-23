@@ -64,7 +64,7 @@ struct Entity {
 class PassThroughWidget : public nanogui::Widget {
 public:
 	PassThroughWidget(nanogui::Window& parent)
-	: nanogui::Widget(&parent), mWindow(parent) {
+	: nanogui::Widget(parent), mWindow(parent) {
 	}
 	
 private:
@@ -90,7 +90,7 @@ private:
 class PassThroughButton : public nanogui::Button {
 public:
 	PassThroughButton(nanogui::Widget& parent, nanogui::Window& window, const std::string &caption = "", int icon = 0)
-	: nanogui::Button(&parent, caption, icon), mWindow(window) {
+	: nanogui::Button(parent, caption, icon), mWindow(window) {
 	}
 	
 private:
