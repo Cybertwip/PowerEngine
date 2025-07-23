@@ -1,9 +1,5 @@
 #include "PowerReflection.hpp"
 #include <algorithm> // For std::sort and std::find
-#include <rttr/property.h>
-#include <rttr/method.h>
-#include <rttr/parameter_info.h>
-#include <rttr/argument.h>
 
 namespace power::reflection {
 

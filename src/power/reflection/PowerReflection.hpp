@@ -2,7 +2,7 @@
 
 #include <string>
 #include <vector>
-#include <rttr/type.h>
+#include <rttr/registration>
 
 namespace power::reflection {
 
