@@ -6,92 +6,53 @@ namespace power::reflection {
 
 // --- PowerType Implementation ---
 
-PowerType::PowerType(refl::runtime::type_info t) : m_type(t) {}
-
 PowerType PowerType::get_by_name(const std::string& name) {
-    return ReflectionRegistry::get_type_by_name(name);
-}
-
-bool PowerType::is_valid() const {
-    return m_type.is_valid();
-}
-
-std::string_view PowerType::get_name() const {
-    return is_valid() ? m_type.name() : "Invalid Type";
+	return ReflectionRegistry::get_type_by_name(name);
 }
 
 std::vector<PropertyInfo> PowerType::get_properties() const {
-    if (!is_valid()) return {};
-    
-    std::vector<PropertyInfo> result;
-    for (const auto& prop : m_type.get_public_members()) {
-        result.emplace_back(PropertyInfo{std::string(prop.name), prop.type});
-    }
-    return result;
+	if (!m_is_valid) return {};
+	// Simply invoke the stored function to generate the info.
+	return m_properties_getter();
 }
 
 std::vector<MethodInfo> PowerType::get_methods() const {
-    if (!is_valid()) return {};
-    
-    std::vector<MethodInfo> result;
-    for (const auto& method : m_type.get_public_functions()) {
-        std::vector<ParameterInfo> params;
-        for (size_t i = 0; i < method.parameters.size(); ++i) {
-            params.emplace_back(ParameterInfo{
-                "p" + std::to_string(i), // Generate placeholder name
-                method.parameters[i],
-                static_cast<unsigned int>(i)
-            });
-        }
-        
-        result.emplace_back(MethodInfo{
-            std::string(method.name),
-            method.return_type,
-            std::move(params)
-        });
-    }
-    return result;
-}
-
-const refl::runtime::type_info& PowerType::get_underlying_type() const {
-    return m_type;
+	if (!m_is_valid) return {};
+	// Simply invoke the stored function to generate the info.
+	return m_methods_getter();
 }
 
 
 // --- ReflectionRegistry Implementation ---
 
-std::map<std::string, refl::runtime::type_info>& ReflectionRegistry::get_name_map() {
-    static std::map<std::string, refl::runtime::type_info> name_map;
-    return name_map;
-}
-
-std::vector<refl::runtime::type_info>& ReflectionRegistry::get_type_vector() {
-    static std::vector<refl::runtime::type_info> type_vector;
-    return type_vector;
+std::map<std::string, PowerType>& ReflectionRegistry::get_registry() {
+	static std::map<std::string, PowerType> registry;
+	return registry;
 }
 
 PowerType ReflectionRegistry::get_type_by_name(const std::string& name) {
-    const auto& map = get_name_map();
-    if (auto it = map.find(name); it != map.end()) {
-        return PowerType(it->second);
-    }
-    return PowerType(refl::runtime::type_info{}); // Return an invalid PowerType
+	const auto& map = get_registry();
+	if (auto it = map.find(name); it != map.end()) {
+		return it->second;
+	}
+	return PowerType{}; // Return a default (invalid) PowerType
 }
 
 std::vector<PowerType> ReflectionRegistry::get_all_types() {
-    auto& reg = get_type_vector();
-    // Sort by name for consistent ordering
-    std::sort(reg.begin(), reg.end(), [](const auto& a, const auto& b) {
-        return a.name() < b.name();
-    });
-    
-    std::vector<PowerType> types;
-    types.reserve(reg.size());
-    
-    for (const auto& rti : reg) {
-        types.push_back(PowerType(rti));
-    }
-    return types;
+	auto& reg = get_registry();
+	std::vector<PowerType> types;
+	types.reserve(reg.size());
+	
+	for (const auto& pair : reg) {
+		types.push_back(pair.second);
+	}
+	
+	// Sort by name for consistent ordering.
+	std::sort(types.begin(), types.end(), [](const PowerType& a, const PowerType& b) {
+		return a.get_name() < b.get_name();
+	});
+	
+	return types;
 }
 
 } // namespace power::reflection
