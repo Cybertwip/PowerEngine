@@ -24,21 +24,21 @@ struct MemberInfo {
 
 int main(int argc, char** argv) {
 	if (argc != 4) {
+		// Note: argv[3] is no longer used, but kept for compatibility with the build system.
 		std::cerr << "Usage: generator <input_header_full_path> <output_cpp_full_path> <header_relative_path>\n";
 		return 1;
 	}
 	const char* input_path = argv[1];
 	const char* output_path = argv[2];
 	
-	std::string relative_header_path = argv[3];
-	for (char& c : relative_header_path) {
-		if (c == '\\') {
-			c = '/';
-		}
-	}
+	// Construct the correct include path from the full input path.
+	// This creates a path like "parent_dir/filename.hpp".
+	std::filesystem::path header_full_path(input_path);
+	std::string filename = header_full_path.filename().string();
+	std::string parent_dir = header_full_path.parent_path().filename().string();
+	std::string correct_include_path = parent_dir + "/" + filename;
 	
 	// --- Grammar to find structs and members marked for reflection ---
-	// This grammar has been improved to be more efficient and robust.
 	const auto grammar = R"(
 		# Top-level rule: A file is a sequence of content, which can be a struct or other text.
 		File             <- (Struct / OtherContent)*
@@ -59,10 +59,11 @@ int main(int argc, char** argv) {
 		FunctionBody     <- '{' Body '}'
 		Body             <- ( [^{}] / FunctionBody )*
 	
-		# Basic language elements
-		Name             <- < [a-zA-Z_][a-zA-Z0-9_:]* >
-		Type             <- Name _ ('<' _ Type (_ ',' _ Type)* _ '>')? (_ ('&' / 'const' / '*'))*
-		PList            <- Type _ Name (_ ',' _ PList)?
+		# Basic language elements. Name is no longer a token capture, its action will handle it.
+		Name             <- [a-zA-Z_][a-zA-Z0-9_:]*
+		Identifier       <- [a-zA-Z_][a-zA-Z0-9_:]*
+		Type             <- Identifier _ ('<' _ Type (_ ',' _ Type)* _ '>')? (_ ('&' / 'const' / '*'))*
+		PList            <- Type _ Identifier (_ ',' _ PList)?
 		CQual            <- 'const'
 		Initializer      <- '=' (!';' .)*
 	
@@ -96,37 +97,67 @@ int main(int argc, char** argv) {
 	
 	// --- Setup Semantic Actions to build the data structure from the bottom up ---
 	
-	// The Field rule now returns a MemberInfo object.
+	// The Name rule's action returns the matched name as a std::string.
+	parser["Name"] = [](const peg::SemanticValues& sv) {
+		return std::make_any<std::string>(sv.sv());
+	};
+	
+	// The Field rule's action finds the name from its children and returns a MemberInfo.
 	parser["Field"] = [](const peg::SemanticValues& sv) {
-		return std::make_any<MemberInfo>(MemberInfo{MemberInfo::FIELD, sv.token_to_string(0)});
+		std::string field_name;
+		for (const auto& item_any : sv) {
+			if (item_any.type() == typeid(std::string)) {
+				field_name = std::any_cast<std::string>(item_any);
+			}
+		}
+		return std::make_any<MemberInfo>(MemberInfo{MemberInfo::FIELD, field_name});
 	};
 	
-	// The Method rule also returns a MemberInfo object.
+	// The Method rule's action finds the name and returns a MemberInfo.
 	parser["Method"] = [](const peg::SemanticValues& sv) {
-		return std::make_any<MemberInfo>(MemberInfo{MemberInfo::METHOD, sv.token_to_string(0)});
+		std::string method_name;
+		for (const auto& item_any : sv) {
+			if (item_any.type() == typeid(std::string)) {
+				method_name = std::any_cast<std::string>(item_any);
+			}
+		}
+		return std::make_any<MemberInfo>(MemberInfo{MemberInfo::METHOD, method_name});
 	};
 	
-	// The Struct rule is the final step. It receives the struct name as a token
-	// and a flattened list of semantic values from its children (the MemberInfo objects).
-	parser["Struct"] = [&](const peg::SemanticValues& sv) {
-		ReflectableStruct current_struct;
-		current_struct.name = sv.token_to_string(0);
-		
-		// Iterate through the semantic values. Each value returned from the Field or Method
-		// rules will be an element in 'sv'.
+	// The Members rule collects all MemberInfo objects from its children into a vector.
+	parser["Members"] = [](const peg::SemanticValues& sv) {
+		auto members = std::make_shared<std::vector<MemberInfo>>();
 		for (const auto& item_any : sv) {
 			if (item_any.type() == typeid(MemberInfo)) {
-				const auto& member = std::any_cast<MemberInfo>(item_any);
-				if (member.type == MemberInfo::FIELD) {
-					current_struct.fields.push_back(member.name);
-				} else if (member.type == MemberInfo::METHOD) {
-					current_struct.methods.push_back(member.name);
+				members->push_back(std::any_cast<MemberInfo>(item_any));
+			}
+		}
+		return std::make_any<std::shared_ptr<std::vector<MemberInfo>>>(members);
+	};
+	
+	// The Struct rule now assembles the final struct from the name and the vector of members.
+	parser["Struct"] = [&](const peg::SemanticValues& sv) {
+		ReflectableStruct current_struct;
+		
+		for (const auto& item_any : sv) {
+			if (item_any.type() == typeid(std::string)) {
+				current_struct.name = std::any_cast<std::string>(item_any);
+			} else if (item_any.type() == typeid(std::shared_ptr<std::vector<MemberInfo>>)) {
+				auto members_ptr = std::any_cast<std::shared_ptr<std::vector<MemberInfo>>>(item_any);
+				for (const auto& member : *members_ptr) {
+					if (member.type == MemberInfo::FIELD) {
+						current_struct.fields.push_back(member.name);
+					} else if (member.type == MemberInfo::METHOD) {
+						current_struct.methods.push_back(member.name);
+					}
 				}
 			}
 		}
 		
-		reflectables.push_back(current_struct);
-		std::cout << "Successfully parsed struct: " << current_struct.name << "\n";
+		if (!current_struct.name.empty()) {
+			reflectables.push_back(current_struct);
+			std::cout << "Successfully parsed struct: " << current_struct.name << "\n";
+		}
 	};
 	
 	std::ifstream ifs(input_path);
@@ -160,8 +191,8 @@ int main(int argc, char** argv) {
 		return 1;
 	}
 	
-	ofs << "// DO NOT EDIT - Code generated by 'generator' from " << relative_header_path << "\n\n";
-	ofs << "#include \"" << relative_header_path << "\"\n";
+	ofs << "// DO NOT EDIT - Code generated by 'generator' from " << correct_include_path << "\n\n";
+	ofs << "#include \"" << correct_include_path << "\"\n";
 	ofs << "#include \"PowerReflection.hpp\"\n\n";
 	
 	for (const auto& s : reflectables) {
