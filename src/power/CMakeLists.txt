@@ -37,21 +37,23 @@ if(APPLE)
     set (PLATFORM_SPECIFIC_SOURCES ${CMAKE_CURRENT_LIST_DIR}/Application.mm)
 endif()
 
+
+### FIX: Call the generation function correctly. ###
+# The third argument is the NAME of the variable that will store the file list.
 generate_reflection_sources(
   execution_reflection
   ${CMAKE_CURRENT_LIST_DIR}/execution
-  ${CMAKE_CURRENT_LIST_DIR}/reflected/execution
+  EXECUTION_GENERATED_SOURCES # Pass the variable name, not a directory path
 )
 
+# This correctly appends the generated sources to your master list.
 list(APPEND ALL_GENERATED_SOURCES ${EXECUTION_GENERATED_SOURCES})
-
 
 add_executable(PowerEngine
     ${BUNDLE}
     ${APP_ICON}
     ${BUNDLE_MENU}
     ${PLATFORM_SPECIFIC_SOURCES}
-    ${ALL_GENERATED_SOURCES}
     ${CMAKE_CURRENT_LIST_DIR}/Application.hpp
     ${CMAKE_CURRENT_LIST_DIR}/Canvas.cpp
     ${CMAKE_CURRENT_LIST_DIR}/Canvas.hpp
@@ -399,12 +401,15 @@ add_custom_target(
   DEPENDS ${GENERATED_HEADERS}
 )
 
-add_dependencies(PowerEngine generate_headers)
+add_dependencies(PowerEngine generate_headers execution_reflection)
 
 target_include_directories(PowerEngine
   PUBLIC
     ${GENERATED_HEADERS_DIR}
 )
+
+target_sources(PowerEngine PRIVATE ${ALL_GENERATED_SOURCES})
+
 
 target_link_libraries(PowerEngine
   PRIVATE

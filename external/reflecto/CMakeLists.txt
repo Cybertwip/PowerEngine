@@ -36,26 +36,38 @@ function(generate_reflection_sources TARGET_NAME SOURCE_PATH OUTPUT_VAR)
         file(RELATIVE_PATH RELATIVE_HEADER_PATH ${SOURCE_PATH} ${HEADER_FILE})
 
         # --- CORRECTED FILENAME LOGIC (CMake < 3.20 compatible) ---
-        # Get the directory part of the relative path (e.g., "execution/nodes")
         get_filename_component(RELATIVE_DIR ${RELATIVE_HEADER_PATH} DIRECTORY)
-        
-        # Get just the filename with its extension (e.g., "BlueprintCanvas.hpp")
         get_filename_component(HEADER_NAME ${RELATIVE_HEADER_PATH} NAME)
-        # Use a regex to strip the extension, creating the "stem" (e.g., "BlueprintCanvas")
         string(REGEX REPLACE "\\.[^.]*$" "" HEADER_STEM ${HEADER_NAME})
 
         # Construct the full path for the output file with the new naming scheme.
         set(GENERATED_FILE "${REFLECTION_OUTPUT_DIR}/${RELATIVE_DIR}/${HEADER_STEM}.generated.cpp")
         list(APPEND CURRENTLY_GENERATED_FILES ${GENERATED_FILE})
+        
+        # Get the directory for the generated file.
+        get_filename_component(GENERATED_FILE_DIR ${GENERATED_FILE} DIRECTORY)
 
         # Define the rule to generate one C++ file from one header.
         add_custom_command(
             OUTPUT  ${GENERATED_FILE}
+            
+            # This is a sequence of commands executed in order.
             COMMAND
+                # 1. Ensure the output directory exists before trying to write to it.
+                ${CMAKE_COMMAND} -E make_directory ${GENERATED_FILE_DIR}
+            COMMAND
+                # 2. CRITICAL FIX: Create an empty placeholder file first. This command
+                #    is available in older CMake versions.
+                ${CMAKE_COMMAND} -E touch ${GENERATED_FILE}
+            COMMAND
+                # 3. Run the generator. It will overwrite the empty placeholder if it
+                #    finds any reflectable structs.
                 $<TARGET_FILE:generator> ${HEADER_FILE} ${GENERATED_FILE} ${RELATIVE_HEADER_PATH}
+
             DEPENDS
                 generator ${HEADER_FILE}
             COMMENT "Reflecting: ${RELATIVE_HEADER_PATH}"
+            VERBATIM # Recommended for complex commands
         )
     endforeach()
 
@@ -70,9 +82,6 @@ function(generate_reflection_sources TARGET_NAME SOURCE_PATH OUTPUT_VAR)
 
     # Add the dependency to the main 'generate_reflection' target.
     add_dependencies(generate_reflection ${TARGET_NAME})
-
-    # Add the specific output directory to the include path of the main 'reflecto' library.
-    target_include_directories(reflecto INTERFACE ${REFLECTION_OUTPUT_DIR})
 
 endfunction()
 
