@@ -8,7 +8,7 @@
  *
  * =====================================================================================
  */
-// #include "BlueprintSerializer.hpp" // This would be included in a real project structure
+ #include "BlueprintSerializer.hpp"
 #include "execution/NodeProcessor.hpp"
 #include "execution/BlueprintNode.hpp"
 #include "execution/KeyPressNode.hpp"
