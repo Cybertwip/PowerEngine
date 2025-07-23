@@ -10,7 +10,6 @@ struct Vec2i {
 // Enums mirroring the C++ definitions for the blueprint system.
 enum NodeType : ubyte { KeyPress, KeyRelease, String, Print }
 enum PinType : ubyte { Flow, Bool, Int, Float, String, Object, Function, Delegate }
-enum PinSubType : ubyte { None, Actor, Light, Camera, Animation, Sequence, Composition }
 enum PinKind : ubyte { Output, Input }
 
 // --- Data Payload Definitions ---
@@ -36,7 +35,6 @@ table BlueprintPayload {
 table BlueprintPin {
     id:ulong; // CHANGED: Pin ID must be 64-bit to match UUID.
     type:PinType;
-    subtype:PinSubType;
     kind:PinKind;
     data:BlueprintPayload;
 }
