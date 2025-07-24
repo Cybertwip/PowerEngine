@@ -13,6 +13,8 @@
 #include <memory>        // Required for std::unique_ptr
 #include <any>           // Required for std::any
 
+#include "execution/ReflectedNode.hpp"
+
 // Forward declarations to manage dependencies on the blueprint system
 class CoreNode;
 class ReflectedCoreNode;
@@ -97,7 +99,7 @@ public:
 	static void register_type() {
 		// NOTE: For this to compile, the definition for ReflectedCoreNode must be available.
 		// The include is placed here to scope the dependency to this template's instantiation.
-#include "execution/nodes/ReflectedNode.hpp"
+
 		
 		const std::string type_name(refl::reflect<T>().name);
 		
