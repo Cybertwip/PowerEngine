@@ -45,7 +45,7 @@ void KeyPressCoreNode::key_event_fired(int action) {
 	}
 }
 
-bool KeyPressCoreNode::evaluate(UUID flow_pin_id {
+bool KeyPressCoreNode::evaluate(UUID flow_pin_id) {
 	// Return true if the event was just triggered, false otherwise.
 	// This boolean return value directly controls if the execution flow continues.
 	return mTriggered;
