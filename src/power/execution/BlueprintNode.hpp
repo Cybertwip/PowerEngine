@@ -234,21 +234,7 @@ public:
 	}
 	
 	virtual ~CoreNode() = default;
-	
-	// add_input updated to remove PinSubType
-	CorePin& add_input(PinType pin_type) {
-		auto input = std::make_unique<CorePin>(*this, get_next_id(), pin_type);
-		inputs.push_back(std::move(input));
-		return *inputs.back();
-	}
-	
-	// add_output updated to remove PinSubType
-	CorePin& add_output(PinType pin_type) {
-		auto output = std::make_unique<CorePin>(*this, get_next_id(), pin_type);
-		outputs.push_back(std::move(output));
-		return *outputs.back();
-	}
-	
+		
 	void build();
 	
 	const std::vector<std::unique_ptr<CorePin>>& get_inputs() const {

@@ -23,7 +23,7 @@ mStringInput(add_input(PinType::String))
 	add_output(PinType::Flow);
 }
 
-bool PrintCoreNode::evaluate() {
+bool PrintCoreNode::evaluate(UUID flow_pin_id) {
 	std::string string_to_print;
 	bool data_found = false;
 	

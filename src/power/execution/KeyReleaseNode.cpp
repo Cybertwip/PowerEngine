@@ -47,7 +47,7 @@ void KeyReleaseCoreNode::key_event_fired(int action) {
 	}
 }
 
-bool KeyReleaseCoreNode::evaluate() {
+bool KeyReleaseCoreNode::evaluate(UUID flow_pin_id) {
 	// This function is called by raise_event().
 	// It returns true only if the event was a key release, allowing the flow to continue.
 	return mTriggered;

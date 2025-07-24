@@ -5,17 +5,9 @@
 #include "serialization/UUID.hpp"
 
 // --- Include all concrete node types we can spawn ---
-#include "nodes/KeyPressNode.hpp"
-#include "nodes/KeyReleaseNode.hpp"
-#include "nodes/ReflectedNode.hpp"
-
-// --- Include all C++ types we want to make available as blueprint nodes ---
-#include "components/Transform.hpp"
-
-// --- Include the GENERATED reflection file for each C++ type ---
-// This is critical. It ensures the REFL_AUTO macro is compiled and the
-// static AutoRegistrator runs, populating the global ReflectionRegistry.
-#include "gen/Transform.refl.cpp"
+#include "KeyPressNode.hpp"
+#include "KeyReleaseNode.hpp"
+#include "ReflectedNode.hpp"
 
 
 NodeProcessor::NodeProcessor() {
