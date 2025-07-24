@@ -99,9 +99,9 @@ public:
 	static void register_type() {
 		// NOTE: For this to compile, the definition for ReflectedCoreNode must be available.
 		// The include is placed here to scope the dependency to this template's instantiation.
-
 		
-		const std::string type_name(refl::reflect<T>().name);
+		
+		const std::string type_name(refl::reflect<T>().name.data); // FIX: Explicitly convert from const_string
 		
 		auto& reg = get_registry();
 		if (reg.count(type_name)) {
@@ -114,8 +114,9 @@ public:
 			refl::util::for_each(refl::reflect<T>().members, [&](auto member) {
 				if constexpr (refl::descriptor::is_field(member)) {
 					props.push_back({
-						.name = std::string(member.name),
-						.type_name = std::string(refl::reflect<typename decltype(member)::value_type>().name)
+						// FIX: Explicitly convert from const_string using .data
+						.name = std::string(member.name.data),
+						.type_name = std::string(refl::reflect<typename decltype(member)::value_type>().name.data)
 					});
 				}
 			});
@@ -128,12 +129,13 @@ public:
 			refl::util::for_each(refl::reflect<T>().members, [&](auto func) {
 				if constexpr (refl::descriptor::is_function(func)) {
 					MethodInfo mi;
-					mi.name = std::string(func.name);
+					mi.name = std::string(func.name.data); // FIX: Explicitly convert from const_string
 					
 					// This is a simplified check. A full implementation would be more complex.
 					if constexpr (std::is_invocable_v<decltype(func), T&>) {
 						using return_type = decltype(func(std::declval<T&>()));
-						mi.return_type_name = std::string(refl::reflect<return_type>().name);
+						// FIX: Explicitly convert from const_string
+						mi.return_type_name = std::string(refl::reflect<return_type>().name.data);
 					} else {
 						mi.return_type_name = "(unsupported signature)";
 					}
@@ -146,14 +148,16 @@ public:
 		
 		// Create the Node Creator lambda.
 		auto node_creator = [](UUID id) -> std::unique_ptr<CoreNode> {
-			PowerType type_info = PowerType::get_by_name(std::string(refl::reflect<T>().name));
+			// FIX: Explicitly convert from const_string
+			PowerType type_info = PowerType::get_by_name(std::string(refl::reflect<T>().name.data));
 			auto instance = std::make_any<T>();
 			auto node = std::make_unique<ReflectedCoreNode>(id, type_info, instance);
 			
 			// Populate the node's dispatchers (property getters/setters, method callers)
 			refl::util::for_each(refl::reflect<T>().members, [&](auto member) {
 				if constexpr (refl::descriptor::is_field(member)) {
-					std::string prop_name = member.name;
+					// FIX: Explicitly convert from const_string
+					std::string prop_name(member.name.data());
 					node->m_property_getters[prop_name] = [member](std::any& obj) -> std::any {
 						return member(std::any_cast<T&>(obj));
 					};
@@ -164,16 +168,19 @@ public:
 						}
 					};
 				} else if constexpr (refl::descriptor::is_function(member)) {
-					node->m_method_dispatchers[std::string(member.name)] =
+					// FIX: Explicitly convert from const_string for map key
+					node->m_method_dispatchers[std::string(member.name.dataj)] =
 					[f = member, node_ptr = node.get()](const std::vector<std::any>& args) {
 						// A full implementation requires complex argument unpacking.
 						// This simplified version only handles specific known functions.
 						auto& instance_ref = std::any_cast<T&>(node_ptr->get_instance());
-						if constexpr (std::string_view{f.name} == "move" && args.size() == 2) {
+						// FIX: Use direct compile-time comparison for const_string
+						if constexpr (f.name == "move" && args.size() == 2) {
 							if constexpr (std::is_invocable_v<decltype(f), T&, float, float>) {
 								f(instance_ref, std::any_cast<float>(args[0]), std::any_cast<float>(args[1]));
 							}
-						} else if constexpr (std::string_view{f.name} == "print" && args.empty()) {
+							// FIX: Use direct compile-time comparison for const_string
+						} else if constexpr (f.name == "print" && args.empty()) {
 							if constexpr (std::is_invocable_v<decltype(f), const T&>) {
 								f(instance_ref);
 							}
