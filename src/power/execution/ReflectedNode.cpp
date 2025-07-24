@@ -94,8 +94,8 @@ void ReflectedCoreNode::set_property_value(const std::string& property_name, std
 
 // --- Visual Node Implementation ---
 
-ReflectedVisualNode::ReflectedVisualNode(BlueprintCanvas& parent, nanogui::Vector2i position, ReflectedCoreNode& coreNode)
-: VisualBlueprintNode(parent, coreNode.get_type_info().get_name(), position, nanogui::Vector2i(250, 150), coreNode) {
+ReflectedVisualNode::ReflectedVisualNode(BlueprintCanvas& parent, nanogui::Vector2i position, nanogui::Vector2i size,  ReflectedCoreNode& coreNode)
+: VisualBlueprintNode(parent, coreNode.get_type_info().get_name(), position, size, coreNode) {
     
     // Dynamically create UI widgets for each editable property.
     for (const auto& prop : coreNode.get_type_info().get_properties()) {

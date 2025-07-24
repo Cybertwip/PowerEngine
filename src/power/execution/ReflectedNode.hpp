@@ -114,5 +114,5 @@ private:
  */
 class ReflectedVisualNode : public VisualBlueprintNode {
 public:
-    ReflectedVisualNode(BlueprintCanvas& parent, nanogui::Vector2i position, ReflectedCoreNode& coreNode);
+    ReflectedVisualNode(BlueprintCanvas& parent, nanogui::Vector2i position, nanogui::Vector2i size, ReflectedCoreNode& coreNode);
 };

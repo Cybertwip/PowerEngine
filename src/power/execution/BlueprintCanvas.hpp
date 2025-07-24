@@ -49,7 +49,7 @@ public:
 	
 	template<typename T, typename U>
 	void spawn_node(nanogui::Vector2i position, U& coreNode) {
-		auto node = std::make_unique<T>(*this, position, coreNode);
+		auto node = std::make_unique<T>(*this, position, nanogui::Vector2i(196, 64), coreNode);
 		mVisualNodes.push_back(std::move(node));
 		mOnCanvasModifiedCallback();
 	}
