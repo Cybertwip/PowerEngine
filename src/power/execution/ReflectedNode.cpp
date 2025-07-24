@@ -1,5 +1,6 @@
 #include "ReflectedNode.hpp"
 #include "execution/BlueprintCanvas.hpp" // For on_modified()
+#include "reflection/PowerReflection.hpp" // For on_modified()
 #include <iostream>
 #include <nanogui/textbox.h>
 #include <nanogui/label.h>

@@ -97,8 +97,10 @@ void NodeProcessor::deserialize(BlueprintCanvas& canvas, Actor& actor) {
 	canvas.clear();
 	this->clear();
 	
-	auto* bp_comp = actor.find_component<BlueprintComponent>();
-	if (!bp_comp) return;
+	if (!actor.find_component<BlueprintComponent>()) return;
+	
+	auto* bp_comp = actor.get_component<BlueprintComponent>();
+
 	
 	auto& source_processor = bp_comp->node_processor();
 	
