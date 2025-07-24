@@ -22,6 +22,21 @@ std::vector<MethodInfo> PowerType::get_methods() const {
 	return m_methods_getter();
 }
 
+const PowerType::NodeCreatorFunc& PowerType::get_node_creator() const {
+	// A non-const reference can't be returned if the object is const.
+	// We return a const reference to the stored function.
+	if (!m_is_valid) {
+		static const NodeCreatorFunc invalid_creator = nullptr;
+		return invalid_creator;
+	}
+	return m_node_creator;
+}
+
+bool PowerType::has_node_creator() const {
+	// A std::function is convertible to bool. It's true if it holds a target.
+	return m_is_valid && static_cast<bool>(m_node_creator);
+}
+
 
 // --- ReflectionRegistry Implementation ---
 

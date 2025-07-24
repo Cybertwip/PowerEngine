@@ -1,14 +1,21 @@
 #pragma once
 
+#include "serialization/UUID.hpp"
+
+#include "refl.hpp"
+
 #include <string>
 #include <vector>
 #include <map>
 #include <string_view>
-#include <functional> // Required for std::function
-#include <type_traits> // Required for std::is_invocable_v
+#include <functional>    // Required for std::function
+#include <type_traits>   // Required for std::is_invocable_v
+#include <memory>        // Required for std::unique_ptr
+#include <any>           // Required for std::any
 
-// Modern, header-only reflection library for C++17
-#include "refl.hpp" // Ensure this path is correct for your project
+// Forward declarations to manage dependencies on the blueprint system
+class CoreNode;
+class ReflectedCoreNode;
 
 namespace power::reflection {
 
@@ -36,12 +43,18 @@ struct MethodInfo {
 
 // A type-erased, runtime-accessible wrapper for a reflected type.
 class PowerType {
+public:
+	// A factory function that can create a fully configured CoreNode.
+	using NodeCreatorFunc = std::function<std::unique_ptr<CoreNode>(UUID)>;
+	
 private:
 	std::string m_name;
 	bool m_is_valid = false;
 	// Lambdas to generate info on demand, captured at registration time.
 	std::function<std::vector<PropertyInfo>()> m_properties_getter;
 	std::function<std::vector<MethodInfo>()> m_methods_getter;
+	// New member to hold the node factory function.
+	NodeCreatorFunc m_node_creator;
 	
 	PowerType() = default; // For creating an invalid type
 	
@@ -50,11 +63,13 @@ public:
 	PowerType(
 			  std::string_view name,
 			  std::function<std::vector<PropertyInfo>()> prop_getter,
-			  std::function<std::vector<MethodInfo>()> meth_getter)
+			  std::function<std::vector<MethodInfo>()> meth_getter,
+			  NodeCreatorFunc node_creator) // Added node_creator parameter
 	: m_name(name),
 	m_is_valid(true),
 	m_properties_getter(std::move(prop_getter)),
-	m_methods_getter(std::move(meth_getter)) {}
+	m_methods_getter(std::move(meth_getter)),
+	m_node_creator(std::move(node_creator)) {} // Initialize new member
 	
 	static PowerType get_by_name(const std::string& name);
 	
@@ -63,6 +78,10 @@ public:
 	
 	std::vector<PropertyInfo> get_properties() const;
 	std::vector<MethodInfo> get_methods() const;
+	
+	// New methods to access the node creator.
+	const NodeCreatorFunc& get_node_creator() const;
+	bool has_node_creator() const;
 	
 	friend class ReflectionRegistry;
 };
@@ -76,7 +95,10 @@ public:
 	// Template for registering a type. Must be defined in the header.
 	template<typename T>
 	static void register_type() {
-		// CHANGE: Get the type name directly from the descriptor's 'name' member.
+		// NOTE: For this to compile, the definition for ReflectedCoreNode must be available.
+		// The include is placed here to scope the dependency to this template's instantiation.
+#include "execution/nodes/ReflectedNode.hpp"
+		
 		const std::string type_name(refl::reflect<T>().name);
 		
 		auto& reg = get_registry();
@@ -88,11 +110,9 @@ public:
 		auto prop_getter = []() -> std::vector<PropertyInfo> {
 			std::vector<PropertyInfo> props;
 			refl::util::for_each(refl::reflect<T>().members, [&](auto member) {
-				// CHANGE: Use 'if constexpr' to process only fields (properties).
 				if constexpr (refl::descriptor::is_field(member)) {
 					props.push_back({
 						.name = std::string(member.name),
-						// CHANGE: Get the field's type name by reflecting its type.
 						.type_name = std::string(refl::reflect<typename decltype(member)::value_type>().name)
 					});
 				}
@@ -103,15 +123,12 @@ public:
 		// Create a lambda to generate method info at runtime.
 		auto meth_getter = []() -> std::vector<MethodInfo> {
 			std::vector<MethodInfo> meths;
-			// CHANGE: Iterate over all members, not a non-existent '.functions' member.
 			refl::util::for_each(refl::reflect<T>().members, [&](auto func) {
-				// CHANGE: Use 'if constexpr' to process only functions.
 				if constexpr (refl::descriptor::is_function(func)) {
 					MethodInfo mi;
 					mi.name = std::string(func.name);
 					
-					// CHANGE: This is the modern C++ way to check for a method signature.
-					// Here, we assume a simple, no-argument member function.
+					// This is a simplified check. A full implementation would be more complex.
 					if constexpr (std::is_invocable_v<decltype(func), T&>) {
 						using return_type = decltype(func(std::declval<T&>()));
 						mi.return_type_name = std::string(refl::reflect<return_type>().name);
@@ -119,17 +136,54 @@ public:
 						mi.return_type_name = "(unsupported signature)";
 					}
 					
-					// NOTE: refl-cpp does not support iterating function parameters.
-					// The 'parameters' vector will remain empty.
-					
 					meths.push_back(std::move(mi));
 				}
 			});
 			return meths;
 		};
 		
+		// Create the Node Creator lambda.
+		auto node_creator = [](UUID id) -> std::unique_ptr<CoreNode> {
+			PowerType type_info = PowerType::get_by_name(std::string(refl::reflect<T>().name));
+			auto instance = std::make_any<T>();
+			auto node = std::make_unique<ReflectedCoreNode>(id, type_info, instance);
+			
+			// Populate the node's dispatchers (property getters/setters, method callers)
+			refl::util::for_each(refl::reflect<T>().members, [&](auto member) {
+				if constexpr (refl::descriptor::is_field(member)) {
+					std::string prop_name = member.name;
+					node->m_property_getters[prop_name] = [member](std::any& obj) -> std::any {
+						return member(std::any_cast<T&>(obj));
+					};
+					node->m_property_setters[prop_name] = [member](std::any& obj, std::any val) {
+						using TField = typename decltype(member)::value_type;
+						if (const auto* pval = std::any_cast<TField>(&val)) {
+							member(std::any_cast<T&>(obj)) = *pval;
+						}
+					};
+				} else if constexpr (refl::descriptor::is_function(member)) {
+					node->m_method_dispatchers[std::string(member.name)] =
+					[f = member, node_ptr = node.get()](const std::vector<std::any>& args) {
+						// A full implementation requires complex argument unpacking.
+						// This simplified version only handles specific known functions.
+						auto& instance_ref = std::any_cast<T&>(node_ptr->get_instance());
+						if constexpr (std::string_view{f.name} == "move" && args.size() == 2) {
+							if constexpr (std::is_invocable_v<decltype(f), T&, float, float>) {
+								f(instance_ref, std::any_cast<float>(args[0]), std::any_cast<float>(args[1]));
+							}
+						} else if constexpr (std::string_view{f.name} == "print" && args.empty()) {
+							if constexpr (std::is_invocable_v<decltype(f), const T&>) {
+								f(instance_ref);
+							}
+						}
+					};
+				}
+			});
+			return node;
+		};
+		
 		// Create the runtime PowerType object and store it in the registry.
-		reg.emplace(type_name, PowerType(type_name, std::move(prop_getter), std::move(meth_getter)));
+		reg.emplace(type_name, PowerType(type_name, std::move(prop_getter), std::move(meth_getter), std::move(node_creator)));
 	}
 	
 private:
@@ -138,9 +192,6 @@ private:
 };
 
 // Helper to register a type at program startup.
-// CHANGE: Corrected the comment to reflect how refl-cpp works.
-// Note: For this to work, type T must be made reflectable using the
-// REFL_AUTO() or REFL_TYPE() macros in a global scope.
 template<typename T>
 struct AutoRegistrator {
 	AutoRegistrator() {
