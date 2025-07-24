@@ -20,6 +20,7 @@
 
 namespace power::reflection {
 	class PowerType;
+	class ReflectionRegistry;
 }
 
 class BlueprintCanvas;
@@ -99,6 +100,8 @@ private:
     // The factory in NodeProcessor needs to register the dispatchers.
     template<typename T>
     friend class NodeFactory;
+	
+	friend class power::reflection::ReflectionRegistry;
 };
 
 
