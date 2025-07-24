@@ -6,7 +6,7 @@
 
 ReflectedCoreNode::ReflectedCoreNode(UUID id, const power::reflection::PowerType& type_info, std::any instance)
     : CoreNode(NodeType::Reflected, id, nanogui::Color(210, 210, 210, 255)),
-      m_type_info(std::make_unique<power::reflection::PowerType>(type_info_),
+      m_type_info(std::make_unique<power::reflection::PowerType>(type_info)),
       m_object_instance(std::move(instance))
 {
     // Store the reflected type name for serialization.
