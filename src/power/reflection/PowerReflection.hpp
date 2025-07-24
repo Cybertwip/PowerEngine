@@ -157,7 +157,7 @@ public:
 			refl::util::for_each(refl::reflect<T>().members, [&](auto member) {
 				if constexpr (refl::descriptor::is_field(member)) {
 					// FIX: Explicitly convert from const_string
-					std::string prop_name(member.name.data());
+					std::string prop_name(member.name.data);
 					node->m_property_getters[prop_name] = [member](std::any& obj) -> std::any {
 						return member(std::any_cast<T&>(obj));
 					};
@@ -169,7 +169,7 @@ public:
 					};
 				} else if constexpr (refl::descriptor::is_function(member)) {
 					// FIX: Explicitly convert from const_string for map key
-					node->m_method_dispatchers[std::string(member.name.dataj)] =
+					node->m_method_dispatchers[std::string(member.name.data)] =
 					[f = member, node_ptr = node.get()](const std::vector<std::any>& args) {
 						// A full implementation requires complex argument unpacking.
 						// This simplified version only handles specific known functions.
