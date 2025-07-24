@@ -7,6 +7,7 @@
 #include "KeyReleaseNode.hpp"
 #include "PrintNode.hpp"
 #include "StringNode.hpp"
+#include "ReflectedNode.hpp"
 
 
 #include "ShaderManager.hpp"
