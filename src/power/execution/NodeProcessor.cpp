@@ -1,247 +1,240 @@
-#include "Canvas.hpp"
+#include "execution/NodeProcessor.hpp"
+#include "execution/BlueprintCanvas.hpp"
 #include "actors/Actor.hpp"
-#include "BlueprintNode.hpp"
-#include "BlueprintCanvas.hpp"
-#include "KeyPressNode.hpp"
-#include "KeyReleaseNode.hpp"
-#include "PrintNode.hpp"
-#include "StringNode.hpp"
 #include "components/BlueprintComponent.hpp"
-
 #include "serialization/UUID.hpp"
 
-#include <unordered_set>
+// --- Include all concrete node types we can spawn ---
+#include "nodes/KeyPressNode.hpp"
+#include "nodes/KeyReleaseNode.hpp"
+#include "nodes/ReflectedNode.hpp"
+
+// --- Include all C++ types we want to make available as blueprint nodes ---
+#include "components/Transform.hpp"
+
+// --- Include the GENERATED reflection file for each C++ type ---
+// This is critical. It ensures the REFL_AUTO macro is compiled and the
+// static AutoRegistrator runs, populating the global ReflectionRegistry.
+#include "gen/Transform.refl.cpp"
+
 
 NodeProcessor::NodeProcessor() {
-	
+    // 1. Register hardcoded, non-reflected nodes (like events).
+    m_creators["KeyPress"] = [](UUID id) { 
+        return std::make_unique<KeyPressCoreNode>(id); 
+    };
+    m_creators["KeyRelease"] = [](UUID id) { 
+        return std::make_unique<KeyReleaseCoreNode>(id); 
+    };
+    
+    // 2. Register all reflectable C++ types that should be available as nodes.
+    register_blueprint_type<Transform>();
+    // To add more nodes, just add the class header, the gen/*.refl.cpp file,
+    // and call register_blueprint_type<MyNewClass>(); here.
 }
 
-long long NodeProcessor::get_next_id() {
-	return UUIDGenerator::generate();
+template<typename T>
+void NodeProcessor::register_blueprint_type() {
+    const std::string name(refl::reflect<T>().name);
+    
+    power::reflection::PowerType type_info = power::reflection::PowerType::get_by_name(name);
+    if (!type_info.is_valid()) {
+        std::cerr << "ERROR: Could not register blueprint type '" << name 
+                  << "'. Is it reflected with REFL_AUTO and is the generated .refl.cpp file included and compiled?\n";
+        return;
+    }
+
+    // Create a lambda that knows how to construct this specific reflected node.
+    m_creators[name] = [type_info](UUID id) -> std::unique_ptr<CoreNode> {
+        // Create an instance of the C++ object, wrapped in std::any.
+        auto instance = std::make_any<T>();
+        
+        // Create the core node container for it.
+        auto node = std::make_unique<ReflectedCoreNode>(id, type_info, instance);
+        
+        // Create the runtime dispatchers that connect reflected names to actual code.
+        refl::util::for_each(refl::reflect<T>().members, [&](auto member) {
+            if constexpr (refl::descriptor::is_field(member)) {
+                std::string prop_name = member.name;
+                // Create a getter lambda.
+                node->m_property_getters[prop_name] = [member](std::any& obj) -> std::any {
+                    return member(std::any_cast<T&>(obj));
+                };
+                // Create a setter lambda.
+                node->m_property_setters[prop_name] = [member](std::any& obj, std::any val) {
+                     using TField = typename decltype(member)::value_type;
+                     if (const auto* pval = std::any_cast<TField>(&val)) {
+                         member(std::any_cast<T&>(obj)) = *pval;
+                     }
+                };
+            }
+            else if constexpr (refl::descriptor::is_function(member)) {
+                // Create a method-calling lambda.
+                node->m_method_dispatchers[std::string(member.name)] = 
+                    [f = member, node_ptr = node.get()](const std::vector<std::any>& args) {
+                    
+                    auto& instance = std::any_cast<T&>(node_ptr->get_instance());
+
+                    // NOTE: This dispatcher is simplified. A full implementation would require
+                    // more advanced template metaprogramming to handle arbitrary function signatures.
+                    // This example explicitly handles the known methods of `Transform`.
+                    if constexpr (std::string_view{f.name} == "move" && std::is_invocable_v<decltype(f), T&, float, float>) {
+                        if (args.size() == 2) {
+                            f(instance, std::any_cast<float>(args[0]), std::any_cast<float>(args[1]));
+                        }
+                    } else if constexpr (std::string_view{f.name} == "print" && std::is_invocable_v<decltype(f), const T&>) {
+                        f(instance);
+                    }
+                };
+            }
+        });
+        
+        return node;
+    };
 }
 
-void NodeProcessor::build_node(CoreNode& node){
-	node.build();
+std::unique_ptr<CoreNode> NodeProcessor::create_node(const std::string& type_name, UUID id) {
+    if (m_creators.count(type_name)) {
+        // Call the stored creator function for the requested type.
+        return m_creators.at(type_name)(id);
+    }
+    std::cerr << "ERROR: Attempted to create unknown node type: " << type_name << std::endl;
+    return nullptr;
+}
+
+CoreNode& NodeProcessor::add_node(std::unique_ptr<CoreNode> node) {
+    if (!node) {
+        throw std::runtime_error("Attempted to add a null node to NodeProcessor.");
+    }
+    CoreNode& ref = *node;
+    nodes.push_back(std::move(node));
+    return ref;
 }
 
 void NodeProcessor::serialize(BlueprintCanvas& canvas, Actor& actor) {
-	auto node_processor = std::make_unique<NodeProcessor>();
-	
-	if(actor.find_component<BlueprintComponent>()) {
-		actor.remove_component<BlueprintComponent>();
-	}
-	
-	if (!nodes.empty()) {
-		for (auto& node : nodes) {
-			switch (node->type) {
-				case NodeType::KeyPress: {
-					auto& spawn = node_processor->spawn_node<KeyPressCoreNode>(node->id);
-					spawn.set_window(canvas.screen().glfw_window());
-					spawn.set_position(node->position);
-				}
-					break;
-				case NodeType::KeyRelease: {
-					auto& spawn = node_processor->spawn_node<KeyReleaseCoreNode>(node->id);
-					spawn.set_window(canvas.screen().glfw_window());
-					spawn.set_position(node->position);
-				}
-					break;
-				case NodeType::String: {
-					auto& spawn = node_processor->spawn_node<StringCoreNode>(node->id);
-					spawn.set_position(node->position);
-				}
-					break;
-					
-				case NodeType::Print: {
-					auto& spawn = node_processor->spawn_node<PrintCoreNode>(node->id);
-					spawn.set_position(node->position);
-				}
-					break;
-			}
-			
-			// Source node is the original node in the canvas
-			auto& source_node = *node;
-			// Target node is the newly spawned node in our temporary processor
-			if (auto* target_node = node_processor->find_node(node->id)) {
-				// Get non-const access to the pin vectors. This assumes pin creation order is identical.
-				auto& target_inputs = const_cast<std::vector<std::unique_ptr<CorePin>>&>(target_node->get_inputs());
-				auto& target_outputs = const_cast<std::vector<std::unique_ptr<CorePin>>&>(target_node->get_outputs());
-				const auto& source_inputs = source_node.get_inputs();
-				const auto& source_outputs = source_node.get_outputs();
-				
-				// Copy input pin IDs and data
-				for (size_t i = 0; i < source_inputs.size(); ++i) {
-					target_inputs[i]->id = source_inputs[i]->id; // <-- The critical fix
-					target_inputs[i]->set_data(source_inputs[i]->get_data());
-				}
-				
-				// Copy output pin IDs and data
-				for (size_t i = 0; i < source_outputs.size(); ++i) {
-					target_outputs[i]->id = source_outputs[i]->id; // <-- The critical fix
-					target_outputs[i]->set_data(source_outputs[i]->get_data());
-				}
-			}
-		}
-		
-		for (auto& link : links) {
-			auto& start_pin = link->get_start();
-			auto& end_pin = link->get_end();
-			
-			auto* target_source_node = node_processor->find_node(start_pin.node.id);
-			auto* target_destination_node = node_processor->find_node(end_pin.node.id);
-			
-			if (target_source_node && target_destination_node) {
-				auto& target_start_pin = target_source_node->get_pin(start_pin.id);
-				auto& target_end_pin = target_destination_node->get_pin(end_pin.id);
-				node_processor->create_link(link->get_id(), target_start_pin, target_end_pin);
-			}
-		}
-		
-		for (auto& node : nodes) {
-			if (auto* target_node = node_processor->find_node(node->id)) {
-				auto* that_node = dynamic_cast<DataCoreNode*>(target_node);
-				auto* this_node = dynamic_cast<DataCoreNode*>(node.get());
-				
-				if (that_node && this_node) {
-					that_node->set_data(this_node->get_data());
-				}
-			}
-		}
-		
-	}
-	
-	actor.add_component<BlueprintComponent>(std::move(node_processor));
+    auto runtime_processor = std::make_unique<NodeProcessor>();
+
+    if (actor.find_component<BlueprintComponent>()) {
+        actor.remove_component<BlueprintComponent>();
+    }
+
+    // 1. Clone all nodes from the canvas processor to the runtime processor.
+    for (const auto& canvas_node : this->nodes) {
+        std::unique_ptr<CoreNode> new_node = runtime_processor->create_node(canvas_node->reflected_type_name, canvas_node->id);
+        if (new_node) {
+            new_node->set_position(canvas_node->position);
+            
+            // If it's a reflected node, copy its internal C++ object's state.
+            if(auto* src = dynamic_cast<ReflectedCoreNode*>(canvas_node.get())) {
+                if(auto* dst = dynamic_cast<ReflectedCoreNode*>(new_node.get())) {
+                    dst->get_instance() = src->get_instance();
+                }
+            }
+            // For event nodes, we might need to copy specific state.
+            else if (auto* src = dynamic_cast<KeyPressCoreNode*>(canvas_node.get())) {
+                if(auto* dst = dynamic_cast<KeyPressCoreNode*>(new_node.get())) {
+                    dst->set_window(canvas.screen().glfw_window());
+                }
+            }
+            runtime_processor->add_node(std::move(new_node));
+        }
+    }
+
+    // 2. Clone all links.
+    for (const auto& link : this->links) {
+        auto& start_pin = link->get_start();
+        auto& end_pin = link->get_end();
+        
+        auto* new_start_node = runtime_processor->find_node(start_pin.node.id);
+        auto* new_end_node = runtime_processor->find_node(end_pin.node.id);
+
+        if (new_start_node && new_end_node) {
+             runtime_processor->create_link(link->get_id(), new_start_node->get_pin(start_pin.id), new_end_node->get_pin(end_pin.id));
+        }
+    }
+    
+    actor.add_component<BlueprintComponent>(std::move(runtime_processor));
 }
 
 void NodeProcessor::deserialize(BlueprintCanvas& canvas, Actor& actor) {
-	
-	canvas.clear();
-	clear();
-	
-	if (actor.find_component<BlueprintComponent>()) {
-		auto& blueprint_component = actor.get_component<BlueprintComponent>();
-		auto& node_processor = blueprint_component.node_processor();
-		
-		for (auto& node : node_processor.nodes) {
-			// Spawn nodes in the canvas (target) from the component's data (source)
-			switch (node->type) {
-				case NodeType::KeyPress:
-					canvas.spawn_node<KeyPressVisualNode>(node->position, spawn_node<KeyPressCoreNode>(node->id));
-					break;
-				case NodeType::KeyRelease:
-					canvas.spawn_node<KeyReleaseVisualNode>(node->position, spawn_node<KeyReleaseCoreNode>(node->id));
-					break;
-				case NodeType::String:
-					canvas.spawn_node<StringVisualNode>(node->position, spawn_node<StringCoreNode>(node->id));
-					break;
-				case NodeType::Print:
-					canvas.spawn_node<PrintVisualNode>(node->position, spawn_node<PrintCoreNode>(node->id));
-					break;
-			}
-			
-			// Source node is from the component's processor
-			auto& source_node = *node;
-			// Target node is the one just spawned in this (the canvas's) processor
-			if (auto* target_node = find_node(node->id)) {
-				// Get non-const access to the pin vectors.
-				auto& target_inputs = const_cast<std::vector<std::unique_ptr<CorePin>>&>(target_node->get_inputs());
-				auto& target_outputs = const_cast<std::vector<std::unique_ptr<CorePin>>&>(target_node->get_outputs());
-				const auto& source_inputs = source_node.get_inputs();
-				const auto& source_outputs = source_node.get_outputs();
-				
-				// Copy input pin IDs and data
-				for (size_t i = 0; i < source_inputs.size(); ++i) {
-					target_inputs[i]->id = source_inputs[i]->id; // <-- The critical fix
-					target_inputs[i]->set_data(source_inputs[i]->get_data());
-				}
-				
-				// Copy output pin IDs and data
-				for (size_t i = 0; i < source_outputs.size(); ++i) {
-					target_outputs[i]->id = source_outputs[i]->id; // <-- The critical fix
-					target_outputs[i]->set_data(source_outputs[i]->get_data());
-				}
-			}
-		}
-		
-		for (auto& node : node_processor.nodes) {
-			if(auto* target_node = find_node(node->id)) {
-				auto* this_node = dynamic_cast<DataCoreNode*>(target_node);
-				auto* that_node = dynamic_cast<DataCoreNode*>(node.get());
-				
-				if (this_node && that_node) {
-					this_node->set_data(that_node->get_data());
-				}
-			}
-		}
-		
-		for (auto& link : node_processor.links) {
-			auto& start_pin = link->get_start();
-			auto& end_pin = link->get_end();
-			
-			auto* target_source_node = find_node(start_pin.node.id);
-			auto* target_destination_node = find_node(end_pin.node.id);
-			
-			if (target_source_node && target_destination_node) {
-				auto& target_start_pin = target_source_node->get_pin(start_pin.id);
-				auto& target_end_pin = target_destination_node->get_pin(end_pin.id);
-				
-				create_link(link->get_id(), target_start_pin, target_end_pin);
-				canvas.link(target_start_pin, target_end_pin);
-			}
-		}
-		
-		canvas.perform_layout(canvas.screen().nvg_context());
-	}
+    canvas.clear();
+    this->clear();
+    
+    auto* bp_comp = actor.find_component<BlueprintComponent>();
+    if (!bp_comp) return;
+
+    auto& source_processor = bp_comp->node_processor();
+        
+    // 1. Create all nodes in this processor from the source processor's data.
+    for (const auto& source_node : source_processor.get_nodes()) {
+        std::unique_ptr<CoreNode> new_node = this->create_node(source_node->reflected_type_name, source_node->id);
+        if (new_node) {
+            new_node->set_position(source_node->position);
+
+            // Copy instance data for reflected nodes.
+            if(auto* src = dynamic_cast<ReflectedCoreNode*>(source_node.get())) {
+                if(auto* dst = dynamic_cast<ReflectedCoreNode*>(new_node.get())) {
+                    dst->get_instance() = src->get_instance();
+                }
+            }
+            
+            // Spawn the corresponding VISUAL node on the canvas.
+            if (auto* reflected_core = dynamic_cast<ReflectedCoreNode*>(new_node.get())) {
+                canvas.spawn_node<ReflectedVisualNode>(new_node->position, *reflected_core);
+            } else if (auto* keypress_core = dynamic_cast<KeyPressCoreNode*>(new_node.get())) {
+                canvas.spawn_node<KeyPressVisualNode>(new_node->position, *keypress_core);
+            } // ... add else-if for other non-reflected visual node types.
+
+            this->add_node(std::move(new_node));
+        }
+    }
+    
+    // 2. Recreate all links, both logically and visually.
+    for (const auto& link : source_processor.get_links()) {
+        auto& start_pin = link->get_start();
+        auto& end_pin = link->get_end();
+        
+        auto* new_start_node = this->find_node(start_pin.node.id);
+        auto* new_end_node = this->find_node(end_pin.node.id);
+
+        if (new_start_node && new_end_node) {
+             auto& new_start_pin = new_start_node->get_pin(start_pin.id);
+             auto& new_end_pin = new_end_node->get_pin(end_pin.id);
+             
+             this->create_link(link->get_id(), new_start_pin, new_end_pin);
+             canvas.link(new_start_pin, new_end_pin); // Tell canvas to draw the link
+        }
+    }
+    canvas.perform_layout(canvas.screen().nvg_context());
 }
 
-CoreNode& NodeProcessor::get_node(UUID id) {
-	auto node_it = std::find_if(nodes.begin(), nodes.end(), [id](auto& node) {
-		return node->id == id;
-	});
-	
-	if (node_it == nodes.end()) {
-		throw std::runtime_error("Node with ID " + std::to_string(id) + " not found.");
-	}
-	return *node_it->get();
+
+// --- Unchanged Methods ---
+
+void NodeProcessor::create_link(UUID id, CorePin& output, CorePin& input){
+    auto link = std::make_unique<Link>(id, output, input);
+    output.links.push_back(link.get());
+    input.links.push_back(link.get());
+    links.push_back(std::move(link));
+}
+
+void NodeProcessor::create_link(BlueprintCanvas& canvas, UUID id, VisualPin& output, VisualPin& input){
+    auto link = std::make_unique<Link>(id, output.core_pin(), input.core_pin());
+    output.core_pin().links.push_back(link.get());
+    input.core_pin().links.push_back(link.get());
+    links.push_back(std::move(link));
+    canvas.add_link(output, input);
 }
 
 CoreNode* NodeProcessor::find_node(UUID id) {
-	auto node_it = std::find_if(nodes.begin(), nodes.end(), [id](const std::unique_ptr<CoreNode>& node) {
-		return node->id == id;
-	});
-	
-	if (node_it != nodes.end()) {
-		return node_it->get();
-	}
-	
-	return nullptr;
-}
-
-
-void NodeProcessor::break_links(CoreNode& node) {
-	
-	std::vector<Link*> links_to_remove;
-	
-	for (auto& link : links) {
-		const auto& start_pin = link->get_start();
-		const auto& end_pin = link->get_end();
-		
-		if (&start_pin.node == &node || &end_pin.node == &node) {
-			links_to_remove.push_back(link.get());
-		}
-	}
-	
-	links.erase(
-				std::remove_if(links.begin(), links.end(),
-							   [&links_to_remove](const std::unique_ptr<Link>& link) {
-								   return std::find(links_to_remove.begin(), links_to_remove.end(), link.get()) != links_to_remove.end();
-							   }
-							   ),
-				links.end()
-				);
+    auto it = std::find_if(nodes.begin(), nodes.end(), 
+                           [id](const std::unique_ptr<CoreNode>& node) {
+        return node->id == id;
+    });
+    return (it != nodes.end()) ? it->get() : nullptr;
 }
 
 void NodeProcessor::clear() {
-	nodes.clear();
-	links.clear();
+    nodes.clear();
+    links.clear();
 }

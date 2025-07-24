@@ -39,7 +39,7 @@ public:
 	 * @brief Executes the node's logic: printing a string to the console.
 	 * @return True to allow the execution flow to continue.
 	 */
-	bool evaluate() override;
+	bool evaluate(UUID flow_pin_id) override;
 	
 private:
 	// Allow visual node to access private members to set the textbox pointer.

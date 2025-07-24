@@ -32,7 +32,8 @@ enum class NodeType {
 	KeyPress,
 	KeyRelease,
 	String,
-	Print
+	Print,
+	Reflected
 };
 
 enum class PinType {
@@ -119,12 +120,13 @@ public:
 	CoreNode& node;
 	PinType type;
 	PinKind kind;
-	
+	std::string label; 
+
 	std::vector<Link*> links;
 	
 	// Constructor updated to remove PinSubType
-	CorePin(CoreNode& parent, UUID id, PinType type)
-	: id(id), node(parent), type(type), kind(PinKind::Input) {
+	CorePin(CoreNode& parent, UUID id, PinType type, const std::string& label = "")
+	: id(id), node(parent), type(type), kind(PinKind::Input), label(label) {
 		// Initialize with default data based on type
 		if (type == PinType::Bool) {
 			set_data(true);
@@ -200,15 +202,31 @@ public:
 	nanogui::Color color;
 	bool root_node = false;
 	nanogui::Vector2i position;
+	std::string reflected_type_name; // ADD THIS: For serialization of reflected nodes
 	
 	/**
 	 * @brief Executes the node's internal logic.
 	 * @return True to continue the execution flow, false to stop it.
 	 * Derived classes must override this to implement their behavior.
 	 */
-	virtual bool evaluate() {
-		return false;
-	}
+    // MODIFIED: 'evaluate' now takes an optional pin ID for event-driven nodes.
+    // Default to 0 for nodes that aren't triggered by a specific pin.
+    virtual bool evaluate(UUID flow_pin_id = 0) {
+        return false;
+    }
+    
+    // ADD THIS: A new 'add_input/output' override to add a label to the pin
+    CorePin& add_input(PinType pin_type, const std::string& label = "") {
+        auto input = std::make_unique<CorePin>(*this, get_next_id(), pin_type, label);
+		inputs.push_back(std::move(input));
+		return *inputs.back();
+    }
+    
+    CorePin& add_output(PinType pin_type, const std::string& label = "") {
+        auto output = std::make_unique<CorePin>(*this, get_next_id(), pin_type, label);
+		outputs.push_back(std::move(output));
+		return *outputs.back();
+    }
 	
 	void raise_event();
 	

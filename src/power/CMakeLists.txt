@@ -142,6 +142,9 @@ add_executable(PowerEngine
     ${CMAKE_CURRENT_LIST_DIR}/execution/PrintNode.hpp
     ${CMAKE_CURRENT_LIST_DIR}/execution/PrintNode.cpp
 
+    ${CMAKE_CURRENT_LIST_DIR}/execution/ReflectedNode.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/execution/ReflectedNode.cpp
+
     ${CMAKE_CURRENT_LIST_DIR}/execution/ExecutionManager.hpp
 
     ${CMAKE_CURRENT_LIST_DIR}/filesystem/CompressedSerialization.hpp

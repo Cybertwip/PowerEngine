@@ -339,48 +339,48 @@ void BlueprintCanvas::draw(NVGcontext *ctx) {
 	}
 
 }
-
 void BlueprintCanvas::setup_options() {
-	SContextMenu->clear_children();
-	
-	auto key_press_option = std::make_unique<nanogui::Button>(*SContextMenu, "Key Press");
-	auto key_release_option = std::make_unique<nanogui::Button>(*SContextMenu, "Key Release");
-	auto string_option = std::make_unique<nanogui::Button>(*SContextMenu, "String");
-	auto print_option = std::make_unique<nanogui::Button>(*SContextMenu, "Print");
-	
-	key_press_option->set_callback([this](){
-		SContextMenu->set_visible(false);
-		spawn_node<KeyPressVisualNode>(SContextMenu->position(), mNodeProcessor.spawn_node<KeyPressCoreNode>(mNodeProcessor.get_next_id()));
-		perform_layout(this->screen().nvg_context());
-	});
-	
-	key_release_option->set_callback([this](){
-		SContextMenu->set_visible(false);
-		spawn_node<KeyReleaseVisualNode>(SContextMenu->position(), mNodeProcessor.spawn_node<KeyReleaseCoreNode>(mNodeProcessor.get_next_id()));
-		perform_layout(this->screen().nvg_context());
-	});
-	
-	string_option->set_callback([this](){
-		SContextMenu->set_visible(false);
-		spawn_node<StringVisualNode>(SContextMenu->position(), mNodeProcessor.spawn_node<StringCoreNode>(mNodeProcessor.get_next_id()));
-		perform_layout(this->screen().nvg_context());
-	});
+    SContextMenu->clear_children();
+    mNodeOptions.clear();
 
-	print_option->set_callback([this](){
-		SContextMenu->set_visible(false);
-		spawn_node<PrintVisualNode>(SContextMenu->position(), mNodeProcessor.spawn_node<PrintCoreNode>(mNodeProcessor.get_next_id()));
-		perform_layout(this->screen().nvg_context());
-	});
-	
-	mNodeOptions.clear();
-	
-	mNodeOptions.push_back(std::move(key_press_option));
-	mNodeOptions.push_back(std::move(key_release_option));
-	mNodeOptions.push_back(std::move(string_option));
-	mNodeOptions.push_back(std::move(print_option));
-	
-	SContextMenu->set_visible(false);
+    // Dynamically add an option for every reflected type
+    auto all_types = power::reflection::ReflectionRegistry::get_all_types();
+    for (const auto& type : all_types) {
+        auto type_button = std::make_unique<nanogui::Button>(*SContextMenu, type.get_name());
+        
+        type_button->set_callback([this, type_name = type.get_name()](){
+            SContextMenu->set_visible(false);
+
+            // 1. Create the Core Node using the processor
+            auto core_node_ptr = mNodeProcessor.create_node(type_name, UUIDGenerator::generate());
+            if (!core_node_ptr) return;
+
+            auto* reflected_core = dynamic_cast<ReflectedCoreNode*>(core_node_ptr.get());
+            if (!reflected_core) return;
+            
+            // 2. Add it to the processor's list of managed nodes
+            mNodeProcessor.add_node(std::move(core_node_ptr));
+            
+            // 3. Spawn the Visual Node on the canvas
+            spawn_node<ReflectedVisualNode>(SContextMenu->position(), *reflected_core);
+            perform_layout(this->screen().nvg_context());
+        });
+        mNodeOptions.push_back(std::move(type_button));
+    }
+    
+    // You can still add hardcoded nodes if you want
+    auto key_press_option = std::make_unique<nanogui::Button>(*SContextMenu, "KeyPress");
+    key_press_option->set_callback([this](){
+        SContextMenu->set_visible(false);
+        auto& core = mNodeProcessor.add_node(mNodeProcessor.create_node("KeyPress", UUIDGenerator::generate()));
+        spawn_node<KeyPressVisualNode>(SContextMenu->position(), static_cast<KeyPressCoreNode&>(core));
+        perform_layout(this->screen().nvg_context());
+    });
+    mNodeOptions.push_back(std::move(key_press_option));
+
+    SContextMenu->set_visible(false);
 }
+
 
 void BlueprintCanvas::clear() {
 	clear_children();

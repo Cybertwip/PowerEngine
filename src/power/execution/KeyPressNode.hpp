@@ -55,7 +55,7 @@ public:
 	 * @brief Overrides the base class to define this node's evaluation logic.
 	 * @return True if the key was just pressed, allowing the flow to continue.
 	 */
-	bool evaluate() override;
+	bool evaluate(UUID flow_pin_id) override;
 	
 	[[nodiscard]] int keycode() const { return mKeyCode; }
 	[[nodiscard]] bool configured() const { return mConfigured; }
