@@ -4,7 +4,7 @@
 
 #include "serialization/UUID.hpp"
 
-inline void CoreNode::raise_event() {
+void CoreNode::raise_event() {
 	// Step 1: PULL data from connected nodes into this node's input pins.
 	for (const auto& input_pin : inputs) {
 		// We only care about connected data pins.
@@ -43,7 +43,7 @@ inline void CoreNode::raise_event() {
 	}
 }
 
-inline void CoreNode::build() {
+void CoreNode::build() {
 	for (auto& input : inputs) {
 		input->kind = PinKind::Input;
 	}
@@ -52,15 +52,15 @@ inline void CoreNode::build() {
 	}
 }
 
-inline UUID CoreNode::get_next_id() {
+UUID CoreNode::get_next_id() {
 	return UUIDGenerator::generate();
 }
 
-inline VisualPin::VisualPin(nanogui::Widget& parent, CorePin& core_pin)
+VisualPin::VisualPin(nanogui::Widget& parent, CorePin& core_pin)
 : nanogui::ToolButton(parent, FA_CIRCLE_NOTCH, ""), mCorePin(core_pin) {
 }
 
-inline VisualBlueprintNode::VisualBlueprintNode(BlueprintCanvas& parent, const std::string& name, nanogui::Vector2i position, nanogui::Vector2i size, CoreNode& coreNode)
+VisualBlueprintNode::VisualBlueprintNode(BlueprintCanvas& parent, const std::string& name, nanogui::Vector2i position, nanogui::Vector2i size, CoreNode& coreNode)
 : nanogui::Window(parent, name), mCanvas(parent), mCoreNode(coreNode) {
 	set_draggable(true);
 	set_fixed_size(size);
@@ -89,7 +89,7 @@ inline VisualBlueprintNode::VisualBlueprintNode(BlueprintCanvas& parent, const s
 	create_visual_pins();
 }
 
-inline void VisualBlueprintNode::create_visual_pins() {
+void VisualBlueprintNode::create_visual_pins() {
 	for (const auto& core_pin : mCoreNode.get_inputs()) {
 		auto visual_pin = std::make_unique<VisualPin>(core_pin->type == PinType::Flow ? *mFlowContainer : *mLeftColumn, *core_pin);
 		visual_pin->set_fixed_size(nanogui::Vector2i(22, 22));
@@ -127,14 +127,14 @@ inline void VisualBlueprintNode::create_visual_pins() {
 	}
 }
 
-inline void VisualBlueprintNode::perform_layout(NVGcontext *ctx) {
+void VisualBlueprintNode::perform_layout(NVGcontext *ctx) {
 	Window::perform_layout(ctx);
 	int hh = theme().m_window_header_height;
 	mFlowContainer->set_position(nanogui::Vector2i(0, 0));
 	mColumnContainer->set_position(nanogui::Vector2i(5, hh + 3));
 }
 
-inline void VisualBlueprintNode::draw(NVGcontext *ctx) {
+void VisualBlueprintNode::draw(NVGcontext *ctx) {
 	// Standard nanogui window drawing logic
 	int ds = theme().m_window_drop_shadow_size, cr = theme().m_window_corner_radius;
 	int hh = theme().m_window_header_height;

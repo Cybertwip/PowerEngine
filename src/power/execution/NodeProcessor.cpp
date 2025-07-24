@@ -84,10 +84,6 @@ void NodeProcessor::break_links(CoreNode& node) {
 	
 }
 
-
-
-
-
 std::unique_ptr<CoreNode> NodeProcessor::create_node(const std::string& type_name, UUID id) {
 	if (m_creators.count(type_name)) {
 		// Call the stored creator function for the requested type.

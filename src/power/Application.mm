@@ -220,7 +220,7 @@ void Application::initialize() {
 	
 	mExecutionManager = std::make_unique<ExecutionManager>(*mRenderCommon->canvas(), *mSimulationServer, *mBlueprintManager);
 	
-	mSimulationServer->run();
+//	mSimulationServer->run();
 
 	perform_layout();
 }
