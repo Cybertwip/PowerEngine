@@ -67,11 +67,11 @@ public:
     std::optional<std::any> get_property_value(const std::string& property_name);
     void set_property_value(const std::string& property_name, std::any value);
 
-    const power::reflection::PowerType& get_type_info() const { return m_type_info; }
+    const power::reflection::PowerType& get_type_info() const { return *m_type_info; }
     std::any& get_instance() { return m_object_instance; }
 
 private:
-    power::reflection::PowerType m_type_info;
+    std::unique_ptr<power::reflection::PowerType> m_type_info;
     std::any m_object_instance;
 
     // A map from a method's flow-input-pin ID to its name.

@@ -6,14 +6,14 @@
 
 ReflectedCoreNode::ReflectedCoreNode(UUID id, const power::reflection::PowerType& type_info, std::any instance)
     : CoreNode(NodeType::Reflected, id, nanogui::Color(210, 210, 210, 255)),
-      m_type_info(type_info),
+      m_type_info(std::make_unique<power::reflection::PowerType>(type_info_),
       m_object_instance(std::move(instance))
 {
     // Store the reflected type name for serialization.
-    reflected_type_name = m_type_info.get_name();
+    reflected_type_name = m_type_info->get_name();
 
     // 1. Create Output Pins for each reflected PROPERTY
-    for (const auto& prop_info : m_type_info.get_properties()) {
+    for (const auto& prop_info : m_type_info->get_properties()) {
         PinType pin_type = string_to_pin_type(prop_info.type_name);
         CorePin& output_pin = add_output(pin_type, prop_info.name);
         m_property_pins[prop_info.name] = &output_pin;
@@ -21,7 +21,7 @@ ReflectedCoreNode::ReflectedCoreNode(UUID id, const power::reflection::PowerType
 
     // 2. Create Input Pins for each reflected METHOD
     // An input flow pin to trigger the method, and data pins for its parameters.
-    for (const auto& method_info : m_type_info.get_methods()) {
+    for (const auto& method_info : m_type_info->get_methods()) {
         CorePin& flow_pin = add_input(PinType::Flow, method_info.name);
         m_pin_to_method_name[flow_pin.id] = method_info.name;
 
@@ -66,7 +66,7 @@ bool ReflectedCoreNode::evaluate(UUID flow_pin_id) {
 
     // 4. Use the dispatcher to invoke the real C++ method.
     if (m_method_dispatchers.count(method_to_call)) {
-        std::cout << "Blueprint: Calling " << m_type_info.get_name() << "::" << method_to_call << "..." << std::endl;
+        std::cout << "Blueprint: Calling " << m_type_info->get_name() << "::" << method_to_call << "..." << std::endl;
         m_method_dispatchers.at(method_to_call)(args);
     } else {
         std::cerr << "Error: No dispatcher registered for method: " << method_to_call << std::endl;
