@@ -30,6 +30,64 @@ NodeProcessor::NodeProcessor() {
 	}
 }
 
+long long NodeProcessor::get_next_id() {
+	
+	return UUIDGenerator::generate();
+	
+}
+
+
+
+void NodeProcessor::build_node(CoreNode& node){
+	
+	node.build();
+	
+}
+
+void NodeProcessor::break_links(CoreNode& node) {
+	
+	
+	std::vector<Link*> links_to_remove;
+	
+	
+	for (auto& link : links) {
+		
+		const auto& start_pin = link->get_start();
+		
+		const auto& end_pin = link->get_end();
+		
+		
+		if (&start_pin.node == &node || &end_pin.node == &node) {
+			
+			links_to_remove.push_back(link.get());
+			
+		}
+		
+	}
+	
+	
+	links.erase(
+				
+				std::remove_if(links.begin(), links.end(),
+							   
+							   [&links_to_remove](const std::unique_ptr<Link>& link) {
+								   
+								   return std::find(links_to_remove.begin(), links_to_remove.end(), link.get()) != links_to_remove.end();
+								   
+							   }
+							   
+							   ),
+				
+				links.end()
+				
+				);
+	
+}
+
+
+
+
+
 std::unique_ptr<CoreNode> NodeProcessor::create_node(const std::string& type_name, UUID id) {
 	if (m_creators.count(type_name)) {
 		// Call the stored creator function for the requested type.
