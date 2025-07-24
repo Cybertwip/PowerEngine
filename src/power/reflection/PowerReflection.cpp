@@ -37,22 +37,6 @@ bool PowerType::has_node_creator() const {
 	return m_is_valid && static_cast<bool>(m_node_creator);
 }
 
-
-// --- ReflectionRegistry Implementation ---
-
-std::map<std::string, PowerType>& ReflectionRegistry::get_registry() {
-	static std::map<std::string, PowerType> registry;
-	return registry;
-}
-
-PowerType ReflectionRegistry::get_type_by_name(const std::string& name) {
-	const auto& map = get_registry();
-	if (auto it = map.find(name); it != map.end()) {
-		return it->second;
-	}
-	return PowerType{}; // Return a default (invalid) PowerType
-}
-
 std::vector<PowerType> ReflectionRegistry::get_all_types() {
 	auto& reg = get_registry();
 	std::vector<PowerType> types;
