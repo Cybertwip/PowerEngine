@@ -99,10 +99,10 @@ void NodeProcessor::deserialize(BlueprintCanvas& canvas, Actor& actor) {
 	
 	if (!actor.find_component<BlueprintComponent>()) return;
 	
-	auto* bp_comp = actor.get_component<BlueprintComponent>();
+	auto& bp_comp = actor.get_component<BlueprintComponent>();
 
 	
-	auto& source_processor = bp_comp->node_processor();
+	auto& source_processor = bp_comp.node_processor();
 	
 	// 1. Create all nodes in this processor from the source processor's data.
 	for (const auto& source_node : source_processor.get_nodes()) {
