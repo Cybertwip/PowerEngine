@@ -192,37 +192,6 @@ struct AutoRegistrator {
 	}
 };
 
-// --- FIX: Add missing function definitions ---
-// These need to be defined after both PowerType and ReflectionRegistry are fully declared.
-
-inline PowerType PowerType::get_by_name(const std::string& name) {
-	return ReflectionRegistry::get_type_by_name(name);
-}
-
-inline std::vector<PropertyInfo> PowerType::get_properties() const {
-	return m_is_valid ? m_properties_getter() : std::vector<PropertyInfo>{};
-}
-
-inline std::vector<MethodInfo> PowerType::get_methods() const {
-	return m_is_valid ? m_methods_getter() : std::vector<MethodInfo>{};
-}
-
-inline const PowerType::NodeCreatorFunc& PowerType::get_node_creator() const {
-	return m_node_creator;
-}
-
-inline bool PowerType::has_node_creator() const {
-	return m_is_valid && m_node_creator;
-}
-
-inline std::vector<PowerType> ReflectionRegistry::get_all_types() {
-	std::vector<PowerType> types;
-	types.reserve(get_registry().size());
-	for (const auto& pair : get_registry()) {
-		types.push_back(pair.second);
-	}
-	return types;
-}
 
 inline PowerType ReflectionRegistry::get_type_by_name(const std::string& name) {
 	auto& reg = get_registry();
