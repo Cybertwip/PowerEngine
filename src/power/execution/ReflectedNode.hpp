@@ -11,13 +11,16 @@
 #pragma once
 
 #include "BlueprintNode.hpp"
-#include "reflection/PowerReflection.hpp"
 
 #include <any>
 #include <functional>
 #include <string>
 #include <map>
 #include <stdexcept>
+
+namespace power::reflection {
+	class PowerType;
+}
 
 class BlueprintCanvas;
 
