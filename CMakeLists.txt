@@ -4,7 +4,8 @@ cmake_minimum_required(VERSION 3.5)
 
 cmake_policy(SET CMP0079 NEW)
 
-set(CMAKE_OSX_DEPLOYMENT_TARGET "10.12" CACHE STRING "Minimum OS X deployment version" FORCE)
+
+set(CMAKE_OSX_DEPLOYMENT_TARGET "14.0" CACHE STRING "Minimum iOS deployment version" FORCE)
 
 include(${CMAKE_ROOT}/Modules/ExternalProject.cmake)
 
@@ -12,18 +13,14 @@ if (NOT POWER_ENGINE_DISTRIBUTION)
   set(CMAKE_BUILD_TYPE RelWithDebInfo CACHE STRING "Choose the type of build." FORCE)
 endif()
 
-if(APPLE)
-project(
-  PowerEngine
-  LANGUAGES CXX OBJC
-  VERSION 0.1.0)
-else()
 project(
   PowerEngine
   LANGUAGES CXX
   VERSION 0.1.0)
-endif()
 
+if (APPLE)
+    enable_language(OBJCXX)
+endif()
 
 
 set(CMAKE_CXX_STANDARD 20)
