@@ -34,7 +34,7 @@ void Grid::draw_content(const nanogui::Matrix4f& model, const nanogui::Matrix4f&
 	
 	// Common code: Near and far planes
 	float nearPlane = 0.01f;   // Example value for near plane
-	float farPlane = 1e5f;      // Example value for far plane
+	float farPlane = 700;      // Example value for far plane
 	
 	// Common code: Set uniforms
 	mShaderWrapper.set_uniform("u_near", nearPlane);

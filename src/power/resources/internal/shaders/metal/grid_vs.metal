@@ -1,6 +1,12 @@
 #include <metal_stdlib>
 using namespace metal;
 
+// Helper function to unproject a point from clip space to world space
+float3 unproject_point(float x, float y, float z, constant float4x4 &invProjView) {
+    float4 unproj_point = invProjView * float4(x, y, z, 1.0);
+    return unproj_point.xyz / unproj_point.w;
+}
+
 struct VertexOut {
     float4 position [[position]];
     float3 near;
@@ -16,14 +22,9 @@ vertex VertexOut vertex_main(const device packed_float2 *const aPosition [[buffe
     
     float2 p = aPosition[id];
 
-    // Use the precomputed inverse matrix
-    auto unproject_point = [&](float x, float y, float z) -> float3 {
-        float4 unproj_point = aInvProjectionView * float4(x, y, z, 1.0);
-        return unproj_point.xyz / unproj_point.w;
-    };
-
-    vert.near = unproject_point(p.x, p.y, -1.0);
-    vert.far = unproject_point(p.x, p.y, 1.0);
+    // Call the helper function to get the near and far points
+    vert.near = unproject_point(p.x, p.y, -1.0, aInvProjectionView);
+    vert.far  = unproject_point(p.x, p.y, 1.0, aInvProjectionView);
     
     vert.position = float4(p, 0.0, 1.0);
 
