@@ -105,7 +105,6 @@ add_subdirectory(external/zlib/)
 add_subdirectory(external/nanogui/)
 add_subdirectory(external/tinygizmo/) 
 add_subdirectory(external/websocketpp/) 
-add_subdirectory(external/ozz/) 
 add_subdirectory(external/refl-cpp/) 
 add_subdirectory(external/reflecto/)
 

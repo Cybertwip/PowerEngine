@@ -292,8 +292,6 @@ json
 httplib::httplib 
 OpenSSL::SSL
 OpenSSL::Crypto
-ozz_animation_tools
-ozz_animation_fbx
 riscv
 wasmtime
 zlib
