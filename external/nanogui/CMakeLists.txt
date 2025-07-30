@@ -4,10 +4,6 @@ cmake_minimum_required(VERSION 3.5)
 # Project Definition
 #============================================================================
 
-set(CMAKE_CXX_STANDARD 20)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_EXTENSIONS OFF)
-
 # Extract project version from the header to keep it in one place
 file(STRINGS "${CMAKE_CURRENT_SOURCE_DIR}/include/nanogui/common.h"
      nanogui_version_defines REGEX "#define NANOGUI_VERSION_(MAJOR|MINOR|PATCH) ")
@@ -21,6 +17,16 @@ endforeach()
 set(NANOGUI_VERSION "${NANOGUI_VERSION_MAJOR}.${NANOGUI_VERSION_MINOR}.${NANOGUI_VERSION_PATCH}")
 
 project(nanogui LANGUAGES CXX C VERSION ${NANOGUI_VERSION})
+
+if (APPLE)
+    enable_language(OBJC)
+endif()
+
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
+
+set(CMAKE_WARN_DEPRECATED FALSE)
 
 message(STATUS "Configuring NanoGUI v${NANOGUI_VERSION}")
 
@@ -65,6 +71,8 @@ elseif(NANOGUI_BACKEND STREQUAL "Metal")
     list(APPEND NANOGUI_EXTRA_SOURCES
         ext/nanovg_metal/src/nanovg_mtl.m src/texture_metal.mm
         src/shader_metal.mm src/renderpass_metal.mm)
+    set_source_files_properties(ext/nanovg_metal/src/nanovg_mtl.m PROPERTIES LANGUAGE OBJC)
+
     set(NANOGUI_RESOURCE_GLOB "resources/*.metal")
     include_directories(ext/nanovg_metal/src)
     message(STATUS "NanoGUI: Using Metal backend.")
