@@ -83,6 +83,7 @@ endif()
 
 
 set(FLATBUFFERS_BUILD_TESTS OFF CACHE BOOL "Disable Flatbuffers Tests" FORCE)
+set(BUILD_TESTS OFF CACHE BOOL "Disable Flatbuffers Tests" FORCE)
 
 
 # add external libraries
