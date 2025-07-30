@@ -43,8 +43,8 @@ float compute_depth(float3 point, constant float4x4 &aView, constant float4x4 &a
     float4 clip_space = aProjection * aView * float4(point, 1.0);
     float clip_space_depth = clip_space.z / clip_space.w;
     
-    // The projection matrix is assumed to map view-space depth to the [0, 1] range.
     // This re-linearization is specific to how the projection was set up.
+    // It maps normalized device coordinates back to view-space depth.
     float depth_view = ((clip_space_depth * 2.0 - 1.0) + 1.0) / 2.0 * (u_far - u_near) + u_near;
     
     // Normalize to [0, 1] for the depth buffer.
@@ -66,22 +66,24 @@ fragment FragmentOutput fragment_main(VertexInput in [[stage_in]],
     float3 R = in.near + t * (in.far - in.near);
 
     // If 't' is negative, the intersection is behind the camera, so we discard the pixel.
-    if (t < 0.0) {
+    // A very small denominator means the view ray is almost parallel to the grid,
+    // representing the horizon. We discard these fragments to avoid floating point issues.
+    if (t < 0.0 || abs(in.far.y - in.near.y) < 1e-6) {
         discard_fragment();
     }
 
     // --- Horizon Clipping Logic ---
-    // Use the far plane distance passed from the application as the horizon.
-    // This makes the grid extend to the edge of the view frustum.
-    // NOTE: This approach calculates distance from the world origin (0,0,0).
-    // It works best when the camera is near the origin.
-    float horizon_distance = u_far;
-    
-    // Calculate the distance of the grid point R from the world origin.
-    float world_distance = length(R);
+    // To correctly clip the grid at the horizon (far plane), we must check the
+    // distance of the point from the camera in view space.
+    float4 view_position = aView * float4(R, 1.0);
 
-    // If the point is beyond the horizon distance, discard the fragment entirely.
-    if (world_distance > horizon_distance) {
+    // In view space, the camera is at the origin looking down the negative Z-axis.
+    // Therefore, the distance from the camera along the view direction is -view_position.z.
+    float view_distance = -view_position.z;
+
+    // Discard any fragment that is beyond the far clipping plane.
+    // This creates a hard clip at the far plane, which appears as a straight line at the horizon.
+    if (view_distance > u_far) {
         discard_fragment();
     }
 
@@ -92,6 +94,7 @@ fragment FragmentOutput fragment_main(VertexInput in [[stage_in]],
     // Prepare the final output for this fragment.
     FragmentOutput out;
     out.color = o_color;
+    // The depth value must also be computed correctly for the GPU's depth test.
     out.depth = compute_depth(R, aView, aProjection, u_near, u_far);
 
     return out;
