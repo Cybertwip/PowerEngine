@@ -1,20 +1,23 @@
 #include <metal_stdlib>
 using namespace metal;
 
-// Input from the vertex shader, representing points on the near and far planes.
-struct VertexInput {
+// --- Fragment Shader ---
+// Final output from the fragment shader.
+
+struct VertexIO {
+    float4 position [[position]];
     float3 near;
     float3 far;
 };
 
-// Output from the fragment shader.
 struct FragmentOutput {
     float4 color [[color(0)]];
     float depth [[depth(any)]];
 };
 
+
+
 // Helper function to compute the visual appearance of the grid lines.
-// It draws lines on the XZ plane and highlights the X and Z axes.
 float4 compute_grid(float3 point, float scale, bool is_axis) {
     float2 coord = point.xz / scale;
     float2 dd = abs(fwidth(coord));
@@ -37,65 +40,63 @@ float4 compute_grid(float3 point, float scale, bool is_axis) {
     return col;
 }
 
-// Computes the final depth value for the fragment in the [0, 1] range.
-// This is used by the GPU for depth testing to ensure objects occlude each other correctly.
-float compute_depth(float3 point, constant float4x4 &aView, constant float4x4 &aProjection, constant float &u_near, constant float &u_far) {
-    float4 clip_space = aProjection * aView * float4(point, 1.0);
-    float clip_space_depth = clip_space.z / clip_space.w;
-    
-    // This re-linearization is specific to how the projection was set up.
-    // It maps normalized device coordinates back to view-space depth.
-    float depth_view = ((clip_space_depth * 2.0 - 1.0) + 1.0) / 2.0 * (u_far - u_near) + u_near;
-    
-    // Normalize to [0, 1] for the depth buffer.
-    float normalized_depth = (depth_view - u_near) / (u_far - u_near);
-    
-    return normalized_depth;
-}
 
-// Main function for the fragment shader.
-// It calculates the color for each pixel of the grid plane.
-fragment FragmentOutput fragment_main(VertexInput in [[stage_in]],
+// The fragment shader's main function. It runs for every pixel covered by the quad.
+fragment FragmentOutput fragment_main(VertexIO in [[stage_in]],
                                      constant float &u_near [[buffer(0)]],
                                      constant float &u_far [[buffer(1)]],
-                                     constant float4x4 &aView [[buffer(2)]],
-                                     constant float4x4 &aProjection [[buffer(3)]]) {
-    // Perform a ray-plane intersection to find the point 'R' on the grid (y=0).
-    // The ray is defined by the near and far points from the vertex shader.
-    float t = -in.near.y / (in.far.y - in.near.y);
-    float3 R = in.near + t * (in.far - in.near);
+                                     constant float4x4 &aView [[buffer(2)]]) {
+    // The view ray's direction vector.
+    float3 ray_direction = in.far - in.near;
 
-    // If 't' is negative, the intersection is behind the camera, so we discard the pixel.
-    // A very small denominator means the view ray is almost parallel to the grid,
-    // representing the horizon. We discard these fragments to avoid floating point issues.
-    if (t < 0.0 || abs(in.far.y - in.near.y) < 1e-6) {
+    // The denominator for the ray-plane intersection calculation.
+    // This is the Y-component of the ray's direction.
+    float den = ray_direction.y;
+
+    // --- Stability Check at Horizon ---
+    // If the ray is nearly parallel to the grid plane (den is close to zero),
+    // discard the fragment. This happens at the horizon. This check is necessary
+    // to prevent division by zero, but it is also the source of the flickering,
+    // as camera movement can cause `den` to hover around the threshold.
+    if (abs(den) < 1e-6) {
         discard_fragment();
     }
 
-    // --- Horizon Clipping Logic ---
-    // To correctly clip the grid at the horizon (far plane), we must check the
-    // distance of the point from the camera in view space.
+    // Calculate the intersection of the view ray with the grid plane (y=0).
+    // 't' is the parameter along the ray where the intersection occurs.
+    float t = -in.near.y / den;
+
+    // If t is negative, the intersection point is "behind" the camera.
+    if (t < 0.0) {
+        discard_fragment();
+    }
+    
+    // Calculate the world-space intersection point R.
+    float3 R = in.near + t * ray_direction;
+
+    // --- Clipping and Depth Calculation ---
+    // Transform the world point R to view space to get its distance from the camera.
     float4 view_position = aView * float4(R, 1.0);
 
-    // In view space, the camera is at the origin looking down the negative Z-axis.
-    // Therefore, the distance from the camera along the view direction is -view_position.z.
+    // In view space, distance along the view direction is the negative Z coordinate.
     float view_distance = -view_position.z;
 
-    // Discard any fragment that is beyond the far clipping plane.
-    // This creates a hard clip at the far plane, which appears as a straight line at the horizon.
-    if (view_distance > u_far) {
+    // Discard fragments that are outside the near/far clipping planes.
+    // The check against u_far provides the main clipping at the horizon.
+    if (view_distance > u_far || view_distance < u_near) {
         discard_fragment();
     }
 
-    // --- Final Color and Depth Calculation ---
-    // Compute the base color for the grid lines.
+    // --- Final Color and Depth Output ---
+    // Compute the grid pattern color based on the world position.
     float4 o_color = compute_grid(R, 32.0, true);
 
-    // Prepare the final output for this fragment.
     FragmentOutput out;
     out.color = o_color;
-    // The depth value must also be computed correctly for the GPU's depth test.
-    out.depth = compute_depth(R, aView, aProjection, u_near, u_far);
+    
+    // The depth buffer requires a value in the [0, 1] range.
+    // We calculate this directly from the view_distance we already have.
+    out.depth = (view_distance - u_near) / (u_far - u_near);
 
     return out;
 }
